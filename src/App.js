@@ -4,6 +4,13 @@ import './App.css';
 import { v4 as uuidv4 } from 'uuid';
 import querystring from 'querystring';
 
+const iceServers = [
+  { url:'stun:stun.l.google.com:19302'},
+  {
+    url: 'turn:numb.viagenie.ca',
+    credential: 'muazkh',
+    username: 'webrtc@live.com'
+  }];
 export default class App extends React.Component { 
   state = {
     watchPartyActive: false,
@@ -64,9 +71,9 @@ export default class App extends React.Component {
 
   async componentDidMount() {
     // Load UUID from url
-    let query = querystring.parse(window.location.search.substring(1));
-    if (query.id) {
-      this.uuid = query.id;
+    let query = window.location.hash.substring(1);
+    if (query) {
+      this.uuid = query;
       this.join();
     }
     // video chat
@@ -78,12 +85,12 @@ export default class App extends React.Component {
 
   host = () => {
     this.uuid = uuidv4();
-    window.history.pushState('', '', window.location.href + '?id=' + this.uuid);
+    window.history.pushState('', '', window.location.href + '#' + this.uuid);
     this.setState({ currentMedia: this.state.watchOptions[0] }, () => {
       this.setMedia(null, { value: this.state.currentMedia }, () => {
         const leftVideo = document.getElementById('leftVideo');
         let stream = leftVideo.captureStream();
-        const host = new window.Peer(this.uuid);
+        const host = new window.Peer(this.uuid, { iceServers });
         this.hostPeer = host;
         console.log(host, stream, stream.getAudioTracks(), stream.getVideoTracks());
         this.setState({ isHost: true }, () => {
@@ -150,7 +157,7 @@ export default class App extends React.Component {
 
   join = async () => {
     this.setState({ state: 'joining' }, async () => {
-      const peer = new window.Peer();
+      const peer = new window.Peer(null, { debug: 3, iceServers });
       const rightVideo = document.getElementById('rightVideo');
       // let stream = await navigator.mediaDevices.getUserMedia({audio: true, video: true});
       let silence = () => {
