@@ -1,6 +1,8 @@
 import React from 'react';
 import { Button, Grid, Segment, Divider, Select, Dimmer, Loader, Header, Label, Card } from 'semantic-ui-react'
 import './App.css';
+import { v4 as uuidv4 } from 'uuid';
+import querystring from 'querystring';
 
 export default class App extends React.Component { 
   state = {
@@ -58,8 +60,15 @@ export default class App extends React.Component {
   };
   videoRefs = {};
   hostPeer = null;
+  uuid = null;
 
   async componentDidMount() {
+    // Load UUID from url
+    let query = querystring.parse(window.location.search.substring(1));
+    if (query.id) {
+      this.uuid = query.id;
+      this.join();
+    }
     // video chat
     // "bring your own file"
     // now playing
@@ -68,33 +77,36 @@ export default class App extends React.Component {
   }
 
   host = () => {
+    this.uuid = uuidv4();
+    window.history.pushState('', '', window.location.href + '?id=' + this.uuid);
     this.setState({ currentMedia: this.state.watchOptions[0] }, () => {
-      this.setMedia(null, { value: this.state.currentMedia });
-      const host = new window.Peer('watchparty-host');
-      this.hostPeer = host;
-      // console.log(stream, stream.getAudioTracks(), stream.getVideoTracks());
-      this.setState({ isHost: true }, () => {
-        host.on('call', (call) => {
-          const leftVideo = document.getElementById('leftVideo');
-          let stream = leftVideo.captureStream();
-          call.answer(stream)
-          call.on('stream', (remoteStream) => {
-            this.state.participants[call.peer] = remoteStream;
-            this.setState(this.state.participants);
-            console.log(this.state.participants);
-            // this.videoRefs[call.peer].srcObject = remoteStream;
-            // Render all incoming streams to canvas and rebroadcast?
-            // https://stackoverflow.com/questions/4429440/html5-display-video-inside-canvas
+      this.setMedia(null, { value: this.state.currentMedia }, () => {
+        const leftVideo = document.getElementById('leftVideo');
+        let stream = leftVideo.captureStream();
+        const host = new window.Peer(this.uuid);
+        this.hostPeer = host;
+        console.log(host, stream, stream.getAudioTracks(), stream.getVideoTracks());
+        this.setState({ isHost: true }, () => {
+          host.on('call', (call) => {
+            call.answer(stream);
+            call.on('stream', (remoteStream) => {
+              this.state.participants[call.peer] = remoteStream;
+              this.setState(this.state.participants);
+              console.log(this.state.participants);
+              // this.videoRefs[call.peer].srcObject = remoteStream;
+              // Render all incoming streams to canvas and rebroadcast?
+              // https://stackoverflow.com/questions/4429440/html5-display-video-inside-canvas
+            });
           });
-        });
-        host.on('open', () => {
-          this.join();
+          host.on('open', () => {
+            this.join();
+          });
         });
       });
     });
   }
 
-  setMedia = async (e, data) => {
+  setMedia = async (e, data, cb) => {
     const leftVideo = document.getElementById('leftVideo');
     this.playerElement.src = '/media/' + data.value;
     leftVideo.muted = true;
@@ -119,6 +131,9 @@ export default class App extends React.Component {
       }
       this.setState({currentMedia: data.value });
       leftVideo.removeEventListener('loadeddata', replaceVideo);
+      if (cb) {
+        cb();
+      }
     };
     leftVideo.addEventListener('loadeddata', replaceVideo);
   }
@@ -154,9 +169,10 @@ export default class App extends React.Component {
       
       let blackSilence = (...args) => new MediaStream([black(...args), silence()]);
 
-      var call = peer.call('watchparty-host', blackSilence());
+      var call = peer.call(this.uuid, blackSilence());
       // console.log(call);
       call.on('stream', (remoteStream) => {
+        console.log(remoteStream);
         window.testStream = remoteStream;
         rightVideo.srcObject = remoteStream;
         this.setState({ watchPartyActive: true });
