@@ -72,11 +72,11 @@ export default class App extends React.Component {
       this.setMedia(null, { value: this.state.currentMedia });
       const host = new window.Peer('watchparty-host');
       this.hostPeer = host;
-      const leftVideo = document.getElementById('leftVideo');
-      let stream = leftVideo.captureStream();
       // console.log(stream, stream.getAudioTracks(), stream.getVideoTracks());
       this.setState({ isHost: true }, () => {
         host.on('call', (call) => {
+          const leftVideo = document.getElementById('leftVideo');
+          let stream = leftVideo.captureStream();
           call.answer(stream)
           call.on('stream', (remoteStream) => {
             this.state.participants[call.peer] = remoteStream;
@@ -97,6 +97,7 @@ export default class App extends React.Component {
   setMedia = async (e, data) => {
     const leftVideo = document.getElementById('leftVideo');
     this.playerElement.src = '/media/' + data.value;
+    leftVideo.muted = true;
     leftVideo.load();
     const replaceVideo = () => {
       let stream = leftVideo.captureStream();
@@ -124,7 +125,6 @@ export default class App extends React.Component {
 
   start = () => {
     const leftVideo = document.getElementById('leftVideo');
-    leftVideo.muted = true;
     leftVideo.play();
   }
 
@@ -137,9 +137,24 @@ export default class App extends React.Component {
     this.setState({ state: 'joining' }, async () => {
       const peer = new window.Peer();
       const rightVideo = document.getElementById('rightVideo');
-      let stream = await navigator.mediaDevices.getUserMedia({audio: true, video: true});
-      // let stream = new MediaStream();
-      var call = peer.call('watchparty-host', stream);
+      // let stream = await navigator.mediaDevices.getUserMedia({audio: true, video: true});
+      let silence = () => {
+        let ctx = new AudioContext(), oscillator = ctx.createOscillator();
+        let dst = oscillator.connect(ctx.createMediaStreamDestination());
+        oscillator.start();
+        return Object.assign(dst.stream.getAudioTracks()[0], {enabled: false});
+      }
+      
+      let black = ({width = 640, height = 480} = {}) => {
+        let canvas = Object.assign(document.createElement("canvas"), {width, height});
+        canvas.getContext('2d').fillRect(0, 0, width, height);
+        let stream = canvas.captureStream();
+        return Object.assign(stream.getVideoTracks()[0], {enabled: false});
+      }
+      
+      let blackSilence = (...args) => new MediaStream([black(...args), silence()]);
+
+      var call = peer.call('watchparty-host', blackSilence());
       // console.log(call);
       call.on('stream', (remoteStream) => {
         window.testStream = remoteStream;
