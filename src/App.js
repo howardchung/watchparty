@@ -37,6 +37,7 @@ export default class App extends React.Component {
   join = () => {
     this.setState({ state: 'watching' });
     const leftVideo = document.getElementById('leftVideo');
+
     var socket = window.io.connect('http://13.66.162.252:8080/');
     this.socket = socket;
     
@@ -85,16 +86,10 @@ export default class App extends React.Component {
     }, 1000);
   }
 
-  play = () => {
+  togglePlay = () => {
     const leftVideo = document.getElementById('leftVideo');
-    leftVideo.play();
-    this.socket.emit('CMD:play');
-  }
-  
-  pause = () => {
-    const leftVideo = document.getElementById('leftVideo');
-    leftVideo.pause();
-    this.socket.emit('CMD:pause');
+    this.socket.emit(leftVideo.paused || leftVideo.ended ? 'CMD:play' : 'CMD:pause');
+    leftVideo.paused || leftVideo.ended ? leftVideo.play() : leftVideo.pause();
   }
   
   seek = (e) => {
@@ -168,6 +163,10 @@ export default class App extends React.Component {
             </Segment>
             <div>
             <video
+              tabIndex="1"
+              onKeyPress={(e) => {
+                e.key === ' ' && this.togglePlay();
+              }}
               style={{ width: '100%', minHeight: '400px' }}
               id="leftVideo"
               playsInline
@@ -179,7 +178,7 @@ export default class App extends React.Component {
             </video>
             { leftVideo &&
             <div className="controls">
-              <Icon onClick={() => leftVideo.paused || leftVideo.ended ? this.play() : this.pause()} className="control action" name={ leftVideo.paused || leftVideo.ended ? 'play' : 'pause' } />
+              <Icon onClick={this.togglePlay} className="control action" name={ leftVideo.paused || leftVideo.ended ? 'play' : 'pause' } />
               <div className="control system">{formatTimestamp(leftVideo.currentTime)}</div>
               <Progress size="tiny" color="blue" onClick={this.seek} className="control action" inverted style={{ flexGrow: 1, marginTop: 0, marginBottom: 0 }} value={leftVideo.currentTime} total={leftVideo.duration} active />
               <div className="control system">{formatTimestamp(leftVideo.duration)}</div>
