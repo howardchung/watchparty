@@ -8,11 +8,13 @@ const io = require('socket.io')(server, { origins: '*:*'});
 
 server.listen(process.env.PORT || 8080);
 
-const mediaList = fs.readdirSync('./media');
 app.use(cors());
 app.use(express.static('build'));
-app.get('/media', (req, res) => res.json(mediaList));
-app.use('/media', express.static('media'));
+if (fs.existsSync('./media')) {
+  const mediaList = fs.readdirSync('./media');
+  app.get('/media', (req, res) => res.json(mediaList));
+  app.use('/media', express.static('media'));
+}
 
 let video = null;
 let videoTS = 0;
