@@ -6,7 +6,8 @@ import querystring from 'querystring';
 import { generateName } from './generateName';
 
 const serverPath = process.env.REACT_APP_SERVER_HOST || `${window.location.protocol}//${window.location.hostname}${process.env.NODE_ENV === 'production' ? '' : ':8080'}`;
-const mediaPath = process.env.REACT_APP_MEDIA_PATH || `${serverPath}/media/`;
+const mediaList = process.env.REACT_APP_MEDIA_LIST || `https://gitlab.com/api/v4/projects/17741570/repository/tree`;
+const mediaPath = process.env.REACT_APP_MEDIA_PATH || `https://glcdn.githack.com/howardchung/media/-/raw/master/`;
 
 export default class App extends React.Component {
   state = {
@@ -42,9 +43,9 @@ export default class App extends React.Component {
   join = async () => {
     this.setState({ state: 'watching' });
     
-    const response = await window.fetch(mediaPath);
+    const response = await window.fetch(mediaList);
     const data = await response.json();
-    this.setState({ watchOptions: data });
+    this.setState({ watchOptions: data.map(file => file.path) });
     
     const leftVideo = document.getElementById('leftVideo');
 
@@ -64,14 +65,16 @@ export default class App extends React.Component {
     socket.on('REC:host', async (data) => {
       leftVideo.src = mediaPath + data.video;
       leftVideo.currentTime = data.videoTS;
-      try {
-        await leftVideo.play();
-      } catch(e) {
-        console.error(e);
-        if (e.message.includes('play() failed')) {
-          console.log('failed to autoplay, muted');
-          leftVideo.muted = true;
-          leftVideo.play();
+      if (!data.paused) {
+        try {
+          await leftVideo.play();
+        } catch(e) {
+          console.error(e);
+          if (e.message.includes('play() failed')) {
+            console.log('failed to autoplay, muted');
+            leftVideo.muted = true;
+            leftVideo.play();
+          }
         }
       }
       this.setState({ currentMedia: data.video });

@@ -10,16 +10,10 @@ server.listen(process.env.PORT || 8080);
 
 app.use(cors());
 app.use(express.static('build'));
-if (fs.existsSync('./media')) {
-  app.get('/media', (req, res) => {
-    const mediaList = fs.readdirSync('./media');
-    res.json(mediaList);
-  });
-  app.use('/media', express.static('media'));
-}
 
 let video = null;
 let videoTS = 0;
+let paused = false;
 let roster = [];
 let chat = [];
 let tsMap = {};
@@ -36,7 +30,7 @@ io.on('connection', function (socket) {
 
   io.emit('roster', roster);
   socket.emit('chatinit', chat);
-  socket.emit('REC:host', { video, videoTS });
+  socket.emit('REC:host', getHostState());
   socket.emit('REC:nameMap', nameMap);
   socket.emit('REC:tsMap', tsMap);
 
@@ -48,18 +42,20 @@ io.on('connection', function (socket) {
     console.log(socket.id, data);
     video = data;
     videoTS = 0;
-    io.emit('REC:host', { video, videoTS });
+    io.emit('REC:host', getHostState());
     const chatMsg = { id: socket.id, cmd: 'host', msg: data };
     addChatMessage(chatMsg);
   });
   socket.on('CMD:play', () => {
     socket.broadcast.emit('REC:play', video);
     const chatMsg = { id: socket.id, cmd: 'play' };
+    paused = false;
     addChatMessage(chatMsg);
   });
   socket.on('CMD:pause', () => {
     socket.broadcast.emit('REC:pause');
     const chatMsg = { id: socket.id, cmd: 'pause' };
+    paused = true;
     addChatMessage(chatMsg);
   });
   socket.on('CMD:seek', (data) => {
@@ -90,5 +86,9 @@ io.on('connection', function (socket) {
     chat.push(chatWithTime);
     chat = chat.splice(-50);
     io.emit('REC:chat', chatWithTime);
+  }
+  
+  function getHostState() {
+    return { video, videoTS, paused };
   }
 });
