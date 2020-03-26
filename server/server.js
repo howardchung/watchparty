@@ -1,10 +1,18 @@
 const { v4 } = require('uuid');
 const fs = require('fs');
-const app = require('express')();
+const express = require('express');
+const cors = require('cors');
+const app = express();
 const server = require('http').Server(app);
 const io = require('socket.io')(server, { origins: '*:*'});
 
-server.listen(8080);
+server.listen(process.env.PORT || 8080);
+
+const mediaList = fs.readdirSync('./media');
+app.use(cors());
+app.use(express.static('build'));
+app.get('/media', (req, res) => res.json(mediaList));
+app.use('/media', express.static('media'));
 
 let video = null;
 let videoTS = 0;
@@ -12,7 +20,6 @@ let roster = [];
 let chat = [];
 let tsMap = {};
 let nameMap = {};
-const mediaList = fs.readdirSync('./public/media/');
 
 setInterval(() => {
   console.log(roster, tsMap, nameMap);
@@ -28,8 +35,7 @@ io.on('connection', function (socket) {
   socket.emit('REC:host', { video, videoTS });
   socket.emit('REC:nameMap', nameMap);
   socket.emit('REC:tsMap', tsMap);
-  socket.emit('REC:mediaList', mediaList);
-  
+
   socket.on('CMD:name', (data) => {
     nameMap[socket.id] = data;
     io.emit('REC:nameMap', nameMap);

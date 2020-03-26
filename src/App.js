@@ -5,7 +5,11 @@ import { v4 as uuidv4 } from 'uuid';
 import querystring from 'querystring';
 import { generateName } from './generateName';
 
-export default class App extends React.Component { 
+const port = process.env.REACT_APP_SERVER_PORT || 8080;
+const serverPath = process.env.REACT_APP_SERVER_HOST || `http://${window.location.hostname}:${port}/`;
+const mediaPath = process.env.REACT_APP_MEDIA_PATH || `http://${window.location.hostname}:${port}/media/`;
+
+export default class App extends React.Component {
   state = {
     state: 'init',
     watchOptions: [],
@@ -23,7 +27,7 @@ export default class App extends React.Component {
   isProgrammatic = false;
   messagesEndRef = React.createRef();
 
-  async componentDidMount() {
+  componentDidMount() {
     // Load UUID from url
     let query = window.location.hash.substring(1);
     if (query) {
@@ -32,13 +36,20 @@ export default class App extends React.Component {
     this.join();
     // TODO video chat
     // TODO host/join, multiple rooms support
+    // TODO youtube, twitch, bring your own file
+    // TODO playlists
   }
   
-  join = () => {
+  join = async () => {
     this.setState({ state: 'watching' });
+    
+    const response = await window.fetch(mediaPath);
+    const data = await response.json();
+    this.setState({ watchOptions: data });
+    
     const leftVideo = document.getElementById('leftVideo');
 
-    var socket = window.io.connect('http://13.66.162.252:8080/');
+    var socket = window.io.connect(serverPath);
     this.socket = socket;
     
     socket.on('connect', () => {
@@ -51,10 +62,17 @@ export default class App extends React.Component {
     socket.on('REC:pause', () => {
       leftVideo.pause();
     });
-    socket.on('REC:host', (data) => {
-      leftVideo.src = '/media/' + data.video;
+    socket.on('REC:host', async (data) => {
+      leftVideo.src = mediaPath + data.video;
       leftVideo.currentTime = data.videoTS;
-      leftVideo.muted = false;
+      try {
+        await leftVideo.play();
+      } catch(e) {
+        console.error(e);
+        console.log('failed to autoplay, muted');
+        leftVideo.muted = true;
+        leftVideo.play();
+      }
       this.setState({ currentMedia: data.video });
     });
     socket.on('REC:seek', (data) => {
@@ -70,9 +88,6 @@ export default class App extends React.Component {
     });
     socket.on('REC:nameMap', (data) => {
       this.setState({ nameMap: data });
-    });
-    socket.on('REC:mediaList', (data) => {
-      this.setState({ watchOptions: data });
     });
     socket.on('roster', (data) => {
       this.setState({ participants: data }); 
@@ -141,7 +156,7 @@ export default class App extends React.Component {
   render() {
     const leftVideo = document.getElementById('leftVideo');
     return (
-        <Grid celled='internally' style={{ height: '100vh' }}>
+        <Grid stackable celled='internally' style={{ height: '100vh' }}>
           <Grid.Row>
             <Grid.Column>
               <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -164,16 +179,11 @@ export default class App extends React.Component {
             <div>
             <video
               tabIndex="1"
-              onKeyPress={(e) => {
-                e.key === ' ' && this.togglePlay();
-              }}
+              onClick={this.togglePlay}
               style={{ width: '100%', minHeight: '400px' }}
               id="leftVideo"
               playsInline
-              autoPlay
-              muted
               type="video/mp4"
-              // data-setup='{}'
             >
             </video>
             { leftVideo &&
@@ -187,7 +197,7 @@ export default class App extends React.Component {
             </div> }
             </div>
             <Segment inverted>
-              <Grid>
+              <Grid stackable celled="internally">
               <Grid.Column width={8}>
               <Input inverted label={'My name is:'} value={this.state.myName} onChange={this.updateName} icon={<Icon onClick={() => this.updateName(null, { value: generateName() })} name='refresh' inverted circular link />} />
               </Grid.Column>
