@@ -11,8 +11,10 @@ server.listen(process.env.PORT || 8080);
 app.use(cors());
 app.use(express.static('build'));
 if (fs.existsSync('./media')) {
-  const mediaList = fs.readdirSync('./media');
-  app.get('/media', (req, res) => res.json(mediaList));
+  app.get('/media', (req, res) => {
+    const mediaList = fs.readdirSync('./media');
+    res.json(mediaList);
+  });
   app.use('/media', express.static('media'));
 }
 

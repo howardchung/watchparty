@@ -5,9 +5,8 @@ import { v4 as uuidv4 } from 'uuid';
 import querystring from 'querystring';
 import { generateName } from './generateName';
 
-const port = process.env.REACT_APP_SERVER_PORT || 8080;
-const serverPath = process.env.REACT_APP_SERVER_HOST || `http://${window.location.hostname}:${port}/`;
-const mediaPath = process.env.REACT_APP_MEDIA_PATH || `http://${window.location.hostname}:${port}/media/`;
+const serverPath = process.env.REACT_APP_SERVER_HOST || `${window.location.protocol}//${window.location.hostname}${process.env.NODE_ENV === 'production' ? '' : ':8080'}`;
+const mediaPath = process.env.REACT_APP_MEDIA_PATH || `${serverPath}/media/`;
 
 export default class App extends React.Component {
   state = {
@@ -69,9 +68,11 @@ export default class App extends React.Component {
         await leftVideo.play();
       } catch(e) {
         console.error(e);
-        console.log('failed to autoplay, muted');
-        leftVideo.muted = true;
-        leftVideo.play();
+        if (e.message.includes('play() failed')) {
+          console.log('failed to autoplay, muted');
+          leftVideo.muted = true;
+          leftVideo.play();
+        }
       }
       this.setState({ currentMedia: data.video });
     });
