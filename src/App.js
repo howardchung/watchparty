@@ -1,253 +1,314 @@
 import React from 'react';
-import { Button, Grid, Segment, Divider, Select, Dimmer, Loader, Header, Label, Card } from 'semantic-ui-react'
+import { Button, Grid, Segment, Divider, Select, Dimmer, Loader, Header, Label, Card, Input, Icon, List, Comment, Progress } from 'semantic-ui-react'
 import './App.css';
 import { v4 as uuidv4 } from 'uuid';
 import querystring from 'querystring';
+import { generateName } from './generateName';
 
-const iceServers = [
-{ url:'stun:stun.l.google.com:19302'},
-{
-	url: 'turn:numb.viagenie.ca',
-	credential: 'watchparty',
-	username: 'howardzchung@gmail.com'
-}];
 export default class App extends React.Component { 
   state = {
-    watchPartyActive: false,
     state: 'init',
-    watchOptions: [
-      'The.Legend.Of.Korra.S01e01-E02.720P.Hdtv.X264-Hwe-1.m4v',
-      'The.Legend.Of.Korra.S01e03.720P.Hdtv.X264-Hwe-2.m4v',
-      'The.Legend.Of.Korra.S01e04.720P.Hdtv.X264-Hwe-3.m4v',
-      'The.Legend.Of.Korra.S01e05.720P.Hdtv.X264-Hwe-4.m4v',
-      'The.Legend.Of.Korra.S01e06.720P.Hdtv.X264-Hwe-5.m4v',
-      'The.Legend.Of.Korra.S01e07.The.Aftermath.720P.Hdtv.H264-Ooo-6.m4v',
-      'The.Legend.Of.Korra.S01e08.720P.Hdtv.X264-Hwe-7.m4v',
-      'The.Legend.Of.Korra.S01e09.720P.Hdtv.X264-Hwe-8.m4v',
-      'The.Legend.Of.Korra.S01e10.Turning.The.Tides.720P.Hdtv.H264-Ooo-9.m4v',
-      'The.Legend.Of.Korra.S01e11.Skeletons.In.The.Closet.720P.Hdtv.H264-Ooo-10.m4v',
-      'The.Legend.Of.Korra.S01e12.Endgame.720P.Hdtv.H264-Ooo-11.m4v',
-     'The.Legend.Of.Korra.S02e01-E02.Rebel.Spirit Southern.Lights.720P.Hdtv.X264-W4f-2.m4v',
-     'The.Legend.Of.Korra.S02e03.Civil.Wars.Part.1.720P.Hdtv.X264-W4f-1.m4v',
-     'The.Legend.Of.Korra.S02e04.Civil.Wars.Part.2.720P.Hdtv.X264-W4f-4.m4v',
-     'The.Legend.Of.Korra.S02e05.Peacekeepers.720P.Hdtv.X264-Ooo-5.m4v',
-     'The.Legend.Of.Korra.S02e06.The.Sting.720P.Hdtv.X264-W4f-6.m4v',
-     'The.Legend.Of.Korra.S02e07e08.Beginnings.720P.Hdtv.X264-Ooo-1.m4v',
-     'The.Legend.Of.Korra.S02e09.The.Guide.720P.Hdtv.X264-Ooo-1.m4v',
-     'The.Legend.Of.Korra.S02e10.A.New.Spiritual.Age.720P.Hdtv.X264-Ooo-1.m4v',
-     'The.Legend.Of.Korra.S02e11-E12.Night.Of.A.Thousand.Stars Harmonic.Convergence.720P.Hdtv.X264-W4f-1.m4v',
-     'The.Legend.Of.Korra.S02e13-E14.720P.Hdtv.H264.Aac-Secludedly-1.m4v',
-     'The.Legend.of.Korra.S03E01.A.Breath.of.Fresh.Air.REPACK.720p.WEBRip.x264.AAC.mp4',
-     'The.Legend.of.Korra.S03E02.Rebirth.REPACK.720p.WEBRip.x264.AAC.mp4',
-     'The.Legend.of.Korra.S03E03.The.Earth.Queen.REPACK.720p.WEBRip.x264.AAC.mp4',
-     'The.Legend.of.Korra.S03E04.In.Harms.Way.720p.WEBRip.x264.AAC.mp4',
-     'The.Legend.of.Korra.S03E05.The.Metal.Clan.720p.WEBRip.x264.AAC.mp4',
-     'The.Legend.of.Korra.S03E06.Old.Wounds.720p.WEBRip.x264.AAC.mp4',
-     'The.Legend.of.Korra.S03E07.Original.Airbenders.720p.WEBRip.x264.AAC.mp4',
-     'The.Legend.of.Korra.S03E08.The.Terror.Within.720p.WEBRip.x264.AAC.mp4',
-     'The.Legend.of.Korra.S03E09.The.Stakeout.720p.WEBRip.x264.AAC.mp4',
-     'The.Legend.of.Korra.S03E10.Long.Live.the.Queen.720p.WEBRip.x264.AAC.mp4',
-     'The.Legend.of.Korra.S03E11.The.Ultimatum.720p.WEBRip.x264.AAC.mp4',
-     'The.Legend.of.Korra.S03E12.Enter.the.Void.720p.WEBRip.x264.AAC.mp4',
-     'The.Legend.of.Korra.S03E13.Venom.of.the.Red.Lotus.720p.WEBRip.x264.AAC.mp4',
-     'The.Legend.Of.Korra.S04E01.mp4',
-     'The.Legend.Of.Korra.S04E11.mp4',
-     'The.Legend.Of.Korra.S04E12-13.mp4',
-     'The.Legend.Of.Korra.S04E02.mp4',
-     'The.Legend.Of.Korra.S04E03.mp4',
-     'The.Legend.Of.Korra.S04E04.mp4',
-     'The.Legend.Of.Korra.S04E05.mp4',
-     'The.Legend.Of.Korra.S04E06.mp4',
-     'The.Legend.Of.Korra.S04E07.mp4',
-     'The.Legend.Of.Korra.S04E08.mp4',
-     'The.Legend.Of.Korra.S04E09.mp4',
-     'The.Legend.Of.Korra.S04E10.mp4',
-    ],
-    participants: {},
+    watchOptions: [],
+    currentMedia: '',
+    participants: [],
+    chat: [],
+    tsMap: {},
+    nameMap: {},
+    chatMsg: '',
+    myName: '',
   };
   videoRefs = {};
-  hostPeer = null;
   uuid = null;
+  socket = null;
+  isProgrammatic = false;
+  messagesEndRef = React.createRef();
 
   async componentDidMount() {
     // Load UUID from url
     let query = window.location.hash.substring(1);
     if (query) {
       this.uuid = query;
-      this.join();
     }
-    // video chat
-    // "bring your own file"
-    // now playing
-    // remove from participant on disconnect
-    // group/shared controls
+    this.join();
+    // TODO video chat
+    // TODO host/join, multiple rooms support
   }
-
-  host = () => {
-    this.uuid = uuidv4();
-    window.history.pushState('', '', window.location.href + '#' + this.uuid);
-    this.setState({ currentMedia: this.state.watchOptions[0] }, () => {
-      this.setMedia(null, { value: this.state.currentMedia }, () => {
-        const leftVideo = document.getElementById('leftVideo');
-        let stream = leftVideo.captureStream();
-        const host = new window.Peer(this.uuid, { iceServers });
-        this.hostPeer = host;
-        console.log(host, stream, stream.getAudioTracks(), stream.getVideoTracks());
-        this.setState({ isHost: true }, () => {
-          host.on('call', (call) => {
-            call.answer(stream);
-            call.on('stream', (remoteStream) => {
-              this.state.participants[call.peer] = remoteStream;
-              this.setState(this.state.participants);
-              console.log(this.state.participants);
-              // this.videoRefs[call.peer].srcObject = remoteStream;
-              // Render all incoming streams to canvas and rebroadcast?
-              // https://stackoverflow.com/questions/4429440/html5-display-video-inside-canvas
-            });
-          });
-          host.on('open', () => {
-            this.join();
-          });
-        });
-      });
-    });
-  }
-
-  setMedia = async (e, data, cb) => {
+  
+  join = () => {
+    this.setState({ state: 'watching' });
     const leftVideo = document.getElementById('leftVideo');
-    this.playerElement.src = '/media/' + data.value;
-    leftVideo.muted = true;
-    leftVideo.load();
-    const replaceVideo = () => {
-      let stream = leftVideo.captureStream();
-      // console.log(stream, stream.getAudioTracks(), stream.getVideoTracks());
-      if (this.hostPeer && this.hostPeer.connections) {
-        Object.keys(this.hostPeer.connections).forEach(key => {
-          const connection = this.hostPeer.connections[key][0];
-          connection.peerConnection.getSenders().forEach(sender => {
-            if (sender.track && sender.track.kind === 'audio') {
-              sender.track.stop();
-              sender.replaceTrack(stream.getAudioTracks()[0]);
-            }
-            else if (sender.track && sender.track.kind === 'video') {
-              sender.track.stop();
-              sender.replaceTrack(stream.getVideoTracks()[0]);
-            }
-          });
-        });  
-      }
-      this.setState({currentMedia: data.value });
-      leftVideo.removeEventListener('loadeddata', replaceVideo);
-      if (cb) {
-        cb();
-      }
-    };
-    leftVideo.addEventListener('loadeddata', replaceVideo);
+    var socket = window.io.connect('http://13.66.162.252:8080/');
+    this.socket = socket;
+    
+    socket.on('connect', () => {
+      let userName = window.localStorage.getItem('watchparty-username');
+      this.updateName(null, { value: userName || generateName()});
+    });
+    socket.on('REC:play', function (data) {
+      leftVideo.play();
+    });
+    socket.on('REC:pause', () => {
+      leftVideo.pause();
+    });
+    socket.on('REC:host', (data) => {
+      leftVideo.src = '/media/' + data.video;
+      leftVideo.currentTime = data.videoTS;
+      leftVideo.muted = false;
+      this.setState({ currentMedia: data.video });
+    });
+    socket.on('REC:seek', (data) => {
+      leftVideo.currentTime = data;
+    });
+    socket.on('REC:chat', (data) => {
+      this.state.chat.push(data);
+      this.setState({ chat: this.state.chat });
+      this.scrollToBottom();
+    });
+    socket.on('REC:tsMap', (data) => {
+      this.setState({ tsMap: data });
+    });
+    socket.on('REC:nameMap', (data) => {
+      this.setState({ nameMap: data });
+    });
+    socket.on('REC:mediaList', (data) => {
+      this.setState({ watchOptions: data });
+    });
+    socket.on('roster', (data) => {
+      this.setState({ participants: data }); 
+    });
+    socket.on('chatinit', (data) => {
+      this.setState({ chat: data });
+      this.scrollToBottom();
+    });
+    window.setInterval(() => {
+      this.socket.emit('CMD:ts', leftVideo.currentTime);
+    }, 1000);
   }
 
-  start = () => {
+  play = () => {
     const leftVideo = document.getElementById('leftVideo');
     leftVideo.play();
+    this.socket.emit('CMD:play');
   }
-
-  stop = () => {
+  
+  pause = () => {
     const leftVideo = document.getElementById('leftVideo');
-    leftVideo.pause();    
+    leftVideo.pause();
+    this.socket.emit('CMD:pause');
   }
-
-  join = async () => {
-    this.setState({ state: 'joining' }, async () => {
-      const peer = new window.Peer(null, { debug: 3, iceServers });
-      const rightVideo = document.getElementById('rightVideo');
-      // let stream = await navigator.mediaDevices.getUserMedia({audio: true, video: true});
-      let silence = () => {
-        let ctx = new AudioContext(), oscillator = ctx.createOscillator();
-        let dst = oscillator.connect(ctx.createMediaStreamDestination());
-        oscillator.start();
-        return Object.assign(dst.stream.getAudioTracks()[0], {enabled: false});
-      }
-      
-      let black = ({width = 640, height = 480} = {}) => {
-        let canvas = Object.assign(document.createElement("canvas"), {width, height});
-        canvas.getContext('2d').fillRect(0, 0, width, height);
-        let stream = canvas.captureStream();
-        return Object.assign(stream.getVideoTracks()[0], {enabled: false});
-      }
-      
-      let blackSilence = (...args) => new MediaStream([black(...args), silence()]);
-
-      var call = peer.call(this.uuid, blackSilence());
-      // console.log(call);
-      call.on('stream', (remoteStream) => {
-        console.log(remoteStream);
-        window.testStream = remoteStream;
-        rightVideo.srcObject = remoteStream;
-        this.setState({ watchPartyActive: true });
-      });
-    });
+  
+  seek = (e) => {
+    const rect = e.target.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const max = rect.width;
+    const leftVideo = document.getElementById('leftVideo');
+    leftVideo.currentTime = x / max * leftVideo.duration;
+    this.socket.emit('CMD:seek', leftVideo.currentTime);
+  }
+  
+  fullScreen = () => {
+    const leftVideo = document.getElementById('leftVideo');
+    leftVideo.requestFullscreen();
+  }
+  
+  toggleMute = () => {
+    const leftVideo = document.getElementById('leftVideo');
+    leftVideo.muted = !leftVideo.muted;
+  }
+  
+  setMedia = (e, data) => {
+    this.socket.emit('CMD:host', data.value);
+  }
+  
+  updateChatMsg = (e, data) => {
+    this.setState({ chatMsg: data.value });
+  }
+  
+  sendChatMsg = () => {
+    if (!this.state.chatMsg) {
+      return;
+    }
+    this.setState({ chatMsg: '' });
+    this.socket.emit('CMD:chat', this.state.chatMsg);
+  }
+  
+  updateName = (e, data) => {
+    this.setState({ myName: data.value });
+    this.socket.emit('CMD:name', data.value);
+    window.localStorage.setItem('watchparty-username', data.value);
+  }
+  
+  scrollToBottom = () => {
+    // TODO dont do if user manually scrolled up
+    this.messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
   }
 
   render() {
+    const leftVideo = document.getElementById('leftVideo');
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px', maxWidth: '1024px' }}>
-        <Header as='h1'>Watch Party</Header>
-        { this.state.state === 'init' &&
-        <Segment>
-          <Grid columns={2} relaxed='very'>
-          <Grid.Column>
-          <Button onClick={this.host} primary>Host</Button>
+        <Grid celled='internally' style={{ height: '100vh' }}>
+          <Grid.Row>
+            <Grid.Column>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+              <div style={{ height: '85px', width: '85px', position: 'relative' }}>
+                <Icon inverted name="film" size="big" circular color="blue" style={{ position: 'absolute' }} />
+                <Icon inverted name="group" size="big" circular color="green" style={{ position: 'absolute', right: 0, bottom: 0 }} />
+              </div>
+              <Header inverted style={{ textTransform: 'uppercase', letterSpacing: '2px', fontWeight: 700 }} as='h1' color="blue">Watch</Header>
+              <Header inverted style={{ textTransform: 'uppercase', letterSpacing: '2px'  }} as='h1' color="green">Party</Header>
+              </div>
+            </Grid.Column>
+          </Grid.Row>
+          <Grid.Row>
+          <Grid.Column width={11}>
+            <Segment inverted>
+            <Header inverted as='h4' style={{ textTransform: 'uppercase' }}>Now Watching: {this.state.currentMedia}</Header>
+            <Select inverted onChange={this.setMedia} value={this.state.currentMedia} options={this.state.watchOptions.map(option => ({ key: option, text: option, value: option }))}>
+            </Select>
+            </Segment>
+            <div>
+            <video
+              style={{ width: '100%', minHeight: '400px' }}
+              id="leftVideo"
+              playsInline
+              autoPlay
+              muted
+              type="video/mp4"
+              // data-setup='{}'
+            >
+            </video>
+            { leftVideo &&
+            <div className="controls">
+              <Icon onClick={() => leftVideo.paused || leftVideo.ended ? this.play() : this.pause()} className="control action" name={ leftVideo.paused || leftVideo.ended ? 'play' : 'pause' } />
+              <div className="control system">{formatTimestamp(leftVideo.currentTime)}</div>
+              <Progress size="tiny" color="blue" onClick={this.seek} className="control action" inverted style={{ flexGrow: 1, marginTop: 0, marginBottom: 0 }} value={leftVideo.currentTime} total={leftVideo.duration} active />
+              <div className="control system">{formatTimestamp(leftVideo.duration)}</div>
+              <Icon onClick={this.fullScreen} className="control action" name='expand' />
+              <Icon onClick={this.toggleMute} className="control action" name={leftVideo.muted ? 'volume off' : 'volume up' } />
+            </div> }
+            </div>
+            <Segment inverted>
+              <Grid>
+              <Grid.Column width={8}>
+              <Input inverted label={'My name is:'} value={this.state.myName} onChange={this.updateName} icon={<Icon onClick={() => this.updateName(null, { value: generateName() })} name='refresh' inverted circular link />} />
+              </Grid.Column>
+              <Grid.Column width={8}>
+              <Header inverted as='h3'>Partiers</Header>
+              <List inverted>
+                {this.state.participants.map((participant) => {
+                  return <List.Item>
+                    <Label inverted as='a' color={getColor(participant.id)} image>
+                      <img src={getImage(this.state.nameMap[participant.id] || participant.id)} alt="" />
+                      {this.state.nameMap[participant.id] || participant.id}
+                      <Label.Detail>{formatTimestamp(this.state.tsMap[participant.id] || 0)}</Label.Detail>
+                    </Label>
+                    {/* <video ref={el => {this.videoRefs[participant] = el}} style={{ width: '100%', height: '100%' }} autoPlay playsInline></video> */}
+                    </List.Item>;
+                })}
+              </List>
+              </Grid.Column>
+              </Grid>
+            </Segment>
           </Grid.Column>
-          <Grid.Column>
-            <Button onClick={this.join} secondary>Join</Button>
-          </Grid.Column>
-          </Grid>
-          <Divider vertical>OR</Divider>
-        </Segment>
-        }
-        <video
-            style={{ display: 'none' }}
-            id="leftVideo"
-            playsInline
-            controls
-            ref={el => {this.playerElement = el}}
-            type="video/mp4"
-          >
-        </video>
         
-        {
-          this.state.state !== 'init' &&
-          <Segment style={{ width: '100%', minHeight: '400px' }}>
-          <video style={ { width: '100%', height: '100%' } } id="rightVideo" playsInline autoPlay controls>
-          </video>
-          {!this.state.watchPartyActive && <Dimmer active>
-              <Loader />
-            </Dimmer>}
+        <Grid.Column width={5} style={{ display: 'flex' }}>
+          <Segment inverted style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+            <div className="chatContainer">
+              <Comment.Group>
+                {this.state.chat.map(msg => <ChatMessage {...msg} nameMap={this.state.nameMap} />)}
+                <div ref={this.messagesEndRef} />
+              </Comment.Group>
+            </div>
+            <Input
+              style={{ width: '100%' }}
+              inverted
+              onKeyPress={(e) => e.key === 'Enter' && this.sendChatMsg()} 
+              onChange={this.updateChatMsg}
+              value={this.state.chatMsg}
+              icon={<Icon onClick={this.sendChatMsg} name='send' inverted circular link />}
+              placeholder='Enter a message...'
+            />
           </Segment>
-        }
-        
-        {this.state.watchPartyActive && this.state.isHost && <Segment>
-          <Header as='h2'>Controls</Header>
-          <Select onChange={this.setMedia} value={this.state.currentMedia} options={this.state.watchOptions.map(option => ({ key: option, text: option, value: option }))}>
-          </Select>
-          <Button onClick={this.start} primary>Start</Button>
-          <Button onClick={this.stop} secondary>Stop</Button>
-        </Segment>}
-
-        {this.state.watchPartyActive && <div>
-          <Header as='h3'>Participants</Header>
-          <div style={ { display: 'flex'}}>
-            {Object.keys(this.state.participants).map((participant) => {
-              return <div>
-                <Label as='a' image>
-                  <img src='/logo192.png' alt="" />
-                  {participant}
-                </Label>
-                {/* <video ref={el => {this.videoRefs[participant] = el}} style={{ width: '100%', height: '100%' }} autoPlay playsInline></video> */}
-                </div>;
-            })}
-          </div>
-        </div> }
-      </div>
+        </Grid.Column>
+        </Grid.Row>
+      </Grid>
     );
   }
+}
+
+const ChatMessage = ({ id, timestamp, cmd, msg, nameMap }) => {
+    return <Comment>
+      <Comment.Avatar src={getImage(nameMap[id])} />
+      <Comment.Content>
+        <Comment.Author as='a' className="white">{nameMap[id] || id}</Comment.Author>
+        <Comment.Metadata className="lightgray">
+          <div>{new Date(timestamp).toLocaleTimeString()}</div>
+        </Comment.Metadata>
+        <Comment.Text className="lightgray system">{ cmd && formatMessage(cmd, msg)}</Comment.Text>
+        <Comment.Text className="white">{ !cmd && msg}</Comment.Text>
+      </Comment.Content>
+    </Comment>;
+};
+
+function formatMessage(cmd, msg) {
+  if (cmd === 'host') {
+    return `changed the video to ${msg}`;
+  }
+  else if (cmd === 'seek') {
+    return `jumped to ${formatTimestamp(msg)}`;
+  }
+  else if (cmd === 'play') {
+    return `started the video`;
+  }
+  else if (cmd === 'pause') {
+    return `paused the video`;
+  }
+  return cmd;
+}
+
+function formatTimestamp(input) {
+  if (input === null || input === undefined || input === false || Number.isNaN(input)) {
+    return '';
+  }
+  let minutes = Math.floor(input / 60);
+  let seconds = Math.floor(input % 60).toString().padStart(2, '0');
+  return `${minutes}:${seconds}`;
+}
+
+function hashString(input) {
+  var hash = 0, i, chr;
+    for (i = 0; i < input.length; i++) {
+      chr   = input.charCodeAt(i);
+      hash  = ((hash << 5) - hash) + chr;
+      hash |= 0; // Convert to 32bit integer
+    }
+  return hash;
+}
+
+let colorCache = {};
+function getColor(id) {
+  let colors = ['red','orange','yellow','olive', 'green', 'teal', 'blue', 'violet', 'purple', 'pink', 'brown','grey'];
+  if (colorCache[id]) {
+    return colors[colorCache[id]];
+  }
+  colorCache[id] = Math.abs(hashString(id)) % colors.length;
+  return colors[colorCache[id]];
+}
+
+function getImage(name) {
+  const lower = (name || '').toLowerCase();
+  const getFbPhoto = (fbId) => `http://graph.facebook.com/${fbId}/picture?type=square`;
+  if (lower === 'howard') {
+    return getFbPhoto('746929384');
+  }
+  else if (lower === 'vy') {
+    return getFbPhoto('1005627144');
+  }
+  else if (lower === 'matt' || lower === 'hollar') {
+    return getFbPhoto('1407126862');
+  }
+  else if (lower === 'al' || lower === 'allison' || lower === 'alacrity') {
+    return getFbPhoto('100003885416987');
+  }
+  return '/logo192.png';
 }
