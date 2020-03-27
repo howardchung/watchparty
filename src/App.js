@@ -6,7 +6,7 @@ import querystring from 'querystring';
 import { generateName } from './generateName';
 
 const serverPath = process.env.REACT_APP_SERVER_HOST || `${window.location.protocol}//${window.location.hostname}${process.env.NODE_ENV === 'production' ? '' : ':8080'}`;
-const mediaList = process.env.REACT_APP_MEDIA_LIST || `https://gitlab.com/api/v4/projects/17741570/repository/tree`;
+const mediaList = process.env.REACT_APP_MEDIA_LIST || `https://gitlab.com/api/v4/projects/howardchung%2Fmedia/repository/tree`;
 const mediaPath = process.env.REACT_APP_MEDIA_PATH || `https://glcdn.githack.com/howardchung/media/-/raw/master/`;
 
 export default class App extends React.Component {
@@ -38,6 +38,7 @@ export default class App extends React.Component {
     // TODO host/join, multiple rooms support
     // TODO youtube, twitch, bring your own file
     // TODO playlists
+    // TODO rewrite using ws
   }
   
   join = async () => {
@@ -70,7 +71,7 @@ export default class App extends React.Component {
           await leftVideo.play();
         } catch(e) {
           console.error(e);
-          if (e.message.includes('play() failed')) {
+          if (e instanceof window.DOMException && e.message.includes('play')) {
             console.log('failed to autoplay, muted');
             leftVideo.muted = true;
             leftVideo.play();
@@ -162,16 +163,14 @@ export default class App extends React.Component {
     return (
         <Grid stackable celled='internally' style={{ height: '100vh' }}>
           <Grid.Row>
-            <Grid.Column>
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-              <div style={{ height: '85px', width: '85px', position: 'relative' }}>
-                <Icon inverted name="film" size="big" circular color="blue" style={{ position: 'absolute' }} />
-                <Icon inverted name="group" size="big" circular color="green" style={{ position: 'absolute', right: 0, bottom: 0 }} />
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginLeft: '1em' }}>
+                <div style={{ height: '85px', width: '85px', position: 'relative' }}>
+                  <Icon inverted name="film" size="big" circular color="blue" style={{ position: 'absolute' }} />
+                  <Icon inverted name="group" size="big" circular color="green" style={{ position: 'absolute', right: 0, bottom: 0 }} />
+                </div>
+                <Header inverted style={{ textTransform: 'uppercase', letterSpacing: '2px', fontWeight: 700 }} as='h1' color="blue">Watch</Header>
+                <Header inverted style={{ textTransform: 'uppercase', letterSpacing: '2px'  }} as='h1' color="green">Party</Header>
               </div>
-              <Header inverted style={{ textTransform: 'uppercase', letterSpacing: '2px', fontWeight: 700 }} as='h1' color="blue">Watch</Header>
-              <Header inverted style={{ textTransform: 'uppercase', letterSpacing: '2px'  }} as='h1' color="green">Party</Header>
-              </div>
-            </Grid.Column>
           </Grid.Row>
           <Grid.Row>
           <Grid.Column width={11}>
@@ -189,7 +188,7 @@ export default class App extends React.Component {
             <Segment inverted style={{ position: 'relative' }}>
               <Grid columns={2}>
                 <Grid.Column>
-                <Header inverted as='h4' style={{ textTransform: 'uppercase', marginRight: '20px' }}>Now Watching: {this.state.currentMedia}</Header>
+                <Header inverted as='h4' style={{ textTransform: 'uppercase', marginRight: '20px', wordBreak: 'all' }}>Now Watching: {this.state.currentMedia}</Header>
                 </Grid.Column>
                 <Grid.Column>
                 <List inverted horizontal style={{ marginLeft: '20px' }}>
@@ -230,21 +229,21 @@ export default class App extends React.Component {
             </div>
           </Grid.Column>
         
-        <Grid.Column width={5} style={{ display: 'flex' }}>
-          <Segment inverted style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
-            <Input
+        <Grid.Column width={5} style={{ display: 'flex', flexDirection: 'column' }}>
+          <Input
+            inverted
+            fluid
+            label={'My name is:'}
+            value={this.state.myName}
+            onChange={this.updateName}
+            icon={<Icon onClick={() => this.updateName(null, { value: generateName() })}
+              name='refresh'
               inverted
-              fluid
-              label={'My name is:'}
-              value={this.state.myName}
-              onChange={this.updateName}
-              icon={<Icon onClick={() => this.updateName(null, { value: generateName() })}
-                name='refresh'
-                inverted
-                circular
-                link />
-              }
-            />
+              circular
+              link />
+            }
+          />
+          <Segment inverted style={{ display: 'flex', flexDirection: 'column', width: '100%', flexGrow: '1' }}>
             <div className="chatContainer">
               <Comment.Group>
                 {this.state.chat.map(msg => <ChatMessage {...msg} nameMap={this.state.nameMap} />)}

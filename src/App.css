@@ -58,12 +58,9 @@ body {
 }
 
 .chatContainer {
-  flex-direction: column;
-  display: flex;
   flex-grow: 1;
   overflow: scroll;
   max-height: 80vh;
-  margin-top: 10px;
 }
 
 .system.system.system.system {
