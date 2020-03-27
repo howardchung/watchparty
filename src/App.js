@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Grid, Segment, Divider, Select, Dimmer, Loader, Header, Label, Card, Input, Icon, List, Comment, Progress } from 'semantic-ui-react'
+import { Button, Grid, Segment, Divider, Select, Dimmer, Loader, Header, Label, Card, Input, Icon, List, Comment, Progress, Dropdown } from 'semantic-ui-react'
 import './App.css';
 import { v4 as uuidv4 } from 'uuid';
 import querystring from 'querystring';
@@ -175,57 +175,76 @@ export default class App extends React.Component {
           </Grid.Row>
           <Grid.Row>
           <Grid.Column width={11}>
-            <Segment inverted>
-            <Header inverted as='h4' style={{ textTransform: 'uppercase' }}>Now Watching: {this.state.currentMedia}</Header>
-            <Select inverted onChange={this.setMedia} value={this.state.currentMedia} options={this.state.watchOptions.map(option => ({ key: option, text: option, value: option }))}>
-            </Select>
+            <Dropdown
+              icon='film'
+              className='icon'
+              labeled
+              button
+              fluid
+              inverted
+              onChange={this.setMedia}
+              value={this.state.currentMedia}
+              options={this.state.watchOptions.map(option => ({ key: option, text: option, value: option }))}
+            />
+            <Segment inverted style={{ position: 'relative' }}>
+              <Grid columns={2}>
+                <Grid.Column>
+                <Header inverted as='h4' style={{ textTransform: 'uppercase', marginRight: '20px' }}>Now Watching: {this.state.currentMedia}</Header>
+                </Grid.Column>
+                <Grid.Column>
+                <List inverted horizontal style={{ marginLeft: '20px' }}>
+                  {this.state.participants.map((participant) => {
+                    return <List.Item>
+                      <Label inverted as='a' color={getColor(participant.id)} image>
+                        <img src={getImage(this.state.nameMap[participant.id] || participant.id)} alt="" />
+                        {this.state.nameMap[participant.id] || participant.id}
+                        <Label.Detail>{formatTimestamp(this.state.tsMap[participant.id] || 0)}</Label.Detail>
+                      </Label>
+                      {/* <video ref={el => {this.videoRefs[participant] = el}} style={{ width: '100%', height: '100%' }} autoPlay playsInline></video> */}
+                      </List.Item>;
+                  })}
+                </List>
+                </Grid.Column>
+              </Grid>
+              <Divider inverted vertical>With</Divider>
             </Segment>
             <div>
-            <video
-              tabIndex="1"
-              onClick={this.togglePlay}
-              style={{ width: '100%', minHeight: '400px' }}
-              id="leftVideo"
-              playsInline
-              type="video/mp4"
-            >
-            </video>
-            { leftVideo &&
-            <div className="controls">
-              <Icon onClick={this.togglePlay} className="control action" name={ leftVideo.paused || leftVideo.ended ? 'play' : 'pause' } />
-              <div className="control system">{formatTimestamp(leftVideo.currentTime)}</div>
-              <Progress size="tiny" color="blue" onClick={this.seek} className="control action" inverted style={{ flexGrow: 1, marginTop: 0, marginBottom: 0 }} value={leftVideo.currentTime} total={leftVideo.duration} active />
-              <div className="control system">{formatTimestamp(leftVideo.duration)}</div>
-              <Icon onClick={this.fullScreen} className="control action" name='expand' />
-              <Icon onClick={this.toggleMute} className="control action" name={leftVideo.muted ? 'volume off' : 'volume up' } />
+              <video
+                tabIndex="1"
+                onClick={this.togglePlay}
+                style={{ width: '100%', minHeight: '400px' }}
+                id="leftVideo"
+                playsInline
+                type="video/mp4"
+              >
+              </video>
+              { leftVideo &&
+              <div className="controls">
+                <Icon onClick={this.togglePlay} className="control action" name={ leftVideo.paused || leftVideo.ended ? 'play' : 'pause' } />
+                <div className="control system">{formatTimestamp(leftVideo.currentTime)}</div>
+                <Progress size="tiny" color="blue" onClick={this.seek} className="control action" inverted style={{ flexGrow: 1, marginTop: 0, marginBottom: 0 }} value={leftVideo.currentTime} total={leftVideo.duration} active />
+                <div className="control system">{formatTimestamp(leftVideo.duration)}</div>
+                <Icon onClick={this.fullScreen} className="control action" name='expand' />
+                <Icon onClick={this.toggleMute} className="control action" name={leftVideo.muted ? 'volume off' : 'volume up' } />
             </div> }
             </div>
-            <Segment inverted>
-              <Grid stackable celled="internally">
-              <Grid.Column width={8}>
-              <Input inverted label={'My name is:'} value={this.state.myName} onChange={this.updateName} icon={<Icon onClick={() => this.updateName(null, { value: generateName() })} name='refresh' inverted circular link />} />
-              </Grid.Column>
-              <Grid.Column width={8}>
-              <Header inverted as='h3'>Partiers</Header>
-              <List inverted>
-                {this.state.participants.map((participant) => {
-                  return <List.Item>
-                    <Label inverted as='a' color={getColor(participant.id)} image>
-                      <img src={getImage(this.state.nameMap[participant.id] || participant.id)} alt="" />
-                      {this.state.nameMap[participant.id] || participant.id}
-                      <Label.Detail>{formatTimestamp(this.state.tsMap[participant.id] || 0)}</Label.Detail>
-                    </Label>
-                    {/* <video ref={el => {this.videoRefs[participant] = el}} style={{ width: '100%', height: '100%' }} autoPlay playsInline></video> */}
-                    </List.Item>;
-                })}
-              </List>
-              </Grid.Column>
-              </Grid>
-            </Segment>
           </Grid.Column>
         
         <Grid.Column width={5} style={{ display: 'flex' }}>
           <Segment inverted style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+            <Input
+              inverted
+              fluid
+              label={'My name is:'}
+              value={this.state.myName}
+              onChange={this.updateName}
+              icon={<Icon onClick={() => this.updateName(null, { value: generateName() })}
+                name='refresh'
+                inverted
+                circular
+                link />
+              }
+            />
             <div className="chatContainer">
               <Comment.Group>
                 {this.state.chat.map(msg => <ChatMessage {...msg} nameMap={this.state.nameMap} />)}
@@ -233,8 +252,8 @@ export default class App extends React.Component {
               </Comment.Group>
             </div>
             <Input
-              style={{ width: '100%' }}
               inverted
+              fluid
               onKeyPress={(e) => e.key === 'Enter' && this.sendChatMsg()} 
               onChange={this.updateChatMsg}
               value={this.state.chatMsg}
