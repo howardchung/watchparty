@@ -5,90 +5,107 @@ const cors = require('cors');
 const app = express();
 const server = require('http').Server(app);
 const io = require('socket.io')(server, { origins: '*:*'});
+const Moniker = require('moniker');
+const names = Moniker.generator([Moniker.adjective, Moniker.noun, Moniker.verb]);
 
 server.listen(process.env.PORT || 8080);
 
 app.use(cors());
 app.use(express.static('build'));
 
-let video = null;
-let videoTS = 0;
-let paused = false;
-let roster = [];
-let chat = [];
-let tsMap = {};
-let nameMap = {};
-
-setInterval(() => {
-  console.log(roster, tsMap, nameMap);
-  io.emit('REC:tsMap', tsMap);
-}, 1000);
-
-io.on('connection', function (socket) {
-  console.log(socket.id);
-  roster.push({ id: socket.id });
-
-  io.emit('roster', roster);
-  socket.emit('chatinit', chat);
-  socket.emit('REC:host', getHostState());
-  socket.emit('REC:nameMap', nameMap);
-  socket.emit('REC:tsMap', tsMap);
-
-  socket.on('CMD:name', (data) => {
-    nameMap[socket.id] = data;
-    io.emit('REC:nameMap', nameMap);
-  });
-  socket.on('CMD:host', (data) => {
-    console.log(socket.id, data);
-    video = data;
-    videoTS = 0;
-    io.emit('REC:host', getHostState());
-    const chatMsg = { id: socket.id, cmd: 'host', msg: data };
-    addChatMessage(chatMsg);
-  });
-  socket.on('CMD:play', () => {
-    socket.broadcast.emit('REC:play', video);
-    const chatMsg = { id: socket.id, cmd: 'play' };
-    paused = false;
-    addChatMessage(chatMsg);
-  });
-  socket.on('CMD:pause', () => {
-    socket.broadcast.emit('REC:pause');
-    const chatMsg = { id: socket.id, cmd: 'pause' };
-    paused = true;
-    addChatMessage(chatMsg);
-  });
-  socket.on('CMD:seek', (data) => {
-     videoTS = data;
-     socket.broadcast.emit('REC:seek', data);
-     const chatMsg = { id: socket.id, cmd: 'seek', msg: data };
-     addChatMessage(chatMsg);
-  });
-  socket.on('CMD:ts', (data) => {
-     videoTS = data;
-     tsMap[socket.id] = data;
-  });
-  socket.on('CMD:chat', (data) => {
-     const chatMsg = {id: socket.id, msg: data};
-     addChatMessage(chatMsg);
-  });
-
-  socket.on('disconnect', () => {
-    let index = roster.findIndex(user => user.id === socket.id);
-    roster.splice(index, 1);
-    io.emit('roster', roster);
-    // delete nameMap[socket.id];
-    // delete tsMap[socket.id];
-  });
+function Room(roomId) {
+  this.video = null;
+  this.videoTS = 0;
+  this.paused = false;
+  this.roster = [];
+  this.chat = [];
+  this.tsMap = {};
+  this.nameMap = {};
   
-  function addChatMessage(chatMsg) {
-    const chatWithTime = {...chatMsg, timestamp: new Date().toISOString(), videoTS: tsMap[socket.id] };
-    chat.push(chatWithTime);
-    chat = chat.splice(-50);
-    io.emit('REC:chat', chatWithTime);
-  }
+  const getHostState = () => {
+    return { video: this.video, videoTS: this.videoTS, paused: this.paused };
+  };
   
-  function getHostState() {
-    return { video, videoTS, paused };
-  }
-});
+  setInterval(() => {
+    console.log(roomId, this.video, this.roster, this.tsMap, this.nameMap);
+    io.of(roomId).emit('REC:tsMap', this.tsMap);
+  }, 1000);
+  
+  io.of(roomId).on('connection', (socket) => {
+    const addChatMessage = (chatMsg) => {
+      const chatWithTime = {...chatMsg, timestamp: new Date().toISOString(), videoTS: this.tsMap[socket.id] };
+      this.chat.push(chatWithTime);
+      this.chat = this.chat.splice(-50);
+      io.of(roomId).emit('REC:chat', chatWithTime);
+    };
+  
+    // console.log(socket.id);
+    this.roster.push({ id: socket.id });
+  
+    io.of(roomId).emit('roster', this.roster);
+    socket.emit('chatinit', this.chat);
+    socket.emit('REC:host', getHostState());
+    socket.emit('REC:nameMap', this.nameMap);
+    socket.emit('REC:tsMap', this.tsMap);
+  
+    socket.on('CMD:createRoom', () => {
+      let name = names.choose();
+      // Keep retrying until no collision
+      while(rooms.has(name)) {
+        name = names.choose();
+      }
+      console.log('createRoom: ', name);
+      rooms.set('/' + name, new Room('/' + name));
+      socket.emit('REC:createRoom', { name });
+    });
+    socket.on('CMD:name', (data) => {
+      this.nameMap[socket.id] = data;
+      io.of(roomId).emit('REC:nameMap', this.nameMap);
+    });
+    socket.on('CMD:host', (data) => {
+      console.log(socket.id, data);
+      this.video = data;
+      this.videoTS = 0;
+      io.of(roomId).emit('REC:host', getHostState());
+      const chatMsg = { id: socket.id, cmd: 'host', msg: data };
+      addChatMessage(chatMsg);
+    });
+    socket.on('CMD:play', () => {
+      socket.broadcast.emit('REC:play', this.video);
+      const chatMsg = { id: socket.id, cmd: 'play' };
+      this.paused = false;
+      addChatMessage(chatMsg);
+    });
+    socket.on('CMD:pause', () => {
+      socket.broadcast.emit('REC:pause');
+      const chatMsg = { id: socket.id, cmd: 'pause' };
+      this.paused = true;
+      addChatMessage(chatMsg);
+    });
+    socket.on('CMD:seek', (data) => {
+       this.videoTS = data;
+       socket.broadcast.emit('REC:seek', data);
+       const chatMsg = { id: socket.id, cmd: 'seek', msg: data };
+       addChatMessage(chatMsg);
+    });
+    socket.on('CMD:ts', (data) => {
+       this.videoTS = data;
+       this.tsMap[socket.id] = data;
+    });
+    socket.on('CMD:chat', (data) => {
+       const chatMsg = {id: socket.id, msg: data};
+       addChatMessage(chatMsg);
+    });
+  
+    socket.on('disconnect', () => {
+      let index = this.roster.findIndex(user => user.id === socket.id);
+      this.roster.splice(index, 1);
+      io.of(roomId).emit('roster', this.roster);
+      // delete nameMap[socket.id];
+      // delete tsMap[socket.id];
+    });
+  });
+}
+
+const rooms = new Map();
+rooms.set('/default', new Room('/default'));

@@ -1,13 +1,13 @@
 import React from 'react';
-import { Button, Grid, Segment, Divider, Select, Dimmer, Loader, Header, Label, Card, Input, Icon, List, Comment, Progress, Dropdown } from 'semantic-ui-react'
+import { Button, Grid, Segment, Divider, Select, Dimmer, Loader, Header, Label, Card, Input, Icon, List, Comment, Progress, Dropdown, Message } from 'semantic-ui-react'
 import './App.css';
-import { v4 as uuidv4 } from 'uuid';
+// import { v4 as uuidv4 } from 'uuid';
 import querystring from 'querystring';
 import { generateName } from './generateName';
 
 const serverPath = process.env.REACT_APP_SERVER_HOST || `${window.location.protocol}//${window.location.hostname}${process.env.NODE_ENV === 'production' ? '' : ':8080'}`;
-const mediaList = process.env.REACT_APP_MEDIA_LIST || `https://gitlab.com/api/v4/projects/howardchung%2Fmedia/repository/tree`;
-const mediaPath = process.env.REACT_APP_MEDIA_PATH || `https://glcdn.githack.com/howardchung/media/-/raw/master/`;
+const mediaList = process.env.REACT_APP_MEDIA_LIST || 'https://dev.howardchung.net/' || `https://gitlab.com/api/v4/projects/howardchung%2Fmedia/repository/tree`;
+const mediaPath = process.env.REACT_APP_MEDIA_PATH || 'https://dev.howardchung.net/' || `https://glcdn.githack.com/howardchung/media/-/raw/master/`;
 
 export default class App extends React.Component {
   state = {
@@ -20,39 +20,48 @@ export default class App extends React.Component {
     nameMap: {},
     chatMsg: '',
     myName: '',
+    loading: true,
   };
   videoRefs = {};
-  uuid = null;
   socket = null;
   isProgrammatic = false;
   messagesEndRef = React.createRef();
 
   componentDidMount() {
     // Load UUID from url
+    let roomId = '/default';
     let query = window.location.hash.substring(1);
     if (query) {
-      this.uuid = query;
+      roomId = '/' + query;
     }
-    this.join();
+    this.join(roomId);
     // TODO video chat
-    // TODO host/join, multiple rooms support
     // TODO youtube, twitch, bring your own file
     // TODO playlists
     // TODO rewrite using ws
   }
   
-  join = async () => {
-    this.setState({ state: 'watching' });
-    
+  createRoom = () => {
+    // get back the generated name, reload page with that URL
+    this.socket.on('REC:createRoom', (data) => {
+      const { name } = data;
+      window.location.hash = '#' + name;
+      window.location.reload();
+    });
+    this.socket.emit('CMD:createRoom');
+  }
+  
+  join = async (roomId) => {
+    // this.setState({ state: 'watching' });
     const response = await window.fetch(mediaList);
     const data = await response.json();
-    this.setState({ watchOptions: data.map(file => file.path) });
+    this.setState({ watchOptions: data.map(file => file.name) });
     
     const leftVideo = document.getElementById('leftVideo');
 
-    var socket = window.io.connect(serverPath);
+    console.log(roomId);
+    const socket = window.io.connect(serverPath + roomId);
     this.socket = socket;
-    
     socket.on('connect', () => {
       let userName = window.localStorage.getItem('watchparty-username');
       this.updateName(null, { value: userName || generateName()});
@@ -78,7 +87,7 @@ export default class App extends React.Component {
           }
         }
       }
-      this.setState({ currentMedia: data.video });
+      this.setState({ currentMedia: data.video, loading: false });
     });
     socket.on('REC:seek', (data) => {
       leftVideo.currentTime = data;
@@ -163,14 +172,17 @@ export default class App extends React.Component {
     return (
         <Grid stackable celled='internally' style={{ height: '100vh' }}>
           <Grid.Row>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginLeft: '1em' }}>
+            <a href="/" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginLeft: '1em', marginTop: '10px', marginBottom: '10px' }}>
                 <div style={{ height: '85px', width: '85px', position: 'relative' }}>
                   <Icon inverted name="film" size="big" circular color="blue" style={{ position: 'absolute' }} />
                   <Icon inverted name="group" size="big" circular color="green" style={{ position: 'absolute', right: 0, bottom: 0 }} />
                 </div>
                 <Header inverted style={{ textTransform: 'uppercase', letterSpacing: '2px', fontWeight: 700 }} as='h1' color="blue">Watch</Header>
                 <Header inverted style={{ textTransform: 'uppercase', letterSpacing: '2px'  }} as='h1' color="green">Party</Header>
-              </div>
+            </a>
+            <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', marginRight: '1em' }}>
+              <Button inverted primary size="large" icon labelPosition="left" onClick={this.createRoom}><Icon name='certificate' />Create New Room</Button>
+            </div>
           </Grid.Row>
           <Grid.Row>
           <Grid.Column width={11}>
@@ -188,7 +200,7 @@ export default class App extends React.Component {
             <Segment inverted style={{ position: 'relative' }}>
               <Grid columns={2}>
                 <Grid.Column>
-                <Header inverted as='h4' style={{ textTransform: 'uppercase', marginRight: '20px', wordBreak: 'all' }}>Now Watching: {this.state.currentMedia}</Header>
+                <Header inverted as='h4' style={{ textTransform: 'uppercase', marginRight: '20px', wordBreak: 'break-all' }}>Now Watching: {this.state.currentMedia}</Header>
                 </Grid.Column>
                 <Grid.Column>
                 <List inverted horizontal style={{ marginLeft: '20px' }}>
@@ -207,7 +219,22 @@ export default class App extends React.Component {
               </Grid>
               <Divider inverted vertical>With</Divider>
             </Segment>
-            <div>
+            { (this.state.loading || !this.state.currentMedia) && <Segment inverted style={{ minHeight: '400px' }}>
+              { this.state.loading && 
+              <Dimmer active>
+                <Loader />
+              </Dimmer>
+              }
+              { !this.state.loading && !this.state.currentMedia && <Message
+                inverted
+                color="yellow"
+                icon='hand point up'
+                header="You're not watching anything!"
+                content='Pick something to watch from the menu above.'
+              />
+              }
+            </Segment> }
+            <div style={{ display: this.state.currentMedia ? 'block' : 'none' }}>
               <video
                 tabIndex="1"
                 onClick={this.togglePlay}
