@@ -8,7 +8,7 @@ import { generateName } from './generateName';
 const serverPath = process.env.REACT_APP_SERVER_HOST || `${window.location.protocol}//${window.location.hostname}${process.env.NODE_ENV === 'production' ? '' : ':8080'}`;
 const mediaList = process.env.REACT_APP_MEDIA_LIST || 'https://dev.howardchung.net/' || `https://gitlab.com/api/v4/projects/howardchung%2Fmedia/repository/tree`;
 const mediaPath = process.env.REACT_APP_MEDIA_PATH || 'https://dev.howardchung.net/' || `https://glcdn.githack.com/howardchung/media/-/raw/master/`;
-
+      
 export default class App extends React.Component {
   state = {
     state: 'init',
@@ -24,31 +24,62 @@ export default class App extends React.Component {
   };
   videoRefs = {};
   socket = null;
-  isProgrammatic = false;
   messagesEndRef = React.createRef();
+  watchPartyYTPlayer = null;
 
-  componentDidMount() {
+  async componentDidMount() {
+    const canAutoplay = await testAutoplay();
+    console.log(canAutoplay);
+    if (canAutoplay) {
+      this.init();
+    }
+    // TODO video chat
+    // TODO youtube, twitch, bring your own file
+    // TODO playlists
+    // TODO rewrite using ws
+    // TODO fix minor delay on new plays
+    // TODO scroll chat doesn't work well on mobile
+    // TODO last writer wins on sending desynced timestamps (use max?)
+  }
+  
+  init = () => {
+    this.setState({ state: 'started' });
     // Load UUID from url
     let roomId = '/default';
     let query = window.location.hash.substring(1);
     if (query) {
       roomId = '/' + query;
     }
-    this.join(roomId);
-    // TODO video chat
-    // TODO youtube, twitch, bring your own file
-    // TODO playlists
-    // TODO rewrite using ws
-  }
-  
-  createRoom = () => {
-    // get back the generated name, reload page with that URL
-    this.socket.on('REC:createRoom', (data) => {
-      const { name } = data;
-      window.location.hash = '#' + name;
-      window.location.reload();
-    });
-    this.socket.emit('CMD:createRoom');
+
+    // 2. This code loads the IFrame Player API code asynchronously.
+    const tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/iframe_api";
+    var firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+          
+    window.onYouTubeIframeAPIReady = () => {
+      this.watchPartyYTPlayer = new window.YT.Player('leftYt', {
+        events: {
+          onReady: () => {
+            this.join(roomId);
+            // this.watchPartyYTPlayer.playVideo();
+          },
+          onStateChange: (e) => {
+            console.log(e.data, this.watchPartyYTPlayer.getVideoUrl());
+            // TODO detect user clicks in video to start/stop
+            // TODO but don't emit if this was in response to a remote event
+            // if (this.watchPartyYTPlayer.getPlayerState() === window.YT.PlayerState.PLAYING) {
+            //   this.socket.emit('CMD:play');
+            //   this.watchPartyYTPlayer.playVideo();
+            // }
+            // if (this.watchPartyYTPlayer.getPlayerState() === window.YT.PlayerState.PAUSED) {
+            //   this.socket.emit('CMD:pause');
+            //   this.watchPartyYTPlayer.pauseVideo();
+            // }
+          }
+        }
+      });
+    };
   }
   
   join = async (roomId) => {
@@ -57,40 +88,41 @@ export default class App extends React.Component {
     const data = await response.json();
     this.setState({ watchOptions: data.map(file => file.name) });
     
-    const leftVideo = document.getElementById('leftVideo');
-
-    console.log(roomId);
     const socket = window.io.connect(serverPath + roomId);
     this.socket = socket;
     socket.on('connect', () => {
       let userName = window.localStorage.getItem('watchparty-username');
       this.updateName(null, { value: userName || generateName()});
     });
-    socket.on('REC:play', function (data) {
-      leftVideo.play();
+    socket.on('REC:play', () => {
+      this.doPlay();
     });
     socket.on('REC:pause', () => {
-      leftVideo.pause();
-    });
-    socket.on('REC:host', async (data) => {
-      leftVideo.src = mediaPath + data.video;
-      leftVideo.currentTime = data.videoTS;
-      if (!data.paused) {
-        try {
-          await leftVideo.play();
-        } catch(e) {
-          console.error(e);
-          if (e instanceof window.DOMException && e.message.includes('play')) {
-            console.log('failed to autoplay, muted');
-            leftVideo.muted = true;
-            leftVideo.play();
-          }
-        }
-      }
-      this.setState({ currentMedia: data.video, loading: false });
+      this.doPause();
     });
     socket.on('REC:seek', (data) => {
-      leftVideo.currentTime = data;
+      this.doSeek(data);
+    });
+    socket.on('REC:host', (data) => {
+      const watchOptions = this.state.watchOptions;
+      if (data.video && !this.state.watchOptions.includes(data.video)) {
+        watchOptions.push(data.video);
+      }
+      this.setState({ currentMedia: data.video || '', watchOptions, loading: false }, () => {
+        // Stop all other players
+        if (this.isVideo()) {
+          this.watchPartyYTPlayer.stopVideo();
+        }
+        if (this.isYouTube()) {
+          const leftVideo = document.getElementById('leftVideo');
+          leftVideo.pause();
+        }
+        // Start this player
+        this.doSrc(data.video, data.videoTS);
+        if (this.isVideo() && !data.paused) {
+          this.doPlay();
+        }
+      });
     });
     socket.on('REC:chat', (data) => {
       this.state.chat.push(data);
@@ -111,33 +143,190 @@ export default class App extends React.Component {
       this.scrollToBottom();
     });
     window.setInterval(() => {
-      this.socket.emit('CMD:ts', leftVideo.currentTime);
-    }, 1000);
+      this.socket.emit('CMD:ts', this.getCurrentTime());
+    });
+  }
+  
+  getMediaType = () => {
+    if (!this.state.currentMedia) {
+      return '';
+    }
+    if (this.state.currentMedia.startsWith('https://www.youtube.com/')) {
+      return 'youtube';
+    }
+    return 'video';
+  }
+  
+  isYouTube = () => {
+    return this.getMediaType() === 'youtube';
+  }
+  
+  isVideo = () => {
+    return this.getMediaType() === 'video';
+  }
+  
+  getCurrentTime = () => {
+    if (this.isVideo()) {
+      const leftVideo = document.getElementById('leftVideo');
+      return leftVideo.currentTime;
+    }
+    if (this.isYouTube()) {
+      return this.watchPartyYTPlayer.getCurrentTime();
+    }
+  }
+  
+  getDuration = () => {
+    if (this.isVideo()) {
+      const leftVideo = document.getElementById('leftVideo');
+      return leftVideo.duration;
+    }
+    if (this.isYouTube()) {
+      return this.watchPartyYTPlayer.getDuration();
+    }
+  }
+  
+  isPaused = () => {
+    if (this.isVideo()) {
+      const leftVideo = document.getElementById('leftVideo');
+      return leftVideo.paused || leftVideo.ended;
+    }
+    if (this.isYouTube()) {
+      return this.watchPartyYTPlayer.getPlayerState() === window.YT.PlayerState.PAUSED || this.watchPartyYTPlayer.getPlayerState() === window.YT.PlayerState.ENDED;
+    }
+  }
+  
+  isMuted = () => {
+    if (this.isVideo()) {
+      const leftVideo = document.getElementById('leftVideo');
+      return leftVideo.muted;
+    }
+    if (this.isYouTube()) {
+      return this.watchPartyYTPlayer.isMuted();
+    }
+  }
+  
+  doSrc = async (src, time) => {
+    console.log('doSrc', src, time);
+    if (this.isVideo()) {
+      const leftVideo = document.getElementById('leftVideo');
+      leftVideo.src = mediaPath + src;
+      leftVideo.currentTime = time;
+    }
+    if (this.isYouTube()) {
+      let url = new window.URL(src);
+      let videoId = querystring.parse(url.search.substring(1))['v'];
+      // TODO weird media engagement index stuff, video might not start automatically
+      // this.watchPartyYTPlayer.mute();
+      this.watchPartyYTPlayer.loadVideoById(videoId, time);
+    }
+  }
+  
+  doPlay = async () => {
+    if (this.isVideo()) {
+      const leftVideo = document.getElementById('leftVideo');
+      try {
+        await leftVideo.play();
+      }
+      catch(e) {
+        console.error(e);
+        if (e instanceof window.DOMException && e.message.includes('play')) {
+          console.log('failed to autoplay, muted');
+          leftVideo.muted = true;
+          leftVideo.play();
+        }
+      }
+    }
+    if (this.isYouTube()) {
+      this.watchPartyYTPlayer.playVideo();
+    }
+  }
+  
+  doPause = () => {
+    if (this.isVideo()) {
+      const leftVideo = document.getElementById('leftVideo');
+      leftVideo.pause();
+    }
+    if (this.isYouTube()) {
+      this.watchPartyYTPlayer.pauseVideo();
+    }
+  }
+  
+  doSeek = (time) => {
+    if (this.isVideo()) {
+      const leftVideo = document.getElementById('leftVideo');
+      leftVideo.currentTime = time;
+    }
+    if (this.isYouTube()) {
+      this.watchPartyYTPlayer.seekTo(time, true);
+    }
+  }
+  
+  createRoom = () => {
+    // get back the generated name, reload page with that URL
+    this.socket.on('REC:createRoom', (data) => {
+      const { name } = data;
+      window.location.hash = '#' + name;
+      window.location.reload();
+    });
+    this.socket.emit('CMD:createRoom');
   }
 
   togglePlay = () => {
-    const leftVideo = document.getElementById('leftVideo');
-    this.socket.emit(leftVideo.paused || leftVideo.ended ? 'CMD:play' : 'CMD:pause');
-    leftVideo.paused || leftVideo.ended ? leftVideo.play() : leftVideo.pause();
+    if (this.isVideo()) {
+      const leftVideo = document.getElementById('leftVideo');
+      if (leftVideo.paused || leftVideo.ended) {
+        this.socket.emit('CMD:play');
+        leftVideo.play();
+      } else {
+        this.socket.emit('CMD:pause');
+        leftVideo.pause();
+      }
+    }
+    if (this.isYouTube()) {
+      if (this.watchPartyYTPlayer.getPlayerState() === window.YT.PlayerState.PAUSED || this.getCurrentTime() === this.getDuration()) {
+        this.socket.emit('CMD:play');
+        this.watchPartyYTPlayer.playVideo();
+      } else {
+        this.socket.emit('CMD:pause');
+        this.watchPartyYTPlayer.pauseVideo();
+      }
+    }
   }
   
-  seek = (e) => {
+  onSeek = (e) => {
     const rect = e.target.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const max = rect.width;
-    const leftVideo = document.getElementById('leftVideo');
-    leftVideo.currentTime = x / max * leftVideo.duration;
-    this.socket.emit('CMD:seek', leftVideo.currentTime);
+    const target = x / max * this.getDuration();
+    if (this.isVideo()) {
+      const leftVideo = document.getElementById('leftVideo');
+      leftVideo.currentTime = target;
+    }
+    if (this.isYouTube()) {
+      this.watchPartyYTPlayer.seekTo(target);
+    }
+    this.socket.emit('CMD:seek', target);
   }
   
   fullScreen = () => {
-    const leftVideo = document.getElementById('leftVideo');
-    leftVideo.requestFullscreen();
+    if (this.isVideo()) {
+      const leftVideo = document.getElementById('leftVideo');
+      leftVideo.requestFullscreen();
+    }
+    if (this.isYouTube()) {
+      const leftYt = document.getElementById(('leftYt'));
+      leftYt.requestFullscreen();
+    }
   }
   
   toggleMute = () => {
-    const leftVideo = document.getElementById('leftVideo');
-    leftVideo.muted = !leftVideo.muted;
+    if (this.isVideo()) {
+      const leftVideo = document.getElementById('leftVideo');
+      leftVideo.muted = !leftVideo.muted;
+    }
+    if (this.isYouTube()) {
+      this.watchPartyYTPlayer.isMuted() ? this.watchPartyYTPlayer.unMute() : this.watchPartyYTPlayer.mute();
+    }
   }
   
   setMedia = (e, data) => {
@@ -168,7 +357,6 @@ export default class App extends React.Component {
   }
 
   render() {
-    const leftVideo = document.getElementById('leftVideo');
     return (
         <Grid stackable celled='internally' style={{ height: '100vh' }}>
           <Grid.Row>
@@ -192,7 +380,11 @@ export default class App extends React.Component {
               labeled
               button
               fluid
-              inverted
+              search
+              allowAdditions
+              selection
+              placeholder="Enter YouTube URL or pick an option"
+              onAddItem={(e, {value}) => this.setState({ watchOptions: [...this.state.watchOptions, value] })}
               onChange={this.setMedia}
               value={this.state.currentMedia}
               options={this.state.watchOptions.map(option => ({ key: option, text: option, value: option }))}
@@ -206,7 +398,7 @@ export default class App extends React.Component {
                 <List inverted horizontal style={{ marginLeft: '20px' }}>
                   {this.state.participants.map((participant) => {
                     return <List.Item>
-                      <Label inverted as='a' color={getColor(participant.id)} image>
+                      <Label as='a' color={getColor(participant.id)} image>
                         <img src={getImage(this.state.nameMap[participant.id] || participant.id)} alt="" />
                         {this.state.nameMap[participant.id] || participant.id}
                         <Label.Detail>{formatTimestamp(this.state.tsMap[participant.id] || 0)}</Label.Detail>
@@ -219,13 +411,14 @@ export default class App extends React.Component {
               </Grid>
               <Divider inverted vertical>With</Divider>
             </Segment>
-            { (this.state.loading || !this.state.currentMedia) && <Segment inverted style={{ minHeight: '400px' }}>
-              { this.state.loading && 
+            { (this.state.state === 'init' || this.state.loading || !this.state.currentMedia) && <Segment inverted style={{ minHeight: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              { this.state.state === 'init' && <Button inverted primary size="huge" onClick={this.init} icon labelPosition="left"><Icon name="sign-in" />Join Party</Button> }
+              { !this.state.state === 'init' && this.state.loading && 
               <Dimmer active>
                 <Loader />
               </Dimmer>
               }
-              { !this.state.loading && !this.state.currentMedia && <Message
+              { !this.state.state === 'init' && !this.state.loading && !this.state.currentMedia && <Message
                 inverted
                 color="yellow"
                 icon='hand point up'
@@ -234,7 +427,17 @@ export default class App extends React.Component {
               />
               }
             </Segment> }
-            <div style={{ display: this.state.currentMedia ? 'block' : 'none' }}>
+            <div className="auto-resizable-iframe" style={{ display: this.isYouTube() ? 'block' : 'none' }}>
+              <div>
+                <iframe
+                  id="leftYt"
+                  allowFullScreen
+                  frameBorder="0"
+                  src="https://www.youtube.com/embed/?enablejsapi=1&controls=0&rel=0"
+                />
+              </div>
+            </div>
+            <div style={{ display: this.isVideo() ? 'block' : 'none' }}>
               <video
                 tabIndex="1"
                 onClick={this.togglePlay}
@@ -244,16 +447,18 @@ export default class App extends React.Component {
                 type="video/mp4"
               >
               </video>
-              { leftVideo &&
-              <div className="controls">
-                <Icon onClick={this.togglePlay} className="control action" name={ leftVideo.paused || leftVideo.ended ? 'play' : 'pause' } />
-                <div className="control system">{formatTimestamp(leftVideo.currentTime)}</div>
-                <Progress size="tiny" color="blue" onClick={this.seek} className="control action" inverted style={{ flexGrow: 1, marginTop: 0, marginBottom: 0 }} value={leftVideo.currentTime} total={leftVideo.duration} active />
-                <div className="control system">{formatTimestamp(leftVideo.duration)}</div>
-                <Icon onClick={this.fullScreen} className="control action" name='expand' />
-                <Icon onClick={this.toggleMute} className="control action" name={leftVideo.muted ? 'volume off' : 'volume up' } />
-            </div> }
             </div>
+            { this.state.currentMedia && <Controls
+              togglePlay={this.togglePlay}
+              onSeek={this.onSeek}
+              fullScreen={this.fullScreen}
+              toggleMute={this.toggleMute}
+              paused={this.isPaused()}
+              muted={this.isMuted()}
+              currentTime={this.getCurrentTime()}
+              duration={this.getDuration()}
+            />
+            }
           </Grid.Column>
         
         <Grid.Column width={5} style={{ display: 'flex', flexDirection: 'column' }}>
@@ -306,6 +511,17 @@ const ChatMessage = ({ id, timestamp, cmd, msg, nameMap }) => {
         <Comment.Text className="white">{ !cmd && msg}</Comment.Text>
       </Comment.Content>
     </Comment>;
+};
+
+const Controls = ({ togglePlay, onSeek, fullScreen, toggleMute, paused, muted, currentTime, duration }) => {
+  return <div className="controls">
+    <Icon onClick={togglePlay} className="control action" name={ paused ? 'play' : 'pause' } />
+    <div className="control system">{formatTimestamp(currentTime)}</div>
+    <Progress size="tiny" color="blue" onClick={onSeek} className="control action" inverted style={{ flexGrow: 1, marginTop: 0, marginBottom: 0 }} value={currentTime} total={duration} active />
+    <div className="control system">{formatTimestamp(duration)}</div>
+    <Icon onClick={fullScreen} className="control action" name='expand' />
+    <Icon onClick={toggleMute} className="control action" name={muted ? 'volume off' : 'volume up' } />
+  </div>;
 };
 
 function formatMessage(cmd, msg) {
@@ -369,4 +585,19 @@ function getImage(name) {
     return getFbPhoto('100003885416987');
   }
   return '/logo192.png';
+}
+
+async function testAutoplay() {
+  const video = document.createElement('video');
+  video.src = 'https://www.w3schools.com/tags/movie.ogg';
+  // document.body.appendChild(video);
+  try {
+    await video.play();
+  } catch(e) {
+    console.log(e);
+    return false;
+  }
+  // TODO remove the element
+  video.pause();
+  return true;
 }

@@ -14,7 +14,7 @@ app.use(cors());
 app.use(express.static('build'));
 
 function Room(roomId) {
-  this.video = null;
+  this.video = '';
   this.videoTS = 0;
   this.paused = false;
   this.roster = [];
@@ -66,6 +66,7 @@ function Room(roomId) {
       console.log(socket.id, data);
       this.video = data;
       this.videoTS = 0;
+      this.paused = false;
       io.of(roomId).emit('REC:host', getHostState());
       const chatMsg = { id: socket.id, cmd: 'host', msg: data };
       addChatMessage(chatMsg);
