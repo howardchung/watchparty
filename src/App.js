@@ -29,6 +29,7 @@ export default class App extends React.Component {
   messagesEndRef = React.createRef();
   watchPartyYTPlayer = null;
   ytDebounce = true;
+  videoInitTime = 0;
 
   async componentDidMount() {
     const canAutoplay = await testAutoplay();
@@ -40,7 +41,6 @@ export default class App extends React.Component {
     // TODO youtube, twitch, bring your own file
     // TODO playlists
     // TODO rewrite using ws
-    // TODO fix minor delay on new plays
     // TODO last writer wins on sending desynced timestamps (use max?)
   }
   
@@ -52,6 +52,14 @@ export default class App extends React.Component {
     if (query) {
       roomId = '/' + query;
     }
+    
+    const leftVideo = document.getElementById('leftVideo');
+    leftVideo.onloadeddata = () => {
+      const videoReadyTime = Number(new Date());
+      const offset = videoReadyTime - this.videoInitTime;
+      console.log('offset: ', offset);
+      leftVideo.currentTime += (offset / 1000);
+    };
 
     // 2. This code loads the IFrame Player API code asynchronously.
     const tag = document.createElement('script');
@@ -212,6 +220,7 @@ export default class App extends React.Component {
       const leftVideo = document.getElementById('leftVideo');
       leftVideo.src = mediaPath + src;
       leftVideo.currentTime = time;
+      this.videoInitTime = Number(new Date());
     }
     if (this.isYouTube()) {
       let url = new window.URL(src);
