@@ -14,6 +14,7 @@ export default class App extends React.Component {
     state: 'init',
     watchOptions: [],
     currentMedia: '',
+    currentMediaPaused: false,
     participants: [],
     chat: [],
     tsMap: {},
@@ -24,8 +25,10 @@ export default class App extends React.Component {
   };
   videoRefs = {};
   socket = null;
+  messagesRef = React.createRef();
   messagesEndRef = React.createRef();
   watchPartyYTPlayer = null;
+  ytDebounce = true;
 
   async componentDidMount() {
     const canAutoplay = await testAutoplay();
@@ -65,17 +68,19 @@ export default class App extends React.Component {
             // this.watchPartyYTPlayer.playVideo();
           },
           onStateChange: (e) => {
-            console.log(e.data, this.watchPartyYTPlayer.getVideoUrl());
-            // TODO detect user clicks in video to start/stop
-            // TODO but don't emit if this was in response to a remote event
-            // if (this.watchPartyYTPlayer.getPlayerState() === window.YT.PlayerState.PLAYING) {
-            //   this.socket.emit('CMD:play');
-            //   this.watchPartyYTPlayer.playVideo();
-            // }
-            // if (this.watchPartyYTPlayer.getPlayerState() === window.YT.PlayerState.PAUSED) {
-            //   this.socket.emit('CMD:pause');
-            //   this.watchPartyYTPlayer.pauseVideo();
-            // }
+            // console.log(this.ytDebounce, e.data, this.watchPartyYTPlayer.getVideoUrl());
+            if (this.ytDebounce && (e.data === window.YT.PlayerState.PLAYING && this.state.currentMediaPaused
+                || e.data === window.YT.PlayerState.PAUSED && !this.state.currentMediaPaused)) {
+              this.ytDebounce = false;
+              if (e.data === window.YT.PlayerState.PLAYING) {
+                this.socket.emit('CMD:play');
+                this.doPlay();
+              } else {
+                this.socket.emit('CMD:pause');
+                this.doPause();
+              }
+              window.setTimeout(() => this.ytDebounce = true, 500);
+            }
           }
         }
       });
@@ -108,16 +113,13 @@ export default class App extends React.Component {
       if (data.video && !this.state.watchOptions.includes(data.video)) {
         watchOptions.push(data.video);
       }
-      this.setState({ currentMedia: data.video || '', watchOptions, loading: false }, () => {
-        // Stop all other players
-        if (this.isVideo()) {
-          this.watchPartyYTPlayer.stopVideo();
-        }
-        if (this.isYouTube()) {
-          const leftVideo = document.getElementById('leftVideo');
-          leftVideo.pause();
-        }
-        // Start this player
+      this.setState({ currentMedia: data.video, currentMediaPaused: data.paused, watchOptions, loading: false }, () => {
+        // Stop all players
+        const leftVideo = document.getElementById('leftVideo');
+        leftVideo.pause();
+        this.watchPartyYTPlayer.stopVideo();
+
+        // Start this video
         this.doSrc(data.video, data.videoTS);
         if (this.isVideo() && !data.paused) {
           this.doPlay();
@@ -222,33 +224,39 @@ export default class App extends React.Component {
   }
   
   doPlay = async () => {
-    if (this.isVideo()) {
-      const leftVideo = document.getElementById('leftVideo');
-      try {
-        await leftVideo.play();
-      }
-      catch(e) {
-        console.error(e);
-        if (e instanceof window.DOMException && e.message.includes('play')) {
-          console.log('failed to autoplay, muted');
-          leftVideo.muted = true;
-          leftVideo.play();
+    this.setState({ currentMediaPaused: false }, async () => {
+      if (this.isVideo()) {
+        const leftVideo = document.getElementById('leftVideo');
+        try {
+          await leftVideo.play();
+        }
+        catch(e) {
+          console.error(e);
+          if (e instanceof window.DOMException && e.message.includes('play')) {
+            console.log('failed to autoplay, muted');
+            leftVideo.muted = true;
+            leftVideo.play();
+          }
         }
       }
-    }
-    if (this.isYouTube()) {
-      this.watchPartyYTPlayer.playVideo();
-    }
+      if (this.isYouTube()) {
+        console.log('play');
+        this.watchPartyYTPlayer.playVideo();
+      }
+    });
   }
   
   doPause = () => {
-    if (this.isVideo()) {
-      const leftVideo = document.getElementById('leftVideo');
-      leftVideo.pause();
-    }
-    if (this.isYouTube()) {
-      this.watchPartyYTPlayer.pauseVideo();
-    }
+    this.setState({ currentMediaPaused: true }, async () => {
+      if (this.isVideo()) {
+        const leftVideo = document.getElementById('leftVideo');
+        leftVideo.pause();
+      }
+      if (this.isYouTube()) {
+        console.log('pause');
+        this.watchPartyYTPlayer.pauseVideo();
+      }
+    });
   }
   
   doSeek = (time) => {
@@ -272,24 +280,20 @@ export default class App extends React.Component {
   }
 
   togglePlay = () => {
+    let shouldPlay = true;
     if (this.isVideo()) {
       const leftVideo = document.getElementById('leftVideo');
-      if (leftVideo.paused || leftVideo.ended) {
-        this.socket.emit('CMD:play');
-        leftVideo.play();
-      } else {
-        this.socket.emit('CMD:pause');
-        leftVideo.pause();
-      }
+      shouldPlay = leftVideo.paused || leftVideo.ended;
     }
-    if (this.isYouTube()) {
-      if (this.watchPartyYTPlayer.getPlayerState() === window.YT.PlayerState.PAUSED || this.getCurrentTime() === this.getDuration()) {
-        this.socket.emit('CMD:play');
-        this.watchPartyYTPlayer.playVideo();
-      } else {
-        this.socket.emit('CMD:pause');
-        this.watchPartyYTPlayer.pauseVideo();
-      }
+    else if (this.isYouTube()) {
+      shouldPlay = this.watchPartyYTPlayer.getPlayerState() === window.YT.PlayerState.PAUSED || this.getCurrentTime() === this.getDuration();
+    }
+    if (shouldPlay) {
+      this.socket.emit('CMD:play');
+      this.doPlay();
+    } else {
+      this.socket.emit('CMD:pause');
+      this.doPause();
     }
   }
   
@@ -353,7 +357,8 @@ export default class App extends React.Component {
   
   scrollToBottom = () => {
     // TODO dont do if user manually scrolled up
-    this.messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+    // this.messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+    this.messagesRef.current.scrollTop = this.messagesRef.current.scrollHeight;
   }
 
   render() {
@@ -375,9 +380,9 @@ export default class App extends React.Component {
           <Grid.Row>
           <Grid.Column width={11}>
             <Dropdown
-              icon='film'
-              className='icon'
-              labeled
+              // icon='film'
+              // className='icon'
+              // labeled
               button
               fluid
               search
@@ -476,10 +481,10 @@ export default class App extends React.Component {
             }
           />
           <Segment inverted style={{ display: 'flex', flexDirection: 'column', width: '100%', flexGrow: '1' }}>
-            <div className="chatContainer">
+            <div className="chatContainer" ref={this.messagesRef}>
               <Comment.Group>
                 {this.state.chat.map(msg => <ChatMessage {...msg} nameMap={this.state.nameMap} />)}
-                <div ref={this.messagesEndRef} />
+                { /* <div ref={this.messagesEndRef} /> */ }
               </Comment.Group>
             </div>
             <Input
@@ -532,10 +537,10 @@ function formatMessage(cmd, msg) {
     return `jumped to ${formatTimestamp(msg)}`;
   }
   else if (cmd === 'play') {
-    return `started the video`;
+    return `started the video at ${formatTimestamp(msg)}`;
   }
   else if (cmd === 'pause') {
-    return `paused the video`;
+    return `paused the video at ${formatTimestamp(msg)}`;
   }
   return cmd;
 }
@@ -583,6 +588,9 @@ function getImage(name) {
   }
   else if (lower === 'al' || lower === 'allison' || lower === 'alacrity') {
     return getFbPhoto('100003885416987');
+  }
+  else if (lower === 'yvonne' || lower === 'eve') {
+    return getFbPhoto('1417572343');
   }
   return '/logo192.png';
 }

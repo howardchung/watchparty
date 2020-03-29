@@ -73,13 +73,13 @@ function Room(roomId) {
     });
     socket.on('CMD:play', () => {
       socket.broadcast.emit('REC:play', this.video);
-      const chatMsg = { id: socket.id, cmd: 'play' };
+      const chatMsg = { id: socket.id, cmd: 'play', msg: this.tsMap[socket.id] };
       this.paused = false;
       addChatMessage(chatMsg);
     });
     socket.on('CMD:pause', () => {
       socket.broadcast.emit('REC:pause');
-      const chatMsg = { id: socket.id, cmd: 'pause' };
+      const chatMsg = { id: socket.id, cmd: 'pause', msg: this.tsMap[socket.id] };
       this.paused = true;
       addChatMessage(chatMsg);
     });
