@@ -41,8 +41,8 @@ export default class App extends React.Component {
     // TODO playlists
     // TODO rewrite using ws
     // TODO fix minor delay on new plays
-    // TODO scroll chat doesn't work well on mobile
     // TODO last writer wins on sending desynced timestamps (use max?)
+    // TODO preview seek timestamp
   }
   
   init = () => {
@@ -363,22 +363,31 @@ export default class App extends React.Component {
 
   render() {
     return (
+        <React.Fragment>
+        <div style={{ display: 'flex' }}>
+          <a href="/" style={{ display: 'flex', marginLeft: '1em', marginTop: '10px' }}>
+              <div style={{ height: '85px', width: '85px', position: 'relative' }}>
+                <Icon inverted name="film" size="big" circular color="blue" style={{ position: 'absolute' }} />
+                <Icon inverted name="group" size="big" circular color="green" style={{ position: 'absolute', right: 0, bottom: 0 }} />
+              </div>
+              <Header inverted style={{ textTransform: 'uppercase', letterSpacing: '2px', fontWeight: 700 }} as='h1' color="blue">Watch</Header>
+              <Header inverted style={{ textTransform: 'uppercase', letterSpacing: '2px'  }} as='h1' color="green">Party</Header>
+          </a>
+          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', marginRight: '1em' }}>
+            <Button inverted primary size="large" icon labelPosition="left" onClick={this.createRoom}><Icon name='certificate' />Create New Room</Button>
+          </div>
+        </div>
+        <Divider inverted horizontal>
+          <Header inverted as='h4'>
+            <Icon name='film' />
+            Watch videos with your friends!
+          </Header>
+        </Divider>
         <Grid stackable celled='internally' style={{ height: '100vh' }}>
           <Grid.Row>
-            <a href="/" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginLeft: '1em', marginTop: '10px', marginBottom: '10px' }}>
-                <div style={{ height: '85px', width: '85px', position: 'relative' }}>
-                  <Icon inverted name="film" size="big" circular color="blue" style={{ position: 'absolute' }} />
-                  <Icon inverted name="group" size="big" circular color="green" style={{ position: 'absolute', right: 0, bottom: 0 }} />
-                </div>
-                <Header inverted style={{ textTransform: 'uppercase', letterSpacing: '2px', fontWeight: 700 }} as='h1' color="blue">Watch</Header>
-                <Header inverted style={{ textTransform: 'uppercase', letterSpacing: '2px'  }} as='h1' color="green">Party</Header>
-            </a>
-            <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', marginRight: '1em' }}>
-              <Button inverted primary size="large" icon labelPosition="left" onClick={this.createRoom}><Icon name='certificate' />Create New Room</Button>
-            </div>
-          </Grid.Row>
-          <Grid.Row>
           <Grid.Column width={11}>
+            { this.state.state === 'init' && <div style={{ display: 'flex', justifyContent: 'center' }}><Button inverted primary size="huge" onClick={this.init} icon labelPosition="left"><Icon name="sign-in" />Join Party</Button></div> }
+            { this.state.state !== 'init' && <React.Fragment>
             <Dropdown
               // icon='film'
               // className='icon'
@@ -416,14 +425,13 @@ export default class App extends React.Component {
               </Grid>
               <Divider inverted vertical>With</Divider>
             </Segment>
-            { (this.state.state === 'init' || this.state.loading || !this.state.currentMedia) && <Segment inverted style={{ minHeight: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              { this.state.state === 'init' && <Button inverted primary size="huge" onClick={this.init} icon labelPosition="left"><Icon name="sign-in" />Join Party</Button> }
-              { !this.state.state === 'init' && this.state.loading && 
+            { (this.state.loading || !this.state.currentMedia) && <Segment inverted style={{ minHeight: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              { this.state.loading && 
               <Dimmer active>
                 <Loader />
               </Dimmer>
               }
-              { !this.state.state === 'init' && !this.state.loading && !this.state.currentMedia && <Message
+              { !this.state.loading && !this.state.currentMedia && <Message
                 inverted
                 color="yellow"
                 icon='hand point up'
@@ -464,8 +472,8 @@ export default class App extends React.Component {
               duration={this.getDuration()}
             />
             }
-          </Grid.Column>
-        
+          </React.Fragment> }
+        </Grid.Column>
         <Grid.Column width={5} style={{ display: 'flex', flexDirection: 'column' }}>
           <Input
             inverted
@@ -500,6 +508,7 @@ export default class App extends React.Component {
         </Grid.Column>
         </Grid.Row>
       </Grid>
+      </React.Fragment>
     );
   }
 }
