@@ -76,8 +76,8 @@ export default class App extends React.Component {
           },
           onStateChange: (e) => {
             // console.log(this.ytDebounce, e.data, this.watchPartyYTPlayer.getVideoUrl());
-            if (this.ytDebounce && (e.data === window.YT.PlayerState.PLAYING && this.state.currentMediaPaused
-                || e.data === window.YT.PlayerState.PAUSED && !this.state.currentMediaPaused)) {
+            if (this.ytDebounce && ((e.data === window.YT.PlayerState.PLAYING && this.state.currentMediaPaused)
+                || (e.data === window.YT.PlayerState.PAUSED && !this.state.currentMediaPaused))) {
               this.ytDebounce = false;
               if (e.data === window.YT.PlayerState.PLAYING) {
                 this.socket.emit('CMD:play');
@@ -451,6 +451,7 @@ export default class App extends React.Component {
             <div className="auto-resizable-iframe" style={{ display: this.isYouTube() ? 'block' : 'none' }}>
               <div>
                 <iframe
+                  title="YouTube"
                   id="leftYt"
                   allowFullScreen
                   frameBorder="0"
