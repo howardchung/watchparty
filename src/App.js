@@ -42,7 +42,6 @@ export default class App extends React.Component {
     // TODO rewrite using ws
     // TODO fix minor delay on new plays
     // TODO last writer wins on sending desynced timestamps (use max?)
-    // TODO preview seek timestamp
   }
   
   init = () => {
@@ -527,16 +526,61 @@ const ChatMessage = ({ id, timestamp, cmd, msg, nameMap }) => {
     </Comment>;
 };
 
-const Controls = ({ togglePlay, onSeek, fullScreen, toggleMute, paused, muted, currentTime, duration }) => {
-  return <div className="controls">
-    <Icon onClick={togglePlay} className="control action" name={ paused ? 'play' : 'pause' } />
-    <div className="control system">{formatTimestamp(currentTime)}</div>
-    <Progress size="tiny" color="blue" onClick={onSeek} className="control action" inverted style={{ flexGrow: 1, marginTop: 0, marginBottom: 0 }} value={currentTime} total={duration} active />
-    <div className="control system">{formatTimestamp(duration)}</div>
-    <Icon onClick={fullScreen} className="control action" name='expand' />
-    <Icon onClick={toggleMute} className="control action" name={muted ? 'volume off' : 'volume up' } />
-  </div>;
-};
+class Controls extends React.Component {
+  state = { showTimestamp: false, currTimestamp: 0, posTimestamp: 0 }
+  
+  onMouseOver = () => {
+    // console.log('mouseover');
+    this.setState({ showTimestamp: true });
+  }
+  
+  onMouseOut = () => {
+    // console.log('mouseout');
+    this.setState({ showTimestamp: false });
+  }
+  
+  onMouseMove = (e) => {
+    const rect = e.target.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const max = rect.width;
+    const pct = x / max;
+    // console.log(x, max);
+    const target = pct * this.props.duration;
+    // console.log(pct);
+    this.setState({ currTimestamp: target, posTimestamp: pct });
+  }
+  
+  render() {
+    const { togglePlay, onSeek, fullScreen, toggleMute, paused, muted, currentTime, duration } = this.props;
+    return <div className="controls">
+      <Icon size="large" bordered onClick={togglePlay} className="control action" name={ paused ? 'play' : 'pause' } />
+      <div className="control">{formatTimestamp(currentTime)}</div>
+      <Progress
+        size="tiny"
+        color="blue"
+        onClick={onSeek}
+        onMouseOver={this.onMouseOver}
+        onMouseOut={this.onMouseOut}
+        onMouseMove={this.onMouseMove}
+        className="control action"
+        inverted
+        style={{ flexGrow: 1, marginTop: 0, marginBottom: 0, position: 'relative' }}
+        value={currentTime}
+        total={duration}
+        active
+      >
+        {this.state.showTimestamp && <div style={{ position: 'absolute', bottom: '0px', left: `calc(${this.state.posTimestamp * 100 + '% - 27px'})`, pointerEvents: 'none' }}>
+          <Label basic color="blue" pointing="below" >
+            <div style={{ width: '34px' }}>{formatTimestamp(this.state.currTimestamp)}</div>
+          </Label>
+        </div>}
+      </Progress>
+      <div className="control">{formatTimestamp(duration)}</div>
+      <Icon size="large" bordered onClick={fullScreen} className="control action" name='expand' />
+      <Icon size="large" bordered onClick={toggleMute} className="control action" name={muted ? 'volume off' : 'volume up' } />
+    </div>;
+  }
+}
 
 function formatMessage(cmd, msg) {
   if (cmd === 'host') {
