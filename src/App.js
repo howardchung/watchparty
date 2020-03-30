@@ -641,7 +641,7 @@ function getColor(id) {
 
 function getImage(name) {
   const lower = (name || '').toLowerCase();
-  const getFbPhoto = (fbId) => `http://graph.facebook.com/${fbId}/picture?type=square`;
+  const getFbPhoto = (fbId) => `https://graph.facebook.com/${fbId}/picture?type=square`;
   if (lower === 'howard') {
     return getFbPhoto('746929384');
   }
