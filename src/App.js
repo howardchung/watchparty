@@ -405,6 +405,7 @@ export default class App extends React.Component {
               search
               allowAdditions
               selection
+              selectOnBlur={false}
               placeholder="Enter YouTube URL or pick an option"
               onAddItem={(e, {value}) => this.setState({ watchOptions: [...this.state.watchOptions, value] })}
               onChange={this.setMedia}
