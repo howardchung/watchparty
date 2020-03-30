@@ -12,6 +12,16 @@ server.listen(process.env.PORT || 8080);
 
 app.use(cors());
 app.use(express.static('build'));
+app.post('/createRoom', (req, res) => {
+  let name = names.choose();
+  // Keep retrying until no collision
+  while(rooms.has(name)) {
+    name = names.choose();
+  }
+  console.log('createRoom: ', name);
+  rooms.set('/' + name, new Room('/' + name));
+  res.json({ name });
+});
 
 function Room(roomId) {
   this.video = '';
@@ -48,16 +58,6 @@ function Room(roomId) {
     socket.emit('REC:nameMap', this.nameMap);
     socket.emit('REC:tsMap', this.tsMap);
   
-    socket.on('CMD:createRoom', () => {
-      let name = names.choose();
-      // Keep retrying until no collision
-      while(rooms.has(name)) {
-        name = names.choose();
-      }
-      console.log('createRoom: ', name);
-      rooms.set('/' + name, new Room('/' + name));
-      socket.emit('REC:createRoom', { name });
-    });
     socket.on('CMD:name', (data) => {
       this.nameMap[socket.id] = data;
       io.of(roomId).emit('REC:nameMap', this.nameMap);

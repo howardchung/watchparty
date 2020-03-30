@@ -278,14 +278,12 @@ export default class App extends React.Component {
     }
   }
   
-  createRoom = () => {
-    // get back the generated name, reload page with that URL
-    this.socket.on('REC:createRoom', (data) => {
-      const { name } = data;
-      window.location.hash = '#' + name;
-      window.location.reload();
-    });
-    this.socket.emit('CMD:createRoom');
+  createRoom = async () => {
+    const response = await window.fetch({ url: serverPath + '/createRoom', method: 'POST' });
+    const data = await response.json();
+    const { name } = data;
+    window.location.hash = '#' + name;
+    window.location.reload();
   }
 
   togglePlay = () => {
@@ -382,7 +380,7 @@ export default class App extends React.Component {
               <Header inverted style={{ textTransform: 'uppercase', letterSpacing: '2px', fontWeight: 700 }} as='h1' color="blue">Watch</Header>
               <Header inverted style={{ textTransform: 'uppercase', letterSpacing: '2px'  }} as='h1' color="green">Party</Header>
           </a>
-          { this.state.state !== 'init' && <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', marginRight: '1em' }}>
+          { <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', marginRight: '1em' }}>
             <Button inverted primary size="large" icon labelPosition="left" onClick={this.createRoom}><Icon name='certificate' />Create New Room</Button>
           </div> }
         </div>
