@@ -45,14 +45,49 @@ export default class App extends React.Component {
   }
   
   init = () => {
-    this.setState({ state: 'started' });
-    // Load UUID from url
-    let roomId = '/default';
-    let query = window.location.hash.substring(1);
-    if (query) {
-      roomId = '/' + query;
-    }
-    
+    this.setState({ state: 'started' }, () => {
+      // Load UUID from url
+      let roomId = '/default';
+      let query = window.location.hash.substring(1);
+      if (query) {
+        roomId = '/' + query;
+      }
+  
+      // 2. This code loads the IFrame Player API code asynchronously.
+      const tag = document.createElement('script');
+      tag.src = "https://www.youtube.com/iframe_api";
+      var firstScriptTag = document.getElementsByTagName('script')[0];
+      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+            
+      window.onYouTubeIframeAPIReady = () => {
+        this.watchPartyYTPlayer = new window.YT.Player('leftYt', {
+          events: {
+            onReady: () => {
+              this.join(roomId);
+              // this.watchPartyYTPlayer.playVideo();
+            },
+            onStateChange: (e) => {
+              // console.log(this.ytDebounce, e.data, this.watchPartyYTPlayer.getVideoUrl());
+              if (this.ytDebounce && ((e.data === window.YT.PlayerState.PLAYING && this.state.currentMediaPaused)
+                  || (e.data === window.YT.PlayerState.PAUSED && !this.state.currentMediaPaused))) {
+                this.ytDebounce = false;
+                if (e.data === window.YT.PlayerState.PLAYING) {
+                  this.socket.emit('CMD:play');
+                  this.doPlay();
+                } else {
+                  this.socket.emit('CMD:pause');
+                  this.doPause();
+                }
+                window.setTimeout(() => this.ytDebounce = true, 500);
+              }
+            }
+          }
+        });
+      };
+    });
+  }
+  
+  join = async (roomId) => {
     const leftVideo = document.getElementById('leftVideo');
     leftVideo.onloadeddata = () => {
       const videoReadyTime = Number(new Date());
@@ -61,40 +96,6 @@ export default class App extends React.Component {
       leftVideo.currentTime += (offset / 1000);
     };
 
-    // 2. This code loads the IFrame Player API code asynchronously.
-    const tag = document.createElement('script');
-    tag.src = "https://www.youtube.com/iframe_api";
-    var firstScriptTag = document.getElementsByTagName('script')[0];
-    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-          
-    window.onYouTubeIframeAPIReady = () => {
-      this.watchPartyYTPlayer = new window.YT.Player('leftYt', {
-        events: {
-          onReady: () => {
-            this.join(roomId);
-            // this.watchPartyYTPlayer.playVideo();
-          },
-          onStateChange: (e) => {
-            // console.log(this.ytDebounce, e.data, this.watchPartyYTPlayer.getVideoUrl());
-            if (this.ytDebounce && ((e.data === window.YT.PlayerState.PLAYING && this.state.currentMediaPaused)
-                || (e.data === window.YT.PlayerState.PAUSED && !this.state.currentMediaPaused))) {
-              this.ytDebounce = false;
-              if (e.data === window.YT.PlayerState.PLAYING) {
-                this.socket.emit('CMD:play');
-                this.doPlay();
-              } else {
-                this.socket.emit('CMD:pause');
-                this.doPause();
-              }
-              window.setTimeout(() => this.ytDebounce = true, 500);
-            }
-          }
-        }
-      });
-    };
-  }
-  
-  join = async (roomId) => {
     // this.setState({ state: 'watching' });
     const response = await window.fetch(mediaList);
     const data = await response.json();
