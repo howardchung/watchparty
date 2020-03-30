@@ -373,7 +373,7 @@ export default class App extends React.Component {
   render() {
     return (
         <React.Fragment>
-        <div style={{ display: 'flex' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap' }}>
           <a href="/" style={{ display: 'flex', marginLeft: '1em', marginTop: '10px' }}>
               <div style={{ height: '85px', width: '85px', position: 'relative' }}>
                 <Icon inverted name="film" size="big" circular color="blue" style={{ position: 'absolute' }} />
@@ -382,9 +382,9 @@ export default class App extends React.Component {
               <Header inverted style={{ textTransform: 'uppercase', letterSpacing: '2px', fontWeight: 700 }} as='h1' color="blue">Watch</Header>
               <Header inverted style={{ textTransform: 'uppercase', letterSpacing: '2px'  }} as='h1' color="green">Party</Header>
           </a>
-          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', marginRight: '1em' }}>
+          { this.state.state !== 'init' && <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', marginRight: '1em' }}>
             <Button inverted primary size="large" icon labelPosition="left" onClick={this.createRoom}><Icon name='certificate' />Create New Room</Button>
-          </div>
+          </div> }
         </div>
         <Divider inverted horizontal>
           <Header inverted as='h4'>
