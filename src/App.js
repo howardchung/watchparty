@@ -279,7 +279,7 @@ export default class App extends React.Component {
   }
   
   createRoom = async () => {
-    const response = await window.fetch({ url: serverPath + '/createRoom', method: 'POST' });
+    const response = await window.fetch(serverPath + '/createRoom', { method: 'POST' });
     const data = await response.json();
     const { name } = data;
     window.location.hash = '#' + name;
