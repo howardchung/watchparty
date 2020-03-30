@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Grid, Segment, Divider, Select, Dimmer, Loader, Header, Label, Card, Input, Icon, List, Comment, Progress, Dropdown, Message } from 'semantic-ui-react'
+import { Button, Grid, Segment, Divider, Dimmer, Loader, Header, Label, Input, Icon, List, Comment, Progress, Dropdown, Message } from 'semantic-ui-react'
 import './App.css';
 // import { v4 as uuidv4 } from 'uuid';
 import querystring from 'querystring';
