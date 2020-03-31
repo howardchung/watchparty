@@ -270,7 +270,7 @@ export default class App extends React.Component {
       leftVideo.currentTime = time;
       // Clear subtitles
       leftVideo.innerHTML = '';
-      const subtitleListResp = await window.fetch(mediaPath + 'subtitles');
+      const subtitleListResp = await window.fetch(mediaPath + 'subtitles/');
       const subtitleList = await subtitleListResp.json();
       const match = subtitleList.find(subtitle => src.slice(0, -4).toLowerCase().startsWith(subtitle.name.slice(0, -4).toLowerCase()));
       if (match) {
