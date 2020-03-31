@@ -15,6 +15,22 @@ const io = require('socket.io')(server, { origins: '*:*'});
 const Moniker = require('moniker');
 const names = Moniker.generator([Moniker.adjective, Moniker.noun, Moniker.verb]);
 
+// const Turn = require('node-turn');
+// const turnServer = new Turn({
+//   // set options
+//   listeningIps: ['0.0.0.0'],
+//   // relayIps: ['13.66.162.252'],
+//   authMech: 'long-term',
+//   credentials: {
+//     username: "password"
+//   },
+//   debugLevel: 'DEBUG',
+// });
+// turnServer.start();
+
+// const { PeerServer } = require('peer');
+// const peerServer = PeerServer({ port: 2000, path: '/' });
+
 server.listen(process.env.PORT || 8080);
 
 app.use(cors());

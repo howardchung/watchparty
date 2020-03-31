@@ -48,13 +48,13 @@ export default class App extends React.Component {
   }
 
   setupWebRTC = () => {
-    const iceServers = [[
+    const iceServers = [
       { url: 'stun:stun.l.google.com:19302' },
-      { url: 'turn:13.66.162.252:3478' },
-    ]];
+      // { url: 'turn:13.66.162.252:3478', username: 'username', credential: 'password' },
+    ];
     const isHost = window.location.search.length > 1;
     if (isHost) {
-      const host = new window.Peer('watchparty-video', { debug: 3, iceServers });
+      const host = new window.Peer('watchparty-video', { debug: 3, config: { iceServers }});
       const videoRecs = {};
       host.on('call', function(call) {
         call.answer();
@@ -78,8 +78,10 @@ export default class App extends React.Component {
 
     async function startData() {
       const stream = await window.navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-      const peer = new window.Peer({ iceServers });
-      peer.call('watchparty-video', stream);
+      const peer = new window.Peer(null, { debug: 3, config: { iceServers }});
+      peer.on('open', () => {
+          peer.call('watchparty-video', stream);
+      });
     }
   }
   
