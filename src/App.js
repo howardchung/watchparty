@@ -134,10 +134,12 @@ export default class App extends React.Component {
   join = async (roomId) => {
     const leftVideo = document.getElementById('leftVideo');
     leftVideo.onloadeddata = () => {
-      const videoReadyTime = Number(new Date());
-      const offset = videoReadyTime - this.videoInitTime;
-      console.log('offset: ', offset);
-      leftVideo.currentTime += (offset / 1000);
+      if (this.videoInitTime) {
+        const videoReadyTime = Number(new Date());
+        const offset = videoReadyTime - this.videoInitTime;
+        console.log('offset: ', offset);
+        leftVideo.currentTime += (offset / 1000);
+      }
     };
 
     // this.setState({ state: 'watching' });
@@ -264,6 +266,8 @@ export default class App extends React.Component {
     if (this.isVideo()) {
       const leftVideo = document.getElementById('leftVideo');
       leftVideo.src = mediaPath + src;
+      this.videoInitTime = Number(new Date());
+      leftVideo.currentTime = time;
       // Clear subtitles
       leftVideo.innerHTML = '';
       const subtitleListResp = await window.fetch(mediaPath + 'subtitles');
@@ -281,8 +285,6 @@ export default class App extends React.Component {
         track.src = url;
         leftVideo.appendChild(track);
       }
-      leftVideo.currentTime = time;
-      this.videoInitTime = Number(new Date());
     }
     if (this.isYouTube()) {
       let url = new window.URL(src);
