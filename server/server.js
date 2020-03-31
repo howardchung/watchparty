@@ -3,7 +3,14 @@ const fs = require('fs');
 const express = require('express');
 const cors = require('cors');
 const app = express();
-const server = require('http').Server(app);
+let server = null;
+if (process.env.HTTPS) {
+    const key = fs.readFileSync('./server/insecurekey.pem');
+    const cert = fs.readFileSync('./server/insecurecert.pem');
+    server = require('https').createServer({key: key, cert: cert }, app);
+} else {
+    server = require('http').Server(app);
+}
 const io = require('socket.io')(server, { origins: '*:*'});
 const Moniker = require('moniker');
 const names = Moniker.generator([Moniker.adjective, Moniker.noun, Moniker.verb]);
@@ -12,6 +19,9 @@ server.listen(process.env.PORT || 8080);
 
 app.use(cors());
 app.use(express.static('build'));
+app.get('/ping', (req, res) => {
+  res.json('pong');
+});
 app.post('/createRoom', (req, res) => {
   let name = names.choose();
   // Keep retrying until no collision
@@ -37,7 +47,7 @@ function Room(roomId) {
   };
   
   setInterval(() => {
-    console.log(roomId, this.video, this.roster, this.tsMap, this.nameMap);
+    // console.log(roomId, this.video, this.roster, this.tsMap, this.nameMap);
     io.of(roomId).emit('REC:tsMap', this.tsMap);
   }, 1000);
   
@@ -96,6 +106,10 @@ function Room(roomId) {
     socket.on('CMD:chat', (data) => {
        const chatMsg = {id: socket.id, msg: data};
        addChatMessage(chatMsg);
+    });
+    socket.on('CMD:video', (data) => {
+        // console.log(data);
+        socket.broadcast.emit('REC:video', { id: socket.id, data });
     });
   
     socket.on('disconnect', () => {

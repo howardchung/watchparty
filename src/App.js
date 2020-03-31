@@ -4,11 +4,12 @@ import './App.css';
 // import { v4 as uuidv4 } from 'uuid';
 import querystring from 'querystring';
 import { generateName } from './generateName';
+import VTTConverter from 'srt-webvtt';
 
 const serverPath = process.env.REACT_APP_SERVER_HOST || `${window.location.protocol}//${window.location.hostname}${process.env.NODE_ENV === 'production' ? '' : ':8080'}`;
 const mediaList = process.env.REACT_APP_MEDIA_LIST || 'https://dev.howardchung.net/' || `https://gitlab.com/api/v4/projects/howardchung%2Fmedia/repository/tree`;
 const mediaPath = process.env.REACT_APP_MEDIA_PATH || 'https://dev.howardchung.net/' || `https://glcdn.githack.com/howardchung/media/-/raw/master/`;
-      
+
 export default class App extends React.Component {
   state = {
     state: 'init',
@@ -38,10 +39,48 @@ export default class App extends React.Component {
       this.init();
     }
     // TODO video chat
+    // this.uploadVideo();
+    // this.setupWebRTC();
     // TODO youtube, twitch, bring your own file
     // TODO playlists
     // TODO rewrite using ws
     // TODO last writer wins on sending desynced timestamps (use max?)
+  }
+
+  setupWebRTC = () => {
+    const iceServers = [[
+      { url: 'stun:stun.l.google.com:19302' },
+      { url: 'turn:13.66.162.252:3478' },
+    ]];
+    const isHost = window.location.search.length > 1;
+    if (isHost) {
+      const host = new window.Peer('watchparty-video', { debug: 3, iceServers });
+      const videoRecs = {};
+      host.on('call', function(call) {
+        call.answer();
+        call.on('stream', function(stream) {
+          console.log(call, stream);
+          if (!videoRecs[call.peer]) {
+            const videoRec = document.createElement('video');
+            videoRec.autoplay = true;
+            videoRec.width = 320;
+            videoRec.height = 240;
+            videoRecs[call.peer] = videoRec;
+            videoRec.srcObject = stream;
+            document.body.appendChild(videoRec);
+          }
+        });
+      });
+    }
+    else {
+      startData();
+    }
+
+    async function startData() {
+      const stream = await window.navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      const peer = new window.Peer({ iceServers });
+      peer.call('watchparty-video', stream);
+    }
   }
   
   init = () => {
@@ -52,8 +91,13 @@ export default class App extends React.Component {
       if (query) {
         roomId = '/' + query;
       }
+
+      // Send heartbeat to the server
+      window.setInterval(() => {
+        window.fetch(serverPath + '/ping');
+      }, 10 * 60 * 1000);
   
-      // 2. This code loads the IFrame Player API code asynchronously.
+      // This code loads the IFrame Player API code asynchronously.
       const tag = document.createElement('script');
       tag.src = "https://www.youtube.com/iframe_api";
       var firstScriptTag = document.getElementsByTagName('script')[0];
@@ -99,7 +143,7 @@ export default class App extends React.Component {
     // this.setState({ state: 'watching' });
     const response = await window.fetch(mediaList);
     const data = await response.json();
-    this.setState({ watchOptions: data.map(file => file.name) });
+    this.setState({ watchOptions: data.filter(file => file.type === 'file').map(file => file.name) });
     
     const socket = window.io.connect(serverPath + roomId);
     this.socket = socket;
@@ -220,6 +264,23 @@ export default class App extends React.Component {
     if (this.isVideo()) {
       const leftVideo = document.getElementById('leftVideo');
       leftVideo.src = mediaPath + src;
+      // Clear subtitles
+      leftVideo.innerHTML = '';
+      const subtitleListResp = await window.fetch(mediaPath + 'subtitles');
+      const subtitleList = await subtitleListResp.json();
+      const match = subtitleList.find(subtitle => src.slice(0, -4).toLowerCase().startsWith(subtitle.name.slice(0, -4).toLowerCase()));
+      if (match) {
+        const response = await window.fetch(mediaPath + 'subtitles/' + match.name);
+        const buffer = await response.arrayBuffer();
+        const vttConverter = new VTTConverter(new Blob([buffer]));
+        const url = await vttConverter.getURL();
+        const track = document.createElement("track");
+        track.kind = "captions";
+        track.label = "English";
+        track.srclang = "en";
+        track.src = url;
+        leftVideo.appendChild(track);
+      }
       leftVideo.currentTime = time;
       this.videoInitTime = Number(new Date());
     }
@@ -340,6 +401,11 @@ export default class App extends React.Component {
     }
   }
   
+  toggleSubtitle = () => {
+    const leftVideo = document.getElementById('leftVideo');
+    leftVideo.textTracks[0].mode = leftVideo.textTracks[0].mode === 'showing' ? 'hidden' : 'showing';
+  }
+
   setMedia = (e, data) => {
     this.socket.emit('CMD:host', data.value);
   }
@@ -475,6 +541,7 @@ export default class App extends React.Component {
               onSeek={this.onSeek}
               fullScreen={this.fullScreen}
               toggleMute={this.toggleMute}
+              toggleSubtitle={this.toggleSubtitle}
               paused={this.isPaused()}
               muted={this.isMuted()}
               currentTime={this.getCurrentTime()}
@@ -561,7 +628,7 @@ class Controls extends React.Component {
   }
   
   render() {
-    const { togglePlay, onSeek, fullScreen, toggleMute, paused, muted, currentTime, duration } = this.props;
+    const { togglePlay, onSeek, fullScreen, toggleMute, toggleSubtitle, paused, muted, currentTime, duration } = this.props;
     return <div className="controls">
       <Icon size="large" bordered onClick={togglePlay} className="control action" name={ paused ? 'play' : 'pause' } />
       <div className="control">{formatTimestamp(currentTime)}</div>
@@ -586,6 +653,7 @@ class Controls extends React.Component {
         </div>}
       </Progress>
       <div className="control">{formatTimestamp(duration)}</div>
+      <Icon size="large" bordered onClick={toggleSubtitle} className="control action" name='closed captioning' />
       <Icon size="large" bordered onClick={fullScreen} className="control action" name='expand' />
       <Icon size="large" bordered onClick={toggleMute} className="control action" name={muted ? 'volume off' : 'volume up' } />
     </div>;
@@ -672,3 +740,58 @@ async function testAutoplay() {
   video.pause();
   return true;
 }
+
+    /*
+      uploadVideo = async () => {
+    let stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+    // let options = { mimeType: 'video/webm; codecs=vp9' };
+    let options = { mimeType: 'video/webm; codecs=vp9' };
+    let mediaRecorder = new MediaRecorder(stream, options);
+    mediaRecorder.ondataavailable = async (event) => {
+      if (event.data.size > 0) {
+        console.log((await event.data.arrayBuffer()));
+        debugger;
+        this.socket && this.socket.emit('CMD:video', event.data);
+      }
+    };
+    mediaRecorder.start(1000);
+      
+    const video = document.createElement('video');
+    video.width = 320;
+    video.height = 240;
+    video.srcObject = stream;
+    video.autoplay = true;
+    video.muted = true;
+    document.body.appendChild(video);
+  }
+  */
+ /*
+     let videoRecs = {};
+    let videoMs = {};
+    socket.on('REC:video', (data) => {
+      // id and data fields
+      if (!videoRecs[data.id]) {
+        const videoRec = document.createElement('video');
+        // videoRec.autoplay = true;
+        videoRec.width = 320;
+        videoRec.height = 240;
+        videoRecs[data.id] = videoRec;
+        const ms = new MediaSource();
+        // console.log(MediaSource.isTypeSupported('video/webm; codecs=vp9'));
+        ms.onsourceopen = () => {
+          console.log('onsourceopen');
+          ms.addSourceBuffer('video/webm; codecs=vp9');
+          videoMs[data.id] = ms;
+        };
+        ms.onsourceclose = () => {
+          console.log('onsourceclose');
+        }
+        videoRec.src = window.URL.createObjectURL(ms);
+        document.body.appendChild(videoRec);
+      }
+      if (videoMs[data.id] && videoMs[data.id].readyState === 'open') {
+        videoMs[data.id].sourceBuffers[0].appendBuffer(new Uint8Array(data.data));
+        console.log('append', videoMs[data.id].sourceBuffers, new Uint8Array(data.data));
+      }
+    });
+    */
