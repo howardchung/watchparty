@@ -202,7 +202,7 @@ export default class App extends React.Component {
     });
     window.setInterval(() => {
       this.socket.emit('CMD:ts', this.getCurrentTime());
-    });
+    }, 1000);
   }
   
   getMediaType = () => {
