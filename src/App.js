@@ -84,6 +84,66 @@ export default class App extends React.Component {
       });
     }
   }
+
+  uploadVideo = async () => {
+    let stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+    const video = document.createElement('video');
+    video.width = 320;
+    video.height = 240;
+    video.srcObject = stream;
+    video.autoplay = true;
+    video.muted = true;
+    document.body.appendChild(video);
+
+    const canvas = document.createElement('canvas');
+    canvas.id = 'canvas';
+    document.body.appendChild(canvas);
+
+	var context = canvas.getContext('2d');
+	requestAnimationFrame(renderFrame);
+
+	function renderFrame() {
+	  // re-register callback
+	  requestAnimationFrame(renderFrame);
+	  // set internal canvas size to match HTML element size
+	  canvas.width = canvas.scrollWidth;
+	  canvas.height = canvas.scrollHeight;
+	  if (video.readyState === video.HAVE_ENOUGH_DATA) {
+		// scale and horizontally center the camera image
+		var videoSize = { width: video.videoWidth, height: video.videoHeight };
+		var canvasSize = { width: canvas.width, height: canvas.height };
+		var renderSize = calculateSize(videoSize, canvasSize);
+		var xOffset = (canvasSize.width - renderSize.width) / 2;
+		context.drawImage(video, xOffset, 0, renderSize.width, renderSize.height);
+	  }
+	}
+	function calculateSize(srcSize, dstSize) {
+    var srcRatio = srcSize.width / srcSize.height;
+    var dstRatio = dstSize.width / dstSize.height;
+    if (dstRatio > srcRatio) {
+      return {
+        width:  dstSize.height * srcRatio,
+        height: dstSize.height
+      };
+    } else {
+      return {
+        width:  dstSize.width,
+        height: dstSize.width / srcRatio
+      };
+    }
+  }
+
+    const stream2 = canvas.captureStream(25);
+    let options = { mimeType: 'video/webm; codecs=vp9' };
+    let mediaRecorder = new MediaRecorder(stream2, options);
+    mediaRecorder.ondataavailable = async (event) => {
+      if (event.data.size > 0) {
+        // console.log((await event.data.arrayBuffer()));
+        this.socket && this.socket.emit('CMD:video', event.data);
+      }
+    };
+    mediaRecorder.start(1000);
+  }
   
   init = () => {
     this.setState({ state: 'started' }, () => {
@@ -186,6 +246,42 @@ export default class App extends React.Component {
       this.state.chat.push(data);
       this.setState({ chat: this.state.chat });
       this.scrollToBottom();
+    });
+    let videoRecs = {};
+    let videoMs = {};
+    let buffers = {};
+    socket.on('REC:video', async (data) => {
+      // id and data fields
+      if (!buffers[data.id]) {
+        buffers[data.id] = [];
+      }
+      const buffer = buffers[data.id];
+      buffer.push(data.data);
+      console.log(buffer, data);
+      const ms = videoMs[data.id];
+      if (ms && ms.sourceBuffers[0] && !ms.sourceBuffers[0].updating && buffer.length)
+      {
+        videoMs[data.id].sourceBuffers[0].appendBuffer(buffer.shift());
+      }
+      if (!videoRecs[data.id]) {
+        const videoRec = document.createElement('video');
+        videoRec.autoplay = true;
+        videoRec.width = 320;
+        videoRec.height = 240;
+        videoRecs[data.id] = videoRec;
+        const ms = new MediaSource();
+        // console.log(MediaSource.isTypeSupported('video/webm; codecs=vp9'));
+        ms.onsourceopen = () => {
+          console.log('onsourceopen');
+          ms.addSourceBuffer('video/webm; codecs=vp9');
+          videoMs[data.id] = ms;
+        };
+        ms.onsourceclose = () => {
+          console.log('onsourceclose');
+        }
+        videoRec.src = window.URL.createObjectURL(ms);
+        document.body.appendChild(videoRec);
+      }
     });
     socket.on('REC:tsMap', (data) => {
       this.setState({ tsMap: data });
@@ -745,57 +841,3 @@ async function testAutoplay() {
   return true;
 }
 
-    /*
-      uploadVideo = async () => {
-    let stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
-    // let options = { mimeType: 'video/webm; codecs=vp9' };
-    let options = { mimeType: 'video/webm; codecs=vp9' };
-    let mediaRecorder = new MediaRecorder(stream, options);
-    mediaRecorder.ondataavailable = async (event) => {
-      if (event.data.size > 0) {
-        console.log((await event.data.arrayBuffer()));
-        debugger;
-        this.socket && this.socket.emit('CMD:video', event.data);
-      }
-    };
-    mediaRecorder.start(1000);
-      
-    const video = document.createElement('video');
-    video.width = 320;
-    video.height = 240;
-    video.srcObject = stream;
-    video.autoplay = true;
-    video.muted = true;
-    document.body.appendChild(video);
-  }
-  */
- /*
-     let videoRecs = {};
-    let videoMs = {};
-    socket.on('REC:video', (data) => {
-      // id and data fields
-      if (!videoRecs[data.id]) {
-        const videoRec = document.createElement('video');
-        // videoRec.autoplay = true;
-        videoRec.width = 320;
-        videoRec.height = 240;
-        videoRecs[data.id] = videoRec;
-        const ms = new MediaSource();
-        // console.log(MediaSource.isTypeSupported('video/webm; codecs=vp9'));
-        ms.onsourceopen = () => {
-          console.log('onsourceopen');
-          ms.addSourceBuffer('video/webm; codecs=vp9');
-          videoMs[data.id] = ms;
-        };
-        ms.onsourceclose = () => {
-          console.log('onsourceclose');
-        }
-        videoRec.src = window.URL.createObjectURL(ms);
-        document.body.appendChild(videoRec);
-      }
-      if (videoMs[data.id] && videoMs[data.id].readyState === 'open') {
-        videoMs[data.id].sourceBuffers[0].appendBuffer(new Uint8Array(data.data));
-        console.log('append', videoMs[data.id].sourceBuffers, new Uint8Array(data.data));
-      }
-    });
-    */
