@@ -1,14 +1,28 @@
 import React from 'react';
-import { Button, Grid, Segment, Divider, Dimmer, Loader, Header, Label, Input, Icon, List, Comment, Progress, Dropdown, Message } from 'semantic-ui-react'
+import { Button, Grid, Segment, Divider, Dimmer, Loader, Header, Label, Input, Icon, List, Comment, Progress, Dropdown, Message, Modal, Form, TextArea } from 'semantic-ui-react'
 import './App.css';
 // import { v4 as uuidv4 } from 'uuid';
 import querystring from 'querystring';
 import { generateName } from './generateName';
 import VTTConverter from 'srt-webvtt';
+import magnet from 'magnet-uri';
 
 const serverPath = process.env.REACT_APP_SERVER_HOST || `${window.location.protocol}//${window.location.hostname}${process.env.NODE_ENV === 'production' ? '' : ':8080'}`;
-const mediaList = process.env.REACT_APP_MEDIA_LIST || 'https://dev.howardchung.net/' || `https://gitlab.com/api/v4/projects/howardchung%2Fmedia/repository/tree`;
-const mediaPath = process.env.REACT_APP_MEDIA_PATH || 'https://dev.howardchung.net/' || `https://glcdn.githack.com/howardchung/media/-/raw/master/`;
+const defaultMediaList = process.env.REACT_APP_MEDIA_LIST || 'https://dev.howardchung.net/';
+const searchPath = process.env.REACT_APP_SEARCH_PATH || 'https://scw.howardchung.net/';
+
+const getMediaPathForList = (list) => {
+  const mappings = {
+    // TODO do a dynamic transform on gitlab to githack urls
+    'https://gitlab.com/api/v4/projects/howardchung%2Fmedia/repository/tree': 'https://glcdn.githack.com/howardchung/media/-/raw/master/',
+  };
+  if (mappings[list]) {
+    // Return any predefined
+    return mappings[list];
+  }
+  // Nginx servers use the same mediapath as list
+  return list;
+}
 
 export default class App extends React.Component {
   state = {
@@ -195,23 +209,37 @@ export default class App extends React.Component {
   
   join = async (roomId) => {
     const leftVideo = document.getElementById('leftVideo');
-    leftVideo.onloadeddata = () => {
-      if (this.videoInitTime) {
-        const videoReadyTime = Number(new Date());
-        const offset = videoReadyTime - this.videoInitTime;
-        console.log('offset: ', offset);
-        leftVideo.currentTime += (offset / 1000);
-      }
-    };
+    // leftVideo.onloadeddata = () => {
+    //   if (this.videoInitTime) {
+    //     const videoReadyTime = Number(new Date());
+    //     const offset = videoReadyTime - this.videoInitTime;
+    //     console.log('offset: ', offset);
+    //     leftVideo.currentTime += (offset / 1000);
+    //   }
+    // };
+
+    // Load settings from localstorage, build medialist
+    let settings = window.localStorage.getItem('watchparty-setting');
+    if (!settings) {
+        updateSettings(defaultMediaList);
+        settings = window.localStorage.getItem('watchparty-setting');
+    }
+    let watchOptions = [];
+    const lines = settings.split('\n');
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      // TODO promise.all this to make requests in parallel
+      const response = await window.fetch(line);
+      const data = await response.json();
+      watchOptions = [...watchOptions, ...data.filter(file => file.type === 'file').map(file => getMediaPathForList(line) + file.name)];
+    }
+    this.setState({ watchOptions });
 
     // this.setState({ state: 'watching' });
-    const response = await window.fetch(mediaList);
-    const data = await response.json();
-    this.setState({ watchOptions: data.filter(file => file.type === 'file').map(file => file.name) });
-    
     const socket = window.io.connect(serverPath + roomId);
     this.socket = socket;
-    socket.on('connect', () => {
+    socket.on('connect', async () => {
+      // Load username from localstorage
       let userName = window.localStorage.getItem('watchparty-username');
       this.updateName(null, { value: userName || generateName()});
     });
@@ -301,22 +329,12 @@ export default class App extends React.Component {
     }, 1000);
   }
   
-  getMediaType = () => {
-    if (!this.state.currentMedia) {
-      return '';
-    }
-    if (this.state.currentMedia.startsWith('https://www.youtube.com/')) {
-      return 'youtube';
-    }
-    return 'video';
-  }
-  
   isYouTube = () => {
-    return this.getMediaType() === 'youtube';
+    return getMediaType(this.state.currentMedia) === 'youtube';
   }
   
   isVideo = () => {
-    return this.getMediaType() === 'video';
+    return getMediaType(this.state.currentMedia) === 'video';
   }
   
   getCurrentTime = () => {
@@ -363,16 +381,17 @@ export default class App extends React.Component {
     console.log('doSrc', src, time);
     if (this.isVideo()) {
       const leftVideo = document.getElementById('leftVideo');
-      leftVideo.src = mediaPath + src;
+      leftVideo.src = src;
       this.videoInitTime = Number(new Date());
       leftVideo.currentTime = time;
       // Clear subtitles
       leftVideo.innerHTML = '';
-      const subtitleListResp = await window.fetch(mediaPath + 'subtitles/');
+      const subtitlePath = src.slice(0, src.lastIndexOf('/') + 1);
+      const subtitleListResp = await window.fetch(subtitlePath + 'subtitles/');
       const subtitleList = await subtitleListResp.json();
       const match = subtitleList.find(subtitle => src.slice(0, -4).toLowerCase().startsWith(subtitle.name.slice(0, -4).toLowerCase()));
       if (match) {
-        const response = await window.fetch(mediaPath + 'subtitles/' + match.name);
+        const response = await window.fetch(subtitlePath + 'subtitles/' + match.name);
         const buffer = await response.arrayBuffer();
         const vttConverter = new VTTConverter(new Blob([buffer]));
         const url = await vttConverter.getURL();
@@ -531,7 +550,9 @@ export default class App extends React.Component {
   scrollToBottom = () => {
     // TODO dont do if user manually scrolled up
     // this.messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
-    this.messagesRef.current.scrollTop = this.messagesRef.current.scrollHeight;
+    if (this.messagesRef.current) {
+      this.messagesRef.current.scrollTop = this.messagesRef.current.scrollHeight;
+    }
   }
 
   render() {
@@ -548,6 +569,7 @@ export default class App extends React.Component {
           </a>
           { <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', marginRight: '1em' }}>
             <Button inverted primary size="large" icon labelPosition="left" onClick={this.createRoom}><Icon name='certificate' />Create New Room</Button>
+            <SettingsModal />
           </div> }
         </div>
         <Divider inverted horizontal>
@@ -561,6 +583,7 @@ export default class App extends React.Component {
           <Grid.Column width={11}>
             { this.state.state === 'init' && <div style={{ display: 'flex', justifyContent: 'center' }}><Button inverted primary size="huge" onClick={this.init} icon labelPosition="left"><Icon name="sign-in" />Join Party</Button></div> }
             { this.state.state !== 'init' && <React.Fragment>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
             <Dropdown
               // icon='film'
               // className='icon'
@@ -575,12 +598,17 @@ export default class App extends React.Component {
               onAddItem={(e, {value}) => this.setState({ watchOptions: [...this.state.watchOptions, value] })}
               onChange={this.setMedia}
               value={this.state.currentMedia}
-              options={this.state.watchOptions.map(option => ({ key: option, text: option, value: option }))}
+              options={this.state.watchOptions.map(option => ({ key: option, text: getMediaDisplayName(option), value: option }))}
             />
+            </div>
+            <Divider inverted horizontal></Divider>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+            <SearchComponent setMedia={this.setMedia} />
+            </div>
             <Segment inverted style={{ position: 'relative' }}>
               <Grid columns={2}>
                 <Grid.Column>
-                <Header inverted as='h4' style={{ textTransform: 'uppercase', marginRight: '20px', wordBreak: 'break-all' }}>Now Watching: {this.state.currentMedia}</Header>
+                <Header inverted as='h4' style={{ textTransform: 'uppercase', marginRight: '20px', wordBreak: 'break-all' }}>Now Watching: {getMediaDisplayName(this.state.currentMedia)}</Header>
                 </Grid.Column>
                 <Grid.Column>
                 <List inverted horizontal style={{ marginLeft: '20px' }}>
@@ -689,6 +717,153 @@ export default class App extends React.Component {
   }
 }
 
+class SearchComponent extends React.Component {
+  state = { results: null, resetDropdown: Number(new Date()) };
+
+  doSearch = (e) => {
+    e.persist();
+    if (!this.debounced) {
+      this.debounced = debounce(async () => {
+        const response = await window.fetch(searchPath + 'search?q=' + encodeURIComponent(e.target.value));
+        const data = await response.json();
+        this.setState({ results: data });
+      }, 300);
+    }
+    this.debounced();
+  }
+
+  render() {
+    const { setMedia } = this.props;
+    return <Dropdown
+      key={this.state.resetDropdown}
+      fluid
+      icon='search'
+      text="Search for streams"
+      labeled
+      search={() => {}}
+      onSearchChange={this.doSearch}
+      button
+      className='icon'
+    >
+      <Dropdown.Menu>
+        {(this.state.results || []).map(result => {
+          return <Dropdown.Item
+            label={{ color: Number(result.seeders) ? 'green' : 'red', empty: true, circular: true }}
+            text={result.name + ' - ' + result.size + ' - ' + result.seeders + ' peers'}
+            onClick={(e) => {
+              setMedia(e, { value: searchPath + 'stream?torrent=' + encodeURIComponent(result.magnet)});
+              this.setState({ resetDropdown: Number(new Date()) });
+            }}
+          />
+        })}
+      </Dropdown.Menu>
+    </Dropdown>;
+  }
+}
+
+// Returns a function, that, as long as it continues to be invoked, will not
+// be triggered. The function will be called after it stops being called for
+// N milliseconds. If `immediate` is passed, trigger the function on the
+// leading edge, instead of the trailing.
+function debounce(func, wait, immediate) {
+  var timeout;
+
+  // This is the function that is actually executed when
+  // the DOM event is triggered.
+  return function executedFunction() {
+    // Store the context of this and any
+    // parameters passed to executedFunction
+    var context = this;
+    var args = arguments;
+	    
+    // The function to be called after 
+    // the debounce time has elapsed
+    var later = function() {
+      // null timeout to indicate the debounce ended
+      timeout = null;
+	    
+      // Call function now if you did not on the leading end
+      if (!immediate) func.apply(context, args);
+    };
+
+    // Determine if you should call the function
+    // on the leading or trail end
+    var callNow = immediate && !timeout;
+	
+    // This will reset the waiting every function execution.
+    // This is the step that prevents the function from
+    // being executed because it will never reach the 
+    // inside of the previous setTimeout  
+    clearTimeout(timeout);
+	
+    // Restart the debounce waiting period.
+    // setTimeout returns a truthy value (it differs in web vs node)
+    timeout = setTimeout(later, wait);
+	
+    // Call immediately if you're dong a leading
+    // end execution
+    if (callNow) func.apply(context, args);
+  };
+};
+
+const SettingsModal = () => (
+  <Modal trigger={<Button secondary size="large" icon labelPosition="left"><Icon name="setting" />Settings</Button>} basic size='small'>
+    <Header icon='setting' content='Settings' />
+    <Modal.Content>
+      <Header inverted>
+        Configure media sources:
+      </Header>
+      <p>Enter one URL per line.</p>
+      <p>The plan is to make this support Nginx file servers, GitLab repos, Plex media servers, etc.</p>
+      <Form>
+        <TextArea id="settings_textarea">{window.localStorage.getItem('watchparty-setting')}</TextArea>
+      </Form>
+    </Modal.Content>
+    <Modal.Actions>
+      <Button color='green' inverted onClick={() => {
+            const newSetting = document.getElementById('settings_textarea').value;
+            updateSettings(newSetting);
+            window.location.reload();
+        }}>
+        <Icon name='checkmark' />Save
+      </Button>
+    </Modal.Actions>
+  </Modal>
+)
+
+const updateSettings = (newSetting) => {
+  window.localStorage.setItem('watchparty-setting', newSetting);
+}
+
+const getMediaType = (input) => {
+  if (!input) {
+    return '';
+  }
+  if (input.startsWith('https://www.youtube.com/')) {
+    return 'youtube';
+  }
+  return 'video';
+}
+
+const getMediaDisplayName = (input) => {
+  if (!input) {
+    return '';
+  }
+  // Show the whole URL for youtube
+  if (getMediaType(input) === 'youtube') {
+    return input;
+  }
+  if (input.includes('stream?torrent=magnet')) {
+    // TODO support showing names for peerstream selections (need to decode magnet url)
+    const search = new URL(input).search;
+    const magnetUrl = querystring.parse(search.substring(1)).torrent;
+    const magnetParsed = magnet.decode(decodeURIComponent(magnetUrl));
+    return magnetParsed.name;
+  }
+  // Get the filename out of the URL
+  return input.split('/').slice(-1)[0];
+}
+
 const ChatMessage = ({ id, timestamp, cmd, msg, nameMap }) => {
     return <Comment>
       <Comment.Avatar src={getImage(nameMap[id])} />
@@ -762,7 +937,7 @@ class Controls extends React.Component {
 
 function formatMessage(cmd, msg) {
   if (cmd === 'host') {
-    return `changed the video to ${msg}`;
+    return `changed the video to ${getMediaDisplayName(msg)}`;
   }
   else if (cmd === 'seek') {
     return `jumped to ${formatTimestamp(msg)}`;
