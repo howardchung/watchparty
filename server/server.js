@@ -28,9 +28,6 @@ const names = Moniker.generator([Moniker.adjective, Moniker.noun, Moniker.verb])
 // });
 // turnServer.start();
 
-// const { PeerServer } = require('peer');
-// const peerServer = PeerServer({ port: 2000, path: '/' });
-
 server.listen(process.env.PORT || 8080);
 
 app.use(cors());
@@ -126,6 +123,9 @@ function Room(roomId) {
     socket.on('CMD:video', (data) => {
         // console.log(data);
         socket.broadcast.emit('REC:video', { id: socket.id, data });
+    });
+    socket.on('signal', (data) => {
+        socket.broadcast.emit('signal', { id: socket.id, data });
     });
   
     socket.on('disconnect', () => {

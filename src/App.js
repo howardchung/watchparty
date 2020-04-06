@@ -53,8 +53,6 @@ export default class App extends React.Component {
       this.init();
     }
     // TODO video chat
-    // this.uploadVideo();
-    // this.setupWebRTC();
     // TODO youtube, twitch, bring your own file
     // TODO playlists
     // TODO rewrite using ws
@@ -63,100 +61,90 @@ export default class App extends React.Component {
 
   setupWebRTC = () => {
     const iceServers = [
-      { url: 'stun:stun.l.google.com:19302' },
-      // { url: 'turn:13.66.162.252:3478', username: 'username', credential: 'password' },
+      { urls: 'stun:stun.l.google.com:19302' },
+      // { urls: 'turn:13.66.162.252:3478', username: 'username', credential: 'password' },
+      {
+	       urls: 'turn:numb.viagenie.ca',
+	       credential: 'watchparty',
+	      username: 'howardzchung@gmail.com',
+      },
     ];
-    const isHost = window.location.search.length > 1;
-    if (isHost) {
-      const host = new window.Peer('watchparty-video', { debug: 3, config: { iceServers }});
-      const videoRecs = {};
-      host.on('call', function(call) {
-        call.answer();
-        call.on('stream', function(stream) {
-          console.log(call, stream);
-          if (!videoRecs[call.peer]) {
-            const videoRec = document.createElement('video');
-            videoRec.autoplay = true;
-            videoRec.width = 320;
-            videoRec.height = 240;
-            videoRecs[call.peer] = videoRec;
-            videoRec.srcObject = stream;
-            document.body.appendChild(videoRec);
-          }
-        });
-      });
-    }
-    else {
-      startData();
-    }
+    const videoRecs = {};
+    // const yourId = this.socket.id;
+    // TODO get the roster
+    // TODO establish a connection with each other member (mesh config)
 
-    async function startData() {
-      const stream = await window.navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-      const peer = new window.Peer(null, { debug: 3, config: { iceServers }});
-      peer.on('open', () => {
-          peer.call('watchparty-video', stream);
-      });
-    }
-  }
-
-  uploadVideo = async () => {
-    let stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
-    const video = document.createElement('video');
-    video.width = 320;
-    video.height = 240;
-    video.srcObject = stream;
-    video.autoplay = true;
-    video.muted = true;
-    document.body.appendChild(video);
-
-    const canvas = document.createElement('canvas');
-    canvas.id = 'canvas';
-    document.body.appendChild(canvas);
-
-	var context = canvas.getContext('2d');
-	requestAnimationFrame(renderFrame);
-
-	function renderFrame() {
-	  // re-register callback
-	  requestAnimationFrame(renderFrame);
-	  // set internal canvas size to match HTML element size
-	  canvas.width = canvas.scrollWidth;
-	  canvas.height = canvas.scrollHeight;
-	  if (video.readyState === video.HAVE_ENOUGH_DATA) {
-		// scale and horizontally center the camera image
-		var videoSize = { width: video.videoWidth, height: video.videoHeight };
-		var canvasSize = { width: canvas.width, height: canvas.height };
-		var renderSize = calculateSize(videoSize, canvasSize);
-		var xOffset = (canvasSize.width - renderSize.width) / 2;
-		context.drawImage(video, xOffset, 0, renderSize.width, renderSize.height);
-	  }
-	}
-	function calculateSize(srcSize, dstSize) {
-    var srcRatio = srcSize.width / srcSize.height;
-    var dstRatio = dstSize.width / dstSize.height;
-    if (dstRatio > srcRatio) {
-      return {
-        width:  dstSize.height * srcRatio,
-        height: dstSize.height
-      };
-    } else {
-      return {
-        width:  dstSize.width,
-        height: dstSize.width / srcRatio
-      };
-    }
-  }
-
-    const stream2 = canvas.captureStream(25);
-    let options = { mimeType: 'video/webm; codecs=vp9' };
-    let mediaRecorder = new MediaRecorder(stream2, options);
-    mediaRecorder.ondataavailable = async (event) => {
-      if (event.data.size > 0) {
-        // console.log((await event.data.arrayBuffer()));
-        this.socket && this.socket.emit('CMD:video', event.data);
+    const pc = new RTCPeerConnection({ iceTransportPolicy: 'all', iceServers });
+    pc.onicecandidate = (event) => {
+      if (event.candidate) {
+        sendMessage({'ice': event.candidate});
       }
     };
-    mediaRecorder.start(1000);
+    pc.onaddstream = (event) => {
+      // console.log('stream', event);
+      const stream = event.stream;
+      const remoteId = Math.random();
+      if (!videoRecs[remoteId]) {
+        const videoRec = document.createElement('video');
+        videoRec.autoplay = true;
+        videoRec.width = 320;
+        videoRec.height = 240;
+        videoRecs[remoteId] = videoRec;
+        videoRec.srcObject = stream;
+        document.body.appendChild(videoRec);
+      }
+    };
+    pc.onicegatheringstatechange = (e) => {
+      // console.log(e);
+    }
+    pc.onnegotiationneeded = () => {
+      showFriendsFace();
+    }
+
+    this.socket.on('signal', (data) => {
+      readMessage(data);
+    });
+
+    const sendMessage = async (data) => {
+      this.socket.emit('signal', data);
+    }
+
+    const readMessage = async (data) => {
+      const msg = data.data;
+      // const id = data.id;
+      // console.log('recv', data);
+      if (msg.ice !== undefined) {
+        pc.addIceCandidate(new RTCIceCandidate(msg.ice));
+      }
+      else if (msg.sdp.type === "offer") {
+        await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        sendMessage({'sdp': pc.localDescription});
+      }
+      else if (msg.sdp.type === "answer") {
+        pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
+      }
+    }
+
+    const showMyFace = async () => {
+      const stream = await navigator.mediaDevices.getUserMedia({audio:true, video:true});
+      const videoRec = document.createElement('video');
+      videoRec.autoplay = true;
+      videoRec.width = 320;
+      videoRec.height = 240;
+      videoRecs[this.socket.id] = videoRec;
+      videoRec.srcObject = stream;
+      document.body.appendChild(videoRec);
+      pc.addStream(stream);
+    }
+
+    const showFriendsFace = async () => {
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      sendMessage({'sdp': pc.localDescription });
+    }
+    showMyFace();
   }
   
   init = () => {
@@ -208,7 +196,7 @@ export default class App extends React.Component {
   }
   
   join = async (roomId) => {
-    const leftVideo = document.getElementById('leftVideo');
+    // const leftVideo = document.getElementById('leftVideo');
     // leftVideo.onloadeddata = () => {
     //   if (this.videoInitTime) {
     //     const videoReadyTime = Number(new Date());
@@ -242,6 +230,8 @@ export default class App extends React.Component {
       // Load username from localstorage
       let userName = window.localStorage.getItem('watchparty-username');
       this.updateName(null, { value: userName || generateName()});
+    
+      // this.setupWebRTC();
     });
     socket.on('REC:play', () => {
       this.doPlay();
