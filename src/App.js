@@ -370,6 +370,17 @@ export default class App extends React.Component {
       return this.watchPartyYTPlayer.isMuted();
     }
   }
+
+  isSubtitled = () => {
+    if (this.isVideo()) {
+      const leftVideo = document.getElementById('leftVideo');
+      return leftVideo.textTracks[0] && leftVideo.textTracks[0].mode === 'showing';
+    }
+    if (this.isYouTube()) {
+      // TODO
+      return false;
+    }   
+  }
   
   doSrc = async (src, time) => {
     console.log('doSrc', src, time);
@@ -384,7 +395,7 @@ export default class App extends React.Component {
       if (src.includes('stream?torrent=magnet')) {
         const search = new URL(this.state.currentMedia).search;
         const magnetUrl = querystring.parse(search.substring(1)).torrent;
-        subtitleSrc = searchPath + 'subtitles?torrent=' + encodeURIComponent(magnetUrl);
+        subtitleSrc = searchPath + 'subtitles2?torrent=' + encodeURIComponent(magnetUrl);
       }
       else {
         const subtitlePath = src.slice(0, src.lastIndexOf('/') + 1);
@@ -677,6 +688,7 @@ export default class App extends React.Component {
               toggleSubtitle={this.toggleSubtitle}
               paused={this.isPaused()}
               muted={this.isMuted()}
+              subtitled={this.isSubtitled()}
               currentTime={this.getCurrentTime()}
               duration={this.getDuration()}
             />
@@ -907,7 +919,7 @@ class Controls extends React.Component {
   }
   
   render() {
-    const { togglePlay, onSeek, fullScreen, toggleMute, toggleSubtitle, paused, muted, currentTime, duration } = this.props;
+    const { togglePlay, onSeek, fullScreen, toggleMute, toggleSubtitle, paused, muted, subtitled, currentTime, duration } = this.props;
     return <div className="controls">
       <Icon size="large" bordered onClick={togglePlay} className="control action" name={ paused ? 'play' : 'pause' } />
       <div className="control">{formatTimestamp(currentTime)}</div>
@@ -932,7 +944,7 @@ class Controls extends React.Component {
         </div>}
       </Progress>
       <div className="control">{formatTimestamp(duration)}</div>
-      <Icon size="large" bordered onClick={toggleSubtitle} className="control action" name='closed captioning' />
+      <Icon size="large" bordered onClick={toggleSubtitle} className="control action" name={subtitled ? 'closed captioning' : 'closed captioning outline'} />
       <Icon size="large" bordered onClick={fullScreen} className="control action" name='expand' />
       <Icon size="large" bordered onClick={toggleMute} className="control action" name={muted ? 'volume off' : 'volume up' } />
     </div>;
