@@ -175,6 +175,9 @@ export default class App extends React.Component {
               // this.watchPartyYTPlayer.playVideo();
             },
             onStateChange: (e) => {
+              if (getMediaType(this.state.currentMedia) === 'youtube' && e.data === window.YT.PlayerState.CUED) {
+                this.setState({ loading: false });
+              }
               // console.log(this.ytDebounce, e.data, this.watchPartyYTPlayer.getVideoUrl());
               if (this.ytDebounce && ((e.data === window.YT.PlayerState.PLAYING && this.state.currentMediaPaused)
                   || (e.data === window.YT.PlayerState.PAUSED && !this.state.currentMediaPaused))) {
@@ -196,15 +199,16 @@ export default class App extends React.Component {
   }
   
   join = async (roomId) => {
-    // const leftVideo = document.getElementById('leftVideo');
-    // leftVideo.onloadeddata = () => {
-    //   if (this.videoInitTime) {
-    //     const videoReadyTime = Number(new Date());
-    //     const offset = videoReadyTime - this.videoInitTime;
-    //     console.log('offset: ', offset);
-    //     leftVideo.currentTime += (offset / 1000);
-    //   }
-    // };
+    const leftVideo = document.getElementById('leftVideo');
+    leftVideo.onloadeddata = () => {
+      // if (this.videoInitTime) {
+      //   const videoReadyTime = Number(new Date());
+      //   const offset = videoReadyTime - this.videoInitTime;
+      //   console.log('offset: ', offset);
+      //   leftVideo.currentTime += (offset / 1000);
+      // }
+      this.setState({ loading: false });
+    };
 
     // Load settings from localstorage, build medialist
     let settings = window.localStorage.getItem('watchparty-setting');
@@ -247,7 +251,7 @@ export default class App extends React.Component {
       if (data.video && !this.state.watchOptions.includes(data.video)) {
         watchOptions.push(data.video);
       }
-      this.setState({ currentMedia: data.video, currentMediaPaused: data.paused, watchOptions, loading: false }, () => {
+      this.setState({ currentMedia: data.video, currentMediaPaused: data.paused, watchOptions, loading: true }, () => {
         // Stop all players
         const leftVideo = document.getElementById('leftVideo');
         leftVideo.pause();
@@ -629,7 +633,7 @@ export default class App extends React.Component {
               <Divider inverted vertical>With</Divider>
             </Segment>
             { (this.state.loading || !this.state.currentMedia) && <Segment inverted style={{ minHeight: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              { this.state.loading && 
+              { (this.state.loading) && 
               <Dimmer active>
                 <Loader />
               </Dimmer>
