@@ -251,7 +251,7 @@ export default class App extends React.Component {
       if (data.video && !this.state.watchOptions.includes(data.video)) {
         watchOptions.push(data.video);
       }
-      this.setState({ currentMedia: data.video, currentMediaPaused: data.paused, watchOptions, loading: true }, () => {
+      this.setState({ currentMedia: data.video, currentMediaPaused: data.paused, watchOptions, loading: Boolean(data.video) }, () => {
         // Stop all players
         const leftVideo = document.getElementById('leftVideo');
         leftVideo.pause();
