@@ -293,7 +293,6 @@ export default class App extends React.Component {
     });
     socket.on('roster', (data) => {
       this.setState({ participants: data }, () => {
-        // console.log(data);
         // Establish connections to the other video chatters
         this.updateWebRTC();
       });
@@ -319,7 +318,6 @@ export default class App extends React.Component {
         this.sendMessage(from, {'sdp': pc.localDescription});
       }
       else if (msg.sdp && msg.sdp.type === "answer") {
-        console.log('answer', pc.signalingState);
         pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
       }
     });
