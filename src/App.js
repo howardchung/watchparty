@@ -69,6 +69,8 @@ export default class App extends React.Component {
     // TODO playlists
     // TODO rewrite using ws
     // TODO last writer wins on sending desynced timestamps (use max?)
+    // TODO gate search feature and preloaded eps behind config setting
+    // TODO domain name
   }
 
   setupWebRTC = async () => {
