@@ -120,12 +120,15 @@ function Room(roomId) {
        const chatMsg = {id: socket.id, msg: data};
        addChatMessage(chatMsg);
     });
-    socket.on('CMD:video', (data) => {
-        // console.log(data);
-        socket.broadcast.emit('REC:video', { id: socket.id, data });
+    socket.on('CMD:joinVideo', (data) => {
+        const match = this.roster.find(user => user.id === socket.id);
+        if (match) {
+            match.isVideoChat = true;
+        }
+        io.of(roomId).emit('roster', this.roster);
     });
     socket.on('signal', (data) => {
-        socket.broadcast.emit('signal', { id: socket.id, data });
+        io.of(roomId).to(data.to).emit('signal', { from: socket.id, msg: data.msg });
     });
   
     socket.on('disconnect', () => {

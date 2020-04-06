@@ -24,6 +24,16 @@ const getMediaPathForList = (list) => {
   return list;
 }
 
+const iceServers = [
+  { urls: 'stun:stun.l.google.com:19302' },
+  // { urls: 'turn:13.66.162.252:3478', username: 'username', credential: 'password' },
+  {
+      urls: 'turn:numb.viagenie.ca',
+      credential: 'watchparty',
+    username: 'howardzchung@gmail.com',
+  },
+];
+
 export default class App extends React.Component {
   state = {
     state: 'init',
@@ -45,6 +55,8 @@ export default class App extends React.Component {
   watchPartyYTPlayer = null;
   ytDebounce = true;
   videoInitTime = 0;
+  ourStream = null;
+  videoPCs = {};
 
   async componentDidMount() {
     const canAutoplay = await testAutoplay();
@@ -59,93 +71,63 @@ export default class App extends React.Component {
     // TODO last writer wins on sending desynced timestamps (use max?)
   }
 
-  setupWebRTC = () => {
-    const iceServers = [
-      { urls: 'stun:stun.l.google.com:19302' },
-      // { urls: 'turn:13.66.162.252:3478', username: 'username', credential: 'password' },
-      {
-	       urls: 'turn:numb.viagenie.ca',
-	       credential: 'watchparty',
-	      username: 'howardzchung@gmail.com',
-      },
-    ];
-    const videoRecs = {};
-    // const yourId = this.socket.id;
-    // TODO get the roster
-    // TODO establish a connection with each other member (mesh config)
-
-    const pc = new RTCPeerConnection({ iceTransportPolicy: 'all', iceServers });
-    pc.onicecandidate = (event) => {
-      if (event.candidate) {
-        sendMessage({'ice': event.candidate});
-      }
-    };
-    pc.onaddstream = (event) => {
-      // console.log('stream', event);
-      const stream = event.stream;
-      const remoteId = Math.random();
-      if (!videoRecs[remoteId]) {
-        const videoRec = document.createElement('video');
-        videoRec.autoplay = true;
-        videoRec.width = 320;
-        videoRec.height = 240;
-        videoRecs[remoteId] = videoRec;
-        videoRec.srcObject = stream;
-        document.body.appendChild(videoRec);
-      }
-    };
-    pc.onicegatheringstatechange = (e) => {
-      // console.log(e);
-    }
-    pc.onnegotiationneeded = () => {
-      showFriendsFace();
-    }
-
-    this.socket.on('signal', (data) => {
-      readMessage(data);
-    });
-
-    const sendMessage = async (data) => {
-      this.socket.emit('signal', data);
-    }
-
-    const readMessage = async (data) => {
-      const msg = data.data;
-      // const id = data.id;
-      // console.log('recv', data);
-      if (msg.ice !== undefined) {
-        pc.addIceCandidate(new RTCIceCandidate(msg.ice));
-      }
-      else if (msg.sdp.type === "offer") {
-        await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-        sendMessage({'sdp': pc.localDescription});
-      }
-      else if (msg.sdp.type === "answer") {
-        pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
-      }
-    }
-
-    const showMyFace = async () => {
-      const stream = await navigator.mediaDevices.getUserMedia({audio:true, video:true});
-      const videoRec = document.createElement('video');
-      videoRec.autoplay = true;
-      videoRec.width = 320;
-      videoRec.height = 240;
-      videoRecs[this.socket.id] = videoRec;
-      videoRec.srcObject = stream;
-      document.body.appendChild(videoRec);
-      pc.addStream(stream);
-    }
-
-    const showFriendsFace = async () => {
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-      sendMessage({'sdp': pc.localDescription });
-    }
-    showMyFace();
+  setupWebRTC = async () => {
+    // Set up our own video
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+    this.ourStream = stream;
+    // alert server we've joined video chat
+    this.socket.emit('CMD:joinVideo');
   }
+  
+  updateWebRTC = () => {
+    // TODO teardown connections to people who leave
+    if (!this.ourStream) {
+      // We haven't started video chat, exit
+      return;
+    }
+    this.state.participants.forEach(user => {
+      const id = user.id;
+      if (!user.isVideoChat || this.videoPCs[id]) {
+        return;
+      }
+      if (id === this.socket.id) {
+        this.videoPCs[id] = true;
+        this.videoRefs[id].srcObject = this.ourStream;
+      }
+      else {
+        const pc = new RTCPeerConnection({ iceServers });
+        this.videoPCs[id] = pc;
+        // Add our own video as outgoing stream
+        pc.addStream(this.ourStream);
+        pc.onicecandidate = (event) => {
+          // We generated an ICE candidate, send it to peer
+          if (event.candidate) {
+            this.sendMessage(id, {'ice': event.candidate});
+          }
+        };
+        pc.onaddstream = (event) => {
+          // Mount the stream from peer
+          const stream = event.stream;
+          this.videoRefs[id].srcObject = stream;
+        };
+        // For each pair, have the lexicographically smaller ID be the offerer
+        const isOfferer = this.socket.id < id;
+        if (isOfferer) {
+          pc.onnegotiationneeded = async () => {
+            // Start connection for peer's video
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+            this.sendMessage(id, {'sdp': pc.localDescription });
+          }
+        }
+      }
+    });
+  }
+
+  sendMessage = async (to, data) => {
+    console.log('send', to, data);
+    this.socket.emit('signal', { to, msg: data });
+  };
   
   init = () => {
     this.setState({ state: 'started' }, () => {
@@ -234,8 +216,6 @@ export default class App extends React.Component {
       // Load username from localstorage
       let userName = window.localStorage.getItem('watchparty-username');
       this.updateName(null, { value: userName || generateName()});
-    
-      // this.setupWebRTC();
     });
     socket.on('REC:play', () => {
       this.doPlay();
@@ -269,42 +249,42 @@ export default class App extends React.Component {
       this.setState({ chat: this.state.chat });
       this.scrollToBottom();
     });
-    let videoRecs = {};
-    let videoMs = {};
-    let buffers = {};
-    socket.on('REC:video', async (data) => {
-      // id and data fields
-      if (!buffers[data.id]) {
-        buffers[data.id] = [];
-      }
-      const buffer = buffers[data.id];
-      buffer.push(data.data);
-      console.log(buffer, data);
-      const ms = videoMs[data.id];
-      if (ms && ms.sourceBuffers[0] && !ms.sourceBuffers[0].updating && buffer.length)
-      {
-        videoMs[data.id].sourceBuffers[0].appendBuffer(buffer.shift());
-      }
-      if (!videoRecs[data.id]) {
-        const videoRec = document.createElement('video');
-        videoRec.autoplay = true;
-        videoRec.width = 320;
-        videoRec.height = 240;
-        videoRecs[data.id] = videoRec;
-        const ms = new MediaSource();
-        // console.log(MediaSource.isTypeSupported('video/webm; codecs=vp9'));
-        ms.onsourceopen = () => {
-          console.log('onsourceopen');
-          ms.addSourceBuffer('video/webm; codecs=vp9');
-          videoMs[data.id] = ms;
-        };
-        ms.onsourceclose = () => {
-          console.log('onsourceclose');
-        }
-        videoRec.src = window.URL.createObjectURL(ms);
-        document.body.appendChild(videoRec);
-      }
-    });
+    // let videoRecs = {};
+    // let videoMs = {};
+    // let buffers = {};
+    // socket.on('REC:video', async (data) => {
+    //   // id and data fields
+    //   if (!buffers[data.id]) {
+    //     buffers[data.id] = [];
+    //   }
+    //   const buffer = buffers[data.id];
+    //   buffer.push(data.data);
+    //   console.log(buffer, data);
+    //   const ms = videoMs[data.id];
+    //   if (ms && ms.sourceBuffers[0] && !ms.sourceBuffers[0].updating && buffer.length)
+    //   {
+    //     videoMs[data.id].sourceBuffers[0].appendBuffer(buffer.shift());
+    //   }
+    //   if (!videoRecs[data.id]) {
+    //     const videoRec = document.createElement('video');
+    //     videoRec.autoplay = true;
+    //     videoRec.width = 320;
+    //     videoRec.height = 240;
+    //     videoRecs[data.id] = videoRec;
+    //     const ms = new MediaSource();
+    //     // console.log(MediaSource.isTypeSupported('video/webm; codecs=vp9'));
+    //     ms.onsourceopen = () => {
+    //       console.log('onsourceopen');
+    //       ms.addSourceBuffer('video/webm; codecs=vp9');
+    //       videoMs[data.id] = ms;
+    //     };
+    //     ms.onsourceclose = () => {
+    //       console.log('onsourceclose');
+    //     }
+    //     videoRec.src = window.URL.createObjectURL(ms);
+    //     document.body.appendChild(videoRec);
+    //   }
+    // });
     socket.on('REC:tsMap', (data) => {
       this.setState({ tsMap: data });
     });
@@ -312,11 +292,36 @@ export default class App extends React.Component {
       this.setState({ nameMap: data });
     });
     socket.on('roster', (data) => {
-      this.setState({ participants: data }); 
+      this.setState({ participants: data }, () => {
+        // console.log(data);
+        // Establish connections to the other video chatters
+        this.updateWebRTC();
+      });
     });
     socket.on('chatinit', (data) => {
       this.setState({ chat: data });
       this.scrollToBottom();
+    });
+    socket.on('signal', async (data) => {
+      // Handle messages received from signaling server
+      const msg = data.msg;
+      const from = data.from;
+      const pc = this.videoPCs[from];
+      console.log('recv', from, data);
+      if (msg.ice !== undefined) {
+        pc.addIceCandidate(new RTCIceCandidate(msg.ice));
+      }
+      else if (msg.sdp && msg.sdp.type === "offer") {
+        // console.log('offer');
+        await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        this.sendMessage(from, {'sdp': pc.localDescription});
+      }
+      else if (msg.sdp && msg.sdp.type === "answer") {
+        console.log('answer', pc.signalingState);
+        pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
+      }
     });
     window.setInterval(() => {
       this.socket.emit('CMD:ts', this.getCurrentTime());
@@ -596,9 +601,9 @@ export default class App extends React.Component {
         </Divider>
         <Grid stackable celled='internally' style={{ height: '100vh' }}>
           <Grid.Row>
-          <Grid.Column width={11}>
-            { this.state.state === 'init' && <div style={{ display: 'flex', justifyContent: 'center' }}><Button inverted primary size="huge" onClick={this.init} icon labelPosition="left"><Icon name="sign-in" />Join Party</Button></div> }
-            { this.state.state !== 'init' && <React.Fragment>
+          { this.state.state === 'init' && <div style={{ display: 'flex', width: '100%', alignItems: 'flex-start', justifyContent: 'center' }}><Button style={{ width: '200px' }} inverted primary size="huge" onClick={this.init} icon labelPosition="left"><Icon name="sign-in" />Join Party</Button></div> }
+          { this.state.state !== 'init' && <Grid.Column width={11}>
+            <React.Fragment>
             <div style={{ display: 'flex', alignItems: 'center' }}>
             <Dropdown
               // icon='film'
@@ -635,7 +640,6 @@ export default class App extends React.Component {
                         {this.state.nameMap[participant.id] || participant.id}
                         <Label.Detail>{formatTimestamp(this.state.tsMap[participant.id] || 0)}</Label.Detail>
                       </Label>
-                      {/* <video ref={el => {this.videoRefs[participant] = el}} style={{ width: '100%', height: '100%' }} autoPlay playsInline></video> */}
                       </List.Item>;
                   })}
                 </List>
@@ -693,9 +697,9 @@ export default class App extends React.Component {
               duration={this.getDuration()}
             />
             }
-          </React.Fragment> }
-        </Grid.Column>
-        <Grid.Column width={5} style={{ display: 'flex', flexDirection: 'column' }}>
+          </React.Fragment>
+        </Grid.Column>}
+        {this.state.state !== 'init' && <Grid.Column width={5} style={{ display: 'flex', flexDirection: 'column' }}>
           <Input
             inverted
             fluid
@@ -709,6 +713,22 @@ export default class App extends React.Component {
               link />
             }
           />
+          <Divider inverted horizontal></Divider>
+          {!this.ourStream && <Button color="purple" size="large" icon labelPosition="left" onClick={this.setupWebRTC}><Icon name="video" />Join Video</Button>}
+          <div id="videoContainer">
+            {this.state.participants.map(p => {
+              return <div style={{ position: 'relative' }}>
+                <video
+                  ref={el => {this.videoRefs[p.id] = el}}
+                  style={{ width: '100%', borderRadius: '4px', display: p.isVideoChat ? 'block' : 'none' }}
+                  autoPlay
+                  muted={p.id === this.socket.id}
+                  data-id={p.id}
+                />
+                <Label tag size='small' color={getColor(p.id)} style={{ position: 'absolute', bottom: 0, right: 0 }}>{this.state.nameMap[p.id] || p.id}</Label>
+                </div>;
+              })}
+          </div>
           <Segment inverted style={{ display: 'flex', flexDirection: 'column', width: '100%', flexGrow: '1' }}>
             <div className="chatContainer" ref={this.messagesRef}>
               <Comment.Group>
@@ -726,7 +746,7 @@ export default class App extends React.Component {
               placeholder='Enter a message...'
             />
           </Segment>
-        </Grid.Column>
+        </Grid.Column>}
         </Grid.Row>
       </Grid>
       </React.Fragment>
