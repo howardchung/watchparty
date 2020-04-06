@@ -386,12 +386,21 @@ export default class App extends React.Component {
       leftVideo.currentTime = time;
       // Clear subtitles
       leftVideo.innerHTML = '';
-      const subtitlePath = src.slice(0, src.lastIndexOf('/') + 1);
-      const subtitleListResp = await window.fetch(subtitlePath + 'subtitles/');
-      const subtitleList = await subtitleListResp.json();
-      const match = subtitleList.find(subtitle => src.slice(0, -4).toLowerCase().startsWith(subtitle.name.slice(0, -4).toLowerCase()));
-      if (match) {
-        const response = await window.fetch(subtitlePath + 'subtitles/' + match.name);
+      let subtitleSrc = null;
+      if (src.includes('stream?torrent=magnet')) {
+        const search = new URL(this.state.currentMedia).search;
+        const magnetUrl = querystring.parse(search.substring(1)).torrent;
+        subtitleSrc = searchPath + 'subtitles?torrent=' + encodeURIComponent(magnetUrl);
+      }
+      else {
+        const subtitlePath = src.slice(0, src.lastIndexOf('/') + 1);
+        const subtitleListResp = await window.fetch(subtitlePath + 'subtitles/');
+        const subtitleList = await subtitleListResp.json();
+        const match = subtitleList.find(subtitle => src.slice(0, -4).toLowerCase().startsWith(subtitle.name.slice(0, -4).toLowerCase()));
+        subtitleSrc = subtitlePath + 'subtitles/' + match.name;
+      }
+      if (subtitleSrc) {
+        const response = await window.fetch(subtitleSrc);
         const buffer = await response.arrayBuffer();
         const vttConverter = new VTTConverter(new Blob([buffer]));
         const url = await vttConverter.getURL();
@@ -522,7 +531,9 @@ export default class App extends React.Component {
   
   toggleSubtitle = () => {
     const leftVideo = document.getElementById('leftVideo');
-    leftVideo.textTracks[0].mode = leftVideo.textTracks[0].mode === 'showing' ? 'hidden' : 'showing';
+    if (leftVideo.textTracks[0]) {
+      leftVideo.textTracks[0].mode = leftVideo.textTracks[0].mode === 'showing' ? 'hidden' : 'showing';
+    }
   }
 
   setMedia = (e, data) => {
@@ -854,10 +865,9 @@ const getMediaDisplayName = (input) => {
     return input;
   }
   if (input.includes('stream?torrent=magnet')) {
-    // TODO support showing names for peerstream selections (need to decode magnet url)
     const search = new URL(input).search;
     const magnetUrl = querystring.parse(search.substring(1)).torrent;
-    const magnetParsed = magnet.decode(decodeURIComponent(magnetUrl));
+    const magnetParsed = magnet.decode(magnetUrl);
     return magnetParsed.name;
   }
   // Get the filename out of the URL
