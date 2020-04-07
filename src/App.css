@@ -60,6 +60,7 @@ body {
 .chatContainer {
   flex-grow: 1;
   overflow: scroll;
+  max-height: 400px;
 }
 
 .system.system.system.system {

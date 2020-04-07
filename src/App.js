@@ -71,6 +71,9 @@ export default class App extends React.Component {
     // TODO last writer wins on sending desynced timestamps (use max?)
     // TODO gate search feature and preloaded eps behind config setting
     // TODO domain name
+    // TODO subtitle api
+    // TODO youtube api
+    // TODO fix chat growth
   }
 
   setupWebRTC = async () => {
@@ -406,7 +409,6 @@ export default class App extends React.Component {
         const subtitlePath = src.slice(0, src.lastIndexOf('/') + 1);
         const subtitleListResp = await window.fetch(subtitlePath + 'subtitles/');
         const subtitleList = await subtitleListResp.json();
-        console.log(subtitleList);
         const match = subtitleList.find(subtitle => getMediaDisplayName(src).toLowerCase().startsWith(subtitle.name.slice(0, -4).toLowerCase()));
         subtitleSrc = subtitlePath + 'subtitles/' + match.name;
       }
@@ -663,7 +665,7 @@ export default class App extends React.Component {
               />
               }
             </Segment> }
-            <div className="auto-resizable-iframe" style={{ display: this.isYouTube() ? 'block' : 'none' }}>
+            <div className="auto-resizable-iframe" style={{ display: (this.isYouTube() && !this.state.loading) ? 'block' : 'none' }}>
               <div>
                 <iframe
                   title="YouTube"
@@ -674,7 +676,7 @@ export default class App extends React.Component {
                 />
               </div>
             </div>
-            <div style={{ display: this.isVideo() ? 'block' : 'none' }}>
+            <div style={{ display: (this.isVideo() && !this.state.loading) ? 'block' : 'none' }}>
               <video
                 tabIndex="1"
                 onClick={this.togglePlay}
@@ -716,12 +718,12 @@ export default class App extends React.Component {
           />
           <Divider inverted horizontal></Divider>
           {!this.ourStream && <Button color="purple" size="large" icon labelPosition="left" onClick={this.setupWebRTC}><Icon name="video" />Join Video</Button>}
-          <div id="videoContainer">
+          {this.ourStream && <div id="videoContainer">
             {this.state.participants.map(p => {
-              return <div style={{ position: 'relative' }}>
+              return <div key={p.id} style={{ position: 'relative', display: p.isVideoChat ? 'block' : 'none' }}>
                 <video
                   ref={el => {this.videoRefs[p.id] = el}}
-                  style={{ width: '100%', borderRadius: '4px', display: p.isVideoChat ? 'block' : 'none' }}
+                  style={{ width: '100%', borderRadius: '4px' }}
                   autoPlay
                   muted={p.id === this.socket.id}
                   data-id={p.id}
@@ -729,7 +731,7 @@ export default class App extends React.Component {
                 <Label tag size='small' color={getColor(p.id)} style={{ position: 'absolute', bottom: 0, right: 0 }}>{this.state.nameMap[p.id] || p.id}</Label>
                 </div>;
               })}
-          </div>
+          </div>}
           <Segment inverted style={{ display: 'flex', flexDirection: 'column', width: '100%', flexGrow: '1' }}>
             <div className="chatContainer" ref={this.messagesRef}>
               <Comment.Group>
