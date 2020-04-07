@@ -20,8 +20,8 @@ const getMediaPathForList = (list) => {
     // Return any predefined
     return mappings[list];
   }
-  // Nginx servers use the same mediapath as list
-  return list;
+  // Nginx servers use the same mediapath as list, add trailing /
+  return list + '/';
 }
 
 const iceServers = [
@@ -57,6 +57,7 @@ export default class App extends React.Component {
   videoInitTime = 0;
   ourStream = null;
   videoPCs = {};
+  searchPath = '';
 
   async componentDidMount() {
     const canAutoplay = await testAutoplay();
@@ -195,15 +196,12 @@ export default class App extends React.Component {
     };
 
     // Load settings from localstorage, build medialist
-    let settings = window.localStorage.getItem('watchparty-setting');
-    if (!settings) {
-        updateSettings(defaultMediaList);
-        settings = window.localStorage.getItem('watchparty-setting');
-    }
+    let settings = getCurrentSettings();
+    this.searchPath = settings.searchServer;
+    const mediaServers = settings.mediaServers;
     let watchOptions = [];
-    const lines = settings.split('\n');
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
+    for (let i = 0; i < mediaServers.length; i++) {
+      const line = mediaServers[i];
       // TODO promise.all this to make requests in parallel
       const response = await window.fetch(line);
       const data = await response.json();
@@ -628,7 +626,7 @@ export default class App extends React.Component {
             <Segment inverted style={{ position: 'relative' }}>
               <Grid columns={2}>
                 <Grid.Column>
-                <Header inverted as='h4' style={{ textTransform: 'uppercase', marginRight: '20px', wordBreak: 'break-all' }}>Now Watching: {getMediaDisplayName(this.state.currentMedia)}</Header>
+                <Header inverted as='h4' style={{ textTransform: 'uppercase', marginRight: '20px', wordBreak: 'break-word' }}>Now Watching: {getMediaDisplayName(this.state.currentMedia)}</Header>
                 </Grid.Column>
                 <Grid.Column>
                 <List inverted horizontal style={{ marginLeft: '20px' }}>
@@ -760,7 +758,7 @@ class SearchComponent extends React.Component {
     e.persist();
     if (!this.debounced) {
       this.debounced = debounce(async () => {
-        const response = await window.fetch(searchPath + '/search?q=' + encodeURIComponent(e.target.value));
+        const response = await window.fetch(this.searchPath + '/search?q=' + encodeURIComponent(e.target.value));
         const data = await response.json();
         this.setState({ results: data });
       }, 300);
@@ -787,7 +785,7 @@ class SearchComponent extends React.Component {
             label={{ color: Number(result.seeders) ? 'green' : 'red', empty: true, circular: true }}
             text={result.name + ' - ' + result.size + ' - ' + result.seeders + ' peers'}
             onClick={(e) => {
-              setMedia(e, { value: searchPath + '/stream?torrent=' + encodeURIComponent(result.magnet)});
+              setMedia(e, { value: this.searchPath + '/stream?torrent=' + encodeURIComponent(result.magnet)});
               this.setState({ resetDropdown: Number(new Date()) });
             }}
           />
@@ -843,23 +841,23 @@ function debounce(func, wait, immediate) {
 };
 
 const SettingsModal = () => (
-  <Modal trigger={<Button secondary size="large" icon labelPosition="left"><Icon name="setting" />Settings</Button>} basic size='small'>
+  <Modal trigger={<Button secondary size="large" icon labelPosition="left"><Icon name="setting" />Settings</Button>} basic closeIcon size='small'>
     <Header icon='setting' content='Settings' />
     <Modal.Content>
-      <Header inverted>
-        Configure media sources:
-      </Header>
-      <p>Enter one URL per line.</p>
-      <p>The plan is to make this support Nginx file servers, GitLab repos, Plex media servers, etc.</p>
       <Form>
-        <TextArea id="settings_textarea">{window.localStorage.getItem('watchparty-setting')}</TextArea>
+        <TextArea rows={10} id="settings_textarea">{window.localStorage.getItem('watchparty-setting') || JSON.stringify(getDefaultSettings(), null, 2)}</TextArea>
       </Form>
     </Modal.Content>
     <Modal.Actions>
       <Button color='green' inverted onClick={() => {
             const newSetting = document.getElementById('settings_textarea').value;
-            updateSettings(newSetting);
-            window.location.reload();
+            try {
+                validateSettings(newSetting);
+                updateSettings(newSetting);
+                window.location.reload();
+            } catch (e) {
+                alert(e);
+            }
         }}>
         <Icon name='checkmark' />Save
       </Button>
@@ -867,7 +865,36 @@ const SettingsModal = () => (
   </Modal>
 )
 
-const updateSettings = (newSetting) => {
+function getDefaultSettings() {
+    return {
+        mediaServers: [defaultMediaList],
+        searchServer: searchPath,
+    }
+}
+
+function getCurrentSettings() {
+    const setting = window.localStorage.getItem('watchparty-setting');
+    try {
+        return validateSettings(setting);
+    } catch(e) {
+        console.error(e);
+        return getDefaultSettings();
+    }
+}
+
+/**
+ * Validate a setting string. Return a parsed setting object if valid, otherwise throw exception
+ */
+function validateSettings(setting) {
+    // Don't have a setting or invalid value
+    let settingObject = JSON.parse(setting);
+    if (!setting || setting[0] !== '{') {
+        throw new Error('failed to parse settings, using defaults');
+    }
+    return settingObject;
+}
+
+function updateSettings(newSetting) {
   window.localStorage.setItem('watchparty-setting', newSetting);
 }
 
