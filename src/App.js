@@ -716,10 +716,10 @@ export default class App extends React.Component {
             }
           />
           <Divider inverted horizontal></Divider>
-          {!this.ourStream && <Button color="purple" size="large" icon labelPosition="left" onClick={this.setupWebRTC}><Icon name="video" />Join Video</Button>}
+          {!this.ourStream && <Button color="purple" size="large" icon labelPosition="left" onClick={this.setupWebRTC} style={{ flexShrink: 0 }}><Icon name="video" />Join Video</Button>}
           {this.ourStream && <div id="videoContainer">
             {this.state.participants.map(p => {
-              return <div key={p.id} style={{ position: 'relative', display: p.isVideoChat ? 'block' : 'none' }}>
+              return <div key={p.id} style={{ position: 'relative', height: 'fit-content', display: p.isVideoChat ? 'block' : 'none' }}>
                 <video
                   ref={el => {this.videoRefs[p.id] = el}}
                   style={{ width: '100%', height: '100%', borderRadius: '4px' }}
