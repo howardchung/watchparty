@@ -73,7 +73,6 @@ export default class App extends React.Component {
     // TODO domain name
     // TODO subtitle api
     // TODO youtube api
-    // TODO fix chat growth
   }
 
   setupWebRTC = async () => {
@@ -602,7 +601,7 @@ export default class App extends React.Component {
             Watch videos with your friends!
           </Header>
         </Divider>
-        <Grid stackable celled='internally' style={{ height: '100vh' }}>
+        <Grid stackable celled='internally'>
           <Grid.Row>
           { this.state.state === 'init' && <div style={{ display: 'flex', width: '100%', alignItems: 'flex-start', justifyContent: 'center' }}><Button style={{ width: '200px' }} inverted primary size="huge" onClick={this.init} icon labelPosition="left"><Icon name="sign-in" />Join Party</Button></div> }
           { this.state.state !== 'init' && <Grid.Column width={11}>
@@ -702,7 +701,7 @@ export default class App extends React.Component {
             }
           </React.Fragment>
         </Grid.Column>}
-        {this.state.state !== 'init' && <Grid.Column width={5} style={{ display: 'flex', flexDirection: 'column' }}>
+        {this.state.state !== 'init' && <Grid.Column width={5} style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 120px)' }}>
           <Input
             inverted
             fluid
@@ -723,7 +722,7 @@ export default class App extends React.Component {
               return <div key={p.id} style={{ position: 'relative', display: p.isVideoChat ? 'block' : 'none' }}>
                 <video
                   ref={el => {this.videoRefs[p.id] = el}}
-                  style={{ width: '100%', borderRadius: '4px' }}
+                  style={{ width: '100%', height: '100%', borderRadius: '4px' }}
                   autoPlay
                   muted={p.id === this.socket.id}
                   data-id={p.id}
@@ -732,7 +731,7 @@ export default class App extends React.Component {
                 </div>;
               })}
           </div>}
-          <Segment inverted style={{ display: 'flex', flexDirection: 'column', width: '100%', flexGrow: '1' }}>
+          <Segment inverted style={{ display: 'flex', flexDirection: 'column', width: '100%', flexGrow: '1', minHeight: 0 }}>
             <div className="chatContainer" ref={this.messagesRef}>
               <Comment.Group>
                 {this.state.chat.map(msg => <ChatMessage {...msg} nameMap={this.state.nameMap} />)}

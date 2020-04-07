@@ -60,7 +60,6 @@ body {
 .chatContainer {
   flex-grow: 1;
   overflow: scroll;
-  max-height: 400px;
 }
 
 .system.system.system.system {
@@ -111,6 +110,9 @@ body {
 #videoContainer {
     display: grid;
     grid-template-columns: 50% 50%;
+    /*grid-template-rows: repeat(auto-fill, 160px);*/
+    min-height: 160px;
     max-height: 400px;
     overflow: scroll;
+    flex-shrink: 0;
 }
