@@ -406,7 +406,8 @@ export default class App extends React.Component {
         const subtitlePath = src.slice(0, src.lastIndexOf('/') + 1);
         const subtitleListResp = await window.fetch(subtitlePath + 'subtitles/');
         const subtitleList = await subtitleListResp.json();
-        const match = subtitleList.find(subtitle => src.slice(0, -4).toLowerCase().startsWith(subtitle.name.slice(0, -4).toLowerCase()));
+        console.log(subtitleList);
+        const match = subtitleList.find(subtitle => getMediaDisplayName(src).toLowerCase().startsWith(subtitle.name.slice(0, -4).toLowerCase()));
         subtitleSrc = subtitlePath + 'subtitles/' + match.name;
       }
       if (subtitleSrc) {
