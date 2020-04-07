@@ -1,6 +1,8 @@
+require('dotenv').config();
 const { v4 } = require('uuid');
 const fs = require('fs');
 const express = require('express');
+// const axios = require('axios');
 const cors = require('cors');
 const app = express();
 let server = null;
@@ -35,6 +37,7 @@ app.use(express.static('build'));
 app.get('/ping', (req, res) => {
   res.json('pong');
 });
+
 app.post('/createRoom', (req, res) => {
   let name = names.choose();
   // Keep retrying until no collision

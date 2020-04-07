@@ -8,8 +8,8 @@ import VTTConverter from 'srt-webvtt';
 import magnet from 'magnet-uri';
 
 const serverPath = process.env.REACT_APP_SERVER_HOST || `${window.location.protocol}//${window.location.hostname}${process.env.NODE_ENV === 'production' ? '' : ':8080'}`;
-const defaultMediaList = process.env.REACT_APP_MEDIA_LIST || 'https://dev.howardchung.net/';
-const searchPath = process.env.REACT_APP_SEARCH_PATH || 'https://scw.howardchung.net/';
+const defaultMediaList = process.env.REACT_APP_MEDIA_LIST || 'https://dev.howardchung.net';
+const searchPath = process.env.REACT_APP_SEARCH_PATH || 'https://scw.howardchung.net';
 
 const getMediaPathForList = (list) => {
   const mappings = {
@@ -64,14 +64,12 @@ export default class App extends React.Component {
     if (canAutoplay) {
       this.init();
     }
-    // TODO video chat
     // TODO youtube, twitch, bring your own file
     // TODO playlists
     // TODO rewrite using ws
     // TODO last writer wins on sending desynced timestamps (use max?)
     // TODO gate search feature and preloaded eps behind config setting
     // TODO domain name
-    // TODO subtitle api
     // TODO youtube api
   }
 
@@ -398,13 +396,12 @@ export default class App extends React.Component {
       leftVideo.currentTime = time;
       // Clear subtitles
       leftVideo.innerHTML = '';
-      let subtitleSrc = null;
-      if (src.includes('stream?torrent=magnet')) {
-        const search = new URL(this.state.currentMedia).search;
-        const magnetUrl = querystring.parse(search.substring(1)).torrent;
-        subtitleSrc = searchPath + 'subtitles2?torrent=' + encodeURIComponent(magnetUrl);
+      let subtitleSrc = '';
+      if (src.includes('/stream?torrent=magnet')) {
+        subtitleSrc = src.replace('/stream', '/subtitles2');
       }
-      else {
+      // TODO temporary code to handle special subtitles for Avatar/Korra
+      if (src.endsWith('.m4v')) {
         const subtitlePath = src.slice(0, src.lastIndexOf('/') + 1);
         const subtitleListResp = await window.fetch(subtitlePath + 'subtitles/');
         const subtitleList = await subtitleListResp.json();
@@ -763,7 +760,7 @@ class SearchComponent extends React.Component {
     e.persist();
     if (!this.debounced) {
       this.debounced = debounce(async () => {
-        const response = await window.fetch(searchPath + 'search?q=' + encodeURIComponent(e.target.value));
+        const response = await window.fetch(searchPath + '/search?q=' + encodeURIComponent(e.target.value));
         const data = await response.json();
         this.setState({ results: data });
       }, 300);
@@ -790,7 +787,7 @@ class SearchComponent extends React.Component {
             label={{ color: Number(result.seeders) ? 'green' : 'red', empty: true, circular: true }}
             text={result.name + ' - ' + result.size + ' - ' + result.seeders + ' peers'}
             onClick={(e) => {
-              setMedia(e, { value: searchPath + 'stream?torrent=' + encodeURIComponent(result.magnet)});
+              setMedia(e, { value: searchPath + '/stream?torrent=' + encodeURIComponent(result.magnet)});
               this.setState({ resetDropdown: Number(new Date()) });
             }}
           />
@@ -892,7 +889,7 @@ const getMediaDisplayName = (input) => {
   if (getMediaType(input) === 'youtube') {
     return input;
   }
-  if (input.includes('stream?torrent=magnet')) {
+  if (input.includes('/stream?torrent=magnet')) {
     const search = new URL(input).search;
     const magnetUrl = querystring.parse(search.substring(1)).torrent;
     const magnetParsed = magnet.decode(magnetUrl);
