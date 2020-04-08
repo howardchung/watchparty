@@ -781,7 +781,7 @@ class SearchComponent extends React.Component {
             label={{ color: Number(result.seeders) ? 'green' : 'red', empty: true, circular: true }}
             text={result.name + ' - ' + result.size + ' - ' + result.seeders + ' peers'}
             onClick={(e) => {
-              setMedia(e, { value: this.searchPath + '/stream?torrent=' + encodeURIComponent(result.magnet)});
+              setMedia(e, { value: this.props.searchPath + '/stream?torrent=' + encodeURIComponent(result.magnet)});
               this.setState({ resetDropdown: Number(new Date()) });
             }}
           />
