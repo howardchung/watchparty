@@ -107,6 +107,12 @@ body {
   height: 100%;
 }
 
+#leftVideo {
+    width: 100%;
+    min-height: 400px;
+    max-height: 66vh;
+}
+
 #videoContainer {
     display: grid;
     grid-template-columns: 50% 50%;

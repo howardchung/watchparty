@@ -72,6 +72,9 @@ export default class App extends React.Component {
     // TODO gate search feature and preloaded eps behind config setting
     // TODO domain name
     // TODO youtube api
+    //todo search bar invert
+    //todo combobox, 3 column
+    //todo vid chat column
   }
 
   setupWebRTC = async () => {
@@ -598,7 +601,7 @@ export default class App extends React.Component {
         </Divider>
         <Grid stackable celled='internally'>
           <Grid.Row>
-          { this.state.state === 'init' && <div style={{ display: 'flex', width: '100%', alignItems: 'flex-start', justifyContent: 'center' }}><Button style={{ width: '200px' }} inverted primary size="huge" onClick={this.init} icon labelPosition="left"><Icon name="sign-in" />Join Party</Button></div> }
+          { this.state.state === 'init' && <div style={{ display: 'flex', width: '100%', alignItems: 'flex-start', justifyContent: 'center' }}><Button inverted primary size="huge" onClick={this.init} icon labelPosition="left"><Icon name="sign-in" />Join Party</Button></div> }
           { this.state.state !== 'init' && <Grid.Column width={11}>
             <React.Fragment>
             <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -612,7 +615,7 @@ export default class App extends React.Component {
               allowAdditions
               selection
               selectOnBlur={false}
-              placeholder="Enter YouTube URL or pick an option"
+              placeholder="Enter URL (YouTube, video file, etc.)"
               onAddItem={(e, {value}) => this.setState({ watchOptions: [...this.state.watchOptions, value] })}
               onChange={this.setMedia}
               value={this.state.currentMedia}
@@ -624,11 +627,8 @@ export default class App extends React.Component {
             <SearchComponent setMedia={this.setMedia} />
             </div>
             <Segment inverted style={{ position: 'relative' }}>
-              <Grid columns={2}>
-                <Grid.Column>
                 <Header inverted as='h4' style={{ textTransform: 'uppercase', marginRight: '20px', wordBreak: 'break-word' }}>Now Watching: {getMediaDisplayName(this.state.currentMedia)}</Header>
-                </Grid.Column>
-                <Grid.Column>
+                <Divider inverted horizontal>With</Divider>
                 <List inverted horizontal style={{ marginLeft: '20px' }}>
                   {this.state.participants.map((participant) => {
                     return <List.Item>
@@ -640,9 +640,6 @@ export default class App extends React.Component {
                       </List.Item>;
                   })}
                 </List>
-                </Grid.Column>
-              </Grid>
-              <Divider inverted vertical>With</Divider>
             </Segment>
             { (this.state.loading || !this.state.currentMedia) && <Segment inverted style={{ minHeight: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               { (this.state.loading) && 
@@ -674,7 +671,6 @@ export default class App extends React.Component {
               <video
                 tabIndex="1"
                 onClick={this.togglePlay}
-                style={{ width: '100%', minHeight: '400px' }}
                 id="leftVideo"
                 playsInline
                 type="video/mp4"
