@@ -153,6 +153,13 @@ function Room(roomId) {
         }
         io.of(roomId).emit('roster', this.roster);
     });
+    socket.on('CMD:leaveVideo', (data) => {
+        const match = this.roster.find(user => user.id === socket.id);
+        if (match) {
+            match.isVideoChat = false;
+        }
+        io.of(roomId).emit('roster', this.roster);
+    });
     socket.on('signal', (data) => {
         io.of(roomId).to(data.to).emit('signal', { from: socket.id, msg: data.msg });
     });

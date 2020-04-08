@@ -89,8 +89,6 @@ body {
   }
 }
 
-.fullHeightColumn {
-    display: flex;
-    flex-direction: column;
-    height: calc(100vh - 120px);
+.fullHeightColumn.fullHeightColumn.fullHeightColumn.fullHeightColumn {
+    height: calc(100vh - 150px);
 }
