@@ -602,7 +602,7 @@ export default class App extends React.Component {
         <Grid stackable celled='internally'>
           <Grid.Row>
           { this.state.state === 'init' && <div style={{ display: 'flex', width: '100%', alignItems: 'flex-start', justifyContent: 'center' }}><Button inverted primary size="huge" onClick={this.init} icon labelPosition="left"><Icon name="sign-in" />Join Party</Button></div> }
-          { this.state.state !== 'init' && <Grid.Column width={11}>
+          { this.state.state !== 'init' && <Grid.Column width={10}>
             <React.Fragment>
             <div style={{ display: 'flex', alignItems: 'center' }}>
             <Dropdown
@@ -692,7 +692,23 @@ export default class App extends React.Component {
             }
           </React.Fragment>
         </Grid.Column>}
-        {this.state.state !== 'init' && <Grid.Column width={5} style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 120px)' }}>
+        {this.ourStream && <Grid.Column width={2}>
+          <div id="videoContainer">
+            {this.state.participants.map(p => {
+              return <div key={p.id} style={{ position: 'relative', height: 'fit-content', display: p.isVideoChat ? 'block' : 'none' }}>
+                <video
+                  ref={el => {this.videoRefs[p.id] = el}}
+                  style={{ width: '100%', height: '100%', borderRadius: '4px' }}
+                  autoPlay
+                  muted={p.id === this.socket.id}
+                  data-id={p.id}
+                />
+                <Label tag size='small' color={getColor(p.id)} style={{ position: 'absolute', bottom: 0, right: 0 }}>{this.state.nameMap[p.id] || p.id}</Label>
+                </div>;
+              })}
+          </div>
+        </Grid.Column>}
+        {this.state.state !== 'init' && <Grid.Column width={4} style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 120px)' }}>
           <Input
             inverted
             fluid
@@ -708,20 +724,6 @@ export default class App extends React.Component {
           />
           <Divider inverted horizontal></Divider>
           {!this.ourStream && <Button color="purple" size="large" icon labelPosition="left" onClick={this.setupWebRTC} style={{ flexShrink: 0 }}><Icon name="video" />Join Video</Button>}
-          {this.ourStream && <div id="videoContainer">
-            {this.state.participants.map(p => {
-              return <div key={p.id} style={{ position: 'relative', height: 'fit-content', display: p.isVideoChat ? 'block' : 'none' }}>
-                <video
-                  ref={el => {this.videoRefs[p.id] = el}}
-                  style={{ width: '100%', height: '100%', borderRadius: '4px' }}
-                  autoPlay
-                  muted={p.id === this.socket.id}
-                  data-id={p.id}
-                />
-                <Label tag size='small' color={getColor(p.id)} style={{ position: 'absolute', bottom: 0, right: 0 }}>{this.state.nameMap[p.id] || p.id}</Label>
-                </div>;
-              })}
-          </div>}
           <Segment inverted style={{ display: 'flex', flexDirection: 'column', width: '100%', flexGrow: '1', minHeight: 0 }}>
             <div className="chatContainer" ref={this.messagesRef}>
               <Comment.Group>
