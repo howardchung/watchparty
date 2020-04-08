@@ -6,6 +6,10 @@
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.5.0",
     "@testing-library/user-event": "^7.2.1",
+    "@types/jest": "^25.2.1",
+    "@types/node": "^13.11.0",
+    "@types/react": "^16.9.32",
+    "@types/react-dom": "^16.9.6",
     "axios": "^0.19.2",
     "cors": "^2.8.5",
     "dotenv": "^8.2.0",
@@ -20,7 +24,9 @@
     "s3-client": "^4.4.2",
     "semantic-ui-react": "^0.88.2",
     "socket.io": "^2.3.0",
+    "socket.io-client": "^2.3.0",
     "srt-webvtt": "^1.0.1",
+    "typescript": "^3.8.3",
     "uuid": "^7.0.2"
   },
   "scripts": {
