@@ -624,7 +624,7 @@ export default class App extends React.Component {
             </div>
             <Divider inverted horizontal></Divider>
             <div style={{ display: 'flex', alignItems: 'center' }}>
-            <SearchComponent setMedia={this.setMedia} />
+            <SearchComponent setMedia={this.setMedia} searchPath={this.searchPath} />
             </div>
             <Segment inverted style={{ position: 'relative' }}>
                 <Header inverted as='h4' style={{ textTransform: 'uppercase', marginRight: '20px', wordBreak: 'break-word' }}>Now Watching: {getMediaDisplayName(this.state.currentMedia)}</Header>
@@ -754,7 +754,7 @@ class SearchComponent extends React.Component {
     e.persist();
     if (!this.debounced) {
       this.debounced = debounce(async () => {
-        const response = await window.fetch(this.searchPath + '/search?q=' + encodeURIComponent(e.target.value));
+        const response = await window.fetch(this.props.searchPath + '/search?q=' + encodeURIComponent(e.target.value));
         const data = await response.json();
         this.setState({ results: data });
       }, 300);
