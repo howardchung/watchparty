@@ -11,14 +11,6 @@ import magnet from 'magnet-uri';
 //@ts-ignore
 import io from 'socket.io-client';
 
-const serverPath = process.env.REACT_APP_SERVER_HOST || `${window.location.protocol}//${window.location.hostname}${process.env.NODE_ENV === 'production' ? '' : ':8080'}`;
-const defaultMediaList = process.env.REACT_APP_MEDIA_LIST || 'https://dev.howardchung.net';
-const searchPath = process.env.REACT_APP_SEARCH_PATH || 'https://scw.howardchung.net';
-
-type StringDict = { [key: string]: string };
-type NumberDict = { [key: string]: number };
-type PCDict = { [key: string]: RTCPeerConnection };
-
 declare global {
     interface Window {
         onYouTubeIframeAPIReady: any;
@@ -26,25 +18,9 @@ declare global {
     }
 }
 
-interface User {
-    id: string;
-    isVideoChat: boolean;
-}
-
-interface ChatMessage {
-    timestamp: string;
-    videoTS: number;
-    id: string;
-    cmd: string;
-    msg: string;
-}
-
-interface SearchResult {
-    name: string;
-    size: string;
-    seeders: string;
-    magnet: string;
-}
+const serverPath = process.env.REACT_APP_SERVER_HOST || `${window.location.protocol}//${window.location.hostname}${process.env.NODE_ENV === 'production' ? '' : ':8080'}`;
+const mediaServer = process.env.REACT_APP_MEDIA_LIST || 'https://dev.howardchung.net';
+const searchPath = process.env.REACT_APP_SEARCH_PATH || 'https://scw.howardchung.net';
 
 const getMediaPathForList = (list: string) => {
   const mappings: StringDict = {
@@ -92,7 +68,8 @@ export default class App extends React.Component {
   videoInitTime = 0;
   ourStream: MediaStream | null = null;
   videoPCs: PCDict = {};
-  searchPath = '';
+  searchPath: string | undefined = '';
+  mediaServer: string | undefined = '';
 
   async componentDidMount() {
     const canAutoplay = await testAutoplay();
@@ -104,11 +81,8 @@ export default class App extends React.Component {
     // TODO playlists
     // TODO rewrite using ws
     // TODO last writer wins on sending desynced timestamps (use max?)
-    // TODO gate search feature and preloaded eps behind config setting
     // TODO domain name
     // TODO youtube api
-    // todo search bar invert
-    // todo combobox, 3 column
     // TODO fix race condition where search results return out of order
     // TODO allow turning off video/audio in vidchat
   }
@@ -175,17 +149,22 @@ export default class App extends React.Component {
   
   init = () => {
     this.setState({ state: 'started' }, () => {
-      // Load UUID from url
-      let roomId = '/default';
-      let query = window.location.hash.substring(1);
-      if (query) {
-        roomId = '/' + query;
-      }
+        // Load room ID from url
+        let roomId = '/default';
+        let query = window.location.hash.substring(1);
+        if (query) {
+            roomId = '/' + query;
+        }
 
-      // Send heartbeat to the server
-      window.setInterval(() => {
-        window.fetch(serverPath + '/ping');
-      }, 10 * 60 * 1000);
+        // Send heartbeat to the server
+        window.setInterval(() => {
+            window.fetch(serverPath + '/ping');
+        }, 10 * 60 * 1000);
+
+        // Load settings from localstorage
+        let settings = getCurrentSettings();
+        this.searchPath = settings.searchServer;
+        this.mediaServer = settings.mediaServer;
   
       // This code loads the IFrame Player API code asynchronously.
       const tag = document.createElement('script');
@@ -236,19 +215,16 @@ export default class App extends React.Component {
       this.setState({ loading: false });
     };
 
-    // Load settings from localstorage, build medialist
-    let settings = getCurrentSettings();
-    this.searchPath = settings.searchServer;
-    const mediaServers = settings.mediaServers;
-    let watchOptions: string[] = [];
-    for (let i = 0; i < mediaServers.length; i++) {
-      const line = mediaServers[i];
-      // TODO promise.all this to make requests in parallel
-      const response = await window.fetch(line);
-      const data = await response.json();
-      watchOptions = [...watchOptions, ...data.filter((file: any) => file.type === 'file').map((file: any) => getMediaPathForList(line) + file.name)];
+    if (this.mediaServer) {
+        let watchOptions: string[] = [];
+        const line = this.mediaServer;
+        // TODO promise.all this to make requests in parallel
+        const response = await window.fetch(line as any);
+        const data = await response.json();
+        const results = data.filter((file: any) => file.type === 'file').map((file: any) => getMediaPathForList(line as any) + file.name);
+        watchOptions = [...watchOptions, ...results];
+        this.setState({ watchOptions });
     }
-    this.setState({ watchOptions });
 
     // this.setState({ state: 'watching' });
     const socket = io.connect(serverPath + roomId);
@@ -646,24 +622,23 @@ export default class App extends React.Component {
           { this.state.state === 'init' && <div style={{ display: 'flex', width: '100%', alignItems: 'flex-start', justifyContent: 'center' }}><Button inverted primary size="huge" onClick={this.init} icon labelPosition="left"><Icon name="sign-in" />Join Party</Button></div> }
           { this.state.state !== 'init' && <Grid.Column width={11}>
             <React.Fragment>
-            <div style={{ display: 'flex', alignItems: 'center' }}>
+            <div className="mobileStack" style={{ display: 'flex', alignItems: 'center' }}>
                 <Dropdown
                 fluid
-                button
-                icon='film'
-                className='icon'
+                //button
+                //icon='film'
+                //className='icon'
                 labeled
                 search
-                allowAdditions
                 selection
+                allowAdditions
+                options={this.state.watchOptions.map(option => ({ key: option, text: getMediaDisplayName(option), value: option }))}
                 selectOnBlur={false}
                 placeholder="Enter URL (YouTube, video file, etc.)"
-                onAddItem={(e, {value}) => this.setState({ watchOptions: [...this.state.watchOptions, value] })}
                 onChange={this.setMedia}
                 value={this.state.currentMedia}
-                options={this.state.watchOptions.map(option => ({ key: option, text: getMediaDisplayName(option), value: option }))}
                 />
-                <SearchComponent setMedia={this.setMedia} searchPath={this.searchPath}/>
+                {this.searchPath && <SearchComponent setMedia={this.setMedia} searchPath={this.searchPath}/>}
                 {/* <SearchComponent setMedia={this.setMedia} searchPath={this.searchPath}/> */}
             </div>
             <Segment inverted style={{ position: 'relative' }}>
@@ -806,32 +781,31 @@ class SearchComponent extends React.Component<SearchComponentProps> {
     }
     this.debounced();
   }
-
   render() {
     const { setMedia } = this.props;
     return <Dropdown
       key={this.state.resetDropdown}
       fluid
       button
-      className='icon'
       icon='search'
-      text="Search for streams"
+      className='icon'
       labeled
       search={(() => {}) as any}
+      text="Search for streams"
       onSearchChange={this.doSearch}
       >
-      <Dropdown.Menu>
-        {(this.state.results || []).map((result: SearchResult) => {
-          return <Dropdown.Item
-            label={{ color: Number(result.seeders) ? 'green' : 'red', empty: true, circular: true }}
-            text={result.name + ' - ' + result.size + ' - ' + result.seeders + ' peers'}
-            onClick={(e) => {
-              setMedia(e, { value: this.props.searchPath + '/stream?torrent=' + encodeURIComponent(result.magnet)});
-              this.setState({ resetDropdown: Number(new Date()) });
-            }}
-          />
-        })}
-      </Dropdown.Menu>
+        <Dropdown.Menu>
+            {(this.state.results || []).map((result: SearchResult) => {
+            return <Dropdown.Item
+                label={{ color: Number(result.seeders) ? 'green' : 'red', empty: true, circular: true }}
+                text={result.name + ' - ' + result.size + ' - ' + result.seeders + ' peers'}
+                onClick={(e) => {
+                setMedia(e, { value: this.props.searchPath + '/stream?torrent=' + encodeURIComponent(result.magnet)});
+                this.setState({ resetDropdown: Number(new Date()) });
+                }}
+            />
+            })}
+        </Dropdown.Menu>
     </Dropdown>;
   }
 }
@@ -894,7 +868,7 @@ const SettingsModal = () => (
       <Button color='green' inverted onClick={() => {
             const newSetting = (document.getElementById('settings_textarea') as HTMLTextAreaElement)!.value;
             try {
-                validateSettings(newSetting);
+                validateSettingsString(newSetting);
                 updateSettings(newSetting);
                 window.location.reload();
             } catch (e) {
@@ -907,17 +881,21 @@ const SettingsModal = () => (
   </Modal>
 )
 
-function getDefaultSettings() {
+function getDefaultSettings(): Settings {
     return {
-        mediaServers: [defaultMediaList],
+        mediaServer: mediaServer,
         searchServer: searchPath,
     }
 }
 
-function getCurrentSettings() {
+function getCurrentSettings(): Settings {
     const setting = window.localStorage.getItem('watchparty-setting');
     try {
-        return validateSettings(setting as string);
+        let settings = validateSettingsString(setting);
+        if (!settings) {
+            throw new Error('failed to parse settings, using defaults');
+        }
+        return settings;
     } catch(e) {
         console.error(e);
         return getDefaultSettings();
@@ -927,9 +905,9 @@ function getCurrentSettings() {
 /**
  * Validate a setting string. Return a parsed setting object if valid, otherwise throw exception
  */
-function validateSettings(setting: string) {
+function validateSettingsString(setting: string | null): Settings | null {
     // Don't have a setting or invalid value
-    let settingObject = JSON.parse(setting);
+    let settingObject: Settings = JSON.parse(setting as any);
     if (!setting || setting[0] !== '{') {
         throw new Error('failed to parse settings, using defaults');
     }

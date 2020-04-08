@@ -122,3 +122,9 @@ body {
     overflow: scroll;
     flex-shrink: 0;
 }
+
+@media only screen and (max-width: 600px) {
+  .mobileStack {
+      flex-direction: column;
+  }
+}
