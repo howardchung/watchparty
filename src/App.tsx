@@ -1,18 +1,29 @@
 import React from 'react';
-import { Button, Grid, Segment, Divider, Dimmer, Loader, Header, Label, Input, Icon, List, Comment, Progress, Dropdown, Message, Modal, Form, TextArea } from 'semantic-ui-react'
+import { Button, Grid, Segment, Divider, Dimmer, Loader, Header, Label, Input, Icon, List, Comment, Progress, Dropdown, Message, Modal, Form, TextArea, DropdownProps } from 'semantic-ui-react'
 import './App.css';
 // import { v4 as uuidv4 } from 'uuid';
 import querystring from 'querystring';
 import { generateName } from './generateName';
+//@ts-ignore
 import VTTConverter from 'srt-webvtt';
+//@ts-ignore
 import magnet from 'magnet-uri';
+//@ts-ignore
+import io from 'socket.io-client';
+
+declare global {
+    interface Window {
+        onYouTubeIframeAPIReady: any;
+        YT: any;
+    }
+}
 
 const serverPath = process.env.REACT_APP_SERVER_HOST || `${window.location.protocol}//${window.location.hostname}${process.env.NODE_ENV === 'production' ? '' : ':8080'}`;
-const defaultMediaList = process.env.REACT_APP_MEDIA_LIST || 'https://dev.howardchung.net';
+const mediaPath = process.env.REACT_APP_MEDIA_PATH || 'https://dev.howardchung.net';
 const searchPath = process.env.REACT_APP_SEARCH_PATH || 'https://scw.howardchung.net';
 
-const getMediaPathForList = (list) => {
-  const mappings = {
+const getMediaPathForList = (list: string) => {
+  const mappings: StringDict = {
     // TODO do a dynamic transform on gitlab to githack urls
     'https://gitlab.com/api/v4/projects/howardchung%2Fmedia/repository/tree': 'https://glcdn.githack.com/howardchung/media/-/raw/master/',
   };
@@ -37,27 +48,29 @@ const iceServers = [
 export default class App extends React.Component {
   state = {
     state: 'init',
-    watchOptions: [],
     currentMedia: '',
+    inputMedia: undefined as (string | undefined),
     currentMediaPaused: false,
-    participants: [],
-    chat: [],
-    tsMap: {},
-    nameMap: {},
+    participants: [] as User[],
+    chat: [] as ChatMessage[],
+    tsMap: {} as NumberDict,
+    nameMap: {} as StringDict,
     chatMsg: '',
     myName: '',
     loading: true,
   };
-  videoRefs = {};
-  socket = null;
-  messagesRef = React.createRef();
-  messagesEndRef = React.createRef();
-  watchPartyYTPlayer = null;
+  videoRefs: any = {};
+  socket: any = null;
+  messagesRef = React.createRef<HTMLDivElement>();
+  // messagesEndRef = React.createRef();
+  watchPartyYTPlayer: any = null;
   ytDebounce = true;
   videoInitTime = 0;
-  ourStream = null;
-  videoPCs = {};
-  searchPath = '';
+  ourStream: MediaStream | null = null;
+  videoPCs: PCDict = {};
+  searchPath: string | undefined = '';
+  mediaPath: string | undefined = '';
+  savedMedia = '';
 
   async componentDidMount() {
     const canAutoplay = await testAutoplay();
@@ -65,16 +78,13 @@ export default class App extends React.Component {
     if (canAutoplay) {
       this.init();
     }
-    // TODO youtube, twitch, bring your own file
+    // TODO twitch, bring your own file
     // TODO playlists
     // TODO rewrite using ws
     // TODO last writer wins on sending desynced timestamps (use max?)
-    // TODO gate search feature and preloaded eps behind config setting
     // TODO domain name
-    // TODO youtube api
-    //todo search bar invert
-    //todo combobox, 3 column
-    //todo vid chat column
+    // TODO fix race condition where search results return out of order
+    // TODO allow turning off video/audio in vidchat
   }
 
   setupWebRTC = async () => {
@@ -97,13 +107,14 @@ export default class App extends React.Component {
         return;
       }
       if (id === this.socket.id) {
-        this.videoPCs[id] = true;
+        this.videoPCs[id] = new RTCPeerConnection();
         this.videoRefs[id].srcObject = this.ourStream;
       }
       else {
         const pc = new RTCPeerConnection({ iceServers });
         this.videoPCs[id] = pc;
         // Add our own video as outgoing stream
+        //@ts-ignore
         pc.addStream(this.ourStream);
         pc.onicecandidate = (event) => {
           // We generated an ICE candidate, send it to peer
@@ -111,7 +122,8 @@ export default class App extends React.Component {
             this.sendMessage(id, {'ice': event.candidate});
           }
         };
-        pc.onaddstream = (event) => {
+        //@ts-ignore
+        pc.onaddstream = (event: any) => {
           // Mount the stream from peer
           const stream = event.stream;
           this.videoRefs[id].srcObject = stream;
@@ -130,31 +142,36 @@ export default class App extends React.Component {
     });
   }
 
-  sendMessage = async (to, data) => {
+  sendMessage = async (to: string, data: any) => {
     console.log('send', to, data);
     this.socket.emit('signal', { to, msg: data });
   };
   
   init = () => {
     this.setState({ state: 'started' }, () => {
-      // Load UUID from url
-      let roomId = '/default';
-      let query = window.location.hash.substring(1);
-      if (query) {
-        roomId = '/' + query;
-      }
+        // Load room ID from url
+        let roomId = '/default';
+        let query = window.location.hash.substring(1);
+        if (query) {
+            roomId = '/' + query;
+        }
 
-      // Send heartbeat to the server
-      window.setInterval(() => {
-        window.fetch(serverPath + '/ping');
-      }, 10 * 60 * 1000);
+        // Send heartbeat to the server
+        window.setInterval(() => {
+            window.fetch(serverPath + '/ping');
+        }, 10 * 60 * 1000);
+
+        // Load settings from localstorage
+        let settings = getCurrentSettings();
+        this.searchPath = settings.searchServer;
+        this.mediaPath = settings.mediaServer;
   
       // This code loads the IFrame Player API code asynchronously.
       const tag = document.createElement('script');
       tag.src = "https://www.youtube.com/iframe_api";
       var firstScriptTag = document.getElementsByTagName('script')[0];
-      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-            
+      firstScriptTag!.parentNode!.insertBefore(tag, firstScriptTag);
+     
       window.onYouTubeIframeAPIReady = () => {
         this.watchPartyYTPlayer = new window.YT.Player('leftYt', {
           events: {
@@ -162,7 +179,7 @@ export default class App extends React.Component {
               this.join(roomId);
               // this.watchPartyYTPlayer.playVideo();
             },
-            onStateChange: (e) => {
+            onStateChange: (e: any) => {
               if (getMediaType(this.state.currentMedia) === 'youtube' && e.data === window.YT.PlayerState.CUED) {
                 this.setState({ loading: false });
               }
@@ -186,9 +203,9 @@ export default class App extends React.Component {
     });
   }
   
-  join = async (roomId) => {
+  join = async (roomId: string) => {
     const leftVideo = document.getElementById('leftVideo');
-    leftVideo.onloadeddata = () => {
+    leftVideo!.onloadeddata = () => {
       // if (this.videoInitTime) {
       //   const videoReadyTime = Number(new Date());
       //   const offset = videoReadyTime - this.videoInitTime;
@@ -198,22 +215,8 @@ export default class App extends React.Component {
       this.setState({ loading: false });
     };
 
-    // Load settings from localstorage, build medialist
-    let settings = getCurrentSettings();
-    this.searchPath = settings.searchServer;
-    const mediaServers = settings.mediaServers;
-    let watchOptions = [];
-    for (let i = 0; i < mediaServers.length; i++) {
-      const line = mediaServers[i];
-      // TODO promise.all this to make requests in parallel
-      const response = await window.fetch(line);
-      const data = await response.json();
-      watchOptions = [...watchOptions, ...data.filter(file => file.type === 'file').map(file => getMediaPathForList(line) + file.name)];
-    }
-    this.setState({ watchOptions });
-
     // this.setState({ state: 'watching' });
-    const socket = window.io.connect(serverPath + roomId);
+    const socket = io.connect(serverPath + roomId);
     this.socket = socket;
     socket.on('connect', async () => {
       // Load username from localstorage
@@ -226,18 +229,14 @@ export default class App extends React.Component {
     socket.on('REC:pause', () => {
       this.doPause();
     });
-    socket.on('REC:seek', (data) => {
+    socket.on('REC:seek', (data: any) => {
       this.doSeek(data);
     });
-    socket.on('REC:host', (data) => {
-      const watchOptions = this.state.watchOptions;
-      if (data.video && !this.state.watchOptions.includes(data.video)) {
-        watchOptions.push(data.video);
-      }
-      this.setState({ currentMedia: data.video, currentMediaPaused: data.paused, watchOptions, loading: Boolean(data.video) }, () => {
+    socket.on('REC:host', (data: any) => {
+      this.setState({ currentMedia: data.video, currentMediaPaused: data.paused, loading: Boolean(data.video) }, () => {
         // Stop all players
-        const leftVideo = document.getElementById('leftVideo');
-        leftVideo.pause();
+        const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
+        leftVideo!.pause();
         this.watchPartyYTPlayer.stopVideo();
 
         // Start this video
@@ -247,7 +246,7 @@ export default class App extends React.Component {
         }
       });
     });
-    socket.on('REC:chat', (data) => {
+    socket.on('REC:chat', (data: ChatMessage) => {
       this.state.chat.push(data);
       this.setState({ chat: this.state.chat });
       this.scrollToBottom();
@@ -288,23 +287,23 @@ export default class App extends React.Component {
     //     document.body.appendChild(videoRec);
     //   }
     // });
-    socket.on('REC:tsMap', (data) => {
+    socket.on('REC:tsMap', (data: NumberDict) => {
       this.setState({ tsMap: data });
     });
-    socket.on('REC:nameMap', (data) => {
+    socket.on('REC:nameMap', (data: StringDict) => {
       this.setState({ nameMap: data });
     });
-    socket.on('roster', (data) => {
+    socket.on('roster', (data: User[]) => {
       this.setState({ participants: data }, () => {
         // Establish connections to the other video chatters
         this.updateWebRTC();
       });
     });
-    socket.on('chatinit', (data) => {
+    socket.on('chatinit', (data: any) => {
       this.setState({ chat: data });
       this.scrollToBottom();
     });
-    socket.on('signal', async (data) => {
+    socket.on('signal', async (data: any) => {
       // Handle messages received from signaling server
       const msg = data.msg;
       const from = data.from;
@@ -339,7 +338,7 @@ export default class App extends React.Component {
   
   getCurrentTime = () => {
     if (this.isVideo()) {
-      const leftVideo = document.getElementById('leftVideo');
+      const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
       return leftVideo.currentTime;
     }
     if (this.isYouTube()) {
@@ -349,49 +348,53 @@ export default class App extends React.Component {
   
   getDuration = () => {
     if (this.isVideo()) {
-      const leftVideo = document.getElementById('leftVideo');
+      const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
       return leftVideo.duration;
     }
     if (this.isYouTube()) {
       return this.watchPartyYTPlayer.getDuration();
     }
+    return 0;
   }
   
   isPaused = () => {
     if (this.isVideo()) {
-      const leftVideo = document.getElementById('leftVideo');
+      const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
       return leftVideo.paused || leftVideo.ended;
     }
     if (this.isYouTube()) {
       return this.watchPartyYTPlayer.getPlayerState() === window.YT.PlayerState.PAUSED || this.watchPartyYTPlayer.getPlayerState() === window.YT.PlayerState.ENDED;
     }
+    return false;
   }
   
   isMuted = () => {
     if (this.isVideo()) {
-      const leftVideo = document.getElementById('leftVideo');
+      const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
       return leftVideo.muted;
     }
     if (this.isYouTube()) {
       return this.watchPartyYTPlayer.isMuted();
     }
+    return false;
   }
 
   isSubtitled = () => {
     if (this.isVideo()) {
-      const leftVideo = document.getElementById('leftVideo');
+      const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
       return leftVideo.textTracks[0] && leftVideo.textTracks[0].mode === 'showing';
     }
     if (this.isYouTube()) {
       // TODO
       return false;
-    }   
+    }
+    return false;
   }
   
-  doSrc = async (src, time) => {
+  doSrc = async (src: string, time: number) => {
     console.log('doSrc', src, time);
     if (this.isVideo()) {
-      const leftVideo = document.getElementById('leftVideo');
+      const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
       leftVideo.src = src;
       this.videoInitTime = Number(new Date());
       leftVideo.currentTime = time;
@@ -406,7 +409,7 @@ export default class App extends React.Component {
         const subtitlePath = src.slice(0, src.lastIndexOf('/') + 1);
         const subtitleListResp = await window.fetch(subtitlePath + 'subtitles/');
         const subtitleList = await subtitleListResp.json();
-        const match = subtitleList.find(subtitle => getMediaDisplayName(src).toLowerCase().startsWith(subtitle.name.slice(0, -4).toLowerCase()));
+        const match = subtitleList.find((subtitle: any) => getMediaDisplayName(src).toLowerCase().startsWith(subtitle.name.slice(0, -4).toLowerCase()));
         subtitleSrc = subtitlePath + 'subtitles/' + match.name;
       }
       if (subtitleSrc) {
@@ -434,7 +437,7 @@ export default class App extends React.Component {
   doPlay = async () => {
     this.setState({ currentMediaPaused: false }, async () => {
       if (this.isVideo()) {
-        const leftVideo = document.getElementById('leftVideo');
+        const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
         try {
           await leftVideo.play();
         }
@@ -457,7 +460,7 @@ export default class App extends React.Component {
   doPause = () => {
     this.setState({ currentMediaPaused: true }, async () => {
       if (this.isVideo()) {
-        const leftVideo = document.getElementById('leftVideo');
+        const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
         leftVideo.pause();
       }
       if (this.isYouTube()) {
@@ -467,9 +470,9 @@ export default class App extends React.Component {
     });
   }
   
-  doSeek = (time) => {
+  doSeek = (time: number) => {
     if (this.isVideo()) {
-      const leftVideo = document.getElementById('leftVideo');
+      const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
       leftVideo.currentTime = time;
     }
     if (this.isYouTube()) {
@@ -488,7 +491,7 @@ export default class App extends React.Component {
   togglePlay = () => {
     let shouldPlay = true;
     if (this.isVideo()) {
-      const leftVideo = document.getElementById('leftVideo');
+      const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
       shouldPlay = leftVideo.paused || leftVideo.ended;
     }
     else if (this.isYouTube()) {
@@ -503,13 +506,13 @@ export default class App extends React.Component {
     }
   }
   
-  onSeek = (e) => {
+  onSeek = (e: any) => {
     const rect = e.target.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const max = rect.width;
     const target = x / max * this.getDuration();
     if (this.isVideo()) {
-      const leftVideo = document.getElementById('leftVideo');
+      const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
       leftVideo.currentTime = target;
     }
     if (this.isYouTube()) {
@@ -520,18 +523,18 @@ export default class App extends React.Component {
   
   fullScreen = () => {
     if (this.isVideo()) {
-      const leftVideo = document.getElementById('leftVideo');
+      const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
       leftVideo.requestFullscreen();
     }
     if (this.isYouTube()) {
       const leftYt = document.getElementById(('leftYt'));
-      leftYt.requestFullscreen();
+      leftYt!.requestFullscreen();
     }
   }
   
   toggleMute = () => {
     if (this.isVideo()) {
-      const leftVideo = document.getElementById('leftVideo');
+      const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
       leftVideo.muted = !leftVideo.muted;
     }
     if (this.isYouTube()) {
@@ -540,17 +543,17 @@ export default class App extends React.Component {
   }
   
   toggleSubtitle = () => {
-    const leftVideo = document.getElementById('leftVideo');
+    const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
     if (leftVideo.textTracks[0]) {
       leftVideo.textTracks[0].mode = leftVideo.textTracks[0].mode === 'showing' ? 'hidden' : 'showing';
     }
   }
 
-  setMedia = (e, data) => {
+  setMedia = (e: any, data: DropdownProps) => {
     this.socket.emit('CMD:host', data.value);
   }
   
-  updateChatMsg = (e, data) => {
+  updateChatMsg = (e: any, data: {value: string }) => {
     this.setState({ chatMsg: data.value });
   }
   
@@ -562,7 +565,7 @@ export default class App extends React.Component {
     this.socket.emit('CMD:chat', this.state.chatMsg);
   }
   
-  updateName = (e, data) => {
+  updateName = (e: any, data: { value: string }) => {
     this.setState({ myName: data.value });
     this.socket.emit('CMD:name', data.value);
     window.localStorage.setItem('watchparty-username', data.value);
@@ -602,45 +605,40 @@ export default class App extends React.Component {
         <Grid stackable celled='internally'>
           <Grid.Row>
           { this.state.state === 'init' && <div style={{ display: 'flex', width: '100%', alignItems: 'flex-start', justifyContent: 'center' }}><Button inverted primary size="huge" onClick={this.init} icon labelPosition="left"><Icon name="sign-in" />Join Party</Button></div> }
-          { this.state.state !== 'init' && <Grid.Column width={10}>
+          { this.state.state !== 'init' && <Grid.Column width={this.ourStream ? 10 : 12} className="fullHeightColumn" style={{ overflow: 'scroll' }}>
             <React.Fragment>
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-            <Dropdown
-              // icon='film'
-              // className='icon'
-              // labeled
-              button
-              fluid
-              search
-              allowAdditions
-              selection
-              selectOnBlur={false}
-              placeholder="Enter URL (YouTube, video file, etc.)"
-              onAddItem={(e, {value}) => this.setState({ watchOptions: [...this.state.watchOptions, value] })}
-              onChange={this.setMedia}
-              value={this.state.currentMedia}
-              options={this.state.watchOptions.map(option => ({ key: option, text: getMediaDisplayName(option), value: option }))}
-            />
+            <div className="mobileStack" style={{ display: 'flex', alignItems: 'center' }}>
+                <SearchComponent setMedia={this.setMedia} type={'youtube'} />
+                {this.mediaPath && <SearchComponent setMedia={this.setMedia} type={'mediaServer'} mediaPath={this.mediaPath}/>}
+                {this.searchPath && <SearchComponent setMedia={this.setMedia} type={'searchServer'} searchPath={this.searchPath}/>}
             </div>
             <Divider inverted horizontal></Divider>
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-            <SearchComponent setMedia={this.setMedia} />
-            </div>
-            <Segment inverted style={{ position: 'relative' }}>
-                <Header inverted as='h4' style={{ textTransform: 'uppercase', marginRight: '20px', wordBreak: 'break-word' }}>Now Watching: {getMediaDisplayName(this.state.currentMedia)}</Header>
-                <Divider inverted horizontal>With</Divider>
-                <List inverted horizontal style={{ marginLeft: '20px' }}>
-                  {this.state.participants.map((participant) => {
-                    return <List.Item>
-                      <Label as='a' color={getColor(participant.id)} image>
-                        <img src={getImage(this.state.nameMap[participant.id] || participant.id)} alt="" />
-                        {this.state.nameMap[participant.id] || participant.id}
-                        <Label.Detail>{formatTimestamp(this.state.tsMap[participant.id] || 0)}</Label.Detail>
-                      </Label>
-                      </List.Item>;
-                  })}
-                </List>
-            </Segment>
+            <Input
+                inverted
+                fluid
+                focus
+                onChange={(e: any) => this.setState({ inputMedia: e.target.value })}
+                onFocus={() => this.setState({ inputMedia: '' })}
+                onBlur={() => this.setState({ inputMedia: undefined })}
+                onKeyPress={(e: any) => e.key === 'Enter' && this.setMedia(e, { value: this.state.inputMedia })} 
+                icon={<Icon onClick={(e: any) => this.setMedia(e, { value: this.state.inputMedia })} name='arrow right' inverted circular link />}
+                label="Now Watching:"
+                placeholder="Enter URL (YouTube, video file, etc.), or use a search"
+                value={this.state.inputMedia !== undefined ? this.state.inputMedia : getMediaDisplayName(this.state.currentMedia)}
+            />
+            <Divider inverted horizontal>With</Divider>
+            <List inverted horizontal>
+                {this.state.participants.map((participant) => {
+                return <List.Item>
+                    <Label as='a' color={getColor(participant.id) as any} image>
+                    <img src={getImage(this.state.nameMap[participant.id] || participant.id)} alt="" />
+                    {this.state.nameMap[participant.id] || participant.id}
+                    <Label.Detail>{formatTimestamp(this.state.tsMap[participant.id] || 0)}</Label.Detail>
+                    </Label>
+                    </List.Item>;
+                })}
+            </List>
+            <Divider inverted horizontal></Divider>
             { (this.state.loading || !this.state.currentMedia) && <Segment inverted style={{ minHeight: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               { (this.state.loading) && 
               <Dimmer active>
@@ -669,15 +667,14 @@ export default class App extends React.Component {
             </div>
             <div style={{ display: (this.isVideo() && !this.state.loading) ? 'block' : 'none' }}>
               <video
-                tabIndex="1"
+                tabIndex={1}
                 onClick={this.togglePlay}
                 id="leftVideo"
-                playsInline
-                type="video/mp4"
               >
               </video>
             </div>
-            { this.state.currentMedia && <Controls
+            { this.state.currentMedia && 
+            <Controls
               togglePlay={this.togglePlay}
               onSeek={this.onSeek}
               fullScreen={this.fullScreen}
@@ -703,12 +700,12 @@ export default class App extends React.Component {
                   muted={p.id === this.socket.id}
                   data-id={p.id}
                 />
-                <Label tag size='small' color={getColor(p.id)} style={{ position: 'absolute', bottom: 0, right: 0 }}>{this.state.nameMap[p.id] || p.id}</Label>
+                <Label tag size='small' color={getColor(p.id) as any} style={{ position: 'absolute', bottom: 0, right: 0 }}>{this.state.nameMap[p.id] || p.id}</Label>
                 </div>;
               })}
           </div>
         </Grid.Column>}
-        {this.state.state !== 'init' && <Grid.Column width={4} style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 120px)' }}>
+        {this.state.state !== 'init' && <Grid.Column width={4} className="fullHeightColumn">
           <Input
             inverted
             fluid
@@ -734,7 +731,7 @@ export default class App extends React.Component {
             <Input
               inverted
               fluid
-              onKeyPress={(e) => e.key === 'Enter' && this.sendChatMsg()} 
+              onKeyPress={(e: any) => e.key === 'Enter' && this.sendChatMsg()} 
               onChange={this.updateChatMsg}
               value={this.state.chatMsg}
               icon={<Icon onClick={this.sendChatMsg} name='send' inverted circular link />}
@@ -749,46 +746,110 @@ export default class App extends React.Component {
   }
 }
 
-class SearchComponent extends React.Component {
-  state = { results: null, resetDropdown: Number(new Date()) };
+interface SearchComponentProps {
+    setMedia: Function;
+    searchPath?: string;
+    mediaPath?: string;
+    type?: 'youtube' | 'mediaServer' | 'searchServer';
+}
 
-  doSearch = (e) => {
+class SearchComponent extends React.Component<SearchComponentProps> {
+    state = {
+      results: [] as SearchResult[],
+      watchOptions: [],
+      resetDropdown: Number(new Date()),
+      loading: false,
+    };
+    debounced: any = null;
+
+    async componentDidMount() {
+        if (this.props.type === 'mediaServer') {
+            let watchOptions: SearchResult[] = [];
+            const line = this.props.mediaPath;
+            const response = await window.fetch(line as any);
+            const data = await response.json();
+            const results = data.filter((file: any) => file.type === 'file').map((file: any) => ({ url: getMediaPathForList(line as any) + file.name, name: file.name }));
+            watchOptions = [...watchOptions, ...results];
+            this.setState({ watchOptions: watchOptions, results: watchOptions });
+        }
+    }
+
+  doSearch = (e: any) => {
     e.persist();
+    this.setState({ loading: true });
+    if (this.props.type === 'mediaServer') {
+        this.setState({ loading: false, results: this.state.watchOptions.filter((option: SearchResult) => option.name.toLowerCase().includes(e.target.value.toLowerCase()))});
+        return;
+    }
     if (!this.debounced) {
       this.debounced = debounce(async () => {
-        const response = await window.fetch(this.searchPath + '/search?q=' + encodeURIComponent(e.target.value));
+        let searchUrl = this.props.searchPath + '/search?q=' + encodeURIComponent(e.target.value);
+        if (this.props.type === 'youtube') {
+            searchUrl = serverPath + '/youtube?q=' + encodeURIComponent(e.target.value);
+        }
+        const response = await window.fetch(searchUrl);
         const data = await response.json();
-        this.setState({ results: data });
-      }, 300);
+        this.setState({ loading: false, results: data });
+      }, 500);
     }
     this.debounced();
   }
 
   render() {
     const { setMedia } = this.props;
+    let placeholder = 'Search for streams';
+    let icon = 'search';
+    if (this.props.type === 'youtube') {
+        placeholder = 'Search YouTube';
+        icon = 'youtube';
+    }
+    else if (this.props.type === 'mediaServer') {
+        placeholder = 'Search video files';
+        icon = 'film';
+    }
     return <Dropdown
       key={this.state.resetDropdown}
       fluid
-      icon='search'
-      text="Search for streams"
-      labeled
-      search={() => {}}
-      onSearchChange={this.doSearch}
       button
+      icon={icon}
       className='icon'
-    >
-      <Dropdown.Menu>
-        {(this.state.results || []).map(result => {
-          return <Dropdown.Item
-            label={{ color: Number(result.seeders) ? 'green' : 'red', empty: true, circular: true }}
-            text={result.name + ' - ' + result.size + ' - ' + result.seeders + ' peers'}
-            onClick={(e) => {
-              setMedia(e, { value: this.searchPath + '/stream?torrent=' + encodeURIComponent(result.magnet)});
-              this.setState({ resetDropdown: Number(new Date()) });
-            }}
-          />
-        })}
-      </Dropdown.Menu>
+      labeled
+      search={(() => {}) as any}
+      text={placeholder}
+      onSearchChange={this.doSearch}
+      onBlur={() => this.setState({ results: this.state.watchOptions })}
+      //loading={this.state.loading}
+      >
+        {Boolean(this.state.results.length) ? <Dropdown.Menu>
+            {this.state.results.map((result: SearchResult) => {
+                if (this.props.type === 'youtube') {
+                    return <Dropdown.Item
+                        children={<div style={{ display: 'flex', alignItems: 'center'}}>
+                            <img style={{ height: '40px' }} src={result.img} alt={result.name} />
+                            <div style={{ marginLeft: '5px' }}>{decodeEntities(result.name)}</div>
+                        </div>}
+                        onClick={(e) => {
+                            setMedia(e, { value: result.url });
+                            this.setState({ resetDropdown: Number(new Date()) });
+                        }}
+                    />;
+                }
+                else if (this.props.type === 'mediaServer') {
+                    return <Dropdown.Item text={result.name} onClick={(e) => {
+                        setMedia(e, { value: result.url });
+                        this.setState({ results: this.state.watchOptions, resetDropdown: Number(new Date()) });
+                    }} />;
+                }
+                return <Dropdown.Item
+                    label={{ color: Number(result.seeders) ? 'green' : 'red', empty: true, circular: true }}
+                    text={result.name + ' - ' + result.size + ' - ' + result.seeders + ' peers'}
+                    onClick={(e) => {
+                        setMedia(e, { value: this.props.searchPath + '/stream?torrent=' + encodeURIComponent(result.magnet)});
+                        this.setState({ resetDropdown: Number(new Date()) });
+                    }}
+                />;
+            })}
+        </Dropdown.Menu> : null}
     </Dropdown>;
   }
 }
@@ -797,14 +858,15 @@ class SearchComponent extends React.Component {
 // be triggered. The function will be called after it stops being called for
 // N milliseconds. If `immediate` is passed, trigger the function on the
 // leading edge, instead of the trailing.
-function debounce(func, wait, immediate) {
-  var timeout;
+function debounce(func: Function, wait: number, immediate?: boolean) {
+  var timeout: any;
 
   // This is the function that is actually executed when
   // the DOM event is triggered.
   return function executedFunction() {
     // Store the context of this and any
     // parameters passed to executedFunction
+    //@ts-ignore
     var context = this;
     var args = arguments;
 	    
@@ -848,9 +910,9 @@ const SettingsModal = () => (
     </Modal.Content>
     <Modal.Actions>
       <Button color='green' inverted onClick={() => {
-            const newSetting = document.getElementById('settings_textarea').value;
+            const newSetting = (document.getElementById('settings_textarea') as HTMLTextAreaElement)!.value;
             try {
-                validateSettings(newSetting);
+                validateSettingsString(newSetting);
                 updateSettings(newSetting);
                 window.location.reload();
             } catch (e) {
@@ -863,17 +925,21 @@ const SettingsModal = () => (
   </Modal>
 )
 
-function getDefaultSettings() {
+function getDefaultSettings(): Settings {
     return {
-        mediaServers: [defaultMediaList],
+        mediaServer: mediaPath,
         searchServer: searchPath,
     }
 }
 
-function getCurrentSettings() {
+function getCurrentSettings(): Settings {
     const setting = window.localStorage.getItem('watchparty-setting');
     try {
-        return validateSettings(setting);
+        let settings = validateSettingsString(setting);
+        if (!settings) {
+            throw new Error('failed to parse settings, using defaults');
+        }
+        return settings;
     } catch(e) {
         console.error(e);
         return getDefaultSettings();
@@ -883,20 +949,20 @@ function getCurrentSettings() {
 /**
  * Validate a setting string. Return a parsed setting object if valid, otherwise throw exception
  */
-function validateSettings(setting) {
+function validateSettingsString(setting: string | null): Settings | null {
     // Don't have a setting or invalid value
-    let settingObject = JSON.parse(setting);
+    let settingObject: Settings = JSON.parse(setting as any);
     if (!setting || setting[0] !== '{') {
         throw new Error('failed to parse settings, using defaults');
     }
     return settingObject;
 }
 
-function updateSettings(newSetting) {
+function updateSettings(newSetting: string) {
   window.localStorage.setItem('watchparty-setting', newSetting);
 }
 
-const getMediaType = (input) => {
+const getMediaType = (input: string) => {
   if (!input) {
     return '';
   }
@@ -906,7 +972,7 @@ const getMediaType = (input) => {
   return 'video';
 }
 
-const getMediaDisplayName = (input) => {
+const getMediaDisplayName = (input: string) => {
   if (!input) {
     return '';
   }
@@ -924,7 +990,7 @@ const getMediaDisplayName = (input) => {
   return input.split('/').slice(-1)[0];
 }
 
-const ChatMessage = ({ id, timestamp, cmd, msg, nameMap }) => {
+const ChatMessage = ({ id, timestamp, cmd, msg, nameMap }: any) => {
     return <Comment>
       <Comment.Avatar src={getImage(nameMap[id])} />
       <Comment.Content>
@@ -938,7 +1004,19 @@ const ChatMessage = ({ id, timestamp, cmd, msg, nameMap }) => {
     </Comment>;
 };
 
-class Controls extends React.Component {
+interface ControlsProps {
+    duration: number;
+    togglePlay: Function;
+    onSeek: Function;
+    fullScreen: Function;
+    toggleMute: Function;
+    toggleSubtitle: Function;
+    paused: boolean;
+    muted: boolean;
+    subtitled: boolean;
+    currentTime: number;
+}
+class Controls extends React.Component<ControlsProps> {
   state = { showTimestamp: false, currTimestamp: 0, posTimestamp: 0 }
   
   onMouseOver = () => {
@@ -951,7 +1029,7 @@ class Controls extends React.Component {
     this.setState({ showTimestamp: false });
   }
   
-  onMouseMove = (e) => {
+  onMouseMove = (e: any) => {
     const rect = e.target.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const max = rect.width;
@@ -995,7 +1073,7 @@ class Controls extends React.Component {
   }
 }
 
-function formatMessage(cmd, msg) {
+function formatMessage(cmd: string, msg: string) {
   if (cmd === 'host') {
     return `changed the video to ${getMediaDisplayName(msg)}`;
   }
@@ -1011,16 +1089,16 @@ function formatMessage(cmd, msg) {
   return cmd;
 }
 
-function formatTimestamp(input) {
+function formatTimestamp(input: any) {
   if (input === null || input === undefined || input === false || Number.isNaN(input)) {
     return '';
   }
-  let minutes = Math.floor(input / 60);
-  let seconds = Math.floor(input % 60).toString().padStart(2, '0');
+  let minutes = Math.floor(Number(input) / 60);
+  let seconds = Math.floor(Number(input) % 60).toString().padStart(2, '0');
   return `${minutes}:${seconds}`;
 }
 
-function hashString(input) {
+function hashString(input: string) {
   var hash = 0, i, chr;
     for (i = 0; i < input.length; i++) {
       chr   = input.charCodeAt(i);
@@ -1030,8 +1108,8 @@ function hashString(input) {
   return hash;
 }
 
-let colorCache = {};
-function getColor(id) {
+let colorCache = {} as NumberDict;
+function getColor(id: string) {
   let colors = ['red','orange','yellow','olive', 'green', 'teal', 'blue', 'violet', 'purple', 'pink', 'brown','grey'];
   if (colorCache[id]) {
     return colors[colorCache[id]];
@@ -1040,9 +1118,9 @@ function getColor(id) {
   return colors[colorCache[id]];
 }
 
-function getImage(name) {
+function getImage(name: string) {
   const lower = (name || '').toLowerCase();
-  const getFbPhoto = (fbId) => `https://graph.facebook.com/${fbId}/picture?type=square`;
+  const getFbPhoto = (fbId: string) => `https://graph.facebook.com/${fbId}/picture?type=square`;
   if (lower === 'howard') {
     return getFbPhoto('746929384');
   }
@@ -1076,3 +1154,7 @@ async function testAutoplay() {
   return true;
 }
 
+function decodeEntities(input: string) {
+  const doc = new DOMParser().parseFromString(input, "text/html");
+  return doc.documentElement.textContent;
+}
