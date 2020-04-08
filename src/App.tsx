@@ -84,7 +84,7 @@ export default class App extends React.Component {
     // TODO last writer wins on sending desynced timestamps (use max?)
     // TODO domain name
     // TODO fix race condition where search results return out of order
-    // TODO allow turning off video/audio in vidchat
+    // TODO full disconnection from webrtc (and allow rejoining)
   }
 
   setupWebRTC = async () => {
@@ -93,6 +93,34 @@ export default class App extends React.Component {
     this.ourStream = stream;
     // alert server we've joined video chat
     this.socket.emit('CMD:joinVideo');
+  }
+
+  stopWebRTC = () => {
+      this.ourStream && this.ourStream.getTracks().forEach(track => {
+          track.stop();
+      });
+      this.ourStream = null;
+      this.socket.emit('CMD:leaveVideo');
+  }
+
+  toggleVideoWebRTC = () => {
+      if (this.ourStream) {
+          this.ourStream.getVideoTracks()[0].enabled = !this.ourStream.getVideoTracks()[0].enabled;
+      }
+  }
+
+  getVideoWebRTC = () => {
+    return this.ourStream && this.ourStream.getVideoTracks()[0].enabled;
+  }
+
+  toggleAudioWebRTC = () => {
+      if (this.ourStream) {
+          this.ourStream.getAudioTracks()[0].enabled = !this.ourStream.getAudioTracks()[0].enabled;
+      }
+  }
+
+  getAudioWebRTC = () => {
+      return this.ourStream && this.ourStream.getAudioTracks()[0].enabled;
   }
   
   updateWebRTC = () => {
@@ -124,9 +152,10 @@ export default class App extends React.Component {
         };
         //@ts-ignore
         pc.onaddstream = (event: any) => {
-          // Mount the stream from peer
-          const stream = event.stream;
-          this.videoRefs[id].srcObject = stream;
+            // Mount the stream from peer
+            const stream = event.stream;
+            console.log(stream);
+            this.videoRefs[id].srcObject = stream;
         };
         // For each pair, have the lexicographically smaller ID be the offerer
         const isOfferer = this.socket.id < id;
@@ -605,40 +634,40 @@ export default class App extends React.Component {
         <Grid stackable celled='internally'>
           <Grid.Row>
           { this.state.state === 'init' && <div style={{ display: 'flex', width: '100%', alignItems: 'flex-start', justifyContent: 'center' }}><Button inverted primary size="huge" onClick={this.init} icon labelPosition="left"><Icon name="sign-in" />Join Party</Button></div> }
-          { this.state.state !== 'init' && <Grid.Column width={11}>
+          { this.state.state !== 'init' && <Grid.Column width={this.ourStream ? 10 : 12} className="fullHeightColumn" style={{ overflow: 'scroll' }}>
             <React.Fragment>
             <div className="mobileStack" style={{ display: 'flex', alignItems: 'center' }}>
                 <SearchComponent setMedia={this.setMedia} type={'youtube'} />
                 {this.mediaPath && <SearchComponent setMedia={this.setMedia} type={'mediaServer'} mediaPath={this.mediaPath}/>}
                 {this.searchPath && <SearchComponent setMedia={this.setMedia} type={'searchServer'} searchPath={this.searchPath}/>}
             </div>
-            <Segment inverted style={{ position: 'relative' }}>
-                <Input
-                    inverted
-                    fluid
-                    focus
-                    onChange={(e: any) => this.setState({ inputMedia: e.target.value })}
-                    onFocus={() => this.setState({ inputMedia: '' })}
-                    onBlur={() => this.setState({ inputMedia: undefined })}
-                    onKeyPress={(e: any) => e.key === 'Enter' && this.setMedia(e, { value: this.state.inputMedia })} 
-                    icon={<Icon onClick={(e: any) => this.setMedia(e, { value: this.state.inputMedia })} name='arrow right' inverted circular link />}
-                    label="Now Watching:"
-                    placeholder="Enter URL (YouTube, video file, etc.), or use a search"
-                    value={this.state.inputMedia !== undefined ? this.state.inputMedia : getMediaDisplayName(this.state.currentMedia)}
-                />
-                <Divider inverted horizontal>With</Divider>
-                <List inverted horizontal>
-                  {this.state.participants.map((participant) => {
-                    return <List.Item>
-                      <Label as='a' color={getColor(participant.id) as any} image>
-                        <img src={getImage(this.state.nameMap[participant.id] || participant.id)} alt="" />
-                        {this.state.nameMap[participant.id] || participant.id}
-                        <Label.Detail>{formatTimestamp(this.state.tsMap[participant.id] || 0)}</Label.Detail>
-                      </Label>
-                      </List.Item>;
-                  })}
-                </List>
-            </Segment>
+            <Divider inverted horizontal></Divider>
+            <Input
+                inverted
+                fluid
+                focus
+                onChange={(e: any) => this.setState({ inputMedia: e.target.value })}
+                onFocus={() => this.setState({ inputMedia: '' })}
+                onBlur={() => this.setState({ inputMedia: undefined })}
+                onKeyPress={(e: any) => e.key === 'Enter' && this.setMedia(e, { value: this.state.inputMedia })} 
+                icon={<Icon onClick={(e: any) => this.setMedia(e, { value: this.state.inputMedia })} name='arrow right' inverted circular link />}
+                label="Now Watching:"
+                placeholder="Enter URL (YouTube, video file, etc.), or use search"
+                value={this.state.inputMedia !== undefined ? this.state.inputMedia : getMediaDisplayName(this.state.currentMedia)}
+            />
+            <Divider inverted horizontal>With</Divider>
+            <List inverted horizontal>
+                {this.state.participants.map((participant) => {
+                return <List.Item>
+                    <Label as='a' color={getColor(participant.id) as any} image>
+                    <img src={getImage(this.state.nameMap[participant.id] || participant.id)} alt="" />
+                    {this.state.nameMap[participant.id] || participant.id}
+                    <Label.Detail>{formatTimestamp(this.state.tsMap[participant.id] || 0)}</Label.Detail>
+                    </Label>
+                    </List.Item>;
+                })}
+            </List>
+            <Divider inverted horizontal></Divider>
             { (this.state.loading || !this.state.currentMedia) && <Segment inverted style={{ minHeight: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               { (this.state.loading) && 
               <Dimmer active>
@@ -689,7 +718,23 @@ export default class App extends React.Component {
             }
           </React.Fragment>
         </Grid.Column>}
-        {this.state.state !== 'init' && <Grid.Column width={5} style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 120px)' }}>
+        {this.ourStream && <Grid.Column width={2}>
+          <div id="videoContainer">
+            {this.state.participants.map(p => {
+              return <div key={p.id} style={{ position: 'relative', height: 'fit-content', display: p.isVideoChat ? 'block' : 'none' }}>
+                <video
+                  ref={el => {this.videoRefs[p.id] = el}}
+                  style={{ width: '100%', height: '100%', borderRadius: '4px' }}
+                  autoPlay
+                  muted={p.id === this.socket.id}
+                  data-id={p.id}
+                />
+                <Label tag size='small' color={getColor(p.id) as any} style={{ position: 'absolute', bottom: 0, right: 0 }}>{this.state.nameMap[p.id] || p.id}</Label>
+                </div>;
+              })}
+          </div>
+        </Grid.Column>}
+        {this.state.state !== 'init' && <Grid.Column width={4} style={{ display: 'flex', flexDirection: 'column' }} className="fullHeightColumn">
           <Input
             inverted
             fluid
@@ -704,21 +749,16 @@ export default class App extends React.Component {
             }
           />
           <Divider inverted horizontal></Divider>
-          {!this.ourStream && <Button color="purple" size="large" icon labelPosition="left" onClick={this.setupWebRTC} style={{ flexShrink: 0 }}><Icon name="video" />Join Video</Button>}
-          {this.ourStream && <div id="videoContainer">
-            {this.state.participants.map(p => {
-              return <div key={p.id} style={{ position: 'relative', height: 'fit-content', display: p.isVideoChat ? 'block' : 'none' }}>
-                <video
-                  ref={el => {this.videoRefs[p.id] = el}}
-                  style={{ width: '100%', height: '100%', borderRadius: '4px' }}
-                  autoPlay
-                  muted={p.id === this.socket.id}
-                  data-id={p.id}
-                />
-                <Label tag size='small' color={getColor(p.id) as any} style={{ position: 'absolute', bottom: 0, right: 0 }}>{this.state.nameMap[p.id] || p.id}</Label>
-                </div>;
-              })}
-          </div>}
+          {!this.ourStream
+            ? <Button color="purple" size="large" icon labelPosition="left" onClick={this.setupWebRTC} style={{ flexShrink: 0 }}><Icon name="video" />Join Video</Button>
+            : (
+                <div style={{ display: 'flex', width: '100%' }}>
+                <Button fluid color={this.getVideoWebRTC() ? "green" : "red"} size="large" icon labelPosition="left" onClick={this.toggleVideoWebRTC}><Icon name="video" />{this.getVideoWebRTC() ? 'On' : 'Off'}</Button>
+                <Button fluid color={this.getAudioWebRTC() ? "green" : "red"} size="large" icon labelPosition="left" onClick={this.toggleAudioWebRTC}><Icon name={this.getAudioWebRTC() ? "microphone" : 'microphone slash'} />{this.getAudioWebRTC() ? 'On' : 'Off'}</Button>
+                </div>
+            )
+          }
+
           <Segment inverted style={{ display: 'flex', flexDirection: 'column', width: '100%', flexGrow: '1', minHeight: 0 }}>
             <div className="chatContainer" ref={this.messagesRef}>
               <Comment.Group>

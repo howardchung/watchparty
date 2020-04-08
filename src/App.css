@@ -76,10 +76,9 @@ body {
 
 #videoContainer {
     display: grid;
-    grid-template-columns: 50% 50%;
+    grid-template-columns: 100%;
     /*grid-template-rows: repeat(auto-fill, 160px);*/
-    min-height: 160px;
-    max-height: 400px;
+    max-height: calc(100vh - 120px);
     overflow: scroll;
     flex-shrink: 0;
 }
@@ -88,4 +87,8 @@ body {
   .mobileStack {
       flex-direction: column;
   }
+}
+
+.fullHeightColumn.fullHeightColumn.fullHeightColumn.fullHeightColumn {
+    height: calc(100vh - 150px);
 }
