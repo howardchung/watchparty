@@ -3,7 +3,12 @@ const { v4 } = require('uuid');
 const fs = require('fs');
 const express = require('express');
 // const axios = require('axios');
+const Moniker = require('moniker');
+const Youtube = require("youtube-api");
 const cors = require('cors');
+
+const names = Moniker.generator([Moniker.adjective, Moniker.noun, Moniker.verb]);
+
 const app = express();
 let server = null;
 if (process.env.HTTPS) {
@@ -14,8 +19,13 @@ if (process.env.HTTPS) {
     server = require('http').Server(app);
 }
 const io = require('socket.io')(server, { origins: '*:*'});
-const Moniker = require('moniker');
-const names = Moniker.generator([Moniker.adjective, Moniker.noun, Moniker.verb]);
+
+if (process.env.YOUTUBE_API_KEY) {
+    Youtube.authenticate({
+        type: "key",
+        key: process.env.YOUTUBE_API_KEY,
+    });
+}
 
 // const Turn = require('node-turn');
 // const turnServer = new Turn({
@@ -36,6 +46,19 @@ app.use(cors());
 app.use(express.static('build'));
 app.get('/ping', (req, res) => {
   res.json('pong');
+});
+
+app.get('/youtube', (req, res) => {
+    Youtube.search.list({ part: 'snippet', type: 'video', maxResults: 25, q: req.query.q }, (err, data) => {
+        const response = data.items.map(video => {
+            return { 
+                url: 'https://www.youtube.com/watch?v=' + video.id.videoId,
+                name: video.snippet.title,
+                img: video.snippet.thumbnails.default.url,
+            };
+        });
+        res.json(response);
+    });
 });
 
 app.post('/createRoom', (req, res) => {

@@ -20,6 +20,8 @@ interface SearchResult {
     size: string;
     seeders: string;
     magnet: string;
+    url: string;
+    img: string;
 }
 
 interface Settings {

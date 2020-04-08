@@ -19,7 +19,7 @@ declare global {
 }
 
 const serverPath = process.env.REACT_APP_SERVER_HOST || `${window.location.protocol}//${window.location.hostname}${process.env.NODE_ENV === 'production' ? '' : ':8080'}`;
-const mediaServer = process.env.REACT_APP_MEDIA_LIST || 'https://dev.howardchung.net';
+const mediaPath = process.env.REACT_APP_MEDIA_PATH || 'https://dev.howardchung.net';
 const searchPath = process.env.REACT_APP_SEARCH_PATH || 'https://scw.howardchung.net';
 
 const getMediaPathForList = (list: string) => {
@@ -48,8 +48,8 @@ const iceServers = [
 export default class App extends React.Component {
   state = {
     state: 'init',
-    watchOptions: [] as string[],
     currentMedia: '',
+    inputMedia: undefined as (string | undefined),
     currentMediaPaused: false,
     participants: [] as User[],
     chat: [] as ChatMessage[],
@@ -69,7 +69,8 @@ export default class App extends React.Component {
   ourStream: MediaStream | null = null;
   videoPCs: PCDict = {};
   searchPath: string | undefined = '';
-  mediaServer: string | undefined = '';
+  mediaPath: string | undefined = '';
+  savedMedia = '';
 
   async componentDidMount() {
     const canAutoplay = await testAutoplay();
@@ -77,12 +78,11 @@ export default class App extends React.Component {
     if (canAutoplay) {
       this.init();
     }
-    // TODO youtube, twitch, bring your own file
+    // TODO twitch, bring your own file
     // TODO playlists
     // TODO rewrite using ws
     // TODO last writer wins on sending desynced timestamps (use max?)
     // TODO domain name
-    // TODO youtube api
     // TODO fix race condition where search results return out of order
     // TODO allow turning off video/audio in vidchat
   }
@@ -164,7 +164,7 @@ export default class App extends React.Component {
         // Load settings from localstorage
         let settings = getCurrentSettings();
         this.searchPath = settings.searchServer;
-        this.mediaServer = settings.mediaServer;
+        this.mediaPath = settings.mediaServer;
   
       // This code loads the IFrame Player API code asynchronously.
       const tag = document.createElement('script');
@@ -215,17 +215,6 @@ export default class App extends React.Component {
       this.setState({ loading: false });
     };
 
-    if (this.mediaServer) {
-        let watchOptions: string[] = [];
-        const line = this.mediaServer;
-        // TODO promise.all this to make requests in parallel
-        const response = await window.fetch(line as any);
-        const data = await response.json();
-        const results = data.filter((file: any) => file.type === 'file').map((file: any) => getMediaPathForList(line as any) + file.name);
-        watchOptions = [...watchOptions, ...results];
-        this.setState({ watchOptions });
-    }
-
     // this.setState({ state: 'watching' });
     const socket = io.connect(serverPath + roomId);
     this.socket = socket;
@@ -244,11 +233,7 @@ export default class App extends React.Component {
       this.doSeek(data);
     });
     socket.on('REC:host', (data: any) => {
-      const watchOptions = this.state.watchOptions;
-      if (data.video && !this.state.watchOptions.includes(data.video)) {
-        watchOptions.push(data.video);
-      }
-      this.setState({ currentMedia: data.video, currentMediaPaused: data.paused, watchOptions, loading: Boolean(data.video) }, () => {
+      this.setState({ currentMedia: data.video, currentMediaPaused: data.paused, loading: Boolean(data.video) }, () => {
         // Stop all players
         const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
         leftVideo!.pause();
@@ -623,28 +608,26 @@ export default class App extends React.Component {
           { this.state.state !== 'init' && <Grid.Column width={11}>
             <React.Fragment>
             <div className="mobileStack" style={{ display: 'flex', alignItems: 'center' }}>
-                <Dropdown
-                fluid
-                //button
-                //icon='film'
-                //className='icon'
-                labeled
-                search
-                selection
-                allowAdditions
-                options={this.state.watchOptions.map(option => ({ key: option, text: getMediaDisplayName(option), value: option }))}
-                selectOnBlur={false}
-                placeholder="Enter URL (YouTube, video file, etc.)"
-                onChange={this.setMedia}
-                value={this.state.currentMedia}
-                />
-                {this.searchPath && <SearchComponent setMedia={this.setMedia} searchPath={this.searchPath}/>}
-                {/* <SearchComponent setMedia={this.setMedia} searchPath={this.searchPath}/> */}
+                <SearchComponent setMedia={this.setMedia} type={'youtube'} />
+                {this.mediaPath && <SearchComponent setMedia={this.setMedia} type={'mediaServer'} mediaPath={this.mediaPath}/>}
+                {this.searchPath && <SearchComponent setMedia={this.setMedia} type={'searchServer'} searchPath={this.searchPath}/>}
             </div>
             <Segment inverted style={{ position: 'relative' }}>
-                <Header inverted as='h4' style={{ textTransform: 'uppercase', marginRight: '20px', wordBreak: 'break-word' }}>Now Watching: {getMediaDisplayName(this.state.currentMedia)}</Header>
+                <Input
+                    inverted
+                    fluid
+                    focus
+                    onChange={(e: any) => this.setState({ inputMedia: e.target.value })}
+                    onFocus={() => this.setState({ inputMedia: '' })}
+                    onBlur={() => this.setState({ inputMedia: undefined })}
+                    onKeyPress={(e: any) => e.key === 'Enter' && this.setMedia(e, { value: this.state.inputMedia })} 
+                    icon={<Icon onClick={(e: any) => this.setMedia(e, { value: this.state.inputMedia })} name='arrow right' inverted circular link />}
+                    label="Now Watching:"
+                    placeholder="Enter URL (YouTube, video file, etc.), or use a search"
+                    value={this.state.inputMedia !== undefined ? this.state.inputMedia : getMediaDisplayName(this.state.currentMedia)}
+                />
                 <Divider inverted horizontal>With</Divider>
-                <List inverted horizontal style={{ marginLeft: '20px' }}>
+                <List inverted horizontal>
                   {this.state.participants.map((participant) => {
                     return <List.Item>
                       <Label as='a' color={getColor(participant.id) as any} image>
@@ -763,49 +746,108 @@ export default class App extends React.Component {
 
 interface SearchComponentProps {
     setMedia: Function;
-    searchPath: string;
+    searchPath?: string;
+    mediaPath?: string;
+    type?: 'youtube' | 'mediaServer' | 'searchServer';
 }
 
 class SearchComponent extends React.Component<SearchComponentProps> {
-  state = { results: null, resetDropdown: Number(new Date()) };
-  debounced: any = null;
+    state = {
+      results: [] as SearchResult[],
+      watchOptions: [],
+      resetDropdown: Number(new Date()),
+      loading: false,
+    };
+    debounced: any = null;
+
+    async componentDidMount() {
+        if (this.props.type === 'mediaServer') {
+            let watchOptions: SearchResult[] = [];
+            const line = this.props.mediaPath;
+            const response = await window.fetch(line as any);
+            const data = await response.json();
+            const results = data.filter((file: any) => file.type === 'file').map((file: any) => ({ url: getMediaPathForList(line as any) + file.name, name: file.name }));
+            watchOptions = [...watchOptions, ...results];
+            this.setState({ watchOptions: watchOptions, results: watchOptions });
+        }
+    }
 
   doSearch = (e: any) => {
     e.persist();
+    this.setState({ loading: true });
+    if (this.props.type === 'mediaServer') {
+        this.setState({ loading: false, results: this.state.watchOptions.filter((option: SearchResult) => option.name.toLowerCase().includes(e.target.value.toLowerCase()))});
+        return;
+    }
     if (!this.debounced) {
       this.debounced = debounce(async () => {
-        const response = await window.fetch(this.props.searchPath + '/search?q=' + encodeURIComponent(e.target.value));
+        let searchUrl = this.props.searchPath + '/search?q=' + encodeURIComponent(e.target.value);
+        if (this.props.type === 'youtube') {
+            searchUrl = serverPath + '/youtube?q=' + encodeURIComponent(e.target.value);
+        }
+        const response = await window.fetch(searchUrl);
         const data = await response.json();
-        this.setState({ results: data });
-      }, 300);
+        this.setState({ loading: false, results: data });
+      }, 500);
     }
     this.debounced();
   }
+
   render() {
     const { setMedia } = this.props;
+    let placeholder = 'Search for streams';
+    let icon = 'search';
+    if (this.props.type === 'youtube') {
+        placeholder = 'Search YouTube';
+        icon = 'youtube';
+    }
+    else if (this.props.type === 'mediaServer') {
+        placeholder = 'Search video files';
+        icon = 'film';
+    }
     return <Dropdown
       key={this.state.resetDropdown}
       fluid
       button
-      icon='search'
+      icon={icon}
       className='icon'
       labeled
       search={(() => {}) as any}
-      text="Search for streams"
+      text={placeholder}
       onSearchChange={this.doSearch}
+      onBlur={() => this.setState({ results: this.state.watchOptions })}
+      //loading={this.state.loading}
       >
-        <Dropdown.Menu>
-            {(this.state.results || []).map((result: SearchResult) => {
-            return <Dropdown.Item
-                label={{ color: Number(result.seeders) ? 'green' : 'red', empty: true, circular: true }}
-                text={result.name + ' - ' + result.size + ' - ' + result.seeders + ' peers'}
-                onClick={(e) => {
-                setMedia(e, { value: this.props.searchPath + '/stream?torrent=' + encodeURIComponent(result.magnet)});
-                this.setState({ resetDropdown: Number(new Date()) });
-                }}
-            />
+        {Boolean(this.state.results.length) ? <Dropdown.Menu>
+            {this.state.results.map((result: SearchResult) => {
+                if (this.props.type === 'youtube') {
+                    return <Dropdown.Item
+                        children={<div style={{ display: 'flex', alignItems: 'center'}}>
+                            <img style={{ height: '40px' }} src={result.img} alt={result.name} />
+                            <div style={{ marginLeft: '5px' }}>{decodeEntities(result.name)}</div>
+                        </div>}
+                        onClick={(e) => {
+                            setMedia(e, { value: result.url });
+                            this.setState({ resetDropdown: Number(new Date()) });
+                        }}
+                    />;
+                }
+                else if (this.props.type === 'mediaServer') {
+                    return <Dropdown.Item text={result.name} onClick={(e) => {
+                        setMedia(e, { value: result.url });
+                        this.setState({ results: this.state.watchOptions, resetDropdown: Number(new Date()) });
+                    }} />;
+                }
+                return <Dropdown.Item
+                    label={{ color: Number(result.seeders) ? 'green' : 'red', empty: true, circular: true }}
+                    text={result.name + ' - ' + result.size + ' - ' + result.seeders + ' peers'}
+                    onClick={(e) => {
+                        setMedia(e, { value: this.props.searchPath + '/stream?torrent=' + encodeURIComponent(result.magnet)});
+                        this.setState({ resetDropdown: Number(new Date()) });
+                    }}
+                />;
             })}
-        </Dropdown.Menu>
+        </Dropdown.Menu> : null}
     </Dropdown>;
   }
 }
@@ -883,7 +925,7 @@ const SettingsModal = () => (
 
 function getDefaultSettings(): Settings {
     return {
-        mediaServer: mediaServer,
+        mediaServer: mediaPath,
         searchServer: searchPath,
     }
 }
@@ -1110,3 +1152,7 @@ async function testAutoplay() {
   return true;
 }
 
+function decodeEntities(input: string) {
+  const doc = new DOMParser().parseFromString(input, "text/html");
+  return doc.documentElement.textContent;
+}

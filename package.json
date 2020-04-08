@@ -27,7 +27,8 @@
     "socket.io-client": "^2.3.0",
     "srt-webvtt": "^1.0.1",
     "typescript": "^3.8.3",
-    "uuid": "^7.0.2"
+    "uuid": "^7.0.2",
+    "youtube-api": "^2.0.10"
   },
   "scripts": {
     "start": "react-scripts start",
