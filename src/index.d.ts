@@ -17,14 +17,14 @@ interface ChatMessage {
 
 interface SearchResult {
     name: string;
+    url: string;
     size: string;
     seeders: string;
     magnet: string;
-    url: string;
     img: string;
 }
 
 interface Settings {
-    mediaServer?: string;
-    searchServer?: string;
+    mediaPath?: string;
+    searchPath?: string;
 }

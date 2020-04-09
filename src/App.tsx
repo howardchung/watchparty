@@ -19,8 +19,10 @@ declare global {
 }
 
 const serverPath = process.env.REACT_APP_SERVER_HOST || `${window.location.protocol}//${window.location.hostname}${process.env.NODE_ENV === 'production' ? '' : ':8080'}`;
-const mediaPath = process.env.REACT_APP_MEDIA_PATH || 'https://dev.howardchung.net';
-const searchPath = process.env.REACT_APP_SEARCH_PATH || 'https://scw.howardchung.net';
+let defaultMediaPath = process.env.REACT_APP_MEDIA_PATH || 'https://dev.howardchung.net' || serverPath + '/examples';
+let defaultSearchPath = process.env.REACT_APP_SEARCH_PATH || 'https://scw.howardchung.net';
+// Load settings from localstorage
+let settings = getCurrentSettings();
 
 const getMediaPathForList = (list: string) => {
   const mappings: StringDict = {
@@ -68,8 +70,6 @@ export default class App extends React.Component {
   videoInitTime = 0;
   ourStream: MediaStream | null = null;
   videoPCs: PCDict = {};
-  searchPath: string | undefined = '';
-  mediaPath: string | undefined = '';
   savedMedia = '';
 
   async componentDidMount() {
@@ -187,11 +187,6 @@ export default class App extends React.Component {
         window.setInterval(() => {
             window.fetch(serverPath + '/ping');
         }, 10 * 60 * 1000);
-
-        // Load settings from localstorage
-        let settings = getCurrentSettings();
-        this.searchPath = settings.searchServer;
-        this.mediaPath = settings.mediaServer;
   
       // This code loads the IFrame Player API code asynchronously.
       const tag = document.createElement('script');
@@ -636,8 +631,8 @@ export default class App extends React.Component {
             <React.Fragment>
             <div className="mobileStack" style={{ display: 'flex', alignItems: 'center' }}>
                 <SearchComponent setMedia={this.setMedia} type={'youtube'} />
-                {this.mediaPath && <SearchComponent setMedia={this.setMedia} type={'mediaServer'} mediaPath={this.mediaPath}/>}
-                {this.searchPath && <SearchComponent setMedia={this.setMedia} type={'searchServer'} searchPath={this.searchPath}/>}
+                <SearchComponent setMedia={this.setMedia} type={'mediaServer'} mediaPath={settings.mediaPath} />
+                {settings.searchPath && <SearchComponent setMedia={this.setMedia} type={'searchServer'} searchPath={settings.searchPath}/>}
             </div>
             <Divider inverted horizontal></Divider>
             <Input
@@ -803,9 +798,10 @@ class SearchComponent extends React.Component<SearchComponentProps> {
             const line = this.props.mediaPath;
             const response = await window.fetch(line as any);
             const data = await response.json();
-            const results = data.filter((file: any) => file.type === 'file').map((file: any) => ({ url: getMediaPathForList(line as any) + file.name, name: file.name }));
+            const results = data.filter((file: any) => file.type === 'file').map((file: any) => ({ url: file.url || getMediaPathForList(line as any) + file.name, name: file.name }));
             watchOptions = [...watchOptions, ...results];
             this.setState({ watchOptions: watchOptions, results: watchOptions });
+            // console.log(watchOptions);
         }
     }
 
@@ -839,7 +835,7 @@ class SearchComponent extends React.Component<SearchComponentProps> {
         icon = 'youtube';
     }
     else if (this.props.type === 'mediaServer') {
-        placeholder = 'Search video files';
+        placeholder = 'Search files on ' + this.props.mediaPath;
         icon = 'film';
     }
     return <Dropdown
@@ -962,8 +958,8 @@ const SettingsModal = () => (
 
 function getDefaultSettings(): Settings {
     return {
-        mediaServer: mediaPath,
-        searchServer: searchPath,
+        mediaPath: defaultMediaPath,
+        searchPath: defaultSearchPath,
     }
 }
 
