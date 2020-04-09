@@ -33,11 +33,15 @@ async function init() {
 
     // Start saving rooms to Redis
     setInterval(() => {
+        console.time('roomSave');
         rooms.forEach((value, key) => {
-            const roomData = value.serialize();
-            redis.setex(key, 60 * 60 * 1, roomData);
+            if (value.roster.length) {
+                const roomData = value.serialize();
+                redis.setex(key, 60 * 60 * 1, roomData);
+            }
         });
-    }, 2000);
+        console.timeEnd('roomSave');
+    }, 1000);
 }
 
 const app = express();
