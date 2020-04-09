@@ -67,13 +67,13 @@ body {
 
 #leftVideo {
     width: 100%;
-    max-height: 66vh;
+    max-height: 60vh;
 }
 
 .videoOuter {
     width: 100%;
     min-height: 400px;
-    max-height: 66vh;
+    max-height: 60vh;
 }
 
 #videoContainer {

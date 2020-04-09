@@ -678,8 +678,9 @@ export default class App extends React.Component {
                   src="https://www.youtube.com/embed/?enablejsapi=1&controls=0&rel=0"
                 />
             </div>
-            <div style={{ display: (this.isVideo() && !this.state.loading) ? 'block' : 'none' }} className="videoOuter">
+            <div style={{ display: (this.isVideo() && !this.state.loading) ? 'block' : 'none' }}>
               <video
+                className="videoOuter"
                 tabIndex={1}
                 onClick={this.togglePlay}
                 id="leftVideo"
