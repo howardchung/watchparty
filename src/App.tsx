@@ -80,9 +80,7 @@ export default class App extends React.Component {
     }
     // TODO twitch, bring your own file
     // TODO playlists
-    // TODO rewrite using ws
     // TODO last writer wins on sending desynced timestamps (use max?)
-    // TODO domain name
     // TODO fix race condition where search results return out of order
     // TODO full disconnection from webrtc (and allow rejoining)
     // TODO persist sessions somewhere and reload on server boot
@@ -656,18 +654,6 @@ export default class App extends React.Component {
                 placeholder="Enter URL (YouTube, video file, etc.), or use search"
                 value={this.state.inputMedia !== undefined ? this.state.inputMedia : getMediaDisplayName(this.state.currentMedia)}
             />
-            <Divider inverted horizontal>With</Divider>
-            <List inverted horizontal>
-                {this.state.participants.map((participant) => {
-                return <List.Item>
-                    <Label as='a' color={getColor(participant.id) as any} image>
-                    <img src={getImage(this.state.nameMap[participant.id] || participant.id)} alt="" />
-                    {this.state.nameMap[participant.id] || participant.id}
-                    <Label.Detail>{formatTimestamp(this.state.tsMap[participant.id] || 0)}</Label.Detail>
-                    </Label>
-                    </List.Item>;
-                })}
-            </List>
             <Divider inverted horizontal></Divider>
             { (this.state.loading || !this.state.currentMedia) && <Segment inverted style={{ minHeight: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               { (this.state.loading) && 
@@ -684,8 +670,7 @@ export default class App extends React.Component {
               />
               }
             </Segment> }
-            <div className="auto-resizable-iframe" style={{ display: (this.isYouTube() && !this.state.loading) ? 'block' : 'none' }}>
-              <div>
+            <div className="leftYtContainer videoOuter" style={{ display: (this.isYouTube() && !this.state.loading) ? 'block' : 'none' }}>
                 <iframe
                   title="YouTube"
                   id="leftYt"
@@ -693,9 +678,8 @@ export default class App extends React.Component {
                   frameBorder="0"
                   src="https://www.youtube.com/embed/?enablejsapi=1&controls=0&rel=0"
                 />
-              </div>
             </div>
-            <div style={{ display: (this.isVideo() && !this.state.loading) ? 'block' : 'none' }}>
+            <div style={{ display: (this.isVideo() && !this.state.loading) ? 'block' : 'none' }} className="videoOuter">
               <video
                 tabIndex={1}
                 onClick={this.togglePlay}
@@ -717,6 +701,18 @@ export default class App extends React.Component {
               duration={this.getDuration()}
             />
             }
+            <Divider inverted horizontal>With</Divider>
+            <List inverted horizontal>
+                {this.state.participants.map((participant) => {
+                return <List.Item>
+                    <Label as='a' color={getColor(participant.id) as any} image>
+                    <img src={getImage(this.state.nameMap[participant.id] || participant.id)} alt="" />
+                    {this.state.nameMap[participant.id] || participant.id}
+                    <Label.Detail>{formatTimestamp(this.state.tsMap[participant.id] || 0)}</Label.Detail>
+                    </Label>
+                    </List.Item>;
+                })}
+            </List>
           </React.Fragment>
         </Grid.Column>}
         {this.ourStream && <Grid.Column width={2}>

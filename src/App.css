@@ -50,28 +50,31 @@ body {
   min-width: initial;
 }
 
-.auto-resizable-iframe {
-  margin: 0px auto;
+.leftYtContainer {
+    position: relative;
+    width: 100%;
+    height: 0;
+    padding-bottom: 56.25%;
 }
 
-.auto-resizable-iframe > div {
-  position: relative;
-  padding-bottom: 60%;
-  height: 0px;
-}
-
-.auto-resizable-iframe iframe {
-  position: absolute;
-  top: 0px;
-  left: 0px;
-  width: 100%;
-  height: 100%;
+#leftYt {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
 }
 
 #leftVideo {
     width: 100%;
+    max-height: 66vh;
+}
+
+.videoOuter {
+    width: 100%;
     min-height: 400px;
     max-height: 66vh;
+    position: relative;
 }
 
 #videoContainer {
