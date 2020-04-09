@@ -83,7 +83,6 @@ export default class App extends React.Component {
     // TODO last writer wins on sending desynced timestamps (use max?)
     // TODO fix race condition where search results return out of order
     // TODO full disconnection from webrtc (and allow rejoining)
-    // TODO persist sessions somewhere and reload on server boot
   }
 
   setupWebRTC = async () => {
