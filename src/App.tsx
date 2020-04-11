@@ -806,18 +806,18 @@ class SearchComponent extends React.Component<SearchComponentProps> {
         }
     }
 
-  doSearch = (e: any) => {
+    doSearch = (e: any) => {
+    this.setState({ loading: true, query: e.target.value });
     e.persist();
-    this.setState({ loading: true, value: e.target.value });
     if (this.props.type === 'mediaServer') {
         this.setState({ loading: false, results: this.state.watchOptions.filter((option: SearchResult) => option.name.toLowerCase().includes(e.target.value.toLowerCase()))});
         return;
     }
     if (!this.debounced) {
       this.debounced = debounce(async () => {
-        let searchUrl = this.props.searchPath + '/search?q=' + encodeURIComponent(e.target.value);
+        let searchUrl = this.props.searchPath + '/search?q=' + encodeURIComponent(this.state.query);
         if (this.props.type === 'youtube') {
-            searchUrl = serverPath + '/youtube?q=' + encodeURIComponent(e.target.value);
+            searchUrl = serverPath + '/youtube?q=' + encodeURIComponent(this.state.query);
         }
         const response = await window.fetch(searchUrl);
         const data = await response.json();
@@ -850,6 +850,7 @@ class SearchComponent extends React.Component<SearchComponentProps> {
       text={placeholder}
       onSearchChange={this.doSearch}
       onBlur={() => this.setState({ results: this.state.watchOptions })}
+      //searchQuery={this.state.query}
       //loading={this.state.loading}
       >
         {Boolean(this.state.results.length) ? <Dropdown.Menu>
@@ -862,14 +863,14 @@ class SearchComponent extends React.Component<SearchComponentProps> {
                         </div>}
                         onClick={(e) => {
                             setMedia(e, { value: result.url });
-                            this.setState({ resetDropdown: Number(new Date()), value: '' });
+                            this.setState({ resetDropdown: Number(new Date()) });
                         }}
                     />;
                 }
                 else if (this.props.type === 'mediaServer') {
                     return <Dropdown.Item text={result.name} onClick={(e) => {
                         setMedia(e, { value: result.url });
-                        this.setState({ results: this.state.watchOptions, resetDropdown: Number(new Date()), value: '' });
+                        this.setState({ results: this.state.watchOptions, resetDropdown: Number(new Date()) });
                     }} />;
                 }
                 return <Dropdown.Item
@@ -877,7 +878,7 @@ class SearchComponent extends React.Component<SearchComponentProps> {
                     text={result.name + ' - ' + result.size + ' - ' + result.seeders + ' peers'}
                     onClick={(e) => {
                         setMedia(e, { value: this.props.searchPath + '/stream?torrent=' + encodeURIComponent(result.magnet)});
-                        this.setState({ resetDropdown: Number(new Date()), value: '' });
+                        this.setState({ resetDropdown: Number(new Date()) });
                     }}
                 />;
             })}
