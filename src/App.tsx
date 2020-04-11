@@ -1166,6 +1166,12 @@ function getImage(name: string) {
   else if (lower === 'al' || lower === 'allison' || lower === 'alacrity') {
     return getFbPhoto('100003885416987');
   }
+  else if (lower === 'dani') {
+      return getFbPhoto('100000224524388');
+  }
+  else if (lower === 'aredy') {
+      return getFbPhoto('100005523159165');
+  }
   else if (lower === 'yvonne' || lower === 'eve') {
     return getFbPhoto('1417572343');
   }
