@@ -789,6 +789,7 @@ class SearchComponent extends React.Component<SearchComponentProps> {
       watchOptions: [],
       resetDropdown: Number(new Date()),
       loading: false,
+      query: '',
     };
     debounced: any = null;
 
@@ -807,7 +808,7 @@ class SearchComponent extends React.Component<SearchComponentProps> {
 
   doSearch = (e: any) => {
     e.persist();
-    this.setState({ loading: true });
+    this.setState({ loading: true, value: e.target.value });
     if (this.props.type === 'mediaServer') {
         this.setState({ loading: false, results: this.state.watchOptions.filter((option: SearchResult) => option.name.toLowerCase().includes(e.target.value.toLowerCase()))});
         return;
@@ -861,14 +862,14 @@ class SearchComponent extends React.Component<SearchComponentProps> {
                         </div>}
                         onClick={(e) => {
                             setMedia(e, { value: result.url });
-                            this.setState({ resetDropdown: Number(new Date()) });
+                            this.setState({ resetDropdown: Number(new Date()), value: '' });
                         }}
                     />;
                 }
                 else if (this.props.type === 'mediaServer') {
                     return <Dropdown.Item text={result.name} onClick={(e) => {
                         setMedia(e, { value: result.url });
-                        this.setState({ results: this.state.watchOptions, resetDropdown: Number(new Date()) });
+                        this.setState({ results: this.state.watchOptions, resetDropdown: Number(new Date()), value: '' });
                     }} />;
                 }
                 return <Dropdown.Item
@@ -876,7 +877,7 @@ class SearchComponent extends React.Component<SearchComponentProps> {
                     text={result.name + ' - ' + result.size + ' - ' + result.seeders + ' peers'}
                     onClick={(e) => {
                         setMedia(e, { value: this.props.searchPath + '/stream?torrent=' + encodeURIComponent(result.magnet)});
-                        this.setState({ resetDropdown: Number(new Date()) });
+                        this.setState({ resetDropdown: Number(new Date()), value: '' });
                     }}
                 />;
             })}
