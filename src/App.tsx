@@ -702,6 +702,7 @@ export default class App extends React.Component {
                 return <List.Item>
                     <Label as='a' color={getColor(participant.id) as any} image>
                     <img src={getImage(this.state.nameMap[participant.id] || participant.id)} alt="" />
+                    {participant.isVideoChat && <Icon size="small" name='video' /> }
                     {this.state.nameMap[participant.id] || participant.id}
                     <Label.Detail>{formatTimestamp(this.state.tsMap[participant.id] || 0)}</Label.Detail>
                     </Label>
