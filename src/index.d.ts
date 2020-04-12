@@ -26,5 +26,5 @@ interface SearchResult {
 
 interface Settings {
     mediaPath?: string;
-    searchPath?: string;
+    streamPath?: string;
 }

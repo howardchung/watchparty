@@ -8,42 +8,6 @@ const Moniker = require('moniker');
 const Youtube = require("youtube-api");
 const cors = require('cors');
 const Redis = require("ioredis");
-const redis = new Redis(process.env.REDIS_URL);
-const names = Moniker.generator([Moniker.adjective, Moniker.noun, Moniker.verb]);
-
-const rooms = new Map();
-init();
-
-async function init() {
-    // Load rooms from Redis
-    console.log('loading rooms from redis');
-    const keys = await redis.keys('*');
-    console.log(util.format('found %s rooms in redis', keys.length));
-    for (let i = 0; i < keys.length; i++) {
-        const key = keys[i];
-        const roomData = await redis.get(key);
-        console.log(key, roomData.length);
-        const roomObj = JSON.parse(roomData);
-        rooms.set(key, new Room(key, roomObj));
-    }
-
-    if (!rooms.has('/default')) {
-        rooms.set('/default', new Room('/default'));
-    }
-
-    // Start saving rooms to Redis
-    setInterval(() => {
-        console.time('roomSave');
-        rooms.forEach((value, key) => {
-            if (value.roster.length) {
-                const roomData = value.serialize();
-                redis.setex(key, 60 * 60 * 3, roomData);
-            }
-        });
-        console.timeEnd('roomSave');
-    }, 1000);
-}
-
 const app = express();
 let server = null;
 if (process.env.HTTPS) {
@@ -54,138 +18,50 @@ if (process.env.HTTPS) {
     server = require('http').Server(app);
 }
 const io = require('socket.io')(server, { origins: '*:*'});
+const Room = require('./room');
+
+const names = Moniker.generator([Moniker.adjective, Moniker.noun, Moniker.verb]);
+
+const rooms = new Map();
+init();
+
+async function init() {
+    if (process.env.REDIS_URL) {
+        // Load rooms from Redis
+        const redis = new Redis(process.env.REDIS_URL);
+        console.log('loading rooms from redis');
+        const keys = await redis.keys('*');
+        console.log(util.format('found %s rooms in redis', keys.length));
+        for (let i = 0; i < keys.length; i++) {
+            const key = keys[i];
+            const roomData = await redis.get(key);
+            console.log(key, roomData.length);
+            const roomObj = JSON.parse(roomData);
+            rooms.set(key, new Room(io, key, roomObj));
+        }
+        // Start saving rooms to Redis
+        setInterval(() => {
+            console.time('roomSave');
+            rooms.forEach((value, key) => {
+                if (value.roster.length) {
+                    const roomData = value.serialize();
+                    redis.setex(key, 60 * 60 * 3, roomData);
+                }
+            });
+            console.timeEnd('roomSave');
+        }, 1000);
+    }
+
+    if (!rooms.has('/default')) {
+        rooms.set('/default', new Room(io, '/default'));
+    }
+}
 
 if (process.env.YOUTUBE_API_KEY) {
     Youtube.authenticate({
         type: "key",
         key: process.env.YOUTUBE_API_KEY,
     });
-}
-
-class Room {
-  video = '';
-  videoTS = 0;
-  paused = false;
-  roster = [];
-  chat = [];
-  tsMap = {};
-  nameMap = {};
-  roomId = null;
-
-  constructor(roomId, roomData) {
-    this.roomId = roomId;
-    if (roomData) {
-        this.deserialize(roomData);
-    }
-
-    setInterval(() => {
-        // console.log(roomId, this.video, this.roster, this.tsMap, this.nameMap);
-        io.of(roomId).emit('REC:tsMap', this.tsMap);
-    }, 1000);
-
-    io.of(roomId).on('connection', (socket) => {
-        // console.log(socket.id);
-        const addChatMessage = (chatMsg) => {
-            const chatWithTime = {...chatMsg, timestamp: new Date().toISOString(), videoTS: this.tsMap[socket.id] };
-            this.chat.push(chatWithTime);
-            this.chat = this.chat.splice(-50);
-            io.of(roomId).emit('REC:chat', chatWithTime);
-        };
-
-        this.roster.push({ id: socket.id });
-    
-        io.of(roomId).emit('roster', this.roster);
-        socket.emit('chatinit', this.chat);
-        socket.emit('REC:host', this.getHostState());
-        socket.emit('REC:nameMap', this.nameMap);
-        socket.emit('REC:tsMap', this.tsMap);
-    
-        socket.on('CMD:name', (data) => {
-            this.nameMap[socket.id] = data;
-            io.of(roomId).emit('REC:nameMap', this.nameMap);
-        });
-        socket.on('CMD:host', (data) => {
-            console.log(socket.id, data);
-            this.video = data;
-            this.videoTS = 0;
-            this.paused = false;
-            io.of(roomId).emit('REC:host', this.getHostState());
-            const chatMsg = { id: socket.id, cmd: 'host', msg: data };
-            addChatMessage(chatMsg);
-        });
-        socket.on('CMD:play', () => {
-            socket.broadcast.emit('REC:play', this.video);
-            const chatMsg = { id: socket.id, cmd: 'play', msg: this.tsMap[socket.id] };
-            this.paused = false;
-            addChatMessage(chatMsg);
-        });
-        socket.on('CMD:pause', () => {
-            socket.broadcast.emit('REC:pause');
-            const chatMsg = { id: socket.id, cmd: 'pause', msg: this.tsMap[socket.id] };
-            this.paused = true;
-            addChatMessage(chatMsg);
-        });
-        socket.on('CMD:seek', (data) => {
-            this.videoTS = data;
-            socket.broadcast.emit('REC:seek', data);
-            const chatMsg = { id: socket.id, cmd: 'seek', msg: data };
-            addChatMessage(chatMsg);
-        });
-        socket.on('CMD:ts', (data) => {
-            this.videoTS = data;
-            this.tsMap[socket.id] = data;
-        });
-        socket.on('CMD:chat', (data) => {
-            const chatMsg = {id: socket.id, msg: data};
-            addChatMessage(chatMsg);
-        });
-        socket.on('CMD:joinVideo', (data) => {
-            const match = this.roster.find(user => user.id === socket.id);
-            if (match) {
-                match.isVideoChat = true;
-            }
-            io.of(roomId).emit('roster', this.roster);
-        });
-        socket.on('CMD:leaveVideo', (data) => {
-            const match = this.roster.find(user => user.id === socket.id);
-            if (match) {
-                match.isVideoChat = false;
-            }
-            io.of(roomId).emit('roster', this.roster);
-        });
-        socket.on('signal', (data) => {
-            io.of(roomId).to(data.to).emit('signal', { from: socket.id, msg: data.msg });
-        });
-    
-        socket.on('disconnect', () => {
-            let index = this.roster.findIndex(user => user.id === socket.id);
-            this.roster.splice(index, 1);
-            io.of(roomId).emit('roster', this.roster);
-            // delete nameMap[socket.id];
-            // delete tsMap[socket.id];
-        });
-    });
-  }
-
-  serialize = () => {
-    return JSON.stringify({ video: this.video, videoTS: this.videoTS, paused: this.paused, nameMap: this.nameMap, chat: this.chat });
-  };
-
-  deserialize = (roomData) => {
-    this.video = roomData.video;
-    this.videoTS = roomData.videoTS;
-    this.paused = roomData.paused;
-    if (roomData.chat) {
-        this.chat = roomData.chat;
-    }
-    if (roomData.nameMap) {
-        this.nameMap = roomData.nameMap;
-    }
-  }
-  
-  getHostState = () => {
-    return { video: this.video, videoTS: this.videoTS, paused: this.paused };
-  };
 }
 
 server.listen(process.env.PORT || 8080);

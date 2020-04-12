@@ -20,7 +20,7 @@ declare global {
 
 const serverPath = process.env.REACT_APP_SERVER_HOST || `${window.location.protocol}//${window.location.hostname}${process.env.NODE_ENV === 'production' ? '' : ':8080'}`;
 let defaultMediaPath = process.env.REACT_APP_MEDIA_PATH || 'https://dev.howardchung.net' || serverPath + '/examples';
-let defaultSearchPath = process.env.REACT_APP_SEARCH_PATH || 'https://scw.howardchung.net';
+let defaultStreamPath = process.env.REACT_APP_SEARCH_PATH || 'https://scw.howardchung.net';
 // Load settings from localstorage
 let settings = getCurrentSettings();
 
@@ -592,24 +592,28 @@ export default class App extends React.Component {
   render() {
     return (
         <React.Fragment>
-        <div style={{ display: 'flex', flexWrap: 'wrap', padding: '1em' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', padding: '1em', paddingBottom: '0px' }}>
             <a href="/" style={{ display: 'flex' }}>
                 <div style={{ height: '85px', width: '85px', position: 'relative' }}>
                 <Icon inverted name="film" size="big" circular color="blue" style={{ position: 'absolute' }} />
                 <Icon inverted name="group" size="big" circular color="green" style={{ position: 'absolute', right: 0, bottom: 0 }} />
                 </div>
-                <Header inverted style={{ textTransform: 'uppercase', letterSpacing: '2px', fontWeight: 700 }} as='h1' color="blue">Watch</Header>
-                <Header inverted style={{ textTransform: 'uppercase', letterSpacing: '2px'  }} as='h1' color="green">Party</Header>
+                <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', width: '130px' }}>
+                    <div style={{ textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700, color: '#2185d0', fontSize: '30px', lineHeight: '30px' }}>Watch</div>
+                    <div style={{ textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700, color: '#21ba45', fontSize: '30px', lineHeight: '30px', marginLeft: 'auto' }}>Party</div>
+                </div>
             </a>
-            <div className="mobileStack" style={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
+            <div className="mobileStack" style={{ display: 'flex', alignItems: 'center', flexGrow: 1, padding: '0px 10px' }}>
                 <SearchComponent setMedia={this.setMedia} type={'youtube'} />
                 <SearchComponent setMedia={this.setMedia} type={'mediaServer'} mediaPath={settings.mediaPath} />
-                {settings.searchPath && <SearchComponent setMedia={this.setMedia} type={'searchServer'} searchPath={settings.searchPath}/>}
+                {settings.streamPath && <SearchComponent setMedia={this.setMedia} type={'searchServer'} streamPath={settings.streamPath}/>}
             </div>
-            { <div style={{ marginLeft: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginRight: '1em' }}>
-                <Button inverted primary size="large" icon labelPosition="left" onClick={this.createRoom}><Icon name='certificate' />Create Room</Button>
-                <SettingsModal />
-            </div> }
+        </div>
+        <div style={{ display: 'flex', padding: '0px 1em' }}>
+            <div style={{ display: 'flex', marginLeft: 'auto', width: '400px' }}>
+            <Button fluid inverted primary size="large" icon labelPosition="left" onClick={this.createRoom}><Icon name='certificate' />Create Room</Button>
+            <SettingsModal />
+            </div>
         </div>
         <Divider inverted horizontal>
           <Header inverted as='h4'>
@@ -632,7 +636,7 @@ export default class App extends React.Component {
                 onKeyPress={(e: any) => e.key === 'Enter' && this.setMedia(e, { value: this.state.inputMedia })} 
                 icon={<Icon onClick={(e: any) => this.setMedia(e, { value: this.state.inputMedia })} name='arrow right' inverted circular link />}
                 label="Now Watching:"
-                placeholder="Enter URL (YouTube, video file, etc.), or use search"
+                placeholder="Enter URL (YouTube, video file, etc.), or use search above"
                 value={this.state.inputMedia !== undefined ? this.state.inputMedia : getMediaDisplayName(this.state.currentMedia)}
             />
             <Divider inverted horizontal></Divider>
@@ -706,7 +710,7 @@ export default class App extends React.Component {
           </React.Fragment>
         </Grid.Column>}
         {this.ourStream && <Grid.Column width={2}>
-          <div id="videoContainer">
+          <div id="videoContainer" className="fullHeightColumn">
             {this.state.participants.map(p => {
               return <div key={p.id} style={{ position: 'relative', height: 'fit-content', display: p.isVideoChat ? 'block' : 'none' }}>
                 <video
@@ -819,7 +823,7 @@ class Chat extends React.Component<ChatProps> {
 
 interface SearchComponentProps {
     setMedia: Function;
-    searchPath?: string;
+    streamPath?: string;
     mediaPath?: string;
     type?: 'youtube' | 'mediaServer' | 'searchServer';
 }
@@ -856,7 +860,7 @@ class SearchComponent extends React.Component<SearchComponentProps> {
     }
     if (!this.debounced) {
       this.debounced = debounce(async () => {
-        let searchUrl = this.props.searchPath + '/search?q=' + encodeURIComponent(this.state.query);
+        let searchUrl = this.props.streamPath + '/search?q=' + encodeURIComponent(this.state.query);
         if (this.props.type === 'youtube') {
             searchUrl = serverPath + '/youtube?q=' + encodeURIComponent(this.state.query);
         }
@@ -877,7 +881,7 @@ class SearchComponent extends React.Component<SearchComponentProps> {
         icon = 'youtube';
     }
     else if (this.props.type === 'mediaServer') {
-        placeholder = 'Search files on ' + this.props.mediaPath;
+        placeholder = 'Files on ' + this.props.mediaPath;
         icon = 'film';
     }
     return <Dropdown
@@ -918,7 +922,7 @@ class SearchComponent extends React.Component<SearchComponentProps> {
                     label={{ color: Number(result.seeders) ? 'green' : 'red', empty: true, circular: true }}
                     text={result.name + ' - ' + result.size + ' - ' + result.seeders + ' peers'}
                     onClick={(e) => {
-                        setMedia(e, { value: this.props.searchPath + '/stream?torrent=' + encodeURIComponent(result.magnet)});
+                        setMedia(e, { value: this.props.streamPath + '/stream?torrent=' + encodeURIComponent(result.magnet)});
                         this.setState({ resetDropdown: Number(new Date()) });
                     }}
                 />;
@@ -929,7 +933,7 @@ class SearchComponent extends React.Component<SearchComponentProps> {
 }
 
 const SettingsModal = () => (
-  <Modal trigger={<Button secondary size="large" icon labelPosition="left"><Icon name="setting" />Settings</Button>} basic closeIcon size='small'>
+  <Modal trigger={<Button fluid secondary size="large" icon labelPosition="left"><Icon name="setting" />Settings</Button>} basic closeIcon size='small'>
     <Header icon='setting' content='Settings' />
     <Modal.Content>
       <Form>
@@ -956,7 +960,7 @@ const SettingsModal = () => (
 function getDefaultSettings(): Settings {
     return {
         mediaPath: defaultMediaPath,
-        searchPath: defaultSearchPath,
+        streamPath: defaultStreamPath,
     }
 }
 

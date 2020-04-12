@@ -89,7 +89,6 @@ body {
     display: grid;
     grid-template-columns: 100%;
     /*grid-template-rows: repeat(auto-fill, 160px);*/
-    max-height: calc(100vh - 120px);
     overflow: scroll;
     flex-shrink: 0;
 }
@@ -101,5 +100,5 @@ body {
 }
 
 .fullHeightColumn.fullHeightColumn.fullHeightColumn.fullHeightColumn {
-    height: calc(100vh - 150px);
+    height: calc(100vh - 190px);
 }
