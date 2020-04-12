@@ -534,7 +534,7 @@ export default class App extends React.Component {
           const rect = e.target.getBoundingClientRect();
           const x = e.clientX - rect.left;
           const max = rect.width;
-          const target = x / max * this.getDuration();
+          target = x / max * this.getDuration();
       }
       this.doSeek(target);
       this.socket.emit('CMD:seek', target);
@@ -592,8 +592,8 @@ export default class App extends React.Component {
   render() {
     return (
         <React.Fragment>
-        <div style={{ display: 'flex', flexWrap: 'wrap' }}>
-            <a href="/" style={{ display: 'flex', marginLeft: '1em', marginTop: '10px' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', padding: '1em' }}>
+            <a href="/" style={{ display: 'flex' }}>
                 <div style={{ height: '85px', width: '85px', position: 'relative' }}>
                 <Icon inverted name="film" size="big" circular color="blue" style={{ position: 'absolute' }} />
                 <Icon inverted name="group" size="big" circular color="green" style={{ position: 'absolute', right: 0, bottom: 0 }} />
@@ -606,7 +606,7 @@ export default class App extends React.Component {
                 <SearchComponent setMedia={this.setMedia} type={'mediaServer'} mediaPath={settings.mediaPath} />
                 {settings.searchPath && <SearchComponent setMedia={this.setMedia} type={'searchServer'} searchPath={settings.searchPath}/>}
             </div>
-            { <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'flex-end', marginRight: '1em' }}>
+            { <div style={{ marginLeft: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginRight: '1em' }}>
                 <Button inverted primary size="large" icon labelPosition="left" onClick={this.createRoom}><Icon name='certificate' />Create Room</Button>
                 <SettingsModal />
             </div> }
