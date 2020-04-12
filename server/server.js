@@ -37,7 +37,7 @@ async function init() {
         rooms.forEach((value, key) => {
             if (value.roster.length) {
                 const roomData = value.serialize();
-                redis.setex(key, 60 * 60 * 1, roomData);
+                redis.setex(key, 60 * 60 * 3, roomData);
             }
         });
         console.timeEnd('roomSave');
@@ -168,7 +168,7 @@ class Room {
   }
 
   serialize = () => {
-    return JSON.stringify({ video: this.video, videoTS: this.videoTS, paused: this.paused, chat: this.chat });
+    return JSON.stringify({ video: this.video, videoTS: this.videoTS, paused: this.paused, nameMap: this.nameMap, chat: this.chat });
   };
 
   deserialize = (roomData) => {
@@ -176,6 +176,7 @@ class Room {
     this.videoTS = roomData.videoTS;
     this.paused = roomData.paused;
     this.chat = roomData.chat;
+    this.nameMap = roomData.nameMap;
   }
   
   getHostState = () => {
