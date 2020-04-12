@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Grid, Segment, Divider, Dimmer, Loader, Header, Label, Input, Icon, List, Comment, Progress, Dropdown, Message, Modal, Form, TextArea, DropdownProps } from 'semantic-ui-react'
+import { Button, Grid, Segment, Divider, Dimmer, Loader, Header, Label, Input, Icon, List, Comment, Progress, Dropdown, Message, Modal, Form, TextArea, DropdownProps, FeedLabel } from 'semantic-ui-react'
 import './App.css';
 // import { v4 as uuidv4 } from 'uuid';
 import querystring from 'querystring';
@@ -47,16 +47,31 @@ const iceServers = [
   },
 ];
 
-export default class App extends React.Component {
-  state = {
+interface AppState {
+    state: string;
+    currentMedia: string;
+    inputMedia?: string;
+    currentMediaPaused: boolean;
+    participants: User[];
+    chat: ChatMessage[];
+    tsMap: NumberDict;
+    nameMap: StringDict;
+    myName: string;
+    loading: boolean;
+    scrollTimestamp: number;
+    fullScreen: boolean;
+}
+
+export default class App extends React.Component<null, AppState> {
+  state: AppState = {
     state: 'init',
     currentMedia: '',
-    inputMedia: undefined as (string | undefined),
+    inputMedia: undefined,
     currentMediaPaused: false,
-    participants: [] as User[],
-    chat: [] as ChatMessage[],
-    tsMap: {} as NumberDict,
-    nameMap: {} as StringDict,
+    participants: [],
+    chat: [],
+    tsMap: {},
+    nameMap: {},
     myName: '',
     loading: true,
     scrollTimestamp: Number(new Date()),
@@ -606,7 +621,7 @@ export default class App extends React.Component {
             <div className="mobileStack" style={{ display: 'flex', alignItems: 'center', flexGrow: 1, padding: '0px 10px' }}>
                 <SearchComponent setMedia={this.setMedia} type={'youtube'} />
                 <SearchComponent setMedia={this.setMedia} type={'mediaServer'} mediaPath={settings.mediaPath} />
-                {settings.streamPath && <SearchComponent setMedia={this.setMedia} type={'searchServer'} streamPath={settings.streamPath}/>}
+                {settings.streamPath && <SearchComponent setMedia={this.setMedia} type={'searchServer'} streamPath={settings.streamPath} />}
             </div>
         </div>
         <div style={{ display: 'flex', padding: '0px 1em' }}>
@@ -640,20 +655,22 @@ export default class App extends React.Component {
                 value={this.state.inputMedia !== undefined ? this.state.inputMedia : getMediaDisplayName(this.state.currentMedia)}
             />
             <Divider inverted horizontal></Divider>
-            { (this.state.loading || !this.state.currentMedia) && <Segment inverted style={{ minHeight: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              { (this.state.loading) && 
-              <Dimmer active>
-                <Loader />
-              </Dimmer>
-              }
-              { !this.state.loading && !this.state.currentMedia && <Message
-                inverted
-                color="yellow"
-                icon='hand point up'
-                header="You're not watching anything!"
-                content='Pick something to watch from the menu above.'
-              />
-              }
+            { (this.state.loading || !this.state.currentMedia) && 
+            <Segment inverted style={{ minHeight: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                { 
+                (this.state.loading) && 
+                <Dimmer active>
+                    <Loader />
+                </Dimmer>
+                }
+                { !this.state.loading && !this.state.currentMedia && <Message
+                    inverted
+                    color="yellow"
+                    icon='hand point up'
+                    header="You're not watching anything!"
+                    content='Pick something to watch from the menu above.'
+                />
+                }
             </Segment> }
             <div id="fullScreenContainer" className={this.state.fullScreen ? "fullScreenContainer" : ''}>
                 <div tabIndex={1} onKeyDown={this.onVideoKeydown}>
@@ -835,6 +852,7 @@ class SearchComponent extends React.Component<SearchComponentProps> {
       resetDropdown: Number(new Date()),
       loading: false,
       query: '',
+      multiStreamSelection: undefined,
     };
     debounced: any = null;
 
@@ -872,6 +890,10 @@ class SearchComponent extends React.Component<SearchComponentProps> {
     this.debounced();
   }
 
+  resetMultiStream = () => {
+      this.setState({ multiStreamSelection: null });
+  }
+
   render() {
     const { setMedia } = this.props;
     let placeholder = 'Search for streams';
@@ -884,7 +906,9 @@ class SearchComponent extends React.Component<SearchComponentProps> {
         placeholder = 'Files on ' + this.props.mediaPath;
         icon = 'film';
     }
-    return <Dropdown
+    return <React.Fragment>
+        {this.state.multiStreamSelection && <MultiStreamModal streams={this.state.multiStreamSelection} setMedia={setMedia} resetMultiStream={this.resetMultiStream} />}
+        <Dropdown
       key={this.state.resetDropdown}
       fluid
       button
@@ -898,6 +922,7 @@ class SearchComponent extends React.Component<SearchComponentProps> {
       //searchQuery={this.state.query}
       //loading={this.state.loading}
       >
+        
         {Boolean(this.state.results.length) ? <Dropdown.Menu>
             {this.state.results.map((result: SearchResult) => {
                 if (this.props.type === 'youtube') {
@@ -921,16 +946,51 @@ class SearchComponent extends React.Component<SearchComponentProps> {
                 return <Dropdown.Item
                     label={{ color: Number(result.seeders) ? 'green' : 'red', empty: true, circular: true }}
                     text={result.name + ' - ' + result.size + ' - ' + result.seeders + ' peers'}
-                    onClick={(e) => {
-                        setMedia(e, { value: this.props.streamPath + '/stream?torrent=' + encodeURIComponent(result.magnet)});
+                    onClick={async (e) => {
                         this.setState({ resetDropdown: Number(new Date()) });
+                        let response = await window.fetch(this.props.streamPath + '/data?torrent=' + encodeURIComponent(result.magnet));
+                        let metadata = await response.json();
+                        // console.log(metadata);
+                        if (metadata.filter((file: any) => file.length > 10 * 1024 * 1024).length > 1) {
+                            // Multiple files, present user selection
+                            const multiStreamSelection = metadata.map((file: any, i: number) => ({
+                                ...file,
+                                url: this.props.streamPath + '/stream?torrent=' + encodeURIComponent(result.magnet) + '&fileIndex=' + i,
+                            }));
+                            multiStreamSelection.sort((a: any, b: any) => a.name.localeCompare(b.name));
+                            this.setState({ multiStreamSelection });
+                        } else {
+                            setMedia(e, { value: this.props.streamPath + '/stream?torrent=' + encodeURIComponent(result.magnet)});
+                        }
                     }}
                 />;
             })}
         </Dropdown.Menu> : null}
-    </Dropdown>;
+    </Dropdown>
+    </React.Fragment>;
   }
 }
+
+const MultiStreamModal = ({ streams, setMedia, resetMultiStream }: any) => (
+    <Modal inverted basic open closeIcon onClose={resetMultiStream} >
+        <Modal.Header>Select a file</Modal.Header>
+        <Modal.Content>
+            {streams && <List inverted>
+                {streams.map((file: any) => 
+                <List.Item>
+                    <List.Icon name='file' />
+                    <List.Content>
+                        <List.Header as='a' onClick={() => {
+                            setMedia(null, { value: file.url });
+                            resetMultiStream();
+                        }}>{file.name}</List.Header>
+                        <List.Description>{file.length.toLocaleString()} bytes</List.Description>
+                    </List.Content>
+                </List.Item>)}
+            </List>}
+        </Modal.Content>
+    </Modal>
+);
 
 const SettingsModal = () => (
   <Modal trigger={<Button fluid secondary size="large" icon labelPosition="left"><Icon name="setting" />Settings</Button>} basic closeIcon size='small'>
