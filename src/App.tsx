@@ -57,14 +57,13 @@ export default class App extends React.Component {
     chat: [] as ChatMessage[],
     tsMap: {} as NumberDict,
     nameMap: {} as StringDict,
-    chatMsg: '',
     myName: '',
     loading: true,
+    scrollTimestamp: Number(new Date()),
+    fullScreen: false,
   };
   videoRefs: any = {};
   socket: any = null;
-  messagesRef = React.createRef<HTMLDivElement>();
-  // messagesEndRef = React.createRef();
   watchPartyYTPlayer: any = null;
   ytDebounce = true;
   videoInitTime = 0;
@@ -77,6 +76,9 @@ export default class App extends React.Component {
     console.log(canAutoplay);
     if (canAutoplay) {
       this.init();
+    }
+    document.onfullscreenchange = () => {
+        this.setState({ fullScreen: Boolean(document.fullscreenElement) });
     }
     // TODO twitch, bring your own file
     // TODO playlists
@@ -145,7 +147,7 @@ export default class App extends React.Component {
         pc.onicecandidate = (event) => {
           // We generated an ICE candidate, send it to peer
           if (event.candidate) {
-            this.sendMessage(id, {'ice': event.candidate});
+            this.sendSignal(id, {'ice': event.candidate});
           }
         };
         //@ts-ignore
@@ -162,14 +164,14 @@ export default class App extends React.Component {
             // Start connection for peer's video
             const offer = await pc.createOffer();
             await pc.setLocalDescription(offer);
-            this.sendMessage(id, {'sdp': pc.localDescription });
+            this.sendSignal(id, {'sdp': pc.localDescription });
           }
         }
       }
     });
   }
 
-  sendMessage = async (to: string, data: any) => {
+  sendSignal = async (to: string, data: any) => {
     console.log('send', to, data);
     this.socket.emit('signal', { to, msg: data });
   };
@@ -270,8 +272,7 @@ export default class App extends React.Component {
     });
     socket.on('REC:chat', (data: ChatMessage) => {
       this.state.chat.push(data);
-      this.setState({ chat: this.state.chat });
-      this.scrollToBottom();
+      this.setState({ chat: this.state.chat, scrollTimestamp: Number(new Date()) });
     });
     // let videoRecs = {};
     // let videoMs = {};
@@ -322,8 +323,7 @@ export default class App extends React.Component {
       });
     });
     socket.on('chatinit', (data: any) => {
-      this.setState({ chat: data });
-      this.scrollToBottom();
+      this.setState({ chat: data, scrollTimestamp: Number(new Date()) });
     });
     socket.on('signal', async (data: any) => {
       // Handle messages received from signaling server
@@ -339,7 +339,7 @@ export default class App extends React.Component {
         await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
-        this.sendMessage(from, {'sdp': pc.localDescription});
+        this.sendSignal(from, {'sdp': pc.localDescription});
       }
       else if (msg.sdp && msg.sdp.type === "answer") {
         pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
@@ -528,29 +528,37 @@ export default class App extends React.Component {
     }
   }
   
-  onSeek = (e: any) => {
-    const rect = e.target.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const max = rect.width;
-    const target = x / max * this.getDuration();
-    if (this.isVideo()) {
-      const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
-      leftVideo.currentTime = target;
+  onSeek = (e: any, time: number) => {
+      let target = time;
+      if (e) {
+          const rect = e.target.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const max = rect.width;
+          const target = x / max * this.getDuration();
+      }
+      this.doSeek(target);
+      this.socket.emit('CMD:seek', target);
+  }
+
+  onVideoKeydown = (e: any) => {
+    e.preventDefault();
+    if (e.key === ' ') {
+        this.togglePlay();
     }
-    if (this.isYouTube()) {
-      this.watchPartyYTPlayer.seekTo(target);
+    else if (e.key === 'ArrowRight') {
+        this.onSeek(null, this.getCurrentTime() + 10);
     }
-    this.socket.emit('CMD:seek', target);
+    else if (e.key === 'ArrowLeft') {
+        this.onSeek(null, this.getCurrentTime() - 10);
+    }
   }
   
-  fullScreen = () => {
-    if (this.isVideo()) {
-      const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
-      leftVideo.requestFullscreen();
-    }
-    if (this.isYouTube()) {
-      const leftYt = document.getElementById(('leftYt'));
-      leftYt!.requestFullscreen();
+  fullScreen = async () => {
+    if (document.fullscreenElement) {
+        document.exitFullscreen();
+    } else {
+        const container = document.getElementById('fullScreenContainer') as HTMLElement;
+        await container.requestFullscreen();
     }
   }
   
@@ -575,48 +583,33 @@ export default class App extends React.Component {
     this.socket.emit('CMD:host', data.value);
   }
   
-  updateChatMsg = (e: any, data: {value: string }) => {
-    this.setState({ chatMsg: data.value });
-  }
-  
-  sendChatMsg = () => {
-    if (!this.state.chatMsg) {
-      return;
-    }
-    this.setState({ chatMsg: '' });
-    this.socket.emit('CMD:chat', this.state.chatMsg);
-  }
-  
   updateName = (e: any, data: { value: string }) => {
     this.setState({ myName: data.value });
     this.socket.emit('CMD:name', data.value);
     window.localStorage.setItem('watchparty-username', data.value);
-  }
-  
-  scrollToBottom = () => {
-    // TODO dont do if user manually scrolled up
-    // this.messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
-    if (this.messagesRef.current) {
-      this.messagesRef.current.scrollTop = this.messagesRef.current.scrollHeight;
-    }
   }
 
   render() {
     return (
         <React.Fragment>
         <div style={{ display: 'flex', flexWrap: 'wrap' }}>
-          <a href="/" style={{ display: 'flex', marginLeft: '1em', marginTop: '10px' }}>
-              <div style={{ height: '85px', width: '85px', position: 'relative' }}>
+            <a href="/" style={{ display: 'flex', marginLeft: '1em', marginTop: '10px' }}>
+                <div style={{ height: '85px', width: '85px', position: 'relative' }}>
                 <Icon inverted name="film" size="big" circular color="blue" style={{ position: 'absolute' }} />
                 <Icon inverted name="group" size="big" circular color="green" style={{ position: 'absolute', right: 0, bottom: 0 }} />
-              </div>
-              <Header inverted style={{ textTransform: 'uppercase', letterSpacing: '2px', fontWeight: 700 }} as='h1' color="blue">Watch</Header>
-              <Header inverted style={{ textTransform: 'uppercase', letterSpacing: '2px'  }} as='h1' color="green">Party</Header>
-          </a>
-          { <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', marginRight: '1em' }}>
-            <Button inverted primary size="large" icon labelPosition="left" onClick={this.createRoom}><Icon name='certificate' />Create New Room</Button>
-            <SettingsModal />
-          </div> }
+                </div>
+                <Header inverted style={{ textTransform: 'uppercase', letterSpacing: '2px', fontWeight: 700 }} as='h1' color="blue">Watch</Header>
+                <Header inverted style={{ textTransform: 'uppercase', letterSpacing: '2px'  }} as='h1' color="green">Party</Header>
+            </a>
+            <div className="mobileStack" style={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
+                <SearchComponent setMedia={this.setMedia} type={'youtube'} />
+                <SearchComponent setMedia={this.setMedia} type={'mediaServer'} mediaPath={settings.mediaPath} />
+                {settings.searchPath && <SearchComponent setMedia={this.setMedia} type={'searchServer'} searchPath={settings.searchPath}/>}
+            </div>
+            { <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'flex-end', marginRight: '1em' }}>
+                <Button inverted primary size="large" icon labelPosition="left" onClick={this.createRoom}><Icon name='certificate' />Create Room</Button>
+                <SettingsModal />
+            </div> }
         </div>
         <Divider inverted horizontal>
           <Header inverted as='h4'>
@@ -629,12 +622,6 @@ export default class App extends React.Component {
           { this.state.state === 'init' && <div style={{ display: 'flex', width: '100%', alignItems: 'flex-start', justifyContent: 'center' }}><Button inverted primary size="huge" onClick={this.init} icon labelPosition="left"><Icon name="sign-in" />Join Party</Button></div> }
           { this.state.state !== 'init' && <Grid.Column width={this.ourStream ? 10 : 12} className="fullHeightColumn" style={{ overflow: 'scroll' }}>
             <React.Fragment>
-            <div className="mobileStack" style={{ display: 'flex', alignItems: 'center' }}>
-                <SearchComponent setMedia={this.setMedia} type={'youtube'} />
-                <SearchComponent setMedia={this.setMedia} type={'mediaServer'} mediaPath={settings.mediaPath} />
-                {settings.searchPath && <SearchComponent setMedia={this.setMedia} type={'searchServer'} searchPath={settings.searchPath}/>}
-            </div>
-            <Divider inverted horizontal></Divider>
             <Input
                 inverted
                 fluid
@@ -664,38 +651,45 @@ export default class App extends React.Component {
               />
               }
             </Segment> }
-            <div className="leftYtContainer videoOuter" style={{ display: (this.isYouTube() && !this.state.loading) ? 'block' : 'none' }}>
-                <iframe
-                  title="YouTube"
-                  id="leftYt"
-                  allowFullScreen
-                  frameBorder="0"
-                  src="https://www.youtube.com/embed/?enablejsapi=1&controls=0&rel=0"
-                />
+            <div id="fullScreenContainer" className={this.state.fullScreen ? "fullScreenContainer" : ''}>
+                <div tabIndex={1} onKeyDown={this.onVideoKeydown}>
+                    <div className="leftYtContainer videoOuter" style={{ display: (this.isYouTube() && !this.state.loading) ? 'block' : 'none' }}>
+                        <iframe
+                        title="YouTube"
+                        id="leftYt"
+                        allowFullScreen
+                        frameBorder="0"
+                        src="https://www.youtube.com/embed/?enablejsapi=1&controls=0&rel=0"
+                        />
+                    </div>
+                    <div className="videoOuter" style={{ display: (this.isVideo() && !this.state.loading) ? 'block' : 'none' }}>
+                    <video
+                        className="videoOuter"
+                        // tabIndex={1}
+                        // onClick={this.togglePlay}
+                        id="leftVideo"
+                    >
+                    </video>
+                    </div>
+                    { this.state.currentMedia && 
+                    <Controls
+                        togglePlay={this.togglePlay}
+                        onSeek={this.onSeek}
+                        fullScreen={this.fullScreen}
+                        toggleMute={this.toggleMute}
+                        toggleSubtitle={this.toggleSubtitle}
+                        paused={this.isPaused()}
+                        muted={this.isMuted()}
+                        subtitled={this.isSubtitled()}
+                        currentTime={this.getCurrentTime()}
+                        duration={this.getDuration()}
+                    />
+                    }
+                </div>
+                {this.state.fullScreen &&
+                    <Chat className="fullScreenChat" chat={this.state.chat} nameMap={this.state.nameMap} socket={this.socket} scrollTimestamp={this.state.scrollTimestamp} />
+                }
             </div>
-            <div style={{ display: (this.isVideo() && !this.state.loading) ? 'block' : 'none' }}>
-              <video
-                className="videoOuter"
-                tabIndex={1}
-                onClick={this.togglePlay}
-                id="leftVideo"
-              >
-              </video>
-            </div>
-            { this.state.currentMedia && 
-            <Controls
-              togglePlay={this.togglePlay}
-              onSeek={this.onSeek}
-              fullScreen={this.fullScreen}
-              toggleMute={this.toggleMute}
-              toggleSubtitle={this.toggleSubtitle}
-              paused={this.isPaused()}
-              muted={this.isMuted()}
-              subtitled={this.isSubtitled()}
-              currentTime={this.getCurrentTime()}
-              duration={this.getDuration()}
-            />
-            }
             <Divider inverted horizontal>With</Divider>
             <List inverted horizontal>
                 {this.state.participants.map((participant) => {
@@ -743,7 +737,7 @@ export default class App extends React.Component {
           />
           <Divider inverted horizontal></Divider>
           {!this.ourStream
-            ? <Button color="purple" size="large" icon labelPosition="left" onClick={this.setupWebRTC} style={{ flexShrink: 0 }}><Icon name="video" />Join Video</Button>
+            ? <Button color="purple" size="large" icon labelPosition="left" onClick={this.setupWebRTC} style={{ flexShrink: 0 }}><Icon name="video" />Join Video Chat</Button>
             : (
                 <div style={{ display: 'flex', width: '100%' }}>
                 <Button fluid color={this.getVideoWebRTC() ? "green" : "red"} size="large" icon labelPosition="left" onClick={this.toggleVideoWebRTC}><Icon name="video" />{this.getVideoWebRTC() ? 'On' : 'Off'}</Button>
@@ -751,11 +745,62 @@ export default class App extends React.Component {
                 </div>
             )
           }
+          {!this.state.fullScreen && <Chat chat={this.state.chat} nameMap={this.state.nameMap} socket={this.socket} scrollTimestamp={this.state.scrollTimestamp} />}
+        </Grid.Column>}
+        </Grid.Row>
+      </Grid>
+      </React.Fragment>
+    );
+  }
+}
 
-          <Segment inverted style={{ display: 'flex', flexDirection: 'column', width: '100%', flexGrow: '1', minHeight: 0 }}>
+interface ChatProps {
+    chat: ChatMessage[];
+    nameMap: StringDict; 
+    socket: any;
+    scrollTimestamp: number;
+    className?: string;
+}
+
+class Chat extends React.Component<ChatProps> {
+    public state = { chatMsg: '' };
+    messagesRef = React.createRef<HTMLDivElement>();
+
+    componentDidMount() {
+        this.scrollToBottom();
+    }
+
+    componentDidUpdate(prevProps: ChatProps) {
+        if (this.props.scrollTimestamp !== prevProps.scrollTimestamp) {
+            this.scrollToBottom();
+        }
+    }
+
+    updateChatMsg = (e: any, data: {value: string }) => {
+        this.setState({ chatMsg: data.value });
+    }
+
+    sendChatMsg = () => {
+        if (!this.state.chatMsg) {
+            return;
+        }
+        this.setState({ chatMsg: '' });
+        this.props.socket.emit('CMD:chat', this.state.chatMsg);
+    }
+
+    scrollToBottom = () => {
+        // TODO dont do if user manually scrolled up
+        // this.messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+        if (this.messagesRef.current) {
+            this.messagesRef.current.scrollTop = this.messagesRef.current.scrollHeight;
+        }
+    }
+
+    render() {
+        return <Segment className={this.props.className} inverted style={{ display: 'flex', flexDirection: 'column', width: '100%', flexGrow: '1', minHeight: 0 }}>
             <div className="chatContainer" ref={this.messagesRef}>
               <Comment.Group>
-                {this.state.chat.map(msg => <ChatMessage {...msg} nameMap={this.state.nameMap} />)}
+                {this.props.chat.map(msg => <ChatMessage {...msg} nameMap={this.props.nameMap} />)}
                 { /* <div ref={this.messagesEndRef} /> */ }
               </Comment.Group>
             </div>
@@ -768,13 +813,8 @@ export default class App extends React.Component {
               icon={<Icon onClick={this.sendChatMsg} name='send' inverted circular link />}
               placeholder='Enter a message...'
             />
-          </Segment>
-        </Grid.Column>}
-        </Grid.Row>
-      </Grid>
-      </React.Fragment>
-    );
-  }
+        </Segment>;
+    }
 }
 
 interface SearchComponentProps {
@@ -887,52 +927,6 @@ class SearchComponent extends React.Component<SearchComponentProps> {
     </Dropdown>;
   }
 }
-
-// Returns a function, that, as long as it continues to be invoked, will not
-// be triggered. The function will be called after it stops being called for
-// N milliseconds. If `immediate` is passed, trigger the function on the
-// leading edge, instead of the trailing.
-function debounce(func: Function, wait: number, immediate?: boolean) {
-  var timeout: any;
-
-  // This is the function that is actually executed when
-  // the DOM event is triggered.
-  return function executedFunction() {
-    // Store the context of this and any
-    // parameters passed to executedFunction
-    //@ts-ignore
-    var context = this;
-    var args = arguments;
-	    
-    // The function to be called after 
-    // the debounce time has elapsed
-    var later = function() {
-      // null timeout to indicate the debounce ended
-      timeout = null;
-	    
-      // Call function now if you did not on the leading end
-      if (!immediate) func.apply(context, args);
-    };
-
-    // Determine if you should call the function
-    // on the leading or trail end
-    var callNow = immediate && !timeout;
-	
-    // This will reset the waiting every function execution.
-    // This is the step that prevents the function from
-    // being executed because it will never reach the 
-    // inside of the previous setTimeout  
-    clearTimeout(timeout);
-	
-    // Restart the debounce waiting period.
-    // setTimeout returns a truthy value (it differs in web vs node)
-    timeout = setTimeout(later, wait);
-	
-    // Call immediately if you're dong a leading
-    // end execution
-    if (callNow) func.apply(context, args);
-  };
-};
 
 const SettingsModal = () => (
   <Modal trigger={<Button secondary size="large" icon labelPosition="left"><Icon name="setting" />Settings</Button>} basic closeIcon size='small'>
@@ -1071,7 +1065,9 @@ class Controls extends React.Component<ControlsProps> {
     // console.log(x, max);
     const target = pct * this.props.duration;
     // console.log(pct);
-    this.setState({ currTimestamp: target, posTimestamp: pct });
+    if (pct >= 0) {
+        this.setState({ currTimestamp: target, posTimestamp: pct });
+    }
   }
   
   render() {
@@ -1201,3 +1197,49 @@ function decodeEntities(input: string) {
   const doc = new DOMParser().parseFromString(input, "text/html");
   return doc.documentElement.textContent;
 }
+
+// Returns a function, that, as long as it continues to be invoked, will not
+// be triggered. The function will be called after it stops being called for
+// N milliseconds. If `immediate` is passed, trigger the function on the
+// leading edge, instead of the trailing.
+function debounce(func: Function, wait: number, immediate?: boolean) {
+  var timeout: any;
+
+  // This is the function that is actually executed when
+  // the DOM event is triggered.
+  return function executedFunction() {
+    // Store the context of this and any
+    // parameters passed to executedFunction
+    //@ts-ignore
+    var context = this;
+    var args = arguments;
+	    
+    // The function to be called after 
+    // the debounce time has elapsed
+    var later = function() {
+      // null timeout to indicate the debounce ended
+      timeout = null;
+	    
+      // Call function now if you did not on the leading end
+      if (!immediate) func.apply(context, args);
+    };
+
+    // Determine if you should call the function
+    // on the leading or trail end
+    var callNow = immediate && !timeout;
+	
+    // This will reset the waiting every function execution.
+    // This is the step that prevents the function from
+    // being executed because it will never reach the 
+    // inside of the previous setTimeout  
+    clearTimeout(timeout);
+	
+    // Restart the debounce waiting period.
+    // setTimeout returns a truthy value (it differs in web vs node)
+    timeout = setTimeout(later, wait);
+	
+    // Call immediately if you're dong a leading
+    // end execution
+    if (callNow) func.apply(context, args);
+  };
+};
