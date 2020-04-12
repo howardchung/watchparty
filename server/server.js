@@ -175,8 +175,12 @@ class Room {
     this.video = roomData.video;
     this.videoTS = roomData.videoTS;
     this.paused = roomData.paused;
-    this.chat = roomData.chat;
-    this.nameMap = roomData.nameMap;
+    if (roomData.chat) {
+        this.chat = roomData.chat;
+    }
+    if (roomData.nameMap) {
+        this.nameMap = roomData.nameMap;
+    }
   }
   
   getHostState = () => {
