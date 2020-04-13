@@ -566,13 +566,28 @@ export default class App extends React.Component<null, AppState> {
     else if (e.key === 'ArrowLeft') {
         this.onSeek(null, this.getCurrentTime() - 10);
     }
+    else if (e.key === 'c') {
+        this.toggleSubtitle();
+    }
+    else if (e.key === 't') {
+        this.fullScreen(false);
+    }
+    else if (e.key === 'f') {
+        this.fullScreen(true);
+    }
+    else if (e.key === 'm') {
+        this.toggleMute();
+    }
   }
   
-  fullScreen = async () => {
-    if (document.fullscreenElement) {
+  fullScreen = async (bVideoOnly: boolean) => {
+    let container = document.getElementById('fullScreenContainer') as HTMLElement;
+    if (bVideoOnly) {
+        container = document.getElementById('playerContainer') as HTMLElement;
+    }
+    if (document.fullscreenElement === container) {
         document.exitFullscreen();
     } else {
-        const container = document.getElementById('fullScreenContainer') as HTMLElement;
         await container.requestFullscreen();
     }
   }
@@ -673,7 +688,7 @@ export default class App extends React.Component<null, AppState> {
                 }
             </Segment> }
             <div id="fullScreenContainer" className={this.state.fullScreen ? "fullScreenContainer" : ''}>
-                <div tabIndex={1} onKeyDown={this.onVideoKeydown}>
+                <div id="playerContainer" tabIndex={1} onKeyDown={this.onVideoKeydown}>
                     <div className="leftYtContainer videoOuter" style={{ display: (this.isYouTube() && !this.state.loading) ? 'block' : 'none' }}>
                         <iframe
                         title="YouTube"
@@ -1161,7 +1176,8 @@ class Controls extends React.Component<ControlsProps> {
       </Progress>
       <div className="control">{formatTimestamp(duration)}</div>
       <Icon size="large" bordered onClick={toggleSubtitle} className="control action" name={subtitled ? 'closed captioning' : 'closed captioning outline'} />
-      <Icon size="large" bordered onClick={fullScreen} className="control action" name='expand' />
+      <Icon size="large" bordered onClick={() => fullScreen(false)} className="control action" name='window maximize outline' />
+      <Icon size="large" bordered onClick={() => fullScreen(true)} className="control action" name='expand' />
       <Icon size="large" bordered onClick={toggleMute} className="control action" name={muted ? 'volume off' : 'volume up' } />
     </div>;
   }

@@ -67,16 +67,23 @@ body {
 
 .fullScreenContainer {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+}
+
+#playerContainer:fullscreen .videoOuter  {
+    min-width: 100vw;
+    min-height: 100vh;
 }
 
 .fullScreenContainer .videoOuter {
-    min-height: 70vh;
-    max-height: 75vh;
+    /* min-height: 70vh;
+    max-height: 75vh; */
+    width: 80vw;
 }
 
 .fullScreenContainer .fullScreenChat {
-    max-height: 20vh;
+    /* max-height: 23vh; */
+    width: 20vw;
 }
 
 .videoOuter {
