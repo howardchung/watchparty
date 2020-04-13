@@ -834,7 +834,7 @@ class Chat extends React.Component<ChatProps> {
     }
 
     render() {
-        return <Segment className={this.props.className} inverted style={{ display: 'flex', flexDirection: 'column', width: '100%', flexGrow: '1', minHeight: 0 }}>
+        return <Segment className={this.props.className} inverted style={{ display: 'flex', flexDirection: 'column', width: '100%', flexGrow: '1', minHeight: 0, marginTop: 0 }}>
             <div className="chatContainer" ref={this.messagesRef}>
               <Comment.Group>
                 {this.props.chat.map(msg => <ChatMessage {...msg} nameMap={this.props.nameMap} />)}
