@@ -60,6 +60,7 @@ interface AppState {
     loading: boolean;
     scrollTimestamp: number;
     fullScreen: boolean;
+    controlsTimestamp: number;
 }
 
 export default class App extends React.Component<null, AppState> {
@@ -76,6 +77,7 @@ export default class App extends React.Component<null, AppState> {
     loading: true,
     scrollTimestamp: Number(new Date()),
     fullScreen: false,
+    controlsTimestamp: 0,
   };
   videoRefs: any = {};
   socket: any = null;
@@ -204,7 +206,12 @@ export default class App extends React.Component<null, AppState> {
         window.setInterval(() => {
             window.fetch(serverPath + '/ping');
         }, 10 * 60 * 1000);
-  
+
+        // Trigger an update on the controls
+        window.setInterval(() => {
+            this.setState({ controlsTimestamp: Number(new Date()) });
+        }, 1000);
+
       // This code loads the IFrame Player API code asynchronously.
       const tag = document.createElement('script');
       tag.src = "https://www.youtube.com/iframe_api";
@@ -709,6 +716,7 @@ export default class App extends React.Component<null, AppState> {
                     </div>
                     { this.state.currentMedia && 
                     <Controls
+                        key={this.state.controlsTimestamp}
                         togglePlay={this.togglePlay}
                         onSeek={this.onSeek}
                         fullScreen={this.fullScreen}
