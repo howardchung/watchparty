@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Grid, Segment, Divider, Dimmer, Loader, Header, Label, Input, Icon, List, Comment, Progress, Dropdown, Message, Modal, Form, TextArea, DropdownProps } from 'semantic-ui-react'
+import { Button, Grid, Segment, Divider, Dimmer, Loader, Header, Label, Input, Icon, List, Comment, Progress, Dropdown, Message, Modal, Form, TextArea, DropdownProps, Menu } from 'semantic-ui-react'
 import './App.css';
 // import { v4 as uuidv4 } from 'uuid';
 import querystring from 'querystring';
@@ -20,7 +20,7 @@ declare global {
 
 const serverPath = process.env.REACT_APP_SERVER_HOST || `${window.location.protocol}//${window.location.hostname}${process.env.NODE_ENV === 'production' ? '' : ':8080'}`;
 let defaultMediaPath = process.env.REACT_APP_MEDIA_PATH || 'https://dev.howardchung.net' || serverPath + '/examples';
-let defaultStreamPath = process.env.REACT_APP_SEARCH_PATH || 'https://scw.howardchung.net';
+let defaultStreamPath = process.env.REACT_APP_SEARCH_PATH || 'https://scw.howardchung.net' || '';
 // Load settings from localstorage
 let settings = getCurrentSettings();
 
@@ -61,6 +61,7 @@ interface AppState {
     scrollTimestamp: number;
     fullScreen: boolean;
     controlsTimestamp: number;
+    watchOptions: SearchResult[];
 }
 
 export default class App extends React.Component<null, AppState> {
@@ -78,6 +79,7 @@ export default class App extends React.Component<null, AppState> {
     scrollTimestamp: Number(new Date()),
     fullScreen: false,
     controlsTimestamp: 0,
+    watchOptions: [],
   };
   videoRefs: any = {};
   socket: any = null;
@@ -97,6 +99,11 @@ export default class App extends React.Component<null, AppState> {
     document.onfullscreenchange = () => {
         this.setState({ fullScreen: Boolean(document.fullscreenElement) });
     }
+    const response = await window.fetch(defaultMediaPath);
+    const data = await response.json();
+    const results = data.filter((file: any) => file.type === 'file').map((file: any) => ({ url: file.url || getMediaPathForList(defaultMediaPath) + file.name, name: getMediaPathForList(defaultMediaPath) + file.name }));
+    this.setState({ watchOptions: results });
+
     // TODO twitch, bring your own file
     // TODO playlists
     // TODO last writer wins on sending desynced timestamps (use max?)
@@ -207,40 +214,40 @@ export default class App extends React.Component<null, AppState> {
             window.fetch(serverPath + '/ping');
         }, 10 * 60 * 1000);
 
-      // This code loads the IFrame Player API code asynchronously.
-      const tag = document.createElement('script');
-      tag.src = "https://www.youtube.com/iframe_api";
-      var firstScriptTag = document.getElementsByTagName('script')[0];
-      firstScriptTag!.parentNode!.insertBefore(tag, firstScriptTag);
+        // This code loads the IFrame Player API code asynchronously.
+        const tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        var firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag!.parentNode!.insertBefore(tag, firstScriptTag);
      
-      window.onYouTubeIframeAPIReady = () => {
-        this.watchPartyYTPlayer = new window.YT.Player('leftYt', {
-          events: {
-            onReady: () => {
-              this.join(roomId);
-              // this.watchPartyYTPlayer.playVideo();
-            },
-            onStateChange: (e: any) => {
-              if (getMediaType(this.state.currentMedia) === 'youtube' && e.data === window.YT.PlayerState.CUED) {
-                this.setState({ loading: false });
-              }
-              // console.log(this.ytDebounce, e.data, this.watchPartyYTPlayer.getVideoUrl());
-              if (this.ytDebounce && ((e.data === window.YT.PlayerState.PLAYING && this.state.currentMediaPaused)
-                  || (e.data === window.YT.PlayerState.PAUSED && !this.state.currentMediaPaused))) {
-                this.ytDebounce = false;
-                if (e.data === window.YT.PlayerState.PLAYING) {
-                  this.socket.emit('CMD:play');
-                  this.doPlay();
-                } else {
-                  this.socket.emit('CMD:pause');
-                  this.doPause();
+        window.onYouTubeIframeAPIReady = () => {
+            this.watchPartyYTPlayer = new window.YT.Player('leftYt', {
+            events: {
+                onReady: () => {
+                this.join(roomId);
+                // this.watchPartyYTPlayer.playVideo();
+                },
+                onStateChange: (e: any) => {
+                if (getMediaType(this.state.currentMedia) === 'youtube' && e.data === window.YT.PlayerState.CUED) {
+                    this.setState({ loading: false });
                 }
-                window.setTimeout(() => this.ytDebounce = true, 500);
-              }
+                // console.log(this.ytDebounce, e.data, this.watchPartyYTPlayer.getVideoUrl());
+                if (this.ytDebounce && ((e.data === window.YT.PlayerState.PLAYING && this.state.currentMediaPaused)
+                    || (e.data === window.YT.PlayerState.PAUSED && !this.state.currentMediaPaused))) {
+                    this.ytDebounce = false;
+                    if (e.data === window.YT.PlayerState.PLAYING) {
+                    this.socket.emit('CMD:play');
+                    this.doPlay();
+                    } else {
+                    this.socket.emit('CMD:pause');
+                    this.doPause();
+                    }
+                    window.setTimeout(() => this.ytDebounce = true, 500);
+                }
+                }
             }
-          }
-        });
-      };
+            });
+        };
     });
   }
   
@@ -616,7 +623,7 @@ export default class App extends React.Component<null, AppState> {
   }
 
   setMedia = (e: any, data: DropdownProps) => {
-    this.socket.emit('CMD:host', data.value);
+      this.socket.emit('CMD:host', data.value);
   }
   
   updateName = (e: any, data: { value: string }) => {
@@ -641,7 +648,7 @@ export default class App extends React.Component<null, AppState> {
             </a>
             <div className="mobileStack" style={{ display: 'flex', alignItems: 'center', flexGrow: 1, marginLeft: '10px' }}>
                 <SearchComponent setMedia={this.setMedia} type={'youtube'} />
-                <SearchComponent setMedia={this.setMedia} type={'mediaServer'} mediaPath={settings.mediaPath} />
+                {/* <SearchComponent setMedia={this.setMedia} type={'mediaServer'} mediaPath={settings.mediaPath} /> */}
                 {settings.streamPath && <SearchComponent setMedia={this.setMedia} type={'searchServer'} streamPath={settings.streamPath} />}
                 <div style={{ display: 'flex', width: '300px', flexShrink: 0 }}>
                     <Button fluid inverted primary size="medium" icon labelPosition="left" onClick={this.createRoom}><Icon name='certificate' />Create Room</Button>
@@ -660,19 +667,27 @@ export default class App extends React.Component<null, AppState> {
           { this.state.state === 'init' && <div style={{ display: 'flex', width: '100%', alignItems: 'flex-start', justifyContent: 'center' }}><Button inverted primary size="huge" onClick={this.init} icon labelPosition="left"><Icon name="sign-in" />Join Party</Button></div> }
           { this.state.state !== 'init' && <Grid.Column width={this.ourStream ? 10 : 12} className="fullHeightColumn" style={{ overflow: 'scroll' }}>
             <React.Fragment>
-            <Input
-                inverted
-                fluid
-                focus
-                onChange={(e: any) => this.setState({ inputMedia: e.target.value })}
-                onFocus={() => this.setState({ inputMedia: '' })}
-                onBlur={() => this.setState({ inputMedia: undefined })}
-                onKeyPress={(e: any) => e.key === 'Enter' && this.setMedia(e, { value: this.state.inputMedia })} 
-                icon={<Icon onClick={(e: any) => this.setMedia(e, { value: this.state.inputMedia })} name='arrow right' inverted circular link />}
-                label="Now Watching:"
-                placeholder="Enter URL (YouTube, video file, etc.), or use search above"
-                value={this.state.inputMedia !== undefined ? this.state.inputMedia : getMediaDisplayName(this.state.currentMedia)}
-            />
+            <div style={{ position: 'relative' }}>
+                <Input
+                    inverted
+                    fluid
+                    focus
+                    onChange={(e: any) => this.setState({ inputMedia: e.target.value })}
+                    onFocus={() => this.setState({ inputMedia: '' })}
+                    onBlur={() => setTimeout(() => this.setState({ inputMedia: undefined }), 100)}
+                    onKeyPress={(e: any) => e.key === 'Enter' && this.setMedia(e, { value: this.state.inputMedia })} 
+                    icon={<Icon onClick={(e: any) => this.setMedia(e, { value: this.state.inputMedia })} name='arrow right' inverted circular link />}
+                    label="Now Watching:"
+                    placeholder="Enter URL (YouTube, video file, etc.), or use search above"
+                    value={this.state.inputMedia !== undefined ? this.state.inputMedia : getMediaDisplayName(this.state.currentMedia)}
+                />
+                {this.state.inputMedia !== undefined &&
+                <Menu fluid vertical style={{ position: 'absolute', top: '22px', maxHeight: '400px', overflow: 'scroll', zIndex: 1 }}>
+                {this.state.watchOptions.map((option: any) => 
+                    <Menu.Item onClick={(e: any) => this.setMedia(e, { value: option.url})}>{option.url}</Menu.Item>
+                )}
+                </Menu>}
+            </div>
             <Divider inverted horizontal></Divider>
             { (this.state.loading || !this.state.currentMedia) && 
             <Segment inverted style={{ minHeight: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -890,25 +905,25 @@ class SearchComponent extends React.Component<SearchComponentProps> {
     }
 
     doSearch = (e: any) => {
-    this.setState({ loading: true, query: e.target.value });
-    e.persist();
-    if (this.props.type === 'mediaServer') {
-        this.setState({ loading: false, results: this.state.watchOptions.filter((option: SearchResult) => option.name.toLowerCase().includes(e.target.value.toLowerCase()))});
-        return;
-    }
-    if (!this.debounced) {
-      this.debounced = debounce(async () => {
-        let searchUrl = this.props.streamPath + '/search?q=' + encodeURIComponent(this.state.query);
-        if (this.props.type === 'youtube') {
-            searchUrl = serverPath + '/youtube?q=' + encodeURIComponent(this.state.query);
+        this.setState({ loading: true, query: e.target.value });
+        e.persist();
+        if (this.props.type === 'mediaServer') {
+            this.setState({ loading: false, results: this.state.watchOptions.filter((option: SearchResult) => option.name.toLowerCase().includes(e.target.value.toLowerCase()))});
+            return;
         }
-        const response = await window.fetch(searchUrl);
-        const data = await response.json();
-        this.setState({ loading: false, results: data });
-      }, 500);
+        if (!this.debounced) {
+        this.debounced = debounce(async () => {
+            let searchUrl = this.props.streamPath + '/search?q=' + encodeURIComponent(this.state.query);
+            if (this.props.type === 'youtube') {
+                searchUrl = serverPath + '/youtube?q=' + encodeURIComponent(this.state.query);
+            }
+            const response = await window.fetch(searchUrl);
+            const data = await response.json();
+            this.setState({ loading: false, results: data });
+        }, 500);
+        }
+        this.debounced();
     }
-    this.debounced();
-  }
 
   resetMultiStream = () => {
       this.setState({ multiStreamSelection: null });
@@ -929,20 +944,19 @@ class SearchComponent extends React.Component<SearchComponentProps> {
     return <React.Fragment>
         {this.state.multiStreamSelection && <MultiStreamModal streams={this.state.multiStreamSelection} setMedia={setMedia} resetMultiStream={this.resetMultiStream} />}
         <Dropdown
-      key={this.state.resetDropdown}
-      fluid
-      button
-      icon={icon}
-      className='icon'
-      labeled
-      search={(() => {}) as any}
-      text={placeholder}
-      onSearchChange={this.doSearch}
-      onBlur={() => this.setState({ results: this.state.watchOptions })}
-      //searchQuery={this.state.query}
-      //loading={this.state.loading}
-      >
-        
+        key={this.state.resetDropdown}
+        fluid
+        button
+        icon={icon}
+        className='icon'
+        labeled
+        search={(() => {}) as any}
+        text={placeholder}
+        onSearchChange={this.doSearch}
+        onBlur={() => this.setState({ results: this.state.watchOptions })}
+        //searchQuery={this.state.query}
+        //loading={this.state.loading}
+        >
         {Boolean(this.state.results.length) ? <Dropdown.Menu>
             {this.state.results.map((result: SearchResult) => {
                 if (this.props.type === 'youtube') {
