@@ -635,16 +635,14 @@ export default class App extends React.Component<null, AppState> {
                     <div style={{ textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700, color: '#21ba45', fontSize: '30px', lineHeight: '30px', marginLeft: 'auto' }}>Party</div>
                 </div>
             </a>
-            <div className="mobileStack" style={{ display: 'flex', alignItems: 'center', flexGrow: 1, padding: '0px 10px' }}>
+            <div className="mobileStack" style={{ display: 'flex', alignItems: 'center', flexGrow: 1, marginLeft: '10px' }}>
                 <SearchComponent setMedia={this.setMedia} type={'youtube'} />
                 <SearchComponent setMedia={this.setMedia} type={'mediaServer'} mediaPath={settings.mediaPath} />
                 {settings.streamPath && <SearchComponent setMedia={this.setMedia} type={'searchServer'} streamPath={settings.streamPath} />}
-            </div>
-        </div>
-        <div style={{ display: 'flex', padding: '0px 1em' }}>
-            <div style={{ display: 'flex', marginLeft: 'auto', width: '400px' }}>
-            <Button fluid inverted primary size="large" icon labelPosition="left" onClick={this.createRoom}><Icon name='certificate' />Create Room</Button>
-            <SettingsModal />
+                <div style={{ display: 'flex', width: '300px', flexShrink: 0 }}>
+                    <Button fluid inverted primary size="medium" icon labelPosition="left" onClick={this.createRoom}><Icon name='certificate' />Create Room</Button>
+                    <SettingsModal />
+                </div>
             </div>
         </div>
         <Divider inverted horizontal>
@@ -1011,7 +1009,7 @@ const MultiStreamModal = ({ streams, setMedia, resetMultiStream }: any) => (
 );
 
 const SettingsModal = () => (
-  <Modal trigger={<Button fluid secondary size="large" icon labelPosition="left"><Icon name="setting" />Settings</Button>} basic closeIcon size='small'>
+  <Modal trigger={<Button fluid secondary size="medium" icon labelPosition="left"><Icon name="setting" />Settings</Button>} basic closeIcon size='small'>
     <Header icon='setting' content='Settings' />
     <Modal.Content>
       <Form>
