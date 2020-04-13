@@ -17,7 +17,7 @@ module.exports = class Room {
     setInterval(() => {
         // console.log(roomId, this.video, this.roster, this.tsMap, this.nameMap);
         io.of(roomId).emit('REC:tsMap', this.tsMap);
-    }, 3000);
+    }, 1000);
 
     io.of(roomId).on('connection', (socket) => {
         // console.log(socket.id);

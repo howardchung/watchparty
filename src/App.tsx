@@ -207,11 +207,6 @@ export default class App extends React.Component<null, AppState> {
             window.fetch(serverPath + '/ping');
         }, 10 * 60 * 1000);
 
-        // Trigger an update on the controls
-        window.setInterval(() => {
-            this.setState({ controlsTimestamp: Number(new Date()) });
-        }, 1000);
-
       // This code loads the IFrame Player API code asynchronously.
       const tag = document.createElement('script');
       tag.src = "https://www.youtube.com/iframe_api";
