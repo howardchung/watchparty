@@ -79,11 +79,13 @@ body {
     /* min-height: 70vh;
     max-height: 75vh; */
     width: 80vw;
+    max-height: 100vh;
 }
 
 .fullScreenContainer .fullScreenChat {
     /* max-height: 23vh; */
     width: 20vw;
+    max-height: 100vh;
 }
 
 .videoOuter {
