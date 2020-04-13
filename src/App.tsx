@@ -558,28 +558,28 @@ export default class App extends React.Component<null, AppState> {
   }
 
   onVideoKeydown = (e: any) => {
-    e.preventDefault();
-    if (e.key === ' ') {
-        this.togglePlay();
-    }
-    else if (e.key === 'ArrowRight') {
-        this.onSeek(null, this.getCurrentTime() + 10);
-    }
-    else if (e.key === 'ArrowLeft') {
-        this.onSeek(null, this.getCurrentTime() - 10);
-    }
-    else if (e.key === 'c') {
-        this.toggleSubtitle();
-    }
-    else if (e.key === 't') {
-        this.fullScreen(false);
-    }
-    else if (e.key === 'f') {
-        this.fullScreen(true);
-    }
-    else if (e.key === 'm') {
-        this.toggleMute();
-    }
+        if (e.key === ' ') {
+          e.preventDefault();
+          this.togglePlay();
+        }
+        else if (e.key === 'ArrowRight') {
+            this.onSeek(null, this.getCurrentTime() + 10);
+        }
+        else if (e.key === 'ArrowLeft') {
+            this.onSeek(null, this.getCurrentTime() - 10);
+        }
+        else if (e.key === 'c') {
+            this.toggleSubtitle();
+        }
+        else if (e.key === 't') {
+            this.fullScreen(false);
+        }
+        else if (e.key === 'f') {
+            this.fullScreen(true);
+        }
+        else if (e.key === 'm') {
+            this.toggleMute();
+        }
   }
   
   fullScreen = async (bVideoOnly: boolean) => {
@@ -587,9 +587,13 @@ export default class App extends React.Component<null, AppState> {
     if (bVideoOnly) {
         container = document.getElementById('playerContainer') as HTMLElement;
     }
-    if (document.fullscreenElement === container) {
-        document.exitFullscreen();
-    } else {
+    if (!document.fullscreenElement) {
+        await container.requestFullscreen();
+        return;
+    }
+    const bChangeElements = document.fullscreenElement !== container;
+    await document.exitFullscreen();
+    if (bChangeElements) {
         await container.requestFullscreen();
     }
   }
