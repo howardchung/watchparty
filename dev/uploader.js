@@ -22,7 +22,7 @@ var client = s3.createClient({
 
 var params = {
   localDir: "/var/www/html",
-  deleteRemoved: true, // default false, whether to remove s3 objects that have no corresponding local file.
+  deleteRemoved: false, // default false, whether to remove s3 objects that have no corresponding local file.
   s3Params: {
     Bucket: "hcmedia",
     Prefix: "",

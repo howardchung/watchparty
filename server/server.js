@@ -110,7 +110,7 @@ app.post('/createRoom', (req, res) => {
     name = names.choose();
   }
   console.log('createRoom: ', name);
-  rooms.set('/' + name, new Room('/' + name));
+  rooms.set('/' + name, new Room(io, '/' + name));
   res.json({ name });
 });
 
