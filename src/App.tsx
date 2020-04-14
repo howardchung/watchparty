@@ -108,7 +108,6 @@ export default class App extends React.Component<null, AppState> {
     // TODO playlists
     // TODO last writer wins on sending desynced timestamps (use max?)
     // TODO fix race condition where search results return out of order
-    // TODO full disconnection from webrtc (and allow rejoining)
   }
 
   setupWebRTC = async () => {
@@ -120,11 +119,15 @@ export default class App extends React.Component<null, AppState> {
   }
 
   stopWebRTC = () => {
-      this.ourStream && this.ourStream.getTracks().forEach(track => {
-          track.stop();
-      });
-      this.ourStream = null;
-      this.socket.emit('CMD:leaveVideo');
+        this.ourStream && this.ourStream.getTracks().forEach(track => {
+            track.stop();
+        });
+        this.ourStream = null;
+        Object.values(this.videoPCs).forEach(pc => {
+            pc.close();
+        });
+        this.videoPCs = {};
+        this.socket.emit('CMD:leaveVideo');
   }
 
   toggleVideoWebRTC = () => {
@@ -792,14 +795,13 @@ export default class App extends React.Component<null, AppState> {
             }
           />
           <Divider inverted horizontal></Divider>
-          {!this.ourStream
-            ? <Button color="purple" size="large" icon labelPosition="left" onClick={this.setupWebRTC} style={{ flexShrink: 0 }}><Icon name="video" />Join Video Chat</Button>
-            : (
+          {!this.ourStream && <Button color={"purple"} size="large" icon labelPosition="left" onClick={this.setupWebRTC} style={{ flexShrink: 0 }}><Icon name="video" />{`Join Video Chat`}</Button>}
+          {this.ourStream &&
                 <div style={{ display: 'flex', width: '100%' }}>
-                <Button fluid color={this.getVideoWebRTC() ? "green" : "red"} size="large" icon labelPosition="left" onClick={this.toggleVideoWebRTC}><Icon name="video" />{this.getVideoWebRTC() ? 'On' : 'Off'}</Button>
-                <Button fluid color={this.getAudioWebRTC() ? "green" : "red"} size="large" icon labelPosition="left" onClick={this.toggleAudioWebRTC}><Icon name={this.getAudioWebRTC() ? "microphone" : 'microphone slash'} />{this.getAudioWebRTC() ? 'On' : 'Off'}</Button>
+                <Button fluid color={"red"} size="medium" icon labelPosition="left" onClick={this.stopWebRTC}><Icon name="external" />{`Leave`}</Button>
+                <Button fluid color={this.getVideoWebRTC() ? "green" : "red"} size="medium" icon labelPosition="left" onClick={this.toggleVideoWebRTC}><Icon name="video" />{this.getVideoWebRTC() ? 'On' : 'Off'}</Button>
+                <Button fluid color={this.getAudioWebRTC() ? "green" : "red"} size="medium" icon labelPosition="left" onClick={this.toggleAudioWebRTC}><Icon name={this.getAudioWebRTC() ? "microphone" : 'microphone slash'} />{this.getAudioWebRTC() ? 'On' : 'Off'}</Button>
                 </div>
-            )
           }
           {!this.state.fullScreen && <Chat chat={this.state.chat} nameMap={this.state.nameMap} socket={this.socket} scrollTimestamp={this.state.scrollTimestamp} />}
         </Grid.Column>}

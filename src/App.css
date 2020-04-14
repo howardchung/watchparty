@@ -95,11 +95,10 @@ body {
 }
 
 #videoContainer {
-    display: grid;
-    grid-template-columns: 100%;
+    /* display: grid;
+    grid-template-columns: 100%; */
     /*grid-template-rows: repeat(auto-fill, 160px);*/
     overflow: scroll;
-    flex-shrink: 0;
 }
 
 @media only screen and (max-width: 600px) {
