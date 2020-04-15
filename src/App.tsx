@@ -292,7 +292,7 @@ export default class App extends React.Component<null, AppState> {
 
         // Start this video
         this.doSrc(data.video, data.videoTS);
-        if (this.isVideo() && !data.paused) {
+        if (!data.paused) {
           this.doPlay();
         }
       });
@@ -500,7 +500,7 @@ export default class App extends React.Component<null, AppState> {
         }
       }
       if (this.isYouTube()) {
-        console.log('play');
+        console.log('play yt');
         this.watchPartyYTPlayer.playVideo();
       }
     });
@@ -717,7 +717,7 @@ export default class App extends React.Component<null, AppState> {
                         id="leftYt"
                         allowFullScreen
                         frameBorder="0"
-                        src="https://www.youtube.com/embed/?enablejsapi=1&controls=0&rel=0&autoplay=1"
+                        src="https://www.youtube.com/embed/?enablejsapi=1&controls=0&rel=0"
                         />
                     </div>
                     <div className="videoOuter" style={{ display: (this.isVideo() && !this.state.loading) ? 'block' : 'none' }}>
