@@ -717,7 +717,7 @@ export default class App extends React.Component<null, AppState> {
                         id="leftYt"
                         allowFullScreen
                         frameBorder="0"
-                        src="https://www.youtube.com/embed/?enablejsapi=1&controls=0&rel=0"
+                        src="https://www.youtube.com/embed/?enablejsapi=1&controls=0&rel=0&autoplay=1"
                         />
                     </div>
                     <div className="videoOuter" style={{ display: (this.isVideo() && !this.state.loading) ? 'block' : 'none' }}>
