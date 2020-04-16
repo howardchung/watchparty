@@ -679,7 +679,7 @@ export default class App extends React.Component<null, AppState> {
                     onFocus={() => this.setState({ inputMedia: '' })}
                     onBlur={() => setTimeout(() => this.setState({ inputMedia: undefined }), 100)}
                     onKeyPress={(e: any) => e.key === 'Enter' && this.setMedia(e, { value: this.state.inputMedia })} 
-                    icon={<Icon onClick={(e: any) => this.setMedia(e, { value: this.state.inputMedia })} name='arrow right' inverted circular link />}
+                    icon={<Icon onClick={(e: any) => this.setMedia(e, { value: this.state.inputMedia || this.state.currentMedia })} name='arrow right' inverted circular link />}
                     label="Now Watching:"
                     placeholder="Enter URL (YouTube, video file, etc.), or use search above"
                     value={this.state.inputMedia !== undefined ? this.state.inputMedia : getMediaDisplayName(this.state.currentMedia)}
