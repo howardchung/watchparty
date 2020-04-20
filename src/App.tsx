@@ -626,6 +626,7 @@ export default class App extends React.Component<null, AppState> {
   }
 
   setMedia = (e: any, data: DropdownProps) => {
+      setTimeout(() => this.setState({ inputMedia: undefined }), 100);
       this.socket.emit('CMD:host', data.value);
   }
   
@@ -679,7 +680,7 @@ export default class App extends React.Component<null, AppState> {
                     onFocus={() => this.setState({ inputMedia: '' })}
                     onBlur={() => setTimeout(() => this.setState({ inputMedia: undefined }), 100)}
                     onKeyPress={(e: any) => e.key === 'Enter' && this.setMedia(e, { value: (this.state.inputMedia || this.state.currentMedia) })} 
-                    icon={this.state.inputMedia ? <Icon onClick={(e: any) => this.setMedia(e, { value: (this.state.inputMedia!) })} name='arrow right' inverted circular link /> : null}
+                    icon={this.state.inputMedia ? <Icon onClick={(e: any) => this.setMedia(e, { value: (this.state.inputMedia) })} name='arrow right' inverted circular link /> : null}
                     label="Now Watching:"
                     placeholder="Enter URL (YouTube, video file, etc.), or use search above"
                     value={this.state.inputMedia !== undefined ? this.state.inputMedia : getMediaDisplayName(this.state.currentMedia)}
