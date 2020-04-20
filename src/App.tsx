@@ -717,6 +717,7 @@ export default class App extends React.Component<null, AppState> {
                         id="leftYt"
                         allowFullScreen
                         frameBorder="0"
+                        allow="autoplay"
                         src="https://www.youtube.com/embed/?enablejsapi=1&controls=0&rel=0"
                         />
                     </div>
