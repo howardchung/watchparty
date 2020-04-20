@@ -19,8 +19,8 @@ declare global {
 }
 
 const serverPath = process.env.REACT_APP_SERVER_HOST || `${window.location.protocol}//${window.location.hostname}${process.env.NODE_ENV === 'production' ? '' : ':8080'}`;
-let defaultMediaPath = process.env.REACT_APP_MEDIA_PATH || 'https://dev.howardchung.net' || serverPath + '/examples';
-let defaultStreamPath = process.env.REACT_APP_SEARCH_PATH || 'https://scw.howardchung.net' || '';
+let defaultMediaPath = process.env.REACT_APP_MEDIA_PATH || serverPath + '/examples';
+let defaultStreamPath = process.env.REACT_APP_SEARCH_PATH || '';
 // Load settings from localstorage
 let settings = getCurrentSettings();
 
