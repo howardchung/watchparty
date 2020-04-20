@@ -20,7 +20,7 @@ declare global {
 
 const serverPath = process.env.REACT_APP_SERVER_HOST || `${window.location.protocol}//${window.location.hostname}${process.env.NODE_ENV === 'production' ? '' : ':8080'}`;
 let defaultMediaPath = process.env.REACT_APP_MEDIA_PATH || serverPath + '/examples';
-let defaultStreamPath = process.env.REACT_APP_SEARCH_PATH || '';
+let defaultStreamPath = process.env.REACT_APP_STREAM_PATH || '';
 // Load settings from localstorage
 let settings = getCurrentSettings();
 
@@ -679,7 +679,7 @@ export default class App extends React.Component<null, AppState> {
                     onFocus={() => this.setState({ inputMedia: '' })}
                     onBlur={() => setTimeout(() => this.setState({ inputMedia: undefined }), 100)}
                     onKeyPress={(e: any) => e.key === 'Enter' && this.setMedia(e, { value: (this.state.inputMedia || this.state.currentMedia).toLowerCase() })} 
-                    icon={<Icon onClick={(e: any) => this.setMedia(e, { value: (this.state.inputMedia || this.state.currentMedia).toLowerCase() })} name='arrow right' inverted circular link />}
+                    icon={this.state.inputMedia ? <Icon onClick={(e: any) => this.setMedia(e, { value: (this.state.inputMedia!).toLowerCase() })} name='arrow right' inverted circular link /> : null}
                     label="Now Watching:"
                     placeholder="Enter URL (YouTube, video file, etc.), or use search above"
                     value={this.state.inputMedia !== undefined ? this.state.inputMedia : getMediaDisplayName(this.state.currentMedia)}
