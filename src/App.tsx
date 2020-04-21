@@ -115,7 +115,7 @@ export default class App extends React.Component<null, AppState> {
 
   setupScreenShare = async () => {
         //@ts-ignore
-        const stream = await navigator.mediaDevices.getDisplayMedia({ video: { cursor: 'never', logicalSurface: true }, audio: true });
+        const stream = await navigator.mediaDevices.getDisplayMedia({ video: { cursor: 'never', width: 720, logicalSurface: true }, audio: true });
         stream.getVideoTracks()[0].onended = this.stopScreenShare;
         this.screenShareStream = stream;
         this.socket.emit('CMD:joinScreenShare');
