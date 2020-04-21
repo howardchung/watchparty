@@ -239,11 +239,11 @@ export default class App extends React.Component<null, AppState> {
                     || (e.data === window.YT.PlayerState.PAUSED && !this.state.currentMediaPaused))) {
                     this.ytDebounce = false;
                     if (e.data === window.YT.PlayerState.PLAYING) {
-                    this.socket.emit('CMD:play');
-                    this.doPlay();
+                        this.socket.emit('CMD:play');
+                        this.doPlay();
                     } else {
-                    this.socket.emit('CMD:pause');
-                    this.doPause();
+                        this.socket.emit('CMD:pause');
+                        this.doPause();
                     }
                     window.setTimeout(() => this.ytDebounce = true, 500);
                 }
@@ -477,9 +477,7 @@ export default class App extends React.Component<null, AppState> {
     if (this.isYouTube()) {
       let url = new window.URL(src);
       let videoId = querystring.parse(url.search.substring(1))['v'];
-      // TODO weird media engagement index stuff, video might not start automatically
-      // this.watchPartyYTPlayer.mute();
-      this.watchPartyYTPlayer.loadVideoById(videoId, time);
+      this.watchPartyYTPlayer.cueVideoById(videoId, time);
     }
   }
   
@@ -651,12 +649,13 @@ export default class App extends React.Component<null, AppState> {
                 </div>
             </a>
             <div className="mobileStack" style={{ display: 'flex', alignItems: 'center', flexGrow: 1, marginLeft: '10px' }}>
-                <SearchComponent setMedia={this.setMedia} type={'youtube'} />
-                {/* <SearchComponent setMedia={this.setMedia} type={'mediaServer'} mediaPath={settings.mediaPath} /> */}
-                {settings.streamPath && <SearchComponent setMedia={this.setMedia} type={'searchServer'} streamPath={settings.streamPath} />}
-                <div style={{ display: 'flex', width: '300px', flexShrink: 0 }}>
-                    <Button fluid inverted primary size="medium" icon labelPosition="left" onClick={this.createRoom}><Icon name='certificate' />Create Room</Button>
-                    <SettingsModal />
+                {this.state.state !== 'init' && <SearchComponent setMedia={this.setMedia} type={'youtube'} />}
+                {/* this.state.state !== 'init' && <SearchComponent setMedia={this.setMedia} type={'mediaServer'} mediaPath={settings.mediaPath} /> */}
+                {this.state.state !== 'init' && settings.streamPath && <SearchComponent setMedia={this.setMedia} type={'searchServer'} streamPath={settings.streamPath} />}
+                <div style={{ display: 'flex', width: '410px', flexShrink: 0 }}>
+                    <Button fluid inverted primary size="medium" icon labelPosition="left" onClick={this.createRoom}><Icon name='certificate' />New Room</Button>
+                    <SettingsModal trigger={<Button fluid inverted color="green" size="medium" icon labelPosition="left"><Icon name="setting" />Settings</Button>} />
+                    <Button fluid inverted color="grey" size="medium" icon labelPosition="left" href="https://github.com/howardchung/watchparty" target="_blank"><Icon name='github' />Source</Button>
                 </div>
             </div>
         </div>
@@ -669,7 +668,7 @@ export default class App extends React.Component<null, AppState> {
         <Grid stackable celled='internally'>
           <Grid.Row>
           { this.state.state === 'init' && <div style={{ display: 'flex', width: '100%', alignItems: 'flex-start', justifyContent: 'center' }}><Button inverted primary size="huge" onClick={this.init} icon labelPosition="left"><Icon name="sign-in" />Join Party</Button></div> }
-          { this.state.state !== 'init' && <Grid.Column width={this.ourStream ? 10 : 12} className="fullHeightColumn" style={{ overflow: 'scroll' }}>
+          { this.state.state !== 'init' && <Grid.Column width={this.ourStream ? 9 : 11} className="fullHeightColumn" style={{ overflow: 'scroll' }}>
             <React.Fragment>
             <div style={{ position: 'relative' }}>
                 <Input
@@ -782,7 +781,7 @@ export default class App extends React.Component<null, AppState> {
               })}
           </div>
         </Grid.Column>}
-        {this.state.state !== 'init' && <Grid.Column width={4} style={{ display: 'flex', flexDirection: 'column' }} className="fullHeightColumn">
+        {this.state.state !== 'init' && <Grid.Column width={5} style={{ display: 'flex', flexDirection: 'column' }} className="fullHeightColumn">
           <Input
             inverted
             fluid
@@ -1030,8 +1029,8 @@ const MultiStreamModal = ({ streams, setMedia, resetMultiStream }: any) => (
     </Modal>
 );
 
-const SettingsModal = () => (
-  <Modal trigger={<Button fluid secondary size="medium" icon labelPosition="left"><Icon name="setting" />Settings</Button>} basic closeIcon size='small'>
+const SettingsModal = ({ trigger }: any) => (
+  <Modal trigger={trigger} basic closeIcon size='small'>
     <Header icon='setting' content='Settings' />
     <Modal.Content>
       <Form>
@@ -1206,9 +1205,9 @@ class Controls extends React.Component<ControlsProps> {
   }
 }
 
-function formatMessage(cmd: string, msg: string) {
+function formatMessage(cmd: string, msg: string): React.ReactNode | string {
   if (cmd === 'host') {
-    return `changed the video to ${getMediaDisplayName(msg)}`;
+    return <React.Fragment>{`changed the video to `}<span style={{ textTransform: 'initial' }}>{getMediaDisplayName(msg)}</span></React.Fragment>;
   }
   else if (cmd === 'seek') {
     return `jumped to ${formatTimestamp(msg)}`;
