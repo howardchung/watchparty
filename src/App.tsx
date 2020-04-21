@@ -1138,6 +1138,7 @@ const MultiStreamModal = ({ streams, setMedia, resetMultiStream }: any) => (
     </Modal>
 );
 
+/* eslint-disable-next-line */
 const SettingsModal = ({ trigger }: any) => (
   <Modal trigger={trigger} basic closeIcon size='small'>
     <Header icon='setting' content='Settings' />
