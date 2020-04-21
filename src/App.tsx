@@ -774,7 +774,7 @@ export default class App extends React.Component<null, AppState> {
         <Grid stackable celled='internally'>
           <Grid.Row>
           { this.state.state === 'init' && <div style={{ display: 'flex', width: '100%', alignItems: 'flex-start', justifyContent: 'center' }}><Button inverted primary size="huge" onClick={this.init} icon labelPosition="left"><Icon name="sign-in" />Join Party</Button></div> }
-          { this.state.state !== 'init' && <Grid.Column width={this.ourStream ? 9 : 11} className="fullHeightColumn" style={{ overflow: 'scroll' }}>
+          { this.state.state !== 'init' && <Grid.Column width={10} style={{ overflow: 'scroll' }}>
             <React.Fragment>
             <div style={{ position: 'relative' }}>
                 <div style={{ display: 'flex' }}>
@@ -799,7 +799,7 @@ export default class App extends React.Component<null, AppState> {
                 />
                 </div>
                 {this.state.inputMedia !== undefined &&
-                <Menu fluid vertical style={{ position: 'absolute', top: '22px', maxHeight: '400px', overflow: 'scroll', zIndex: 1 }}>
+                <Menu fluid vertical style={{ position: 'absolute', top: '22px', maxHeight: '300px', overflow: 'scroll', zIndex: 1 }}>
                 {this.state.watchOptions.map((option: any) => 
                     <Menu.Item onClick={(e: any) => this.setMedia(e, { value: option.url})}>{option.url}</Menu.Item>
                 )}
@@ -864,38 +864,32 @@ export default class App extends React.Component<null, AppState> {
                     <Chat className="fullScreenChat" chat={this.state.chat} nameMap={this.state.nameMap} socket={this.socket} scrollTimestamp={this.state.scrollTimestamp} />
                 }
             </div>
-            <Divider inverted horizontal>With</Divider>
-            <List inverted horizontal>
-                {this.state.participants.map((participant) => {
-                return <List.Item>
-                    <Label as='a' color={getColor(participant.id) as any} image>
-                    <img src={getImage(this.state.nameMap[participant.id] || participant.id)} alt="" />
-                    {participant.isVideoChat && <Icon size="small" name='video' /> }
-                    {this.state.nameMap[participant.id] || participant.id}
-                    <Label.Detail>{formatTimestamp(this.state.tsMap[participant.id] || 0)}</Label.Detail>
-                    </Label>
-                    </List.Item>;
-                })}
-            </List>
           </React.Fragment>
         </Grid.Column>}
-        {this.ourStream && <Grid.Column width={2}>
-          <div id="videoContainer" className="fullHeightColumn">
+        <Grid.Column width={2} className="fullHeightColumn">
+          <div style={{ overflow: 'scroll' }}>
             {this.state.participants.map(p => {
-              return <div key={p.id} style={{ position: 'relative', height: 'fit-content', display: p.isVideoChat ? 'block' : 'none' }}>
-                <video
+              return <div key={p.id} style={{ position: 'relative', height: this.ourStream && p.isVideoChat ? 'fit-content' : '26px' }}>
+                {this.ourStream && p.isVideoChat && <video
                   ref={el => {this.videoRefs[p.id] = el}}
                   style={{ width: '100%', height: '100%', borderRadius: '4px' }}
                   autoPlay
                   muted={p.id === this.socket.id}
                   data-id={p.id}
-                />
-                <Label tag size='small' color={getColor(p.id) as any} style={{ position: 'absolute', bottom: 0, right: 0 }}>{this.state.nameMap[p.id] || p.id}</Label>
+                />}
+                <Label style={{ position: 'absolute', bottom: 0, right: 0 }} as='a' color={getColor(p.id) as any} image>
+                <div style={{ display: 'flex' }}>
+                    <img src={getImage(this.state.nameMap[p.id] || p.id)} alt="" />
+                    {p.isVideoChat && <Icon size="small" name='video' /> }
+                    <div title={this.state.nameMap[p.id] || p.id} style={{ width: '70px', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{this.state.nameMap[p.id] || p.id}</div>
+                    <Label.Detail>{formatTimestamp(this.state.tsMap[p.id] || 0)}</Label.Detail>
+                </div>
+                </Label>
                 </div>;
               })}
           </div>
-        </Grid.Column>}
-        {this.state.state !== 'init' && <Grid.Column width={5} style={{ display: 'flex', flexDirection: 'column' }} className="fullHeightColumn">
+        </Grid.Column>
+        {this.state.state !== 'init' && <Grid.Column width={4} style={{ display: 'flex', flexDirection: 'column' }} className="fullHeightColumn">
           <Input
             inverted
             fluid

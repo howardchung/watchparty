@@ -94,13 +94,6 @@ body {
     max-height: 60vh;
 }
 
-#videoContainer {
-    /* display: grid;
-    grid-template-columns: 100%; */
-    /*grid-template-rows: repeat(auto-fill, 160px);*/
-    overflow: scroll;
-}
-
 @media only screen and (max-width: 600px) {
   .mobileStack {
       flex-direction: column;
@@ -108,5 +101,5 @@ body {
 }
 
 .fullHeightColumn.fullHeightColumn.fullHeightColumn.fullHeightColumn {
-    height: calc(100vh - 150px);
+    height: calc(100vh - 160px);
 }
