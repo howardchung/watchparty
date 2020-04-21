@@ -5,6 +5,7 @@ type PCDict = { [key: string]: RTCPeerConnection };
 interface User {
     id: string;
     isVideoChat: boolean;
+    isScreenShare: boolean;
 }
 
 interface ChatMessage {

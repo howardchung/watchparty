@@ -89,8 +89,31 @@ module.exports = class Room {
             }
             io.of(roomId).emit('roster', this.roster);
         });
+        socket.on('CMD:joinScreenShare', (data) => {
+            const existingSharer  = this.roster.find(user => user.isScreenShare);
+            // TODO allow handing off screen share rather than rejecting when there's already one
+            if (existingSharer) {
+                return;
+            }
+            const match = this.roster.find(user => user.id === socket.id);
+            if (match) {
+                match.isScreenShare = true;
+            }
+            io.of(roomId).emit('roster', this.roster);
+        });
+        socket.on('CMD:leaveScreenShare', (data) => {
+            const match = this.roster.find(user => user.id === socket.id);
+            if (match) {
+                match.isScreenShare = false;
+            }
+            io.of(roomId).emit('roster', this.roster);            
+        });
+        // TODO allow leaving screenshare
         socket.on('signal', (data) => {
             io.of(roomId).to(data.to).emit('signal', { from: socket.id, msg: data.msg });
+        });
+        socket.on('signalSS', (data) => {
+            io.of(roomId).to(data.to).emit('signalSS', { from: socket.id, sharer: data.sharer, msg: data.msg });
         });
     
         socket.on('disconnect', () => {

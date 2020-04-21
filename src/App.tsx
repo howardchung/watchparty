@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Grid, Segment, Divider, Dimmer, Loader, Header, Label, Input, Icon, List, Comment, Progress, Dropdown, Message, Modal, Form, TextArea, DropdownProps, Menu } from 'semantic-ui-react'
+import { Button, Grid, Segment, Divider, Dimmer, Loader, Header, Label, Input, Icon, List, Comment, Progress, Dropdown, Message, Modal, Form, TextArea, DropdownProps, Menu, Popup } from 'semantic-ui-react'
 import './App.css';
 // import { v4 as uuidv4 } from 'uuid';
 import querystring from 'querystring';
@@ -86,9 +86,12 @@ export default class App extends React.Component<null, AppState> {
   watchPartyYTPlayer: any = null;
   ytDebounce = true;
   videoInitTime = 0;
-  ourStream: MediaStream | null = null;
+  ourStream?: MediaStream;
   videoPCs: PCDict = {};
   savedMedia = '';
+  screenShareStream?: MediaStream;
+  screenHostPC: PCDict = {};
+  screenSharePC?: RTCPeerConnection;
 
   async componentDidMount() {
     const canAutoplay = await testAutoplay();
@@ -110,19 +113,43 @@ export default class App extends React.Component<null, AppState> {
     // TODO fix race condition where search results return out of order
   }
 
+  setupScreenShare = async () => {
+        //@ts-ignore
+        const stream = await navigator.mediaDevices.getDisplayMedia({ video: { cursor: 'never', logicalSurface: true }, audio: true });
+        stream.getVideoTracks()[0].onended = this.stopScreenShare;
+        this.screenShareStream = stream;
+        this.socket.emit('CMD:joinScreenShare');
+  }
+
+  stopScreenShare = async () => {
+        this.screenShareStream && this.screenShareStream.getTracks().forEach(track => {
+            track.stop();
+        });
+        this.screenShareStream = undefined;
+        if (this.screenSharePC) {
+            this.screenSharePC.close();
+            this.screenSharePC = undefined;
+        }
+        Object.values(this.screenHostPC).forEach(pc => {
+            pc.close();
+        });
+        this.screenHostPC = {};
+        this.socket.emit('CMD:leaveScreenShare');
+    }
+
   setupWebRTC = async () => {
-    // Set up our own video
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
-    this.ourStream = stream;
-    // alert server we've joined video chat
-    this.socket.emit('CMD:joinVideo');
+        // Set up our own video
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+        this.ourStream = stream;
+        // alert server we've joined video chat
+        this.socket.emit('CMD:joinVideo');
   }
 
   stopWebRTC = () => {
         this.ourStream && this.ourStream.getTracks().forEach(track => {
             track.stop();
         });
-        this.ourStream = null;
+        this.ourStream = undefined;
         Object.values(this.videoPCs).forEach(pc => {
             pc.close();
         });
@@ -147,7 +174,7 @@ export default class App extends React.Component<null, AppState> {
   }
 
   getAudioWebRTC = () => {
-      return this.ourStream && this.ourStream.getAudioTracks()[0].enabled;
+      return this.ourStream && this.ourStream.getAudioTracks()[0] && this.ourStream.getAudioTracks()[0].enabled;
   }
   
   updateWebRTC = () => {
@@ -198,9 +225,65 @@ export default class App extends React.Component<null, AppState> {
     });
   }
 
+  updateScreenShare = async () => {
+        // TODO teardown for those who leave
+        const sharer = this.state.participants.find(p => p.isScreenShare);
+        if (sharer && sharer.id === this.socket.id) {
+            // We're the sharer, create a connection to each other member
+            this.state.participants.forEach(user => {
+                const id = user.id;
+                if (!this.screenHostPC[id]) {
+                    // Set up the RTCPeerConnection for sharing media to each member
+                    const pc = new RTCPeerConnection({ iceServers });
+                    this.screenHostPC[id] = pc;
+                    //@ts-ignore
+                    pc.addStream(this.screenShareStream);
+                    pc.onicecandidate = (event) => {
+                        // We generated an ICE candidate, send it to peer
+                        if (event.candidate) {
+                            this.sendSignalSS(id, {'ice': event.candidate}, true);
+                        }
+                    };
+                    pc.onnegotiationneeded = async () => {
+                        // Start connection for peer's video
+                        const offer = await pc.createOffer();
+                        await pc.setLocalDescription(offer);
+                        this.sendSignalSS(id, {'sdp': pc.localDescription }, true);
+                    }              
+                }
+            });
+        }
+        // We're a watcher, establish connection to sharer (sharer connects to self)
+        if (sharer && !this.screenSharePC) {
+            const pc = new RTCPeerConnection({ iceServers });
+            this.screenSharePC = pc;
+            pc.onicecandidate = (event) => {
+                // We generated an ICE candidate, send it to peer
+                if (event.candidate) {
+                    this.sendSignalSS(sharer.id, {'ice': event.candidate});
+                }
+            };
+            //@ts-ignore
+            pc.onaddstream = (event: any) => {
+                // Mount the stream from peer
+                const stream = event.stream;
+                console.log(stream);
+                const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
+                leftVideo.srcObject = stream;
+                leftVideo.play();
+                this.setState({ currentMedia: this.state.nameMap[sharer.id] });
+            };
+        }
+  }
+
   sendSignal = async (to: string, data: any) => {
     console.log('send', to, data);
     this.socket.emit('signal', { to, msg: data });
+  };
+
+  sendSignalSS = async (to: string, data: any, sharer?: boolean) => {
+    // console.log('sendSS', to, data);
+    this.socket.emit('signalSS', { to, msg: data, sharer });
   };
   
   init = () => {
@@ -347,6 +430,7 @@ export default class App extends React.Component<null, AppState> {
       this.setState({ participants: data }, () => {
         // Establish connections to the other video chatters
         this.updateWebRTC();
+        this.updateScreenShare();
       });
     });
     socket.on('chatinit', (data: any) => {
@@ -367,6 +451,26 @@ export default class App extends React.Component<null, AppState> {
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
         this.sendSignal(from, {'sdp': pc.localDescription});
+      }
+      else if (msg.sdp && msg.sdp.type === "answer") {
+        pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
+      }
+    });
+    socket.on('signalSS', async (data: any) => {
+      // Handle messages received from signaling server
+      const msg = data.msg;
+      const from = data.from;
+      // Determine whether the message came from the sharer or the sharee
+      const pc = (data.sharer ? this.screenSharePC : this.screenHostPC[from]) as RTCPeerConnection;
+      if (msg.ice !== undefined) {
+        pc.addIceCandidate(new RTCIceCandidate(msg.ice));
+      }
+      else if (msg.sdp && msg.sdp.type === "offer") {
+        // console.log('offer');
+        await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        this.sendSignalSS(from, {'sdp': pc.localDescription}, !data.sharer);
       }
       else if (msg.sdp && msg.sdp.type === "answer") {
         pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
@@ -444,6 +548,7 @@ export default class App extends React.Component<null, AppState> {
     console.log('doSrc', src, time);
     if (this.isVideo()) {
       const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
+      leftVideo.srcObject = null;
       leftVideo.src = src;
       this.videoInitTime = Number(new Date());
       leftVideo.currentTime = time;
@@ -625,6 +730,7 @@ export default class App extends React.Component<null, AppState> {
 
   setMedia = (e: any, data: DropdownProps) => {
       setTimeout(() => this.setState({ inputMedia: undefined }), 100);
+      this.stopScreenShare();
       this.socket.emit('CMD:host', data.value);
   }
   
@@ -652,9 +758,9 @@ export default class App extends React.Component<null, AppState> {
                 {this.state.state !== 'init' && <SearchComponent setMedia={this.setMedia} type={'youtube'} />}
                 {/* this.state.state !== 'init' && <SearchComponent setMedia={this.setMedia} type={'mediaServer'} mediaPath={settings.mediaPath} /> */}
                 {this.state.state !== 'init' && settings.streamPath && <SearchComponent setMedia={this.setMedia} type={'searchServer'} streamPath={settings.streamPath} />}
-                <div style={{ display: 'flex', width: '410px', flexShrink: 0 }}>
+                <div style={{ display: 'flex', width: '300px', flexShrink: 0 }}>
                     <Button fluid inverted primary size="medium" icon labelPosition="left" onClick={this.createRoom}><Icon name='certificate' />New Room</Button>
-                    <SettingsModal trigger={<Button fluid inverted color="green" size="medium" icon labelPosition="left"><Icon name="setting" />Settings</Button>} />
+                    {/* <SettingsModal trigger={<Button fluid inverted color="green" size="medium" icon labelPosition="left"><Icon name="setting" />Settings</Button>} /> */}
                     <Button fluid inverted color="grey" size="medium" icon labelPosition="left" href="https://github.com/howardchung/watchparty" target="_blank"><Icon name='github' />Source</Button>
                 </div>
             </div>
@@ -671,7 +777,9 @@ export default class App extends React.Component<null, AppState> {
           { this.state.state !== 'init' && <Grid.Column width={this.ourStream ? 9 : 11} className="fullHeightColumn" style={{ overflow: 'scroll' }}>
             <React.Fragment>
             <div style={{ position: 'relative' }}>
+                <div style={{ display: 'flex' }}>
                 <Input
+                    style={{ flexGrow: 1 }}
                     inverted
                     fluid
                     focus
@@ -684,6 +792,12 @@ export default class App extends React.Component<null, AppState> {
                     placeholder="Enter URL (YouTube, video file, etc.), or use search above"
                     value={this.state.inputMedia !== undefined ? this.state.inputMedia : getMediaDisplayName(this.state.currentMedia)}
                 />
+                <Popup basic content="Screenshare" trigger={
+                    <Button floated="right" icon color={this.screenShareStream ? "red" : "instagram"} onClick={this.screenShareStream ? this.stopScreenShare : this.setupScreenShare}>
+                        <Icon name={this.screenShareStream ? 'cancel' : 'slideshare'} />
+                    </Button>}
+                />
+                </div>
                 {this.state.inputMedia !== undefined &&
                 <Menu fluid vertical style={{ position: 'absolute', top: '22px', maxHeight: '400px', overflow: 'scroll', zIndex: 1 }}>
                 {this.state.watchOptions.map((option: any) => 
@@ -1179,7 +1293,7 @@ class Controls extends React.Component<ControlsProps> {
       <Progress
         size="tiny"
         color="blue"
-        onClick={onSeek}
+        onClick={duration < Infinity ? onSeek : undefined}
         onMouseOver={this.onMouseOver}
         onMouseOut={this.onMouseOut}
         onMouseMove={this.onMouseMove}
@@ -1190,7 +1304,7 @@ class Controls extends React.Component<ControlsProps> {
         total={duration}
         active
       >
-        {this.state.showTimestamp && <div style={{ position: 'absolute', bottom: '0px', left: `calc(${this.state.posTimestamp * 100 + '% - 27px'})`, pointerEvents: 'none' }}>
+        {duration < Infinity && this.state.showTimestamp && <div style={{ position: 'absolute', bottom: '0px', left: `calc(${this.state.posTimestamp * 100 + '% - 27px'})`, pointerEvents: 'none' }}>
           <Label basic color="blue" pointing="below" >
             <div style={{ width: '34px' }}>{formatTimestamp(this.state.currTimestamp)}</div>
           </Label>
@@ -1222,7 +1336,7 @@ function formatMessage(cmd: string, msg: string): React.ReactNode | string {
 }
 
 function formatTimestamp(input: any) {
-  if (input === null || input === undefined || input === false || Number.isNaN(input)) {
+  if (input === null || input === undefined || input === false || Number.isNaN(input) || input === Infinity) {
     return '';
   }
   let minutes = Math.floor(Number(input) / 60);
