@@ -38,13 +38,14 @@ const getMediaPathForList = (list: string) => {
 }
 
 const iceServers = [
-  { urls: 'stun:stun.l.google.com:19302' },
-  // { urls: 'turn:13.66.162.252:3478', username: 'username', credential: 'password' },
-  {
-      urls: 'turn:numb.viagenie.ca',
-      credential: 'watchparty',
-    username: 'howardzchung@gmail.com',
-  },
+    { urls: 'stun:stun.l.google.com:19302' },
+    // { urls: 'turn:13.66.162.252:3478', username: 'username', credential: 'password' },
+    // { urls: 'turn:212.47.251.184:3478', username: 'username', credential: 'password' },
+    {
+        urls: 'turn:numb.viagenie.ca',
+        credential: 'watchparty',
+        username: 'howardzchung@gmail.com',
+    },
 ];
 
 interface AppState {
@@ -117,8 +118,9 @@ export default class App extends React.Component<null, AppState> {
       //@ts-ignore
       const stream = await navigator.mediaDevices.getDisplayMedia({ video: { cursor: 'never', width: 720, logicalSurface: true }, audio: true });
       stream.getVideoTracks()[0].onended = this.stopScreenShare;
-      this.screenShareStream = stream;
+      
       this.setMedia(null, { value: '' });
+      this.screenShareStream = stream;
       this.socket.emit('CMD:joinScreenShare');
   }
 
@@ -731,8 +733,8 @@ export default class App extends React.Component<null, AppState> {
   }
 
   setMedia = (e: any, data: DropdownProps) => {
-      setTimeout(() => this.setState({ inputMedia: undefined }), 100);
       this.stopScreenShare();
+      setTimeout(() => this.setState({ inputMedia: undefined }), 100);
       this.socket.emit('CMD:host', data.value);
   }
   
