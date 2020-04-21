@@ -754,7 +754,7 @@ export default class App extends React.Component<null, AppState> {
                     <div style={{ textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700, color: '#21ba45', fontSize: '30px', lineHeight: '30px', marginLeft: 'auto' }}>Party</div>
                 </div>
             </a>
-            <div className="mobileStack" style={{ display: 'flex', alignItems: 'center', flexGrow: 1, marginLeft: '10px' }}>
+            <div className="mobileStack" style={{ display: 'flex', alignItems: 'center', flexGrow: 1, marginLeft: '10px', marginTop: '10px', marginBottom: '10px' }}>
                 {this.state.state !== 'init' && <SearchComponent setMedia={this.setMedia} type={'youtube'} />}
                 {/* this.state.state !== 'init' && <SearchComponent setMedia={this.setMedia} type={'mediaServer'} mediaPath={settings.mediaPath} /> */}
                 {this.state.state !== 'init' && settings.streamPath && <SearchComponent setMedia={this.setMedia} type={'searchServer'} streamPath={settings.streamPath} />}
@@ -866,7 +866,7 @@ export default class App extends React.Component<null, AppState> {
             </div>
           </React.Fragment>
         </Grid.Column>}
-        <Grid.Column width={2} className="fullHeightColumn">
+        {this.state.state !== 'init' && <Grid.Column width={2} className="fullHeightColumn">
           <Divider inverted horizontal>With</Divider>
           <div style={{ overflow: 'scroll' }}>
             {this.state.participants.map(p => {
@@ -889,7 +889,7 @@ export default class App extends React.Component<null, AppState> {
                 </div>;
               })}
           </div>
-        </Grid.Column>
+        </Grid.Column>}
         {this.state.state !== 'init' && <Grid.Column width={4} style={{ display: 'flex', flexDirection: 'column' }} className="fullHeightColumn">
           <Input
             inverted
