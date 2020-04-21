@@ -269,6 +269,7 @@ export default class App extends React.Component<null, AppState> {
                 const stream = event.stream;
                 console.log(stream);
                 const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
+                leftVideo.src = '';
                 leftVideo.srcObject = stream;
                 leftVideo.play();
                 this.setState({ currentMedia: this.state.nameMap[sharer.id] });
