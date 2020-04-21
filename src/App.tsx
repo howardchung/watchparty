@@ -867,9 +867,10 @@ export default class App extends React.Component<null, AppState> {
           </React.Fragment>
         </Grid.Column>}
         <Grid.Column width={2} className="fullHeightColumn">
+          <Divider inverted horizontal>With</Divider>
           <div style={{ overflow: 'scroll' }}>
             {this.state.participants.map(p => {
-              return <div key={p.id} style={{ position: 'relative', height: this.ourStream && p.isVideoChat ? 'fit-content' : '26px' }}>
+              return <div key={p.id} style={{ position: 'relative', height: this.ourStream && p.isVideoChat ? 'fit-content' : '30px', marginTop: '5px' }}>
                 {this.ourStream && p.isVideoChat && <video
                   ref={el => {this.videoRefs[p.id] = el}}
                   style={{ width: '100%', height: '100%', borderRadius: '4px' }}
@@ -881,7 +882,7 @@ export default class App extends React.Component<null, AppState> {
                 <div style={{ display: 'flex' }}>
                     <img src={getImage(this.state.nameMap[p.id] || p.id)} alt="" />
                     {p.isVideoChat && <Icon size="small" name='video' /> }
-                    <div title={this.state.nameMap[p.id] || p.id} style={{ width: '70px', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{this.state.nameMap[p.id] || p.id}</div>
+                    <div title={this.state.nameMap[p.id] || p.id} style={{ width: '70px', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden', lineHeight: '8px' }}>{this.state.nameMap[p.id] || p.id}</div>
                     <Label.Detail>{formatTimestamp(this.state.tsMap[p.id] || 0)}</Label.Detail>
                 </div>
                 </Label>
@@ -1325,6 +1326,9 @@ function formatMessage(cmd: string, msg: string): React.ReactNode | string {
   }
   else if (cmd === 'pause') {
     return `paused the video at ${formatTimestamp(msg)}`;
+  }
+  else if (cmd === 'screenShare') {
+      return `shared their screen`;
   }
   return cmd;
 }

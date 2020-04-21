@@ -100,6 +100,8 @@ module.exports = class Room {
                 match.isScreenShare = true;
             }
             io.of(roomId).emit('roster', this.roster);
+            const chatMsg = { id: socket.id, cmd: 'screenShare' };
+            addChatMessage(chatMsg);
         });
         socket.on('CMD:leaveScreenShare', (data) => {
             const match = this.roster.find(user => user.id === socket.id);
