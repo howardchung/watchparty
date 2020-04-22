@@ -900,18 +900,22 @@ export default class App extends React.Component<null, AppState> {
             {this.state.state !== 'init' && <SearchComponent setMedia={this.setMedia} type={'youtube'} />}
             {/* this.state.state !== 'init' && <SearchComponent setMedia={this.setMedia} type={'mediaServer'} mediaPath={settings.mediaPath} /> */}
             {this.state.state !== 'init' && settings.streamPath && <SearchComponent setMedia={this.setMedia} type={'searchServer'} streamPath={settings.streamPath} />}
-            {this.screenShareStream && <Button fluid className="toolButton" icon color='red' onClick={this.stopScreenShare}>
+            {this.screenShareStream && <Button fluid className="toolButton" icon labelPosition="left" color='red' onClick={this.stopScreenShare}>
                     <Icon name="cancel" />
-                    {' Stop Share'}
+                    Stop Share
                 </Button>}
-            {!this.screenShareStream && <Button fluid className="toolButton" disabled={sharer && this.socket.id !== sharer.id} icon color={"instagram"} onClick={this.setupScreenShare}>
+            {!this.screenShareStream && <Popup content={`Share a tab or an application. Make sure to check "Share audio" for best results.`} trigger={<Button fluid className="toolButton" disabled={sharer && this.socket.id !== sharer.id} icon labelPosition="left" color={"instagram"} onClick={this.setupScreenShare}>
                 <Icon name={'slideshare'} />
-                {' Screenshare'}
-            </Button>}
-            {!this.screenShareStream && <Button fluid className="toolButton" disabled={sharer && this.socket.id !== sharer.id} icon onClick={this.setupFileShare}>
+                Screenshare
+            </Button>} />}
+            {!this.screenShareStream && <Popup content="Stream your own video file" trigger={<Button fluid className="toolButton" disabled={sharer && this.socket.id !== sharer.id} icon labelPosition="left" onClick={this.setupFileShare}>
                 <Icon name="file" />
-                {' Stream File'}
-            </Button>}
+                File
+            </Button>} />}
+            {false && !this.screenShareStream && <Popup content="Launch a shared virtual browser" trigger={<Button fluid className="toolButton" disabled={sharer && this.socket.id !== sharer!.id} icon labelPosition="left" color="green" onClick={undefined}>
+                <Icon name="desktop" />
+                VBrowser
+            </Button>} />}
           </div>
             <Divider inverted horizontal></Divider>
             { (this.state.loading || !this.state.currentMedia) && 
@@ -993,7 +997,7 @@ export default class App extends React.Component<null, AppState> {
         </Grid.Column>}
         {this.state.state !== 'init' && <Grid.Column width={2} className="fullHeightColumn">
           <div style={{ overflow: 'scroll', height: '100%' }}>
-            {!this.ourStream && <Button fluid color={"purple"} size="large" icon labelPosition="left" onClick={this.setupWebRTC}><Icon name="video" />{`Join`}</Button>}
+            {!this.ourStream && <Button fluid color={"purple"} size="medium" icon labelPosition="left" onClick={this.setupWebRTC}><Icon name="video" />{`Join`}</Button>}
             {this.ourStream &&
                     <div style={{ display: 'flex', width: '100%', flexWrap: 'wrap' }}>
                     <Button fluid color={"red"} size="medium" icon labelPosition="left" onClick={this.stopWebRTC}><Icon name="external" />{`Leave`}</Button>
