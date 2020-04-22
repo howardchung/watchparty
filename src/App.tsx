@@ -1002,23 +1002,28 @@ export default class App extends React.Component<null, AppState> {
                     </div>
             }
             {this.state.participants.map(p => {
-              return <div key={p.id} style={{ position: 'relative', marginTop: '20px' }}>
-                {this.ourStream && p.isVideoChat ? <video
-                  ref={el => {this.videoRefs[p.id] = el}}
-                  style={{ width: '100%', height: '100%', borderRadius: '4px' }}
-                  autoPlay
-                  muted={p.id === this.socket.id}
-                  data-id={p.id}
-                /> : <img style={{ width: '100%', height: '100%', borderRadius: '4px' }} src={getImage(this.state.nameMap[p.id] || p.id)} alt="" />}
-                <Label as='a' color={getColor(p.id) as any} style={{ width: '100%', position: 'absolute', bottom: '-15px', left: '0px', marginLeft: '0px' }}>
-                    <div style={{ display: 'flex' }}>
-                        <div title={this.state.nameMap[p.id] || p.id} style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flexGrow: 1 }}>
-                            {p.isVideoChat && <Icon size="small" name='video' /> }                
+              return <div key={p.id} style={{ marginTop: '10px' }}>
+                <div style={{ position: 'relative', height: '100px', width: '100%' }}>
+                    <div style={{ position: 'absolute', top: '0px', left: '0px', height: '100%' }}>
+                    {this.ourStream && p.isVideoChat 
+                    ? <video
+                    ref={el => {this.videoRefs[p.id] = el}}
+                    style={{ height: '100%', borderRadius: '4px' }}
+                    autoPlay
+                    muted={p.id === this.socket.id}
+                    data-id={p.id}
+                    /> 
+                    : <img style={{ height: '100%', borderRadius: '4px' }} src={getImage(this.state.nameMap[p.id] || p.id)} alt="" />}
+                    </div>
+                    <div style={{ position: 'absolute', bottom: '0px', left: '0px' }}>
+                    <Label as='a' image size="mini" color={getColor(p.id) as any}>
+                        <div title={this.state.nameMap[p.id] || p.id} style={{ maxWidth: '70px', textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden', display: 'inline-block' }}>               
                             {this.state.nameMap[p.id] || p.id}
                         </div>
-                        <Label.Detail style={{ lineHeight: 'normal', overflow: 'hidden', whiteSpace: 'nowrap' }}>{formatTimestamp(this.state.tsMap[p.id] || 0)}</Label.Detail>
+                        <Label.Detail>{formatTimestamp(this.state.tsMap[p.id] || 0)}</Label.Detail>
+                    </Label>
                     </div>
-                </Label>
+                </div>
                 </div>;
               })}
           </div>
