@@ -28,19 +28,7 @@ module.exports = class Room {
             io.of(roomId).emit('REC:chat', chatWithTime);
         };
 
-        this.roster.push({ id: socket.id });
-    
-        io.of(roomId).emit('roster', this.roster);
-        socket.emit('chatinit', this.chat);
-        socket.emit('REC:host', this.getHostState());
-        socket.emit('REC:nameMap', this.nameMap);
-        socket.emit('REC:tsMap', this.tsMap);
-    
-        socket.on('CMD:name', (data) => {
-            this.nameMap[socket.id] = data;
-            io.of(roomId).emit('REC:nameMap', this.nameMap);
-        });
-        socket.on('CMD:host', (data) => {
+        const cmdHost = (data) => {
             console.log(socket.id, data);
             this.video = data;
             this.videoTS = 0;
@@ -50,6 +38,30 @@ module.exports = class Room {
                 const chatMsg = { id: socket.id, cmd: 'host', msg: data };
                 addChatMessage(chatMsg);
             }
+        };
+
+        this.roster.push({ id: socket.id });
+    
+        socket.emit('REC:host', this.getHostState());
+        socket.emit('REC:nameMap', this.nameMap);
+        socket.emit('REC:tsMap', this.tsMap);
+        socket.emit('chatinit', this.chat);
+        io.of(roomId).emit('roster', this.roster);
+    
+        socket.on('CMD:name', (data) => {
+            if (data.length > 100) {
+                return;
+            }
+            this.nameMap[socket.id] = data;
+            io.of(roomId).emit('REC:nameMap', this.nameMap);
+        });
+        socket.on('CMD:host', (data) => {
+            const sharer = this.roster.find(user => user.id === socket.id);
+            if (sharer) {
+                // Can't update the video while someone is screensharing
+                return;
+            }
+            cmdHost(data);
         });
         socket.on('CMD:play', () => {
             socket.broadcast.emit('REC:play', this.video);
@@ -74,6 +86,10 @@ module.exports = class Room {
             this.tsMap[socket.id] = data;
         });
         socket.on('CMD:chat', (data) => {
+            if (data.length > 65536) {
+                // TODO add some validation on client side too so we don't just drop long messages
+                return;
+            }
             const chatMsg = {id: socket.id, msg: data};
             addChatMessage(chatMsg);
         });
@@ -92,27 +108,27 @@ module.exports = class Room {
             io.of(roomId).emit('roster', this.roster);
         });
         socket.on('CMD:joinScreenShare', (data) => {
-            const existingSharer  = this.roster.find(user => user.isScreenShare);
+            const sharer  = this.roster.find(user => user.isScreenShare);
             // TODO allow handing off screen share rather than rejecting when there's already one
-            if (existingSharer) {
+            if (sharer) {
                 return;
             }
+            cmdHost('screenshare://' + socket.id);
             const match = this.roster.find(user => user.id === socket.id);
             if (match) {
                 match.isScreenShare = true;
             }
             io.of(roomId).emit('roster', this.roster);
-            const chatMsg = { id: socket.id, cmd: 'screenShare' };
-            addChatMessage(chatMsg);
         });
         socket.on('CMD:leaveScreenShare', (data) => {
+            // console.log('CMD:leaveScreenShare');
             const match = this.roster.find(user => user.id === socket.id);
             if (match) {
                 match.isScreenShare = false;
             }
-            io.of(roomId).emit('roster', this.roster);            
+            cmdHost('');
+            io.of(roomId).emit('roster', this.roster);
         });
-        // TODO allow leaving screenshare
         socket.on('signal', (data) => {
             io.of(roomId).to(data.to).emit('signal', { from: socket.id, msg: data.msg });
         });
@@ -122,8 +138,12 @@ module.exports = class Room {
     
         socket.on('disconnect', () => {
             let index = this.roster.findIndex(user => user.id === socket.id);
-            this.roster.splice(index, 1);
+            const removed = this.roster.splice(index, 1)[0];
             io.of(roomId).emit('roster', this.roster);
+            if (removed.isScreenShare) {
+                // Reset the room state since we lost the screen sharer
+                cmdHost('');
+            }
             // delete nameMap[socket.id];
             // delete tsMap[socket.id];
         });

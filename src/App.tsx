@@ -118,8 +118,6 @@ export default class App extends React.Component<null, AppState> {
       //@ts-ignore
       const stream = await navigator.mediaDevices.getDisplayMedia({ video: { cursor: 'never', width: 720, logicalSurface: true }, audio: true });
       stream.getVideoTracks()[0].onended = this.stopScreenShare;
-      
-      this.setMedia(null, { value: '' });
       this.screenShareStream = stream;
       this.socket.emit('CMD:joinScreenShare');
   }
@@ -137,7 +135,10 @@ export default class App extends React.Component<null, AppState> {
             pc.close();
         });
         this.screenHostPC = {};
-        this.socket.emit('CMD:leaveScreenShare');
+        const match = this.state.participants.find(p => p.isScreenShare);
+        if (match && match.id === this.socket.id) {
+            this.socket.emit('CMD:leaveScreenShare');
+        }
     }
 
   setupWebRTC = async () => {
@@ -211,7 +212,7 @@ export default class App extends React.Component<null, AppState> {
         pc.onaddstream = (event: any) => {
             // Mount the stream from peer
             const stream = event.stream;
-            console.log(stream);
+            // console.log(stream);
             this.videoRefs[id].srcObject = stream;
         };
         // For each pair, have the lexicographically smaller ID be the offerer
@@ -229,6 +230,9 @@ export default class App extends React.Component<null, AppState> {
   }
 
   updateScreenShare = async () => {
+        if (!this.isScreenShare()) {
+            return;
+        }
         // TODO teardown for those who leave
         const sharer = this.state.participants.find(p => p.isScreenShare);
         if (sharer && sharer.id === this.socket.id) {
@@ -270,12 +274,11 @@ export default class App extends React.Component<null, AppState> {
             pc.onaddstream = (event: any) => {
                 // Mount the stream from peer
                 const stream = event.stream;
-                console.log(stream);
+                // console.log(stream);
                 const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
                 leftVideo.src = '';
                 leftVideo.srcObject = stream;
                 leftVideo.play();
-                this.setState({ currentMedia: this.state.nameMap[sharer.id] });
             };
         }
   }
@@ -371,7 +374,11 @@ export default class App extends React.Component<null, AppState> {
       this.doSeek(data);
     });
     socket.on('REC:host', (data: any) => {
-      this.setState({ currentMedia: data.video, currentMediaPaused: data.paused, loading: Boolean(data.video) }, () => {
+        let currentMedia = data.video || '';
+        if (this.isScreenShare() && !currentMedia.startsWith('screenshare://')) {
+            this.stopScreenShare();
+        }
+        this.setState({ currentMedia, currentMediaPaused: data.paused, loading: Boolean(data.video) }, () => {
         // Stop all players
         const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
         leftVideo!.pause();
@@ -385,8 +392,11 @@ export default class App extends React.Component<null, AppState> {
       });
     });
     socket.on('REC:chat', (data: ChatMessage) => {
-      this.state.chat.push(data);
-      this.setState({ chat: this.state.chat, scrollTimestamp: Number(new Date()) });
+        if (data.cmd === 'host') {
+            data.msg = this.getMediaDisplayName(data.msg);
+        }
+        this.state.chat.push(data);
+        this.setState({ chat: this.state.chat, scrollTimestamp: Number(new Date()) });
     });
     // let videoRecs = {};
     // let videoMs = {};
@@ -489,6 +499,10 @@ export default class App extends React.Component<null, AppState> {
     return getMediaType(this.state.currentMedia) === 'youtube';
   }
   
+  isScreenShare = () => {
+    return this.state.currentMedia.startsWith('screenshare://');
+  }
+
   isVideo = () => {
     return getMediaType(this.state.currentMedia) === 'video';
   }
@@ -550,6 +564,10 @@ export default class App extends React.Component<null, AppState> {
   
   doSrc = async (src: string, time: number) => {
     console.log('doSrc', src, time);
+    if (this.isScreenShare()) {
+        // No-op as we'll set video when WebRTC completes
+        return;
+    }
     if (this.isVideo()) {
       const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
       leftVideo.srcObject = null;
@@ -562,12 +580,12 @@ export default class App extends React.Component<null, AppState> {
       if (src.includes('/stream?torrent=magnet')) {
         subtitleSrc = src.replace('/stream', '/subtitles2');
       }
-      // TODO temporary code to handle special subtitles for Avatar/Korra
+      // TODO temporary code to handle special subtitles for preloaded videos
       if (src.endsWith('.m4v')) {
         const subtitlePath = src.slice(0, src.lastIndexOf('/') + 1);
         const subtitleListResp = await window.fetch(subtitlePath + 'subtitles/');
         const subtitleList = await subtitleListResp.json();
-        const match = subtitleList.find((subtitle: any) => getMediaDisplayName(src).toLowerCase().startsWith(subtitle.name.slice(0, -4).toLowerCase()));
+        const match = subtitleList.find((subtitle: any) => this.getMediaDisplayName(src).toLowerCase().startsWith(subtitle.name.slice(0, -4).toLowerCase()));
         subtitleSrc = subtitlePath + 'subtitles/' + match.name;
       }
       if (subtitleSrc) {
@@ -733,7 +751,6 @@ export default class App extends React.Component<null, AppState> {
   }
 
   setMedia = (e: any, data: DropdownProps) => {
-      this.stopScreenShare();
       setTimeout(() => this.setState({ inputMedia: undefined }), 100);
       this.socket.emit('CMD:host', data.value);
   }
@@ -744,7 +761,30 @@ export default class App extends React.Component<null, AppState> {
     window.localStorage.setItem('watchparty-username', data.value);
   }
 
+  getMediaDisplayName = (input: string) => {
+        if (!input) {
+            return '';
+        }
+        // Show the whole URL for youtube
+        if (getMediaType(input) === 'youtube') {
+            return input;
+        }
+        if (input.startsWith('screenshare://')) {
+            let id = input.slice('screenshare://'.length);
+            return this.state.nameMap[id] + "'s screen";
+        }
+        if (input.includes('/stream?torrent=magnet')) {
+            const search = new URL(input).search;
+            const magnetUrl = querystring.parse(search.substring(1)).torrent;
+            const magnetParsed = magnet.decode(magnetUrl);
+            return magnetParsed.name;
+        }
+        // Get the filename out of the URL
+        return input.split('/').slice(-1)[0];
+    }
+
   render() {
+    const sharer = this.state.participants.find(p => p.isScreenShare);
     return (
         <React.Fragment>
         <div style={{ display: 'flex', flexWrap: 'wrap', padding: '1em', paddingBottom: '0px' }}>
@@ -794,10 +834,10 @@ export default class App extends React.Component<null, AppState> {
                     icon={this.state.inputMedia ? <Icon onClick={(e: any) => this.setMedia(e, { value: (this.state.inputMedia) })} name='arrow right' inverted circular link /> : null}
                     label="Now Watching:"
                     placeholder="Enter URL (YouTube, video file, etc.), or use search above"
-                    value={this.state.inputMedia !== undefined ? this.state.inputMedia : getMediaDisplayName(this.state.currentMedia)}
+                    value={this.state.inputMedia !== undefined ? this.state.inputMedia : this.getMediaDisplayName(this.state.currentMedia)}
                 />
                 <Popup basic content="Screenshare" trigger={
-                    <Button floated="right" icon color={this.screenShareStream ? "red" : "instagram"} onClick={this.screenShareStream ? this.stopScreenShare : this.setupScreenShare}>
+                    <Button disabled={sharer && this.socket.id !== sharer.id} floated="right" icon color={this.screenShareStream ? "red" : "instagram"} onClick={this.screenShareStream ? this.stopScreenShare : this.setupScreenShare}>
                         <Icon name={this.screenShareStream ? 'cancel' : 'slideshare'} />
                     </Button>}
                 />
@@ -1215,24 +1255,6 @@ const getMediaType = (input: string) => {
   return 'video';
 }
 
-const getMediaDisplayName = (input: string) => {
-  if (!input) {
-    return '';
-  }
-  // Show the whole URL for youtube
-  if (getMediaType(input) === 'youtube') {
-    return input;
-  }
-  if (input.includes('/stream?torrent=magnet')) {
-    const search = new URL(input).search;
-    const magnetUrl = querystring.parse(search.substring(1)).torrent;
-    const magnetParsed = magnet.decode(magnetUrl);
-    return magnetParsed.name;
-  }
-  // Get the filename out of the URL
-  return input.split('/').slice(-1)[0];
-}
-
 const ChatMessage = ({ id, timestamp, cmd, msg, nameMap }: any) => {
     return <Comment>
       <Comment.Avatar src={getImage(nameMap[id])} />
@@ -1321,7 +1343,7 @@ class Controls extends React.Component<ControlsProps> {
 
 function formatMessage(cmd: string, msg: string): React.ReactNode | string {
   if (cmd === 'host') {
-    return <React.Fragment>{`changed the video to `}<span style={{ textTransform: 'initial' }}>{getMediaDisplayName(msg)}</span></React.Fragment>;
+    return <React.Fragment>{`changed the video to `}<span style={{ textTransform: 'initial' }}>{msg}</span></React.Fragment>;
   }
   else if (cmd === 'seek') {
     return `jumped to ${formatTimestamp(msg)}`;
@@ -1331,9 +1353,6 @@ function formatMessage(cmd: string, msg: string): React.ReactNode | string {
   }
   else if (cmd === 'pause') {
     return `paused the video at ${formatTimestamp(msg)}`;
-  }
-  else if (cmd === 'screenShare') {
-      return `shared their screen`;
   }
   return cmd;
 }
