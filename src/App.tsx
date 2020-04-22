@@ -888,7 +888,7 @@ export default class App extends React.Component<null, AppState> {
                 />
                 </div>
                 {this.state.inputMedia !== undefined &&
-                <Menu fluid vertical style={{ position: 'absolute', top: '22px', maxHeight: '300px', overflow: 'scroll', zIndex: 1 }}>
+                <Menu fluid vertical style={{ position: 'absolute', top: '22px', maxHeight: '300px', overflow: 'scroll', zIndex: 20 }}>
                 {this.state.watchOptions.map((option: any) => 
                     <Menu.Item onClick={(e: any) => this.setMedia(e, { value: option.url})}>{option.url}</Menu.Item>
                 )}
@@ -900,15 +900,15 @@ export default class App extends React.Component<null, AppState> {
             {this.state.state !== 'init' && <SearchComponent setMedia={this.setMedia} type={'youtube'} />}
             {/* this.state.state !== 'init' && <SearchComponent setMedia={this.setMedia} type={'mediaServer'} mediaPath={settings.mediaPath} /> */}
             {this.state.state !== 'init' && settings.streamPath && <SearchComponent setMedia={this.setMedia} type={'searchServer'} streamPath={settings.streamPath} />}
-            {this.screenShareStream && <Button icon color='red' onClick={this.stopScreenShare}>
+            {this.screenShareStream && <Button fluid className="toolButton" icon color='red' onClick={this.stopScreenShare}>
                     <Icon name="cancel" />
-                    {' Stop Sharing'}
+                    {' Stop Share'}
                 </Button>}
-            {!this.screenShareStream && <Button fluid disabled={sharer && this.socket.id !== sharer.id} icon color={"instagram"} onClick={this.setupScreenShare}>
+            {!this.screenShareStream && <Button fluid className="toolButton" disabled={sharer && this.socket.id !== sharer.id} icon color={"instagram"} onClick={this.setupScreenShare}>
                 <Icon name={'slideshare'} />
                 {' Screenshare'}
             </Button>}
-            {!this.screenShareStream && <Button fluid disabled={sharer && this.socket.id !== sharer.id} icon onClick={this.setupFileShare}>
+            {!this.screenShareStream && <Button fluid className="toolButton" disabled={sharer && this.socket.id !== sharer.id} icon onClick={this.setupFileShare}>
                 <Icon name="file" />
                 {' Stream File'}
             </Button>}

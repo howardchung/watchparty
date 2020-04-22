@@ -103,3 +103,7 @@ body {
 .fullHeightColumn.fullHeightColumn.fullHeightColumn.fullHeightColumn {
     height: calc(100vh - 160px);
 }
+
+.toolButton {
+    max-width: 120px;
+}
