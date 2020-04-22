@@ -10,6 +10,8 @@ import VTTConverter from 'srt-webvtt';
 import magnet from 'magnet-uri';
 //@ts-ignore
 import io from 'socket.io-client';
+//@ts-ignore
+import canAutoplay from 'can-autoplay';
 
 declare global {
     interface Window {
@@ -879,7 +881,7 @@ export default class App extends React.Component<null, AppState> {
                     placeholder="Enter URL (YouTube, video file, etc.), or use search above"
                     value={this.state.inputMedia !== undefined ? this.state.inputMedia : this.getMediaDisplayName(this.state.currentMedia)}
                 />
-                <Popup basic content="Screenshare" trigger={
+                <Popup basic content="Screenshare (tab, app, or file)" trigger={
                     <Button.Group>
                         {this.screenShareStream && <Button icon color='red' onClick={this.stopScreenShare}>
                             <Icon name="cancel" />
@@ -1474,17 +1476,8 @@ function getImage(name: string) {
 }
 
 async function testAutoplay() {
-  const video = document.createElement('video');
-  video.src = 'https://www.w3schools.com/tags/movie.ogg';
-  let canPlay = true;
-  try {
-    await video.play();
-  } catch(e) {
-    console.log(e);
-    canPlay = false;
-  }
-  video.pause();
-  return canPlay;
+    const result = await canAutoplay.video();
+    return result.result;
 }
 
 function decodeEntities(input: string) {
