@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Grid, Segment, Divider, Dimmer, Loader, Header, Label, Input, Icon, List, Comment, Progress, Dropdown, Message, Modal, Form, TextArea, DropdownProps, Menu, Popup } from 'semantic-ui-react'
+import { Button, Grid, Segment, Divider, Dimmer, Loader, Header, Label, Card, Input, Icon, Image, List, Comment, Progress, Dropdown, Message, Modal, Form, TextArea, DropdownProps, Menu, Popup } from 'semantic-ui-react'
 import './App.css';
 // import { v4 as uuidv4 } from 'uuid';
 import querystring from 'querystring';
@@ -989,38 +989,36 @@ export default class App extends React.Component<null, AppState> {
             }
           />
           <Divider inverted horizontal></Divider>
-          {!this.ourStream && <Button color={"purple"} size="large" icon labelPosition="left" onClick={this.setupWebRTC} style={{ flexShrink: 0 }}><Icon name="video" />{`Join Video Chat`}</Button>}
-          {this.ourStream &&
-                <div style={{ display: 'flex', width: '100%' }}>
-                <Button fluid color={"red"} size="medium" icon labelPosition="left" onClick={this.stopWebRTC}><Icon name="external" />{`Leave`}</Button>
-                <Button fluid color={this.getVideoWebRTC() ? "green" : "red"} size="medium" icon labelPosition="left" onClick={this.toggleVideoWebRTC}><Icon name="video" />{this.getVideoWebRTC() ? 'On' : 'Off'}</Button>
-                <Button fluid color={this.getAudioWebRTC() ? "green" : "red"} size="medium" icon labelPosition="left" onClick={this.toggleAudioWebRTC}><Icon name={this.getAudioWebRTC() ? "microphone" : 'microphone slash'} />{this.getAudioWebRTC() ? 'On' : 'Off'}</Button>
-                </div>
-          }
           {!this.state.fullScreen && <Chat chat={this.state.chat} nameMap={this.state.nameMap} socket={this.socket} scrollTimestamp={this.state.scrollTimestamp} getMediaDisplayName={this.getMediaDisplayName} />}
         </Grid.Column>}
         {this.state.state !== 'init' && <Grid.Column width={2} className="fullHeightColumn">
-          <Divider inverted horizontal>With</Divider>
-          <div style={{ overflow: 'scroll' }}>
+          <div style={{ overflow: 'scroll', height: '100%' }}>
+            {!this.ourStream && <Button fluid color={"purple"} size="large" icon labelPosition="left" onClick={this.setupWebRTC}><Icon name="video" />{`Join`}</Button>}
+            {this.ourStream &&
+                    <div style={{ display: 'flex', width: '100%', flexWrap: 'wrap' }}>
+                    <Button fluid color={"red"} size="medium" icon labelPosition="left" onClick={this.stopWebRTC}><Icon name="external" />{`Leave`}</Button>
+                    <Button fluid color={this.getVideoWebRTC() ? "green" : "red"} size="medium" icon labelPosition="left" onClick={this.toggleVideoWebRTC}><Icon name="video" />{this.getVideoWebRTC() ? 'On' : 'Off'}</Button>
+                    <Button fluid color={this.getAudioWebRTC() ? "green" : "red"} size="medium" icon labelPosition="left" onClick={this.toggleAudioWebRTC}><Icon name={this.getAudioWebRTC() ? "microphone" : 'microphone slash'} />{this.getAudioWebRTC() ? 'On' : 'Off'}</Button>
+                    </div>
+            }
             {this.state.participants.map(p => {
-              return <div key={p.id} style={{ marginTop: '5px' }}>
-                <Label as='a' color={getColor(p.id) as any} image>
-                    <div style={{ display: 'flex' }}>
-                    {/* <img src={getImage(this.state.nameMap[p.id] || p.id)} alt="" /> */}
-                    <div title={this.state.nameMap[p.id] || p.id} style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '90px' }}>
-                        {p.isVideoChat && <Icon size="small" name='video' /> }                
-                        {this.state.nameMap[p.id] || p.id}
-                    </div>
-                    <Label.Detail><div style={{ lineHeight: 'normal', overflow: 'hidden' }}>{formatTimestamp(this.state.tsMap[p.id] || 0)}</div></Label.Detail>
-                    </div>
-                </Label>
-                {this.ourStream && p.isVideoChat && <video
+              return <div key={p.id} style={{ position: 'relative', marginTop: '20px' }}>
+                {this.ourStream && p.isVideoChat ? <video
                   ref={el => {this.videoRefs[p.id] = el}}
                   style={{ width: '100%', height: '100%', borderRadius: '4px' }}
                   autoPlay
                   muted={p.id === this.socket.id}
                   data-id={p.id}
-                />}
+                /> : <img style={{ width: '100%', height: '100%', borderRadius: '4px' }} src={getImage(this.state.nameMap[p.id] || p.id)} alt="" />}
+                <Label as='a' color={getColor(p.id) as any} style={{ width: '100%', position: 'absolute', bottom: '-15px', left: '0px', marginLeft: '0px' }}>
+                    <div style={{ display: 'flex' }}>
+                        <div title={this.state.nameMap[p.id] || p.id} style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flexGrow: 1 }}>
+                            {p.isVideoChat && <Icon size="small" name='video' /> }                
+                            {this.state.nameMap[p.id] || p.id}
+                        </div>
+                        <Label.Detail style={{ lineHeight: 'normal', overflow: 'hidden', whiteSpace: 'nowrap' }}>{formatTimestamp(this.state.tsMap[p.id] || 0)}</Label.Detail>
+                    </div>
+                </Label>
                 </div>;
               })}
           </div>
@@ -1455,7 +1453,7 @@ function getColor(id: string) {
 
 function getImage(name: string) {
   const lower = (name || '').toLowerCase();
-  const getFbPhoto = (fbId: string) => `https://graph.facebook.com/${fbId}/picture?type=square`;
+  const getFbPhoto = (fbId: string) => `https://graph.facebook.com/${fbId}/picture?type=normal`;
   if (lower === 'howard') {
     return getFbPhoto('746929384');
   }
