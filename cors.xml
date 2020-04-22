@@ -1,0 +1,9 @@
+<CORSConfiguration>
+  <CORSRule>
+     <AllowedOrigin>*</AllowedOrigin>
+     <AllowedMethod>GET</AllowedMethod>
+     <AllowedHeader>*</AllowedHeader>
+     <MaxAgeSeconds>3000</MaxAgeSeconds>
+     <ExposeHeader>ETag</ExposeHeader>
+  </CORSRule>
+</CORSConfiguration>

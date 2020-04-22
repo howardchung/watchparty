@@ -12,6 +12,8 @@ import magnet from 'magnet-uri';
 import io from 'socket.io-client';
 //@ts-ignore
 import canAutoplay from 'can-autoplay';
+//@ts-ignore
+import {parseStringPromise} from 'xml2js';
 
 declare global {
     interface Window {
@@ -110,8 +112,17 @@ export default class App extends React.Component<null, AppState> {
         this.setState({ fullScreen: Boolean(document.fullscreenElement) });
     }
     const response = await window.fetch(defaultMediaPath);
-    const data = await response.json();
-    const results = data.filter((file: any) => file.type === 'file').map((file: any) => ({ url: file.url || getMediaPathForList(defaultMediaPath) + file.name, name: getMediaPathForList(defaultMediaPath) + file.name }));
+    let results = [];
+    if (defaultMediaPath.includes('s3.')) {
+        // S3-style buckets return data in XML
+        const xml = await response.text();
+        const data = await parseStringPromise(xml);
+        let filtered = data.ListBucketResult.Contents.filter((file: any) => !file.Key[0].includes('/'));
+        results = filtered.map((file: any) => ({ url: defaultMediaPath + '/' + file.Key[0], name: defaultMediaPath + '/' + file.Key[0] }));
+    } else {
+        const data = await response.json();
+        results = data.filter((file: any) => file.type === 'file').map((file: any) => ({ url: file.url || getMediaPathForList(defaultMediaPath) + file.name, name: getMediaPathForList(defaultMediaPath) + file.name }));
+    }
     this.setState({ watchOptions: results });
 
     // TODO twitch
@@ -625,13 +636,10 @@ export default class App extends React.Component<null, AppState> {
       if (src.includes('/stream?torrent=magnet')) {
         subtitleSrc = src.replace('/stream', '/subtitles2');
       }
-      // TODO temporary code to handle special subtitles for preloaded videos
-      if (src.endsWith('.m4v')) {
+      else if (getMediaType(src) === 'video') {
         const subtitlePath = src.slice(0, src.lastIndexOf('/') + 1);
-        const subtitleListResp = await window.fetch(subtitlePath + 'subtitles/');
-        const subtitleList = await subtitleListResp.json();
-        const match = subtitleList.find((subtitle: any) => this.getMediaDisplayName(src).toLowerCase().startsWith(subtitle.name.slice(0, -4).toLowerCase()));
-        subtitleSrc = subtitlePath + 'subtitles/' + match.name;
+        // Expect subtitle name to be file name + .srt
+        subtitleSrc = subtitlePath + 'subtitles/' + this.getMediaDisplayName(src) + '.srt';
       }
       if (subtitleSrc) {
         const response = await window.fetch(subtitleSrc);
