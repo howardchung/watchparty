@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Grid, Segment, Divider, Dimmer, Loader, Header, Label, Card, Input, Icon, Image, List, Comment, Progress, Dropdown, Message, Modal, Form, TextArea, DropdownProps, Menu, Popup } from 'semantic-ui-react'
+import { Button, Grid, Segment, Divider, Dimmer, Loader, Header, Label, Input, Icon, List, Comment, Progress, Dropdown, Message, Modal, Form, TextArea, DropdownProps, Menu, Popup } from 'semantic-ui-react'
 import './App.css';
 // import { v4 as uuidv4 } from 'uuid';
 import querystring from 'querystring';
@@ -852,10 +852,7 @@ export default class App extends React.Component<null, AppState> {
                 </div>
             </a>
             <div className="mobileStack" style={{ display: 'flex', alignItems: 'center', flexGrow: 1, marginLeft: '10px', marginTop: '10px', marginBottom: '10px' }}>
-                {this.state.state !== 'init' && <SearchComponent setMedia={this.setMedia} type={'youtube'} />}
-                {/* this.state.state !== 'init' && <SearchComponent setMedia={this.setMedia} type={'mediaServer'} mediaPath={settings.mediaPath} /> */}
-                {this.state.state !== 'init' && settings.streamPath && <SearchComponent setMedia={this.setMedia} type={'searchServer'} streamPath={settings.streamPath} />}
-                <div style={{ display: 'flex', width: '300px', flexShrink: 0 }}>
+                <div style={{ display: 'flex', width: '300px', flexShrink: 0, marginLeft: 'auto' }}>
                     <Button fluid primary size="medium" icon labelPosition="left" onClick={this.createRoom}><Icon name='certificate' />New Room</Button>
                     {/* <SettingsModal trigger={<Button fluid inverted color="green" size="medium" icon labelPosition="left"><Icon name="setting" />Settings</Button>} /> */}
                     <Button fluid color="grey" size="medium" icon labelPosition="left" href="https://github.com/howardchung/watchparty" target="_blank"><Icon name='github' />Source</Button>
@@ -886,7 +883,7 @@ export default class App extends React.Component<null, AppState> {
                     onKeyPress={(e: any) => e.key === 'Enter' && this.setMedia(e, { value: (this.state.inputMedia || this.state.currentMedia) })} 
                     icon={this.state.inputMedia ? <Icon onClick={(e: any) => this.setMedia(e, { value: (this.state.inputMedia) })} name='arrow right' inverted circular link /> : null}
                     label="Now Watching:"
-                    placeholder="Enter URL (YouTube, video file, etc.), or use search above"
+                    placeholder="Enter URL (YouTube, video file, etc.), or use search"
                     value={this.state.inputMedia !== undefined ? this.state.inputMedia : this.getMediaDisplayName(this.state.currentMedia)}
                 />
                 </div>
@@ -897,6 +894,25 @@ export default class App extends React.Component<null, AppState> {
                 )}
                 </Menu>}
             </div>
+            {/* <Divider inverted horizontal></Divider> */}
+            <div style={{ height: '4px' }} />
+            <div style={{ display: 'flex' }}>
+            {this.state.state !== 'init' && <SearchComponent setMedia={this.setMedia} type={'youtube'} />}
+            {/* this.state.state !== 'init' && <SearchComponent setMedia={this.setMedia} type={'mediaServer'} mediaPath={settings.mediaPath} /> */}
+            {this.state.state !== 'init' && settings.streamPath && <SearchComponent setMedia={this.setMedia} type={'searchServer'} streamPath={settings.streamPath} />}
+            {this.screenShareStream && <Button icon color='red' onClick={this.stopScreenShare}>
+                    <Icon name="cancel" />
+                    {' Stop Sharing'}
+                </Button>}
+            {!this.screenShareStream && <Button fluid disabled={sharer && this.socket.id !== sharer.id} icon color={"instagram"} onClick={this.setupScreenShare}>
+                <Icon name={'slideshare'} />
+                {' Screenshare'}
+            </Button>}
+            {!this.screenShareStream && <Button fluid disabled={sharer && this.socket.id !== sharer.id} icon onClick={this.setupFileShare}>
+                <Icon name="file" />
+                {' Stream File'}
+            </Button>}
+          </div>
             <Divider inverted horizontal></Divider>
             { (this.state.loading || !this.state.currentMedia) && 
             <Segment inverted style={{ minHeight: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -956,27 +972,6 @@ export default class App extends React.Component<null, AppState> {
                     <Chat className="fullScreenChat" chat={this.state.chat} nameMap={this.state.nameMap} socket={this.socket} scrollTimestamp={this.state.scrollTimestamp} getMediaDisplayName={this.getMediaDisplayName} />
                 }
             </div>
-            {/* <Divider inverted horizontal></Divider> */}
-            <Button.Group>
-                {this.screenShareStream && <Button icon color='red' onClick={this.stopScreenShare}>
-                    <Icon name="cancel" />
-                    {' Stop Sharing'}
-                </Button>}
-                {!this.screenShareStream && <React.Fragment>
-                    <Button disabled={sharer && this.socket.id !== sharer.id} icon color={"instagram"} onClick={this.setupScreenShare}>
-                        <Icon name={'slideshare'} />
-                        {' Screenshare'}
-                    </Button>
-                    <Button disabled={sharer && this.socket.id !== sharer.id} icon onClick={this.setupFileShare}>
-                        <Icon name="file" />
-                        {' Stream File'}
-                    </Button>
-                    <Button color="teal" icon onClick={undefined}>
-                        <Icon name="desktop" />
-                        {' Virtual Browser'}
-                    </Button>
-                </React.Fragment>}
-            </Button.Group>
           </React.Fragment>
         </Grid.Column>}
         {this.state.state !== 'init' && <Grid.Column width={4} style={{ display: 'flex', flexDirection: 'column' }} className="fullHeightColumn">
@@ -993,7 +988,7 @@ export default class App extends React.Component<null, AppState> {
               link />
             }
           />
-          <Divider inverted horizontal></Divider>
+          {/* <Divider inverted horizontal></Divider> */}
           {!this.state.fullScreen && <Chat chat={this.state.chat} nameMap={this.state.nameMap} socket={this.socket} scrollTimestamp={this.state.scrollTimestamp} getMediaDisplayName={this.getMediaDisplayName} />}
         </Grid.Column>}
         {this.state.state !== 'init' && <Grid.Column width={2} className="fullHeightColumn">
