@@ -392,9 +392,6 @@ export default class App extends React.Component<null, AppState> {
       });
     });
     socket.on('REC:chat', (data: ChatMessage) => {
-        if (data.cmd === 'host') {
-            data.msg = this.getMediaDisplayName(data.msg);
-        }
         this.state.chat.push(data);
         this.setState({ chat: this.state.chat, scrollTimestamp: Number(new Date()) });
     });
@@ -905,7 +902,7 @@ export default class App extends React.Component<null, AppState> {
                     }
                 </div>
                 {this.state.fullScreen &&
-                    <Chat className="fullScreenChat" chat={this.state.chat} nameMap={this.state.nameMap} socket={this.socket} scrollTimestamp={this.state.scrollTimestamp} />
+                    <Chat className="fullScreenChat" chat={this.state.chat} nameMap={this.state.nameMap} socket={this.socket} scrollTimestamp={this.state.scrollTimestamp} getMediaDisplayName={this.getMediaDisplayName} />
                 }
             </div>
           </React.Fragment>
@@ -957,7 +954,7 @@ export default class App extends React.Component<null, AppState> {
                 <Button fluid color={this.getAudioWebRTC() ? "green" : "red"} size="medium" icon labelPosition="left" onClick={this.toggleAudioWebRTC}><Icon name={this.getAudioWebRTC() ? "microphone" : 'microphone slash'} />{this.getAudioWebRTC() ? 'On' : 'Off'}</Button>
                 </div>
           }
-          {!this.state.fullScreen && <Chat chat={this.state.chat} nameMap={this.state.nameMap} socket={this.socket} scrollTimestamp={this.state.scrollTimestamp} />}
+          {!this.state.fullScreen && <Chat chat={this.state.chat} nameMap={this.state.nameMap} socket={this.socket} scrollTimestamp={this.state.scrollTimestamp} getMediaDisplayName={this.getMediaDisplayName} />}
         </Grid.Column>}
         </Grid.Row>
       </Grid>
@@ -972,6 +969,7 @@ interface ChatProps {
     socket: any;
     scrollTimestamp: number;
     className?: string;
+    getMediaDisplayName: Function;
 }
 
 class Chat extends React.Component<ChatProps> {
@@ -1008,11 +1006,27 @@ class Chat extends React.Component<ChatProps> {
         }
     }
 
+    formatMessage = (cmd: string, msg: string): React.ReactNode | string => {
+        if (cmd === 'host') {
+            return <React.Fragment>{`changed the video to `}<span style={{ textTransform: 'initial' }}>{this.props.getMediaDisplayName(msg)}</span></React.Fragment>;
+        }
+        else if (cmd === 'seek') {
+            return `jumped to ${formatTimestamp(msg)}`;
+        }
+        else if (cmd === 'play') {
+            return `started the video at ${formatTimestamp(msg)}`;
+        }
+        else if (cmd === 'pause') {
+            return `paused the video at ${formatTimestamp(msg)}`;
+        }
+        return cmd;
+    }
+
     render() {
         return <Segment className={this.props.className} inverted style={{ display: 'flex', flexDirection: 'column', width: '100%', flexGrow: '1', minHeight: 0, marginTop: 0 }}>
             <div className="chatContainer" ref={this.messagesRef}>
               <Comment.Group>
-                {this.props.chat.map(msg => <ChatMessage {...msg} nameMap={this.props.nameMap} />)}
+                {this.props.chat.map(msg => <ChatMessage {...msg} nameMap={this.props.nameMap} formatMessage={this.formatMessage} />)}
                 { /* <div ref={this.messagesEndRef} /> */ }
               </Comment.Group>
             </div>
@@ -1255,7 +1269,7 @@ const getMediaType = (input: string) => {
   return 'video';
 }
 
-const ChatMessage = ({ id, timestamp, cmd, msg, nameMap }: any) => {
+const ChatMessage = ({ id, timestamp, cmd, msg, nameMap, formatMessage }: any) => {
     return <Comment>
       <Comment.Avatar src={getImage(nameMap[id])} />
       <Comment.Content>
@@ -1339,22 +1353,6 @@ class Controls extends React.Component<ControlsProps> {
       <Icon size="large" bordered onClick={toggleMute} className="control action" name={muted ? 'volume off' : 'volume up' } />
     </div>;
   }
-}
-
-function formatMessage(cmd: string, msg: string): React.ReactNode | string {
-  if (cmd === 'host') {
-    return <React.Fragment>{`changed the video to `}<span style={{ textTransform: 'initial' }}>{msg}</span></React.Fragment>;
-  }
-  else if (cmd === 'seek') {
-    return `jumped to ${formatTimestamp(msg)}`;
-  }
-  else if (cmd === 'play') {
-    return `started the video at ${formatTimestamp(msg)}`;
-  }
-  else if (cmd === 'pause') {
-    return `paused the video at ${formatTimestamp(msg)}`;
-  }
-  return cmd;
 }
 
 function formatTimestamp(input: any) {
