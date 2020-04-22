@@ -56,7 +56,7 @@ module.exports = class Room {
             io.of(roomId).emit('REC:nameMap', this.nameMap);
         });
         socket.on('CMD:host', (data) => {
-            const sharer = this.roster.find(user => user.id === socket.id);
+            const sharer = this.roster.find(user => user.isScreenShare);
             if (sharer) {
                 // Can't update the video while someone is screensharing
                 return;
