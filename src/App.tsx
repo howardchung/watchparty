@@ -856,9 +856,9 @@ export default class App extends React.Component<null, AppState> {
                 {/* this.state.state !== 'init' && <SearchComponent setMedia={this.setMedia} type={'mediaServer'} mediaPath={settings.mediaPath} /> */}
                 {this.state.state !== 'init' && settings.streamPath && <SearchComponent setMedia={this.setMedia} type={'searchServer'} streamPath={settings.streamPath} />}
                 <div style={{ display: 'flex', width: '300px', flexShrink: 0 }}>
-                    <Button fluid inverted primary size="medium" icon labelPosition="left" onClick={this.createRoom}><Icon name='certificate' />New Room</Button>
+                    <Button fluid primary size="medium" icon labelPosition="left" onClick={this.createRoom}><Icon name='certificate' />New Room</Button>
                     {/* <SettingsModal trigger={<Button fluid inverted color="green" size="medium" icon labelPosition="left"><Icon name="setting" />Settings</Button>} /> */}
-                    <Button fluid inverted color="grey" size="medium" icon labelPosition="left" href="https://github.com/howardchung/watchparty" target="_blank"><Icon name='github' />Source</Button>
+                    <Button fluid color="grey" size="medium" icon labelPosition="left" href="https://github.com/howardchung/watchparty" target="_blank"><Icon name='github' />Source</Button>
                 </div>
             </div>
         </div>
@@ -870,7 +870,7 @@ export default class App extends React.Component<null, AppState> {
         </Divider>
         <Grid stackable celled='internally'>
           <Grid.Row>
-          { this.state.state === 'init' && <div style={{ display: 'flex', width: '100%', alignItems: 'flex-start', justifyContent: 'center' }}><Button inverted primary size="huge" onClick={this.init} icon labelPosition="left"><Icon name="sign-in" />Join Party</Button></div> }
+          { this.state.state === 'init' && <div style={{ display: 'flex', width: '100%', alignItems: 'flex-start', justifyContent: 'center' }}><Button primary size="huge" onClick={this.init} icon labelPosition="left"><Icon name="sign-in" />Join Party</Button></div> }
           { this.state.state !== 'init' && <Grid.Column width={10} style={{ overflow: 'scroll' }}>
             <React.Fragment>
             <div style={{ position: 'relative' }}>
@@ -888,22 +888,6 @@ export default class App extends React.Component<null, AppState> {
                     label="Now Watching:"
                     placeholder="Enter URL (YouTube, video file, etc.), or use search above"
                     value={this.state.inputMedia !== undefined ? this.state.inputMedia : this.getMediaDisplayName(this.state.currentMedia)}
-                />
-                <Popup basic content="Screenshare (tab, app, or file)" trigger={
-                    <Button.Group>
-                        {this.screenShareStream && <Button icon color='red' onClick={this.stopScreenShare}>
-                            <Icon name="cancel" />
-                        </Button>}
-                        {!this.screenShareStream && <React.Fragment>
-                            <Button disabled={sharer && this.socket.id !== sharer.id} icon color={"instagram"} onClick={this.setupScreenShare}>
-                                <Icon name={'slideshare'} />
-                            </Button>
-                            <Button disabled={sharer && this.socket.id !== sharer.id} icon onClick={this.setupFileShare}>
-                                <Icon name="file" />
-                            </Button>
-                        </React.Fragment>}
-                    </Button.Group>
-                    }
                 />
                 </div>
                 {this.state.inputMedia !== undefined &&
@@ -972,6 +956,27 @@ export default class App extends React.Component<null, AppState> {
                     <Chat className="fullScreenChat" chat={this.state.chat} nameMap={this.state.nameMap} socket={this.socket} scrollTimestamp={this.state.scrollTimestamp} getMediaDisplayName={this.getMediaDisplayName} />
                 }
             </div>
+            {/* <Divider inverted horizontal></Divider> */}
+            <Button.Group>
+                {this.screenShareStream && <Button icon color='red' onClick={this.stopScreenShare}>
+                    <Icon name="cancel" />
+                    {' Stop Sharing'}
+                </Button>}
+                {!this.screenShareStream && <React.Fragment>
+                    <Button disabled={sharer && this.socket.id !== sharer.id} icon color={"instagram"} onClick={this.setupScreenShare}>
+                        <Icon name={'slideshare'} />
+                        {' Screenshare'}
+                    </Button>
+                    <Button disabled={sharer && this.socket.id !== sharer.id} icon onClick={this.setupFileShare}>
+                        <Icon name="file" />
+                        {' Stream File'}
+                    </Button>
+                    <Button color="teal" icon onClick={undefined}>
+                        <Icon name="desktop" />
+                        {' Virtual Browser'}
+                    </Button>
+                </React.Fragment>}
+            </Button.Group>
           </React.Fragment>
         </Grid.Column>}
         {this.state.state !== 'init' && <Grid.Column width={4} style={{ display: 'flex', flexDirection: 'column' }} className="fullHeightColumn">
