@@ -63,6 +63,8 @@ interface AppState {
     fullScreen: boolean;
     controlsTimestamp: number;
     watchOptions: SearchResult[];
+    isScreenSharing: boolean;
+    isScreenSharingFile: boolean;
 }
 
 export default class App extends React.Component<null, AppState> {
@@ -81,6 +83,8 @@ export default class App extends React.Component<null, AppState> {
     fullScreen: false,
     controlsTimestamp: 0,
     watchOptions: [],
+    isScreenSharing: false,
+    isScreenSharingFile: false,
   };
   videoRefs: any = {};
   socket: any = null;
@@ -108,10 +112,45 @@ export default class App extends React.Component<null, AppState> {
     const results = data.filter((file: any) => file.type === 'file').map((file: any) => ({ url: file.url || getMediaPathForList(defaultMediaPath) + file.name, name: getMediaPathForList(defaultMediaPath) + file.name }));
     this.setState({ watchOptions: results });
 
-    // TODO twitch, bring your own file
+    // TODO twitch
     // TODO playlists
+    // TODO joiners might be out of sync due to load time
     // TODO last writer wins on sending desynced timestamps (use max?)
     // TODO fix race condition where search results return out of order
+  }
+
+  setupFileShare = async () => {
+    // Create an input element
+    const inputElement = document.createElement("input");
+
+    // Set its type to file
+    inputElement.type = "file";
+
+    // Set accept to the file types you want the user to select. 
+    // Include both the file extension and the mime type
+    // inputElement.accept = accept;
+
+    // set onchange event to call callback when user has selected file
+    inputElement.addEventListener("change", () => {
+      const file = inputElement.files![0];
+      const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
+      leftVideo.src = URL.createObjectURL(file);
+      leftVideo.play();
+      //@ts-ignore
+      const stream = leftVideo.captureStream();
+      // Can render video to a canvas to resize it, reduce size
+      stream.onaddtrack = () => {
+          console.log(stream, stream.getVideoTracks(), stream.getAudioTracks());
+          if (!this.screenShareStream && stream.getVideoTracks().length && stream.getAudioTracks().length) {
+            this.screenShareStream = stream;
+            this.socket.emit('CMD:joinScreenShare');
+            this.setState({ isScreenSharing: true, isScreenSharingFile: true });
+          }
+      }
+    });
+
+    // dispatch a click event to open the file dialog
+    inputElement.dispatchEvent(new MouseEvent("click")); 
   }
 
   setupScreenShare = async () => {
@@ -120,6 +159,7 @@ export default class App extends React.Component<null, AppState> {
       stream.getVideoTracks()[0].onended = this.stopScreenShare;
       this.screenShareStream = stream;
       this.socket.emit('CMD:joinScreenShare');
+      this.setState({ isScreenSharing: true });
   }
 
   stopScreenShare = async () => {
@@ -135,10 +175,10 @@ export default class App extends React.Component<null, AppState> {
             pc.close();
         });
         this.screenHostPC = {};
-        const match = this.state.participants.find(p => p.isScreenShare);
-        if (match && match.id === this.socket.id) {
+        if (this.state.isScreenSharing) {
             this.socket.emit('CMD:leaveScreenShare');
         }
+        this.setState({ isScreenSharing: false, isScreenSharingFile: false });
     }
 
   setupWebRTC = async () => {
@@ -239,6 +279,10 @@ export default class App extends React.Component<null, AppState> {
             // We're the sharer, create a connection to each other member
             this.state.participants.forEach(user => {
                 const id = user.id;
+                if (id === this.socket.id && this.state.isScreenSharingFile) {
+                    // Don't set up a connection to ourselves if sharing file
+                    return;
+                }
                 if (!this.screenHostPC[id]) {
                     // Set up the RTCPeerConnection for sharing media to each member
                     const pc = new RTCPeerConnection({ iceServers });
@@ -260,8 +304,10 @@ export default class App extends React.Component<null, AppState> {
                 }
             });
         }
-        // We're a watcher, establish connection to sharer (sharer connects to self)
-        if (sharer && !this.screenSharePC) {
+        // We're a watcher, establish connection to sharer
+        // If screensharing, sharer also does this
+        // If filesharing, sharer does not do this since we use leftVideo
+        if (sharer && !this.screenSharePC && !this.state.isScreenSharingFile) {
             const pc = new RTCPeerConnection({ iceServers });
             this.screenSharePC = pc;
             pc.onicecandidate = (event) => {
@@ -834,9 +880,20 @@ export default class App extends React.Component<null, AppState> {
                     value={this.state.inputMedia !== undefined ? this.state.inputMedia : this.getMediaDisplayName(this.state.currentMedia)}
                 />
                 <Popup basic content="Screenshare" trigger={
-                    <Button disabled={sharer && this.socket.id !== sharer.id} floated="right" icon color={this.screenShareStream ? "red" : "instagram"} onClick={this.screenShareStream ? this.stopScreenShare : this.setupScreenShare}>
-                        <Icon name={this.screenShareStream ? 'cancel' : 'slideshare'} />
-                    </Button>}
+                    <Button.Group>
+                        {this.screenShareStream && <Button icon color='red' onClick={this.stopScreenShare}>
+                            <Icon name="cancel" />
+                        </Button>}
+                        {!this.screenShareStream && <React.Fragment>
+                            <Button disabled={sharer && this.socket.id !== sharer.id} icon color={"instagram"} onClick={this.setupScreenShare}>
+                                <Icon name={'slideshare'} />
+                            </Button>
+                            <Button disabled={sharer && this.socket.id !== sharer.id} icon onClick={this.setupFileShare}>
+                                <Icon name="file" />
+                            </Button>
+                        </React.Fragment>}
+                    </Button.Group>
+                    }
                 />
                 </div>
                 {this.state.inputMedia !== undefined &&
@@ -907,30 +964,6 @@ export default class App extends React.Component<null, AppState> {
             </div>
           </React.Fragment>
         </Grid.Column>}
-        {this.state.state !== 'init' && <Grid.Column width={2} className="fullHeightColumn">
-          <Divider inverted horizontal>With</Divider>
-          <div style={{ overflow: 'scroll' }}>
-            {this.state.participants.map(p => {
-              return <div key={p.id} style={{ position: 'relative', height: this.ourStream && p.isVideoChat ? 'fit-content' : '30px', marginTop: '5px' }}>
-                {this.ourStream && p.isVideoChat && <video
-                  ref={el => {this.videoRefs[p.id] = el}}
-                  style={{ width: '100%', height: '100%', borderRadius: '4px' }}
-                  autoPlay
-                  muted={p.id === this.socket.id}
-                  data-id={p.id}
-                />}
-                <Label style={{ position: 'absolute', bottom: 0, right: 0 }} as='a' color={getColor(p.id) as any} image>
-                <div style={{ display: 'flex' }}>
-                    <img src={getImage(this.state.nameMap[p.id] || p.id)} alt="" />
-                    {p.isVideoChat && <Icon size="small" name='video' /> }
-                    <div title={this.state.nameMap[p.id] || p.id} style={{ width: '70px', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden', lineHeight: '8px' }}>{this.state.nameMap[p.id] || p.id}</div>
-                    <Label.Detail>{formatTimestamp(this.state.tsMap[p.id] || 0)}</Label.Detail>
-                </div>
-                </Label>
-                </div>;
-              })}
-          </div>
-        </Grid.Column>}
         {this.state.state !== 'init' && <Grid.Column width={4} style={{ display: 'flex', flexDirection: 'column' }} className="fullHeightColumn">
           <Input
             inverted
@@ -955,6 +988,32 @@ export default class App extends React.Component<null, AppState> {
                 </div>
           }
           {!this.state.fullScreen && <Chat chat={this.state.chat} nameMap={this.state.nameMap} socket={this.socket} scrollTimestamp={this.state.scrollTimestamp} getMediaDisplayName={this.getMediaDisplayName} />}
+        </Grid.Column>}
+        {this.state.state !== 'init' && <Grid.Column width={2} className="fullHeightColumn">
+          <Divider inverted horizontal>With</Divider>
+          <div style={{ overflow: 'scroll' }}>
+            {this.state.participants.map(p => {
+              return <div key={p.id} style={{ marginTop: '5px' }}>
+                <Label as='a' color={getColor(p.id) as any} image>
+                    <div style={{ display: 'flex' }}>
+                    {/* <img src={getImage(this.state.nameMap[p.id] || p.id)} alt="" /> */}
+                    <div title={this.state.nameMap[p.id] || p.id} style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '90px' }}>
+                        {p.isVideoChat && <Icon size="small" name='video' /> }                
+                        {this.state.nameMap[p.id] || p.id}
+                    </div>
+                    <Label.Detail><div style={{ lineHeight: 'normal', overflow: 'hidden' }}>{formatTimestamp(this.state.tsMap[p.id] || 0)}</div></Label.Detail>
+                    </div>
+                </Label>
+                {this.ourStream && p.isVideoChat && <video
+                  ref={el => {this.videoRefs[p.id] = el}}
+                  style={{ width: '100%', height: '100%', borderRadius: '4px' }}
+                  autoPlay
+                  muted={p.id === this.socket.id}
+                  data-id={p.id}
+                />}
+                </div>;
+              })}
+          </div>
         </Grid.Column>}
         </Grid.Row>
       </Grid>
@@ -1417,16 +1476,15 @@ function getImage(name: string) {
 async function testAutoplay() {
   const video = document.createElement('video');
   video.src = 'https://www.w3schools.com/tags/movie.ogg';
-  // document.body.appendChild(video);
+  let canPlay = true;
   try {
     await video.play();
   } catch(e) {
     console.log(e);
-    return false;
+    canPlay = false;
   }
-  // TODO remove the element
   video.pause();
-  return true;
+  return canPlay;
 }
 
 function decodeEntities(input: string) {
