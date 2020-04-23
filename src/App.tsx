@@ -454,42 +454,6 @@ export default class App extends React.Component<null, AppState> {
         this.state.chat.push(data);
         this.setState({ chat: this.state.chat, scrollTimestamp: Number(new Date()) });
     });
-    // let videoRecs = {};
-    // let videoMs = {};
-    // let buffers = {};
-    // socket.on('REC:video', async (data) => {
-    //   // id and data fields
-    //   if (!buffers[data.id]) {
-    //     buffers[data.id] = [];
-    //   }
-    //   const buffer = buffers[data.id];
-    //   buffer.push(data.data);
-    //   console.log(buffer, data);
-    //   const ms = videoMs[data.id];
-    //   if (ms && ms.sourceBuffers[0] && !ms.sourceBuffers[0].updating && buffer.length)
-    //   {
-    //     videoMs[data.id].sourceBuffers[0].appendBuffer(buffer.shift());
-    //   }
-    //   if (!videoRecs[data.id]) {
-    //     const videoRec = document.createElement('video');
-    //     videoRec.autoplay = true;
-    //     videoRec.width = 320;
-    //     videoRec.height = 240;
-    //     videoRecs[data.id] = videoRec;
-    //     const ms = new MediaSource();
-    //     // console.log(MediaSource.isTypeSupported('video/webm; codecs=vp9'));
-    //     ms.onsourceopen = () => {
-    //       console.log('onsourceopen');
-    //       ms.addSourceBuffer('video/webm; codecs=vp9');
-    //       videoMs[data.id] = ms;
-    //     };
-    //     ms.onsourceclose = () => {
-    //       console.log('onsourceclose');
-    //     }
-    //     videoRec.src = window.URL.createObjectURL(ms);
-    //     document.body.appendChild(videoRec);
-    //   }
-    // });
     socket.on('REC:tsMap', (data: NumberDict) => {
       this.setState({ tsMap: data });
     });
