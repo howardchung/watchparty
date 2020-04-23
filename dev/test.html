@@ -1,96 +1,96 @@
 <video id="video" autoplay="true"></video>
 <canvas id="canvas"></canvas>
 <script>
-var video = document.getElementById('video');
+  var video = document.getElementById('video');
 
-if (navigator.mediaDevices.getUserMedia) {
-  var successCallback = function(stream) {
-    video.srcObject = stream;
-	var canvas = document.querySelector("canvas");
+  if (navigator.mediaDevices.getUserMedia) {
+    var successCallback = function (stream) {
+      video.srcObject = stream;
+      var canvas = document.querySelector('canvas');
 
-// Optional frames per second argument.
-var stream2 = canvas.captureStream(25);
-var recordedChunks = [];
+      // Optional frames per second argument.
+      var stream2 = canvas.captureStream(25);
+      var recordedChunks = [];
 
-console.log(stream);
-var options = { mimeType: "video/webm; codecs=vp9" };
-mediaRecorder = new MediaRecorder(stream, options);
+      console.log(stream);
+      var options = { mimeType: 'video/webm; codecs=vp9' };
+      mediaRecorder = new MediaRecorder(stream, options);
 
-mediaRecorder.ondataavailable = handleDataAvailable;
-mediaRecorder.start(1000);
+      mediaRecorder.ondataavailable = handleDataAvailable;
+      mediaRecorder.start(1000);
 
-async function handleDataAvailable(event) {
-  console.log(event.data, (await event.data.arrayBuffer()));
-  if (event.data.size > 0) {
-    // recordedChunks.push(event.data);
-	addVideoChunk({ data: event.data });
+      async function handleDataAvailable(event) {
+        console.log(event.data, await event.data.arrayBuffer());
+        if (event.data.size > 0) {
+          // recordedChunks.push(event.data);
+          addVideoChunk({ data: event.data });
+        }
+      }
+    };
+    var errorCallback = function (error) {
+      console.log(error);
+    };
+    navigator.mediaDevices
+      .getUserMedia({
+        audio: false,
+        video: { facingMode: { ideal: 'environment' } }, // prefer rear-facing camera
+      })
+      .then(successCallback, errorCallback);
   }
-}
 
-  };
-  var errorCallback = function(error) {
-    console.log(error);
-  };
-  navigator.mediaDevices.getUserMedia({
-    audio: false,
-    video: { facingMode: { ideal: 'environment' } } // prefer rear-facing camera
-  }).then(successCallback, errorCallback);
-}
+  var canvas = document.getElementById('canvas');
+  var context = canvas.getContext('2d');
+  requestAnimationFrame(renderFrame);
 
-	var canvas = document.getElementById('canvas');
-	var context = canvas.getContext('2d');
-	requestAnimationFrame(renderFrame);
-
-	function renderFrame() {
-	  // re-register callback
-	  requestAnimationFrame(renderFrame);
-	  // set internal canvas size to match HTML element size
-	  canvas.width = canvas.scrollWidth;
-	  canvas.height = canvas.scrollHeight;
-	  if (video.readyState === video.HAVE_ENOUGH_DATA) {
-		// scale and horizontally center the camera image
-		var videoSize = { width: video.videoWidth, height: video.videoHeight };
-		var canvasSize = { width: canvas.width, height: canvas.height };
-		var renderSize = calculateSize(videoSize, canvasSize);
-		var xOffset = (canvasSize.width - renderSize.width) / 2;
-		context.drawImage(video, xOffset, 0, renderSize.width, renderSize.height);
-	  }
-	}
-	function calculateSize(srcSize, dstSize) {
+  function renderFrame() {
+    // re-register callback
+    requestAnimationFrame(renderFrame);
+    // set internal canvas size to match HTML element size
+    canvas.width = canvas.scrollWidth;
+    canvas.height = canvas.scrollHeight;
+    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+      // scale and horizontally center the camera image
+      var videoSize = { width: video.videoWidth, height: video.videoHeight };
+      var canvasSize = { width: canvas.width, height: canvas.height };
+      var renderSize = calculateSize(videoSize, canvasSize);
+      var xOffset = (canvasSize.width - renderSize.width) / 2;
+      context.drawImage(video, xOffset, 0, renderSize.width, renderSize.height);
+    }
+  }
+  function calculateSize(srcSize, dstSize) {
     var srcRatio = srcSize.width / srcSize.height;
     var dstRatio = dstSize.width / dstSize.height;
     if (dstRatio > srcRatio) {
       return {
-        width:  dstSize.height * srcRatio,
-        height: dstSize.height
+        width: dstSize.height * srcRatio,
+        height: dstSize.height,
       };
     } else {
       return {
-        width:  dstSize.width,
-        height: dstSize.width / srcRatio
+        width: dstSize.width,
+        height: dstSize.width / srcRatio,
       };
     }
   }
 
-const videoRec = document.createElement('video');
-const ms = new MediaSource();
+  const videoRec = document.createElement('video');
+  const ms = new MediaSource();
 
-videoRec.autoplay = true;
-videoRec.width = 320;
-videoRec.height = 240;
-// console.log(MediaSource.isTypeSupported('video/webm; codecs=vp9'));
-ms.onsourceopen = () => {
-  console.log('onsourceopen');
-  ms.addSourceBuffer('video/webm; codecs=vp9');
-};
-ms.onsourceclose = () => {
-  console.log('onsourceclose');
-}
-videoRec.src = window.URL.createObjectURL(ms);
-document.body.appendChild(videoRec);
+  videoRec.autoplay = true;
+  videoRec.width = 320;
+  videoRec.height = 240;
+  // console.log(MediaSource.isTypeSupported('video/webm; codecs=vp9'));
+  ms.onsourceopen = () => {
+    console.log('onsourceopen');
+    ms.addSourceBuffer('video/webm; codecs=vp9');
+  };
+  ms.onsourceclose = () => {
+    console.log('onsourceclose');
+  };
+  videoRec.src = window.URL.createObjectURL(ms);
+  document.body.appendChild(videoRec);
 
-async function addVideoChunk(data) {
-ms.sourceBuffers[0].appendBuffer(await data.data.arrayBuffer());
-}
-
+  async function addVideoChunk(data) {
+    ms.sourceBuffers[0].appendBuffer(await data.data.arrayBuffer());
+  }
 </script>

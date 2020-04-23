@@ -39,7 +39,8 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "dev": "nodemon --watch server server/server",
-    "server": "node server/server"
+    "server": "node server/server",
+    "prettier": "prettier --single-quote --write ."
   },
   "eslintConfig": {
     "extends": "react-app"
