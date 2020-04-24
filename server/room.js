@@ -1,15 +1,44 @@
 module.exports = class Room {
-  video = '';
-  videoTS = 0;
-  paused = false;
-  roster = [];
-  chat = [];
-  tsMap = {};
-  nameMap = {};
-  pictureMap = {};
-  roomId = null;
-
   constructor(io, roomId, roomData) {
+    this.video = '';
+    this.videoTS = 0;
+    this.paused = false;
+    this.roster = [];
+    this.chat = [];
+    this.tsMap = {};
+    this.nameMap = {};
+    this.pictureMap = {};
+
+    this.serialize = () => {
+      return JSON.stringify({
+        video: this.video,
+        videoTS: this.videoTS,
+        paused: this.paused,
+        nameMap: this.nameMap,
+        pictureMap: this.pictureMap,
+        chat: this.chat,
+      });
+    };
+
+    this.deserialize = (roomData) => {
+      this.video = roomData.video;
+      this.videoTS = roomData.videoTS;
+      this.paused = roomData.paused;
+      if (roomData.chat) {
+        this.chat = roomData.chat;
+      }
+      if (roomData.nameMap) {
+        this.nameMap = roomData.nameMap;
+      }
+      if (roomData.pictureMap) {
+        this.pictureMap = roomData.pictureMap;
+      }
+    };
+
+    this.getHostState = () => {
+      return { video: this.video, videoTS: this.videoTS, paused: this.paused };
+    };
+
     this.roomId = roomId;
     if (roomData) {
       this.deserialize(roomData);
@@ -185,34 +214,4 @@ module.exports = class Room {
       });
     });
   }
-
-  serialize = () => {
-    return JSON.stringify({
-      video: this.video,
-      videoTS: this.videoTS,
-      paused: this.paused,
-      nameMap: this.nameMap,
-      pictureMap: this.pictureMap,
-      chat: this.chat,
-    });
-  };
-
-  deserialize = (roomData) => {
-    this.video = roomData.video;
-    this.videoTS = roomData.videoTS;
-    this.paused = roomData.paused;
-    if (roomData.chat) {
-      this.chat = roomData.chat;
-    }
-    if (roomData.nameMap) {
-      this.nameMap = roomData.nameMap;
-    }
-    if (roomData.pictureMap) {
-      this.pictureMap = roomData.pictureMap;
-    }
-  };
-
-  getHostState = () => {
-    return { video: this.video, videoTS: this.videoTS, paused: this.paused };
-  };
 };
