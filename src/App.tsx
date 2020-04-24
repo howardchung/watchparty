@@ -293,8 +293,6 @@ export default class App extends React.Component<null, AppState> {
   };
 
   join = async (roomId: string) => {
-    const leftVideo = document.getElementById('leftVideo');
-
     const socket = io.connect(serverPath + roomId);
     this.socket = socket;
     socket.on('connect', async () => {
