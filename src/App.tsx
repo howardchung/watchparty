@@ -89,7 +89,6 @@ const iceServers = [
 
 // TODO twitch
 // TODO playlists
-// TODO joiners might be out of sync due to load time
 // TODO fix race condition where search results return out of order
 
 interface AppState {
@@ -295,15 +294,6 @@ export default class App extends React.Component<null, AppState> {
 
   join = async (roomId: string) => {
     const leftVideo = document.getElementById('leftVideo');
-    leftVideo!.onloadeddata = () => {
-      // if (this.videoInitTime) {
-      //   const videoReadyTime = Number(new Date());
-      //   const offset = videoReadyTime - this.videoInitTime;
-      //   console.log('offset: ', offset);
-      //   leftVideo.currentTime += (offset / 1000);
-      // }
-      this.setState({ loading: false });
-    };
 
     const socket = io.connect(serverPath + roomId);
     this.socket = socket;
@@ -345,20 +335,35 @@ export default class App extends React.Component<null, AppState> {
             this.setMute(true);
           }
 
-          const playVideo = () => {
-            // Start this video
-            this.doSrc(data.video, data.videoTS);
-            if (!data.paused) {
-              this.doPlay();
-            }
-          };
-
           if (this.isYouTube() && !this.watchPartyYTPlayer) {
             console.log(
               'YT player not ready, onReady callback will retry when it is'
             );
           } else {
-            playVideo();
+            // Start this video
+            this.doSrc(data.video, data.videoTS);
+            if (!data.paused) {
+              this.doPlay();
+            }
+            leftVideo!.addEventListener(
+              'loadedmetadata',
+              () => {
+                this.setState({ loading: false });
+              },
+              { once: true }
+            );
+            // One time, when we're ready to play
+            leftVideo!.addEventListener(
+              'canplay',
+              () => {
+                // Jump to the leader's position
+                const maxTS = Math.max(...Object.values(this.state.tsMap));
+                this.doSeek(maxTS);
+                console.log('initial jump to leader at ', maxTS);
+                this.setState({ loading: false });
+              },
+              { once: true }
+            );
           }
         }
       );
@@ -1160,7 +1165,7 @@ export default class App extends React.Component<null, AppState> {
               color="grey"
               icon
               labelPosition="left"
-              as='a'
+              as="a"
               href="https://github.com/howardchung/watchparty"
               target="_blank"
               className="toolButton"
@@ -1900,7 +1905,10 @@ class SearchComponent extends React.Component<SearchComponentProps> {
                       ' peers'
                     }
                     onClick={async (e) => {
-                      this.setState({ resetDropdown: Number(new Date()), loading: true });
+                      this.setState({
+                        resetDropdown: Number(new Date()),
+                        loading: true,
+                      });
                       let response = await window.fetch(
                         this.props.streamPath +
                           '/data?torrent=' +
@@ -2275,7 +2283,6 @@ function getColor(id: string) {
   colorCache[id] = Math.abs(hashString(id)) % colors.length;
   return colors[colorCache[id]];
 }
-
 
 // const getFbPhoto = (fbId: string) =>
 //   `https://graph.facebook.com/${fbId}/picture?type=normal`;

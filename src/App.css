@@ -109,10 +109,11 @@ body {
   height: 36px;
 }
 
-.ui.labeled.icon.button>.icon.loading, .ui.labeled.icon.buttons>.button>.icon.loading {
+.ui.labeled.icon.button > .icon.loading,
+.ui.labeled.icon.buttons > .button > .icon.loading {
   background-color: initial;
 }
 
-.ui.dropdown .menu[role=listbox]  {
+.ui.dropdown .menu[role='listbox'] {
   z-index: 1001;
 }
