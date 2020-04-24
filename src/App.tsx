@@ -323,6 +323,10 @@ export default class App extends React.Component<null, AppState> {
           loading: Boolean(data.video),
         },
         () => {
+          if (this.state.isScreenSharingFile) {
+            console.log('skipping REC:host video since fileshare is using leftVideo');
+            return;
+          }
           // Stop all players
           const leftVideo = document.getElementById(
             'leftVideo'
@@ -356,11 +360,13 @@ export default class App extends React.Component<null, AppState> {
             leftVideo!.addEventListener(
               'canplay',
               () => {
+                this.setState({ loading: false });
                 // Jump to the leader's position
                 const maxTS = Math.max(...Object.values(this.state.tsMap));
-                this.doSeek(maxTS);
-                console.log('initial jump to leader at ', maxTS);
-                this.setState({ loading: false });
+                if (maxTS > 0) {
+                  console.log('initial jump to leader at ', maxTS);
+                  this.doSeek(maxTS);
+                }
               },
               { once: true }
             );
@@ -655,6 +661,7 @@ export default class App extends React.Component<null, AppState> {
       };
       //@ts-ignore
       pc.onaddstream = (event: any) => {
+        console.log('stream from webrtc peer');
         // Mount the stream from peer
         const stream = event.stream;
         // console.log(stream);
@@ -813,16 +820,7 @@ export default class App extends React.Component<null, AppState> {
         const leftVideo = document.getElementById(
           'leftVideo'
         ) as HTMLMediaElement;
-        try {
-          await leftVideo.play();
-        } catch (e) {
-          console.error(e);
-          if (e instanceof window.DOMException && e.message.includes('play')) {
-            console.log('failed to autoplay, muted');
-            leftVideo.muted = true;
-            leftVideo.play();
-          }
-        }
+        await leftVideo.play();
       }
       if (this.isYouTube()) {
         console.log('play yt');
