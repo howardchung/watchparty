@@ -38,6 +38,7 @@ module.exports = class Room {
         this.video = data;
         this.videoTS = 0;
         this.paused = false;
+        this.tsMap = {};
         io.of(roomId).emit('REC:host', this.getHostState());
         if (data) {
           const chatMsg = { id: socket.id, cmd: 'host', msg: data };
