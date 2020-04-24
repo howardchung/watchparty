@@ -168,8 +168,8 @@ export default class App extends React.Component<null, AppState> {
     }, 10 * 60 * 1000);
 
     const loadFBData = () => {
-      console.log(window.FB, this.socket);
-      if (!window.FB.getLoginStatus || !this.socket) {
+      // console.log(window.FB, this.socket);
+      if (!window.FB || !this.socket) {
         setTimeout(loadFBData, 1000);
         return;
       }
@@ -1091,7 +1091,7 @@ export default class App extends React.Component<null, AppState> {
             className="mobileStack"
             style={{
               display: 'flex',
-              margin: '10px',
+              width: '450px',
               marginLeft: 'auto',
             }}
           >
@@ -1105,6 +1105,7 @@ export default class App extends React.Component<null, AppState> {
                   icon
                   labelPosition="left"
                   onClick={this.createRoom}
+                  className="toolButton"
                 >
                   <Icon name="certificate" />
                   New Room
@@ -1117,7 +1118,6 @@ export default class App extends React.Component<null, AppState> {
                 trigger={
                   <Button
                     fluid
-                    size="medium"
                     icon
                     labelPosition="left"
                     onClick={() =>
@@ -1129,6 +1129,7 @@ export default class App extends React.Component<null, AppState> {
                       )
                     }
                     color="facebook"
+                    className="toolButton"
                   >
                     <Icon name="facebook" />
                     Sign in
@@ -1139,7 +1140,6 @@ export default class App extends React.Component<null, AppState> {
             {this.state.fbUserID && (
               <Button
                 fluid
-                size="medium"
                 icon
                 labelPosition="left"
                 onClick={() =>
@@ -1148,20 +1148,22 @@ export default class App extends React.Component<null, AppState> {
                   })
                 }
                 color="facebook"
+                className="toolButton"
               >
                 <Icon name="facebook" />
                 Sign out
               </Button>
             )}
-            {/* <SettingsModal trigger={<Button fluid inverted color="green" size="medium" icon labelPosition="left"><Icon name="setting" />Settings</Button>} /> */}
+            {/* <SettingsModal trigger={<Button fluid inverted color="green" size="medium" icon labelPosition="left" className="toolButton"><Icon name="setting" />Settings</Button>} /> */}
             <Button
               fluid
               color="grey"
-              size="medium"
               icon
               labelPosition="left"
+              as='a'
               href="https://github.com/howardchung/watchparty"
               target="_blank"
+              className="toolButton"
             >
               <Icon name="github" />
               Source
@@ -1818,6 +1820,9 @@ class SearchComponent extends React.Component<SearchComponentProps> {
       placeholder = 'Files on ' + this.props.mediaPath;
       icon = 'film';
     }
+    if (this.state.loading) {
+      icon = 'loading circle notch';
+    }
     return (
       <React.Fragment>
         {this.state.multiStreamSelection && (
@@ -1895,7 +1900,7 @@ class SearchComponent extends React.Component<SearchComponentProps> {
                       ' peers'
                     }
                     onClick={async (e) => {
-                      this.setState({ resetDropdown: Number(new Date()) });
+                      this.setState({ resetDropdown: Number(new Date()), loading: true });
                       let response = await window.fetch(
                         this.props.streamPath +
                           '/data?torrent=' +
@@ -1932,6 +1937,7 @@ class SearchComponent extends React.Component<SearchComponentProps> {
                             encodeURIComponent(result.magnet),
                         });
                       }
+                      this.setState({ loading: false });
                     }}
                   />
                 );
@@ -2270,9 +2276,9 @@ function getColor(id: string) {
   return colors[colorCache[id]];
 }
 
-//@ts-ignore
-const getFbPhoto = (fbId: string) =>
-  `https://graph.facebook.com/${fbId}/picture?type=normal`;
+
+// const getFbPhoto = (fbId: string) =>
+//   `https://graph.facebook.com/${fbId}/picture?type=normal`;
 
 async function testAutoplay() {
   const result = await canAutoplay.video();
