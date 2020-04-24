@@ -6,6 +6,7 @@ module.exports = class Room {
   chat = [];
   tsMap = {};
   nameMap = {};
+  pictureMap = {};
   roomId = null;
 
   constructor(io, roomId, roomData) {
@@ -48,6 +49,7 @@ module.exports = class Room {
 
       socket.emit('REC:host', this.getHostState());
       socket.emit('REC:nameMap', this.nameMap);
+      socket.emit('REC:pictureMap', this.pictureMap);
       socket.emit('REC:tsMap', this.tsMap);
       socket.emit('chatinit', this.chat);
       io.of(roomId).emit('roster', this.roster);
@@ -59,7 +61,17 @@ module.exports = class Room {
         this.nameMap[socket.id] = data;
         io.of(roomId).emit('REC:nameMap', this.nameMap);
       });
+      socket.on('CMD:picture', (data) => {
+        if (data.length > 10000) {
+          return;
+        }
+        this.pictureMap[socket.id] = data;
+        io.of(roomId).emit('REC:pictureMap', this.pictureMap);
+      });
       socket.on('CMD:host', (data) => {
+        if (data.length > 10000) {
+          return;
+        }
         const sharer = this.roster.find((user) => user.isScreenShare);
         if (sharer) {
           // Can't update the video while someone is screensharing
@@ -94,7 +106,9 @@ module.exports = class Room {
         addChatMessage(chatMsg);
       });
       socket.on('CMD:ts', (data) => {
-        this.videoTS = data;
+        if (data > this.videoTS) {
+          this.videoTS = data;
+        }
         this.tsMap[socket.id] = data;
       });
       socket.on('CMD:chat', (data) => {
@@ -141,6 +155,9 @@ module.exports = class Room {
         cmdHost('');
         io.of(roomId).emit('roster', this.roster);
       });
+      socket.on('CMD:askHost', () => {
+        socket.emit('REC:host', this.getHostState());
+      });
       socket.on('signal', (data) => {
         io.of(roomId)
           .to(data.to)
@@ -174,6 +191,7 @@ module.exports = class Room {
       videoTS: this.videoTS,
       paused: this.paused,
       nameMap: this.nameMap,
+      pictureMap: this.pictureMap,
       chat: this.chat,
     });
   };
@@ -187,6 +205,9 @@ module.exports = class Room {
     }
     if (roomData.nameMap) {
       this.nameMap = roomData.nameMap;
+    }
+    if (roomData.pictureMap) {
+      this.pictureMap = roomData.pictureMap;
     }
   };
 

@@ -41,6 +41,8 @@ declare global {
   interface Window {
     onYouTubeIframeAPIReady: any;
     YT: any;
+    FB: any;
+    fbAsyncInit: Function;
   }
 }
 
@@ -49,6 +51,7 @@ const serverPath =
   `${window.location.protocol}//${window.location.hostname}${
     process.env.NODE_ENV === 'production' ? '' : ':8080'
   }`;
+const defaultPicture = '/logo192.png';
 let defaultMediaPath =
   process.env.REACT_APP_MEDIA_PATH || serverPath + '/examples';
 let defaultStreamPath = process.env.REACT_APP_STREAM_PATH || '';
@@ -84,6 +87,11 @@ const iceServers = [
   },
 ];
 
+// TODO twitch
+// TODO playlists
+// TODO joiners might be out of sync due to load time
+// TODO fix race condition where search results return out of order
+
 interface AppState {
   state: string;
   currentMedia: string;
@@ -93,7 +101,9 @@ interface AppState {
   chat: ChatMessage[];
   tsMap: NumberDict;
   nameMap: StringDict;
+  pictureMap: StringDict;
   myName: string;
+  myPicture: string;
   loading: boolean;
   scrollTimestamp: number;
   fullScreen: boolean;
@@ -101,11 +111,15 @@ interface AppState {
   watchOptions: SearchResult[];
   isScreenSharing: boolean;
   isScreenSharingFile: boolean;
+  fbUserID?: string;
+  isFBReady: boolean;
+  isYouTubeReady: boolean;
+  isAutoPlayable: boolean;
 }
 
 export default class App extends React.Component<null, AppState> {
   state: AppState = {
-    state: 'init',
+    state: 'started',
     currentMedia: '',
     inputMedia: undefined,
     currentMediaPaused: false,
@@ -113,7 +127,9 @@ export default class App extends React.Component<null, AppState> {
     chat: [],
     tsMap: {},
     nameMap: {},
+    pictureMap: {},
     myName: '',
+    myPicture: '',
     loading: true,
     scrollTimestamp: Number(new Date()),
     fullScreen: false,
@@ -121,6 +137,10 @@ export default class App extends React.Component<null, AppState> {
     watchOptions: [],
     isScreenSharing: false,
     isScreenSharingFile: false,
+    fbUserID: undefined,
+    isFBReady: false,
+    isYouTubeReady: false,
+    isAutoPlayable: true,
   };
   videoRefs: any = {};
   socket: any = null;
@@ -136,13 +156,102 @@ export default class App extends React.Component<null, AppState> {
 
   async componentDidMount() {
     const canAutoplay = await testAutoplay();
-    console.log(canAutoplay);
-    if (canAutoplay) {
-      this.init();
-    }
+    this.setState({ isAutoPlayable: canAutoplay });
+
     document.onfullscreenchange = () => {
       this.setState({ fullScreen: Boolean(document.fullscreenElement) });
     };
+
+    // Send heartbeat to the server
+    window.setInterval(() => {
+      window.fetch(serverPath + '/ping');
+    }, 10 * 60 * 1000);
+
+    const loadFBData = () => {
+      console.log(window.FB, this.socket);
+      if (!window.FB.getLoginStatus || !this.socket) {
+        setTimeout(loadFBData, 1000);
+        return;
+      }
+      window.FB.getLoginStatus((response: any) => {
+        this.setState({ isFBReady: true });
+        const fbUserID =
+          response.status === 'connected' && response.authResponse.userID;
+        if (fbUserID) {
+          window.FB.api(
+            '/me',
+            {
+              fields: 'id,first_name,name,email,picture.width(256).height(256)',
+            },
+            (response: any) => {
+              // console.log(response);
+              const picture =
+                response &&
+                response.picture &&
+                response.picture.data &&
+                response.picture.data.url;
+              const name = response && response.first_name;
+              this.setState({ fbUserID });
+              this.updateName(null, { value: name });
+              this.updatePicture(picture);
+            }
+          );
+        }
+      });
+    };
+    loadFBData();
+
+    // This code loads the IFrame Player API code asynchronously.
+    const tag = document.createElement('script');
+    tag.src = 'https://www.youtube.com/iframe_api';
+    var firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag!.parentNode!.insertBefore(tag, firstScriptTag);
+
+    window.onYouTubeIframeAPIReady = () => {
+      // Note: this fails silently if the element is not available
+      const ytPlayer = new window.YT.Player('leftYt', {
+        events: {
+          onReady: () => {
+            this.watchPartyYTPlayer = ytPlayer;
+            this.setState({ isYouTubeReady: true });
+            // We might have failed to play YT originally, ask for the current video again
+            if (this.isYouTube()) {
+              this.socket.emit('CMD:askHost');
+            }
+          },
+          onStateChange: (e: any) => {
+            if (
+              getMediaType(this.state.currentMedia) === 'youtube' &&
+              e.data === window.YT.PlayerState?.CUED
+            ) {
+              this.setState({ loading: false });
+            }
+            // console.log(this.ytDebounce, e.data, this.watchPartyYTPlayer?.getVideoUrl());
+            if (
+              this.ytDebounce &&
+              ((e.data === window.YT.PlayerState?.PLAYING &&
+                this.state.currentMediaPaused) ||
+                (e.data === window.YT.PlayerState?.PAUSED &&
+                  !this.state.currentMediaPaused))
+            ) {
+              this.ytDebounce = false;
+              if (e.data === window.YT.PlayerState?.PLAYING) {
+                this.socket.emit('CMD:play');
+                this.doPlay();
+              } else {
+                this.socket.emit('CMD:pause');
+                this.doPause();
+              }
+              window.setTimeout(() => (this.ytDebounce = true), 500);
+            }
+          },
+        },
+      });
+    };
+
+    this.init();
+
+    // Get media list if provided
     const response = await window.fetch(defaultMediaPath);
     let results = [];
     if (defaultMediaPath.includes('s3.')) {
@@ -166,13 +275,162 @@ export default class App extends React.Component<null, AppState> {
         }));
     }
     this.setState({ watchOptions: results });
-
-    // TODO twitch
-    // TODO playlists
-    // TODO joiners might be out of sync due to load time
-    // TODO last writer wins on sending desynced timestamps (use max?)
-    // TODO fix race condition where search results return out of order
   }
+
+  init = (retryCount = 0) => {
+    // if (retryCount < 10 && (!this.state.isFBReady || !this.state.isYouTubeReady)) {
+    //   console.log('init retry:', retryCount, this.state.isFBReady, this.state.isYouTubeReady);
+    //   setTimeout(() => this.init(retryCount + 1), 500);
+    //   return;
+    // }
+
+    // Load room ID from url
+    let roomId = '/default';
+    let query = window.location.hash.substring(1);
+    if (query) {
+      roomId = '/' + query;
+    }
+    this.join(roomId);
+  };
+
+  join = async (roomId: string) => {
+    const leftVideo = document.getElementById('leftVideo');
+    leftVideo!.onloadeddata = () => {
+      // if (this.videoInitTime) {
+      //   const videoReadyTime = Number(new Date());
+      //   const offset = videoReadyTime - this.videoInitTime;
+      //   console.log('offset: ', offset);
+      //   leftVideo.currentTime += (offset / 1000);
+      // }
+      this.setState({ loading: false });
+    };
+
+    const socket = io.connect(serverPath + roomId);
+    this.socket = socket;
+    socket.on('connect', async () => {
+      // Load username from localstorage
+      let userName = window.localStorage.getItem('watchparty-username');
+      this.updateName(null, { value: userName || generateName() });
+    });
+    socket.on('REC:play', () => {
+      this.doPlay();
+    });
+    socket.on('REC:pause', () => {
+      this.doPause();
+    });
+    socket.on('REC:seek', (data: any) => {
+      this.doSeek(data);
+    });
+    socket.on('REC:host', (data: any) => {
+      let currentMedia = data.video || '';
+      if (this.isScreenShare() && !currentMedia.startsWith('screenshare://')) {
+        this.stopScreenShare();
+      }
+      this.setState(
+        {
+          currentMedia,
+          currentMediaPaused: data.paused,
+          loading: Boolean(data.video),
+        },
+        () => {
+          // Stop all players
+          const leftVideo = document.getElementById(
+            'leftVideo'
+          ) as HTMLMediaElement;
+          leftVideo!.pause();
+          this.watchPartyYTPlayer?.stopVideo();
+
+          // If we can't autoplay, start muted
+          if (!this.state.isAutoPlayable) {
+            this.setMute(true);
+          }
+
+          const playVideo = () => {
+            // Start this video
+            this.doSrc(data.video, data.videoTS);
+            if (!data.paused) {
+              this.doPlay();
+            }
+          };
+
+          if (this.isYouTube() && !this.watchPartyYTPlayer) {
+            console.log(
+              'YT player not ready, onReady callback will retry when it is'
+            );
+          } else {
+            playVideo();
+          }
+        }
+      );
+    });
+    socket.on('REC:chat', (data: ChatMessage) => {
+      this.state.chat.push(data);
+      this.setState({
+        chat: this.state.chat,
+        scrollTimestamp: Number(new Date()),
+      });
+    });
+    socket.on('REC:tsMap', (data: NumberDict) => {
+      this.setState({ tsMap: data });
+    });
+    socket.on('REC:nameMap', (data: StringDict) => {
+      this.setState({ nameMap: data });
+    });
+    socket.on('REC:pictureMap', (data: StringDict) => {
+      this.setState({ pictureMap: data });
+    });
+    socket.on('roster', (data: User[]) => {
+      this.setState({ participants: data }, () => {
+        // Establish connections to the other video chatters
+        this.updateWebRTC();
+        this.updateScreenShare();
+      });
+    });
+    socket.on('chatinit', (data: any) => {
+      this.setState({ chat: data, scrollTimestamp: Number(new Date()) });
+    });
+    socket.on('signal', async (data: any) => {
+      // Handle messages received from signaling server
+      const msg = data.msg;
+      const from = data.from;
+      const pc = this.videoPCs[from];
+      console.log('recv', from, data);
+      if (msg.ice !== undefined) {
+        pc.addIceCandidate(new RTCIceCandidate(msg.ice));
+      } else if (msg.sdp && msg.sdp.type === 'offer') {
+        // console.log('offer');
+        await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        this.sendSignal(from, { sdp: pc.localDescription });
+      } else if (msg.sdp && msg.sdp.type === 'answer') {
+        pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
+      }
+    });
+    socket.on('signalSS', async (data: any) => {
+      // Handle messages received from signaling server
+      const msg = data.msg;
+      const from = data.from;
+      // Determine whether the message came from the sharer or the sharee
+      const pc = (data.sharer
+        ? this.screenSharePC
+        : this.screenHostPC[from]) as RTCPeerConnection;
+      if (msg.ice !== undefined) {
+        pc.addIceCandidate(new RTCIceCandidate(msg.ice));
+      } else if (msg.sdp && msg.sdp.type === 'offer') {
+        // console.log('offer');
+        await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        this.sendSignalSS(from, { sdp: pc.localDescription }, !data.sharer);
+      } else if (msg.sdp && msg.sdp.type === 'answer') {
+        pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
+      }
+    });
+    window.setInterval(() => {
+      this.socket.emit('CMD:ts', this.getCurrentTime());
+    }, 1000);
+  };
 
   setupFileShare = async () => {
     // Create an input element
@@ -415,187 +673,6 @@ export default class App extends React.Component<null, AppState> {
     this.socket.emit('signalSS', { to, msg: data, sharer });
   };
 
-  init = () => {
-    this.setState({ state: 'started' }, () => {
-      // Load room ID from url
-      let roomId = '/default';
-      let query = window.location.hash.substring(1);
-      if (query) {
-        roomId = '/' + query;
-      }
-
-      // Send heartbeat to the server
-      window.setInterval(() => {
-        window.fetch(serverPath + '/ping');
-      }, 10 * 60 * 1000);
-
-      // This code loads the IFrame Player API code asynchronously.
-      const tag = document.createElement('script');
-      tag.src = 'https://www.youtube.com/iframe_api';
-      var firstScriptTag = document.getElementsByTagName('script')[0];
-      firstScriptTag!.parentNode!.insertBefore(tag, firstScriptTag);
-
-      window.onYouTubeIframeAPIReady = () => {
-        this.watchPartyYTPlayer = new window.YT.Player('leftYt', {
-          events: {
-            onReady: () => {
-              this.join(roomId);
-              // this.watchPartyYTPlayer.playVideo();
-            },
-            onStateChange: (e: any) => {
-              if (
-                getMediaType(this.state.currentMedia) === 'youtube' &&
-                e.data === window.YT.PlayerState.CUED
-              ) {
-                this.setState({ loading: false });
-              }
-              // console.log(this.ytDebounce, e.data, this.watchPartyYTPlayer.getVideoUrl());
-              if (
-                this.ytDebounce &&
-                ((e.data === window.YT.PlayerState.PLAYING &&
-                  this.state.currentMediaPaused) ||
-                  (e.data === window.YT.PlayerState.PAUSED &&
-                    !this.state.currentMediaPaused))
-              ) {
-                this.ytDebounce = false;
-                if (e.data === window.YT.PlayerState.PLAYING) {
-                  this.socket.emit('CMD:play');
-                  this.doPlay();
-                } else {
-                  this.socket.emit('CMD:pause');
-                  this.doPause();
-                }
-                window.setTimeout(() => (this.ytDebounce = true), 500);
-              }
-            },
-          },
-        });
-      };
-    });
-  };
-
-  join = async (roomId: string) => {
-    const leftVideo = document.getElementById('leftVideo');
-    leftVideo!.onloadeddata = () => {
-      // if (this.videoInitTime) {
-      //   const videoReadyTime = Number(new Date());
-      //   const offset = videoReadyTime - this.videoInitTime;
-      //   console.log('offset: ', offset);
-      //   leftVideo.currentTime += (offset / 1000);
-      // }
-      this.setState({ loading: false });
-    };
-
-    // this.setState({ state: 'watching' });
-    const socket = io.connect(serverPath + roomId);
-    this.socket = socket;
-    socket.on('connect', async () => {
-      // Load username from localstorage
-      let userName = window.localStorage.getItem('watchparty-username');
-      this.updateName(null, { value: userName || generateName() });
-    });
-    socket.on('REC:play', () => {
-      this.doPlay();
-    });
-    socket.on('REC:pause', () => {
-      this.doPause();
-    });
-    socket.on('REC:seek', (data: any) => {
-      this.doSeek(data);
-    });
-    socket.on('REC:host', (data: any) => {
-      let currentMedia = data.video || '';
-      if (this.isScreenShare() && !currentMedia.startsWith('screenshare://')) {
-        this.stopScreenShare();
-      }
-      this.setState(
-        {
-          currentMedia,
-          currentMediaPaused: data.paused,
-          loading: Boolean(data.video),
-        },
-        () => {
-          // Stop all players
-          const leftVideo = document.getElementById(
-            'leftVideo'
-          ) as HTMLMediaElement;
-          leftVideo!.pause();
-          this.watchPartyYTPlayer.stopVideo();
-
-          // Start this video
-          this.doSrc(data.video, data.videoTS);
-          if (!data.paused) {
-            this.doPlay();
-          }
-        }
-      );
-    });
-    socket.on('REC:chat', (data: ChatMessage) => {
-      this.state.chat.push(data);
-      this.setState({
-        chat: this.state.chat,
-        scrollTimestamp: Number(new Date()),
-      });
-    });
-    socket.on('REC:tsMap', (data: NumberDict) => {
-      this.setState({ tsMap: data });
-    });
-    socket.on('REC:nameMap', (data: StringDict) => {
-      this.setState({ nameMap: data });
-    });
-    socket.on('roster', (data: User[]) => {
-      this.setState({ participants: data }, () => {
-        // Establish connections to the other video chatters
-        this.updateWebRTC();
-        this.updateScreenShare();
-      });
-    });
-    socket.on('chatinit', (data: any) => {
-      this.setState({ chat: data, scrollTimestamp: Number(new Date()) });
-    });
-    socket.on('signal', async (data: any) => {
-      // Handle messages received from signaling server
-      const msg = data.msg;
-      const from = data.from;
-      const pc = this.videoPCs[from];
-      console.log('recv', from, data);
-      if (msg.ice !== undefined) {
-        pc.addIceCandidate(new RTCIceCandidate(msg.ice));
-      } else if (msg.sdp && msg.sdp.type === 'offer') {
-        // console.log('offer');
-        await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-        this.sendSignal(from, { sdp: pc.localDescription });
-      } else if (msg.sdp && msg.sdp.type === 'answer') {
-        pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
-      }
-    });
-    socket.on('signalSS', async (data: any) => {
-      // Handle messages received from signaling server
-      const msg = data.msg;
-      const from = data.from;
-      // Determine whether the message came from the sharer or the sharee
-      const pc = (data.sharer
-        ? this.screenSharePC
-        : this.screenHostPC[from]) as RTCPeerConnection;
-      if (msg.ice !== undefined) {
-        pc.addIceCandidate(new RTCIceCandidate(msg.ice));
-      } else if (msg.sdp && msg.sdp.type === 'offer') {
-        // console.log('offer');
-        await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-        this.sendSignalSS(from, { sdp: pc.localDescription }, !data.sharer);
-      } else if (msg.sdp && msg.sdp.type === 'answer') {
-        pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
-      }
-    });
-    window.setInterval(() => {
-      this.socket.emit('CMD:ts', this.getCurrentTime());
-    }, 1000);
-  };
-
   isYouTube = () => {
     return getMediaType(this.state.currentMedia) === 'youtube';
   };
@@ -616,7 +693,7 @@ export default class App extends React.Component<null, AppState> {
       return leftVideo.currentTime;
     }
     if (this.isYouTube()) {
-      return this.watchPartyYTPlayer.getCurrentTime();
+      return this.watchPartyYTPlayer?.getCurrentTime();
     }
   };
 
@@ -628,7 +705,7 @@ export default class App extends React.Component<null, AppState> {
       return leftVideo.duration;
     }
     if (this.isYouTube()) {
-      return this.watchPartyYTPlayer.getDuration();
+      return this.watchPartyYTPlayer?.getDuration();
     }
     return 0;
   };
@@ -642,9 +719,10 @@ export default class App extends React.Component<null, AppState> {
     }
     if (this.isYouTube()) {
       return (
-        this.watchPartyYTPlayer.getPlayerState() ===
-          window.YT.PlayerState.PAUSED ||
-        this.watchPartyYTPlayer.getPlayerState() === window.YT.PlayerState.ENDED
+        this.watchPartyYTPlayer?.getPlayerState() ===
+          window.YT.PlayerState?.PAUSED ||
+        this.watchPartyYTPlayer?.getPlayerState() ===
+          window.YT.PlayerState?.ENDED
       );
     }
     return false;
@@ -658,7 +736,7 @@ export default class App extends React.Component<null, AppState> {
       return leftVideo.muted;
     }
     if (this.isYouTube()) {
-      return this.watchPartyYTPlayer.isMuted();
+      return this.watchPartyYTPlayer?.isMuted();
     }
     return false;
   };
@@ -720,7 +798,7 @@ export default class App extends React.Component<null, AppState> {
     if (this.isYouTube()) {
       let url = new window.URL(src);
       let videoId = querystring.parse(url.search.substring(1))['v'];
-      this.watchPartyYTPlayer.cueVideoById(videoId, time);
+      this.watchPartyYTPlayer?.cueVideoById(videoId, time);
     }
   };
 
@@ -743,7 +821,7 @@ export default class App extends React.Component<null, AppState> {
       }
       if (this.isYouTube()) {
         console.log('play yt');
-        this.watchPartyYTPlayer.playVideo();
+        this.watchPartyYTPlayer?.playVideo();
       }
     });
   };
@@ -758,7 +836,7 @@ export default class App extends React.Component<null, AppState> {
       }
       if (this.isYouTube()) {
         console.log('pause');
-        this.watchPartyYTPlayer.pauseVideo();
+        this.watchPartyYTPlayer?.pauseVideo();
       }
     });
   };
@@ -771,7 +849,7 @@ export default class App extends React.Component<null, AppState> {
       leftVideo.currentTime = time;
     }
     if (this.isYouTube()) {
-      this.watchPartyYTPlayer.seekTo(time, true);
+      this.watchPartyYTPlayer?.seekTo(time, true);
     }
   };
 
@@ -794,7 +872,7 @@ export default class App extends React.Component<null, AppState> {
       shouldPlay = leftVideo.paused || leftVideo.ended;
     } else if (this.isYouTube()) {
       shouldPlay =
-        this.watchPartyYTPlayer.getPlayerState() ===
+        this.watchPartyYTPlayer?.getPlayerState() ===
           window.YT.PlayerState.PAUSED ||
         this.getCurrentTime() === this.getDuration();
     }
@@ -857,16 +935,22 @@ export default class App extends React.Component<null, AppState> {
   };
 
   toggleMute = () => {
+    this.setMute(!this.isMuted());
+  };
+
+  setMute = (muted: boolean) => {
     if (this.isVideo()) {
       const leftVideo = document.getElementById(
         'leftVideo'
       ) as HTMLMediaElement;
-      leftVideo.muted = !leftVideo.muted;
+      leftVideo.muted = muted;
     }
     if (this.isYouTube()) {
-      this.watchPartyYTPlayer.isMuted()
-        ? this.watchPartyYTPlayer.unMute()
-        : this.watchPartyYTPlayer.mute();
+      if (muted) {
+        this.watchPartyYTPlayer?.mute();
+      } else {
+        this.watchPartyYTPlayer?.unMute();
+      }
     }
   };
 
@@ -887,6 +971,11 @@ export default class App extends React.Component<null, AppState> {
     this.setState({ myName: data.value });
     this.socket.emit('CMD:name', data.value);
     window.localStorage.setItem('watchparty-username', data.value);
+  };
+
+  updatePicture = (url: string) => {
+    this.setState({ myPicture: url });
+    this.socket.emit('CMD:picture', url);
   };
 
   getMediaDisplayName = (input: string) => {
@@ -915,6 +1004,25 @@ export default class App extends React.Component<null, AppState> {
     const sharer = this.state.participants.find((p) => p.isScreenShare);
     return (
       <React.Fragment>
+        {!this.state.isAutoPlayable && (
+          <Modal inverted basic open>
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <Button
+                primary
+                size="huge"
+                onClick={() => {
+                  this.setState({ isAutoPlayable: true });
+                  this.setMute(false);
+                }}
+                icon
+                labelPosition="left"
+              >
+                <Icon name="sign-in" />
+                Join Party
+              </Button>
+            </div>
+          </Modal>
+        )}
         <div
           style={{
             display: 'flex',
@@ -983,46 +1091,81 @@ export default class App extends React.Component<null, AppState> {
             className="mobileStack"
             style={{
               display: 'flex',
-              alignItems: 'center',
-              flexGrow: 1,
-              marginLeft: '10px',
-              marginTop: '10px',
-              marginBottom: '10px',
+              margin: '10px',
+              marginLeft: 'auto',
             }}
           >
-            <div
-              style={{
-                display: 'flex',
-                width: '300px',
-                flexShrink: 0,
-                marginLeft: 'auto',
-              }}
+            <Popup
+              content="Create a new room with a random URL that you can share with friends"
+              trigger={
+                <Button
+                  fluid
+                  color="blue"
+                  size="medium"
+                  icon
+                  labelPosition="left"
+                  onClick={this.createRoom}
+                >
+                  <Icon name="certificate" />
+                  New Room
+                </Button>
+              }
+            />
+            {!this.state.fbUserID && (
+              <Popup
+                content="Optionally sign in with Facebook to use your profile photo in chat"
+                trigger={
+                  <Button
+                    fluid
+                    size="medium"
+                    icon
+                    labelPosition="left"
+                    onClick={() =>
+                      window.FB.login(
+                        (response: any) => {
+                          window.location.reload();
+                        },
+                        { scope: 'public_profile,email' }
+                      )
+                    }
+                    color="facebook"
+                  >
+                    <Icon name="facebook" />
+                    Sign in
+                  </Button>
+                }
+              />
+            )}
+            {this.state.fbUserID && (
+              <Button
+                fluid
+                size="medium"
+                icon
+                labelPosition="left"
+                onClick={() =>
+                  window.FB.logout((response: any) => {
+                    window.location.reload();
+                  })
+                }
+                color="facebook"
+              >
+                <Icon name="facebook" />
+                Sign out
+              </Button>
+            )}
+            {/* <SettingsModal trigger={<Button fluid inverted color="green" size="medium" icon labelPosition="left"><Icon name="setting" />Settings</Button>} /> */}
+            <Button
+              fluid
+              color="grey"
+              size="medium"
+              icon
+              labelPosition="left"
+              href="https://github.com/howardchung/watchparty"
+              target="_blank"
             >
-              <Button
-                fluid
-                primary
-                size="medium"
-                icon
-                labelPosition="left"
-                onClick={this.createRoom}
-              >
-                <Icon name="certificate" />
-                New Room
-              </Button>
-              {/* <SettingsModal trigger={<Button fluid inverted color="green" size="medium" icon labelPosition="left"><Icon name="setting" />Settings</Button>} /> */}
-              <Button
-                fluid
-                color="grey"
-                size="medium"
-                icon
-                labelPosition="left"
-                href="https://github.com/howardchung/watchparty"
-                target="_blank"
-              >
-                <Icon name="github" />
-                Source
-              </Button>
-            </div>
+              <Icon name="github" />
+              Source
+            </Button>
           </div>
         </div>
         <Divider inverted horizontal>
@@ -1033,27 +1176,6 @@ export default class App extends React.Component<null, AppState> {
         </Divider>
         <Grid stackable celled="internally">
           <Grid.Row>
-            {this.state.state === 'init' && (
-              <div
-                style={{
-                  display: 'flex',
-                  width: '100%',
-                  alignItems: 'flex-start',
-                  justifyContent: 'center',
-                }}
-              >
-                <Button
-                  primary
-                  size="huge"
-                  onClick={this.init}
-                  icon
-                  labelPosition="left"
-                >
-                  <Icon name="sign-in" />
-                  Join Party
-                </Button>
-              </div>
-            )}
             {this.state.state !== 'init' && (
               <Grid.Column width={10} style={{ overflow: 'scroll' }}>
                 <React.Fragment>
@@ -1131,7 +1253,7 @@ export default class App extends React.Component<null, AppState> {
                   </div>
                   {/* <Divider inverted horizontal></Divider> */}
                   <div style={{ height: '4px' }} />
-                  <div style={{ display: 'flex' }}>
+                  <div className="mobileStack" style={{ display: 'flex' }}>
                     {this.state.state !== 'init' && (
                       <SearchComponent
                         setMedia={this.setMedia}
@@ -1234,7 +1356,6 @@ export default class App extends React.Component<null, AppState> {
                       )}
                       {!this.state.loading && !this.state.currentMedia && (
                         <Message
-                          inverted
                           color="yellow"
                           icon="hand point up"
                           header="You're not watching anything!"
@@ -1309,6 +1430,7 @@ export default class App extends React.Component<null, AppState> {
                         className="fullScreenChat"
                         chat={this.state.chat}
                         nameMap={this.state.nameMap}
+                        pictureMap={this.state.pictureMap}
                         socket={this.socket}
                         scrollTimestamp={this.state.scrollTimestamp}
                         getMediaDisplayName={this.getMediaDisplayName}
@@ -1347,6 +1469,7 @@ export default class App extends React.Component<null, AppState> {
                   <Chat
                     chat={this.state.chat}
                     nameMap={this.state.nameMap}
+                    pictureMap={this.state.pictureMap}
                     socket={this.socket}
                     scrollTimestamp={this.state.scrollTimestamp}
                     getMediaDisplayName={this.getMediaDisplayName}
@@ -1450,7 +1573,9 @@ export default class App extends React.Component<null, AppState> {
                             ) : (
                               <img
                                 style={{ height: '100%', borderRadius: '4px' }}
-                                src={getImage(this.state.nameMap[p.id] || p.id)}
+                                src={
+                                  this.state.pictureMap[p.id] || defaultPicture
+                                }
                                 alt=""
                               />
                             )}
@@ -1502,6 +1627,7 @@ export default class App extends React.Component<null, AppState> {
 interface ChatProps {
   chat: ChatMessage[];
   nameMap: StringDict;
+  pictureMap: StringDict;
   socket: any;
   scrollTimestamp: number;
   className?: string;
@@ -1581,6 +1707,7 @@ class Chat extends React.Component<ChatProps> {
             {this.props.chat.map((msg) => (
               <ChatMessage
                 {...msg}
+                pictureMap={this.props.pictureMap}
                 nameMap={this.props.nameMap}
                 formatMessage={this.formatMessage}
               />
@@ -1900,7 +2027,7 @@ function getCurrentSettings(): Settings {
     }
     return settings;
   } catch (e) {
-    console.error(e);
+    console.warn(e);
     return getDefaultSettings();
   }
 }
@@ -1933,15 +2060,17 @@ const getMediaType = (input: string) => {
 
 const ChatMessage = ({
   id,
+  picture,
   timestamp,
   cmd,
   msg,
   nameMap,
+  pictureMap,
   formatMessage,
 }: any) => {
   return (
     <Comment>
-      <Comment.Avatar src={getImage(nameMap[id])} />
+      <Comment.Avatar src={pictureMap[id] || defaultPicture} />
       <Comment.Content>
         <Comment.Author as="a" className="white">
           {nameMap[id] || id}
@@ -2141,29 +2270,9 @@ function getColor(id: string) {
   return colors[colorCache[id]];
 }
 
-function getImage(name: string) {
-  const lower = (name || '').toLowerCase();
-  const getFbPhoto = (fbId: string) =>
-    `https://graph.facebook.com/${fbId}/picture?type=normal`;
-  if (lower === 'howard') {
-    return getFbPhoto('746929384');
-  } else if (lower === 'vy') {
-    return getFbPhoto('1005627144');
-  } else if (lower === 'matt' || lower === 'hollar') {
-    return getFbPhoto('1407126862');
-  } else if (lower === 'al' || lower === 'allison' || lower === 'alacrity') {
-    return getFbPhoto('100003885416987');
-  } else if (lower === 'dani') {
-    return getFbPhoto('100000224524388');
-  } else if (lower === 'aredy') {
-    return getFbPhoto('100005523159165');
-  } else if (lower === 'jess') {
-    return getFbPhoto('10155840487496569');
-  } else if (lower === 'yvonne' || lower === 'eve') {
-    return getFbPhoto('1417572343');
-  }
-  return '/logo192.png';
-}
+//@ts-ignore
+const getFbPhoto = (fbId: string) =>
+  `https://graph.facebook.com/${fbId}/picture?type=normal`;
 
 async function testAutoplay() {
   const result = await canAutoplay.video();

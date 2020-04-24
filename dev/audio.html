@@ -1,0 +1,87 @@
+<body>
+  <audio controls autoplay>
+    <source src="http://212.47.251.184:5902" type="audio/ogg" />
+  </audio>
+</body>
+<script>
+  /*
+const videoRec = document.createElement('audio');
+videoRec.autoplay = true;
+videoRec.controls = true;
+videoRec.id = 'audio';
+videoRec.type = 'audio/ogg; codec=opus';
+videoRec.src = 'http://212.47.251.184:5902';
+document.body.appendChild(videoRec);
+*/
+
+  /*
+const ms = new MediaSource();
+let queue = [];
+let buffSize = 0;
+let first = true;
+
+ms.onsourceopen = () => {
+  console.log('onsourceopen');
+  ms.addSourceBuffer('audio/mp4; codecs=opus');
+  const sourceBuffer = ms.sourceBuffers[0];
+  const updateNext = () => {
+	  if (queue.length) {
+	    console.log('premerge', queue.length, buffSize);
+		const merged = mergeBuffers();
+		console.log('merged', merged.map(num => num.toString(16).padStart(2, '0')));
+		// debugger;
+		try {
+		sourceBuffer.appendBuffer(merged);
+		} catch (e) {
+		console.log(document.getElementById('audio').error);
+		}
+		
+	  }
+	};
+  sourceBuffer.addEventListener('updateend', updateNext);
+  const socket = new WebSocket('ws://212.47.251.184:5001');
+  socket.binaryType = 'arraybuffer';
+	socket.onmessage = (event) => {
+	const buffer = new Uint8Array(event.data);
+	queue.push(buffer);
+	buffSize += buffer.length;
+	if (!sourceBuffer.updating) {
+		updateNext();
+	}
+  }
+};
+ms.onsourceclose = () => {
+  console.log('onsourceclose');
+}
+videoRec.src = window.URL.createObjectURL(ms);
+
+function mergeBuffers() {
+	var merged;
+
+	if (queue.length == 1) {
+		merged = queue[0];
+	} else {
+		merged = new Uint8Array(buffSize);
+
+		var length = queue.length;
+		var offset = 0;
+
+		for (var i = 0; i < length; i++) {
+			var curr = queue[i];
+			if (curr.length <= 0) {
+				continue;
+			}
+			merged.set(curr, offset);
+			offset += curr.length;
+		}
+	}
+
+	queue = [];
+	buffSize = 0;
+	return merged;
+}
+*/
+  //options
+  // mp4mux with mediasource and websockify
+  // ogg with TCP->HTTP forwarder and audio src
+</script>

@@ -28,6 +28,21 @@
     />
   </head>
   <body>
+    <script>
+      window.fbAsyncInit = function () {
+        FB.init({
+          appId: '%REACT_APP_FB_APP_ID%',
+          autoLogAppEvents: true,
+          xfbml: true,
+          version: 'v6.0',
+        });
+      };
+    </script>
+    <script
+      async
+      defer
+      src="https://connect.facebook.net/en_US/sdk.js"
+    ></script>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
     <!--
