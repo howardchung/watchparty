@@ -2252,6 +2252,7 @@ class Controls extends React.Component<ControlsProps> {
             marginTop: 0,
             marginBottom: 0,
             position: 'relative',
+            minWidth: '300px',
           }}
           value={currentTime}
           total={duration}
