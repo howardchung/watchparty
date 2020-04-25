@@ -2489,10 +2489,10 @@ function formatTimestamp(input: any) {
 
 function formatSpeed(input: number) {
   if (input >= 1000000) {
-    return Math.floor(input / 1000000).toFixed(2) + ' MiB/s';
+    return (input / 1000000).toFixed(2) + ' MiB/s';
   }
   if (input >= 1000) {
-    return Math.floor(input / 1000) + ' KiB/s';
+    return (input / 1000).toFixed(0) + ' KiB/s';
   }
   return input + ' B/s';
 }
