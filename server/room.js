@@ -143,7 +143,7 @@ module.exports = class Room {
         this.tsMap[socket.id] = data;
       });
       socket.on('CMD:chat', (data) => {
-        if (data.length > 65536) {
+        if (data && data.length > 65536) {
           // TODO add some validation on client side too so we don't just drop long messages
           return;
         }
