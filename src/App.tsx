@@ -1986,12 +1986,12 @@ class SearchComponent extends React.Component<SearchComponentProps> {
                       let metadata = await response.json();
                       // console.log(metadata);
                       if (
-                        metadata.filter(
+                        metadata.files.filter(
                           (file: any) => file.length > 10 * 1024 * 1024
                         ).length > 1
                       ) {
                         // Multiple files, present user selection
-                        const multiStreamSelection = metadata.map(
+                        const multiStreamSelection = metadata.files.map(
                           (file: any, i: number) => ({
                             ...file,
                             url:

@@ -12,6 +12,7 @@ docker run -d --network=host instrumentisto/coturn \
 # TODO use turnadmin to create username and password
 
 # vbrowser
+curl -fsSL https://get.docker.com | sh
 echo 'version: "2.0"
 services:
   neko:
