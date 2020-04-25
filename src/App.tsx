@@ -1459,7 +1459,7 @@ export default class App extends React.Component<null, AppState> {
                   {this.state.total && (
                     <div>
                       <Progress
-                        size="small"
+                        size="tiny"
                         color="green"
                         inverted
                         value={this.state.downloaded}
@@ -1967,6 +1967,7 @@ class StreamPathSearchResult extends React.Component<
             }
           }}
         >
+          <Label circular empty color={Number(result.seeders) ? 'green' : 'red'} />
           {result.name +
             ' - ' +
             result.size +

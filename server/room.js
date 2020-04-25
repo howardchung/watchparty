@@ -86,21 +86,21 @@ module.exports = class Room {
       io.of(roomId).emit('roster', this.roster);
 
       socket.on('CMD:name', (data) => {
-        if (data.length > 100) {
+        if (data && data.length > 100) {
           return;
         }
         this.nameMap[socket.id] = data;
         io.of(roomId).emit('REC:nameMap', this.nameMap);
       });
       socket.on('CMD:picture', (data) => {
-        if (data.length > 10000) {
+        if (data && data.length > 10000) {
           return;
         }
         this.pictureMap[socket.id] = data;
         io.of(roomId).emit('REC:pictureMap', this.pictureMap);
       });
       socket.on('CMD:host', (data) => {
-        if (data.length > 20000) {
+        if (data && data.length > 20000) {
           return;
         }
         const sharer = this.roster.find((user) => user.isScreenShare);
