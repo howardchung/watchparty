@@ -38,6 +38,7 @@ import canAutoplay from 'can-autoplay';
 //@ts-ignore
 import { parseStringPromise } from 'xml2js';
 import './App.css';
+import { examples } from './examples';
 
 declare global {
   interface Window {
@@ -53,8 +54,7 @@ const serverPath =
   `${window.location.protocol}//${window.location.hostname}${
     process.env.NODE_ENV === 'production' ? '' : ':8080'
   }`;
-let defaultMediaPath =
-  process.env.REACT_APP_MEDIA_PATH || serverPath + '/examples';
+let defaultMediaPath = process.env.REACT_APP_MEDIA_PATH || '';
 let defaultStreamPath = process.env.REACT_APP_STREAM_PATH || '';
 // Load settings from localstorage
 let settings = getCurrentSettings();
@@ -99,7 +99,6 @@ const iceServers = [
 interface AppState {
   state: string;
   currentMedia: string;
-  inputMedia?: string;
   currentMediaPaused: boolean;
   participants: User[];
   chat: ChatMessage[];
@@ -123,13 +122,13 @@ interface AppState {
   total: number;
   speed: number;
   connections: number;
+  multiStreamSelection?: any[];
 }
 
 export default class App extends React.Component<null, AppState> {
   state: AppState = {
     state: 'started',
     currentMedia: '',
-    inputMedia: undefined,
     currentMediaPaused: false,
     participants: [],
     chat: [],
@@ -153,6 +152,7 @@ export default class App extends React.Component<null, AppState> {
     total: 0,
     speed: 0,
     connections: 0,
+    multiStreamSelection: undefined,
   };
   videoRefs: any = {};
   socket: any = null;
@@ -263,31 +263,6 @@ export default class App extends React.Component<null, AppState> {
     };
 
     this.init();
-
-    // Get media list if provided
-    const response = await window.fetch(defaultMediaPath);
-    let results = [];
-    if (defaultMediaPath.includes('s3.')) {
-      // S3-style buckets return data in XML
-      const xml = await response.text();
-      const data = await parseStringPromise(xml);
-      let filtered = data.ListBucketResult.Contents.filter(
-        (file: any) => !file.Key[0].includes('/')
-      );
-      results = filtered.map((file: any) => ({
-        url: defaultMediaPath + '/' + file.Key[0],
-        name: defaultMediaPath + '/' + file.Key[0],
-      }));
-    } else {
-      const data = await response.json();
-      results = data
-        .filter((file: any) => file.type === 'file')
-        .map((file: any) => ({
-          url: file.url || getMediaPathForList(defaultMediaPath) + file.name,
-          name: getMediaPathForList(defaultMediaPath) + file.name,
-        }));
-    }
-    this.setState({ watchOptions: results });
   }
 
   init = (retryCount = 0) => {
@@ -390,9 +365,16 @@ export default class App extends React.Component<null, AppState> {
             this.setState({ downloaded: 0, total: 0, speed: 0 });
             if (currentMedia.includes('/stream?torrent=magnet')) {
               this.progressUpdater = window.setInterval(async () => {
-                const response = await window.fetch(currentMedia.replace('/stream', '/data'));
+                const response = await window.fetch(
+                  currentMedia.replace('/stream', '/data')
+                );
                 const data = await response.json();
-                this.setState({ downloaded: data.downloaded, total: data.total, speed: data.speed, connections: data.connections });
+                this.setState({
+                  downloaded: data.downloaded,
+                  total: data.total,
+                  speed: data.speed,
+                  connections: data.connections,
+                });
               }, 1000);
             }
           }
@@ -1040,9 +1022,16 @@ export default class App extends React.Component<null, AppState> {
   };
 
   setMedia = (e: any, data: DropdownProps) => {
-    setTimeout(() => this.setState({ inputMedia: undefined }), 100);
     this.socket.emit('CMD:host', data.value);
   };
+
+  launchMultiSelect = (data: any) => {
+    this.setState({ multiStreamSelection: data });
+  }
+
+  resetMultiSelect = () => {
+    this.setState({ multiStreamSelection: undefined });
+  }
 
   updateName = (e: any, data: { value: string }) => {
     this.setState({ myName: data.value });
@@ -1085,6 +1074,13 @@ export default class App extends React.Component<null, AppState> {
     const sharer = this.state.participants.find((p) => p.isScreenShare);
     return (
       <React.Fragment>
+        {this.state.multiStreamSelection && (
+          <MultiStreamModal
+            streams={this.state.multiStreamSelection}
+            setMedia={this.setMedia}
+            resetMultiSelect={this.resetMultiSelect}
+          />
+        )}
         {!this.state.isAutoPlayable && (
           <Modal inverted basic open>
             <div style={{ display: 'flex', justifyContent: 'center' }}>
@@ -1262,82 +1258,12 @@ export default class App extends React.Component<null, AppState> {
             {this.state.state !== 'init' && (
               <Grid.Column width={10} style={{ overflow: 'scroll' }}>
                 <React.Fragment>
-                  <div style={{ position: 'relative' }}>
-                    <div style={{ display: 'flex' }}>
-                      <Input
-                        style={{ flexGrow: 1 }}
-                        inverted
-                        fluid
-                        focus
-                        id="searchInput"
-                        onChange={(e: any) =>
-                          this.setState({ inputMedia: e.target.value })
-                        }
-                        onFocus={(e: any) => {
-                          this.setState({
-                            inputMedia: '',
-                          });
-                          e.target.select();
-                        }}
-                        onBlur={() =>
-                          setTimeout(
-                            () => this.setState({ inputMedia: undefined }),
-                            100
-                          )
-                        }
-                        onKeyPress={(e: any) =>
-                          e.key === 'Enter' &&
-                          this.setMedia(e, {
-                            value:
-                              this.state.inputMedia || this.state.currentMedia,
-                          })
-                        }
-                        icon={
-                          this.state.inputMedia ? (
-                            <Icon
-                              onClick={(e: any) =>
-                                this.setMedia(e, {
-                                  value: this.state.inputMedia,
-                                })
-                              }
-                              name="arrow right"
-                              inverted
-                              circular
-                              link
-                            />
-                          ) : null
-                        }
-                        label="Now Watching:"
-                        placeholder="Enter URL (YouTube, video file, etc.), or use search"
-                        value={
-                          this.state.inputMedia || this.getMediaDisplayName(this.state.currentMedia)
-                        }
-                      />
-                    </div>
-                    {this.state.inputMedia !== undefined && (
-                      <Menu
-                        fluid
-                        vertical
-                        style={{
-                          position: 'absolute',
-                          top: '22px',
-                          maxHeight: '300px',
-                          overflow: 'scroll',
-                          zIndex: 1001,
-                        }}
-                      >
-                        {this.state.watchOptions.map((option: any) => (
-                          <Menu.Item
-                            onClick={(e: any) =>
-                              this.setMedia(e, { value: option.url })
-                            }
-                          >
-                            {option.url}
-                          </Menu.Item>
-                        ))}
-                      </Menu>
-                    )}
-                  </div>
+                  <ComboBox
+                    setMedia={this.setMedia}
+                    currentMedia={this.state.currentMedia}
+                    getMediaDisplayName={this.getMediaDisplayName}
+                    launchMultiSelect={this.launchMultiSelect}
+                  />
                   {/* <Divider inverted horizontal></Divider> */}
                   <div style={{ height: '4px' }} />
                   <div className="mobileStack" style={{ display: 'flex' }}>
@@ -1347,12 +1273,17 @@ export default class App extends React.Component<null, AppState> {
                         type={'youtube'}
                       />
                     )}
-                    {/* this.state.state !== 'init' && <SearchComponent setMedia={this.setMedia} type={'mediaServer'} mediaPath={settings.mediaPath} /> */}
-                    {this.state.state !== 'init' && settings.streamPath && (
+                    {false && settings.mediaPath && (
+                      <SearchComponent
+                        setMedia={this.setMedia}
+                        type={'mediaServer'}
+                      />
+                    )}
+                    {false && settings.streamPath && (
                       <SearchComponent
                         setMedia={this.setMedia}
                         type={'searchServer'}
-                        streamPath={settings.streamPath}
+                        launchMultiSelect={this.launchMultiSelect}
                       />
                     )}
                     {this.screenShareStream && (
@@ -1526,17 +1457,29 @@ export default class App extends React.Component<null, AppState> {
                       />
                     )}
                   </div>
-                  {this.state.total && <div><Progress
-                    size="small"
-                    color="green"
-                    inverted
-                    value={this.state.downloaded}
-                    total={this.state.total}
-                    active
-                    // indicating
-                    label={(this.state.downloaded / this.state.total * 100).toFixed(2) + '% - ' + formatSpeed(this.state.speed) + ' - ' + this.state.connections + ' connections'}
-                  ></Progress>
-                  </div>}
+                  {this.state.total && (
+                    <div>
+                      <Progress
+                        size="small"
+                        color="green"
+                        inverted
+                        value={this.state.downloaded}
+                        total={this.state.total}
+                        active
+                        // indicating
+                        label={
+                          Math.min((this.state.downloaded / this.state.total) *
+                            100, 100
+                          ).toFixed(2) +
+                          '% - ' +
+                          formatSpeed(this.state.speed) +
+                          ' - ' +
+                          this.state.connections +
+                          ' connections'
+                        }
+                      ></Progress>
+                    </div>
+                  )}
                 </React.Fragment>
               </Grid.Column>
             )}
@@ -1844,83 +1787,55 @@ class Chat extends React.Component<ChatProps> {
 
 interface SearchComponentProps {
   setMedia: Function;
-  streamPath?: string;
-  mediaPath?: string;
   type?: 'youtube' | 'mediaServer' | 'searchServer';
+  launchMultiSelect?: Function;
 }
 
 class SearchComponent extends React.Component<SearchComponentProps> {
   state = {
     results: [] as SearchResult[],
-    watchOptions: [],
     resetDropdown: Number(new Date()),
     loading: false,
-    query: '',
-    multiStreamSelection: undefined,
   };
   debounced: any = null;
 
-  async componentDidMount() {
-    if (this.props.type === 'mediaServer') {
-      let watchOptions: SearchResult[] = [];
-      const line = this.props.mediaPath;
-      const response = await window.fetch(line as any);
-      const data = await response.json();
-      const results = data
-        .filter((file: any) => file.type === 'file')
-        .map((file: any) => ({
-          url: file.url || getMediaPathForList(line as any) + file.name,
-          name: file.name,
-        }));
-      watchOptions = [...watchOptions, ...results];
-      this.setState({ watchOptions: watchOptions, results: watchOptions });
-      // console.log(watchOptions);
-    }
-  }
-
-  doSearch = (e: any) => {
-    this.setState({ loading: true, query: e.target.value });
+  doSearch = async (e: any) => {
     e.persist();
-    if (this.props.type === 'mediaServer') {
-      this.setState({
-        loading: false,
-        results: this.state.watchOptions.filter((option: SearchResult) =>
-          option.name.toLowerCase().includes(e.target.value.toLowerCase())
-        ),
-      });
-      return;
-    }
     if (!this.debounced) {
       this.debounced = debounce(async () => {
-        let searchUrl =
-          this.props.streamPath +
-          '/search?q=' +
-          encodeURIComponent(this.state.query);
+        this.setState({ loading: true });
+        let query = e.target.value;
+        let results = [];
         if (this.props.type === 'youtube') {
-          searchUrl =
-            serverPath + '/youtube?q=' + encodeURIComponent(this.state.query);
+          results = await getYouTubeResults(query);
+        } else if (this.props.type === 'mediaServer') {
+          results = await getMediaPathResults(query);
+        } else {
+          results = await getStreamPathResults(query);
         }
-        const response = await window.fetch(searchUrl);
-        const data = await response.json();
-        this.setState({ loading: false, results: data });
+        this.setState({ loading: false, results });
       }, 500);
     }
     this.debounced();
   };
 
-  resetMultiStream = () => {
-    this.setState({ multiStreamSelection: null });
+  setMedia = (e: any, data: DropdownProps) => {
+    window.setTimeout(
+      () => this.setState({ resetDropdown: Number(new Date()) }),
+      100
+    );
+    this.props.setMedia(e, data);
   };
 
   render() {
-    const { setMedia } = this.props;
+    const setMedia = this.setMedia;
     let placeholder = 'Search for streams';
     let icon = 'search';
     if (this.props.type === 'youtube') {
       placeholder = 'Search YouTube';
       icon = 'youtube';
     } else if (this.props.type === 'mediaServer') {
-      placeholder = 'Files on ' + this.props.mediaPath;
+      placeholder = 'Search ' + ('files' || settings.mediaPath);
       icon = 'film';
     }
     if (this.state.loading) {
@@ -1928,13 +1843,6 @@ class SearchComponent extends React.Component<SearchComponentProps> {
     }
     return (
       <React.Fragment>
-        {this.state.multiStreamSelection && (
-          <MultiStreamModal
-            streams={this.state.multiStreamSelection}
-            setMedia={setMedia}
-            resetMultiStream={this.resetMultiStream}
-          />
-        )}
         <Dropdown
           key={this.state.resetDropdown}
           fluid
@@ -1945,7 +1853,7 @@ class SearchComponent extends React.Component<SearchComponentProps> {
           search={(() => {}) as any}
           text={placeholder}
           onSearchChange={this.doSearch}
-          onBlur={() => this.setState({ results: this.state.watchOptions })}
+          // onBlur={() => this.setState({ results: this.state.watchOptions })}
           //searchQuery={this.state.query}
           //loading={this.state.loading}
         >
@@ -1954,98 +1862,15 @@ class SearchComponent extends React.Component<SearchComponentProps> {
               {this.state.results.map((result: SearchResult) => {
                 if (this.props.type === 'youtube') {
                   return (
-                    <Dropdown.Item
-                      children={
-                        <div style={{ display: 'flex', alignItems: 'center' }}>
-                          <img
-                            style={{ height: '40px' }}
-                            src={result.img}
-                            alt={result.name}
-                          />
-                          <div style={{ marginLeft: '5px' }}>
-                            {decodeEntities(result.name)}
-                          </div>
-                        </div>
-                      }
-                      onClick={(e) => {
-                        setMedia(e, { value: result.url });
-                        this.setState({ resetDropdown: Number(new Date()) });
-                      }}
-                    />
+                    <YouTubeSearchResult {...result} setMedia={setMedia} />
                   );
                 } else if (this.props.type === 'mediaServer') {
                   return (
-                    <Dropdown.Item
-                      text={result.name}
-                      onClick={(e) => {
-                        setMedia(e, { value: result.url });
-                        this.setState({
-                          results: this.state.watchOptions,
-                          resetDropdown: Number(new Date()),
-                        });
-                      }}
-                    />
+                    <MediaPathSearchResult {...result} setMedia={setMedia} />
                   );
                 }
                 return (
-                  <Dropdown.Item
-                    label={{
-                      color: Number(result.seeders) ? 'green' : 'red',
-                      empty: true,
-                      circular: true,
-                    }}
-                    text={
-                      result.name +
-                      ' - ' +
-                      result.size +
-                      ' - ' +
-                      result.seeders +
-                      ' peers'
-                    }
-                    onClick={async (e) => {
-                      this.setState({
-                        resetDropdown: Number(new Date()),
-                        loading: true,
-                      });
-                      let response = await window.fetch(
-                        this.props.streamPath +
-                          '/data?torrent=' +
-                          encodeURIComponent(result.magnet)
-                      );
-                      let metadata = await response.json();
-                      // console.log(metadata);
-                      if (
-                        metadata.files.filter(
-                          (file: any) => file.length > 10 * 1024 * 1024
-                        ).length > 1
-                      ) {
-                        // Multiple files, present user selection
-                        const multiStreamSelection = metadata.files.map(
-                          (file: any, i: number) => ({
-                            ...file,
-                            url:
-                              this.props.streamPath +
-                              '/stream?torrent=' +
-                              encodeURIComponent(result.magnet) +
-                              '&fileIndex=' +
-                              i,
-                          })
-                        );
-                        multiStreamSelection.sort((a: any, b: any) =>
-                          a.name.localeCompare(b.name)
-                        );
-                        this.setState({ multiStreamSelection });
-                      } else {
-                        setMedia(e, {
-                          value:
-                            this.props.streamPath +
-                            '/stream?torrent=' +
-                            encodeURIComponent(result.magnet),
-                        });
-                      }
-                      this.setState({ loading: false });
-                    }}
-                  />
+                  <StreamPathSearchResult {...result} setMedia={setMedia} launchMultiSelect={this.props.launchMultiSelect as Function} />
                 );
               })}
             </Dropdown.Menu>
@@ -2056,10 +1881,298 @@ class SearchComponent extends React.Component<SearchComponentProps> {
   }
 }
 
-const MultiStreamModal = ({ streams, setMedia, resetMultiStream }: any) => (
-  <Modal inverted basic open closeIcon onClose={resetMultiStream}>
+const YouTubeSearchResult = (props: SearchResult & { setMedia: Function }) => {
+  const result = props;
+  const setMedia = props.setMedia;
+  return (
+    <Menu.Item
+      onClick={(e) => {
+        setMedia(e, { value: result.url });
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center' }}>
+        <img style={{ height: '40px' }} src={result.img} alt={result.name} />
+        <div style={{ marginLeft: '5px' }}>{decodeEntities(result.name)}</div>
+      </div>
+    </Menu.Item>
+  );
+};
+
+const MediaPathSearchResult = (
+  props: SearchResult & { setMedia: Function }
+) => {
+  const result = props;
+  const setMedia = props.setMedia;
+  return (
+    <Menu.Item
+      onClick={(e) => {
+        setMedia(e, { value: result.url });
+      }}
+    >
+      {result.name}
+    </Menu.Item>
+  );
+};
+
+class StreamPathSearchResult extends React.Component<
+  SearchResult & { setMedia: Function, launchMultiSelect: Function }
+> {
+  render() {
+    const result = this.props;
+    const setMedia = this.props.setMedia;
+    return (
+      <React.Fragment>
+        <Menu.Item
+          onClick={async (e) => {
+            this.props.launchMultiSelect([]);
+            let response = await window.fetch(
+              settings.streamPath +
+                '/data?torrent=' +
+                encodeURIComponent(result.magnet!)
+            );
+            let metadata = await response.json();
+            // console.log(metadata);
+            if (
+              metadata.files.filter(
+                (file: any) => file.length > 10 * 1024 * 1024
+              ).length > 1
+            ) {
+              // Multiple large files, present user selection
+              const multiStreamSelection = metadata.files.map(
+                (file: any, i: number) => ({
+                  ...file,
+                  url:
+                    settings.streamPath +
+                    '/stream?torrent=' +
+                    encodeURIComponent(result.magnet!) +
+                    '&fileIndex=' +
+                    i,
+                })
+              );
+              multiStreamSelection.sort((a: any, b: any) =>
+                a.name.localeCompare(b.name)
+              );
+              this.props.launchMultiSelect(multiStreamSelection);
+            } else {
+              this.props.launchMultiSelect(undefined);
+              setMedia(e, {
+                value:
+                  settings.streamPath +
+                  '/stream?torrent=' +
+                  encodeURIComponent(result.magnet!),
+              });
+            }
+          }}
+        >
+          {result.name +
+            ' - ' +
+            result.size +
+            ' - ' +
+            result.seeders +
+            ' peers'}
+        </Menu.Item>
+      </React.Fragment>
+    );
+  }
+}
+
+interface ComboBoxProps {
+  setMedia: Function;
+  currentMedia: string;
+  getMediaDisplayName: Function;
+  launchMultiSelect: Function;
+}
+
+class ComboBox extends React.Component<ComboBoxProps> {
+  state = {
+    inputMedia: undefined,
+    results: undefined,
+    loading: false,
+  };
+  debounced: any = null;
+
+  setMedia = (e: any, data: DropdownProps) => {
+    window.setTimeout(() => this.setState({ inputMedia: undefined, results: undefined }), 100);
+    this.props.setMedia(e, data);
+  };
+
+  doSearch = async (e: any) => {
+    let query = e.target.value;
+    this.setState({ inputMedia: query });
+    e.persist();
+    if (!this.debounced) {
+      this.debounced = debounce(async () => {
+        this.setState({ loading: true });
+        query = e.target.value;
+        /* 
+          If input starts with http, probably user is entering their own URL. Don't show anything
+          If input is empty
+            If we have a mediaPath use that for results
+            Else show the default list of demo videos
+          If input is anything else:
+            If we have a stream server use that for results
+            Else search YouTube
+        */
+        let results: JSX.Element[] | undefined = undefined;
+        if (query && query.startsWith('http')) {
+          results = undefined;
+        } else if (query === '') {
+          if (settings.mediaPath) {
+            const data = await getMediaPathResults(query);
+            results = data.map((result) => (
+              <MediaPathSearchResult {...result} setMedia={this.setMedia} />
+            ));
+          } else {
+            results = examples.map((option: any) => (
+              <Menu.Item
+                onClick={(e: any) => this.setMedia(e, { value: option.url })}
+              >
+                {option.url}
+              </Menu.Item>
+            ));
+          }
+        } else {
+          if (query && query.length >= 2) {
+            if (settings.streamPath) {
+              const data = await getStreamPathResults(query);
+              results = data.map((result) => (
+                <StreamPathSearchResult {...result} setMedia={this.setMedia} launchMultiSelect={this.props.launchMultiSelect} />
+              ));
+            } else {
+              const data = await getYouTubeResults(query);
+              results = data.map((result) => (
+                <YouTubeSearchResult {...result} setMedia={this.setMedia} />
+              ));
+            }
+          }
+        }
+        this.setState({ loading: false, results });
+      }, 500);
+    }
+    this.debounced();
+  };
+
+  render() {
+    const { currentMedia, getMediaDisplayName } = this.props;
+    const { results } = this.state;
+    return (
+      <div style={{ position: 'relative' }}>
+        <div style={{ display: 'flex' }}>
+          <Input
+            style={{ flexGrow: 1 }}
+            inverted
+            fluid
+            focus
+            onChange={this.doSearch}
+            onFocus={(e: any) => {
+              this.setState({
+                inputMedia: getMediaDisplayName(currentMedia),
+              });
+              e.target.select();
+            }}
+            onBlur={() =>
+              setTimeout(() => this.setState({ inputMedia: undefined, results: undefined }), 100)
+            }
+            onKeyPress={(e: any) => {
+              if (e.key === 'Enter') {
+                this.setMedia(e, {
+                  value: this.state.inputMedia,
+                });
+              }
+            }}
+            icon={
+              <Icon
+                onClick={(e: any) =>
+                  this.setMedia(e, {
+                    value: this.state.inputMedia,
+                  })
+                }
+                name="arrow right"
+                circular
+                link
+              />
+            }
+            loading={this.state.loading}
+            label={"Now Watching:"}
+            placeholder="Enter URL (YouTube, video file, etc.), or enter search term"
+            value={
+              this.state.inputMedia !== undefined
+                ? this.state.inputMedia
+                : getMediaDisplayName(currentMedia)
+            }
+          />
+        </div>
+        {Boolean(results) && (
+          <Menu
+            fluid
+            vertical
+            style={{
+              position: 'absolute',
+              top: '22px',
+              maxHeight: '250px',
+              overflow: 'scroll',
+              zIndex: 1001,
+            }}
+          >
+            {results}
+          </Menu>
+        )}
+      </div>
+    );
+  }
+}
+
+async function getMediaPathResults(query: string): Promise<SearchResult[]> {
+  // Get media list if provided
+  const response = await window.fetch(defaultMediaPath);
+  let results: SearchResult[] = [];
+  if (defaultMediaPath.includes('s3.')) {
+    // S3-style buckets return data in XML
+    const xml = await response.text();
+    const data = await parseStringPromise(xml);
+    let filtered = data.ListBucketResult.Contents.filter(
+      (file: any) => !file.Key[0].includes('/')
+    );
+    results = filtered.map((file: any) => ({
+      url: defaultMediaPath + '/' + file.Key[0],
+      name: defaultMediaPath + '/' + file.Key[0],
+    }));
+  } else {
+    const data = await response.json();
+    results = data
+      .filter((file: any) => file.type === 'file')
+      .map((file: any) => ({
+        url: file.url || getMediaPathForList(defaultMediaPath) + file.name,
+        name: getMediaPathForList(defaultMediaPath) + file.name,
+      }));
+  }
+  results = results.filter((option: SearchResult) =>
+    option.name.toLowerCase().includes(query.toLowerCase())
+  );
+  return results;
+}
+
+async function getStreamPathResults(query: string): Promise<SearchResult[]> {
+  const response = await window.fetch(
+    settings.streamPath + '/search?q=' + encodeURIComponent(query)
+  );
+  const data = await response.json();
+  return data;
+}
+
+async function getYouTubeResults(query: string): Promise<SearchResult[]> {
+  const response = await window.fetch(
+    serverPath + '/youtube?q=' + encodeURIComponent(query)
+  );
+  const data = await response.json();
+  return data;
+}
+
+const MultiStreamModal = ({ streams, setMedia, resetMultiSelect }: { streams: any[], setMedia: Function, resetMultiSelect: Function }) => (
+  <Modal inverted basic open closeIcon onClose={resetMultiSelect as any}>
     <Modal.Header>Select a file</Modal.Header>
     <Modal.Content>
+      {streams.length === 0 && <Loader />}
       {streams && (
         <List inverted>
           {streams.map((file: any) => (
@@ -2070,7 +2183,7 @@ const MultiStreamModal = ({ streams, setMedia, resetMultiStream }: any) => (
                   as="a"
                   onClick={() => {
                     setMedia(null, { value: file.url });
-                    resetMultiStream();
+                    resetMultiSelect();
                   }}
                 >
                   {file.name}
@@ -2367,10 +2480,10 @@ function formatTimestamp(input: any) {
 
 function formatSpeed(input: number) {
   if (input >= 1000000) {
-    return Math.floor(input/1000000) + ' MiB/s';
+    return Math.floor(input / 1000000).toFixed(2) + ' MiB/s';
   }
   if (input >= 1000) {
-    return Math.floor(input/1000) + ' KiB/s';
+    return Math.floor(input / 1000) + ' KiB/s';
   }
   return input + ' B/s';
 }

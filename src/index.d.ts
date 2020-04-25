@@ -19,10 +19,10 @@ interface ChatMessage {
 interface SearchResult {
   name: string;
   url: string;
-  size: string;
-  seeders: string;
-  magnet: string;
-  img: string;
+  size?: string;
+  seeders?: string;
+  magnet?: string;
+  img?: string;
 }
 
 interface Settings {
