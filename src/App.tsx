@@ -22,7 +22,8 @@ import {
   Menu,
   Popup,
 } from 'semantic-ui-react';
-import './App.css';
+//@ts-ignore
+import { Slider } from 'react-semantic-ui-range';
 // import { v4 as uuidv4 } from 'uuid';
 import querystring from 'querystring';
 import { generateName } from './generateName';
@@ -36,6 +37,7 @@ import io from 'socket.io-client';
 import canAutoplay from 'can-autoplay';
 //@ts-ignore
 import { parseStringPromise } from 'xml2js';
+import './App.css';
 
 declare global {
   interface Window {
@@ -957,6 +959,30 @@ export default class App extends React.Component<null, AppState> {
     }
   };
 
+  setVolume = (volume: number) => {
+    if (this.isVideo()) {
+      const leftVideo = document.getElementById(
+        'leftVideo'
+      ) as HTMLMediaElement;
+      leftVideo.volume = volume;
+    }
+    if (this.isYouTube()) {
+      // TODO
+    }
+  };
+
+  getVolume = () => {
+    if (this.isVideo()) {
+      const leftVideo = document.getElementById(
+        'leftVideo'
+      ) as HTMLMediaElement;
+      return leftVideo.volume;
+    }
+    if (this.isYouTube()) {
+      // TODO
+    }
+  };
+
   toggleSubtitle = () => {
     const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
     if (leftVideo.textTracks[0]) {
@@ -1422,6 +1448,8 @@ export default class App extends React.Component<null, AppState> {
                           fullScreen={this.fullScreen}
                           toggleMute={this.toggleMute}
                           toggleSubtitle={this.toggleSubtitle}
+                          setVolume={this.setVolume}
+                          getVolume={this.getVolume}
                           paused={this.isPaused()}
                           muted={this.isMuted()}
                           subtitled={this.isSubtitled()}
@@ -2110,9 +2138,15 @@ interface ControlsProps {
   muted: boolean;
   subtitled: boolean;
   currentTime: number;
+  getVolume: Function;
+  setVolume: Function;
 }
 class Controls extends React.Component<ControlsProps> {
-  state = { showTimestamp: false, currTimestamp: 0, posTimestamp: 0 };
+  state = {
+    showTimestamp: false,
+    currTimestamp: 0,
+    posTimestamp: 0,
+  };
 
   onMouseOver = () => {
     // console.log('mouseover');
@@ -2154,7 +2188,6 @@ class Controls extends React.Component<ControlsProps> {
       <div className="controls">
         <Icon
           size="large"
-          bordered
           onClick={togglePlay}
           className="control action"
           name={paused ? 'play' : 'pause'}
@@ -2199,32 +2232,42 @@ class Controls extends React.Component<ControlsProps> {
         <div className="control">{formatTimestamp(duration)}</div>
         <Icon
           size="large"
-          bordered
           onClick={toggleSubtitle}
           className="control action"
           name={subtitled ? 'closed captioning' : 'closed captioning outline'}
         />
         <Icon
           size="large"
-          bordered
           onClick={() => fullScreen(false)}
           className="control action"
           name="window maximize outline"
         />
         <Icon
           size="large"
-          bordered
           onClick={() => fullScreen(true)}
           className="control action"
           name="expand"
         />
         <Icon
           size="large"
-          bordered
           onClick={toggleMute}
           className="control action"
           name={muted ? 'volume off' : 'volume up'}
         />
+        <div style={{ width: '100px', marginRight: '10px' }}>
+          <Slider
+            value={this.props.getVolume()}
+            color="blue"
+            settings={{
+              min: 0,
+              max: 1,
+              step: 0.01,
+              onChange: (value: number) => {
+                this.props.setVolume(value);
+              },
+            }}
+          />
+        </div>
       </div>
     );
   }
