@@ -799,7 +799,7 @@ export default class App extends React.Component<null, AppState> {
         const subtitlePath = src.slice(0, src.lastIndexOf('/') + 1);
         // Expect subtitle name to be file name + .srt
         subtitleSrc =
-          subtitlePath + 'subtitles/' + this.getMediaDisplayName(src) + '.srt';
+          subtitlePath + 'subtitles/' + this.getFileName(src) + '.srt';
       }
       if (subtitleSrc) {
         const response = await window.fetch(subtitleSrc);
@@ -1046,6 +1046,10 @@ export default class App extends React.Component<null, AppState> {
       return magnetParsed.name;
     }
     // Get the filename out of the URL
+    return input;
+  };
+
+  getFileName = (input: string) => {
     return input.split('/').slice(-1)[0];
   };
 
@@ -1287,7 +1291,7 @@ export default class App extends React.Component<null, AppState> {
                           top: '22px',
                           maxHeight: '300px',
                           overflow: 'scroll',
-                          zIndex: 20,
+                          zIndex: 1001,
                         }}
                       >
                         {this.state.watchOptions.map((option: any) => (

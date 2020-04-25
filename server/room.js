@@ -100,7 +100,7 @@ module.exports = class Room {
         io.of(roomId).emit('REC:pictureMap', this.pictureMap);
       });
       socket.on('CMD:host', (data) => {
-        if (data.length > 10000) {
+        if (data.length > 20000) {
           return;
         }
         const sharer = this.roster.find((user) => user.isScreenShare);
