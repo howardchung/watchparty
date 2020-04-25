@@ -1389,6 +1389,7 @@ export default class App extends React.Component<null, AppState> {
                       />
                     )}
                   </div>
+                  <div style={{ height: '4px' }} />
                   {(this.state.loading || !this.state.currentMedia) && (
                     <Segment
                       inverted
