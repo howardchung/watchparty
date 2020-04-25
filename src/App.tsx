@@ -53,7 +53,6 @@ const serverPath =
   `${window.location.protocol}//${window.location.hostname}${
     process.env.NODE_ENV === 'production' ? '' : ':8080'
   }`;
-const defaultPicture = '/logo192.png';
 let defaultMediaPath =
   process.env.REACT_APP_MEDIA_PATH || serverPath + '/examples';
 let defaultStreamPath = process.env.REACT_APP_STREAM_PATH || '';
@@ -72,6 +71,10 @@ const getMediaPathForList = (list: string) => {
   }
   // Nginx servers use the same mediapath as list, add trailing /
   return list + '/';
+};
+
+const getDefaultPicture = (name: string, background = 'a0a0a0') => {
+  return `https://ui-avatars.com/api/?name=${name}&background=${background}&size=256&color=ffffff`;
 };
 
 const iceServers = [
@@ -768,7 +771,7 @@ export default class App extends React.Component<null, AppState> {
       try {
         const current = this.watchPartyYTPlayer?.getOption('captions', 'track');
         return Boolean(current && current.languageCode);
-      } catch(e) {
+      } catch (e) {
         console.warn(e);
         return false;
       }
@@ -991,7 +994,9 @@ export default class App extends React.Component<null, AppState> {
 
   toggleSubtitle = () => {
     if (this.isVideo()) {
-      const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
+      const leftVideo = document.getElementById(
+        'leftVideo'
+      ) as HTMLMediaElement;
       if (leftVideo.textTracks[0]) {
         leftVideo.textTracks[0].mode =
           leftVideo.textTracks[0].mode === 'showing' ? 'hidden' : 'showing';
@@ -1005,7 +1010,10 @@ export default class App extends React.Component<null, AppState> {
         this.watchPartyYTPlayer?.setOption('captions', 'track', {});
       } else {
         this.watchPartyYTPlayer?.setOption('captions', 'reload', true);
-        const tracks = this.watchPartyYTPlayer?.getOption('captions', 'tracklist');
+        const tracks = this.watchPartyYTPlayer?.getOption(
+          'captions',
+          'tracklist'
+        );
         this.watchPartyYTPlayer?.setOption('captions', 'track', tracks[0]);
       }
     }
@@ -1246,7 +1254,9 @@ export default class App extends React.Component<null, AppState> {
                           this.setState({ inputMedia: e.target.value })
                         }
                         onFocus={(e: any) => {
-                          this.setState({ inputMedia: this.state.currentMedia });
+                          this.setState({
+                            inputMedia: this.state.currentMedia,
+                          });
                           e.target.select();
                         }}
                         onBlur={() =>
@@ -1635,7 +1645,11 @@ export default class App extends React.Component<null, AppState> {
                               <img
                                 style={{ height: '100%', borderRadius: '4px' }}
                                 src={
-                                  this.state.pictureMap[p.id] || defaultPicture
+                                  this.state.pictureMap[p.id] ||
+                                  getDefaultPicture(
+                                    this.state.nameMap[p.id],
+                                    getColorHex(p.id)
+                                  )
                                 }
                                 alt=""
                               />
@@ -1653,6 +1667,7 @@ export default class App extends React.Component<null, AppState> {
                               image
                               size="mini"
                               color={getColor(p.id) as any}
+                              style={{ lineHeight: 'normal' }}
                             >
                               <div
                                 title={this.state.nameMap[p.id] || p.id}
@@ -2138,7 +2153,9 @@ const ChatMessage = ({
 }: any) => {
   return (
     <Comment>
-      <Comment.Avatar src={pictureMap[id] || defaultPicture} />
+      <Comment.Avatar
+        src={pictureMap[id] || getDefaultPicture(nameMap[id], getColorHex(id))}
+      />
       <Comment.Content>
         <Comment.Author as="a" className="white">
           {nameMap[id] || id}
@@ -2351,6 +2368,25 @@ function getColor(id: string) {
   }
   colorCache[id] = Math.abs(hashString(id)) % colors.length;
   return colors[colorCache[id]];
+}
+
+function getColorHex(id: string) {
+  let mappings: StringDict = {
+    red: 'B03060',
+    orange: 'FE9A76',
+    yellow: 'FFD700',
+    olive: '32CD32',
+    green: '016936',
+    teal: '008080',
+    blue: '0E6EB8',
+    violet: 'EE82EE',
+    purple: 'B413EC',
+    pink: 'FF1493',
+    brown: 'A52A2A',
+    grey: 'A0A0A0',
+    black: '000000',
+  };
+  return mappings[getColor(id)];
 }
 
 // const getFbPhoto = (fbId: string) =>
