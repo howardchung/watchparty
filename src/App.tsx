@@ -94,7 +94,6 @@ const iceServers = [
 
 // TODO twitch
 // TODO playlists
-// TODO fix race condition where search results return out of order
 
 interface AppState {
   state: string;
@@ -1796,6 +1795,7 @@ class SearchComponent extends React.Component<SearchComponentProps> {
     results: [] as SearchResult[],
     resetDropdown: Number(new Date()),
     loading: false,
+    lastResultTimestamp: Number(new Date()),
   };
   debounced: any = null;
 
@@ -1806,6 +1806,7 @@ class SearchComponent extends React.Component<SearchComponentProps> {
         this.setState({ loading: true });
         let query = e.target.value;
         let results = [];
+        let timestamp = Number(new Date());
         if (this.props.type === 'youtube') {
           results = await getYouTubeResults(query);
         } else if (this.props.type === 'mediaServer') {
@@ -1813,7 +1814,9 @@ class SearchComponent extends React.Component<SearchComponentProps> {
         } else {
           results = await getStreamPathResults(query);
         }
-        this.setState({ loading: false, results });
+        if (timestamp > this.state.lastResultTimestamp) {
+          this.setState({ loading: false, results, lastResultTimestamp: timestamp });
+        }
       }, 500);
     }
     this.debounced();
@@ -1988,6 +1991,7 @@ class ComboBox extends React.Component<ComboBoxProps> {
     inputMedia: undefined,
     results: undefined,
     loading: false,
+    lastResultTimestamp: Number(new Date()),
   };
   debounced: any = null;
 
@@ -2004,6 +2008,7 @@ class ComboBox extends React.Component<ComboBoxProps> {
       this.debounced = debounce(async () => {
         this.setState({ loading: true });
         query = e.target.value;
+        let timestamp = Number(new Date());
         /* 
           If input starts with http, probably user is entering their own URL. Don't show anything
           If input is empty
@@ -2046,7 +2051,9 @@ class ComboBox extends React.Component<ComboBoxProps> {
             }
           }
         }
-        this.setState({ loading: false, results });
+        if (timestamp > this.state.lastResultTimestamp) {
+          this.setState({ loading: false, results, lastResultTimestamp: timestamp });
+        }
       }, 500);
     }
     this.debounced();
@@ -2088,8 +2095,9 @@ class ComboBox extends React.Component<ComboBoxProps> {
                   })
                 }
                 name="arrow right"
-                circular
                 link
+                circular
+                //bordered
               />
             }
             loading={this.state.loading}
