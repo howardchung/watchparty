@@ -322,7 +322,9 @@ export default class App extends React.Component<null, AppState> {
         },
         () => {
           if (this.state.isScreenSharingFile) {
-            console.log('skipping REC:host video since fileshare is using leftVideo');
+            console.log(
+              'skipping REC:host video since fileshare is using leftVideo'
+            );
             return;
           }
           // Stop all players
