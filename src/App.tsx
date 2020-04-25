@@ -119,6 +119,10 @@ interface AppState {
   isFBReady: boolean;
   isYouTubeReady: boolean;
   isAutoPlayable: boolean;
+  downloaded: number;
+  total: number;
+  speed: number;
+  connections: number;
 }
 
 export default class App extends React.Component<null, AppState> {
@@ -145,6 +149,10 @@ export default class App extends React.Component<null, AppState> {
     isFBReady: false,
     isYouTubeReady: false,
     isAutoPlayable: true,
+    downloaded: 0,
+    total: 0,
+    speed: 0,
+    connections: 0,
   };
   videoRefs: any = {};
   socket: any = null;
@@ -157,6 +165,7 @@ export default class App extends React.Component<null, AppState> {
   screenShareStream?: MediaStream;
   screenHostPC: PCDict = {};
   screenSharePC?: RTCPeerConnection;
+  progressUpdater?: number;
 
   async componentDidMount() {
     const canAutoplay = await testAutoplay();
@@ -375,6 +384,17 @@ export default class App extends React.Component<null, AppState> {
               },
               { once: true }
             );
+
+            // Progress updater
+            window.clearInterval(this.progressUpdater);
+            this.setState({ downloaded: 0, total: 0, speed: 0 });
+            if (currentMedia.includes('/stream?torrent=magnet')) {
+              this.progressUpdater = window.setInterval(async () => {
+                const response = await window.fetch(currentMedia.replace('/stream', '/data'));
+                const data = await response.json();
+                this.setState({ downloaded: data.downloaded, total: data.total, speed: data.speed, connections: data.connections });
+              }, 1000);
+            }
           }
         }
       );
@@ -1255,7 +1275,7 @@ export default class App extends React.Component<null, AppState> {
                         }
                         onFocus={(e: any) => {
                           this.setState({
-                            inputMedia: this.state.currentMedia,
+                            inputMedia: '',
                           });
                           e.target.select();
                         }}
@@ -1290,9 +1310,7 @@ export default class App extends React.Component<null, AppState> {
                         label="Now Watching:"
                         placeholder="Enter URL (YouTube, video file, etc.), or use search"
                         value={
-                          this.state.inputMedia !== undefined
-                            ? this.state.inputMedia
-                            : this.getMediaDisplayName(this.state.currentMedia)
+                          this.state.inputMedia || this.getMediaDisplayName(this.state.currentMedia)
                         }
                       />
                     </div>
@@ -1508,6 +1526,17 @@ export default class App extends React.Component<null, AppState> {
                       />
                     )}
                   </div>
+                  {this.state.total && <div><Progress
+                    size="small"
+                    color="green"
+                    inverted
+                    value={this.state.downloaded}
+                    total={this.state.total}
+                    active
+                    // indicating
+                    label={(this.state.downloaded / this.state.total * 100).toFixed(2) + '% - ' + formatSpeed(this.state.speed) + ' - ' + this.state.connections + ' connections'}
+                  ></Progress>
+                  </div>}
                 </React.Fragment>
               </Grid.Column>
             )}
@@ -2334,6 +2363,16 @@ function formatTimestamp(input: any) {
     .toString()
     .padStart(2, '0');
   return `${minutes}:${seconds}`;
+}
+
+function formatSpeed(input: number) {
+  if (input >= 1000000) {
+    return Math.floor(input/1000000) + ' MiB/s';
+  }
+  if (input >= 1000) {
+    return Math.floor(input/1000) + ' KiB/s';
+  }
+  return input + ' B/s';
 }
 
 function hashString(input: string) {
