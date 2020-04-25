@@ -765,8 +765,13 @@ export default class App extends React.Component<null, AppState> {
       );
     }
     if (this.isYouTube()) {
-      const current = this.watchPartyYTPlayer?.getOption('captions', 'track');
-      return Boolean(current && current.languageCode);
+      try {
+        const current = this.watchPartyYTPlayer?.getOption('captions', 'track');
+        return Boolean(current && current.languageCode);
+      } catch(e) {
+        console.warn(e);
+        return false;
+      }
     }
     return false;
   };
