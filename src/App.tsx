@@ -1241,10 +1241,14 @@ export default class App extends React.Component<null, AppState> {
                         inverted
                         fluid
                         focus
+                        id="searchInput"
                         onChange={(e: any) =>
                           this.setState({ inputMedia: e.target.value })
                         }
-                        onFocus={() => this.setState({ inputMedia: '' })}
+                        onFocus={(e: any) => {
+                          this.setState({ inputMedia: this.state.currentMedia });
+                          e.target.select();
+                        }}
                         onBlur={() =>
                           setTimeout(
                             () => this.setState({ inputMedia: undefined }),
