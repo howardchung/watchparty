@@ -765,8 +765,8 @@ export default class App extends React.Component<null, AppState> {
       );
     }
     if (this.isYouTube()) {
-      // TODO
-      return false;
+      const current = this.watchPartyYTPlayer?.getOption('captions', 'track');
+      return Boolean(current && current.languageCode);
     }
     return false;
   };
@@ -967,7 +967,7 @@ export default class App extends React.Component<null, AppState> {
       leftVideo.volume = volume;
     }
     if (this.isYouTube()) {
-      // TODO
+      this.watchPartyYTPlayer?.setVolume(volume * 100);
     }
   };
 
@@ -979,15 +979,30 @@ export default class App extends React.Component<null, AppState> {
       return leftVideo.volume;
     }
     if (this.isYouTube()) {
-      // TODO
+      const volume = this.watchPartyYTPlayer?.getVolume();
+      return volume / 100;
     }
   };
 
   toggleSubtitle = () => {
-    const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
-    if (leftVideo.textTracks[0]) {
-      leftVideo.textTracks[0].mode =
-        leftVideo.textTracks[0].mode === 'showing' ? 'hidden' : 'showing';
+    if (this.isVideo()) {
+      const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
+      if (leftVideo.textTracks[0]) {
+        leftVideo.textTracks[0].mode =
+          leftVideo.textTracks[0].mode === 'showing' ? 'hidden' : 'showing';
+      }
+    }
+    if (this.isYouTube()) {
+      const isSubtitled = this.isSubtitled();
+      // console.log(isSubtitled);
+      if (isSubtitled) {
+        // BUG this doesn't actually set the value so subtitles can't be toggled off
+        this.watchPartyYTPlayer?.setOption('captions', 'track', {});
+      } else {
+        this.watchPartyYTPlayer?.setOption('captions', 'reload', true);
+        const tracks = this.watchPartyYTPlayer?.getOption('captions', 'tracklist');
+        this.watchPartyYTPlayer?.setOption('captions', 'track', tracks[0]);
+      }
     }
   };
 
@@ -1369,7 +1384,6 @@ export default class App extends React.Component<null, AppState> {
                       />
                     )}
                   </div>
-                  <Divider inverted horizontal></Divider>
                   {(this.state.loading || !this.state.currentMedia) && (
                     <Segment
                       inverted
