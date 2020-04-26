@@ -16,8 +16,6 @@ import {
   Dropdown,
   Message,
   Modal,
-  Form,
-  TextArea,
   DropdownProps,
   Menu,
   Popup,
@@ -34,11 +32,26 @@ import magnet from 'magnet-uri';
 //@ts-ignore
 import io from 'socket.io-client';
 //@ts-ignore
-import canAutoplay from 'can-autoplay';
-//@ts-ignore
 import { parseStringPromise } from 'xml2js';
 import './App.css';
 import { examples } from './examples';
+import {
+  testAutoplay,
+  getMediaType,
+  isMobile,
+  formatSpeed,
+  getDefaultPicture,
+  getColorHex,
+  getColor,
+  formatTimestamp,
+  debounce,
+  decodeEntities,
+  getMediaPathForList,
+} from './utils';
+import { getCurrentSettings } from './Settings';
+
+// TODO twitch
+// TODO playlists
 
 declare global {
   interface Window {
@@ -54,30 +67,9 @@ const serverPath =
   `${window.location.protocol}//${window.location.hostname}${
     process.env.NODE_ENV === 'production' ? '' : ':8080'
   }`;
-let defaultMediaPath = process.env.REACT_APP_MEDIA_PATH || '';
-let defaultStreamPath = process.env.REACT_APP_STREAM_PATH || '';
-// Load settings from localstorage
-let settings = getCurrentSettings();
-
-const getMediaPathForList = (list: string) => {
-  const mappings: StringDict = {
-    // TODO do a dynamic transform on gitlab to githack urls
-    'https://gitlab.com/api/v4/projects/howardchung%2Fmedia/repository/tree':
-      'https://glcdn.githack.com/howardchung/media/-/raw/master/',
-  };
-  if (mappings[list]) {
-    // Return any predefined
-    return mappings[list];
-  }
-  // Nginx servers use the same mediapath as list, add trailing /
-  return list + '/';
-};
-
-const getDefaultPicture = (name: string, background = 'a0a0a0') => {
-  return `https://ui-avatars.com/api/?name=${name}&background=${background}&size=256&color=ffffff`;
-};
-
-const iceServers = [
+export const defaultMediaPath = process.env.REACT_APP_MEDIA_PATH || '';
+export const defaultStreamPath = process.env.REACT_APP_STREAM_PATH || '';
+export const iceServers = [
   { urls: 'stun:stun.l.google.com:19302' },
   // { urls: 'turn:13.66.162.252:3478', username: 'username', credential: 'password' },
   {
@@ -91,9 +83,8 @@ const iceServers = [
     username: 'howardzchung@gmail.com',
   },
 ];
-
-// TODO twitch
-// TODO playlists
+// Load settings from localstorage
+let settings = getCurrentSettings();
 
 interface AppState {
   state: string;
@@ -934,8 +925,10 @@ export default class App extends React.Component<null, AppState> {
     let container = document.getElementById(
       'fullScreenContainer'
     ) as HTMLElement;
-    if (bVideoOnly) {
-      container = document.getElementById('playerContainer') as HTMLElement;
+    if (bVideoOnly || isMobile()) {
+      container = document.getElementById(
+        this.isYouTube() ? 'leftYt' : 'leftVideo'
+      ) as HTMLElement;
     }
     if (!document.fullscreenElement) {
       await container.requestFullscreen();
@@ -1456,7 +1449,7 @@ export default class App extends React.Component<null, AppState> {
                       />
                     )}
                   </div>
-                  {this.state.total && (
+                  {Boolean(this.state.total) && (
                     <div>
                       <Progress
                         size="tiny"
@@ -2112,7 +2105,7 @@ class ComboBox extends React.Component<ComboBoxProps> {
                   inputMedia: getMediaDisplayName(currentMedia),
                 },
                 () => {
-                  if(!this.state.inputMedia) {
+                  if (!this.state.inputMedia) {
                     this.doSearch(e);
                   }
                 }
@@ -2261,89 +2254,6 @@ const MultiStreamModal = ({
     </Modal.Content>
   </Modal>
 );
-
-/* eslint-disable-next-line */
-const SettingsModal = ({ trigger }: any) => (
-  <Modal trigger={trigger} basic closeIcon size="small">
-    <Header icon="setting" content="Settings" />
-    <Modal.Content>
-      <Form>
-        <TextArea rows={10} id="settings_textarea">
-          {window.localStorage.getItem('watchparty-setting') ||
-            JSON.stringify(getDefaultSettings(), null, 2)}
-        </TextArea>
-      </Form>
-    </Modal.Content>
-    <Modal.Actions>
-      <Button
-        color="green"
-        inverted
-        onClick={() => {
-          const newSetting = (document.getElementById(
-            'settings_textarea'
-          ) as HTMLTextAreaElement)!.value;
-          try {
-            validateSettingsString(newSetting);
-            updateSettings(newSetting);
-            window.location.reload();
-          } catch (e) {
-            alert(e);
-          }
-        }}
-      >
-        <Icon name="checkmark" />
-        Save
-      </Button>
-    </Modal.Actions>
-  </Modal>
-);
-
-function getDefaultSettings(): Settings {
-  return {
-    mediaPath: defaultMediaPath,
-    streamPath: defaultStreamPath,
-  };
-}
-
-function getCurrentSettings(): Settings {
-  const setting = window.localStorage.getItem('watchparty-setting');
-  try {
-    let settings = validateSettingsString(setting);
-    if (!settings) {
-      throw new Error('failed to parse settings, using defaults');
-    }
-    return settings;
-  } catch (e) {
-    console.warn(e);
-    return getDefaultSettings();
-  }
-}
-
-/**
- * Validate a setting string. Return a parsed setting object if valid, otherwise throw exception
- */
-function validateSettingsString(setting: string | null): Settings | null {
-  // Don't have a setting or invalid value
-  let settingObject: Settings = JSON.parse(setting as any);
-  if (!setting || setting[0] !== '{') {
-    throw new Error('failed to parse settings, using defaults');
-  }
-  return settingObject;
-}
-
-function updateSettings(newSetting: string) {
-  window.localStorage.setItem('watchparty-setting', newSetting);
-}
-
-const getMediaType = (input: string) => {
-  if (!input) {
-    return '';
-  }
-  if (input.startsWith('https://www.youtube.com/')) {
-    return 'youtube';
-  }
-  return 'video';
-};
 
 const ChatMessage = ({
   id,
@@ -2521,144 +2431,4 @@ class Controls extends React.Component<ControlsProps> {
       </div>
     );
   }
-}
-
-function formatTimestamp(input: any) {
-  if (
-    input === null ||
-    input === undefined ||
-    input === false ||
-    Number.isNaN(input) ||
-    input === Infinity
-  ) {
-    return '';
-  }
-  let minutes = Math.floor(Number(input) / 60);
-  let seconds = Math.floor(Number(input) % 60)
-    .toString()
-    .padStart(2, '0');
-  return `${minutes}:${seconds}`;
-}
-
-function formatSpeed(input: number) {
-  if (input >= 1000000) {
-    return (input / 1000000).toFixed(2) + ' MiB/s';
-  }
-  if (input >= 1000) {
-    return (input / 1000).toFixed(0) + ' KiB/s';
-  }
-  return input + ' B/s';
-}
-
-function hashString(input: string) {
-  var hash = 0,
-    i,
-    chr;
-  for (i = 0; i < input.length; i++) {
-    chr = input.charCodeAt(i);
-    hash = (hash << 5) - hash + chr;
-    hash |= 0; // Convert to 32bit integer
-  }
-  return hash;
-}
-
-let colorCache = {} as NumberDict;
-function getColor(id: string) {
-  let colors = [
-    'red',
-    'orange',
-    'yellow',
-    'olive',
-    'green',
-    'teal',
-    'blue',
-    'violet',
-    'purple',
-    'pink',
-    'brown',
-    'grey',
-  ];
-  if (colorCache[id]) {
-    return colors[colorCache[id]];
-  }
-  colorCache[id] = Math.abs(hashString(id)) % colors.length;
-  return colors[colorCache[id]];
-}
-
-function getColorHex(id: string) {
-  let mappings: StringDict = {
-    red: 'B03060',
-    orange: 'FE9A76',
-    yellow: 'FFD700',
-    olive: '32CD32',
-    green: '016936',
-    teal: '008080',
-    blue: '0E6EB8',
-    violet: 'EE82EE',
-    purple: 'B413EC',
-    pink: 'FF1493',
-    brown: 'A52A2A',
-    grey: 'A0A0A0',
-    black: '000000',
-  };
-  return mappings[getColor(id)];
-}
-
-// const getFbPhoto = (fbId: string) =>
-//   `https://graph.facebook.com/${fbId}/picture?type=normal`;
-
-async function testAutoplay() {
-  const result = await canAutoplay.video();
-  return result.result;
-}
-
-function decodeEntities(input: string) {
-  const doc = new DOMParser().parseFromString(input, 'text/html');
-  return doc.documentElement.textContent;
-}
-
-// Returns a function, that, as long as it continues to be invoked, will not
-// be triggered. The function will be called after it stops being called for
-// N milliseconds. If `immediate` is passed, trigger the function on the
-// leading edge, instead of the trailing.
-function debounce(func: Function, wait: number, immediate?: boolean) {
-  var timeout: any;
-
-  // This is the function that is actually executed when
-  // the DOM event is triggered.
-  return function executedFunction() {
-    // Store the context of this and any
-    // parameters passed to executedFunction
-    //@ts-ignore
-    var context = this;
-    var args = arguments;
-
-    // The function to be called after
-    // the debounce time has elapsed
-    var later = function () {
-      // null timeout to indicate the debounce ended
-      timeout = null;
-
-      // Call function now if you did not on the leading end
-      if (!immediate) func.apply(context, args);
-    };
-
-    // Determine if you should call the function
-    // on the leading or trail end
-    var callNow = immediate && !timeout;
-
-    // This will reset the waiting every function execution.
-    // This is the step that prevents the function from
-    // being executed because it will never reach the
-    // inside of the previous setTimeout
-    clearTimeout(timeout);
-
-    // Restart the debounce waiting period.
-    // setTimeout returns a truthy value (it differs in web vs node)
-    timeout = setTimeout(later, wait);
-
-    // Call immediately if you're dong a leading
-    // end execution
-    if (callNow) func.apply(context, args);
-  };
 }
