@@ -2150,7 +2150,7 @@ class ComboBox extends React.Component<ComboBoxProps> {
             }
           />
         </div>
-        {Boolean(results) && (
+        {Boolean(results) && this.state.inputMedia !== undefined && (
           <Menu
             fluid
             vertical
