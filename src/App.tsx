@@ -1456,7 +1456,7 @@ export default class App extends React.Component<null, AppState> {
                       />
                     )}
                   </div>
-                  {this.state.total && (
+                  {Boolean(this.state.total) && (
                     <div>
                       <Progress
                         size="tiny"
