@@ -1,22 +1,22 @@
-import { Component, Ref, Watch, Vue } from 'vue-property-decorator';
-import ResizeObserver from 'resize-observer-polyfill';
+import React from 'react';
+import { NekoClient } from '.';
 
-import Emote from './emote.vue';
-import Resolution from './resolution.vue';
-
-export default class extends Vue {
-  @Ref('component') readonly _component!: HTMLElement;
-  @Ref('container') readonly _container!: HTMLElement;
-  @Ref('overlay') readonly _overlay!: HTMLElement;
-  @Ref('aspect') readonly _aspect!: HTMLElement;
-  @Ref('player') readonly _player!: HTMLElement;
-  @Ref('video') readonly _video!: HTMLVideoElement;
-  @Ref('resolution') readonly _resolution!: any;
+export default class Video extends React.Component{
+  // @Ref('component') readonly _component!: HTMLElement;
+  // @Ref('container') readonly _container!: HTMLElement;
+  // @Ref('overlay') readonly _overlay!: HTMLElement;
+  // @Ref('aspect') readonly _aspect!: HTMLElement;
+  // @Ref('player') readonly _player!: HTMLElement;
+  // @Ref('video') readonly _video!: HTMLVideoElement;
+  // @Ref('resolution') readonly _resolution!: any;
 
   private observer = new ResizeObserver(this.onResise.bind(this));
   private focused = false;
   private fullscreen = false;
   private activeKeys: Set<number> = new Set();
+  private hosting = true;
+  private locked = false;
+  $client = new NekoClient();
 
   // @Watch('width')
   // onWidthChanged(width: number) {
@@ -28,7 +28,6 @@ export default class extends Vue {
   //   this.onResise();
   // }
 
-  @Watch('stream')
   onStreamChanged(stream?: MediaStream) {
     if (!this._video || !stream) {
       return;
@@ -42,7 +41,6 @@ export default class extends Vue {
     }
   }
 
-  @Watch('playing')
   onPlayingChanged(playing: boolean) {
     if (playing) {
       this.play();
@@ -51,7 +49,6 @@ export default class extends Vue {
     }
   }
 
-  @Watch('clipboard')
   onClipboardChanged(clipboard: string) {
     if (
       navigator.clipboard &&
@@ -269,9 +266,5 @@ export default class extends Vue {
     this._aspect.style.paddingBottom = `${
       (this.vertical / this.horizontal) * 100
     }%`;
-  }
-
-  onResolution(event: MouseEvent) {
-    this._resolution.open(event);
   }
 }
