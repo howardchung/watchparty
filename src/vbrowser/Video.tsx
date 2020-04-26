@@ -1,15 +1,7 @@
 import React from 'react';
 import { NekoClient } from '.';
 
-export default class Video extends React.Component{
-  // @Ref('component') readonly _component!: HTMLElement;
-  // @Ref('container') readonly _container!: HTMLElement;
-  // @Ref('overlay') readonly _overlay!: HTMLElement;
-  // @Ref('aspect') readonly _aspect!: HTMLElement;
-  // @Ref('player') readonly _player!: HTMLElement;
-  // @Ref('video') readonly _video!: HTMLVideoElement;
-  // @Ref('resolution') readonly _resolution!: any;
-
+export default class Video extends React.Component {
   //@ts-ignore
   private observer = new ResizeObserver(this.onResize.bind(this));
   private focused = false;
@@ -24,13 +16,13 @@ export default class Video extends React.Component{
   private vertical = 9;
   private width = 1280;
   private height = 720;
-  private _component = this.refs.component as HTMLElement;
-  private _container = this.refs.container as HTMLElement;
-  private _overlay = this.refs.overlay as HTMLElement;
-  private _aspect = this.refs.aspect as HTMLElement;
-  private _player = this.refs.player as HTMLElement;
-  private _video = document.getElementById('leftVideo') as HTMLVideoElement;
-  private _resolution = this.refs.resolution;
+  private _component = React.createRef<HTMLDivElement>();
+  private _container = React.createRef<HTMLDivElement>();
+  private _overlay = React.createRef<HTMLDivElement>();
+  private _aspect = React.createRef<HTMLDivElement>();
+  private _player = React.createRef<HTMLDivElement>();
+  private _video = React.createRef<HTMLVideoElement>();
+  private _resolution = React.createRef<HTMLDivElement>();
   private $client = new NekoClient();
 
   // @Watch('width')
@@ -45,10 +37,11 @@ export default class Video extends React.Component{
 
   componentDidMount() {
     // TODO use server-assigned values instead of defaults
-    const url = 'ws://13.66.162.252:5000';;
+    const url = 'ws://13.66.162.252:5000/';
     this.$client.login(url, 'neko', 'admin');
+    this.$client.on('debug', (e) => console.log(e));
 
-    this._container.addEventListener('resize', this.onResize);
+    this._container.current?.addEventListener('resize', this.onResize);
     // this.onStreamChanged(this.stream);
     this.onResize();
 
@@ -65,12 +58,7 @@ export default class Video extends React.Component{
       return;
     }
 
-    if ('srcObject' in this._video) {
-      this._video.srcObject = stream;
-    } else {
-      // @ts-ignore
-      this._video.src = window.URL.createObjectURL(this.stream); // for older browsers
-    }
+    this._video.current!.srcObject = stream;
   }
 
   onClipboardChanged(clipboard: string) {
@@ -93,6 +81,7 @@ export default class Video extends React.Component{
       typeof navigator.clipboard.readText === 'function'
     ) {
       const text = await navigator.clipboard.readText();
+      console.log(text);
       // TODO send clipboard to remote
     }
   }
@@ -111,7 +100,7 @@ export default class Video extends React.Component{
   onMousePos(e: MouseEvent) {
     // TODO allow reading remote resolution
     const { w, h } = { w: this.width, h: this.height };
-    const rect = this._overlay.getBoundingClientRect();
+    const rect = this._overlay.current!.getBoundingClientRect();
     this.$client.sendData('mousemove', {
       x: Math.round((w / rect.width) * (e.clientX - rect.left)),
       y: Math.round((h / rect.height) * (e.clientY - rect.top)),
@@ -157,7 +146,7 @@ export default class Video extends React.Component{
   }
 
   onMouseEnter(e: MouseEvent) {
-    this._overlay.focus();
+    this._overlay.current!.focus();
     this.onFocus();
     this.focused = true;
   }
@@ -207,30 +196,31 @@ export default class Video extends React.Component{
   onResize() {
     let height = 0;
     if (!this.fullscreen) {
-      const { offsetWidth, offsetHeight } = this._component;
-      this._player.style.width = `${offsetWidth}px`;
-      this._player.style.height = `${offsetHeight}px`;
-      height = offsetHeight;
+      const offsetWidth = this._component.current?.offsetWidth;
+      const offsetHeight = this._component.current?.offsetHeight;
+      this._player.current!.style.width = `${offsetWidth}px`;
+      this._player.current!.style.height = `${offsetHeight}px`;
+      height = offsetHeight as number;
     } else {
-      const { offsetWidth, offsetHeight } = this._player;
-      height = offsetHeight;
+      const offsetHeight = this._player.current?.offsetHeight;
+      height = offsetHeight as number;
     }
 
-    this._container.style.maxWidth = `${
+    this._container.current!.style.maxWidth = `${
       (this.horizontal / this.vertical) * height
     }px`;
-    this._aspect.style.paddingBottom = `${
+    this._aspect.current!.style.paddingBottom = `${
       (this.vertical / this.horizontal) * 100
     }%`;
   }
 
   render() {
-    return <div ref="component">
-    <div ref="player">
-      <div ref="container">
-        <video ref="video" id="leftVideo" />
+    return <div ref={this._component}>
+    <div ref={this._player}>
+      <div ref={this._container}>
+        <video ref={this._video} id="leftVideo" />
         <div
-          ref="overlay"
+          ref={this._overlay}
           tabIndex={0}
           // @click.stop.prevent
           // @contextmenu.stop.prevent
@@ -243,9 +233,9 @@ export default class Video extends React.Component{
           // @keydown.stop.prevent="onKeyDown"
           // @keyup.stop.prevent="onKeyUp"
         />
-        <div ref="aspect" />
+        <div ref={this._aspect} />
       </div>
-      <div ref="resolution" />
+      <div ref={this._resolution} />
     </div>
   </div>;
   }

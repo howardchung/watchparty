@@ -1,33 +1,26 @@
-import React from 'react';
 import EventEmitter from 'eventemitter3';
 import { BaseClient } from './base';
-import { Member } from './types';
+//import { Member } from './types';
 import { EVENT } from './events';
 
 import {
   DisconnectPayload,
-  SignalProvidePayload,
-  MemberListPayload,
-  MemberDisconnectPayload,
-  MemberPayload,
+  //SignalProvidePayload,
+  //MemberListPayload,
+  //MemberDisconnectPayload,
+  //MemberPayload,
   ControlPayload,
   ControlTargetPayload,
-  ChatPayload,
-  EmotePayload,
+  //ChatPayload,
+  //EmotePayload,
   ControlClipboardPayload,
   ScreenConfigurationsPayload,
   ScreenResolutionPayload,
-  AdminPayload,
-  AdminTargetPayload,
+  //AdminPayload,
+  //AdminTargetPayload,
 } from './messages';
 
 export class NekoClient extends BaseClient implements EventEmitter<any> {
-  private $vue!: any;
-
-  init(vue: any) {
-    this.$vue = vue;
-  }
-
   login(url: string, password: string, displayname: string) {
     this.connect(url, password, displayname);
   }
@@ -40,13 +33,14 @@ export class NekoClient extends BaseClient implements EventEmitter<any> {
   // Internal Events
   /////////////////////////////
   protected [EVENT.CONNECTING]() {
-    // this.$accessor.setConnnecting();
   }
 
   protected [EVENT.CONNECTED]() {
+
   }
 
   protected [EVENT.DISCONNECTED](reason?: Error) {
+    console.error(reason);
   }
 
   protected [EVENT.TRACK](event: RTCTrackEvent) {
@@ -55,11 +49,15 @@ export class NekoClient extends BaseClient implements EventEmitter<any> {
       return;
     }
 
+    console.log(event, streams);
+    // TODO set up the stream
     // this.$accessor.video.addTrack([track, streams[0]]);
     // this.$accessor.video.setStream(0);
   }
 
-  protected [EVENT.DATA](data: any) {}
+  protected [EVENT.DATA](data: any) {
+    console.log(data);
+  }
 
   /////////////////////////////
   // System Events
@@ -67,10 +65,6 @@ export class NekoClient extends BaseClient implements EventEmitter<any> {
   protected [EVENT.SYSTEM.DISCONNECT]({ message }: DisconnectPayload) {
     this.onDisconnected(new Error(message));
   }
-
-  /////////////////////////////
-  // Member Events
-  /////////////////////////////
 
   /////////////////////////////
   // Control Events
@@ -149,7 +143,7 @@ export class NekoClient extends BaseClient implements EventEmitter<any> {
   }
 
   protected [EVENT.CONTROL.CLIPBOARD]({ text }: ControlClipboardPayload) {
-    console.log(text);
+    // console.log(text);
     //this.$accessor.remote.setClipboard(text);
   }
 
