@@ -10,13 +10,28 @@ export default class Video extends React.Component{
   // @Ref('video') readonly _video!: HTMLVideoElement;
   // @Ref('resolution') readonly _resolution!: any;
 
-  private observer = new ResizeObserver(this.onResise.bind(this));
+  //@ts-ignore
+  private observer = new ResizeObserver(this.onResize.bind(this));
   private focused = false;
   private fullscreen = false;
   private activeKeys: Set<number> = new Set();
-  private hosting = true;
+  private hosting = true; // TODO set based on actual host
+  // TODO current host can pass control around
   private locked = false;
-  $client = new NekoClient();
+  private scroll = 5; // 1 to 10
+  // TODO customize these values
+  private horizontal = 16;
+  private vertical = 9;
+  private width = 1280;
+  private height = 720;
+  private _component = this.refs.component as HTMLElement;
+  private _container = this.refs.container as HTMLElement;
+  private _overlay = this.refs.overlay as HTMLElement;
+  private _aspect = this.refs.aspect as HTMLElement;
+  private _player = this.refs.player as HTMLElement;
+  private _video = document.getElementById('leftVideo') as HTMLVideoElement;
+  private _resolution = this.refs.resolution;
+  private $client = new NekoClient();
 
   // @Watch('width')
   // onWidthChanged(width: number) {
@@ -27,6 +42,23 @@ export default class Video extends React.Component{
   // onHeightChanged(height: number) {
   //   this.onResise();
   // }
+
+  componentDidMount() {
+    // TODO use server-assigned values instead of defaults
+    const url = 'ws://13.66.162.252:5000';;
+    this.$client.login(url, 'neko', 'admin');
+
+    this._container.addEventListener('resize', this.onResize);
+    // this.onStreamChanged(this.stream);
+    this.onResize();
+
+    document.addEventListener('fullscreenchange', () => {
+      this.onResize();
+    });
+
+    document.addEventListener('focusin', this.onFocus.bind(this));
+    document.addEventListener('focusout', this.onBlur.bind(this));
+  }
 
   onStreamChanged(stream?: MediaStream) {
     if (!this._video || !stream) {
@@ -41,14 +73,6 @@ export default class Video extends React.Component{
     }
   }
 
-  onPlayingChanged(playing: boolean) {
-    if (playing) {
-      this.play();
-    } else {
-      this.pause();
-    }
-  }
-
   onClipboardChanged(clipboard: string) {
     if (
       navigator.clipboard &&
@@ -58,65 +82,8 @@ export default class Video extends React.Component{
     }
   }
 
-  mounted() {
-    this._container.addEventListener('resize', this.onResise);
-    this.onStreamChanged(this.stream);
-    this.onResise();
-
-    this.observer.observe(this._component);
-
-    this._player.addEventListener('fullscreenchange', () => {
-      this.onResise();
-    });
-
-    document.addEventListener('focusin', this.onFocus.bind(this));
-    document.addEventListener('focusout', this.onBlur.bind(this));
-  }
-
-  play() {
-    if (!this._video.paused || !this.playable) {
-      return;
-    }
-
-    try {
-      this._video
-        .play()
-        .then(() => {
-          this.onResise();
-        })
-        .catch((err) => this.$log.error);
-    } catch (err) {
-      this.$log.error(err);
-    }
-  }
-
-  pause() {
-    if (this._video.paused || !this.playable) {
-      return;
-    }
-
-    this._video.pause();
-  }
-
-  toggle() {
-    if (!this.playable) {
-      return;
-    }
-
-    if (!this.playing) {
-      this.$accessor.video.play();
-    } else {
-      this.$accessor.video.pause();
-    }
-  }
-
-  requestFullscreen() {
-    this._player.requestFullscreen();
-    this.onResise();
-  }
-
-  onFocus() {
-    if (!document.hasFocus() || !this.$accessor.active) {
+  async onFocus() {
+    if (!document.hasFocus()) {
       return;
     }
 
@@ -125,15 +92,8 @@ export default class Video extends React.Component{
       navigator.clipboard &&
       typeof navigator.clipboard.readText === 'function'
     ) {
-      navigator.clipboard
-        .readText()
-        .then((text) => {
-          if (this.clipboard !== text) {
-            this.$accessor.remote.setClipboard(text);
-            this.$accessor.remote.sendClipboard(text);
-          }
-        })
-        .catch(this.$log.error);
+      const text = await navigator.clipboard.readText();
+      // TODO send clipboard to remote
     }
   }
 
@@ -142,14 +102,15 @@ export default class Video extends React.Component{
       return;
     }
 
-    for (let key of this.activeKeys) {
+    this.activeKeys.forEach(key => {
       this.$client.sendData('keyup', { key });
       this.activeKeys.delete(key);
-    }
+    });
   }
 
   onMousePos(e: MouseEvent) {
-    const { w, h } = this.$accessor.video.resolution;
+    // TODO allow reading remote resolution
+    const { w, h } = { w: this.width, h: this.height };
     const rect = this._overlay.getBoundingClientRect();
     this.$client.sendData('mousemove', {
       x: Math.round((w / rect.width) * (e.clientX - rect.left)),
@@ -165,11 +126,6 @@ export default class Video extends React.Component{
 
     let x = e.deltaX;
     let y = e.deltaY;
-
-    if (this.scroll_invert) {
-      x = x * -1;
-      y = y * -1;
-    }
 
     x = Math.min(Math.max(x, -this.scroll), this.scroll);
     y = Math.min(Math.max(y, -this.scroll), this.scroll);
@@ -248,7 +204,7 @@ export default class Video extends React.Component{
     this.activeKeys.delete(key);
   }
 
-  onResise() {
+  onResize() {
     let height = 0;
     if (!this.fullscreen) {
       const { offsetWidth, offsetHeight } = this._component;
@@ -266,5 +222,31 @@ export default class Video extends React.Component{
     this._aspect.style.paddingBottom = `${
       (this.vertical / this.horizontal) * 100
     }%`;
+  }
+
+  render() {
+    return <div ref="component">
+    <div ref="player">
+      <div ref="container">
+        <video ref="video" id="leftVideo" />
+        <div
+          ref="overlay"
+          tabIndex={0}
+          // @click.stop.prevent
+          // @contextmenu.stop.prevent
+          // @wheel.stop.prevent="onWheel"
+          // @mousemove.stop.prevent="onMouseMove"
+          // @mousedown.stop.prevent="onMouseDown"
+          // @mouseup.stop.prevent="onMouseUp"
+          // @mouseenter.stop.prevent="onMouseEnter"
+          // @mouseleave.stop.prevent="onMouseLeave"
+          // @keydown.stop.prevent="onKeyDown"
+          // @keyup.stop.prevent="onKeyUp"
+        />
+        <div ref="aspect" />
+      </div>
+      <div ref="resolution" />
+    </div>
+  </div>;
   }
 }

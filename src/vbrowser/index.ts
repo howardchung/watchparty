@@ -28,8 +28,7 @@ export class NekoClient extends BaseClient implements EventEmitter<any> {
     this.$vue = vue;
   }
 
-  login(password: string, displayname: string) {
-    const url = 'ws://13.66.162.252:5000';
+  login(url: string, password: string, displayname: string) {
     this.connect(url, password, displayname);
   }
 
