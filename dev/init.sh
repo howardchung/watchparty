@@ -18,10 +18,10 @@ services:
   neko:
     image: nurdism/neko:chromium
     restart: always
+    network: host
     shm_size: "1gb"
     cap_add:
       - "SYS_ADMIN"
-    network: host
     environment:
       DISPLAY: :99.0
       NEKO_PASSWORD: neko
@@ -29,4 +29,4 @@ services:
       NEKO_BIND: :8080
       NEKO_EPR: 59000-59100
 ' >> docker-compose.yml
-docker-compose up
+docker run -d --rm --name=vbrowser --log-opt max-size=1g --restart=always --net=host --shm-size=1g --cap-add="SYS_ADMIN" -e DISPLAY=":99.0" -e NEKO_PASSWORD=neko -e NEKO_PASSWORD_ADMIN=admin -e NEKO_BIND=":8080" -e NEKO_EPR=":59000-59100" nurdism/neko:chromium
