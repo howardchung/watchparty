@@ -1423,7 +1423,7 @@ export default class App extends React.Component<null, AppState> {
                               : 'none',
                         }}
                       >
-                        {this.state.isVBrowser && <Video /> : <video
+                        {this.state.isVBrowser ? <Video /> : <video
                           className="videoOuter"
                           // tabIndex={1}
                           // onClick={this.togglePlay}
