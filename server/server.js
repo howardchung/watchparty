@@ -81,14 +81,19 @@ app.get('/youtube', (req, res) => {
   Youtube.search.list(
     { part: 'snippet', type: 'video', maxResults: 25, q: req.query.q },
     (err, data) => {
-      const response = data.items.map((video) => {
-        return {
-          url: 'https://www.youtube.com/watch?v=' + video.id.videoId,
-          name: video.snippet.title,
-          img: video.snippet.thumbnails.default.url,
-        };
-      });
-      res.json(response);
+      if (data && data.items) {
+        const response = data.items.map((video) => {
+          return {
+            url: 'https://www.youtube.com/watch?v=' + video.id.videoId,
+            name: video.snippet.title,
+            img: video.snippet.thumbnails.default.url,
+          };
+        });
+        res.json(response);
+      } else {
+        console.error(data);
+        return res.status(500).end();
+      }
     }
   );
 });

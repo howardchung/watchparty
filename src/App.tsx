@@ -1026,11 +1026,11 @@ export default class App extends React.Component<null, AppState> {
 
   launchMultiSelect = (data: any) => {
     this.setState({ multiStreamSelection: data });
-  }
+  };
 
   resetMultiSelect = () => {
     this.setState({ multiStreamSelection: undefined });
-  }
+  };
 
   updateName = (e: any, data: { value: string }) => {
     this.setState({ myName: data.value });
@@ -1467,8 +1467,9 @@ export default class App extends React.Component<null, AppState> {
                         active
                         // indicating
                         label={
-                          Math.min((this.state.downloaded / this.state.total) *
-                            100, 100
+                          Math.min(
+                            (this.state.downloaded / this.state.total) * 100,
+                            100
                           ).toFixed(2) +
                           '% - ' +
                           formatSpeed(this.state.speed) +
@@ -1796,30 +1797,37 @@ class SearchComponent extends React.Component<SearchComponentProps> {
     resetDropdown: Number(new Date()),
     loading: false,
     lastResultTimestamp: Number(new Date()),
+    inputMedia: undefined,
   };
   debounced: any = null;
 
   doSearch = async (e: any) => {
     e.persist();
-    if (!this.debounced) {
-      this.debounced = debounce(async () => {
-        this.setState({ loading: true });
-        let query = e.target.value;
-        let results = [];
-        let timestamp = Number(new Date());
-        if (this.props.type === 'youtube') {
-          results = await getYouTubeResults(query);
-        } else if (this.props.type === 'mediaServer') {
-          results = await getMediaPathResults(query);
-        } else {
-          results = await getStreamPathResults(query);
-        }
-        if (timestamp > this.state.lastResultTimestamp) {
-          this.setState({ loading: false, results, lastResultTimestamp: timestamp });
-        }
-      }, 500);
-    }
-    this.debounced();
+    this.setState({ inputMedia: e.target.value }, () => {
+      if (!this.debounced) {
+        this.debounced = debounce(async () => {
+          this.setState({ loading: true });
+          let query = this.state.inputMedia || '';
+          let results = [];
+          let timestamp = Number(new Date());
+          if (this.props.type === 'youtube') {
+            results = await getYouTubeResults(query);
+          } else if (this.props.type === 'mediaServer') {
+            results = await getMediaPathResults(query);
+          } else {
+            results = await getStreamPathResults(query);
+          }
+          if (timestamp > this.state.lastResultTimestamp) {
+            this.setState({
+              loading: false,
+              results,
+              lastResultTimestamp: timestamp,
+            });
+          }
+        }, 500);
+      }
+      this.debounced();
+    });
   };
 
   setMedia = (e: any, data: DropdownProps) => {
@@ -1873,7 +1881,11 @@ class SearchComponent extends React.Component<SearchComponentProps> {
                   );
                 }
                 return (
-                  <StreamPathSearchResult {...result} setMedia={setMedia} launchMultiSelect={this.props.launchMultiSelect as Function} />
+                  <StreamPathSearchResult
+                    {...result}
+                    setMedia={setMedia}
+                    launchMultiSelect={this.props.launchMultiSelect as Function}
+                  />
                 );
               })}
             </Dropdown.Menu>
@@ -1918,7 +1930,7 @@ const MediaPathSearchResult = (
 };
 
 class StreamPathSearchResult extends React.Component<
-  SearchResult & { setMedia: Function, launchMultiSelect: Function }
+  SearchResult & { setMedia: Function; launchMultiSelect: Function }
 > {
   render() {
     const result = this.props;
@@ -1967,7 +1979,11 @@ class StreamPathSearchResult extends React.Component<
             }
           }}
         >
-          <Label circular empty color={Number(result.seeders) ? 'green' : 'red'} />
+          <Label
+            circular
+            empty
+            color={Number(result.seeders) ? 'green' : 'red'}
+          />
           {result.name +
             ' - ' +
             result.size +
@@ -1997,20 +2013,22 @@ class ComboBox extends React.Component<ComboBoxProps> {
   debounced: any = null;
 
   setMedia = (e: any, data: DropdownProps) => {
-    window.setTimeout(() => this.setState({ inputMedia: undefined, results: undefined }), 100);
+    window.setTimeout(
+      () => this.setState({ inputMedia: undefined, results: undefined }),
+      100
+    );
     this.props.setMedia(e, data);
   };
 
   doSearch = async (e: any) => {
-    let query = e.target.value;
-    this.setState({ inputMedia: query });
     e.persist();
-    if (!this.debounced) {
-      this.debounced = debounce(async () => {
-        this.setState({ loading: true });
-        query = e.target.value;
-        let timestamp = Number(new Date());
-        /* 
+    this.setState({ inputMedia: e.target.value }, () => {
+      if (!this.debounced) {
+        this.debounced = debounce(async () => {
+          this.setState({ loading: true });
+          const query: string = this.state.inputMedia || '';
+          let timestamp = Number(new Date());
+          /* 
           If input starts with http, probably user is entering their own URL. Don't show anything
           If input is empty
             If we have a mediaPath use that for results
@@ -2019,45 +2037,54 @@ class ComboBox extends React.Component<ComboBoxProps> {
             If we have a stream server use that for results
             Else search YouTube
         */
-        let results: JSX.Element[] | undefined = undefined;
-        if (query && query.startsWith('http')) {
-          results = undefined;
-        } else if (query === '') {
-          if (settings.mediaPath) {
-            const data = await getMediaPathResults(query);
-            results = data.map((result) => (
-              <MediaPathSearchResult {...result} setMedia={this.setMedia} />
-            ));
-          } else {
-            results = examples.map((option: any) => (
-              <Menu.Item
-                onClick={(e: any) => this.setMedia(e, { value: option.url })}
-              >
-                {option.url}
-              </Menu.Item>
-            ));
-          }
-        } else {
-          if (query && query.length >= 2) {
-            if (settings.streamPath) {
-              const data = await getStreamPathResults(query);
+          let results: JSX.Element[] | undefined = undefined;
+          if (query && query.startsWith('http')) {
+            results = undefined;
+          } else if (query === '') {
+            if (settings.mediaPath) {
+              const data = await getMediaPathResults(query);
               results = data.map((result) => (
-                <StreamPathSearchResult {...result} setMedia={this.setMedia} launchMultiSelect={this.props.launchMultiSelect} />
+                <MediaPathSearchResult {...result} setMedia={this.setMedia} />
               ));
             } else {
-              const data = await getYouTubeResults(query);
-              results = data.map((result) => (
-                <YouTubeSearchResult {...result} setMedia={this.setMedia} />
+              results = examples.map((option: any) => (
+                <Menu.Item
+                  onClick={(e: any) => this.setMedia(e, { value: option.url })}
+                >
+                  {option.url}
+                </Menu.Item>
               ));
             }
+          } else {
+            if (query && query.length >= 2) {
+              if (settings.streamPath) {
+                const data = await getStreamPathResults(query);
+                results = data.map((result) => (
+                  <StreamPathSearchResult
+                    {...result}
+                    setMedia={this.setMedia}
+                    launchMultiSelect={this.props.launchMultiSelect}
+                  />
+                ));
+              } else {
+                const data = await getYouTubeResults(query);
+                results = data.map((result) => (
+                  <YouTubeSearchResult {...result} setMedia={this.setMedia} />
+                ));
+              }
+            }
           }
-        }
-        if (timestamp > this.state.lastResultTimestamp) {
-          this.setState({ loading: false, results, lastResultTimestamp: timestamp });
-        }
-      }, 500);
-    }
-    this.debounced();
+          if (timestamp > this.state.lastResultTimestamp) {
+            this.setState({
+              loading: false,
+              results,
+              lastResultTimestamp: timestamp,
+            });
+          }
+        }, 500);
+      }
+      this.debounced();
+    });
   };
 
   render() {
@@ -2073,13 +2100,25 @@ class ComboBox extends React.Component<ComboBoxProps> {
             focus
             onChange={this.doSearch}
             onFocus={(e: any) => {
-              this.setState({
-                inputMedia: getMediaDisplayName(currentMedia),
-              });
-              e.target.select();
+              e.persist();
+              this.setState(
+                {
+                  inputMedia: getMediaDisplayName(currentMedia),
+                },
+                () => {
+                  if(!this.state.inputMedia) {
+                    this.doSearch(e);
+                  }
+                }
+              );
+              setTimeout(() => e.target.select(), 100);
             }}
             onBlur={() =>
-              setTimeout(() => this.setState({ inputMedia: undefined, results: undefined }), 100)
+              setTimeout(
+                () =>
+                  this.setState({ inputMedia: undefined, results: undefined }),
+                100
+              )
             }
             onKeyPress={(e: any) => {
               if (e.key === 'Enter') {
@@ -2102,7 +2141,7 @@ class ComboBox extends React.Component<ComboBoxProps> {
               />
             }
             loading={this.state.loading}
-            label={"Now Watching:"}
+            label={'Now Watching:'}
             placeholder="Enter URL (YouTube, video file, etc.), or enter search term"
             value={
               this.state.inputMedia !== undefined
@@ -2177,7 +2216,15 @@ async function getYouTubeResults(query: string): Promise<SearchResult[]> {
   return data;
 }
 
-const MultiStreamModal = ({ streams, setMedia, resetMultiSelect }: { streams: any[], setMedia: Function, resetMultiSelect: Function }) => (
+const MultiStreamModal = ({
+  streams,
+  setMedia,
+  resetMultiSelect,
+}: {
+  streams: any[];
+  setMedia: Function;
+  resetMultiSelect: Function;
+}) => (
   <Modal inverted basic open closeIcon onClose={resetMultiSelect as any}>
     <Modal.Header>Select a file</Modal.Header>
     <Modal.Content>
