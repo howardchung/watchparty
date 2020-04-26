@@ -92,7 +92,7 @@ app.get('/youtube', (req, res) => {
         res.json(response);
       } else {
         console.error(data);
-        return res.status(500).end();
+        return res.status(500).json({ error: 'youtube error' });
       }
     }
   );
