@@ -1754,6 +1754,7 @@ class Chat extends React.Component<ChatProps> {
           <Comment.Group>
             {this.props.chat.map((msg) => (
               <ChatMessage
+                key={msg.timestamp + msg.id}
                 {...msg}
                 pictureMap={this.props.pictureMap}
                 nameMap={this.props.nameMap}
@@ -1841,13 +1842,13 @@ class SearchComponent extends React.Component<SearchComponentProps> {
   render() {
     const setMedia = this.setMedia;
     let placeholder = 'Search for streams';
-    let icon = 'search';
+    let icon = 'film';
     if (this.props.type === 'youtube') {
       placeholder = 'Search YouTube';
       icon = 'youtube';
     } else if (this.props.type === 'mediaServer') {
       placeholder = 'Search ' + ('files' || settings.mediaPath);
-      icon = 'film';
+      icon = 'file';
     }
     if (this.state.loading) {
       icon = 'loading circle notch';
@@ -1907,6 +1908,7 @@ const YouTubeSearchResult = (props: SearchResult & { setMedia: Function }) => {
     >
       <div style={{ display: 'flex', alignItems: 'center' }}>
         <img style={{ height: '40px' }} src={result.img} alt={result.name} />
+        <Icon name="youtube" />
         <div style={{ marginLeft: '5px' }}>{decodeEntities(result.name)}</div>
       </div>
     </Menu.Item>
@@ -1924,7 +1926,10 @@ const MediaPathSearchResult = (
         setMedia(e, { value: result.url });
       }}
     >
-      {result.name}
+      <div style={{ display: 'flex' }}>
+        <Icon name="file" />
+        {result.name}
+      </div>
     </Menu.Item>
   );
 };
@@ -1984,6 +1989,7 @@ class StreamPathSearchResult extends React.Component<
             empty
             color={Number(result.seeders) ? 'green' : 'red'}
           />
+          <Icon name="film" />
           {result.name +
             ' - ' +
             result.size +
