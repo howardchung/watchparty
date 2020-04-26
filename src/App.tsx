@@ -356,7 +356,7 @@ export default class App extends React.Component<null, AppState> {
             if (currentMedia.includes('/stream?torrent=magnet')) {
               this.progressUpdater = window.setInterval(async () => {
                 const response = await window.fetch(
-                  currentMedia.replace('/stream', '/data')
+                  currentMedia.replace('/stream', '/progress')
                 );
                 const data = await response.json();
                 this.setState({
