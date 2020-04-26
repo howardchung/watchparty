@@ -49,9 +49,9 @@ import {
   getMediaPathForList,
 } from './utils';
 import { getCurrentSettings } from './Settings';
+import Video from './vbrowser/Video';
 
 // TODO twitch
-// TODO playlists
 
 declare global {
   interface Window {
@@ -104,6 +104,7 @@ interface AppState {
   watchOptions: SearchResult[];
   isScreenSharing: boolean;
   isScreenSharingFile: boolean;
+  isVBrowser: boolean;
   fbUserID?: string;
   isFBReady: boolean;
   isYouTubeReady: boolean;
@@ -134,6 +135,7 @@ export default class App extends React.Component<null, AppState> {
     watchOptions: [],
     isScreenSharing: false,
     isScreenSharingFile: false,
+    isVBrowser: false,
     fbUserID: undefined,
     isFBReady: false,
     isYouTubeReady: false,
@@ -510,6 +512,15 @@ export default class App extends React.Component<null, AppState> {
       this.socket.emit('CMD:leaveScreenShare');
     }
     this.setState({ isScreenSharing: false, isScreenSharingFile: false });
+  };
+
+  setupVBrowser = async () => {
+    this.setState({ isVBrowser: true });
+  };
+
+  stopVBrowser = async () => {
+    // TODO automatically shut this down after some timeout
+    this.setState({ isVBrowser: false });
   };
 
   setupWebRTC = async () => {
@@ -1328,7 +1339,7 @@ export default class App extends React.Component<null, AppState> {
                         }
                       />
                     )}
-                    {false && !this.screenShareStream && (
+                    {(
                       <Popup
                         content="Launch a shared virtual browser"
                         trigger={
@@ -1339,7 +1350,7 @@ export default class App extends React.Component<null, AppState> {
                             icon
                             labelPosition="left"
                             color="green"
-                            onClick={undefined}
+                            onClick={this.setupVBrowser}
                           >
                             <Icon name="desktop" />
                             VBrowser
@@ -1412,12 +1423,12 @@ export default class App extends React.Component<null, AppState> {
                               : 'none',
                         }}
                       >
-                        <video
+                        {this.state.isVBrowser && <Video /> : <video
                           className="videoOuter"
                           // tabIndex={1}
                           // onClick={this.togglePlay}
                           id="leftVideo"
-                        ></video>
+                        ></video>}
                       </div>
                       {this.state.currentMedia && (
                         <Controls
