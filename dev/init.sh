@@ -12,21 +12,11 @@ docker run -d --network=host instrumentisto/coturn \
 # TODO use turnadmin to create username and password
 
 # vbrowser
+# Generate cert with letsencrypt
+DEBIAN_FRONTEND=noninteractive apt-get install -y certbot
+certbot certonly --standalone -n --agree-tos --email howardzchung@gmail.com --domains 9c689d91-db44-43c9-85d1-3179a081e16a.pub.cloud.scaleway.com
+# Certs created in /etc/letsencrypt/live/9c689d91-db44-43c9-85d1-3179a081e16a.pub.cloud.scaleway.com
+# chmod 0755 /etc/letsencrypt/{live,archive}
+
 curl -fsSL https://get.docker.com | sh
-echo 'version: "2.0"
-services:
-  neko:
-    image: nurdism/neko:chromium
-    restart: always
-    network: host
-    shm_size: "1gb"
-    cap_add:
-      - "SYS_ADMIN"
-    environment:
-      DISPLAY: :99.0
-      NEKO_PASSWORD: neko
-      NEKO_PASSWORD_ADMIN: admin
-      NEKO_BIND: :8080
-      NEKO_EPR: 59000-59100
-' >> docker-compose.yml
-docker run -d --rm --name=vbrowser --log-opt max-size=1g --restart=always --net=host --shm-size=1g --cap-add="SYS_ADMIN" -e DISPLAY=":99.0" -e NEKO_PASSWORD=neko -e NEKO_PASSWORD_ADMIN=admin -e NEKO_BIND=":8080" -e NEKO_EPR=":59000-59100" nurdism/neko:chromium
+docker run -d --rm --name=vbrowser -v /etc/letsencrypt/archive/azure.howardchung.net:/cert --log-opt max-size=1g --net=host --shm-size=1g --cap-add="SYS_ADMIN" -e DISPLAY=":99.0" -e NEKO_PASSWORD=neko -e NEKO_PASSWORD_ADMIN=admin -e NEKO_BIND=":5000" -e NEKO_EPR=":59000-59100" -e NEKO_KEY="/cert/privkey1.pem" -e NEKO_CERT="/cert/cert1.pem" nurdism/neko:chromium
