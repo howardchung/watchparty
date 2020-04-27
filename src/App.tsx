@@ -213,7 +213,7 @@ export default class App extends React.Component<null, AppState> {
         events: {
           onReady: () => {
             this.watchPartyYTPlayer = ytPlayer;
-            this.setState({ isYouTubeReady: true });
+            this.setState({ isYouTubeReady: true, loading: false });
             // We might have failed to play YT originally, ask for the current video again
             if (this.isYouTube()) {
               this.socket.emit('CMD:askHost');
@@ -302,6 +302,7 @@ export default class App extends React.Component<null, AppState> {
             console.log(
               'skipping REC:host video since fileshare is using leftVideo'
             );
+            this.setState({ loading: false });
             return;
           }
           // Stop all players
