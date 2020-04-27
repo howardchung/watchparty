@@ -1227,7 +1227,7 @@ export default class App extends React.Component<null, AppState> {
                         }
                       />
                     )}
-                    {(
+                    {process.env.VBROWSER_URL && (
                       <Popup
                         content="Launch a shared virtual browser"
                         trigger={

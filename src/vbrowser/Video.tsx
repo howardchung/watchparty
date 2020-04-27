@@ -37,7 +37,7 @@ export default class Video extends React.Component {
 
   componentDidMount() {
     // TODO use server-assigned values instead of defaults
-    const url = 'wss://azure.howardchung.net:5000/';
+    const url = process.env.VBROWSER_URL + '/';
     this.$client.login(url, 'neko', 'admin');
     this.$client.on('debug', (e) => console.log(e));
 
