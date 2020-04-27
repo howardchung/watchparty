@@ -37,9 +37,9 @@ export default class Video extends React.Component {
 
   componentDidMount() {
     // TODO use server-assigned values instead of defaults
-    const url = process.env.VBROWSER_URL + '/';
+    const url = process.env.REACT_APP_VBROWSER_URL + '/';
     this.$client.login(url, 'neko', 'admin');
-    this.$client.on('debug', (e) => console.log(e));
+    this.$client.on('debug', (e, data) => console.log(e, data));
 
     this._container.current?.addEventListener('resize', this.onResize);
     // this.onStreamChanged(this.stream);
@@ -61,14 +61,14 @@ export default class Video extends React.Component {
     this._video.current!.srcObject = stream;
   }
 
-  onClipboardChanged(clipboard: string) {
-    if (
-      navigator.clipboard &&
-      typeof navigator.clipboard.writeText === 'function'
-    ) {
-      navigator.clipboard.writeText(clipboard).catch(console.error);
-    }
-  }
+  // onClipboardChanged(clipboard: string) {
+  //   if (
+  //     navigator.clipboard &&
+  //     typeof navigator.clipboard.writeText === 'function'
+  //   ) {
+  //     navigator.clipboard.writeText(clipboard).catch(console.error);
+  //   }
+  // }
 
   async onFocus() {
     if (!document.hasFocus()) {

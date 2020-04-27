@@ -496,6 +496,7 @@ export default class App extends React.Component<null, AppState> {
   };
 
   setupVBrowser = async () => {
+    this.setMedia(null, { value: 'vbrowser://'});
     this.setState({ isVBrowser: true });
   };
 
@@ -1227,7 +1228,7 @@ export default class App extends React.Component<null, AppState> {
                         }
                       />
                     )}
-                    {process.env.VBROWSER_URL && (
+                    {process.env.REACT_APP_VBROWSER_URL && (
                       <Popup
                         content="Launch a shared virtual browser"
                         trigger={

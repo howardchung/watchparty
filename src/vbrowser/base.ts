@@ -7,6 +7,7 @@ import {
   WebSocketPayloads,
   SignalProvidePayload,
 } from './messages';
+import { iceServers } from '../App';
 
 export abstract class BaseClient extends EventEmitter<any> {
   protected _ws?: WebSocket;
@@ -193,7 +194,7 @@ export abstract class BaseClient extends EventEmitter<any> {
     this._peer = new RTCPeerConnection();
     if (lite !== true) {
       this._peer = new RTCPeerConnection({
-        iceServers: [{ urls: servers }],
+        iceServers: servers ? [{ urls: servers }] : iceServers,
       });
     }
 
