@@ -1643,7 +1643,7 @@ class VideoChat extends React.Component<VideoChatProps> {
                     marginLeft: '4px',
                   }}
                 >
-                  <div style={{ height: '100px' }}>
+                  <div>
                     {this.ourStream && p.isVideoChat ? (
                       <video
                         ref={(el) => {
@@ -1664,37 +1664,46 @@ class VideoChat extends React.Component<VideoChatProps> {
                         alt=""
                       />
                     )}
-                  </div>
-                  <div
-                    style={{
-                      position: 'absolute',
-                      bottom: '0px',
-                      left: '0px',
-                    }}
-                  >
-                    <Label
-                      as="a"
-                      image
-                      size="mini"
-                      color={getColor(p.id) as any}
-                      style={{ lineHeight: 'normal' }}
-                    >
-                      <div
-                        title={nameMap[p.id] || p.id}
-                        style={{
-                          maxWidth: '60px',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          display: 'inline-block',
-                        }}
+                    <div
+                      style={{
+                        position: 'absolute',
+                        bottom: '4px',
+                        left: '0px',
+                        width: '100%',
+                        backgroundColor: '#' + getColorHex(p.id),
+                        color: 'white',
+                        borderRadius: '4px',
+                        fontSize: '10px',
+                        fontWeight: 700,
+                        display: 'flex',
+                      }}
                       >
-                        {nameMap[p.id] || p.id}
+                        <div
+                          title={nameMap[p.id] || p.id}
+                          style={{
+                            width: '80px',
+                            backdropFilter: 'brightness(80%)',
+                            padding: '4px',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            display: 'inline-block',
+                          }}
+                        >
+                          {nameMap[p.id] || p.id}
+                        </div>
+                        <div
+                          style={{
+                            backdropFilter: 'brightness(60%)',
+                            padding: '4px',
+                            flexGrow: 1,
+                            display: 'flex',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          {formatTimestamp(tsMap[p.id] || 0)}
+                        </div>
                       </div>
-                      <Label.Detail>
-                        {formatTimestamp(tsMap[p.id] || 0)}
-                      </Label.Detail>
-                    </Label>
                   </div>
                 </div>
               </div>
