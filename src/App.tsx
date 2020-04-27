@@ -87,10 +87,11 @@ export const iceServers = [
 let settings = getCurrentSettings();
 
 interface AppState {
-  state: string;
+  state: 'init' | 'starting' | 'connected';
   currentMedia: string;
   currentMediaPaused: boolean;
   participants: User[];
+  rosterUpdateTS: Number;
   chat: ChatMessage[];
   tsMap: NumberDict;
   nameMap: StringDict;
@@ -117,10 +118,11 @@ interface AppState {
 
 export default class App extends React.Component<null, AppState> {
   state: AppState = {
-    state: 'started',
+    state: 'starting',
     currentMedia: '',
     currentMediaPaused: false,
     participants: [],
+    rosterUpdateTS: Number(new Date()),
     chat: [],
     tsMap: {},
     nameMap: {},
@@ -144,14 +146,9 @@ export default class App extends React.Component<null, AppState> {
     connections: 0,
     multiStreamSelection: undefined,
   };
-  videoRefs: any = {};
   socket: any = null;
   watchPartyYTPlayer: any = null;
   ytDebounce = true;
-  videoInitTime = 0;
-  ourStream?: MediaStream;
-  videoPCs: PCDict = {};
-  savedMedia = '';
   screenShareStream?: MediaStream;
   screenHostPC: PCDict = {};
   screenSharePC?: RTCPeerConnection;
@@ -225,20 +222,20 @@ export default class App extends React.Component<null, AppState> {
           onStateChange: (e: any) => {
             if (
               getMediaType(this.state.currentMedia) === 'youtube' &&
-              e.data === window.YT.PlayerState?.CUED
+              e.data === window.YT?.PlayerState?.CUED
             ) {
               this.setState({ loading: false });
             }
             // console.log(this.ytDebounce, e.data, this.watchPartyYTPlayer?.getVideoUrl());
             if (
               this.ytDebounce &&
-              ((e.data === window.YT.PlayerState?.PLAYING &&
+              ((e.data === window.YT?.PlayerState?.PLAYING &&
                 this.state.currentMediaPaused) ||
-                (e.data === window.YT.PlayerState?.PAUSED &&
+                (e.data === window.YT?.PlayerState?.PAUSED &&
                   !this.state.currentMediaPaused))
             ) {
               this.ytDebounce = false;
-              if (e.data === window.YT.PlayerState?.PLAYING) {
+              if (e.data === window.YT?.PlayerState?.PLAYING) {
                 this.socket.emit('CMD:play');
                 this.doPlay();
               } else {
@@ -275,6 +272,7 @@ export default class App extends React.Component<null, AppState> {
     const socket = io.connect(serverPath + roomId);
     this.socket = socket;
     socket.on('connect', async () => {
+      this.setState({ state: 'connected' });
       // Load username from localstorage
       let userName = window.localStorage.getItem('watchparty-username');
       this.updateName(null, { value: userName || generateName() });
@@ -388,32 +386,15 @@ export default class App extends React.Component<null, AppState> {
       this.setState({ pictureMap: data });
     });
     socket.on('roster', (data: User[]) => {
-      this.setState({ participants: data }, () => {
-        // Establish connections to the other video chatters
-        this.updateWebRTC();
-        this.updateScreenShare();
-      });
+      this.setState(
+        { participants: data, rosterUpdateTS: Number(new Date()) },
+        () => {
+          this.updateScreenShare();
+        }
+      );
     });
     socket.on('chatinit', (data: any) => {
       this.setState({ chat: data, scrollTimestamp: Number(new Date()) });
-    });
-    socket.on('signal', async (data: any) => {
-      // Handle messages received from signaling server
-      const msg = data.msg;
-      const from = data.from;
-      const pc = this.videoPCs[from];
-      console.log('recv', from, data);
-      if (msg.ice !== undefined) {
-        pc.addIceCandidate(new RTCIceCandidate(msg.ice));
-      } else if (msg.sdp && msg.sdp.type === 'offer') {
-        // console.log('offer');
-        await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-        this.sendSignal(from, { sdp: pc.localDescription });
-      } else if (msg.sdp && msg.sdp.type === 'answer') {
-        pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
-      }
     });
     socket.on('signalSS', async (data: any) => {
       // Handle messages received from signaling server
@@ -512,103 +493,6 @@ export default class App extends React.Component<null, AppState> {
     this.setState({ isScreenSharing: false, isScreenSharingFile: false });
   };
 
-  setupWebRTC = async () => {
-    // Set up our own video
-    const stream = await navigator.mediaDevices.getUserMedia({
-      audio: true,
-      video: true,
-    });
-    this.ourStream = stream;
-    // alert server we've joined video chat
-    this.socket.emit('CMD:joinVideo');
-  };
-
-  stopWebRTC = () => {
-    this.ourStream &&
-      this.ourStream.getTracks().forEach((track) => {
-        track.stop();
-      });
-    this.ourStream = undefined;
-    Object.values(this.videoPCs).forEach((pc) => {
-      pc.close();
-    });
-    this.videoPCs = {};
-    this.socket.emit('CMD:leaveVideo');
-  };
-
-  toggleVideoWebRTC = () => {
-    if (this.ourStream) {
-      this.ourStream.getVideoTracks()[0].enabled = !this.ourStream.getVideoTracks()[0]
-        .enabled;
-    }
-  };
-
-  getVideoWebRTC = () => {
-    return this.ourStream && this.ourStream.getVideoTracks()[0].enabled;
-  };
-
-  toggleAudioWebRTC = () => {
-    if (this.ourStream) {
-      this.ourStream.getAudioTracks()[0].enabled = !this.ourStream.getAudioTracks()[0]
-        .enabled;
-    }
-  };
-
-  getAudioWebRTC = () => {
-    return (
-      this.ourStream &&
-      this.ourStream.getAudioTracks()[0] &&
-      this.ourStream.getAudioTracks()[0].enabled
-    );
-  };
-
-  updateWebRTC = () => {
-    // TODO teardown connections to people who leave
-    if (!this.ourStream) {
-      // We haven't started video chat, exit
-      return;
-    }
-    this.state.participants.forEach((user) => {
-      const id = user.id;
-      if (!user.isVideoChat || this.videoPCs[id]) {
-        return;
-      }
-      if (id === this.socket.id) {
-        this.videoPCs[id] = new RTCPeerConnection();
-        this.videoRefs[id].srcObject = this.ourStream;
-      } else {
-        const pc = new RTCPeerConnection({ iceServers });
-        this.videoPCs[id] = pc;
-        // Add our own video as outgoing stream
-        //@ts-ignore
-        pc.addStream(this.ourStream);
-        pc.onicecandidate = (event) => {
-          // We generated an ICE candidate, send it to peer
-          if (event.candidate) {
-            this.sendSignal(id, { ice: event.candidate });
-          }
-        };
-        //@ts-ignore
-        pc.onaddstream = (event: any) => {
-          // Mount the stream from peer
-          const stream = event.stream;
-          // console.log(stream);
-          this.videoRefs[id].srcObject = stream;
-        };
-        // For each pair, have the lexicographically smaller ID be the offerer
-        const isOfferer = this.socket.id < id;
-        if (isOfferer) {
-          pc.onnegotiationneeded = async () => {
-            // Start connection for peer's video
-            const offer = await pc.createOffer();
-            await pc.setLocalDescription(offer);
-            this.sendSignal(id, { sdp: pc.localDescription });
-          };
-        }
-      }
-    });
-  };
-
   updateScreenShare = async () => {
     if (!this.isScreenShare()) {
       return;
@@ -672,11 +556,6 @@ export default class App extends React.Component<null, AppState> {
     }
   };
 
-  sendSignal = async (to: string, data: any) => {
-    console.log('send', to, data);
-    this.socket.emit('signal', { to, msg: data });
-  };
-
   sendSignalSS = async (to: string, data: any, sharer?: boolean) => {
     // console.log('sendSS', to, data);
     this.socket.emit('signalSS', { to, msg: data, sharer });
@@ -729,9 +608,9 @@ export default class App extends React.Component<null, AppState> {
     if (this.isYouTube()) {
       return (
         this.watchPartyYTPlayer?.getPlayerState() ===
-          window.YT.PlayerState?.PAUSED ||
+          window.YT?.PlayerState?.PAUSED ||
         this.watchPartyYTPlayer?.getPlayerState() ===
-          window.YT.PlayerState?.ENDED
+          window.YT?.PlayerState?.ENDED
       );
     }
     return false;
@@ -783,7 +662,6 @@ export default class App extends React.Component<null, AppState> {
       ) as HTMLMediaElement;
       leftVideo.srcObject = null;
       leftVideo.src = src;
-      this.videoInitTime = Number(new Date());
       leftVideo.currentTime = time;
       // Clear subtitles
       leftVideo.innerHTML = '';
@@ -878,7 +756,7 @@ export default class App extends React.Component<null, AppState> {
     } else if (this.isYouTube()) {
       shouldPlay =
         this.watchPartyYTPlayer?.getPlayerState() ===
-          window.YT.PlayerState.PAUSED ||
+          window.YT?.PlayerState.PAUSED ||
         this.getCurrentTime() === this.getDuration();
     }
     if (shouldPlay) {
@@ -1245,10 +1123,20 @@ export default class App extends React.Component<null, AppState> {
             Watch videos with your friends!
           </Header>
         </Divider>
+        {this.state.state === 'connected' && (
+          <VideoChat
+            socket={this.socket}
+            participants={this.state.participants}
+            nameMap={this.state.nameMap}
+            pictureMap={this.state.pictureMap}
+            tsMap={this.state.tsMap}
+            rosterUpdateTS={this.state.rosterUpdateTS}
+          />
+        )}
         <Grid stackable celled="internally">
           <Grid.Row>
-            {this.state.state !== 'init' && (
-              <Grid.Column width={10} style={{ overflow: 'scroll' }}>
+            {
+              <Grid.Column width={11} style={{ overflow: 'scroll' }}>
                 <React.Fragment>
                   <ComboBox
                     setMedia={this.setMedia}
@@ -1259,12 +1147,12 @@ export default class App extends React.Component<null, AppState> {
                   {/* <Divider inverted horizontal></Divider> */}
                   <div style={{ height: '4px' }} />
                   <div className="mobileStack" style={{ display: 'flex' }}>
-                    {this.state.state !== 'init' && (
+                    {
                       <SearchComponent
                         setMedia={this.setMedia}
                         type={'youtube'}
                       />
-                    )}
+                    }
                     {false && settings.mediaPath && (
                       <SearchComponent
                         setMedia={this.setMedia}
@@ -1475,10 +1363,10 @@ export default class App extends React.Component<null, AppState> {
                   )}
                 </React.Fragment>
               </Grid.Column>
-            )}
-            {this.state.state !== 'init' && (
+            }
+            {
               <Grid.Column
-                width={4}
+                width={5}
                 style={{ display: 'flex', flexDirection: 'column' }}
                 className="fullHeightColumn"
               >
@@ -1512,155 +1400,307 @@ export default class App extends React.Component<null, AppState> {
                   />
                 )}
               </Grid.Column>
-            )}
-            {this.state.state !== 'init' && (
-              <Grid.Column width={2} className="fullHeightColumn">
-                <div style={{ overflow: 'scroll', height: '100%' }}>
-                  {!this.ourStream && (
-                    <Button
-                      fluid
-                      color={'purple'}
-                      size="medium"
-                      icon
-                      labelPosition="left"
-                      onClick={this.setupWebRTC}
-                    >
-                      <Icon name="video" />
-                      {`Join`}
-                    </Button>
-                  )}
-                  {this.ourStream && (
-                    <div
-                      style={{
-                        display: 'flex',
-                        width: '100%',
-                        flexWrap: 'wrap',
-                      }}
-                    >
-                      <Button
-                        fluid
-                        color={'red'}
-                        size="medium"
-                        icon
-                        labelPosition="left"
-                        onClick={this.stopWebRTC}
-                      >
-                        <Icon name="external" />
-                        {`Leave`}
-                      </Button>
-                      <Button
-                        fluid
-                        color={this.getVideoWebRTC() ? 'green' : 'red'}
-                        size="medium"
-                        icon
-                        labelPosition="left"
-                        onClick={this.toggleVideoWebRTC}
-                      >
-                        <Icon name="video" />
-                        {this.getVideoWebRTC() ? 'On' : 'Off'}
-                      </Button>
-                      <Button
-                        fluid
-                        color={this.getAudioWebRTC() ? 'green' : 'red'}
-                        size="medium"
-                        icon
-                        labelPosition="left"
-                        onClick={this.toggleAudioWebRTC}
-                      >
-                        <Icon
-                          name={
-                            this.getAudioWebRTC()
-                              ? 'microphone'
-                              : 'microphone slash'
-                          }
-                        />
-                        {this.getAudioWebRTC() ? 'On' : 'Off'}
-                      </Button>
-                    </div>
-                  )}
-                  {this.state.participants.map((p) => {
-                    return (
-                      <div key={p.id} style={{ marginTop: '10px' }}>
-                        <div
-                          style={{
-                            position: 'relative',
-                            height: '100px',
-                            width: '100%',
-                          }}
-                        >
-                          <div
-                            style={{
-                              position: 'absolute',
-                              top: '0px',
-                              left: '0px',
-                              height: '100%',
-                            }}
-                          >
-                            {this.ourStream && p.isVideoChat ? (
-                              <video
-                                ref={(el) => {
-                                  this.videoRefs[p.id] = el;
-                                }}
-                                style={{ height: '100%', borderRadius: '4px' }}
-                                autoPlay
-                                muted={p.id === this.socket.id}
-                                data-id={p.id}
-                              />
-                            ) : (
-                              <img
-                                style={{ height: '100%', borderRadius: '4px' }}
-                                src={
-                                  this.state.pictureMap[p.id] ||
-                                  getDefaultPicture(
-                                    this.state.nameMap[p.id],
-                                    getColorHex(p.id)
-                                  )
-                                }
-                                alt=""
-                              />
-                            )}
-                          </div>
-                          <div
-                            style={{
-                              position: 'absolute',
-                              bottom: '0px',
-                              left: '0px',
-                            }}
-                          >
-                            <Label
-                              as="a"
-                              image
-                              size="mini"
-                              color={getColor(p.id) as any}
-                              style={{ lineHeight: 'normal' }}
-                            >
-                              <div
-                                title={this.state.nameMap[p.id] || p.id}
-                                style={{
-                                  maxWidth: '70px',
-                                  textOverflow: 'ellipsis',
-                                  whiteSpace: 'nowrap',
-                                  overflow: 'hidden',
-                                  display: 'inline-block',
-                                }}
-                              >
-                                {this.state.nameMap[p.id] || p.id}
-                              </div>
-                              <Label.Detail>
-                                {formatTimestamp(this.state.tsMap[p.id] || 0)}
-                              </Label.Detail>
-                            </Label>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </Grid.Column>
-            )}
+            }
           </Grid.Row>
         </Grid>
       </React.Fragment>
+    );
+  }
+}
+
+interface VideoChatProps {
+  socket: any;
+  participants: User[];
+  pictureMap: StringDict;
+  nameMap: StringDict;
+  tsMap: NumberDict;
+  rosterUpdateTS: Number;
+}
+
+class VideoChat extends React.Component<VideoChatProps> {
+  ourStream?: MediaStream;
+  videoRefs: any = {};
+  videoPCs: PCDict = {};
+  socket = this.props.socket;
+
+  componentDidMount() {
+    this.socket.on('signal', async (data: any) => {
+      // Handle messages received from signaling server
+      const msg = data.msg;
+      const from = data.from;
+      const pc = this.videoPCs[from];
+      console.log('recv', from, data);
+      if (msg.ice !== undefined) {
+        pc.addIceCandidate(new RTCIceCandidate(msg.ice));
+      } else if (msg.sdp && msg.sdp.type === 'offer') {
+        // console.log('offer');
+        await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        this.sendSignal(from, { sdp: pc.localDescription });
+      } else if (msg.sdp && msg.sdp.type === 'answer') {
+        pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
+      }
+    });
+  }
+
+  componentDidUpdate(prevProps: VideoChatProps) {
+    if (this.props.rosterUpdateTS !== prevProps.rosterUpdateTS) {
+      this.updateWebRTC();
+    }
+  }
+
+  setupWebRTC = async () => {
+    // Set up our own video
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: true,
+      video: true,
+    });
+    this.ourStream = stream;
+    // alert server we've joined video chat
+    this.socket.emit('CMD:joinVideo');
+  };
+
+  stopWebRTC = () => {
+    this.ourStream &&
+      this.ourStream.getTracks().forEach((track) => {
+        track.stop();
+      });
+    this.ourStream = undefined;
+    Object.values(this.videoPCs).forEach((pc) => {
+      pc.close();
+    });
+    this.videoPCs = {};
+    this.socket.emit('CMD:leaveVideo');
+  };
+
+  toggleVideoWebRTC = () => {
+    if (this.ourStream) {
+      this.ourStream.getVideoTracks()[0].enabled = !this.ourStream.getVideoTracks()[0]
+        .enabled;
+    }
+  };
+
+  getVideoWebRTC = () => {
+    return this.ourStream && this.ourStream.getVideoTracks()[0].enabled;
+  };
+
+  toggleAudioWebRTC = () => {
+    if (this.ourStream) {
+      this.ourStream.getAudioTracks()[0].enabled = !this.ourStream.getAudioTracks()[0]
+        .enabled;
+    }
+  };
+
+  getAudioWebRTC = () => {
+    return (
+      this.ourStream &&
+      this.ourStream.getAudioTracks()[0] &&
+      this.ourStream.getAudioTracks()[0].enabled
+    );
+  };
+
+  updateWebRTC = () => {
+    // TODO teardown connections to people who leave
+    if (!this.ourStream) {
+      // We haven't started video chat, exit
+      return;
+    }
+    this.props.participants.forEach((user) => {
+      const id = user.id;
+      if (!user.isVideoChat || this.videoPCs[id]) {
+        return;
+      }
+      if (id === this.socket.id) {
+        this.videoPCs[id] = new RTCPeerConnection();
+        this.videoRefs[id].srcObject = this.ourStream;
+      } else {
+        const pc = new RTCPeerConnection({ iceServers });
+        this.videoPCs[id] = pc;
+        // Add our own video as outgoing stream
+        //@ts-ignore
+        pc.addStream(this.ourStream);
+        pc.onicecandidate = (event) => {
+          // We generated an ICE candidate, send it to peer
+          if (event.candidate) {
+            this.sendSignal(id, { ice: event.candidate });
+          }
+        };
+        //@ts-ignore
+        pc.onaddstream = (event: any) => {
+          // Mount the stream from peer
+          const stream = event.stream;
+          // console.log(stream);
+          this.videoRefs[id].srcObject = stream;
+        };
+        // For each pair, have the lexicographically smaller ID be the offerer
+        const isOfferer = this.socket.id < id;
+        if (isOfferer) {
+          pc.onnegotiationneeded = async () => {
+            // Start connection for peer's video
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+            this.sendSignal(id, { sdp: pc.localDescription });
+          };
+        }
+      }
+    });
+  };
+
+  sendSignal = async (to: string, data: any) => {
+    console.log('send', to, data);
+    this.socket.emit('signal', { to, msg: data });
+  };
+
+  render() {
+    const { participants, pictureMap, nameMap, tsMap, socket } = this.props;
+    return (
+      <div
+        style={{
+          display: 'flex',
+          width: '100%',
+          paddingLeft: '1em',
+          overflowX: 'scroll',
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            maxWidth: '140px',
+            justifyContent: 'center',
+          }}
+        >
+          {!this.ourStream && (
+            <Button
+              //fluid
+              color={'purple'}
+              circular
+              size="big"
+              icon
+              //labelPosition="left"
+              onClick={this.setupWebRTC}
+            >
+              <Icon name="video" />
+              {/* {`Join`} */}
+            </Button>
+          )}
+          {this.ourStream && (
+            <div
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+              }}
+            >
+              <Button
+                fluid
+                color={'red'}
+                size="tiny"
+                icon
+                labelPosition="left"
+                onClick={this.stopWebRTC}
+              >
+                <Icon name="external" />
+                {`Leave`}
+              </Button>
+              <Button
+                fluid
+                color={this.getVideoWebRTC() ? 'green' : 'red'}
+                size="tiny"
+                icon
+                labelPosition="left"
+                onClick={this.toggleVideoWebRTC}
+              >
+                <Icon name="video" />
+                {this.getVideoWebRTC() ? 'On' : 'Off'}
+              </Button>
+              <Button
+                fluid
+                color={this.getAudioWebRTC() ? 'green' : 'red'}
+                size="tiny"
+                icon
+                labelPosition="left"
+                onClick={this.toggleAudioWebRTC}
+              >
+                <Icon
+                  name={
+                    this.getAudioWebRTC() ? 'microphone' : 'microphone slash'
+                  }
+                />
+                {this.getAudioWebRTC() ? 'On' : 'Off'}
+              </Button>
+            </div>
+          )}
+        </div>
+        <div style={{ display: 'flex' }}>
+          {participants.map((p) => {
+            return (
+              <div key={p.id}>
+                <div
+                  style={{
+                    position: 'relative',
+                    marginLeft: '4px',
+                  }}
+                >
+                  <div style={{ height: '100px' }}>
+                    {this.ourStream && p.isVideoChat ? (
+                      <video
+                        ref={(el) => {
+                          this.videoRefs[p.id] = el;
+                        }}
+                        className="videoChatContent"
+                        autoPlay
+                        muted={p.id === socket.id}
+                        data-id={p.id}
+                      />
+                    ) : (
+                      <img
+                        className="videoChatContent"
+                        src={
+                          pictureMap[p.id] ||
+                          getDefaultPicture(nameMap[p.id], getColorHex(p.id))
+                        }
+                        alt=""
+                      />
+                    )}
+                  </div>
+                  <div
+                    style={{
+                      position: 'absolute',
+                      bottom: '0px',
+                      left: '0px',
+                    }}
+                  >
+                    <Label
+                      as="a"
+                      image
+                      size="mini"
+                      color={getColor(p.id) as any}
+                      style={{ lineHeight: 'normal' }}
+                    >
+                      <div
+                        title={nameMap[p.id] || p.id}
+                        style={{
+                          maxWidth: '60px',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          display: 'inline-block',
+                        }}
+                      >
+                        {nameMap[p.id] || p.id}
+                      </div>
+                      <Label.Detail>
+                        {formatTimestamp(tsMap[p.id] || 0)}
+                      </Label.Detail>
+                    </Label>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
     );
   }
 }
@@ -2366,7 +2406,7 @@ class Controls extends React.Component<ControlsProps> {
             marginTop: 0,
             marginBottom: 0,
             position: 'relative',
-            minWidth: '300px',
+            minWidth: '100px',
           }}
           value={currentTime}
           total={duration}
