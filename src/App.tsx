@@ -1135,20 +1135,10 @@ export default class App extends React.Component<null, AppState> {
             Watch videos with your friends!
           </Header>
         </Divider>
-        {this.state.state === 'connected' && (
-          <VideoChat
-            socket={this.socket}
-            participants={this.state.participants}
-            nameMap={this.state.nameMap}
-            pictureMap={this.state.pictureMap}
-            tsMap={this.state.tsMap}
-            rosterUpdateTS={this.state.rosterUpdateTS}
-          />
-        )}
         <Grid stackable celled="internally">
           <Grid.Row>
             {
-              <Grid.Column width={11} style={{ overflow: 'scroll' }}>
+              <Grid.Column width={12} style={{ overflow: 'scroll' }}>
                 <React.Fragment>
                   <ComboBox
                     setMedia={this.setMedia}
@@ -1378,7 +1368,7 @@ export default class App extends React.Component<null, AppState> {
             }
             {
               <Grid.Column
-                width={5}
+                width={4}
                 style={{ display: 'flex', flexDirection: 'column' }}
                 className="fullHeightColumn"
               >
@@ -1415,6 +1405,16 @@ export default class App extends React.Component<null, AppState> {
             }
           </Grid.Row>
         </Grid>
+        {this.state.state === 'connected' && (
+          <VideoChat
+            socket={this.socket}
+            participants={this.state.participants}
+            nameMap={this.state.nameMap}
+            pictureMap={this.state.pictureMap}
+            tsMap={this.state.tsMap}
+            rosterUpdateTS={this.state.rosterUpdateTS}
+          />
+        )}
       </React.Fragment>
     );
   }

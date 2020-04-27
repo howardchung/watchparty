@@ -117,7 +117,7 @@ body {
 }
 
 .videoChatContent {
-  height: 120px;
+  height: 110px;
   border-radius: 4px;
   object-fit: contain;
 }
