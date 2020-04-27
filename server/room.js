@@ -86,6 +86,9 @@ module.exports = class Room {
       io.of(roomId).emit('roster', this.roster);
 
       socket.on('CMD:name', (data) => {
+        if (!data) {
+          return;
+        }
         if (data && data.length > 100) {
           return;
         }
