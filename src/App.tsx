@@ -42,7 +42,6 @@ import {
   formatSpeed,
   getDefaultPicture,
   getColorHex,
-  getColor,
   formatTimestamp,
   debounce,
   decodeEntities,
