@@ -168,40 +168,44 @@ export default class App extends React.Component<null, AppState> {
       window.fetch(serverPath + '/ping');
     }, 10 * 60 * 1000);
 
-    const loadFBData = () => {
-      // console.log(window.FB, this.socket);
-      if (!window.FB || !this.socket) {
-        setTimeout(loadFBData, 1000);
-        return;
-      }
-      window.FB.getLoginStatus((response: any) => {
-        this.setState({ isFBReady: true });
-        const fbUserID =
-          response.status === 'connected' && response.authResponse.userID;
-        if (fbUserID) {
-          window.FB.api(
-            '/me',
-            {
-              fields: 'id,first_name,name,email,picture.width(256).height(256)',
-            },
-            (response: any) => {
-              // console.log(response);
-              const picture =
-                response &&
-                response.picture &&
-                response.picture.data &&
-                response.picture.data.url;
-              const name = response && response.first_name;
-              this.setState({ fbUserID });
-              this.updateName(null, { value: name });
-              this.updatePicture(picture);
-            }
-          );
-        }
-      });
-    };
-    loadFBData();
+    this.loadFBData();
+    this.loadYouTube();
+    this.init();
+  }
 
+  loadFBData = () => {
+    if (!window.FB || !this.socket) {
+      setTimeout(this.loadFBData, 1000);
+      return;
+    }
+    window.FB.getLoginStatus((response: any) => {
+      this.setState({ isFBReady: true });
+      const fbUserID =
+        response.status === 'connected' && response.authResponse.userID;
+      if (fbUserID) {
+        window.FB.api(
+          '/me',
+          {
+            fields: 'id,first_name,name,email,picture.width(256).height(256)',
+          },
+          (response: any) => {
+            // console.log(response);
+            const picture =
+              response &&
+              response.picture &&
+              response.picture.data &&
+              response.picture.data.url;
+            const name = response && response.first_name;
+            this.setState({ fbUserID });
+            this.updateName(null, { value: name });
+            this.updatePicture(picture);
+          }
+        );
+      }
+    });
+  };
+
+  loadYouTube = () => {
     // This code loads the IFrame Player API code asynchronously.
     const tag = document.createElement('script');
     tag.src = 'https://www.youtube.com/iframe_api';
@@ -249,17 +253,9 @@ export default class App extends React.Component<null, AppState> {
         },
       });
     };
+  };
 
-    this.init();
-  }
-
-  init = (retryCount = 0) => {
-    // if (retryCount < 10 && (!this.state.isFBReady || !this.state.isYouTubeReady)) {
-    //   console.log('init retry:', retryCount, this.state.isFBReady, this.state.isYouTubeReady);
-    //   setTimeout(() => this.init(retryCount + 1), 500);
-    //   return;
-    // }
-
+  init = () => {
     // Load room ID from url
     let roomId = '/default';
     let query = window.location.hash.substring(1);
@@ -277,6 +273,7 @@ export default class App extends React.Component<null, AppState> {
       // Load username from localstorage
       let userName = window.localStorage.getItem('watchparty-username');
       this.updateName(null, { value: userName || generateName() });
+      this.loadFBData();
     });
     socket.on('REC:play', () => {
       this.doPlay();
@@ -496,7 +493,7 @@ export default class App extends React.Component<null, AppState> {
   };
 
   setupVBrowser = async () => {
-    this.setMedia(null, { value: 'vbrowser://'});
+    this.setMedia(null, { value: 'vbrowser://' });
     this.setState({ isVBrowser: true });
   };
 
@@ -1302,12 +1299,16 @@ export default class App extends React.Component<null, AppState> {
                               : 'none',
                         }}
                       >
-                        {this.state.isVBrowser ? <Video /> : <video
-                          className="videoOuter"
-                          // tabIndex={1}
-                          // onClick={this.togglePlay}
-                          id="leftVideo"
-                        ></video>}
+                        {this.state.isVBrowser ? (
+                          <Video />
+                        ) : (
+                          <video
+                            className="videoOuter"
+                            // tabIndex={1}
+                            // onClick={this.togglePlay}
+                            id="leftVideo"
+                          ></video>
+                        )}
                       </div>
                       {this.state.currentMedia && (
                         <Controls
@@ -1688,34 +1689,34 @@ class VideoChat extends React.Component<VideoChatProps> {
                         fontWeight: 700,
                         display: 'flex',
                       }}
+                    >
+                      <div
+                        title={nameMap[p.id] || p.id}
+                        style={{
+                          width: '80px',
+                          backdropFilter: 'brightness(80%)',
+                          padding: '4px',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          display: 'inline-block',
+                        }}
                       >
-                        <div
-                          title={nameMap[p.id] || p.id}
-                          style={{
-                            width: '80px',
-                            backdropFilter: 'brightness(80%)',
-                            padding: '4px',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            display: 'inline-block',
-                          }}
-                        >
-                          {p.isVideoChat && <Icon size="small" name="video" />}
-                          {nameMap[p.id] || p.id}
-                        </div>
-                        <div
-                          style={{
-                            backdropFilter: 'brightness(60%)',
-                            padding: '4px',
-                            flexGrow: 1,
-                            display: 'flex',
-                            justifyContent: 'center',
-                          }}
-                        >
-                          {formatTimestamp(tsMap[p.id] || 0)}
-                        </div>
+                        {p.isVideoChat && <Icon size="small" name="video" />}
+                        {nameMap[p.id] || p.id}
                       </div>
+                      <div
+                        style={{
+                          backdropFilter: 'brightness(60%)',
+                          padding: '4px',
+                          flexGrow: 1,
+                          display: 'flex',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        {formatTimestamp(tsMap[p.id] || 0)}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

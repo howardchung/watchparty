@@ -91,7 +91,7 @@ export default class Video extends React.Component {
       return;
     }
 
-    this.activeKeys.forEach(key => {
+    this.activeKeys.forEach((key) => {
       this.$client.sendData('keyup', { key });
       this.activeKeys.delete(key);
     });
@@ -215,28 +215,30 @@ export default class Video extends React.Component {
   }
 
   render() {
-    return <div ref={this._component}>
-    <div ref={this._player}>
-      <div ref={this._container}>
-        <video ref={this._video} id="leftVideo" />
-        <div
-          ref={this._overlay}
-          tabIndex={0}
-          // @click.stop.prevent
-          // @contextmenu.stop.prevent
-          // @wheel.stop.prevent="onWheel"
-          // @mousemove.stop.prevent="onMouseMove"
-          // @mousedown.stop.prevent="onMouseDown"
-          // @mouseup.stop.prevent="onMouseUp"
-          // @mouseenter.stop.prevent="onMouseEnter"
-          // @mouseleave.stop.prevent="onMouseLeave"
-          // @keydown.stop.prevent="onKeyDown"
-          // @keyup.stop.prevent="onKeyUp"
-        />
-        <div ref={this._aspect} />
+    return (
+      <div ref={this._component}>
+        <div ref={this._player}>
+          <div ref={this._container}>
+            <video ref={this._video} id="leftVideo" />
+            <div
+              ref={this._overlay}
+              tabIndex={0}
+              // @click.stop.prevent
+              // @contextmenu.stop.prevent
+              // @wheel.stop.prevent="onWheel"
+              // @mousemove.stop.prevent="onMouseMove"
+              // @mousedown.stop.prevent="onMouseDown"
+              // @mouseup.stop.prevent="onMouseUp"
+              // @mouseenter.stop.prevent="onMouseEnter"
+              // @mouseleave.stop.prevent="onMouseLeave"
+              // @keydown.stop.prevent="onKeyDown"
+              // @keyup.stop.prevent="onKeyUp"
+            />
+            <div ref={this._aspect} />
+          </div>
+          <div ref={this._resolution} />
+        </div>
       </div>
-      <div ref={this._resolution} />
-    </div>
-  </div>;
+    );
   }
 }

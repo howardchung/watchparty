@@ -32,12 +32,9 @@ export class NekoClient extends BaseClient implements EventEmitter<any> {
   /////////////////////////////
   // Internal Events
   /////////////////////////////
-  protected [EVENT.CONNECTING]() {
-  }
+  protected [EVENT.CONNECTING]() {}
 
-  protected [EVENT.CONNECTED]() {
-
-  }
+  protected [EVENT.CONNECTED]() {}
 
   protected [EVENT.DISCONNECTED](reason?: Error) {
     console.warn(reason);
@@ -103,7 +100,6 @@ export class NekoClient extends BaseClient implements EventEmitter<any> {
     // if (!member) {
     //   return;
     // }
-
     //this.$accessor.remote.setHost(member);
   }
 
