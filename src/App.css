@@ -10,12 +10,12 @@ body {
   word-break: break-word;
 }
 
-.comment .white.white.white {
-  color: white;
+.comment .light.light.light {
+  color: gainsboro;
 }
 
-.comment .lightgray.lightgray.lightgray {
-  color: lightgray;
+.comment .dark.dark.dark {
+  color: gray;
 }
 
 .chatContainer {
@@ -24,7 +24,7 @@ body {
 }
 
 .system.system.system.system {
-  font-size: 9px;
+  font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 1px;
 }
@@ -81,13 +81,13 @@ body {
 .fullScreenContainer .videoOuter {
   /* min-height: 70vh;
     max-height: 75vh; */
-  width: 80vw;
+  width: 75vw;
   max-height: 100vh;
 }
 
 .fullScreenContainer .fullScreenChat {
   /* max-height: 23vh; */
-  width: 20vw;
+  width: 25vw;
   max-height: 100vh;
 }
 

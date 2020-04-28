@@ -1327,6 +1327,16 @@ export default class App extends React.Component<null, AppState> {
                           duration={this.getDuration()}
                         />
                       )}
+                      {this.state.fullScreen && this.state.state === 'connected' && (
+                        <VideoChat
+                          socket={this.socket}
+                          participants={this.state.participants}
+                          nameMap={this.state.nameMap}
+                          pictureMap={this.state.pictureMap}
+                          tsMap={this.state.tsMap}
+                          rosterUpdateTS={this.state.rosterUpdateTS}
+                        />
+                      )}
                     </div>
                     {this.state.fullScreen && (
                       <Chat
@@ -2334,16 +2344,16 @@ const ChatMessage = ({
         src={pictureMap[id] || getDefaultPicture(nameMap[id], getColorHex(id))}
       />
       <Comment.Content>
-        <Comment.Author as="a" className="white">
+        <Comment.Author as="a" className="light">
           {nameMap[id] || id}
         </Comment.Author>
-        <Comment.Metadata className="lightgray">
+        <Comment.Metadata className="dark">
           <div>{new Date(timestamp).toLocaleTimeString()}</div>
         </Comment.Metadata>
-        <Comment.Text className="lightgray system">
+        <Comment.Text className="light system">
           {cmd && formatMessage(cmd, msg)}
         </Comment.Text>
-        <Comment.Text className="white">{!cmd && msg}</Comment.Text>
+        <Comment.Text className="light">{!cmd && msg}</Comment.Text>
       </Comment.Content>
     </Comment>
   );
