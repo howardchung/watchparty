@@ -1701,6 +1701,7 @@ class VideoChat extends React.Component<VideoChatProps> {
                             display: 'inline-block',
                           }}
                         >
+                          {p.isVideoChat && <Icon size="small" name="video" />}
                           {nameMap[p.id] || p.id}
                         </div>
                         <div

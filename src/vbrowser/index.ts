@@ -40,7 +40,7 @@ export class NekoClient extends BaseClient implements EventEmitter<any> {
   }
 
   protected [EVENT.DISCONNECTED](reason?: Error) {
-    console.error(reason);
+    console.warn(reason);
   }
 
   protected [EVENT.TRACK](event: RTCTrackEvent) {
@@ -85,15 +85,6 @@ export class NekoClient extends BaseClient implements EventEmitter<any> {
       //   speed: 1000,
       // });
     }
-
-    // this.$accessor.chat.newMessage({
-    //   id: member.id,
-    //   content: this.$vue.$t('notifications.controls_taken', {
-    //     name: '',
-    //   }) as string,
-    //   type: 'event',
-    //   created: new Date(),
-    // });
   }
 
   protected [EVENT.CONTROL.RELEASE]({ id }: ControlPayload) {
@@ -105,30 +96,6 @@ export class NekoClient extends BaseClient implements EventEmitter<any> {
 
     if (this.id === id) {
     }
-
-    // this.$accessor.chat.newMessage({
-    //   id: member.id,
-    //   content: this.$vue.$t('notifications.controls_released', {
-    //     name: '',
-    //   }) as string,
-    //   type: 'event',
-    //   created: new Date(),
-    // });
-  }
-
-  protected [EVENT.CONTROL.REQUEST]({ id }: ControlPayload) {
-    console.log(id);
-    // const member = this.member(id);
-    // if (!member) {
-    //   return;
-    // }
-  }
-
-  protected [EVENT.CONTROL.REQUESTING]({ id }: ControlPayload) {
-    // const member = this.member(id);
-    // if (!member || member.ignored) {
-    //   return;
-    // }
   }
 
   protected [EVENT.CONTROL.GIVE]({ id, target }: ControlTargetPayload) {
@@ -151,7 +118,7 @@ export class NekoClient extends BaseClient implements EventEmitter<any> {
   protected [EVENT.SCREEN.CONFIGURATIONS]({
     configurations,
   }: ScreenConfigurationsPayload) {
-    console.log(configurations);
+    console.log('[CONFIGURATIONS]', configurations);
     //this.$accessor.video.setConfigurations(configurations);
   }
 
@@ -161,16 +128,11 @@ export class NekoClient extends BaseClient implements EventEmitter<any> {
     height,
     rate,
   }: ScreenResolutionPayload) {
-    console.log(id, width, height, rate);
+    console.log('[RESOLUTION]', id, width, height, rate);
     //this.$accessor.video.setResolution({ width, height, rate });
 
     if (!id) {
       return;
     }
-
-    //const member = this.member(id);
-    // if (!member || member.ignored) {
-    //   return;
-    // }
   }
 }
