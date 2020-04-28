@@ -71,12 +71,12 @@ body {
 .fullScreenContainer {
   display: flex;
   flex-direction: row;
-  align-items: center;
 }
 
-#playerContainer:fullscreen .videoOuter {
-  min-width: 100vw;
-  min-height: 100vh;
+.fullScreenContainer:fullscreen > #playerContainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .fullScreenContainer .videoOuter {
