@@ -71,6 +71,7 @@ body {
 .fullScreenContainer {
   display: flex;
   flex-direction: row;
+  align-items: center;
 }
 
 #playerContainer:fullscreen .videoOuter {
