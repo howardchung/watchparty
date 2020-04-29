@@ -1838,7 +1838,7 @@ class Chat extends React.Component<ChatProps> {
             ))}
             {/* <div ref={this.messagesEndRef} /> */}
           </Comment.Group>
-          {!this.state.isNearBottom && <Button size="tiny" onClick={this.scrollToBottom} style={{ position: 'sticky', bottom: 0, width: '100%' }}>Jump to bottom</Button>}
+          {!this.state.isNearBottom && <Button size="tiny" onClick={this.scrollToBottom} style={{ position: 'sticky', bottom: 0, display: 'block', margin: '0 auto' }}>Jump to bottom</Button>}
         </div>
         <Input
           inverted
