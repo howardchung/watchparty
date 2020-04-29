@@ -130,7 +130,7 @@ export default class App extends React.Component<null, AppState> {
     myName: '',
     myPicture: '',
     loading: true,
-    scrollTimestamp: Number(new Date()),
+    scrollTimestamp: 0,
     fullScreen: false,
     controlsTimestamp: 0,
     watchOptions: [],
@@ -1749,16 +1749,19 @@ interface ChatProps {
 }
 
 class Chat extends React.Component<ChatProps> {
-  public state = { chatMsg: '' };
+  public state = { chatMsg: '', isNearBottom: true };
   messagesRef = React.createRef<HTMLDivElement>();
 
   componentDidMount() {
     this.scrollToBottom();
+    this.messagesRef.current?.addEventListener('scroll', this.onScroll);
   }
 
   componentDidUpdate(prevProps: ChatProps) {
     if (this.props.scrollTimestamp !== prevProps.scrollTimestamp) {
-      this.scrollToBottom();
+      if (prevProps.scrollTimestamp === 0 || this.state.isNearBottom) {
+        this.scrollToBottom();
+      }
     }
   }
 
@@ -1774,9 +1777,15 @@ class Chat extends React.Component<ChatProps> {
     this.props.socket.emit('CMD:chat', this.state.chatMsg);
   };
 
+  onScroll = () => {
+    this.setState({ isNearBottom: this.isChatNearBottom() });
+  }
+
+  isChatNearBottom = () => {
+    return this.messagesRef.current && (this.messagesRef.current.scrollHeight - this.messagesRef.current.scrollTop - this.messagesRef.current.offsetHeight) < 100;
+  };
+
   scrollToBottom = () => {
-    // TODO dont do if user manually scrolled up
-    // this.messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
     if (this.messagesRef.current) {
       this.messagesRef.current.scrollTop = this.messagesRef.current.scrollHeight;
     }
@@ -1816,7 +1825,7 @@ class Chat extends React.Component<ChatProps> {
           marginTop: 0,
         }}
       >
-        <div className="chatContainer" ref={this.messagesRef}>
+        <div className="chatContainer" ref={this.messagesRef} style={{ position: 'relative' }}>
           <Comment.Group>
             {this.props.chat.map((msg) => (
               <ChatMessage
@@ -1829,6 +1838,7 @@ class Chat extends React.Component<ChatProps> {
             ))}
             {/* <div ref={this.messagesEndRef} /> */}
           </Comment.Group>
+          {!this.state.isNearBottom && <Button size="tiny" onClick={this.scrollToBottom} style={{ position: 'sticky', bottom: 0, width: '100%' }}>Jump to bottom</Button>}
         </div>
         <Input
           inverted
