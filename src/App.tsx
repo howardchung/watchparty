@@ -2087,7 +2087,7 @@ interface ComboBoxProps {
 
 class ComboBox extends React.Component<ComboBoxProps> {
   state = {
-    inputMedia: undefined,
+    inputMedia: undefined as string | undefined,
     results: undefined,
     loading: false,
     lastResultTimestamp: Number(new Date()),
@@ -2111,8 +2111,7 @@ class ComboBox extends React.Component<ComboBoxProps> {
           const query: string = this.state.inputMedia || '';
           let timestamp = Number(new Date());
           /* 
-          If input starts with http, probably user is entering their own URL. Don't show anything
-          If input is empty
+          If input is empty or starts with http
             If we have a mediaPath use that for results
             Else show the default list of demo videos
           If input is anything else:
@@ -2120,9 +2119,7 @@ class ComboBox extends React.Component<ComboBoxProps> {
             Else search YouTube
         */
           let results: JSX.Element[] | undefined = undefined;
-          if (query && query.startsWith('http')) {
-            results = undefined;
-          } else if (query === '') {
+          if (query === '' || (query && query.startsWith('http'))) {
             if (settings.mediaPath) {
               const data = await getMediaPathResults(query);
               results = data.map((result) => (
@@ -2188,7 +2185,7 @@ class ComboBox extends React.Component<ComboBoxProps> {
                   inputMedia: getMediaDisplayName(currentMedia),
                 },
                 () => {
-                  if (!this.state.inputMedia) {
+                  if (!this.state.inputMedia || (this.state.inputMedia && this.state.inputMedia.startsWith('http'))) {
                     this.doSearch(e);
                   }
                 }
@@ -2276,9 +2273,9 @@ async function getMediaPathResults(query: string): Promise<SearchResult[]> {
         name: getMediaPathForList(defaultMediaPath) + file.name,
       }));
   }
-  results = results.filter((option: SearchResult) =>
-    option.name.toLowerCase().includes(query.toLowerCase())
-  );
+  // results = results.filter((option: SearchResult) =>
+  //   option.name.toLowerCase().includes(query.toLowerCase())
+  // );
   return results;
 }
 
