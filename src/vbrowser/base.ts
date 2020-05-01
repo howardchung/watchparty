@@ -60,7 +60,7 @@ export abstract class BaseClient extends EventEmitter<any> {
     }
 
     if (displayname === '') {
-      throw new Error('Must add a displayname'); // TODO: Better handling
+      throw new Error('Must add a displayname');
     }
 
     this._displayname = displayname;

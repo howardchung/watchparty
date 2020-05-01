@@ -169,7 +169,6 @@ module.exports = class Room {
       });
       socket.on('CMD:joinScreenShare', (data) => {
         const sharer = this.roster.find((user) => user.isScreenShare);
-        // TODO allow handing off screen share rather than rejecting when there's already one
         if (sharer) {
           return;
         }

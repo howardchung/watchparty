@@ -34,18 +34,22 @@ export class NekoClient extends BaseClient implements EventEmitter<any> {
   /////////////////////////////
   protected [EVENT.CONNECTING]() {}
 
-  protected [EVENT.CONNECTED]() {}
+  protected [EVENT.CONNECTED]() {
+    // TODO only if controller
+    this.sendMessage(EVENT.CONTROL.REQUEST);
+  }
 
   protected [EVENT.DISCONNECTED](reason?: Error) {
     console.warn(reason);
   }
 
   protected [EVENT.TRACK](event: RTCTrackEvent) {
-    const { track, streams } = event;
-    console.log(track, streams);
-    // TODO set up the stream
+    const { streams } = event;
+    // console.log(track, streams);
     const video = document.getElementById('leftVideo') as HTMLVideoElement;
-    video!.srcObject = streams[0];
+    video.src = '';
+    video.srcObject = streams[0];
+    video.play();
     // this.$accessor.video.addTrack([track, streams[0]]);
     // this.$accessor.video.setStream(0);
   }

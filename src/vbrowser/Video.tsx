@@ -1,29 +1,27 @@
 import React from 'react';
 import { NekoClient } from '.';
+// import { EVENT } from './events';
 
-export default class Video extends React.Component {
+export default class Video extends React.Component<{ username: string, password: string, hostname: string }> {
   //@ts-ignore
-  private observer = new ResizeObserver(this.onResize.bind(this));
+  // private observer = new ResizeObserver(this.onResize);
   private focused = false;
   private fullscreen = false;
   private activeKeys: Set<number> = new Set();
   private hosting = true; // TODO set based on actual host
-  // TODO current host can pass control around
+  // TODO current host should be able to pass control around
   private locked = false;
   private scroll = 5; // 1 to 10
-  // TODO customize these values
-  private horizontal = 16;
-  private vertical = 9;
   private width = 1280;
   private height = 720;
-  private _component = React.createRef<HTMLDivElement>();
+  // private _component = React.createRef<HTMLDivElement>();
   private _container = React.createRef<HTMLDivElement>();
   private _overlay = React.createRef<HTMLDivElement>();
-  private _aspect = React.createRef<HTMLDivElement>();
-  private _player = React.createRef<HTMLDivElement>();
+  // private _aspect = React.createRef<HTMLDivElement>();
+  // private _player = React.createRef<HTMLDivElement>();
   private _video = React.createRef<HTMLVideoElement>();
-  private _resolution = React.createRef<HTMLDivElement>();
-  private $client = new NekoClient();
+  // private _resolution = React.createRef<HTMLDivElement>();
+  private $client: NekoClient = new NekoClient();
 
   // @Watch('width')
   // onWidthChanged(width: number) {
@@ -36,10 +34,13 @@ export default class Video extends React.Component {
   // }
 
   componentDidMount() {
+    // this.$client = new NekoClient();
     // TODO use server-assigned values instead of defaults
-    const url = process.env.REACT_APP_VBROWSER_URL + '/';
-    this.$client.login(url, 'neko', 'admin');
+    const url = 'wss://' + this.props.hostname + '/';
+    this.$client.login(url, this.props.password, this.props.username);
     this.$client.on('debug', (e, data) => console.log(e, data));
+    // TODO only request control if we're the controller
+    // this.$client.sendMessage(EVENT.CONTROL.REQUEST);
 
     this._container.current?.addEventListener('resize', this.onResize);
     // this.onStreamChanged(this.stream);
@@ -53,13 +54,17 @@ export default class Video extends React.Component {
     document.addEventListener('focusout', this.onBlur.bind(this));
   }
 
-  onStreamChanged(stream?: MediaStream) {
-    if (!this._video || !stream) {
-      return;
-    }
-
-    this._video.current!.srcObject = stream;
+  componentWillUnmount() {
+    this.$client.logout();
   }
+
+  // onStreamChanged(stream?: MediaStream) {
+  //   if (!this._video || !stream) {
+  //     return;
+  //   }
+
+  //   this._video.current!.srcObject = stream;
+  // }
 
   // onClipboardChanged(clipboard: string) {
   //   if (
@@ -70,23 +75,23 @@ export default class Video extends React.Component {
   //   }
   // }
 
-  async onFocus() {
+  onFocus = async () => {
     if (!document.hasFocus()) {
       return;
     }
 
-    if (
-      this.hosting &&
-      navigator.clipboard &&
-      typeof navigator.clipboard.readText === 'function'
-    ) {
-      const text = await navigator.clipboard.readText();
-      console.log(text);
-      // TODO send clipboard to remote
-    }
+    // if (
+    //   this.hosting &&
+    //   navigator.clipboard &&
+    //   typeof navigator.clipboard.readText === 'function'
+    // ) {
+    //   const text = await navigator.clipboard.readText();
+    //   console.log(text);
+    //   // TODO send clipboard to remote
+    // }
   }
 
-  onBlur() {
+  onBlur = () => {
     if (!this.focused || !this.hosting || this.locked) {
       return;
     }
@@ -97,7 +102,19 @@ export default class Video extends React.Component {
     });
   }
 
-  onMousePos(e: MouseEvent) {
+  onClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+  }
+
+  onContextMenu = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+  }
+
+  onMousePos = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
     // TODO allow reading remote resolution
     const { w, h } = { w: this.width, h: this.height };
     const rect = this._overlay.current!.getBoundingClientRect();
@@ -107,7 +124,16 @@ export default class Video extends React.Component {
     });
   }
 
-  onWheel(e: WheelEvent) {
+  onScroll = (e: React.UIEvent) => {
+    // TODO prevent scrolling parents
+    // TODO video overrunning controls
+    e.stopPropagation();
+    e.preventDefault();
+  }
+
+  onWheel = (e: React.WheelEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
     if (!this.hosting || this.locked) {
       return;
     }
@@ -122,41 +148,51 @@ export default class Video extends React.Component {
     this.$client.sendData('wheel', { x, y });
   }
 
-  onMouseDown(e: MouseEvent) {
-    if (!this.hosting || this.locked) {
+  onMouseDown = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (!this.hosting) {
       return;
     }
     this.onMousePos(e);
     this.$client.sendData('mousedown', { key: e.button });
   }
 
-  onMouseUp(e: MouseEvent) {
-    if (!this.hosting || this.locked) {
+  onMouseUp = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (!this.hosting) {
       return;
     }
     this.onMousePos(e);
     this.$client.sendData('mouseup', { key: e.button });
   }
 
-  onMouseMove(e: MouseEvent) {
-    if (!this.hosting || this.locked) {
+  onMouseMove = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (!this.hosting) {
       return;
     }
     this.onMousePos(e);
   }
 
-  onMouseEnter(e: MouseEvent) {
+  onMouseEnter = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
     this._overlay.current!.focus();
     this.onFocus();
     this.focused = true;
   }
 
-  onMouseLeave(e: MouseEvent) {
+  onMouseLeave = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
     this.focused = false;
   }
 
   // frick you firefox
-  getCode(e: KeyboardEvent): number {
+  getCode = (e: React.KeyboardEvent): number => {
     let key = e.keyCode;
     if (key === 59 && (e.key === ';' || e.key === ':')) {
       key = 186;
@@ -173,7 +209,9 @@ export default class Video extends React.Component {
     return key;
   }
 
-  onKeyDown(e: KeyboardEvent) {
+  onKeyDown = (e: React.KeyboardEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
     if (!this.focused || !this.hosting || this.locked) {
       return;
     }
@@ -183,7 +221,9 @@ export default class Video extends React.Component {
     this.activeKeys.add(key);
   }
 
-  onKeyUp(e: KeyboardEvent) {
+  onKeyUp = (e: React.KeyboardEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
     if (!this.focused || !this.hosting || this.locked) {
       return;
     }
@@ -193,52 +233,48 @@ export default class Video extends React.Component {
     this.activeKeys.delete(key);
   }
 
-  onResize() {
-    let height = 0;
-    if (!this.fullscreen) {
-      const offsetWidth = this._component.current?.offsetWidth;
-      const offsetHeight = this._component.current?.offsetHeight;
-      this._player.current!.style.width = `${offsetWidth}px`;
-      this._player.current!.style.height = `${offsetHeight}px`;
-      height = offsetHeight as number;
-    } else {
-      const offsetHeight = this._player.current?.offsetHeight;
-      height = offsetHeight as number;
-    }
+  onResize = () => {
+    // let height = 0;
+    // if (!this.fullscreen) {
+    //   const offsetWidth = this._component.current?.offsetWidth;
+    //   const offsetHeight = this._component.current?.offsetHeight;
+    //   this._player.current!.style.width = `${offsetWidth}px`;
+    //   this._player.current!.style.height = `${offsetHeight}px`;
+    //   height = offsetHeight as number;
+    // } else {
+    //   const offsetHeight = this._player.current?.offsetHeight;
+    //   height = offsetHeight as number;
+    // }
 
-    this._container.current!.style.maxWidth = `${
-      (this.horizontal / this.vertical) * height
-    }px`;
-    this._aspect.current!.style.paddingBottom = `${
-      (this.vertical / this.horizontal) * 100
-    }%`;
+    // this._container.current!.style.maxWidth = `${
+    //   (this.horizontal / this.vertical) * height
+    // }px`;
+    // this._aspect.current!.style.paddingBottom = `${
+    //   (this.vertical / this.horizontal) * 100
+    // }%`;
   }
 
   render() {
     return (
-      <div ref={this._component}>
-        <div ref={this._player}>
-          <div ref={this._container}>
-            <video ref={this._video} id="leftVideo" />
+          <div ref={this._container} style={{ position: 'relative' }}>
+            <video ref={this._video} id="leftVideo" style={{ width: '100%' }} />
             <div
               ref={this._overlay}
               tabIndex={0}
-              // @click.stop.prevent
-              // @contextmenu.stop.prevent
-              // @wheel.stop.prevent="onWheel"
-              // @mousemove.stop.prevent="onMouseMove"
-              // @mousedown.stop.prevent="onMouseDown"
-              // @mouseup.stop.prevent="onMouseUp"
-              // @mouseenter.stop.prevent="onMouseEnter"
-              // @mouseleave.stop.prevent="onMouseLeave"
-              // @keydown.stop.prevent="onKeyDown"
-              // @keyup.stop.prevent="onKeyUp"
+              style={{ width: '100%', height: '100%', position: 'absolute', top: 0, bottom: 0 }}
+              onClick={this.onClick}
+              onContextMenu={this.onContextMenu}
+              onWheel={this.onWheel}
+              onScroll={this.onScroll}
+              onMouseMove={this.onMouseMove}
+              onMouseDown={this.onMouseDown}
+              onMouseUp={this.onMouseUp}
+              onMouseEnter={this.onMouseEnter}
+              onMouseLeave={this.onMouseLeave}
+              onKeyDown={this.onKeyDown}
+              onKeyUp={this.onKeyUp}
             />
-            <div ref={this._aspect} />
           </div>
-          <div ref={this._resolution} />
-        </div>
-      </div>
     );
   }
 }

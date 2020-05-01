@@ -114,6 +114,9 @@ interface AppState {
   speed: number;
   connections: number;
   multiStreamSelection?: any[];
+  vBrowserUser: string;
+  vBrowserPass: string;
+  vBrowserHost: string;
 }
 
 export default class App extends React.Component<null, AppState> {
@@ -146,6 +149,9 @@ export default class App extends React.Component<null, AppState> {
     speed: 0,
     connections: 0,
     multiStreamSelection: undefined,
+    vBrowserUser: 'admin',
+    vBrowserPass: 'neko',
+    vBrowserHost: process.env.REACT_APP_VBROWSER_URL as string,
   };
   socket: any = null;
   watchPartyYTPlayer: any = null;
@@ -275,6 +281,11 @@ export default class App extends React.Component<null, AppState> {
       this.updateName(null, { value: userName || generateName() });
       this.loadFBData();
     });
+    socket.on('error', (err: any) => {
+      console.error(err);
+      // TODO show an error, or auto-redirect to home
+      // window.location.href = window.location.hostname;
+    });
     socket.on('REC:play', () => {
       this.doPlay();
     });
@@ -288,6 +299,9 @@ export default class App extends React.Component<null, AppState> {
       let currentMedia = data.video || '';
       if (this.isScreenShare() && !currentMedia.startsWith('screenshare://')) {
         this.stopScreenShare();
+      }
+      if (this.isVBrowser() && !currentMedia.startsWith('vbrowser://')) {
+        this.stopVBrowser();
       }
       this.setState(
         {
@@ -492,16 +506,6 @@ export default class App extends React.Component<null, AppState> {
     this.setState({ isScreenSharing: false, isScreenSharingFile: false });
   };
 
-  setupVBrowser = async () => {
-    this.setMedia(null, { value: 'vbrowser://' });
-    this.setState({ isVBrowser: true });
-  };
-
-  stopVBrowser = async () => {
-    // TODO automatically shut this down after some timeout
-    this.setState({ isVBrowser: false });
-  };
-
   updateScreenShare = async () => {
     if (!this.isScreenShare()) {
       return;
@@ -565,6 +569,19 @@ export default class App extends React.Component<null, AppState> {
     }
   };
 
+  setupVBrowser = async () => {
+    this.setMedia(null, { value: 'vbrowser://' + this.state.vBrowserUser + ':' + this.state.vBrowserPass + '@' + this.state.vBrowserHost });
+    this.setState({ isVBrowser: true });
+    // TODO send the command to the server
+  };
+
+  stopVBrowser = async () => {
+    // TODO automatically shut this down after some timeout, or nobody in the room
+    // TODO server should clear the currentMedia, like after a screenshare
+    // TODO disable screenshare/fileshare if vbrowser is running
+    this.setState({ isVBrowser: false });
+  };
+
   sendSignalSS = async (to: string, data: any, sharer?: boolean) => {
     // console.log('sendSS', to, data);
     this.socket.emit('signalSS', { to, msg: data, sharer });
@@ -577,6 +594,10 @@ export default class App extends React.Component<null, AppState> {
   isScreenShare = () => {
     return this.state.currentMedia.startsWith('screenshare://');
   };
+
+  isVBrowser = () => {
+    return this.state.currentMedia.startsWith('vbrowser://');
+  }
 
   isVideo = () => {
     return getMediaType(this.state.currentMedia) === 'video';
@@ -661,7 +682,7 @@ export default class App extends React.Component<null, AppState> {
 
   doSrc = async (src: string, time: number) => {
     console.log('doSrc', src, time);
-    if (this.isScreenShare()) {
+    if (this.isScreenShare() || this.isVBrowser()) {
       // No-op as we'll set video when WebRTC completes
       return;
     }
@@ -677,7 +698,7 @@ export default class App extends React.Component<null, AppState> {
       let subtitleSrc = '';
       if (src.includes('/stream?torrent=magnet')) {
         subtitleSrc = src.replace('/stream', '/subtitles2');
-      } else if (getMediaType(src) === 'video') {
+      } else if (src.startsWith('http')) {
         const subtitlePath = src.slice(0, src.lastIndexOf('/') + 1);
         // Expect subtitle name to be file name + .srt
         subtitleSrc =
@@ -934,6 +955,9 @@ export default class App extends React.Component<null, AppState> {
     if (input.startsWith('screenshare://')) {
       let id = input.slice('screenshare://'.length);
       return this.state.nameMap[id] + "'s screen";
+    }
+    if (input.startsWith('vbrowser://')) {
+      return 'Virtual Browser';
     }
     if (input.includes('/stream?torrent=magnet')) {
       const search = new URL(input).search;
@@ -1215,7 +1239,7 @@ export default class App extends React.Component<null, AppState> {
                         }
                       />
                     )}
-                    {process.env.REACT_APP_VBROWSER_URL && (
+                    {process.env.REACT_APP_VBROWSER_URL && !this.isVBrowser() && (
                       <Popup
                         content="Launch a shared virtual browser"
                         trigger={
@@ -1234,6 +1258,20 @@ export default class App extends React.Component<null, AppState> {
                         }
                       />
                     )}
+                    {this.isVBrowser() && (
+                      <Button
+                        fluid
+                        className="toolButton"
+                        icon
+                        labelPosition="left"
+                        color="red"
+                        onClick={this.stopVBrowser}
+                      >
+                        <Icon name="cancel" />
+                        Stop VBrowser
+                      </Button>
+                    )}
+                    {/* TODO UI to hand off control of VBrowser */}
                   </div>
                   <div style={{ height: '4px' }} />
                   {(this.state.loading || !this.state.currentMedia) && (
@@ -1299,8 +1337,8 @@ export default class App extends React.Component<null, AppState> {
                               : 'none',
                         }}
                       >
-                        {this.state.isVBrowser ? (
-                          <Video />
+                        {this.isVBrowser() ? (
+                          <Video username={this.state.vBrowserUser} password={this.state.vBrowserPass} hostname={this.state.vBrowserHost} />
                         ) : (
                           <video
                             className="videoOuter"
