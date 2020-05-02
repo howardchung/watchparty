@@ -77,6 +77,26 @@ app.get('/ping', (req, res) => {
   res.json('pong');
 });
 
+app.get('/stats', (req, res) => {
+  if (req.query.key && req.query.key === process.env.STATS_KEY) {
+    const roomData = [];
+    rooms.forEach((room) => {
+      roomData.push({
+        roomId: room.roomId,
+        video: room.video,
+        videoTS: room.videoTS,
+        rosterLength: room.roster.length,
+      });
+    });
+    res.json({
+      roomCount: rooms.size,
+      rooms: roomData,
+    });
+  } else {
+    return res.status(403).json({ error: 'Access Denied' });
+  }
+});
+
 app.get('/youtube', (req, res) => {
   Youtube.search.list(
     { part: 'snippet', type: 'video', maxResults: 25, q: req.query.q },

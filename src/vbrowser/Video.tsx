@@ -2,7 +2,11 @@ import React from 'react';
 import { NekoClient } from '.';
 // import { EVENT } from './events';
 
-export default class Video extends React.Component<{ username: string, password: string, hostname: string }> {
+export default class Video extends React.Component<{
+  username: string;
+  password: string;
+  hostname: string;
+}> {
   //@ts-ignore
   // private observer = new ResizeObserver(this.onResize);
   private focused = false;
@@ -48,7 +52,9 @@ export default class Video extends React.Component<{ username: string, password:
     document.addEventListener('focusin', this.onFocus.bind(this));
     document.addEventListener('focusout', this.onBlur.bind(this));
 
-    document.getElementById('leftOverlay')?.addEventListener('wheel', this.onWheel, { passive: false });
+    document
+      .getElementById('leftOverlay')
+      ?.addEventListener('wheel', this.onWheel, { passive: false });
   }
 
   componentWillUnmount() {
@@ -78,7 +84,7 @@ export default class Video extends React.Component<{ username: string, password:
     //   console.log(text);
     //   // TODO send clipboard to remote
     // }
-  }
+  };
 
   onBlur = () => {
     if (!this.focused || !this.hosting) {
@@ -89,17 +95,17 @@ export default class Video extends React.Component<{ username: string, password:
       this.$client.sendData('keyup', { key });
       this.activeKeys.delete(key);
     });
-  }
+  };
 
   onClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-  }
+  };
 
   onContextMenu = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-  }
+  };
 
   onMousePos = (e: MouseEvent | React.MouseEvent) => {
     // TODO allow reading remote resolution instead of hardcode
@@ -109,7 +115,7 @@ export default class Video extends React.Component<{ username: string, password:
       x: Math.round((w / rect.width) * (e.clientX - rect.left)),
       y: Math.round((h / rect.height) * (e.clientY - rect.top)),
     });
-  }
+  };
 
   onWheel = (e: WheelEvent) => {
     e.stopPropagation();
@@ -126,7 +132,7 @@ export default class Video extends React.Component<{ username: string, password:
     y = Math.min(Math.max(y, -this.scroll), this.scroll);
 
     this.$client.sendData('wheel', { x, y });
-  }
+  };
 
   onMouseDown = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -136,7 +142,7 @@ export default class Video extends React.Component<{ username: string, password:
     }
     this.onMousePos(e);
     this.$client.sendData('mousedown', { key: e.button });
-  }
+  };
 
   onMouseUp = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -146,25 +152,25 @@ export default class Video extends React.Component<{ username: string, password:
     }
     this.onMousePos(e);
     this.$client.sendData('mouseup', { key: e.button });
-  }
+  };
 
   onMouseMove = (e: React.MouseEvent) => {
     if (!this.hosting) {
       return;
     }
     this.onMousePos(e);
-  }
+  };
 
   onMouseEnter = (e: React.MouseEvent) => {
     this._overlay.current!.focus();
     this.onFocus();
     this.focused = true;
-  }
+  };
 
   onMouseLeave = (e: React.MouseEvent) => {
     this._overlay.current!.blur();
     this.focused = false;
-  }
+  };
 
   // frick you firefox
   getCode = (e: React.KeyboardEvent): number => {
@@ -182,7 +188,7 @@ export default class Video extends React.Component<{ username: string, password:
     }
 
     return key;
-  }
+  };
 
   onKeyDown = (e: React.KeyboardEvent) => {
     e.stopPropagation();
@@ -194,7 +200,7 @@ export default class Video extends React.Component<{ username: string, password:
     let key = this.getCode(e);
     this.$client.sendData('keydown', { key });
     this.activeKeys.add(key);
-  }
+  };
 
   onKeyUp = (e: React.KeyboardEvent) => {
     e.stopPropagation();
@@ -206,7 +212,7 @@ export default class Video extends React.Component<{ username: string, password:
     let key = this.getCode(e);
     this.$client.sendData('keyup', { key });
     this.activeKeys.delete(key);
-  }
+  };
 
   onResize = () => {
     // let height = 0;
@@ -220,36 +226,43 @@ export default class Video extends React.Component<{ username: string, password:
     //   const offsetHeight = this._player.current?.offsetHeight;
     //   height = offsetHeight as number;
     // }
-
     // this._container.current!.style.maxWidth = `${
     //   (this.horizontal / this.vertical) * height
     // }px`;
     // this._aspect.current!.style.paddingBottom = `${
     //   (this.vertical / this.horizontal) * 100
     // }%`;
-  }
+  };
 
   render() {
     return (
-          <div ref={this._container} style={{ position: 'relative' }}>
-            <video ref={this._video} id="leftVideo" style={{ width: '100%' }} />
-            <div
-              ref={this._overlay}
-              id={"leftOverlay"}
-              tabIndex={0}
-              style={{ width: '100%', height: '100%', position: 'absolute', top: 0, bottom: 0, overflow: 'scroll', overscrollBehavior: 'contain' }}
-              onClick={this.onClick}
-              onContextMenu={this.onContextMenu}
-              // onWheel={this.onWheel}
-              onMouseMove={this.onMouseMove}
-              onMouseDown={this.onMouseDown}
-              onMouseUp={this.onMouseUp}
-              onMouseEnter={this.onMouseEnter}
-              onMouseLeave={this.onMouseLeave}
-              onKeyDown={this.onKeyDown}
-              onKeyUp={this.onKeyUp}
-            />
-          </div>
+      <div ref={this._container} style={{ position: 'relative' }}>
+        <video ref={this._video} id="leftVideo" style={{ width: '100%' }} />
+        <div
+          ref={this._overlay}
+          id={'leftOverlay'}
+          tabIndex={0}
+          style={{
+            width: '100%',
+            height: '100%',
+            position: 'absolute',
+            top: 0,
+            bottom: 0,
+            overflow: 'scroll',
+            overscrollBehavior: 'contain',
+          }}
+          onClick={this.onClick}
+          onContextMenu={this.onContextMenu}
+          // onWheel={this.onWheel}
+          onMouseMove={this.onMouseMove}
+          onMouseDown={this.onMouseDown}
+          onMouseUp={this.onMouseUp}
+          onMouseEnter={this.onMouseEnter}
+          onMouseLeave={this.onMouseLeave}
+          onKeyDown={this.onKeyDown}
+          onKeyUp={this.onKeyUp}
+        />
+      </div>
     );
   }
 }

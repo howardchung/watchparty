@@ -571,7 +571,15 @@ export default class App extends React.Component<null, AppState> {
 
   setupVBrowser = async () => {
     // TODO fetch creds from server
-    this.setMedia(null, { value: 'vbrowser://' + this.state.vBrowserUser + ':' + this.state.vBrowserPass + '@' + this.state.vBrowserHost });
+    this.setMedia(null, {
+      value:
+        'vbrowser://' +
+        this.state.vBrowserUser +
+        ':' +
+        this.state.vBrowserPass +
+        '@' +
+        this.state.vBrowserHost,
+    });
     this.setState({ isVBrowser: true });
     // TODO send the command to the server
   };
@@ -598,7 +606,7 @@ export default class App extends React.Component<null, AppState> {
 
   isVBrowser = () => {
     return this.state.currentMedia.startsWith('vbrowser://');
-  }
+  };
 
   isVideo = () => {
     return getMediaType(this.state.currentMedia) === 'video';
@@ -1339,7 +1347,11 @@ export default class App extends React.Component<null, AppState> {
                         }}
                       >
                         {this.isVBrowser() ? (
-                          <Video username={this.state.vBrowserUser} password={this.state.vBrowserPass} hostname={this.state.vBrowserHost} />
+                          <Video
+                            username={this.state.vBrowserUser}
+                            password={this.state.vBrowserPass}
+                            hostname={this.state.vBrowserHost}
+                          />
                         ) : (
                           <video
                             className="videoOuter"
@@ -1366,16 +1378,17 @@ export default class App extends React.Component<null, AppState> {
                           duration={this.getDuration()}
                         />
                       )}
-                      {this.state.fullScreen && this.state.state === 'connected' && (
-                        <VideoChat
-                          socket={this.socket}
-                          participants={this.state.participants}
-                          nameMap={this.state.nameMap}
-                          pictureMap={this.state.pictureMap}
-                          tsMap={this.state.tsMap}
-                          rosterUpdateTS={this.state.rosterUpdateTS}
-                        />
-                      )}
+                      {this.state.fullScreen &&
+                        this.state.state === 'connected' && (
+                          <VideoChat
+                            socket={this.socket}
+                            participants={this.state.participants}
+                            nameMap={this.state.nameMap}
+                            pictureMap={this.state.pictureMap}
+                            tsMap={this.state.tsMap}
+                            rosterUpdateTS={this.state.rosterUpdateTS}
+                          />
+                        )}
                     </div>
                     {this.state.fullScreen && (
                       <Chat
@@ -1818,10 +1831,16 @@ class Chat extends React.Component<ChatProps> {
 
   onScroll = () => {
     this.setState({ isNearBottom: this.isChatNearBottom() });
-  }
+  };
 
   isChatNearBottom = () => {
-    return this.messagesRef.current && (this.messagesRef.current.scrollHeight - this.messagesRef.current.scrollTop - this.messagesRef.current.offsetHeight) < 100;
+    return (
+      this.messagesRef.current &&
+      this.messagesRef.current.scrollHeight -
+        this.messagesRef.current.scrollTop -
+        this.messagesRef.current.offsetHeight <
+        100
+    );
   };
 
   scrollToBottom = () => {
@@ -1864,7 +1883,11 @@ class Chat extends React.Component<ChatProps> {
           marginTop: 0,
         }}
       >
-        <div className="chatContainer" ref={this.messagesRef} style={{ position: 'relative' }}>
+        <div
+          className="chatContainer"
+          ref={this.messagesRef}
+          style={{ position: 'relative' }}
+        >
           <Comment.Group>
             {this.props.chat.map((msg) => (
               <ChatMessage
@@ -1877,7 +1900,20 @@ class Chat extends React.Component<ChatProps> {
             ))}
             {/* <div ref={this.messagesEndRef} /> */}
           </Comment.Group>
-          {!this.state.isNearBottom && <Button size="tiny" onClick={this.scrollToBottom} style={{ position: 'sticky', bottom: 0, display: 'block', margin: '0 auto' }}>Jump to bottom</Button>}
+          {!this.state.isNearBottom && (
+            <Button
+              size="tiny"
+              onClick={this.scrollToBottom}
+              style={{
+                position: 'sticky',
+                bottom: 0,
+                display: 'block',
+                margin: '0 auto',
+              }}
+            >
+              Jump to bottom
+            </Button>
+          )}
         </div>
         <Input
           inverted
@@ -1949,7 +1985,7 @@ class SearchComponent extends React.Component<SearchComponentProps> {
   setMedia = (e: any, data: DropdownProps) => {
     window.setTimeout(
       () => this.setState({ resetDropdown: Number(new Date()) }),
-      100
+      200
     );
     this.props.setMedia(e, data);
   };
@@ -2136,7 +2172,7 @@ class ComboBox extends React.Component<ComboBoxProps> {
   setMedia = (e: any, data: DropdownProps) => {
     window.setTimeout(
       () => this.setState({ inputMedia: undefined, results: undefined }),
-      100
+      200
     );
     this.props.setMedia(e, data);
   };
@@ -2224,7 +2260,11 @@ class ComboBox extends React.Component<ComboBoxProps> {
                   inputMedia: getMediaDisplayName(currentMedia),
                 },
                 () => {
-                  if (!this.state.inputMedia || (this.state.inputMedia && this.state.inputMedia.startsWith('http'))) {
+                  if (
+                    !this.state.inputMedia ||
+                    (this.state.inputMedia &&
+                      this.state.inputMedia.startsWith('http'))
+                  ) {
                     this.doSearch(e);
                   }
                 }
