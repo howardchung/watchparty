@@ -172,7 +172,11 @@ module.exports = class Room {
         if (sharer) {
           return;
         }
-        cmdHost('screenshare://' + socket.id);
+        if (data && data.file) {
+          cmdHost('fileshare://' + socket.id);
+        } else {
+          cmdHost('screenshare://' + socket.id);
+        }
         const match = this.roster.find((user) => user.id === socket.id);
         if (match) {
           match.isScreenShare = true;

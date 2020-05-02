@@ -300,6 +300,9 @@ export default class App extends React.Component<null, AppState> {
       if (this.isScreenShare() && !currentMedia.startsWith('screenshare://')) {
         this.stopScreenShare();
       }
+      if (this.isFileShare() && !currentMedia.startsWith('fileshare://')) {
+        this.stopScreenShare();
+      }
       if (this.isVBrowser() && !currentMedia.startsWith('vbrowser://')) {
         this.stopVBrowser();
       }
@@ -457,14 +460,15 @@ export default class App extends React.Component<null, AppState> {
       const stream = leftVideo.captureStream();
       // Can render video to a canvas to resize it, reduce size
       stream.onaddtrack = () => {
-        console.log(stream, stream.getVideoTracks(), stream.getAudioTracks());
+        // console.log(stream, stream.getVideoTracks(), stream.getAudioTracks());
         if (
           !this.screenShareStream &&
           stream.getVideoTracks().length &&
           stream.getAudioTracks().length
         ) {
+          stream.getVideoTracks()[0].onended = this.stopScreenShare;
           this.screenShareStream = stream;
-          this.socket.emit('CMD:joinScreenShare');
+          this.socket.emit('CMD:joinScreenShare', { file: true });
           this.setState({ isScreenSharing: true, isScreenSharingFile: true });
         }
       };
@@ -507,7 +511,7 @@ export default class App extends React.Component<null, AppState> {
   };
 
   updateScreenShare = async () => {
-    if (!this.isScreenShare()) {
+    if (!this.isScreenShare() && !this.isFileShare()) {
       return;
     }
     // TODO teardown for those who leave
@@ -604,6 +608,10 @@ export default class App extends React.Component<null, AppState> {
     return this.state.currentMedia.startsWith('screenshare://');
   };
 
+  isFileShare = () => {
+    return this.state.currentMedia.startsWith('fileshare://');
+  }
+
   isVBrowser = () => {
     return this.state.currentMedia.startsWith('vbrowser://');
   };
@@ -691,7 +699,7 @@ export default class App extends React.Component<null, AppState> {
 
   doSrc = async (src: string, time: number) => {
     console.log('doSrc', src, time);
-    if (this.isScreenShare() || this.isVBrowser()) {
+    if (this.isScreenShare() || this.isFileShare() || this.isVBrowser()) {
       // No-op as we'll set video when WebRTC completes
       return;
     }
@@ -964,6 +972,10 @@ export default class App extends React.Component<null, AppState> {
     if (input.startsWith('screenshare://')) {
       let id = input.slice('screenshare://'.length);
       return this.state.nameMap[id] + "'s screen";
+    }
+    if (input.startsWith('fileshare://')) {
+      let id = input.slice('fileshare://'.length);
+      return this.state.nameMap[id] + "'s file";
     }
     if (input.startsWith('vbrowser://')) {
       return 'Virtual Browser';
