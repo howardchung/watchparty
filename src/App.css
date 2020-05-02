@@ -95,7 +95,6 @@ body {
 .videoOuter {
   width: 100%;
   min-height: 400px;
-  max-height: 60vh;
 }
 
 #leftVideo::-webkit-media-controls {

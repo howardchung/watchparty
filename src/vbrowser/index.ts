@@ -74,18 +74,6 @@ export class NekoClient extends BaseClient implements EventEmitter<any> {
     // if (!member) {
     //   return;
     // }
-
-    if (this.id === id) {
-      // this.$vue.$notify({
-      //   group: 'neko',
-      //   type: 'info',
-      //   title: this.$vue.$t('notifications.controls_taken', {
-      //     name: this.$vue.$t('you'),
-      //   }) as string,
-      //   duration: 5000,
-      //   speed: 1000,
-      // });
-    }
   }
 
   protected [EVENT.CONTROL.RELEASE]({ id }: ControlPayload) {
@@ -94,9 +82,6 @@ export class NekoClient extends BaseClient implements EventEmitter<any> {
     // if (!member) {
     //   return;
     // }
-
-    if (this.id === id) {
-    }
   }
 
   protected [EVENT.CONTROL.GIVE]({ id, target }: ControlTargetPayload) {

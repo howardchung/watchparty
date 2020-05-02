@@ -570,6 +570,7 @@ export default class App extends React.Component<null, AppState> {
   };
 
   setupVBrowser = async () => {
+    // TODO fetch creds from server
     this.setMedia(null, { value: 'vbrowser://' + this.state.vBrowserUser + ':' + this.state.vBrowserPass + '@' + this.state.vBrowserHost });
     this.setState({ isVBrowser: true });
     // TODO send the command to the server
@@ -1159,7 +1160,7 @@ export default class App extends React.Component<null, AppState> {
         <Grid stackable celled="internally">
           <Grid.Row>
             {
-              <Grid.Column width={12} style={{ overflow: 'scroll' }}>
+              <Grid.Column width={12}>
                 <React.Fragment>
                   <ComboBox
                     setMedia={this.setMedia}

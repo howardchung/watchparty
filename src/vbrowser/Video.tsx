@@ -10,7 +10,6 @@ export default class Video extends React.Component<{ username: string, password:
   private activeKeys: Set<number> = new Set();
   private hosting = true; // TODO set based on actual host
   // TODO current host should be able to pass control around
-  private locked = false;
   private scroll = 5; // 1 to 10
   private width = 1280;
   private height = 720;
@@ -35,36 +34,26 @@ export default class Video extends React.Component<{ username: string, password:
 
   componentDidMount() {
     // this.$client = new NekoClient();
-    // TODO use server-assigned values instead of defaults
     const url = 'wss://' + this.props.hostname + '/';
     this.$client.login(url, this.props.password, this.props.username);
     this.$client.on('debug', (e, data) => console.log(e, data));
-    // TODO only request control if we're the controller
-    // this.$client.sendMessage(EVENT.CONTROL.REQUEST);
 
-    this._container.current?.addEventListener('resize', this.onResize);
-    // this.onStreamChanged(this.stream);
-    this.onResize();
+    // this._container.current?.addEventListener('resize', this.onResize);
+    // this.onResize();
 
-    document.addEventListener('fullscreenchange', () => {
-      this.onResize();
-    });
+    // document.addEventListener('fullscreenchange', () => {
+    //   this.onResize();
+    // });
 
     document.addEventListener('focusin', this.onFocus.bind(this));
     document.addEventListener('focusout', this.onBlur.bind(this));
+
+    document.getElementById('leftOverlay')?.addEventListener('wheel', this.onWheel, { passive: false });
   }
 
   componentWillUnmount() {
     this.$client.logout();
   }
-
-  // onStreamChanged(stream?: MediaStream) {
-  //   if (!this._video || !stream) {
-  //     return;
-  //   }
-
-  //   this._video.current!.srcObject = stream;
-  // }
 
   // onClipboardChanged(clipboard: string) {
   //   if (
@@ -92,7 +81,7 @@ export default class Video extends React.Component<{ username: string, password:
   }
 
   onBlur = () => {
-    if (!this.focused || !this.hosting || this.locked) {
+    if (!this.focused || !this.hosting) {
       return;
     }
 
@@ -112,10 +101,8 @@ export default class Video extends React.Component<{ username: string, password:
     e.preventDefault();
   }
 
-  onMousePos = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    // TODO allow reading remote resolution
+  onMousePos = (e: MouseEvent | React.MouseEvent) => {
+    // TODO allow reading remote resolution instead of hardcode
     const { w, h } = { w: this.width, h: this.height };
     const rect = this._overlay.current!.getBoundingClientRect();
     this.$client.sendData('mousemove', {
@@ -124,17 +111,10 @@ export default class Video extends React.Component<{ username: string, password:
     });
   }
 
-  onScroll = (e: React.UIEvent) => {
-    // TODO prevent scrolling parents
-    // TODO video overrunning controls
+  onWheel = (e: WheelEvent) => {
     e.stopPropagation();
     e.preventDefault();
-  }
-
-  onWheel = (e: React.WheelEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    if (!this.hosting || this.locked) {
+    if (!this.hosting) {
       return;
     }
     this.onMousePos(e);
@@ -169,8 +149,6 @@ export default class Video extends React.Component<{ username: string, password:
   }
 
   onMouseMove = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
     if (!this.hosting) {
       return;
     }
@@ -178,16 +156,13 @@ export default class Video extends React.Component<{ username: string, password:
   }
 
   onMouseEnter = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
     this._overlay.current!.focus();
     this.onFocus();
     this.focused = true;
   }
 
   onMouseLeave = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
+    this._overlay.current!.blur();
     this.focused = false;
   }
 
@@ -212,7 +187,7 @@ export default class Video extends React.Component<{ username: string, password:
   onKeyDown = (e: React.KeyboardEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    if (!this.focused || !this.hosting || this.locked) {
+    if (!this.focused || !this.hosting) {
       return;
     }
 
@@ -224,7 +199,7 @@ export default class Video extends React.Component<{ username: string, password:
   onKeyUp = (e: React.KeyboardEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    if (!this.focused || !this.hosting || this.locked) {
+    if (!this.focused || !this.hosting) {
       return;
     }
 
@@ -260,12 +235,12 @@ export default class Video extends React.Component<{ username: string, password:
             <video ref={this._video} id="leftVideo" style={{ width: '100%' }} />
             <div
               ref={this._overlay}
+              id={"leftOverlay"}
               tabIndex={0}
-              style={{ width: '100%', height: '100%', position: 'absolute', top: 0, bottom: 0 }}
+              style={{ width: '100%', height: '100%', position: 'absolute', top: 0, bottom: 0, overflow: 'scroll', overscrollBehavior: 'contain' }}
               onClick={this.onClick}
               onContextMenu={this.onContextMenu}
-              onWheel={this.onWheel}
-              onScroll={this.onScroll}
+              // onWheel={this.onWheel}
               onMouseMove={this.onMouseMove}
               onMouseDown={this.onMouseDown}
               onMouseUp={this.onMouseUp}

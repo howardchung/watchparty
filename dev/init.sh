@@ -19,4 +19,4 @@ certbot certonly --standalone -n --agree-tos --email howardzchung@gmail.com --do
 # chmod 0755 /etc/letsencrypt/{live,archive}
 
 curl -fsSL https://get.docker.com | sh
-docker run -d --rm --name=vbrowser -v /etc/letsencrypt/archive/azure.howardchung.net:/cert --log-opt max-size=1g --net=host --shm-size=1g --cap-add="SYS_ADMIN" -e DISPLAY=":99.0" -e NEKO_PASSWORD=neko -e NEKO_PASSWORD_ADMIN=admin -e NEKO_BIND=":5000" -e NEKO_EPR=":59000-59100" -e NEKO_KEY="/cert/privkey1.pem" -e NEKO_CERT="/cert/cert1.pem" nurdism/neko:chromium
+docker run -d --rm --name=vbrowser -v /etc/letsencrypt/archive/azure.howardchung.net:/cert --log-opt max-size=1g --net=host --shm-size=1g --cap-add="SYS_ADMIN" -e DISPLAY=":99.0" -e NEKO_SCREEN="1280x720@30" -e NEKO_PASSWORD=neko -e NEKO_PASSWORD_ADMIN=admin -e NEKO_BIND=":5000" -e NEKO_EPR=":59000-59100" -e NEKO_KEY="/cert/privkey1.pem" -e NEKO_CERT="/cert/cert1.pem" nurdism/neko:chromium
