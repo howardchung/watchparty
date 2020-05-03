@@ -382,6 +382,7 @@ export default class App extends React.Component<null, AppState> {
       );
     });
     socket.on('REC:chat', (data: ChatMessage) => {
+      // TODO notification sound
       this.state.chat.push(data);
       this.setState({
         chat: this.state.chat,
@@ -575,7 +576,6 @@ export default class App extends React.Component<null, AppState> {
   };
 
   stopVBrowser = async () => {
-    // TODO automatically shut this down after some timeout, or nobody in the room
     this.socket.emit('CMD:stopVBrowser');
   };
 
@@ -1302,6 +1302,22 @@ export default class App extends React.Component<null, AppState> {
                         />
                       )}
                     {this.isVBrowser() && (
+                      <Dropdown
+                        icon="keyboard"
+                        labeled
+                        className="icon"
+                        button
+                        value={controller && controller!.id}
+                        placeholder="No controller"
+                        onChange={this.changeController}
+                        selection
+                        options={this.state.participants.map((p) => ({
+                          text: this.state.nameMap[p.id] || p.id,
+                          value: p.id,
+                        }))}
+                      ></Dropdown>
+                    )}
+                    {this.isVBrowser() && (
                       <Button
                         fluid
                         className="toolButton"
@@ -1313,22 +1329,6 @@ export default class App extends React.Component<null, AppState> {
                         <Icon name="cancel" />
                         Stop VBrowser
                       </Button>
-                    )}
-                    {this.isVBrowser() && (
-                      <Dropdown
-                        icon="keyboard"
-                        labeled
-                        className="icon"
-                        value={controller && controller!.id}
-                        selection
-                        button
-                        placeholder="No controller"
-                        onChange={this.changeController}
-                        options={this.state.participants.map((p) => ({
-                          text: this.state.nameMap[p.id] || p.id,
-                          value: p.id,
-                        }))}
-                      ></Dropdown>
                     )}
                   </div>
                   <div style={{ height: '4px' }} />

@@ -1,3 +1,7 @@
+const uuid = require('uuid');
+const axios = require('axios');
+const FormData = require('form-data');
+
 module.exports = class Room {
   constructor(io, roomId, roomData) {
     this.video = '';
@@ -201,13 +205,18 @@ module.exports = class Room {
         cmdHost('');
         io.of(roomId).emit('roster', this.roster);
       });
-      socket.on('CMD:startVBrowser', () => {
+      socket.on('CMD:startVBrowser', async () => {
+        const { pass, host, id } = await launchVM();
+        if (!pass || !host || !id) {
+          return;
+        }
+        // TODO automatically shut this down after some timeout, or nobody in the room
         this.vBrowser = {};
         this.vBrowser.bootTime = Number(new Date());
-        // TODO generate credentials and boot a VM
-        this.vBrowser.user = 'admin';
-        this.vBrowser.pass = 'neko';
-        this.vBrowser.host = process.env.REACT_APP_VBROWSER_URL;
+        this.vBrowser.user = socket.id;
+        this.vBrowser.pass = pass;
+        this.vBrowser.host = host;
+        this.vBrowser.id = id;
         this.roster.forEach((user, i) => {
           if (user.id === socket.id) {
             this.roster[i].isController = true;
@@ -225,13 +234,16 @@ module.exports = class Room {
         );
         io.of(roomId).emit('roster', this.roster);
       });
-      socket.on('CMD:stopVBrowser', () => {
-        this.vBrowser = undefined;
-        this.roster.forEach((user, i) => {
-          this.roster[i].isController = false;
-        });
-        // TODO shut down the VM
-        cmdHost('');
+      socket.on('CMD:stopVBrowser', async () => {
+        // shut down the VM
+        if (this.vBrowser) {
+          await terminateVM(this.vBrowser.id);
+          this.vBrowser = undefined;
+          this.roster.forEach((user, i) => {
+            this.roster[i].isController = false;
+          });
+          cmdHost('');
+        }
       });
       socket.on('CMD:changeController', (data) => {
         this.roster.forEach((user, i) => {
@@ -273,3 +285,103 @@ module.exports = class Room {
     });
   }
 };
+
+async function launchVM(password) {
+  // generate credentials and boot a VM
+  try {
+    const password = uuid.v4();
+    const response = await axios({
+      method: 'POST',
+      url: 'https://api.scaleway.com/instance/v1/zones/fr-par-1/servers',
+      headers: {
+        'X-Auth-Token': process.env.SCW_SECRET_KEY,
+        'Content-Type': 'application/json',
+      },
+      data: {
+        name: password,
+        dynamic_ip_required: true,
+        commercial_type: 'DEV1-S',
+        // image: 'ce6c9d21-0ff3-4355-b385-c930c9f22d9d', // ubuntu focal
+        image: 'a178943a-d2ae-449f-b8c0-80ca5447831f', // customized ubuntu bionic
+        volumes: {},
+        organization: process.env.SCW_ORGANIZATION_ID,
+        // tags: ['string'],
+      },
+    });
+    console.log(response.data);
+    const id = response.data.server.id;
+    const host = `${id}.pub.cloud.scaleway.com`;
+    // set userdata for boot action
+    const cloudInit = `#!/bin/bash
+# Generate cert with letsencrypt
+sleep 30
+certbot certonly --standalone -n --agree-tos --email howardzchung@gmail.com --domains ${host}
+
+# start browser
+docker run -d --rm --name=vbrowser -v /etc/letsencrypt/archive/${host}:/cert -v /usr/share/fonts:/usr/share/fonts --log-opt max-size=1g --net=host --shm-size=1g --cap-add="SYS_ADMIN" -e DISPLAY=":99.0" -e NEKO_SCREEN="1280x720@30" -e NEKO_PASSWORD=${password} -e NEKO_PASSWORD_ADMIN=${password} -e NEKO_BIND=":5000" -e NEKO_EPR=":59000-59100" -e NEKO_KEY="/cert/privkey1.pem" -e NEKO_CERT="/cert/cert1.pem" nurdism/neko:chromium
+`;
+    const response2 = await axios({
+      method: 'PATCH',
+      url: `https://api.scaleway.com/instance/v1/zones/fr-par-1/servers/${id}/user_data/cloud-init`,
+      headers: {
+        'X-Auth-Token': process.env.SCW_SECRET_KEY,
+        'Content-Type': 'text/plain',
+      },
+      data: cloudInit,
+    });
+    console.log(response2.data);
+    // boot the instance
+    const response3 = await axios({
+      method: 'POST',
+      url: `https://api.scaleway.com/instance/v1/zones/fr-par-1/servers/${id}/action`,
+      headers: {
+        'X-Auth-Token': process.env.SCW_SECRET_KEY,
+        'Content-Type': 'application/json',
+      },
+      data: {
+        action: 'poweron',
+      },
+    });
+    console.log(response3.data);
+    let state = '';
+    let retryCount = 0;
+    while (state !== 'running') {
+      // poll for status
+      const response4 = await axios({
+        method: 'GET',
+        url: `https://api.scaleway.com/instance/v1/zones/fr-par-1/servers/${id}`,
+        headers: {
+          'X-Auth-Token': process.env.SCW_SECRET_KEY,
+          'Content-Type': 'application/json',
+        },
+      });
+      state = response4.data.server.state;
+      console.log(retryCount, state);
+      retryCount += 1;
+      if (retryCount >= 30) {
+        throw new Error('timed out waiting for instance');
+      } else {
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+      }
+    }
+    return { pass: password, host: host + ':5000', id };
+  } catch (e) {
+    console.error(e);
+    // console.error(e.response.status, e.response.data);
+    return {};
+  }
+}
+
+async function terminateVM(id) {
+  const response = await axios({
+    method: 'POST',
+    url: `https://api.scaleway.com/instance/v1/zones/fr-par-1/servers/${id}/action`,
+    headers: {
+      'X-Auth-Token': process.env.SCW_SECRET_KEY,
+      'Content-Type': 'application/json',
+    },
+    data: {
+      action: 'terminate',
+    },
+  });
+}

@@ -56,12 +56,7 @@ export default class Video extends React.Component<{
   componentDidUpdate(prevProps: any) {
     // console.log(this.props.controlling, prevProps.controlling);
     if (this.props.controlling && !prevProps.controlling) {
-      // TODO Attempt to grab the controls, might need a delay
-      setTimeout(() => this.$client.sendMessage(EVENT.CONTROL.REQUEST), 1000);
-    }
-    if (!this.props.controlling && prevProps.controlling) {
-      // TODO or make this better by using the give command
-      this.$client.sendMessage(EVENT.CONTROL.RELEASE);
+      this.$client.sendMessage(EVENT.ADMIN.CONTROL);
     }
     this.controlling = this.props.controlling;
   }

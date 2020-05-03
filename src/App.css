@@ -130,3 +130,8 @@ body {
 .ui.dropdown .menu[role='listbox'] {
   z-index: 1001;
 }
+
+.ui.selection.dropdown.ui.selection.dropdown {
+  min-height: 1em;
+  border: 0px;
+}
