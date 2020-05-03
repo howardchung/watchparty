@@ -104,6 +104,7 @@ interface AppState {
   watchOptions: SearchResult[];
   isScreenSharing: boolean;
   isScreenSharingFile: boolean;
+  isControlling: boolean;
   isVBrowser: boolean;
   fbUserID?: string;
   isFBReady: boolean;
@@ -114,9 +115,6 @@ interface AppState {
   speed: number;
   connections: number;
   multiStreamSelection?: any[];
-  vBrowserUser: string;
-  vBrowserPass: string;
-  vBrowserHost: string;
 }
 
 export default class App extends React.Component<null, AppState> {
@@ -139,6 +137,7 @@ export default class App extends React.Component<null, AppState> {
     watchOptions: [],
     isScreenSharing: false,
     isScreenSharingFile: false,
+    isControlling: false,
     isVBrowser: false,
     fbUserID: undefined,
     isFBReady: false,
@@ -149,9 +148,6 @@ export default class App extends React.Component<null, AppState> {
     speed: 0,
     connections: 0,
     multiStreamSelection: undefined,
-    vBrowserUser: 'admin',
-    vBrowserPass: 'neko',
-    vBrowserHost: process.env.REACT_APP_VBROWSER_URL as string,
   };
   socket: any = null;
   watchPartyYTPlayer: any = null;
@@ -406,6 +402,7 @@ export default class App extends React.Component<null, AppState> {
         { participants: data, rosterUpdateTS: Number(new Date()) },
         () => {
           this.updateScreenShare();
+          this.updateVBrowser();
         }
       );
     });
@@ -574,25 +571,29 @@ export default class App extends React.Component<null, AppState> {
   };
 
   setupVBrowser = async () => {
-    // TODO fetch creds from server
-    this.setMedia(null, {
-      value:
-        'vbrowser://' +
-        this.state.vBrowserUser +
-        ':' +
-        this.state.vBrowserPass +
-        '@' +
-        this.state.vBrowserHost,
-    });
-    this.setState({ isVBrowser: true });
-    // TODO send the command to the server
+    this.socket.emit('CMD:startVBrowser');
   };
 
   stopVBrowser = async () => {
     // TODO automatically shut this down after some timeout, or nobody in the room
-    // TODO server should clear the currentMedia, like after a screenshare
-    // TODO disable screenshare/fileshare if vbrowser is running
-    this.setState({ isVBrowser: false });
+    this.socket.emit('CMD:stopVBrowser');
+  };
+
+  updateVBrowser = async () => {
+    if (!this.isVBrowser()) {
+      return;
+    }
+    const controller = this.state.participants.find((p) => p.isController);
+    if (controller && controller.id === this.socket.id) {
+      this.setState({ isControlling: true });
+    } else {
+      this.setState({ isControlling: false });
+    }
+  };
+
+  changeController = async (e: any, data: DropdownProps) => {
+    // console.log(data);
+    this.socket.emit('CMD:changeController', data.value);
   };
 
   sendSignalSS = async (to: string, data: any, sharer?: boolean) => {
@@ -604,20 +605,38 @@ export default class App extends React.Component<null, AppState> {
     return getMediaType(this.state.currentMedia) === 'youtube';
   };
 
+  isVideo = () => {
+    return getMediaType(this.state.currentMedia) === 'video';
+  };
+
   isScreenShare = () => {
     return this.state.currentMedia.startsWith('screenshare://');
   };
 
   isFileShare = () => {
     return this.state.currentMedia.startsWith('fileshare://');
-  }
+  };
 
   isVBrowser = () => {
     return this.state.currentMedia.startsWith('vbrowser://');
   };
 
-  isVideo = () => {
-    return getMediaType(this.state.currentMedia) === 'video';
+  getVBrowserUser = () => {
+    return this.state.currentMedia
+      .replace('vbrowser://', '')
+      .split('@')[0]
+      .split(':')[0];
+  };
+
+  getVBrowserPass = () => {
+    return this.state.currentMedia
+      .replace('vbrowser://', '')
+      .split('@')[0]
+      .split(':')[1];
+  };
+
+  getVBrowserHost = () => {
+    return this.state.currentMedia.replace('vbrowser://', '').split('@')[1];
   };
 
   getCurrentTime = () => {
@@ -996,6 +1015,7 @@ export default class App extends React.Component<null, AppState> {
 
   render() {
     const sharer = this.state.participants.find((p) => p.isScreenShare);
+    const controller = this.state.participants.find((p) => p.isController);
     return (
       <React.Fragment>
         {this.state.multiStreamSelection && (
@@ -1223,7 +1243,7 @@ export default class App extends React.Component<null, AppState> {
                         Stop Share
                       </Button>
                     )}
-                    {!this.screenShareStream && (
+                    {!this.screenShareStream && !this.isVBrowser() && (
                       <Popup
                         content={`Share a tab or an application. Make sure to check "Share audio" for best results.`}
                         trigger={
@@ -1242,7 +1262,7 @@ export default class App extends React.Component<null, AppState> {
                         }
                       />
                     )}
-                    {!this.screenShareStream && (
+                    {!this.screenShareStream && !this.isVBrowser() && (
                       <Popup
                         content="Stream your own video file"
                         trigger={
@@ -1260,25 +1280,27 @@ export default class App extends React.Component<null, AppState> {
                         }
                       />
                     )}
-                    {process.env.REACT_APP_VBROWSER_URL && !this.isVBrowser() && (
-                      <Popup
-                        content="Launch a shared virtual browser"
-                        trigger={
-                          <Button
-                            fluid
-                            className="toolButton"
-                            disabled={sharer && this.socket.id !== sharer!.id}
-                            icon
-                            labelPosition="left"
-                            color="green"
-                            onClick={this.setupVBrowser}
-                          >
-                            <Icon name="desktop" />
-                            VBrowser
-                          </Button>
-                        }
-                      />
-                    )}
+                    {process.env.REACT_APP_VBROWSER_URL &&
+                      !this.screenShareStream &&
+                      !this.isVBrowser() && (
+                        <Popup
+                          content="Launch a shared virtual browser"
+                          trigger={
+                            <Button
+                              fluid
+                              className="toolButton"
+                              disabled={sharer && this.socket.id !== sharer!.id}
+                              icon
+                              labelPosition="left"
+                              color="green"
+                              onClick={this.setupVBrowser}
+                            >
+                              <Icon name="desktop" />
+                              VBrowser
+                            </Button>
+                          }
+                        />
+                      )}
                     {this.isVBrowser() && (
                       <Button
                         fluid
@@ -1292,7 +1314,22 @@ export default class App extends React.Component<null, AppState> {
                         Stop VBrowser
                       </Button>
                     )}
-                    {/* TODO UI to hand off control of VBrowser */}
+                    {this.isVBrowser() && (
+                      <Dropdown
+                        icon="keyboard"
+                        labeled
+                        className="icon"
+                        value={controller && controller!.id}
+                        selection
+                        button
+                        placeholder="No controller"
+                        onChange={this.changeController}
+                        options={this.state.participants.map((p) => ({
+                          text: this.state.nameMap[p.id] || p.id,
+                          value: p.id,
+                        }))}
+                      ></Dropdown>
+                    )}
                   </div>
                   <div style={{ height: '4px' }} />
                   {(this.state.loading || !this.state.currentMedia) && (
@@ -1360,9 +1397,10 @@ export default class App extends React.Component<null, AppState> {
                       >
                         {this.isVBrowser() ? (
                           <Video
-                            username={this.state.vBrowserUser}
-                            password={this.state.vBrowserPass}
-                            hostname={this.state.vBrowserHost}
+                            username={this.getVBrowserUser()}
+                            password={this.getVBrowserPass()}
+                            hostname={this.getVBrowserHost()}
+                            controlling={this.state.isControlling}
                           />
                         ) : (
                           <video

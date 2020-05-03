@@ -34,10 +34,7 @@ export class NekoClient extends BaseClient implements EventEmitter<any> {
   /////////////////////////////
   protected [EVENT.CONNECTING]() {}
 
-  protected [EVENT.CONNECTED]() {
-    // TODO only if controller
-    this.sendMessage(EVENT.CONTROL.REQUEST);
-  }
+  protected [EVENT.CONNECTED]() {}
 
   protected [EVENT.DISCONNECTED](reason?: Error) {
     console.warn(reason);

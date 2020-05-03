@@ -1,20 +1,21 @@
 import React from 'react';
 import { NekoClient } from '.';
+import { EVENT } from './events';
 // import { EVENT } from './events';
 
 export default class Video extends React.Component<{
   username: string;
   password: string;
   hostname: string;
+  controlling: boolean;
 }> {
   //@ts-ignore
   // private observer = new ResizeObserver(this.onResize);
   private focused = false;
   private fullscreen = false;
   private activeKeys: Set<number> = new Set();
-  private hosting = true; // TODO set based on actual host
-  // TODO current host should be able to pass control around
-  private scroll = 5; // 1 to 10
+  private controlling = true;
+  private scroll = 3; // 1 to 10
   private width = 1280;
   private height = 720;
   // private _component = React.createRef<HTMLDivElement>();
@@ -26,21 +27,16 @@ export default class Video extends React.Component<{
   // private _resolution = React.createRef<HTMLDivElement>();
   private $client: NekoClient = new NekoClient();
 
-  // @Watch('width')
-  // onWidthChanged(width: number) {
-  //   this.onResise();
-  // }
-
-  // @Watch('height')
-  // onHeightChanged(height: number) {
-  //   this.onResise();
-  // }
-
   componentDidMount() {
-    // this.$client = new NekoClient();
+    if (this.controlling) {
+      this.$client.once(EVENT.CONNECTED, () => {
+        this.$client.sendMessage(EVENT.CONTROL.REQUEST);
+      });
+    }
     const url = 'wss://' + this.props.hostname + '/';
     this.$client.login(url, this.props.password, this.props.username);
     this.$client.on('debug', (e, data) => console.log(e, data));
+    this.controlling = this.props.controlling;
 
     // this._container.current?.addEventListener('resize', this.onResize);
     // this.onResize();
@@ -57,6 +53,19 @@ export default class Video extends React.Component<{
       ?.addEventListener('wheel', this.onWheel, { passive: false });
   }
 
+  componentDidUpdate(prevProps: any) {
+    // console.log(this.props.controlling, prevProps.controlling);
+    if (this.props.controlling && !prevProps.controlling) {
+      // TODO Attempt to grab the controls, might need a delay
+      setTimeout(() => this.$client.sendMessage(EVENT.CONTROL.REQUEST), 1000);
+    }
+    if (!this.props.controlling && prevProps.controlling) {
+      // TODO or make this better by using the give command
+      this.$client.sendMessage(EVENT.CONTROL.RELEASE);
+    }
+    this.controlling = this.props.controlling;
+  }
+
   componentWillUnmount() {
     this.$client.logout();
   }
@@ -71,10 +80,6 @@ export default class Video extends React.Component<{
   // }
 
   onFocus = async () => {
-    if (!document.hasFocus()) {
-      return;
-    }
-
     // if (
     //   this.hosting &&
     //   navigator.clipboard &&
@@ -87,7 +92,7 @@ export default class Video extends React.Component<{
   };
 
   onBlur = () => {
-    if (!this.focused || !this.hosting) {
+    if (!this.focused || !this.controlling) {
       return;
     }
 
@@ -120,7 +125,7 @@ export default class Video extends React.Component<{
   onWheel = (e: WheelEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    if (!this.hosting) {
+    if (!this.controlling) {
       return;
     }
     this.onMousePos(e);
@@ -137,7 +142,7 @@ export default class Video extends React.Component<{
   onMouseDown = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    if (!this.hosting) {
+    if (!this.controlling) {
       return;
     }
     this.onMousePos(e);
@@ -147,7 +152,7 @@ export default class Video extends React.Component<{
   onMouseUp = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    if (!this.hosting) {
+    if (!this.controlling) {
       return;
     }
     this.onMousePos(e);
@@ -155,19 +160,25 @@ export default class Video extends React.Component<{
   };
 
   onMouseMove = (e: React.MouseEvent) => {
-    if (!this.hosting) {
+    if (!this.controlling) {
       return;
     }
     this.onMousePos(e);
   };
 
   onMouseEnter = (e: React.MouseEvent) => {
+    if (!this.controlling) {
+      return;
+    }
     this._overlay.current!.focus();
     this.onFocus();
     this.focused = true;
   };
 
   onMouseLeave = (e: React.MouseEvent) => {
+    if (!this.controlling) {
+      return;
+    }
     this._overlay.current!.blur();
     this.focused = false;
   };
@@ -193,7 +204,7 @@ export default class Video extends React.Component<{
   onKeyDown = (e: React.KeyboardEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    if (!this.focused || !this.hosting) {
+    if (!this.focused || !this.controlling) {
       return;
     }
 
@@ -205,7 +216,7 @@ export default class Video extends React.Component<{
   onKeyUp = (e: React.KeyboardEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    if (!this.focused || !this.hosting) {
+    if (!this.focused || !this.controlling) {
       return;
     }
 

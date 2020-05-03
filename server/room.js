@@ -8,6 +8,7 @@ module.exports = class Room {
     this.tsMap = {};
     this.nameMap = {};
     this.pictureMap = {};
+    this.vBrowser = undefined;
 
     this.serialize = () => {
       return JSON.stringify({
@@ -17,6 +18,7 @@ module.exports = class Room {
         nameMap: this.nameMap,
         pictureMap: this.pictureMap,
         chat: this.chat,
+        vBrowser: this.vBrowser,
       });
     };
 
@@ -33,10 +35,17 @@ module.exports = class Room {
       if (roomData.pictureMap) {
         this.pictureMap = roomData.pictureMap;
       }
+      if (roomData.vBrowser) {
+        this.vBrowser = roomData.vBrowser;
+      }
     };
 
     this.getHostState = () => {
-      return { video: this.video, videoTS: this.videoTS, paused: this.paused };
+      return {
+        video: this.video,
+        videoTS: this.videoTS,
+        paused: this.paused,
+      };
     };
 
     this.roomId = roomId;
@@ -190,6 +199,48 @@ module.exports = class Room {
           match.isScreenShare = false;
         }
         cmdHost('');
+        io.of(roomId).emit('roster', this.roster);
+      });
+      socket.on('CMD:startVBrowser', () => {
+        this.vBrowser = {};
+        this.vBrowser.bootTime = Number(new Date());
+        // TODO generate credentials and boot a VM
+        this.vBrowser.user = 'admin';
+        this.vBrowser.pass = 'neko';
+        this.vBrowser.host = process.env.REACT_APP_VBROWSER_URL;
+        this.roster.forEach((user, i) => {
+          if (user.id === socket.id) {
+            this.roster[i].isController = true;
+          } else {
+            this.roster[i].isController = false;
+          }
+        });
+        cmdHost(
+          'vbrowser://' +
+            this.vBrowser.user +
+            ':' +
+            this.vBrowser.pass +
+            '@' +
+            this.vBrowser.host
+        );
+        io.of(roomId).emit('roster', this.roster);
+      });
+      socket.on('CMD:stopVBrowser', () => {
+        this.vBrowser = undefined;
+        this.roster.forEach((user, i) => {
+          this.roster[i].isController = false;
+        });
+        // TODO shut down the VM
+        cmdHost('');
+      });
+      socket.on('CMD:changeController', (data) => {
+        this.roster.forEach((user, i) => {
+          if (user.id === data) {
+            this.roster[i].isController = true;
+          } else {
+            this.roster[i].isController = false;
+          }
+        });
         io.of(roomId).emit('roster', this.roster);
       });
       socket.on('CMD:askHost', () => {

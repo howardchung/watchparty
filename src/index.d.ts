@@ -6,6 +6,7 @@ interface User {
   id: string;
   isVideoChat: boolean;
   isScreenShare: boolean;
+  isController: boolean;
 }
 
 interface ChatMessage {
