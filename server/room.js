@@ -206,6 +206,10 @@ module.exports = class Room {
         io.of(roomId).emit('roster', this.roster);
       });
       socket.on('CMD:startVBrowser', async () => {
+        if (this.vBrowser) {
+          // Maybe terminate the existing instance and spawn a new one
+          return;
+        }
         const { pass, host, id } = await launchVM();
         if (!pass || !host || !id) {
           return;
@@ -213,7 +217,6 @@ module.exports = class Room {
         // TODO automatically shut this down after some timeout, or nobody in the room
         this.vBrowser = {};
         this.vBrowser.bootTime = Number(new Date());
-        this.vBrowser.user = socket.id;
         this.vBrowser.pass = pass;
         this.vBrowser.host = host;
         this.vBrowser.id = id;
@@ -224,14 +227,7 @@ module.exports = class Room {
             this.roster[i].isController = false;
           }
         });
-        cmdHost(
-          'vbrowser://' +
-            this.vBrowser.user +
-            ':' +
-            this.vBrowser.pass +
-            '@' +
-            this.vBrowser.host
-        );
+        cmdHost('vbrowser://' + this.vBrowser.pass + '@' + this.vBrowser.host);
         io.of(roomId).emit('roster', this.roster);
       });
       socket.on('CMD:stopVBrowser', async () => {
@@ -302,10 +298,11 @@ async function launchVM(password) {
         dynamic_ip_required: true,
         commercial_type: 'DEV1-S',
         // image: 'ce6c9d21-0ff3-4355-b385-c930c9f22d9d', // ubuntu focal
-        image: 'a178943a-d2ae-449f-b8c0-80ca5447831f', // customized ubuntu bionic
+        image: '8b7f4e65-8f3d-467e-8c63-ba6517bce5ca',
+        // image: 'a178943a-d2ae-449f-b8c0-80ca5447831f', // new customized ubuntu bionic
         volumes: {},
         organization: process.env.SCW_ORGANIZATION_ID,
-        // tags: ['string'],
+        tags: ['vbrowser'],
       },
     });
     console.log(response.data);
@@ -313,12 +310,23 @@ async function launchVM(password) {
     const host = `${id}.pub.cloud.scaleway.com`;
     // set userdata for boot action
     const cloudInit = `#!/bin/bash
+until nslookup ${host}
+do
+sleep 5
+echo "Trying DNS lookup again..."
+done
+    
 # Generate cert with letsencrypt
-sleep 30
 certbot certonly --standalone -n --agree-tos --email howardzchung@gmail.com --domains ${host}
 
 # start browser
-docker run -d --rm --name=vbrowser -v /etc/letsencrypt/archive/${host}:/cert -v /usr/share/fonts:/usr/share/fonts --log-opt max-size=1g --net=host --shm-size=1g --cap-add="SYS_ADMIN" -e DISPLAY=":99.0" -e NEKO_SCREEN="1280x720@30" -e NEKO_PASSWORD=${password} -e NEKO_PASSWORD_ADMIN=${password} -e NEKO_BIND=":5000" -e NEKO_EPR=":59000-59100" -e NEKO_KEY="/cert/privkey1.pem" -e NEKO_CERT="/cert/cert1.pem" nurdism/neko:chromium
+iptables -t nat -A PREROUTING -p tcp --dport 443 -j REDIRECT --to-port 5000
+docker run -d --rm --name=vbrowser -v /etc/letsencrypt/archive/${host}:/cert -v /usr/share/fonts:/usr/share/fonts --log-opt max-size=1g --net=host --shm-size=1g --cap-add="SYS_ADMIN" -e DISPLAY=":99.0" -e SCREEN="1280x720@30" -e NEKO_PASSWORD=${password} -e NEKO_PASSWORD_ADMIN=${password} -e NEKO_BIND=":5000" -e NEKO_EPR=":59000-59100" -e NEKO_KEY="/cert/privkey1.pem" -e NEKO_CERT="/cert/fullchain1.pem" nurdism/neko:chromium
+`;
+    const cloudInitNoSsl = `#!/bin/bash
+# start browser
+iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 5000
+docker run -d --rm --name=vbrowser -v /usr/share/fonts:/usr/share/fonts --log-opt max-size=1g --net=host --shm-size=1g --cap-add="SYS_ADMIN" -e DISPLAY=":99.0" -e SCREEN="1280x720@30" -e NEKO_PASSWORD=${password} -e NEKO_PASSWORD_ADMIN=${password} -e NEKO_BIND=":5000" -e NEKO_EPR=":59000-59100" nurdism/neko:chromium
 `;
     const response2 = await axios({
       method: 'PATCH',
@@ -345,26 +353,26 @@ docker run -d --rm --name=vbrowser -v /etc/letsencrypt/archive/${host}:/cert -v 
     console.log(response3.data);
     let state = '';
     let retryCount = 0;
-    while (state !== 'running') {
+    while (!state) {
       // poll for status
-      const response4 = await axios({
-        method: 'GET',
-        url: `https://api.scaleway.com/instance/v1/zones/fr-par-1/servers/${id}`,
-        headers: {
-          'X-Auth-Token': process.env.SCW_SECRET_KEY,
-          'Content-Type': 'application/json',
-        },
-      });
-      state = response4.data.server.state;
+      try {
+        const response4 = await axios({
+          method: 'GET',
+          url: 'https://' + host,
+        });
+        state = response4.data.slice(100);
+      } catch (e) {
+        // console.log(e);
+      }
       console.log(retryCount, state);
       retryCount += 1;
-      if (retryCount >= 30) {
+      if (retryCount >= 200) {
         throw new Error('timed out waiting for instance');
       } else {
         await new Promise((resolve) => setTimeout(resolve, 3000));
       }
     }
-    return { pass: password, host: host + ':5000', id };
+    return { pass: password, host: host, id };
   } catch (e) {
     console.error(e);
     // console.error(e.response.status, e.response.data);
@@ -385,3 +393,8 @@ async function terminateVM(id) {
     },
   });
 }
+
+// TODO listvms
+// TODO process to check current pool and spawn new instances if needed
+// TODO process to terminate any VMs that are too old and no one's using
+// TODO terminate VMs when they're released

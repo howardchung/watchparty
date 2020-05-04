@@ -129,12 +129,6 @@ app.post('/createRoom', (req, res) => {
   res.json({ name });
 });
 
-process.on('exit', () => {
-  io.close();
-  server.close();
-  process.exit();
-});
-
 // const Turn = require('node-turn');
 // const turnServer = new Turn({
 //   // set options

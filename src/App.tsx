@@ -621,18 +621,8 @@ export default class App extends React.Component<null, AppState> {
     return this.state.currentMedia.startsWith('vbrowser://');
   };
 
-  getVBrowserUser = () => {
-    return this.state.currentMedia
-      .replace('vbrowser://', '')
-      .split('@')[0]
-      .split(':')[0];
-  };
-
   getVBrowserPass = () => {
-    return this.state.currentMedia
-      .replace('vbrowser://', '')
-      .split('@')[0]
-      .split(':')[1];
+    return this.state.currentMedia.replace('vbrowser://', '').split('@')[0];
   };
 
   getVBrowserHost = () => {
@@ -1397,7 +1387,7 @@ export default class App extends React.Component<null, AppState> {
                       >
                         {this.isVBrowser() ? (
                           <Video
-                            username={this.getVBrowserUser()}
+                            username={this.socket.id}
                             password={this.getVBrowserPass()}
                             hostname={this.getVBrowserHost()}
                             controlling={this.state.isControlling}

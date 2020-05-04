@@ -16,6 +16,7 @@ export default class Video extends React.Component<{
   private activeKeys: Set<number> = new Set();
   private controlling = true;
   private scroll = 3; // 1 to 10
+  private scroll_invert = true;
   private width = 1280;
   private height = 720;
   // private _component = React.createRef<HTMLDivElement>();
@@ -127,6 +128,11 @@ export default class Video extends React.Component<{
 
     let x = e.deltaX;
     let y = e.deltaY;
+
+    if (this.scroll_invert) {
+      x = x * -1;
+      y = y * -1;
+    }
 
     x = Math.min(Math.max(x, -this.scroll), this.scroll);
     y = Math.min(Math.max(y, -this.scroll), this.scroll);
