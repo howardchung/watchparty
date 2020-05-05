@@ -275,8 +275,8 @@ module.exports = class Room {
           // Reset the room state since we lost the screen sharer
           cmdHost('');
         }
+        delete this.tsMap[socket.id];
         // delete nameMap[socket.id];
-        // delete tsMap[socket.id];
       });
     });
   }

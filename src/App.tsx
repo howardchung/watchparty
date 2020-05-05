@@ -350,12 +350,7 @@ export default class App extends React.Component<null, AppState> {
               'canplay',
               () => {
                 this.setState({ loading: false });
-                // Jump to the leader's position
-                const maxTS = Math.max(...Object.values(this.state.tsMap));
-                if (maxTS > 0) {
-                  console.log('initial jump to leader at ', maxTS);
-                  this.doSeek(maxTS);
-                }
+                this.jumpToLeader();
               },
               { once: true }
             );
@@ -706,6 +701,15 @@ export default class App extends React.Component<null, AppState> {
     return false;
   };
 
+  jumpToLeader = () => {
+    // Jump to the leader's position
+    const maxTS = Math.max(...Object.values(this.state.tsMap));
+    if (maxTS > 0) {
+      console.log('jump to leader at ', maxTS);
+      this.doSeek(maxTS);
+    }
+  }
+
   doSrc = async (src: string, time: number) => {
     console.log('doSrc', src, time);
     if (this.isScreenShare() || this.isFileShare() || this.isVBrowser()) {
@@ -825,7 +829,7 @@ export default class App extends React.Component<null, AppState> {
   };
 
   onSeek = (e: any, time: number) => {
-    let target = time;
+    let target = Math.max(time, 0);
     if (e) {
       const rect = e.target.getBoundingClientRect();
       const x = e.clientX - rect.left;
@@ -1411,6 +1415,7 @@ export default class App extends React.Component<null, AppState> {
                           toggleSubtitle={this.toggleSubtitle}
                           setVolume={this.setVolume}
                           getVolume={this.getVolume}
+                          jumpToLeader={this.jumpToLeader}
                           paused={this.isPaused()}
                           muted={this.isMuted()}
                           subtitled={this.isSubtitled()}
@@ -2481,6 +2486,7 @@ interface ControlsProps {
   fullScreen: Function;
   toggleMute: Function;
   toggleSubtitle: Function;
+  jumpToLeader: Function;
   paused: boolean;
   muted: boolean;
   subtitled: boolean;
@@ -2525,6 +2531,7 @@ class Controls extends React.Component<ControlsProps> {
       fullScreen,
       toggleMute,
       toggleSubtitle,
+      jumpToLeader,
       paused,
       muted,
       subtitled,
@@ -2538,6 +2545,12 @@ class Controls extends React.Component<ControlsProps> {
           onClick={togglePlay}
           className="control action"
           name={paused ? 'play' : 'pause'}
+        />
+        <Icon
+          size="large"
+          onClick={jumpToLeader}
+          className="control action"
+          name={'angle double right'}
         />
         <div className="control">{formatTimestamp(currentTime)}</div>
         <Progress
