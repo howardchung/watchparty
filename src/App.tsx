@@ -1418,17 +1418,6 @@ export default class App extends React.Component<null, AppState> {
                           duration={this.getDuration()}
                         />
                       )}
-                      {this.state.fullScreen &&
-                        this.state.state === 'connected' && (
-                          <VideoChat
-                            socket={this.socket}
-                            participants={this.state.participants}
-                            nameMap={this.state.nameMap}
-                            pictureMap={this.state.pictureMap}
-                            tsMap={this.state.tsMap}
-                            rosterUpdateTS={this.state.rosterUpdateTS}
-                          />
-                        )}
                     </div>
                     {this.state.fullScreen && (
                       <Chat
