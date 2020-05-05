@@ -31,12 +31,18 @@ export default class Video extends React.Component<{
   componentDidMount() {
     if (this.controlling) {
       this.$client.once(EVENT.CONNECTED, () => {
-        this.$client.sendMessage(EVENT.CONTROL.REQUEST);
+        this.$client.sendMessage(EVENT.ADMIN.CONTROL);
       });
     }
+    this.$client.on(EVENT.SCREEN.RESOLUTION, (data) => {
+      this.width = data.width;
+      this.height = data.height;
+    });
     const url = 'wss://' + this.props.hostname + '/';
     this.$client.login(url, this.props.password, this.props.username);
-    this.$client.on('debug', (e, data) => console.log(e, data));
+    if (process.env.NODE_ENV === 'development') {
+      this.$client.on('debug', (e, data) => console.log(e, data));
+    }
     this.controlling = this.props.controlling;
 
     // this._container.current?.addEventListener('resize', this.onResize);
@@ -58,6 +64,7 @@ export default class Video extends React.Component<{
     // console.log(this.props.controlling, prevProps.controlling);
     if (this.props.controlling && !prevProps.controlling) {
       this.$client.sendMessage(EVENT.ADMIN.CONTROL);
+      // Sthis.$client.sendMessage(EVENT.SCREEN.SET, { width: 1920, height: 1080, rate: 30 });
     }
     this.controlling = this.props.controlling;
   }

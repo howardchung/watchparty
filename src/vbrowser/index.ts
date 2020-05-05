@@ -34,7 +34,9 @@ export class NekoClient extends BaseClient implements EventEmitter<any> {
   /////////////////////////////
   protected [EVENT.CONNECTING]() {}
 
-  protected [EVENT.CONNECTED]() {}
+  protected [EVENT.CONNECTED]() {
+    this.emit(EVENT.CONNECTED);
+  }
 
   protected [EVENT.DISCONNECTED](reason?: Error) {
     console.warn(reason);
@@ -47,12 +49,10 @@ export class NekoClient extends BaseClient implements EventEmitter<any> {
     video.src = '';
     video.srcObject = streams[0];
     video.play();
-    // this.$accessor.video.addTrack([track, streams[0]]);
-    // this.$accessor.video.setStream(0);
   }
 
   protected [EVENT.DATA](data: any) {
-    console.log(data);
+    console.log('[DATA]', data);
   }
 
   /////////////////////////////
@@ -100,7 +100,7 @@ export class NekoClient extends BaseClient implements EventEmitter<any> {
   protected [EVENT.SCREEN.CONFIGURATIONS]({
     configurations,
   }: ScreenConfigurationsPayload) {
-    console.log('[CONFIGURATIONS]', configurations);
+    // console.log('[CONFIGURATIONS]', configurations);
     //this.$accessor.video.setConfigurations(configurations);
   }
 
@@ -110,11 +110,6 @@ export class NekoClient extends BaseClient implements EventEmitter<any> {
     height,
     rate,
   }: ScreenResolutionPayload) {
-    console.log('[RESOLUTION]', id, width, height, rate);
-    //this.$accessor.video.setResolution({ width, height, rate });
-
-    if (!id) {
-      return;
-    }
+    this.emit(EVENT.SCREEN.RESOLUTION, { width, height });
   }
 }
