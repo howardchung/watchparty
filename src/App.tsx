@@ -378,6 +378,9 @@ export default class App extends React.Component<null, AppState> {
     });
     socket.on('REC:chat', (data: ChatMessage) => {
       // TODO notification sound
+      if (document.visibilityState && document.visibilityState !== 'visible') {
+        new Audio('/clearly.mp3').play();
+      }
       this.state.chat.push(data);
       this.setState({
         chat: this.state.chat,
