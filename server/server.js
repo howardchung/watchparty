@@ -19,6 +19,7 @@ if (process.env.HTTPS) {
 }
 const io = require('socket.io')(server, { origins: '*:*' });
 const Room = require('./room');
+const { resizeVMGroup, cleanupVMs } = require('./vm');
 
 const names = Moniker.generator([
   Moniker.adjective,
@@ -59,6 +60,11 @@ async function init() {
   if (!rooms.has('/default')) {
     rooms.set('/default', new Room(io, '/default'));
   }
+
+  resizeVMGroup();
+  cleanupVMs(rooms);
+  setInterval(() => resizeVMGroup(), 30 * 1000);
+  setInterval(() => cleanupVMs(rooms), 5 * 60 * 1000);
 }
 
 if (process.env.YOUTUBE_API_KEY) {
@@ -128,6 +134,8 @@ app.post('/createRoom', (req, res) => {
   rooms.set('/' + name, new Room(io, '/' + name));
   res.json({ name });
 });
+
+// process.on('SIGINT', () => { console.log("Bye bye!"); process.exit(); });
 
 // const Turn = require('node-turn');
 // const turnServer = new Turn({

@@ -1,3 +1,5 @@
+const { assignVM, terminateVM, resetVM } = require('./vm');
+
 module.exports = class Room {
   constructor(io, roomId, roomData) {
     this.video = '';
@@ -48,6 +50,42 @@ module.exports = class Room {
       };
     };
 
+    this.resetRoomVM = async (socket) => {
+      if (this.vBrowser && this.vBrowser.id) {
+        await resetVM(this.vBrowser.id);
+        this.vBrowser = undefined;
+        this.roster.forEach((user, i) => {
+          this.roster[i].isController = false;
+        });
+        this.cmdHost(socket, '');
+      }
+    }
+
+    this.cmdHost = (socket, data) => {
+      console.log(socket.id, data);
+      this.video = data;
+      this.videoTS = 0;
+      this.paused = false;
+      this.tsMap = {};
+      io.of(roomId).emit('REC:tsMap', this.tsMap);
+      io.of(roomId).emit('REC:host', this.getHostState());
+      if (data) {
+        const chatMsg = { id: socket.id, cmd: 'host', msg: data };
+        this.addChatMessage(socket, chatMsg);
+      }
+    };
+
+    this.addChatMessage = (socket, chatMsg) => {
+      const chatWithTime = {
+        ...chatMsg,
+        timestamp: new Date().toISOString(),
+        videoTS: this.tsMap[socket.id],
+      };
+      this.chat.push(chatWithTime);
+      this.chat = this.chat.splice(-100);
+      io.of(roomId).emit('REC:chat', chatWithTime);
+    };
+
     this.roomId = roomId;
     if (roomData) {
       this.deserialize(roomData);
@@ -60,31 +98,6 @@ module.exports = class Room {
 
     io.of(roomId).on('connection', (socket) => {
       // console.log(socket.id);
-      const addChatMessage = (chatMsg) => {
-        const chatWithTime = {
-          ...chatMsg,
-          timestamp: new Date().toISOString(),
-          videoTS: this.tsMap[socket.id],
-        };
-        this.chat.push(chatWithTime);
-        this.chat = this.chat.splice(-100);
-        io.of(roomId).emit('REC:chat', chatWithTime);
-      };
-
-      const cmdHost = (data) => {
-        console.log(socket.id, data);
-        this.video = data;
-        this.videoTS = 0;
-        this.paused = false;
-        this.tsMap = {};
-        io.of(roomId).emit('REC:tsMap', this.tsMap);
-        io.of(roomId).emit('REC:host', this.getHostState());
-        if (data) {
-          const chatMsg = { id: socket.id, cmd: 'host', msg: data };
-          addChatMessage(chatMsg);
-        }
-      };
-
       this.roster.push({ id: socket.id });
 
       socket.emit('REC:host', this.getHostState());
@@ -120,7 +133,7 @@ module.exports = class Room {
           // Can't update the video while someone is screensharing
           return;
         }
-        cmdHost(data);
+        this.cmdHost(socket, data);
       });
       socket.on('CMD:play', () => {
         socket.broadcast.emit('REC:play', this.video);
@@ -130,7 +143,7 @@ module.exports = class Room {
           msg: this.tsMap[socket.id],
         };
         this.paused = false;
-        addChatMessage(chatMsg);
+        this.addChatMessage(socket, chatMsg);
       });
       socket.on('CMD:pause', () => {
         socket.broadcast.emit('REC:pause');
@@ -140,13 +153,13 @@ module.exports = class Room {
           msg: this.tsMap[socket.id],
         };
         this.paused = true;
-        addChatMessage(chatMsg);
+        this.addChatMessage(socket, chatMsg);
       });
       socket.on('CMD:seek', (data) => {
         this.videoTS = data;
         socket.broadcast.emit('REC:seek', data);
         const chatMsg = { id: socket.id, cmd: 'seek', msg: data };
-        addChatMessage(chatMsg);
+        this.addChatMessage(socket, chatMsg);
       });
       socket.on('CMD:ts', (data) => {
         if (data > this.videoTS) {
@@ -160,7 +173,7 @@ module.exports = class Room {
           return;
         }
         const chatMsg = { id: socket.id, msg: data };
-        addChatMessage(chatMsg);
+        this.addChatMessage(socket, chatMsg);
       });
       socket.on('CMD:joinVideo', (data) => {
         const match = this.roster.find((user) => user.id === socket.id);
@@ -182,9 +195,9 @@ module.exports = class Room {
           return;
         }
         if (data && data.file) {
-          cmdHost('fileshare://' + socket.id);
+          this.cmdHost(socket, 'fileshare://' + socket.id);
         } else {
-          cmdHost('screenshare://' + socket.id);
+          this.cmdHost(socket, 'screenshare://' + socket.id);
         }
         const match = this.roster.find((user) => user.id === socket.id);
         if (match) {
@@ -198,7 +211,7 @@ module.exports = class Room {
         if (match) {
           match.isScreenShare = false;
         }
-        cmdHost('');
+        this.cmdHost(socket, '');
         io.of(roomId).emit('roster', this.roster);
       });
       socket.on('CMD:startVBrowser', async () => {
@@ -206,16 +219,11 @@ module.exports = class Room {
           // Maybe terminate the existing instance and spawn a new one
           return;
         }
-        // const { pass, host, id } = await launchVM();
-        const { pass, host, id } = {
-          pass: 'admin',
-          host: process.env.REACT_APP_VBROWSER_URL,
-          id: 'asdf',
-        };
+        this.vBrowser = {};
+        const { pass, host, id } = await assignVM();
         if (!pass || !host || !id) {
           return;
         }
-        this.vBrowser = {};
         this.vBrowser.assignTime = Number(new Date());
         this.vBrowser.pass = pass;
         this.vBrowser.host = host;
@@ -227,20 +235,10 @@ module.exports = class Room {
             this.roster[i].isController = false;
           }
         });
-        cmdHost('vbrowser://' + this.vBrowser.pass + '@' + this.vBrowser.host);
+        this.cmdHost(socket, 'vbrowser://' + this.vBrowser.pass + '@' + this.vBrowser.host);
         io.of(roomId).emit('roster', this.roster);
       });
-      socket.on('CMD:stopVBrowser', async () => {
-        // shut down the VM
-        if (this.vBrowser) {
-          // await terminateVM(this.vBrowser.id);
-          this.vBrowser = undefined;
-          this.roster.forEach((user, i) => {
-            this.roster[i].isController = false;
-          });
-          cmdHost('');
-        }
-      });
+      socket.on('CMD:stopVBrowser', () => this.resetRoomVM(socket));
       socket.on('CMD:changeController', (data) => {
         this.roster.forEach((user, i) => {
           if (user.id === data) {
@@ -273,7 +271,7 @@ module.exports = class Room {
         io.of(roomId).emit('roster', this.roster);
         if (removed.isScreenShare) {
           // Reset the room state since we lost the screen sharer
-          cmdHost('');
+          this.cmdHost(socket, '');
         }
         delete this.tsMap[socket.id];
         // delete nameMap[socket.id];

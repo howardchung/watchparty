@@ -281,7 +281,7 @@ export default class App extends React.Component<null, AppState> {
     });
     socket.on('error', (err: any) => {
       console.error(err);
-      this.setState({ error: 'There\'s no room with this name.' });
+      this.setState({ error: "There's no room with this name." });
     });
     socket.on('REC:play', () => {
       this.doPlay();
@@ -711,7 +711,7 @@ export default class App extends React.Component<null, AppState> {
       console.log('jump to leader at ', maxTS);
       this.doSeek(maxTS);
     }
-  }
+  };
 
   doSrc = async (src: string, time: number) => {
     console.log('doSrc', src, time);
@@ -1024,7 +1024,9 @@ export default class App extends React.Component<null, AppState> {
         )}
         {this.state.error && (
           <Modal inverted basic open>
-            <Header as="h1" style={{ textAlign: 'center' }}>{this.state.error}</Header>
+            <Header as="h1" style={{ textAlign: 'center' }}>
+              {this.state.error}
+            </Header>
             <div style={{ display: 'flex', justifyContent: 'center' }}>
               <Button
                 primary
