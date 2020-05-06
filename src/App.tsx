@@ -115,6 +115,7 @@ interface AppState {
   speed: number;
   connections: number;
   multiStreamSelection?: any[];
+  error: string;
 }
 
 export default class App extends React.Component<null, AppState> {
@@ -148,6 +149,7 @@ export default class App extends React.Component<null, AppState> {
     speed: 0,
     connections: 0,
     multiStreamSelection: undefined,
+    error: '',
   };
   socket: any = null;
   watchPartyYTPlayer: any = null;
@@ -279,8 +281,7 @@ export default class App extends React.Component<null, AppState> {
     });
     socket.on('error', (err: any) => {
       console.error(err);
-      // TODO show an error, or auto-redirect to home
-      // window.location.href = window.location.hostname;
+      this.setState({ error: 'There\'s no room with this name.' });
     });
     socket.on('REC:play', () => {
       this.doPlay();
@@ -377,7 +378,6 @@ export default class App extends React.Component<null, AppState> {
       );
     });
     socket.on('REC:chat', (data: ChatMessage) => {
-      // TODO notification sound
       if (document.visibilityState && document.visibilityState !== 'visible') {
         new Audio('/clearly.mp3').play();
       }
@@ -1022,7 +1022,26 @@ export default class App extends React.Component<null, AppState> {
             resetMultiSelect={this.resetMultiSelect}
           />
         )}
-        {!this.state.isAutoPlayable && (
+        {this.state.error && (
+          <Modal inverted basic open>
+            <Header as="h1" style={{ textAlign: 'center' }}>{this.state.error}</Header>
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <Button
+                primary
+                size="huge"
+                onClick={() => {
+                  window.location.href = '/';
+                }}
+                icon
+                labelPosition="left"
+              >
+                <Icon name="home" />
+                Go to home page
+              </Button>
+            </div>
+          </Modal>
+        )}
+        {!this.state.error && !this.state.isAutoPlayable && (
           <Modal inverted basic open>
             <div style={{ display: 'flex', justifyContent: 'center' }}>
               <Button

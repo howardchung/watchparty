@@ -67,7 +67,7 @@ module.exports = class Room {
           videoTS: this.tsMap[socket.id],
         };
         this.chat.push(chatWithTime);
-        this.chat = this.chat.splice(-50);
+        this.chat = this.chat.splice(-100);
         io.of(roomId).emit('REC:chat', chatWithTime);
       };
 
