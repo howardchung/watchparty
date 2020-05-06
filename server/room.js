@@ -1,4 +1,10 @@
-const { assignVM, terminateVM, resetVM } = require('./vm');
+const {
+  assignVM,
+  terminateVM,
+  resetVM,
+  isVBrowserFeatureEnabled,
+  checkVMReady,
+} = require('./vm');
 
 module.exports = class Room {
   constructor(io, roomId, roomData) {
@@ -51,17 +57,18 @@ module.exports = class Room {
     };
 
     this.resetRoomVM = async (socket) => {
-      if (this.vBrowser && this.vBrowser.id) {
-        await resetVM(this.vBrowser.id);
-        this.vBrowser = undefined;
-        this.roster.forEach((user, i) => {
-          this.roster[i].isController = false;
-        });
-        this.cmdHost(socket, '');
+      const id = this.vBrowser && this.vBrowser.id;
+      this.vBrowser = undefined;
+      this.roster.forEach((user, i) => {
+        this.roster[i].isController = false;
+      });
+      this.cmdHost(socket, '');
+      if (id) {
+        await resetVM(id);
       }
-    }
+    };
 
-    this.cmdHost = (socket, data) => {
+    this.cmdHost = (socket, data, silent) => {
       console.log(socket.id, data);
       this.video = data;
       this.videoTS = 0;
@@ -69,7 +76,7 @@ module.exports = class Room {
       this.tsMap = {};
       io.of(roomId).emit('REC:tsMap', this.tsMap);
       io.of(roomId).emit('REC:host', this.getHostState());
-      if (data) {
+      if (data && !silent) {
         const chatMsg = { id: socket.id, cmd: 'host', msg: data };
         this.addChatMessage(socket, chatMsg);
       }
@@ -215,15 +222,19 @@ module.exports = class Room {
         io.of(roomId).emit('roster', this.roster);
       });
       socket.on('CMD:startVBrowser', async () => {
-        if (this.vBrowser) {
+        if (!isVBrowserFeatureEnabled() || this.vBrowser) {
           // Maybe terminate the existing instance and spawn a new one
           return;
         }
+        this.cmdHost(socket, 'vbrowser://');
         this.vBrowser = {};
-        const { pass, host, id } = await assignVM();
-        if (!pass || !host || !id) {
+        const assignment = await assignVM();
+        if (!assignment) {
+          this.cmdHost(socket, '');
+          this.vBrowser = undefined;
           return;
         }
+        const { pass, host, id } = assignment;
         this.vBrowser.assignTime = Number(new Date());
         this.vBrowser.pass = pass;
         this.vBrowser.host = host;
@@ -235,7 +246,11 @@ module.exports = class Room {
             this.roster[i].isController = false;
           }
         });
-        this.cmdHost(socket, 'vbrowser://' + this.vBrowser.pass + '@' + this.vBrowser.host);
+        this.cmdHost(
+          socket,
+          'vbrowser://' + this.vBrowser.pass + '@' + this.vBrowser.host,
+          true
+        );
         io.of(roomId).emit('roster', this.roster);
       });
       socket.on('CMD:stopVBrowser', () => this.resetRoomVM(socket));

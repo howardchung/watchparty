@@ -6,7 +6,9 @@ curl -fsSL https://get.docker.com | sh
 docker pull nurdism/neko:chromium
 # install fonts
 apt-get install -y fonts-noto-cjk
+# install dnsutils
+apt-get install -y dnsutils
 # disable unattended-upgrades
-apt-get remove unattended-upgrades
+apt-get remove -y unattended-upgrades
 # install certbot
 DEBIAN_FRONTEND=noninteractive apt-get install -y certbot

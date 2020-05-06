@@ -19,7 +19,7 @@ if (process.env.HTTPS) {
 }
 const io = require('socket.io')(server, { origins: '*:*' });
 const Room = require('./room');
-const { resizeVMGroup, cleanupVMs } = require('./vm');
+const { resizeVMGroup, cleanupVMs, isVBrowserFeatureEnabled } = require('./vm');
 
 const names = Moniker.generator([
   Moniker.adjective,
@@ -35,7 +35,7 @@ async function init() {
     // Load rooms from Redis
     const redis = new Redis(process.env.REDIS_URL);
     console.log('loading rooms from redis');
-    const keys = await redis.keys('*');
+    const keys = await redis.keys('/*');
     console.log(util.format('found %s rooms in redis', keys.length));
     for (let i = 0; i < keys.length; i++) {
       const key = keys[i];
@@ -46,14 +46,14 @@ async function init() {
     }
     // Start saving rooms to Redis
     setInterval(() => {
-      console.time('roomSave');
+      // console.time('roomSave');
       rooms.forEach((value, key) => {
         if (value.roster.length) {
           const roomData = value.serialize();
           redis.setex(key, 60 * 60 * 3, roomData);
         }
       });
-      console.timeEnd('roomSave');
+      // console.timeEnd('roomSave');
     }, 1000);
   }
 
@@ -61,10 +61,12 @@ async function init() {
     rooms.set('/default', new Room(io, '/default'));
   }
 
-  resizeVMGroup();
-  cleanupVMs(rooms);
-  setInterval(() => resizeVMGroup(), 30 * 1000);
-  setInterval(() => cleanupVMs(rooms), 5 * 60 * 1000);
+  if (isVBrowserFeatureEnabled()) {
+    resizeVMGroup();
+    cleanupVMs(Array.from(rooms.values()));
+    setInterval(() => resizeVMGroup(), 30 * 1000);
+    setInterval(() => cleanupVMs(Array.from(rooms.values())), 1 * 60 * 1000);
+  }
 }
 
 if (process.env.YOUTUBE_API_KEY) {

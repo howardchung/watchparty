@@ -1,5 +1,17 @@
 const uuid = require('uuid');
 const axios = require('axios');
+const Redis = require('ioredis');
+let redis = undefined;
+if (process.env.REDIS_URL) {
+  redis = new Redis(process.env.REDIS_URL);
+}
+
+const VBROWSER_TAG = process.env.VBROWSER_TAG || 'vbrowser';
+const SCW_SECRET_KEY = process.env.SCW_SECRET_KEY;
+const SCW_ORGANIZATION_ID = process.env.SCW_ORGANIZATION_ID;
+
+const isVBrowserFeatureEnabled = () =>
+  Boolean(SCW_SECRET_KEY && SCW_ORGANIZATION_ID);
 
 async function launchVM() {
   // generate credentials and boot a VM
@@ -8,7 +20,7 @@ async function launchVM() {
     method: 'POST',
     url: 'https://api.scaleway.com/instance/v1/zones/fr-par-1/servers',
     headers: {
-      'X-Auth-Token': process.env.SCW_SECRET_KEY,
+      'X-Auth-Token': SCW_SECRET_KEY,
       'Content-Type': 'application/json',
     },
     data: {
@@ -16,12 +28,10 @@ async function launchVM() {
       dynamic_ip_required: true,
       commercial_type: 'DEV1-S',
       // image: 'ce6c9d21-0ff3-4355-b385-c930c9f22d9d', // ubuntu focal
-      image: '8b7f4e65-8f3d-467e-8c63-ba6517bce5ca',
-      // TODO switch to the newer image
-      // image: 'a178943a-d2ae-449f-b8c0-80ca5447831f', // new customized ubuntu bionic
+      image: '8e96c468-2769-4314-bb39-f3c941f63d48', // debian customized
       volumes: {},
-      organization: process.env.SCW_ORGANIZATION_ID,
-      tags: ['vbrowser'],
+      organization: SCW_ORGANIZATION_ID,
+      tags: [VBROWSER_TAG],
     },
   });
   // console.log(response.data);
@@ -38,6 +48,7 @@ done
     
 # Generate cert with letsencrypt
 certbot certonly --standalone -n --agree-tos --email howardzchung@gmail.com --domains ${host}
+chmod -R 755 /etc/letsencrypt/archive
 
 # start browser
 iptables -t nat -A PREROUTING -p tcp --dport 443 -j REDIRECT --to-port 5000
@@ -54,7 +65,7 @@ docker run -d --rm --name=vbrowser -v /usr/share/fonts:/usr/share/fonts --log-op
     method: 'PATCH',
     url: `https://api.scaleway.com/instance/v1/zones/fr-par-1/servers/${id}/user_data/cloud-init`,
     headers: {
-      'X-Auth-Token': process.env.SCW_SECRET_KEY,
+      'X-Auth-Token': SCW_SECRET_KEY,
       'Content-Type': 'text/plain',
     },
     data: cloudInit,
@@ -65,7 +76,7 @@ docker run -d --rm --name=vbrowser -v /usr/share/fonts:/usr/share/fonts --log-op
     method: 'POST',
     url: `https://api.scaleway.com/instance/v1/zones/fr-par-1/servers/${id}/action`,
     headers: {
-      'X-Auth-Token': process.env.SCW_SECRET_KEY,
+      'X-Auth-Token': SCW_SECRET_KEY,
       'Content-Type': 'application/json',
     },
     data: {
@@ -80,7 +91,7 @@ async function terminateVM(id) {
     method: 'POST',
     url: `https://api.scaleway.com/instance/v1/zones/fr-par-1/servers/${id}/action`,
     headers: {
-      'X-Auth-Token': process.env.SCW_SECRET_KEY,
+      'X-Auth-Token': SCW_SECRET_KEY,
       'Content-Type': 'application/json',
     },
     data: {
@@ -91,27 +102,27 @@ async function terminateVM(id) {
 
 async function resetVM(id) {
   const password = uuid.v4();
-  const response = await axios({
-    method: 'PATCH',
-    url: `https://api.scaleway.com/instance/v1/zones/fr-par-1/servers/${id}`,
-    headers: {
-      'X-Auth-Token': process.env.SCW_SECRET_KEY,
-      'Content-Type': 'application/json',
-    },
-    data: {
-      name: password,
-      tags: ['vbrowser']
-    },
-  });
   const response2 = await axios({
     method: 'POST',
     url: `https://api.scaleway.com/instance/v1/zones/fr-par-1/servers/${id}/action`,
     headers: {
-      'X-Auth-Token': process.env.SCW_SECRET_KEY,
+      'X-Auth-Token': SCW_SECRET_KEY,
       'Content-Type': 'application/json',
     },
     data: {
       action: 'reboot',
+    },
+  });
+  const response = await axios({
+    method: 'PATCH',
+    url: `https://api.scaleway.com/instance/v1/zones/fr-par-1/servers/${id}`,
+    headers: {
+      'X-Auth-Token': SCW_SECRET_KEY,
+      'Content-Type': 'application/json',
+    },
+    data: {
+      name: password,
+      tags: [VBROWSER_TAG],
     },
   });
 }
@@ -121,23 +132,43 @@ async function listVMs() {
     method: 'GET',
     url: `https://api.scaleway.com/instance/v1/zones/fr-par-1/servers`,
     headers: {
-      'X-Auth-Token': process.env.SCW_SECRET_KEY,
+      'X-Auth-Token': SCW_SECRET_KEY,
       'Content-Type': 'application/json',
     },
     data: {
+      // TODO needs update if we go beyond 100 VMs
       per_page: 100,
     },
   });
-  return response.data.servers.filter(server => server.tags.includes('vbrowser')).map(server => ({ id: server.id, pass: server.name, host: server.id + '.pub.cloud.scaleway.com', tags: server.tags, creation_date: server.creation_date }));
+  return response.data.servers
+    .filter((server) => server.tags.includes(VBROWSER_TAG))
+    .map((server) => ({
+      id: server.id,
+      pass: server.name,
+      host: server.id + '.pub.cloud.scaleway.com',
+      state: server.state,
+      tags: server.tags,
+      creation_date: server.creation_date,
+    }));
 }
 
 async function resizeVMGroup() {
   // check to see how many VMs we need and how many we have
   const pool = await listVMs();
-  const available = pool.filter(server => !server.tags.includes('inUse'));
-  const used = pool.filter(server => server.tags.includes('inUse'));
-  console.log('resizing VM group', 'pool:', pool.length, 'available:', available.length, 'used:', used.length);
-  if (pool.length > 10) {
+  const available = pool.filter(
+    (server) => server.tags.length === 1 && server.tags[0] === VBROWSER_TAG
+  );
+  const used = pool.filter((server) => server.tags.includes('inUse'));
+  console.log(
+    'resizing VM group',
+    'pool:',
+    pool.length,
+    'available:',
+    available.length,
+    'used:',
+    used.length
+  );
+  if (pool.length > 20) {
     // Max limit reached
     return;
   }
@@ -145,39 +176,65 @@ async function resizeVMGroup() {
     // Need additional VMs
     launchVM();
   }
-  if (available.length >= 3) {
+  if (available.length > 1) {
     // We have too many VMs, terminate one
-    await terminateVM(available[available.length - 1].id);
+    await terminateVM(available[0].id);
   }
 }
 
 async function assignVM() {
-  // TODO Race condition, could assign the same VM twice? Use redis as lock?
+  // TODO blpop queue items
   let selected = null;
   while (!selected) {
     const pool = await listVMs();
-    const available = pool.filter(server => !server.tags.includes('inUse'));
-    const candidate = available[0];
-    // if none available, wait for one
-    if (!candidate) {
+    const available = pool.filter(
+      (server) => server.tags.length === 1 && server.tags[0] === VBROWSER_TAG
+    );
+    const candidate = available[Math.floor(Math.random() * available.length)];
+    // Acquire a lock on this candidate
+    const guid = uuid.v4();
+    let lock = candidate && (!redis || await redis.set('vbrowser:' + candidate.id, guid, 'NX', 'EX', 30));
+    console.log(candidate, lock);
+    if (candidate && lock) {
+      // tag it with inUse
+      const response = await axios({
+        method: 'PATCH',
+        url: `https://api.scaleway.com/instance/v1/zones/fr-par-1/servers/${candidate.id}`,
+        headers: {
+          'X-Auth-Token': SCW_SECRET_KEY,
+          'Content-Type': 'application/json',
+        },
+        data: {
+          tags: [VBROWSER_TAG, 'inUse'],
+        },
+      });
+      if (redis) {
+        // Release the lock
+        await redis.eval(
+          `if redis.call("get",KEYS[1]) == ARGV[1]
+then
+  return redis.call("del",KEYS[1])
+else
+  return 0
+end`,
+          1,
+          'vbrowser:' + candidate.id,
+          guid
+        );
+      }
+    } else {
+      // if none available or couldn't lock, try again
       await new Promise((resolve) => setTimeout(resolve, 3000));
       continue;
     }
-    await checkVMReady(candidate.host);
-    selected = candidate;
+    // Wait for the assigned VM to be ready
+    const ready = await checkVMReady(candidate.host);
+    if (!ready) {
+      await terminateVM(candidate.id);
+    } else {
+      selected = candidate;
+    }
   }
-  // tag it with inUse
-  const response = await axios({
-    method: 'PATCH',
-    url: `https://api.scaleway.com/instance/v1/zones/fr-par-1/servers/${selected.id}`,
-    headers: {
-      'X-Auth-Token': process.env.SCW_SECRET_KEY,
-      'Content-Type': 'application/json',
-    },
-    data: {
-      tags: ['vbrowser', 'inUse']
-    },
-  });
   return selected;
 }
 
@@ -188,24 +245,37 @@ async function cleanupVMs(rooms) {
   for (let i = 0; i < rooms.length; i++) {
     const room = rooms[i];
     if (room.vBrowser && room.vBrowser.assignTime) {
-      if (Number(new Date()) - room.vBrowser.assignTime > 6 * 60 * 60 * 1000 || room.roster.length === 0) {
+      if (
+        Number(new Date()) - room.vBrowser.assignTime > 6 * 60 * 60 * 1000 ||
+        room.roster.length === 0
+      ) {
         console.log('resetting VM in room', room.id);
         await room.resetRoomVM();
       }
     }
   }
-  // TODO possible to leak VMs that get created and tagged inuse, but not persisted to redis
-  // Delete old VMs
+  const useSet = new Set();
+  for (let i = 0; i < rooms.length; i++) {
+    const room = rooms[i];
+    if (room.vBrowser && room.vBrowser.id) {
+      useSet.add(room.vBrowser.id);
+    }
+  }
+  // Find any VMs tagged inUse, but no room is using them, terminate them
+  // TODO this is terminating VMs that are assigned and waiting for ready
   // const pool = await listVMs();
-  // for (let i = 0; i < pool.length; i++) {
-  //   const server = pool[i];
-  //   const oldVM = Number(new Date()) - Number(new Date(server.creation_date)) > 24 * 60 * 60 * 1000;
-  //   if (oldVM) {
-  //     console.log('terminating old vm', server.id);
+  // const used = pool.filter((server) => server.tags.includes('inUse'));
+  // console.log(useSet, used);
+  // for (let i = 0; i < used.length; i++) {
+  //   const server = used[i];
+  //   if (!useSet.has(server.id)) {
+  //     console.log('terminating unused vm', server.id);
   //     await terminateVM(server.id);
   //   }
   // }
 }
+
+// TODO background process to check VMs and add them to ready pool/queue
 
 async function checkVMReady(host) {
   let state = '';
@@ -225,11 +295,12 @@ async function checkVMReady(host) {
     console.log(retryCount, url, state);
     retryCount += 1;
     if (retryCount >= 200) {
-      throw new Error('timed out waiting for instance');
+      return false;
     } else {
       await new Promise((resolve) => setTimeout(resolve, 3000));
     }
   }
+  return true;
 }
 
 module.exports = {
@@ -241,4 +312,5 @@ module.exports = {
   checkVMReady,
   cleanupVMs,
   resetVM,
+  isVBrowserFeatureEnabled,
 };

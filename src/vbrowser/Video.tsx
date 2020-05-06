@@ -15,7 +15,7 @@ export default class Video extends React.Component<{
   private fullscreen = false;
   private activeKeys: Set<number> = new Set();
   private controlling = true;
-  private scroll = 0.5; // 1 to 10
+  private scroll = 1; // 1 to 10
   private scroll_invert = true;
   private width = 1280;
   private height = 720;

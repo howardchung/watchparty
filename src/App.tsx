@@ -1298,27 +1298,25 @@ export default class App extends React.Component<null, AppState> {
                         }
                       />
                     )}
-                    {process.env.REACT_APP_VBROWSER_URL &&
-                      !this.screenShareStream &&
-                      !this.isVBrowser() && (
-                        <Popup
-                          content="Launch a shared virtual browser"
-                          trigger={
-                            <Button
-                              fluid
-                              className="toolButton"
-                              disabled={sharer && this.socket.id !== sharer!.id}
-                              icon
-                              labelPosition="left"
-                              color="green"
-                              onClick={this.setupVBrowser}
-                            >
-                              <Icon name="desktop" />
-                              VBrowser
-                            </Button>
-                          }
-                        />
-                      )}
+                    {!this.screenShareStream && !this.isVBrowser() && (
+                      <Popup
+                        content="Launch a shared virtual browser"
+                        trigger={
+                          <Button
+                            fluid
+                            className="toolButton"
+                            disabled={sharer && this.socket.id !== sharer!.id}
+                            icon
+                            labelPosition="left"
+                            color="green"
+                            onClick={this.setupVBrowser}
+                          >
+                            <Icon name="desktop" />
+                            VBrowser
+                          </Button>
+                        }
+                      />
+                    )}
                     {this.isVBrowser() && (
                       <Dropdown
                         icon="keyboard"
@@ -1413,7 +1411,9 @@ export default class App extends React.Component<null, AppState> {
                               : 'none',
                         }}
                       >
-                        {this.isVBrowser() ? (
+                        {this.isVBrowser() &&
+                        this.getVBrowserPass() &&
+                        this.getVBrowserHost() ? (
                           <Video
                             username={this.socket.id}
                             password={this.getVBrowserPass()}
