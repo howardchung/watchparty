@@ -56,27 +56,26 @@ module.exports = class Room {
       };
     };
 
-    this.resetRoomVM = async (socket) => {
+    this.resetRoomVM = async () => {
       const id = this.vBrowser && this.vBrowser.id;
       this.vBrowser = undefined;
       this.roster.forEach((user, i) => {
         this.roster[i].isController = false;
       });
-      this.cmdHost(socket, '');
+      this.cmdHost(null, '');
       if (id) {
         await resetVM(id);
       }
     };
 
-    this.cmdHost = (socket, data, silent) => {
-      console.log(socket.id, data);
+    this.cmdHost = (socket, data) => {
       this.video = data;
       this.videoTS = 0;
       this.paused = false;
       this.tsMap = {};
       io.of(roomId).emit('REC:tsMap', this.tsMap);
       io.of(roomId).emit('REC:host', this.getHostState());
-      if (data && !silent) {
+      if (socket && data) {
         const chatMsg = { id: socket.id, cmd: 'host', msg: data };
         this.addChatMessage(socket, chatMsg);
       }
@@ -247,13 +246,12 @@ module.exports = class Room {
           }
         });
         this.cmdHost(
-          socket,
+          null,
           'vbrowser://' + this.vBrowser.pass + '@' + this.vBrowser.host,
-          true
         );
         io.of(roomId).emit('roster', this.roster);
       });
-      socket.on('CMD:stopVBrowser', () => this.resetRoomVM(socket));
+      socket.on('CMD:stopVBrowser', () => this.resetRoomVM());
       socket.on('CMD:changeController', (data) => {
         this.roster.forEach((user, i) => {
           if (user.id === data) {

@@ -19,7 +19,7 @@ if (process.env.HTTPS) {
 }
 const io = require('socket.io')(server, { origins: '*:*' });
 const Room = require('./room');
-const { resizeVMGroup, cleanupVMs, isVBrowserFeatureEnabled } = require('./vm');
+const { resizeVMGroup, isVBrowserFeatureEnabled } = require('./vm');
 
 const names = Moniker.generator([
   Moniker.adjective,
@@ -62,10 +62,8 @@ async function init() {
   }
 
   if (isVBrowserFeatureEnabled()) {
-    resizeVMGroup();
-    cleanupVMs(Array.from(rooms.values()));
-    setInterval(() => resizeVMGroup(), 30 * 1000);
-    setInterval(() => cleanupVMs(Array.from(rooms.values())), 1 * 60 * 1000);
+    resizeVMGroup(Array.from(rooms.values()));
+    setInterval(() => resizeVMGroup(Array.from(rooms.values())), 60 * 1000);
   }
 }
 

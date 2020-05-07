@@ -11,7 +11,18 @@ const SCW_SECRET_KEY = process.env.SCW_SECRET_KEY;
 const SCW_ORGANIZATION_ID = process.env.SCW_ORGANIZATION_ID;
 
 const isVBrowserFeatureEnabled = () =>
-  Boolean(SCW_SECRET_KEY && SCW_ORGANIZATION_ID);
+  Boolean(redis && SCW_SECRET_KEY && SCW_ORGANIZATION_ID);
+
+const mapServerObject = (server) => ({
+  id: server.id,
+  pass: server.name,
+  // The gateway handles SSL termination and proxies to the private IP
+  host: 'gateway.watchparty.me/?ip=' + server.private_ip,
+  private_ip: server.private_ip,
+  state: server.state,
+  tags: server.tags,
+  creation_date: server.creation_date,
+});
 
 async function launchVM() {
   // generate credentials and boot a VM
@@ -66,6 +77,14 @@ docker run -d --rm --name=vbrowser -v /usr/share/fonts:/usr/share/fonts --log-op
     },
   });
   // console.log(response3.data);
+  let result = await getVM(id);
+  while (!result.private_ip) {
+    // Make sure the server has an IP
+    console.log('launched VM has no IP yet:', id);
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+    result = await getVM(id);
+  }
+  return result;
 }
 
 async function terminateVM(id) {
@@ -104,9 +123,20 @@ async function resetVM(id) {
     },
     data: {
       name: password,
-      tags: [VBROWSER_TAG],
     },
   });
+}
+
+async function getVM(id) {
+  const response = await axios({
+    method: 'GET',
+    url: `https://api.scaleway.com/instance/v1/zones/fr-par-1/servers/${id}`,
+    headers: {
+      'X-Auth-Token': SCW_SECRET_KEY,
+      'Content-Type': 'application/json',
+    },
+  });
+  return mapServerObject(response.data.server);
 }
 
 async function listVMs() {
@@ -124,96 +154,37 @@ async function listVMs() {
   });
   return response.data.servers
     .filter((server) => server.tags.includes(VBROWSER_TAG))
-    .map((server) => ({
-      id: server.id,
-      pass: server.name,
-      // The gateway handles SSL termination and proxies to the private IP
-      host: 'gateway.watchparty.me/?ip=' + server.private_ip,
-      state: server.state,
-      tags: server.tags,
-      creation_date: server.creation_date,
-    }));
-}
-
-async function resizeVMGroup() {
-  // check to see how many VMs we need and how many we have
-  const pool = await listVMs();
-  const available = pool.filter(
-    (server) => server.tags.length === 1 && server.tags[0] === VBROWSER_TAG
-  );
-  const used = pool.filter((server) => server.tags.includes('inUse'));
-  console.log(
-    'resizing VM group',
-    'pool:',
-    pool.length,
-    'available:',
-    available.length,
-    'used:',
-    used.length
-  );
-  if (pool.length > 20) {
-    // Max limit reached
-    return;
-  }
-  if (available.length < 1) {
-    // Need additional VMs
-    launchVM();
-  }
-  if (available.length > 1) {
-    // We have too many VMs, terminate one
-    await terminateVM(available[0].id);
-  }
+    .map(mapServerObject);
 }
 
 async function assignVM() {
-  // TODO blpop queue items
   let selected = null;
+  let lock = null;
   while (!selected) {
-    const pool = await listVMs();
-    const available = pool.filter(
-      (server) => server.tags.length === 1 && server.tags[0] === VBROWSER_TAG
-    );
-    const candidate = available[Math.floor(Math.random() * available.length)];
-    // Acquire a lock on this candidate
-    const guid = uuid.v4();
-    let lock = candidate && (!redis || await redis.set('vbrowser:' + candidate.id, guid, 'NX', 'EX', 30));
-    console.log(candidate, lock);
-    if (candidate && lock) {
-      // tag it with inUse
-      const response = await axios({
-        method: 'PATCH',
-        url: `https://api.scaleway.com/instance/v1/zones/fr-par-1/servers/${candidate.id}`,
-        headers: {
-          'X-Auth-Token': SCW_SECRET_KEY,
-          'Content-Type': 'application/json',
-        },
-        data: {
-          tags: [VBROWSER_TAG, 'inUse'],
-        },
-      });
-      if (redis) {
-        // Release the lock
-        await redis.eval(
-          `if redis.call("get",KEYS[1]) == ARGV[1]
-then
-  return redis.call("del",KEYS[1])
-else
-  return 0
-end`,
-          1,
-          'vbrowser:' + candidate.id,
-          guid
-        );
-      }
+    let candidate = null;
+    let availableSet = await redis.spop('availableSet');
+    if (availableSet) {
+      candidate = await getVM(availableSet);
+      console.log('got available VM from pool:', availableSet);
     } else {
-      // if none available or couldn't lock, try again
-      await new Promise((resolve) => setTimeout(resolve, 3000));
+      console.log('creating VM');
+      candidate = await launchVM();
+    }
+    const lock = await redis.set(
+      'vbrowser:' + candidate.id,
+      '1',
+      'NX',
+      'EX',
+      180
+    );
+    if (!lock) {
+      await new Promise((resolve) => setTimeout(resolve, 5000));
       continue;
     }
-    // Wait for the assigned VM to be ready
     const ready = await checkVMReady(candidate.host);
     if (!ready) {
       await terminateVM(candidate.id);
+      return null;
     } else {
       selected = candidate;
     }
@@ -221,7 +192,7 @@ end`,
   return selected;
 }
 
-async function cleanupVMs(rooms) {
+async function resizeVMGroup(rooms) {
   // Reset VMs in rooms that are:
   // assigned more than 6 hours ago
   // assigned to a room with no users
@@ -234,38 +205,61 @@ async function cleanupVMs(rooms) {
       ) {
         console.log('resetting VM in room', room.id);
         await room.resetRoomVM();
+      } else {
+        // Renew the lock on the VM
+        await redis.set(
+          'vbrowser:' + room.vBrowser.id,
+          room.id,
+          'NX',
+          'EX',
+          180
+        );
       }
     }
   }
-  const useSet = new Set();
-  for (let i = 0; i < rooms.length; i++) {
-    const room = rooms[i];
-    if (room.vBrowser && room.vBrowser.id) {
-      useSet.add(room.vBrowser.id);
+  // Clean up any unused VMs
+  // allow a buffer of available VMs to exist for fast assignment
+  const maxAvailable = Number(process.env.VBROWSER_VM_BUFFER);
+  const pool = await listVMs();
+  const usedKeys = await redis.keys('vbrowser:*');
+  const available = pool.length - usedKeys.length;
+  const availableSet = await redis.scard('availableSet');
+  console.log(
+    'pool:',
+    pool.length,
+    'used:',
+    usedKeys.length,
+    'available:',
+    available,
+    'availableSet:',
+    availableSet
+  );
+  let extras = available - maxAvailable;
+  for (let i = 0; i < pool.length; i++) {
+    const server = pool[i];
+    const inUse = await redis.get('vbrowser:' + server.id);
+    if (!inUse && extras > 0) {
+      console.log('terminating unused vm', server.id);
+      await redis.srem('availableSet', server.id);
+      await terminateVM(server.id);
+      extras -= 1;
+    }
+    else if (!inUse) {
+      console.log('adding unused vm to availableSet', server.id);
+      await redis.sadd('availableSet', server.id);
     }
   }
-  // Find any VMs tagged inUse, but no room is using them, terminate them
-  // TODO this is terminating VMs that are assigned and waiting for ready
-  // const pool = await listVMs();
-  // const used = pool.filter((server) => server.tags.includes('inUse'));
-  // console.log(useSet, used);
-  // for (let i = 0; i < used.length; i++) {
-  //   const server = used[i];
-  //   if (!useSet.has(server.id)) {
-  //     console.log('terminating unused vm', server.id);
-  //     await terminateVM(server.id);
-  //   }
-  // }
+  if (available < maxAvailable) {
+    launchVM();
+  }
 }
-
-// TODO background process to check VMs and add them to ready pool/queue
 
 async function checkVMReady(host) {
   let state = '';
   let retryCount = 0;
   while (!state) {
     // poll for status
-    const url = 'http://' + host;
+    const url = 'https://' + host;
     try {
       const response4 = await axios({
         method: 'GET',
@@ -276,12 +270,13 @@ async function checkVMReady(host) {
       // console.log(e);
       // console.log(e.response);
       // The server currently 404s on requests with a query string, so just treat the 404 message as success
-      // The error code is not 404 maybe due to the proxy
-      state = e.response.data === '404 page not found\n' ? 'ready' : '';
+      // The error code is not 404 maybe due to the gateway
+      state =
+        e.response && e.response.data === '404 page not found\n' ? 'ready' : '';
     }
     console.log(retryCount, url, state);
     retryCount += 1;
-    if (retryCount >= 200) {
+    if (retryCount >= 50) {
       return false;
     } else {
       await new Promise((resolve) => setTimeout(resolve, 3000));
@@ -314,7 +309,6 @@ module.exports = {
   resizeVMGroup,
   assignVM,
   checkVMReady,
-  cleanupVMs,
   resetVM,
   isVBrowserFeatureEnabled,
 };
