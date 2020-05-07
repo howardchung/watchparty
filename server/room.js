@@ -247,7 +247,7 @@ module.exports = class Room {
         });
         this.cmdHost(
           null,
-          'vbrowser://' + this.vBrowser.pass + '@' + this.vBrowser.host,
+          'vbrowser://' + this.vBrowser.pass + '@' + this.vBrowser.host
         );
         io.of(roomId).emit('roster', this.roster);
       });

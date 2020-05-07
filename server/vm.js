@@ -243,8 +243,7 @@ async function resizeVMGroup(rooms) {
       await redis.srem('availableSet', server.id);
       await terminateVM(server.id);
       extras -= 1;
-    }
-    else if (!inUse) {
+    } else if (!inUse) {
       console.log('adding unused vm to availableSet', server.id);
       await redis.sadd('availableSet', server.id);
     }
