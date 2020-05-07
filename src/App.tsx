@@ -66,8 +66,6 @@ const serverPath =
   `${window.location.protocol}//${window.location.hostname}${
     process.env.NODE_ENV === 'production' ? '' : ':8080'
   }`;
-export const defaultMediaPath = process.env.REACT_APP_MEDIA_PATH || '';
-export const defaultStreamPath = process.env.REACT_APP_STREAM_PATH || '';
 export const iceServers = [
   { urls: 'stun:stun.l.google.com:19302' },
   // { urls: 'turn:13.66.162.252:3478', username: 'username', credential: 'password' },
@@ -82,8 +80,6 @@ export const iceServers = [
     username: 'howardzchung@gmail.com',
   },
 ];
-// Load settings from localstorage
-let settings = getCurrentSettings();
 
 interface AppState {
   state: 'init' | 'starting' | 'connected';
@@ -116,6 +112,7 @@ interface AppState {
   connections: number;
   multiStreamSelection?: any[];
   error: string;
+  settings: Settings;
 }
 
 export default class App extends React.Component<null, AppState> {
@@ -150,6 +147,7 @@ export default class App extends React.Component<null, AppState> {
     connections: 0,
     multiStreamSelection: undefined,
     error: '',
+    settings: {},
   };
   socket: any = null;
   watchPartyYTPlayer: any = null;
@@ -172,10 +170,19 @@ export default class App extends React.Component<null, AppState> {
       window.fetch(serverPath + '/ping');
     }, 10 * 60 * 1000);
 
+    this.loadSettings();
     this.loadFBData();
     this.loadYouTube();
     this.init();
   }
+
+  loadSettings = async () => {
+    // Load settings from localstorage and remote
+    const customSettingsData = await fetch(serverPath + '/settings');
+    const customSettings = await customSettingsData.json();
+    let settings = {...getCurrentSettings(), ...customSettings};
+    this.setState({ settings });
+  };
 
   loadFBData = () => {
     if (!window.FB || !this.socket) {
@@ -1225,6 +1232,8 @@ export default class App extends React.Component<null, AppState> {
                     currentMedia={this.state.currentMedia}
                     getMediaDisplayName={this.getMediaDisplayName}
                     launchMultiSelect={this.launchMultiSelect}
+                    streamPath={this.state.settings.streamPath}
+                    mediaPath={this.state.settings.mediaPath}
                   />
                   {/* <Divider inverted horizontal></Divider> */}
                   <div style={{ height: '4px' }} />
@@ -1233,21 +1242,10 @@ export default class App extends React.Component<null, AppState> {
                       <SearchComponent
                         setMedia={this.setMedia}
                         type={'youtube'}
+                        streamPath={this.state.settings.streamPath}
+                        mediaPath={this.state.settings.mediaPath}
                       />
                     }
-                    {false && settings.mediaPath && (
-                      <SearchComponent
-                        setMedia={this.setMedia}
-                        type={'mediaServer'}
-                      />
-                    )}
-                    {false && settings.streamPath && (
-                      <SearchComponent
-                        setMedia={this.setMedia}
-                        type={'searchServer'}
-                        launchMultiSelect={this.launchMultiSelect}
-                      />
-                    )}
                     {this.screenShareStream && (
                       <Button
                         fluid
@@ -1999,6 +1997,8 @@ interface SearchComponentProps {
   setMedia: Function;
   type?: 'youtube' | 'mediaServer' | 'searchServer';
   launchMultiSelect?: Function;
+  mediaPath: string | undefined;
+  streamPath: string | undefined;
 }
 
 class SearchComponent extends React.Component<SearchComponentProps> {
@@ -2018,14 +2018,14 @@ class SearchComponent extends React.Component<SearchComponentProps> {
         this.debounced = debounce(async () => {
           this.setState({ loading: true });
           let query = this.state.inputMedia || '';
-          let results = [];
+          let results: SearchResult[] = [];
           let timestamp = Number(new Date());
           if (this.props.type === 'youtube') {
             results = await getYouTubeResults(query);
-          } else if (this.props.type === 'mediaServer') {
-            results = await getMediaPathResults(query);
-          } else {
-            results = await getStreamPathResults(query);
+          } else if (this.props.type === 'mediaServer' && this.props.mediaPath) {
+            results = await getMediaPathResults(this.props.mediaPath, query);
+          } else if (this.props.type === 'searchServer' && this.props.streamPath) {
+            results = await getStreamPathResults(this.props.streamPath, query);
           }
           if (timestamp > this.state.lastResultTimestamp) {
             this.setState({
@@ -2056,7 +2056,7 @@ class SearchComponent extends React.Component<SearchComponentProps> {
       placeholder = 'Search YouTube';
       icon = 'youtube';
     } else if (this.props.type === 'mediaServer') {
-      placeholder = 'Search ' + ('files' || settings.mediaPath);
+      placeholder = 'Search files';
       icon = 'file';
     }
     if (this.state.loading) {
@@ -2095,6 +2095,7 @@ class SearchComponent extends React.Component<SearchComponentProps> {
                     {...result}
                     setMedia={setMedia}
                     launchMultiSelect={this.props.launchMultiSelect as Function}
+                    streamPath={this.props.streamPath || ''}
                   />
                 );
               })}
@@ -2144,7 +2145,7 @@ const MediaPathSearchResult = (
 };
 
 class StreamPathSearchResult extends React.Component<
-  SearchResult & { setMedia: Function; launchMultiSelect: Function }
+  SearchResult & { setMedia: Function; launchMultiSelect: Function, streamPath: string }
 > {
   render() {
     const result = this.props;
@@ -2155,7 +2156,7 @@ class StreamPathSearchResult extends React.Component<
           onClick={async (e) => {
             this.props.launchMultiSelect([]);
             let response = await window.fetch(
-              settings.streamPath +
+              this.props.streamPath +
                 '/data?torrent=' +
                 encodeURIComponent(result.magnet!)
             );
@@ -2171,7 +2172,7 @@ class StreamPathSearchResult extends React.Component<
                 (file: any, i: number) => ({
                   ...file,
                   url:
-                    settings.streamPath +
+                    this.props.streamPath +
                     '/stream?torrent=' +
                     encodeURIComponent(result.magnet!) +
                     '&fileIndex=' +
@@ -2186,7 +2187,7 @@ class StreamPathSearchResult extends React.Component<
               this.props.launchMultiSelect(undefined);
               setMedia(e, {
                 value:
-                  settings.streamPath +
+                  this.props.streamPath +
                   '/stream?torrent=' +
                   encodeURIComponent(result.magnet!),
               });
@@ -2216,6 +2217,8 @@ interface ComboBoxProps {
   currentMedia: string;
   getMediaDisplayName: Function;
   launchMultiSelect: Function;
+  mediaPath: string | undefined;
+  streamPath: string | undefined;
 }
 
 class ComboBox extends React.Component<ComboBoxProps> {
@@ -2253,9 +2256,9 @@ class ComboBox extends React.Component<ComboBoxProps> {
         */
           let results: JSX.Element[] | undefined = undefined;
           if (query === '' || (query && query.startsWith('http'))) {
-            if (settings.mediaPath) {
-              const data = await getMediaPathResults(query);
-              results = data.map((result) => (
+            if (this.props.mediaPath) {
+              const data = await getMediaPathResults(this.props.mediaPath, query);
+              results = data.map((result: SearchResult) => (
                 <MediaPathSearchResult {...result} setMedia={this.setMedia} />
               ));
             } else {
@@ -2269,13 +2272,14 @@ class ComboBox extends React.Component<ComboBoxProps> {
             }
           } else {
             if (query && query.length >= 2) {
-              if (settings.streamPath) {
-                const data = await getStreamPathResults(query);
-                results = data.map((result) => (
+              if (this.props.streamPath) {
+                const data = await getStreamPathResults(this.props.streamPath, query);
+                results = data.map((result: SearchResult) => (
                   <StreamPathSearchResult
                     {...result}
                     setMedia={this.setMedia}
                     launchMultiSelect={this.props.launchMultiSelect}
+                    streamPath={this.props.streamPath || ''}
                   />
                 ));
               } else {
@@ -2386,11 +2390,11 @@ class ComboBox extends React.Component<ComboBoxProps> {
   }
 }
 
-async function getMediaPathResults(query: string): Promise<SearchResult[]> {
+async function getMediaPathResults(mediaPath: string, query: string): Promise<SearchResult[]> {
   // Get media list if provided
-  const response = await window.fetch(defaultMediaPath);
+  const response = await window.fetch(mediaPath);
   let results: SearchResult[] = [];
-  if (defaultMediaPath.includes('s3.')) {
+  if (mediaPath.includes('s3.')) {
     // S3-style buckets return data in XML
     const xml = await response.text();
     const data = await parseStringPromise(xml);
@@ -2398,16 +2402,16 @@ async function getMediaPathResults(query: string): Promise<SearchResult[]> {
       (file: any) => !file.Key[0].includes('/')
     );
     results = filtered.map((file: any) => ({
-      url: defaultMediaPath + '/' + file.Key[0],
-      name: defaultMediaPath + '/' + file.Key[0],
+      url: mediaPath + '/' + file.Key[0],
+      name: mediaPath + '/' + file.Key[0],
     }));
   } else {
     const data = await response.json();
     results = data
       .filter((file: any) => file.type === 'file')
       .map((file: any) => ({
-        url: file.url || getMediaPathForList(defaultMediaPath) + file.name,
-        name: getMediaPathForList(defaultMediaPath) + file.name,
+        url: file.url || getMediaPathForList(mediaPath) + file.name,
+        name: getMediaPathForList(mediaPath) + file.name,
       }));
   }
   // results = results.filter((option: SearchResult) =>
@@ -2416,9 +2420,9 @@ async function getMediaPathResults(query: string): Promise<SearchResult[]> {
   return results;
 }
 
-async function getStreamPathResults(query: string): Promise<SearchResult[]> {
+async function getStreamPathResults(streamPath: string, query: string): Promise<SearchResult[]> {
   const response = await window.fetch(
-    settings.streamPath + '/search?q=' + encodeURIComponent(query)
+    streamPath + '/search?q=' + encodeURIComponent(query)
   );
   const data = await response.json();
   return data;

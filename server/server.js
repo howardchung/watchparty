@@ -135,6 +135,17 @@ app.post('/createRoom', (req, res) => {
   res.json({ name });
 });
 
+app.get('/settings', (req, res) => {
+  console.log(req.hostname, process.env.CUSTOM_SETTINGS_HOSTNAME);
+  if (req.hostname === process.env.CUSTOM_SETTINGS_HOSTNAME) {
+    return res.json({
+      mediaPath: process.env.MEDIA_PATH,
+      streamPath: process.env.STREAM_PATH,
+    });
+  }
+  return res.json({});
+});
+
 // process.on('SIGINT', () => { console.log("Bye bye!"); process.exit(); });
 
 // const Turn = require('node-turn');

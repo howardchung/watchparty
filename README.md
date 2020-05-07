@@ -11,6 +11,7 @@ An website for watching videos together.
   - Screen sharing (Chrome tab or application)
   - Stream-your-own-file
   - Video files on the Internet (anything accessible via HTTP)
+  - Launch a shared virtual browser in the cloud (similar to rabb.it)
 - Create separate rooms for users on demand
 - Text chat
 - Video chat

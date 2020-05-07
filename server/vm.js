@@ -219,7 +219,7 @@ async function resizeVMGroup(rooms) {
   }
   // Clean up any unused VMs
   // allow a buffer of available VMs to exist for fast assignment
-  const maxAvailable = Number(process.env.VBROWSER_VM_BUFFER);
+  const maxAvailable = Number(process.env.VBROWSER_VM_BUFFER) || 0;
   const pool = await listVMs();
   const usedKeys = await redis.keys('vbrowser:*');
   const available = pool.length - usedKeys.length;

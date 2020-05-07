@@ -1,7 +1,6 @@
 import React from 'react';
 //@ts-ignore
 import { Button, Header, Modal, Form, TextArea, Icon } from 'semantic-ui-react';
-import { defaultMediaPath, defaultStreamPath } from './App';
 
 export const SettingsModal = ({ trigger }: any) => (
   <Modal trigger={trigger} basic closeIcon size="small">
@@ -40,8 +39,8 @@ export const SettingsModal = ({ trigger }: any) => (
 
 export function getDefaultSettings(): Settings {
   return {
-    mediaPath: defaultMediaPath,
-    streamPath: defaultStreamPath,
+    mediaPath: process.env.REACT_APP_MEDIA_PATH,
+    streamPath: process.env.REACT_APP_STREAM_PATH,
   };
 }
 
