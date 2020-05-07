@@ -180,7 +180,7 @@ export default class App extends React.Component<null, AppState> {
     // Load settings from localstorage and remote
     const customSettingsData = await fetch(serverPath + '/settings');
     const customSettings = await customSettingsData.json();
-    let settings = {...getCurrentSettings(), ...customSettings};
+    let settings = { ...getCurrentSettings(), ...customSettings };
     this.setState({ settings });
   };
 
@@ -806,16 +806,6 @@ export default class App extends React.Component<null, AppState> {
     }
   };
 
-  createRoom = async () => {
-    const response = await window.fetch(serverPath + '/createRoom', {
-      method: 'POST',
-    });
-    const data = await response.json();
-    const { name } = data;
-    window.location.hash = '#' + name;
-    window.location.reload();
-  };
-
   togglePlay = () => {
     let shouldPlay = true;
     if (this.isVideo()) {
@@ -1069,6 +1059,341 @@ export default class App extends React.Component<null, AppState> {
             </div>
           </Modal>
         )}
+        <Banner fbUserID={this.state.fbUserID} />
+        {
+          <Grid stackable celled="internally">
+            <Grid.Row>
+              {
+                <Grid.Column width={12}>
+                  <React.Fragment>
+                    <ComboBox
+                      setMedia={this.setMedia}
+                      currentMedia={this.state.currentMedia}
+                      getMediaDisplayName={this.getMediaDisplayName}
+                      launchMultiSelect={this.launchMultiSelect}
+                      streamPath={this.state.settings.streamPath}
+                      mediaPath={this.state.settings.mediaPath}
+                    />
+                    {/* <Divider inverted horizontal></Divider> */}
+                    <div style={{ height: '4px' }} />
+                    <div className="mobileStack" style={{ display: 'flex' }}>
+                      {
+                        <SearchComponent
+                          setMedia={this.setMedia}
+                          type={'youtube'}
+                          streamPath={this.state.settings.streamPath}
+                          mediaPath={this.state.settings.mediaPath}
+                        />
+                      }
+                      {this.screenShareStream && (
+                        <Button
+                          fluid
+                          className="toolButton"
+                          icon
+                          labelPosition="left"
+                          color="red"
+                          onClick={this.stopScreenShare}
+                        >
+                          <Icon name="cancel" />
+                          Stop Share
+                        </Button>
+                      )}
+                      {!this.screenShareStream && !this.isVBrowser() && (
+                        <Popup
+                          content={`Share a tab or an application. Make sure to check "Share audio" for best results.`}
+                          trigger={
+                            <Button
+                              fluid
+                              className="toolButton"
+                              disabled={sharer && this.socket.id !== sharer.id}
+                              icon
+                              labelPosition="left"
+                              color={'instagram'}
+                              onClick={this.setupScreenShare}
+                            >
+                              <Icon name={'slideshare'} />
+                              Screenshare
+                            </Button>
+                          }
+                        />
+                      )}
+                      {!this.screenShareStream && !this.isVBrowser() && (
+                        <Popup
+                          content="Stream your own video file"
+                          trigger={
+                            <Button
+                              fluid
+                              className="toolButton"
+                              disabled={sharer && this.socket.id !== sharer.id}
+                              icon
+                              labelPosition="left"
+                              onClick={this.setupFileShare}
+                            >
+                              <Icon name="file" />
+                              File
+                            </Button>
+                          }
+                        />
+                      )}
+                      {!this.screenShareStream && !this.isVBrowser() && (
+                        <Popup
+                          content="Launch a shared virtual browser"
+                          trigger={
+                            <Button
+                              fluid
+                              className="toolButton"
+                              disabled={sharer && this.socket.id !== sharer!.id}
+                              icon
+                              labelPosition="left"
+                              color="green"
+                              onClick={this.setupVBrowser}
+                            >
+                              <Icon name="desktop" />
+                              VBrowser
+                            </Button>
+                          }
+                        />
+                      )}
+                      {this.isVBrowser() && (
+                        <Dropdown
+                          icon="keyboard"
+                          labeled
+                          className="icon"
+                          button
+                          value={controller && controller!.id}
+                          placeholder="No controller"
+                          onChange={this.changeController}
+                          selection
+                          options={this.state.participants.map((p) => ({
+                            text: this.state.nameMap[p.id] || p.id,
+                            value: p.id,
+                          }))}
+                        ></Dropdown>
+                      )}
+                      {this.isVBrowser() && (
+                        <Button
+                          fluid
+                          className="toolButton"
+                          icon
+                          labelPosition="left"
+                          color="red"
+                          onClick={this.stopVBrowser}
+                        >
+                          <Icon name="cancel" />
+                          Stop VBrowser
+                        </Button>
+                      )}
+                    </div>
+                    <div style={{ height: '4px' }} />
+                    {(this.state.loading || !this.state.currentMedia) && (
+                      <Segment
+                        inverted
+                        style={{
+                          minHeight: '400px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        {this.state.loading && (
+                          <Dimmer active>
+                            <Loader />
+                          </Dimmer>
+                        )}
+                        {!this.state.loading && !this.state.currentMedia && (
+                          <Message
+                            color="yellow"
+                            icon="hand point up"
+                            header="You're not watching anything!"
+                            content="Pick something to watch from the menu above."
+                          />
+                        )}
+                      </Segment>
+                    )}
+                    <div
+                      id="fullScreenContainer"
+                      className={
+                        this.state.fullScreen ? 'fullScreenContainer' : ''
+                      }
+                    >
+                      <div
+                        id="playerContainer"
+                        tabIndex={1}
+                        onKeyDown={this.onVideoKeydown}
+                      >
+                        <div
+                          className="leftYtContainer videoOuter"
+                          style={{
+                            display:
+                              this.isYouTube() && !this.state.loading
+                                ? 'block'
+                                : 'none',
+                          }}
+                        >
+                          <iframe
+                            title="YouTube"
+                            id="leftYt"
+                            allowFullScreen
+                            frameBorder="0"
+                            allow="autoplay"
+                            src="https://www.youtube.com/embed/?enablejsapi=1&controls=0&rel=0"
+                          />
+                        </div>
+                        <div
+                          className="videoOuter"
+                          style={{
+                            display:
+                              this.isVideo() && !this.state.loading
+                                ? 'block'
+                                : 'none',
+                          }}
+                        >
+                          {this.isVBrowser() &&
+                          this.getVBrowserPass() &&
+                          this.getVBrowserHost() ? (
+                            <Video
+                              username={this.socket.id}
+                              password={this.getVBrowserPass()}
+                              hostname={this.getVBrowserHost()}
+                              controlling={this.state.isControlling}
+                            />
+                          ) : (
+                            <video
+                              className="videoOuter"
+                              // tabIndex={1}
+                              // onClick={this.togglePlay}
+                              id="leftVideo"
+                            ></video>
+                          )}
+                        </div>
+                        {this.state.currentMedia && (
+                          <Controls
+                            key={this.state.controlsTimestamp}
+                            togglePlay={this.togglePlay}
+                            onSeek={this.onSeek}
+                            fullScreen={this.fullScreen}
+                            toggleMute={this.toggleMute}
+                            toggleSubtitle={this.toggleSubtitle}
+                            setVolume={this.setVolume}
+                            getVolume={this.getVolume}
+                            jumpToLeader={this.jumpToLeader}
+                            paused={this.isPaused()}
+                            muted={this.isMuted()}
+                            subtitled={this.isSubtitled()}
+                            currentTime={this.getCurrentTime()}
+                            duration={this.getDuration()}
+                          />
+                        )}
+                      </div>
+                      {this.state.fullScreen && (
+                        <Chat
+                          className="fullScreenChat"
+                          chat={this.state.chat}
+                          nameMap={this.state.nameMap}
+                          pictureMap={this.state.pictureMap}
+                          socket={this.socket}
+                          scrollTimestamp={this.state.scrollTimestamp}
+                          getMediaDisplayName={this.getMediaDisplayName}
+                        />
+                      )}
+                    </div>
+                    {Boolean(this.state.total) && (
+                      <div>
+                        <Progress
+                          size="tiny"
+                          color="green"
+                          inverted
+                          value={this.state.downloaded}
+                          total={this.state.total}
+                          active
+                          // indicating
+                          label={
+                            Math.min(
+                              (this.state.downloaded / this.state.total) * 100,
+                              100
+                            ).toFixed(2) +
+                            '% - ' +
+                            formatSpeed(this.state.speed) +
+                            ' - ' +
+                            this.state.connections +
+                            ' connections'
+                          }
+                        ></Progress>
+                      </div>
+                    )}
+                  </React.Fragment>
+                </Grid.Column>
+              }
+              {
+                <Grid.Column
+                  width={4}
+                  style={{ display: 'flex', flexDirection: 'column' }}
+                  className="fullHeightColumn"
+                >
+                  <Input
+                    inverted
+                    fluid
+                    label={'My name is:'}
+                    value={this.state.myName}
+                    onChange={this.updateName}
+                    icon={
+                      <Icon
+                        onClick={() =>
+                          this.updateName(null, { value: generateName() })
+                        }
+                        name="refresh"
+                        inverted
+                        circular
+                        link
+                      />
+                    }
+                  />
+                  {/* <Divider inverted horizontal></Divider> */}
+                  {!this.state.fullScreen && (
+                    <Chat
+                      chat={this.state.chat}
+                      nameMap={this.state.nameMap}
+                      pictureMap={this.state.pictureMap}
+                      socket={this.socket}
+                      scrollTimestamp={this.state.scrollTimestamp}
+                      getMediaDisplayName={this.getMediaDisplayName}
+                    />
+                  )}
+                </Grid.Column>
+              }
+            </Grid.Row>
+          </Grid>
+        }
+        {this.state.state === 'connected' && (
+          <VideoChat
+            socket={this.socket}
+            participants={this.state.participants}
+            nameMap={this.state.nameMap}
+            pictureMap={this.state.pictureMap}
+            tsMap={this.state.tsMap}
+            rosterUpdateTS={this.state.rosterUpdateTS}
+          />
+        )}
+      </React.Fragment>
+    );
+  }
+}
+
+class Banner extends React.Component<{ fbUserID: string | undefined }> {
+  createRoom = async () => {
+    const response = await window.fetch(serverPath + '/createRoom', {
+      method: 'POST',
+    });
+    const data = await response.json();
+    const { name } = data;
+    window.location.hash = '#' + name;
+    window.location.reload();
+  };
+
+  render() {
+    const { fbUserID } = this.props;
+    return (
+      <React.Fragment>
         <div
           style={{
             display: 'flex',
@@ -1158,7 +1483,7 @@ export default class App extends React.Component<null, AppState> {
                 </Button>
               }
             />
-            {!this.state.fbUserID && (
+            {!fbUserID && (
               <Popup
                 content="Optionally sign in with Facebook to use your profile photo in chat"
                 trigger={
@@ -1183,7 +1508,7 @@ export default class App extends React.Component<null, AppState> {
                 }
               />
             )}
-            {this.state.fbUserID && (
+            {fbUserID && (
               <Button
                 fluid
                 icon
@@ -1222,318 +1547,6 @@ export default class App extends React.Component<null, AppState> {
             Watch videos with your friends!
           </Header>
         </Divider>
-        <Grid stackable celled="internally">
-          <Grid.Row>
-            {
-              <Grid.Column width={12}>
-                <React.Fragment>
-                  <ComboBox
-                    setMedia={this.setMedia}
-                    currentMedia={this.state.currentMedia}
-                    getMediaDisplayName={this.getMediaDisplayName}
-                    launchMultiSelect={this.launchMultiSelect}
-                    streamPath={this.state.settings.streamPath}
-                    mediaPath={this.state.settings.mediaPath}
-                  />
-                  {/* <Divider inverted horizontal></Divider> */}
-                  <div style={{ height: '4px' }} />
-                  <div className="mobileStack" style={{ display: 'flex' }}>
-                    {
-                      <SearchComponent
-                        setMedia={this.setMedia}
-                        type={'youtube'}
-                        streamPath={this.state.settings.streamPath}
-                        mediaPath={this.state.settings.mediaPath}
-                      />
-                    }
-                    {this.screenShareStream && (
-                      <Button
-                        fluid
-                        className="toolButton"
-                        icon
-                        labelPosition="left"
-                        color="red"
-                        onClick={this.stopScreenShare}
-                      >
-                        <Icon name="cancel" />
-                        Stop Share
-                      </Button>
-                    )}
-                    {!this.screenShareStream && !this.isVBrowser() && (
-                      <Popup
-                        content={`Share a tab or an application. Make sure to check "Share audio" for best results.`}
-                        trigger={
-                          <Button
-                            fluid
-                            className="toolButton"
-                            disabled={sharer && this.socket.id !== sharer.id}
-                            icon
-                            labelPosition="left"
-                            color={'instagram'}
-                            onClick={this.setupScreenShare}
-                          >
-                            <Icon name={'slideshare'} />
-                            Screenshare
-                          </Button>
-                        }
-                      />
-                    )}
-                    {!this.screenShareStream && !this.isVBrowser() && (
-                      <Popup
-                        content="Stream your own video file"
-                        trigger={
-                          <Button
-                            fluid
-                            className="toolButton"
-                            disabled={sharer && this.socket.id !== sharer.id}
-                            icon
-                            labelPosition="left"
-                            onClick={this.setupFileShare}
-                          >
-                            <Icon name="file" />
-                            File
-                          </Button>
-                        }
-                      />
-                    )}
-                    {!this.screenShareStream && !this.isVBrowser() && (
-                      <Popup
-                        content="Launch a shared virtual browser"
-                        trigger={
-                          <Button
-                            fluid
-                            className="toolButton"
-                            disabled={sharer && this.socket.id !== sharer!.id}
-                            icon
-                            labelPosition="left"
-                            color="green"
-                            onClick={this.setupVBrowser}
-                          >
-                            <Icon name="desktop" />
-                            VBrowser
-                          </Button>
-                        }
-                      />
-                    )}
-                    {this.isVBrowser() && (
-                      <Dropdown
-                        icon="keyboard"
-                        labeled
-                        className="icon"
-                        button
-                        value={controller && controller!.id}
-                        placeholder="No controller"
-                        onChange={this.changeController}
-                        selection
-                        options={this.state.participants.map((p) => ({
-                          text: this.state.nameMap[p.id] || p.id,
-                          value: p.id,
-                        }))}
-                      ></Dropdown>
-                    )}
-                    {this.isVBrowser() && (
-                      <Button
-                        fluid
-                        className="toolButton"
-                        icon
-                        labelPosition="left"
-                        color="red"
-                        onClick={this.stopVBrowser}
-                      >
-                        <Icon name="cancel" />
-                        Stop VBrowser
-                      </Button>
-                    )}
-                  </div>
-                  <div style={{ height: '4px' }} />
-                  {(this.state.loading || !this.state.currentMedia) && (
-                    <Segment
-                      inverted
-                      style={{
-                        minHeight: '400px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      {this.state.loading && (
-                        <Dimmer active>
-                          <Loader />
-                        </Dimmer>
-                      )}
-                      {!this.state.loading && !this.state.currentMedia && (
-                        <Message
-                          color="yellow"
-                          icon="hand point up"
-                          header="You're not watching anything!"
-                          content="Pick something to watch from the menu above."
-                        />
-                      )}
-                    </Segment>
-                  )}
-                  <div
-                    id="fullScreenContainer"
-                    className={
-                      this.state.fullScreen ? 'fullScreenContainer' : ''
-                    }
-                  >
-                    <div
-                      id="playerContainer"
-                      tabIndex={1}
-                      onKeyDown={this.onVideoKeydown}
-                    >
-                      <div
-                        className="leftYtContainer videoOuter"
-                        style={{
-                          display:
-                            this.isYouTube() && !this.state.loading
-                              ? 'block'
-                              : 'none',
-                        }}
-                      >
-                        <iframe
-                          title="YouTube"
-                          id="leftYt"
-                          allowFullScreen
-                          frameBorder="0"
-                          allow="autoplay"
-                          src="https://www.youtube.com/embed/?enablejsapi=1&controls=0&rel=0"
-                        />
-                      </div>
-                      <div
-                        className="videoOuter"
-                        style={{
-                          display:
-                            this.isVideo() && !this.state.loading
-                              ? 'block'
-                              : 'none',
-                        }}
-                      >
-                        {this.isVBrowser() &&
-                        this.getVBrowserPass() &&
-                        this.getVBrowserHost() ? (
-                          <Video
-                            username={this.socket.id}
-                            password={this.getVBrowserPass()}
-                            hostname={this.getVBrowserHost()}
-                            controlling={this.state.isControlling}
-                          />
-                        ) : (
-                          <video
-                            className="videoOuter"
-                            // tabIndex={1}
-                            // onClick={this.togglePlay}
-                            id="leftVideo"
-                          ></video>
-                        )}
-                      </div>
-                      {this.state.currentMedia && (
-                        <Controls
-                          key={this.state.controlsTimestamp}
-                          togglePlay={this.togglePlay}
-                          onSeek={this.onSeek}
-                          fullScreen={this.fullScreen}
-                          toggleMute={this.toggleMute}
-                          toggleSubtitle={this.toggleSubtitle}
-                          setVolume={this.setVolume}
-                          getVolume={this.getVolume}
-                          jumpToLeader={this.jumpToLeader}
-                          paused={this.isPaused()}
-                          muted={this.isMuted()}
-                          subtitled={this.isSubtitled()}
-                          currentTime={this.getCurrentTime()}
-                          duration={this.getDuration()}
-                        />
-                      )}
-                    </div>
-                    {this.state.fullScreen && (
-                      <Chat
-                        className="fullScreenChat"
-                        chat={this.state.chat}
-                        nameMap={this.state.nameMap}
-                        pictureMap={this.state.pictureMap}
-                        socket={this.socket}
-                        scrollTimestamp={this.state.scrollTimestamp}
-                        getMediaDisplayName={this.getMediaDisplayName}
-                      />
-                    )}
-                  </div>
-                  {Boolean(this.state.total) && (
-                    <div>
-                      <Progress
-                        size="tiny"
-                        color="green"
-                        inverted
-                        value={this.state.downloaded}
-                        total={this.state.total}
-                        active
-                        // indicating
-                        label={
-                          Math.min(
-                            (this.state.downloaded / this.state.total) * 100,
-                            100
-                          ).toFixed(2) +
-                          '% - ' +
-                          formatSpeed(this.state.speed) +
-                          ' - ' +
-                          this.state.connections +
-                          ' connections'
-                        }
-                      ></Progress>
-                    </div>
-                  )}
-                </React.Fragment>
-              </Grid.Column>
-            }
-            {
-              <Grid.Column
-                width={4}
-                style={{ display: 'flex', flexDirection: 'column' }}
-                className="fullHeightColumn"
-              >
-                <Input
-                  inverted
-                  fluid
-                  label={'My name is:'}
-                  value={this.state.myName}
-                  onChange={this.updateName}
-                  icon={
-                    <Icon
-                      onClick={() =>
-                        this.updateName(null, { value: generateName() })
-                      }
-                      name="refresh"
-                      inverted
-                      circular
-                      link
-                    />
-                  }
-                />
-                {/* <Divider inverted horizontal></Divider> */}
-                {!this.state.fullScreen && (
-                  <Chat
-                    chat={this.state.chat}
-                    nameMap={this.state.nameMap}
-                    pictureMap={this.state.pictureMap}
-                    socket={this.socket}
-                    scrollTimestamp={this.state.scrollTimestamp}
-                    getMediaDisplayName={this.getMediaDisplayName}
-                  />
-                )}
-              </Grid.Column>
-            }
-          </Grid.Row>
-        </Grid>
-        {this.state.state === 'connected' && (
-          <VideoChat
-            socket={this.socket}
-            participants={this.state.participants}
-            nameMap={this.state.nameMap}
-            pictureMap={this.state.pictureMap}
-            tsMap={this.state.tsMap}
-            rosterUpdateTS={this.state.rosterUpdateTS}
-          />
-        )}
       </React.Fragment>
     );
   }
@@ -2022,9 +2035,15 @@ class SearchComponent extends React.Component<SearchComponentProps> {
           let timestamp = Number(new Date());
           if (this.props.type === 'youtube') {
             results = await getYouTubeResults(query);
-          } else if (this.props.type === 'mediaServer' && this.props.mediaPath) {
+          } else if (
+            this.props.type === 'mediaServer' &&
+            this.props.mediaPath
+          ) {
             results = await getMediaPathResults(this.props.mediaPath, query);
-          } else if (this.props.type === 'searchServer' && this.props.streamPath) {
+          } else if (
+            this.props.type === 'searchServer' &&
+            this.props.streamPath
+          ) {
             results = await getStreamPathResults(this.props.streamPath, query);
           }
           if (timestamp > this.state.lastResultTimestamp) {
@@ -2145,7 +2164,11 @@ const MediaPathSearchResult = (
 };
 
 class StreamPathSearchResult extends React.Component<
-  SearchResult & { setMedia: Function; launchMultiSelect: Function, streamPath: string }
+  SearchResult & {
+    setMedia: Function;
+    launchMultiSelect: Function;
+    streamPath: string;
+  }
 > {
   render() {
     const result = this.props;
@@ -2257,7 +2280,10 @@ class ComboBox extends React.Component<ComboBoxProps> {
           let results: JSX.Element[] | undefined = undefined;
           if (query === '' || (query && query.startsWith('http'))) {
             if (this.props.mediaPath) {
-              const data = await getMediaPathResults(this.props.mediaPath, query);
+              const data = await getMediaPathResults(
+                this.props.mediaPath,
+                query
+              );
               results = data.map((result: SearchResult) => (
                 <MediaPathSearchResult {...result} setMedia={this.setMedia} />
               ));
@@ -2273,7 +2299,10 @@ class ComboBox extends React.Component<ComboBoxProps> {
           } else {
             if (query && query.length >= 2) {
               if (this.props.streamPath) {
-                const data = await getStreamPathResults(this.props.streamPath, query);
+                const data = await getStreamPathResults(
+                  this.props.streamPath,
+                  query
+                );
                 results = data.map((result: SearchResult) => (
                   <StreamPathSearchResult
                     {...result}
@@ -2390,7 +2419,10 @@ class ComboBox extends React.Component<ComboBoxProps> {
   }
 }
 
-async function getMediaPathResults(mediaPath: string, query: string): Promise<SearchResult[]> {
+async function getMediaPathResults(
+  mediaPath: string,
+  query: string
+): Promise<SearchResult[]> {
   // Get media list if provided
   const response = await window.fetch(mediaPath);
   let results: SearchResult[] = [];
@@ -2420,7 +2452,10 @@ async function getMediaPathResults(mediaPath: string, query: string): Promise<Se
   return results;
 }
 
-async function getStreamPathResults(streamPath: string, query: string): Promise<SearchResult[]> {
+async function getStreamPathResults(
+  streamPath: string,
+  query: string
+): Promise<SearchResult[]> {
   const response = await window.fetch(
     streamPath + '/search?q=' + encodeURIComponent(query)
   );
