@@ -40,6 +40,7 @@ export class NekoClient extends BaseClient implements EventEmitter<any> {
 
   protected [EVENT.DISCONNECTED](reason?: Error) {
     console.warn(reason);
+    this.emit(EVENT.DISCONNECTED);
   }
 
   protected [EVENT.TRACK](event: RTCTrackEvent) {

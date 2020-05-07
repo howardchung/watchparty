@@ -39,6 +39,9 @@ export default class Video extends React.Component<{
     });
     const url = 'wss://' + this.props.hostname + '/';
     this.$client.login(url, this.props.password, this.props.username);
+    this.$client.on(EVENT.DISCONNECTED, () => {
+      this.$client.login(url, this.props.password, this.props.username);
+    });
     if (process.env.NODE_ENV === 'development') {
       this.$client.on('debug', (e, data) => console.log(e, data));
     }
