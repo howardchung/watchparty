@@ -152,14 +152,11 @@ export function debounce(func: Function, wait: number, immediate?: boolean) {
 }
 
 export const getMediaPathForList = (list: string) => {
-  const mappings: StringDict = {
-    // TODO do a dynamic transform on gitlab to githack urls
-    'https://gitlab.com/api/v4/projects/howardchung%2Fmedia/repository/tree':
-      'https://glcdn.githack.com/howardchung/media/-/raw/master/',
-  };
-  if (mappings[list]) {
-    // Return any predefined
-    return mappings[list];
+  if (list.startsWith('https://gitlab.com/')) {
+    const match = list.match(/https:\/\/gitlab.com\/api\/v4\/projects\/(.*)\/repository\/tree/);
+    const name = match && match[1];
+    const decoded = decodeURIComponent(name || '');
+    return `https://glcdn.githack.com/${decoded}/-/raw/master/`;
   }
   // Nginx servers use the same mediapath as list, add trailing /
   return list + '/';

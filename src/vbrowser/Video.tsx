@@ -116,7 +116,6 @@ export default class Video extends React.Component<{
   };
 
   onMousePos = (e: MouseEvent | React.MouseEvent) => {
-    // TODO allow reading remote resolution instead of hardcode
     const { w, h } = { w: this.width, h: this.height };
     const rect = this._overlay.current!.getBoundingClientRect();
     this.$client.sendData('mousemove', {

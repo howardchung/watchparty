@@ -50,8 +50,6 @@ import {
 import { getCurrentSettings } from './Settings';
 import Video from './vbrowser/Video';
 
-// TODO twitch
-
 declare global {
   interface Window {
     onYouTubeIframeAPIReady: any;
