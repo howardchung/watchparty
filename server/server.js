@@ -65,9 +65,7 @@ async function init() {
   }
 
   if (isVBrowserFeatureEnabled()) {
-    resizeVMGroup();
-    setInterval(() => resizeVMGroup(), 60 * 1000);
-    setInterval(async () => {
+    const release = async () => {
       // Reset VMs in rooms that are:
       // assigned more than 6 hours ago
       // assigned to a room with no users
@@ -82,17 +80,28 @@ async function init() {
           ) {
             console.log('resetting VM in room', room.roomId);
             room.resetRoomVM();
-          } else {
-            console.log('renewing VM in room', room.roomId, room.vBrowser.id);
-            // Renew the lock on the VM
-            await redis.expire(
-              'vbrowser:' + room.vBrowser.id,
-              180
-            );
           }
         }
       }
-    }, 30 * 1000);
+    };
+    const renew = async () => {
+      const roomArr = Array.from(rooms.values());
+      for (let i = 0; i < roomArr.length; i++) {
+        const room = roomArr[i];
+        if (room.vBrowser && room.vBrowser.id) {    
+          console.log('renewing VM in room', room.roomId, room.vBrowser.id);
+          // Renew the lock on the VM
+          await redis.expire(
+            'vbrowser:' + room.vBrowser.id,
+            180
+          );
+        }
+      }
+    };
+    resizeVMGroup();
+    setInterval(resizeVMGroup, 60 * 1000);
+    setInterval(renew, 30 * 1000);
+    setInterval(release, 5 * 60 * 1000);
   }
 }
 

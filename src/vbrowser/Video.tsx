@@ -14,7 +14,7 @@ export default class Video extends React.Component<{
   private focused = false;
   private fullscreen = false;
   private activeKeys: Set<number> = new Set();
-  private controlling = true;
+  private controlling = false;
   private scroll = 1; // 1 to 10
   private scroll_invert = true;
   private width = 1280;
@@ -29,10 +29,9 @@ export default class Video extends React.Component<{
   private $client: NekoClient = new NekoClient();
 
   componentDidMount() {
-    if (this.controlling) {
-      this.$client.once(EVENT.CONNECTED, () => {
-        this.$client.sendMessage(EVENT.ADMIN.CONTROL);
-      });
+    this.controlling = this.props.controlling;
+    if (this.props.controlling) {
+      this.takeControl();
     }
     this.$client.on(EVENT.SCREEN.RESOLUTION, (data) => {
       this.width = data.width;
@@ -43,7 +42,6 @@ export default class Video extends React.Component<{
     if (process.env.NODE_ENV === 'development') {
       this.$client.on('debug', (e, data) => console.log(e, data));
     }
-    this.controlling = this.props.controlling;
 
     // this._container.current?.addEventListener('resize', this.onResize);
     // this.onResize();
@@ -62,15 +60,25 @@ export default class Video extends React.Component<{
 
   componentDidUpdate(prevProps: any) {
     // console.log(this.props.controlling, prevProps.controlling);
+    this.controlling = this.props.controlling;
     if (this.props.controlling && !prevProps.controlling) {
-      this.$client.sendMessage(EVENT.ADMIN.CONTROL);
+      this.takeControl();
       // Sthis.$client.sendMessage(EVENT.SCREEN.SET, { width: 1920, height: 1080, rate: 30 });
     }
-    this.controlling = this.props.controlling;
   }
 
   componentWillUnmount() {
     this.$client.logout();
+  }
+
+  takeControl = () => {
+    if (this.$client.connected) {
+      this.$client.sendMessage(EVENT.ADMIN.CONTROL);
+    } else {
+      this.$client.once(EVENT.CONNECTED, () => {
+        this.$client.sendMessage(EVENT.ADMIN.CONTROL);
+      });
+    }
   }
 
   // onClipboardChanged(clipboard: string) {
