@@ -36,27 +36,9 @@ async function launchVM() {
   });
   // console.log(response.data);
   const id = response.data.server.id;
-  const host = `${id}.pub.cloud.scaleway.com`;
   const imageName = 'nurdism/neko:chromium';
   // set userdata for boot action
   const cloudInit = `#!/bin/bash
-until nslookup ${host}
-do
-sleep 5
-echo "Trying DNS lookup again..."
-done
-    
-# Generate cert with letsencrypt
-certbot certonly --standalone -n --agree-tos --email howardzchung@gmail.com --domains ${host}
-chmod -R 755 /etc/letsencrypt/archive
-
-# start browser
-iptables -t nat -A PREROUTING -p tcp --dport 443 -j REDIRECT --to-port 5000
-sed -i 's/scripts-user$/\[scripts-user, always\]/' /etc/cloud/cloud.cfg
-docker run -d --rm --name=vbrowser -v /etc/letsencrypt/archive/${host}:/cert -v /usr/share/fonts:/usr/share/fonts --log-opt max-size=1g --net=host --shm-size=1g --cap-add="SYS_ADMIN" -e DISPLAY=":99.0" -e SCREEN="1280x720@30" -e NEKO_PASSWORD=$(hostname) -e NEKO_PASSWORD_ADMIN=$(hostname) -e NEKO_BIND=":5000" -e NEKO_EPR=":59000-59100" -e NEKO_KEY="/cert/privkey1.pem" -e NEKO_CERT="/cert/fullchain1.pem" ${imageName}
-`;
-  const cloudInitNoSsl = `#!/bin/bash
-# start browser
 iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 5000
 sed -i 's/scripts-user$/\[scripts-user, always\]/' /etc/cloud/cloud.cfg
 docker run -d --rm --name=vbrowser -v /usr/share/fonts:/usr/share/fonts --log-opt max-size=1g --net=host --shm-size=1g --cap-add="SYS_ADMIN" -e DISPLAY=":99.0" -e SCREEN="1280x720@30" -e NEKO_PASSWORD=$(hostname) -e NEKO_PASSWORD_ADMIN=$(hostname) -e NEKO_BIND=":5000" -e NEKO_EPR=":59000-59100" ${imageName}
@@ -145,7 +127,8 @@ async function listVMs() {
     .map((server) => ({
       id: server.id,
       pass: server.name,
-      host: server.id + '.pub.cloud.scaleway.com',
+      // The gateway handles SSL termination and proxies to the private IP
+      host: 'gateway.watchparty.me/?ip=' + server.private_ip,
       state: server.state,
       tags: server.tags,
       creation_date: server.creation_date,
@@ -282,7 +265,7 @@ async function checkVMReady(host) {
   let retryCount = 0;
   while (!state) {
     // poll for status
-    const url = 'https://' + host;
+    const url = 'http://' + host;
     try {
       const response4 = await axios({
         method: 'GET',
@@ -291,6 +274,10 @@ async function checkVMReady(host) {
       state = response4.data.slice(10);
     } catch (e) {
       // console.log(e);
+      // console.log(e.response);
+      // The server currently 404s on requests with a query string, so just treat the 404 message as success
+      // The error code is not 404 maybe due to the proxy
+      state = e.response.data === '404 page not found\n' ? 'ready' : '';
     }
     console.log(retryCount, url, state);
     retryCount += 1;
@@ -302,6 +289,23 @@ async function checkVMReady(host) {
   }
   return true;
 }
+
+const cloudInitWithTls = (host) => `#!/bin/bash
+until nslookup ${host}
+do
+sleep 5
+echo "Trying DNS lookup again..."
+done
+    
+# Generate cert with letsencrypt
+certbot certonly --standalone -n --agree-tos --email howardzchung@gmail.com --domains ${host}
+chmod -R 755 /etc/letsencrypt/archive
+
+# start browser
+iptables -t nat -A PREROUTING -p tcp --dport 443 -j REDIRECT --to-port 5000
+sed -i 's/scripts-user$/\[scripts-user, always\]/' /etc/cloud/cloud.cfg
+docker run -d --rm --name=vbrowser -v /etc/letsencrypt/archive/${host}:/cert -v /usr/share/fonts:/usr/share/fonts --log-opt max-size=1g --net=host --shm-size=1g --cap-add="SYS_ADMIN" -e DISPLAY=":99.0" -e SCREEN="1280x720@30" -e NEKO_PASSWORD=$(hostname) -e NEKO_PASSWORD_ADMIN=$(hostname) -e NEKO_BIND=":5000" -e NEKO_EPR=":59000-59100" -e NEKO_KEY="/cert/privkey1.pem" -e NEKO_CERT="/cert/fullchain1.pem" ${imageName}
+`;
 
 module.exports = {
   launchVM,
