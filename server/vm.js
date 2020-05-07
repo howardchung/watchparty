@@ -78,12 +78,7 @@ docker run -d --rm --name=vbrowser -v /usr/share/fonts:/usr/share/fonts --log-op
   });
   // console.log(response3.data);
   let result = await getVM(id);
-  while (!result.private_ip) {
-    // Make sure the server has an IP
-    console.log('launched VM has no IP yet:', id);
-    await new Promise((resolve) => setTimeout(resolve, 3000));
-    result = await getVM(id);
-  }
+  await redis.sadd('availableSet', id);
   return result;
 }
 
@@ -99,6 +94,7 @@ async function terminateVM(id) {
       action: 'terminate',
     },
   });
+  await redis.srem('availableSet', id);
 }
 
 async function resetVM(id) {
@@ -128,15 +124,24 @@ async function resetVM(id) {
 }
 
 async function getVM(id) {
-  const response = await axios({
-    method: 'GET',
-    url: `https://api.scaleway.com/instance/v1/zones/fr-par-1/servers/${id}`,
-    headers: {
-      'X-Auth-Token': SCW_SECRET_KEY,
-      'Content-Type': 'application/json',
-    },
-  });
-  return mapServerObject(response.data.server);
+  let result = null;
+  while (!result) {
+    const response = await axios({
+      method: 'GET',
+      url: `https://api.scaleway.com/instance/v1/zones/fr-par-1/servers/${id}`,
+      headers: {
+        'X-Auth-Token': SCW_SECRET_KEY,
+        'Content-Type': 'application/json',
+      },
+    });
+    let server = mapServerObject(response.data.server);
+    if (server.private_ip) {
+      result = server;
+    } else {
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+    }
+  }
+  return result;
 }
 
 async function listVMs() {
@@ -153,22 +158,26 @@ async function listVMs() {
     },
   });
   return response.data.servers
-    .filter((server) => server.tags.includes(VBROWSER_TAG))
+    .filter((server) => server.tags.includes(VBROWSER_TAG) && server.private_ip)
     .map(mapServerObject);
 }
 
 async function assignVM() {
+  if (!isVBrowserFeatureEnabled()) {
+    return null;
+  }
   let selected = null;
   let lock = null;
   while (!selected) {
     let candidate = null;
-    let availableSet = await redis.spop('availableSet');
-    if (availableSet) {
-      candidate = await getVM(availableSet);
-      console.log('got available VM from pool:', availableSet);
+    let available = await redis.spop('availableSet');
+    if (available) {
+      candidate = await getVM(available);
+      console.log('got available VM from pool:', available);
     } else {
       console.log('creating VM');
-      candidate = await launchVM();
+      await launchVM();
+      continue;
     }
     const lock = await redis.set(
       'vbrowser:' + candidate.id,
@@ -178,7 +187,7 @@ async function assignVM() {
       180
     );
     if (!lock) {
-      await new Promise((resolve) => setTimeout(resolve, 5000));
+      await new Promise((resolve) => setTimeout(resolve, 3000));
       continue;
     }
     const ready = await checkVMReady(candidate.host);
@@ -189,67 +198,52 @@ async function assignVM() {
       selected = candidate;
     }
   }
+  await redis.expire('vbrowser:' + selected.id, 180);
   return selected;
 }
 
-async function resizeVMGroup(rooms) {
-  // Reset VMs in rooms that are:
-  // assigned more than 6 hours ago
-  // assigned to a room with no users
-  for (let i = 0; i < rooms.length; i++) {
-    const room = rooms[i];
-    if (room.vBrowser && room.vBrowser.assignTime) {
-      if (
-        Number(new Date()) - room.vBrowser.assignTime > 6 * 60 * 60 * 1000 ||
-        room.roster.length === 0
-      ) {
-        console.log('resetting VM in room', room.id);
-        await room.resetRoomVM();
-      } else {
-        // Renew the lock on the VM
-        await redis.set(
-          'vbrowser:' + room.vBrowser.id,
-          room.id,
-          'NX',
-          'EX',
-          180
-        );
-      }
-    }
-  }
+async function resizeVMGroup() {
   // Clean up any unused VMs
   // allow a buffer of available VMs to exist for fast assignment
   const maxAvailable = Number(process.env.VBROWSER_VM_BUFFER) || 0;
   const pool = await listVMs();
-  const usedKeys = await redis.keys('vbrowser:*');
-  const available = pool.length - usedKeys.length;
-  const availableSet = await redis.scard('availableSet');
+  const poolKeys = pool.map(server => server.id);
+  const usedKeys = (await redis.keys('vbrowser:*')).map(key => key.slice('vbrowser:'.length));
+  await redis
+    .multi([
+      ['del', 'poolSet'],
+      poolKeys.length ? ['sadd', 'poolSet', ...poolKeys] : null,
+      ['del', 'usedSet'],
+      usedKeys.length ? ['sadd', 'usedSet', ...usedKeys] : null,
+      ['sdiffstore', 'availableSet', 'poolSet', 'usedSet']
+    ].filter(Boolean))
+    .exec();
+  const poolCount = await redis.scard('poolSet');
+  const usedCount = await redis.scard('usedSet');
+  const availableCount = await redis.scard('availableSet');
   console.log(
+    new Date(),
     'pool:',
-    pool.length,
+    poolCount,
     'used:',
-    usedKeys.length,
+    usedCount,
     'available:',
-    available,
-    'availableSet:',
-    availableSet
+    availableCount
   );
-  let extras = available - maxAvailable;
-  for (let i = 0; i < pool.length; i++) {
-    const server = pool[i];
-    const inUse = await redis.get('vbrowser:' + server.id);
-    if (!inUse && extras > 0) {
-      console.log('terminating unused vm', server.id);
-      await redis.srem('availableSet', server.id);
-      await terminateVM(server.id);
-      extras -= 1;
-    } else if (!inUse) {
-      console.log('adding unused vm to availableSet', server.id);
-      await redis.sadd('availableSet', server.id);
+  let extras = availableCount - maxAvailable;
+  for (let i = 0; i < extras; i++) {
+    const id = await redis.spop('availableSet');
+    const inUse = await redis.get('vbrowser:' + id);
+    if (!inUse) {
+      console.log('terminating unused vm', id);
+      await terminateVM(id);
     }
   }
-  if (available < maxAvailable) {
-    launchVM();
+  if (extras < 0) {
+    const needs = extras * -1;
+    for (let i = 0; i < needs; i++) {
+      await launchVM();
+    }
   }
 }
 

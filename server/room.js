@@ -1,9 +1,6 @@
 const {
   assignVM,
-  terminateVM,
   resetVM,
-  isVBrowserFeatureEnabled,
-  checkVMReady,
 } = require('./vm');
 
 module.exports = class Room {
@@ -17,6 +14,7 @@ module.exports = class Room {
     this.nameMap = {};
     this.pictureMap = {};
     this.vBrowser = undefined;
+    this.roomId = roomId;
 
     this.serialize = () => {
       return JSON.stringify({
@@ -64,7 +62,11 @@ module.exports = class Room {
       });
       this.cmdHost(null, '');
       if (id) {
-        await resetVM(id);
+        try {
+          await resetVM(id);
+        } catch (e) {
+          console.error(e);
+        }
       }
     };
 
@@ -92,7 +94,6 @@ module.exports = class Room {
       io.of(roomId).emit('REC:chat', chatWithTime);
     };
 
-    this.roomId = roomId;
     if (roomData) {
       this.deserialize(roomData);
     }
@@ -221,7 +222,7 @@ module.exports = class Room {
         io.of(roomId).emit('roster', this.roster);
       });
       socket.on('CMD:startVBrowser', async () => {
-        if (!isVBrowserFeatureEnabled() || this.vBrowser) {
+        if (this.vBrowser) {
           // Maybe terminate the existing instance and spawn a new one
           return;
         }

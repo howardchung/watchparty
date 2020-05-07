@@ -18,6 +18,10 @@ if (process.env.HTTPS) {
   server = require('http').Server(app);
 }
 const io = require('socket.io')(server, { origins: '*:*' });
+let redis = undefined;
+if (process.env.REDIS_URL) {
+  redis = new Redis(process.env.REDIS_URL);
+}
 const Room = require('./room');
 const { resizeVMGroup, isVBrowserFeatureEnabled } = require('./vm');
 
@@ -31,9 +35,8 @@ const rooms = new Map();
 init();
 
 async function init() {
-  if (process.env.REDIS_URL) {
+  if (redis) {
     // Load rooms from Redis
-    const redis = new Redis(process.env.REDIS_URL);
     console.log('loading rooms from redis');
     const keys = await redis.keys('/*');
     console.log(util.format('found %s rooms in redis', keys.length));
@@ -62,8 +65,34 @@ async function init() {
   }
 
   if (isVBrowserFeatureEnabled()) {
-    resizeVMGroup(Array.from(rooms.values()));
-    setInterval(() => resizeVMGroup(Array.from(rooms.values())), 60 * 1000);
+    resizeVMGroup();
+    setInterval(() => resizeVMGroup(), 60 * 1000);
+    setInterval(async () => {
+      // Reset VMs in rooms that are:
+      // assigned more than 6 hours ago
+      // assigned to a room with no users
+      const roomArr = Array.from(rooms.values());
+      for (let i = 0; i < roomArr.length; i++) {
+        const room = roomArr[i];
+        if (room.vBrowser && room.vBrowser.assignTime) {
+          if (
+            Number(new Date()) - room.vBrowser.assignTime >
+              6 * 60 * 60 * 1000 ||
+            room.roster.length === 0
+          ) {
+            console.log('resetting VM in room', room.roomId);
+            room.resetRoomVM();
+          } else {
+            console.log('renewing VM in room', room.roomId, room.vBrowser.id);
+            // Renew the lock on the VM
+            await redis.expire(
+              'vbrowser:' + room.vBrowser.id,
+              180
+            );
+          }
+        }
+      }
+    }, 30 * 1000);
   }
 }
 
@@ -136,7 +165,6 @@ app.post('/createRoom', (req, res) => {
 });
 
 app.get('/settings', (req, res) => {
-  console.log(req.hostname, process.env.CUSTOM_SETTINGS_HOSTNAME);
   if (req.hostname === process.env.CUSTOM_SETTINGS_HOSTNAME) {
     return res.json({
       mediaPath: process.env.MEDIA_PATH,
@@ -146,7 +174,14 @@ app.get('/settings', (req, res) => {
   return res.json({});
 });
 
-// process.on('SIGINT', () => { console.log("Bye bye!"); process.exit(); });
+if (process.env.NODE_ENV === 'development') {
+  process.on('exit', () => {
+    server.close(() => {
+      process.exit();
+    });
+    setImmediate(function(){server.emit('close')});
+  });
+}
 
 // const Turn = require('node-turn');
 // const turnServer = new Turn({
