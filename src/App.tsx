@@ -1456,6 +1456,24 @@ class Banner extends React.Component<{ fbUserID: string | undefined }> {
               </div>
             </div>
           </a>
+          <div style={{ display: 'flex', marginLeft: '10px', alignItems: 'center' }}>
+            <a
+              href="https://discord.gg/3rYj5HV"
+              target="_blank"
+              className="footerIcon"
+              title="Discord"
+            >
+              <Icon name="discord" size="big" link />
+            </a>
+            <a
+              href="https://github.com/howardchung/watchparty"
+              target="_blank"
+              className="footerIcon"
+              title="GitHub"
+            >
+              <Icon name="github" size="big" link />
+            </a>
+          </div>
           <div
             className="mobileStack"
             style={{
@@ -1524,19 +1542,6 @@ class Banner extends React.Component<{ fbUserID: string | undefined }> {
               </Button>
             )}
             {/* <SettingsModal trigger={<Button fluid inverted color="green" size="medium" icon labelPosition="left" className="toolButton"><Icon name="setting" />Settings</Button>} /> */}
-            <Button
-              fluid
-              color="grey"
-              icon
-              labelPosition="left"
-              as="a"
-              href="https://github.com/howardchung/watchparty"
-              target="_blank"
-              className="toolButton"
-            >
-              <Icon name="github" />
-              Source
-            </Button>
           </div>
         </div>
         <Divider inverted horizontal>
@@ -1580,23 +1585,23 @@ class VideoChat extends React.Component<VideoChatProps> {
   }
 
   handleSignal = async (data: any) => {
-      // Handle messages received from signaling server
-      const msg = data.msg;
-      const from = data.from;
-      const pc = this.videoPCs[from];
-      console.log('recv', from, data);
-      if (msg.ice !== undefined) {
-        pc.addIceCandidate(new RTCIceCandidate(msg.ice));
-      } else if (msg.sdp && msg.sdp.type === 'offer') {
-        // console.log('offer');
-        await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-        this.sendSignal(from, { sdp: pc.localDescription });
-      } else if (msg.sdp && msg.sdp.type === 'answer') {
-        pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
-      }
-    };
+    // Handle messages received from signaling server
+    const msg = data.msg;
+    const from = data.from;
+    const pc = this.videoPCs[from];
+    console.log('recv', from, data);
+    if (msg.ice !== undefined) {
+      pc.addIceCandidate(new RTCIceCandidate(msg.ice));
+    } else if (msg.sdp && msg.sdp.type === 'offer') {
+      // console.log('offer');
+      await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      this.sendSignal(from, { sdp: pc.localDescription });
+    } else if (msg.sdp && msg.sdp.type === 'answer') {
+      pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
+    }
+  };
 
   setupWebRTC = async () => {
     // Set up our own video

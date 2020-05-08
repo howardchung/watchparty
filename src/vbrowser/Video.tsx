@@ -82,7 +82,7 @@ export default class Video extends React.Component<{
         this.$client.sendMessage(EVENT.ADMIN.CONTROL);
       });
     }
-  }
+  };
 
   // onClipboardChanged(clipboard: string) {
   //   if (

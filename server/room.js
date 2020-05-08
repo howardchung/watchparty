@@ -1,7 +1,4 @@
-const {
-  assignVM,
-  resetVM,
-} = require('./vm');
+const { assignVM, resetVM } = require('./vm');
 
 module.exports = class Room {
   constructor(io, roomId, roomData) {

@@ -32,6 +32,7 @@ body {
 .controls {
   color: white;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   line-height: 14px;
   padding-left: 10px;
@@ -95,6 +96,7 @@ body {
 .videoOuter {
   width: 100%;
   min-height: 400px;
+  max-height: 80vh;
 }
 
 #leftVideo::-webkit-media-controls {
@@ -134,4 +136,9 @@ body {
 .ui.selection.dropdown.ui.selection.dropdown {
   min-height: 1em;
   border: 0px;
+}
+
+.footerIcon {
+  color: white;
+  margin-right: 10px;
 }

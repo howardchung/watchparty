@@ -164,7 +164,7 @@ async function listVMs(filter) {
       // TODO need to update if over 100 results
       per_page: 100,
       tags,
-    }
+    },
   });
   return response.data.servers
     .filter((server) => server.tags.includes(VBROWSER_TAG) && server.private_ip)
@@ -229,7 +229,11 @@ async function resizeVMGroup() {
   // Clean up any unused VMs
   // allow a buffer of available VMs to exist for fast assignment
   const maxAvailable = Number(process.env.VBROWSER_VM_BUFFER) || 0;
-  const [pool, available, used] = await Promise.all([listVMs(), listVMs('available'), listVMs('inUse')]);
+  const [pool, available, used] = await Promise.all([
+    listVMs(),
+    listVMs('available'),
+    listVMs('inUse'),
+  ]);
   console.log(
     new Date(),
     'pool:',
@@ -237,7 +241,7 @@ async function resizeVMGroup() {
     'available:',
     available.length,
     'used:',
-    used.length,
+    used.length
   );
   // check if there are any vms that are tagged inUse but don't have a redis lock
   for (let i = 0; i < used.length; i++) {

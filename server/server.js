@@ -11,8 +11,8 @@ const Redis = require('ioredis');
 const app = express();
 let server = null;
 if (process.env.HTTPS) {
-  const key = fs.readFileSync('./server/insecurekey.pem');
-  const cert = fs.readFileSync('./server/insecurecert.pem');
+  const key = fs.readFileSync(process.env.SSL_KEY_FILE);
+  const cert = fs.readFileSync(process.env.SSL_CRT_FILE);
   server = require('https').createServer({ key: key, cert: cert }, app);
 } else {
   server = require('http').Server(app);
@@ -88,13 +88,10 @@ async function init() {
       const roomArr = Array.from(rooms.values());
       for (let i = 0; i < roomArr.length; i++) {
         const room = roomArr[i];
-        if (room.vBrowser && room.vBrowser.id) {    
+        if (room.vBrowser && room.vBrowser.id) {
           console.log('renewing VM in room', room.roomId, room.vBrowser.id);
           // Renew the lock on the VM
-          await redis.expire(
-            'vbrowser:' + room.vBrowser.id,
-            180
-          );
+          await redis.expire('vbrowser:' + room.vBrowser.id, 180);
         }
       }
     };
@@ -188,7 +185,9 @@ if (process.env.NODE_ENV === 'development') {
     server.close(() => {
       process.exit();
     });
-    setImmediate(function(){server.emit('close')});
+    setImmediate(function () {
+      server.emit('close');
+    });
   });
 }
 
