@@ -1566,7 +1566,20 @@ class VideoChat extends React.Component<VideoChatProps> {
   socket = this.props.socket;
 
   componentDidMount() {
-    this.socket.on('signal', async (data: any) => {
+    this.socket.on('signal', this.handleSignal);
+  }
+
+  componentWillUnmount() {
+    this.socket.off('signal', this.handleSignal);
+  }
+
+  componentDidUpdate(prevProps: VideoChatProps) {
+    if (this.props.rosterUpdateTS !== prevProps.rosterUpdateTS) {
+      this.updateWebRTC();
+    }
+  }
+
+  handleSignal = async (data: any) => {
       // Handle messages received from signaling server
       const msg = data.msg;
       const from = data.from;
@@ -1583,14 +1596,7 @@ class VideoChat extends React.Component<VideoChatProps> {
       } else if (msg.sdp && msg.sdp.type === 'answer') {
         pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
       }
-    });
-  }
-
-  componentDidUpdate(prevProps: VideoChatProps) {
-    if (this.props.rosterUpdateTS !== prevProps.rosterUpdateTS) {
-      this.updateWebRTC();
-    }
-  }
+    };
 
   setupWebRTC = async () => {
     // Set up our own video
