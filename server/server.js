@@ -53,7 +53,7 @@ async function init() {
       rooms.forEach((value, key) => {
         if (value.roster.length) {
           const roomData = value.serialize();
-          redis.setex(key, 60 * 60 * 3, roomData);
+          redis.setex(key, 24 * 60 * 60, roomData);
         }
       });
       // console.timeEnd('roomSave');
