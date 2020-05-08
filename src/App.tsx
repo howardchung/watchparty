@@ -1460,6 +1460,7 @@ class Banner extends React.Component<{ fbUserID: string | undefined }> {
             <a
               href="https://discord.gg/3rYj5HV"
               target="_blank"
+              rel="noopener noreferrer"
               className="footerIcon"
               title="Discord"
             >
@@ -1468,6 +1469,7 @@ class Banner extends React.Component<{ fbUserID: string | undefined }> {
             <a
               href="https://github.com/howardchung/watchparty"
               target="_blank"
+              rel="noopener noreferrer"
               className="footerIcon"
               title="GitHub"
             >
