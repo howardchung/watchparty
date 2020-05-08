@@ -2707,3 +2707,30 @@ class Controls extends React.Component<ControlsProps> {
     );
   }
 }
+
+class Jeopardy extends React.Component<{ socket: any }> {
+  public state = { gameState: null };
+  componentDidMount() {
+    this.props.socket.on('JPD:state', (gameState: any) => {
+      this.setState({ gameState });
+    });
+  }
+
+  setupJeopardy = async () => {
+    // optionally send an episode number
+    this.props.socket.emit('JPD:start', null);
+  }
+
+  render() {
+    // TODO jeopardy intro:
+    // This is Jeopardy! Here are today's contestants:
+    // A person from somewhere, {name}
+    // TODO jeopardy music
+    // TODO read out clues
+    // TODO board
+    // TODO if clue, show that instead
+    return <div>
+      <pre>{JSON.stringify(this.state.gameState)}</pre>
+    </div>
+  }
+}
