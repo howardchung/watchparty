@@ -181,13 +181,7 @@ async function assignVM() {
     let resp = await redis.blpop('availableList', 0);
     const id = resp[1];
     console.log('[ASSIGN]', id);
-    const lock = await redis.set(
-      'vbrowser:' + id,
-      '1',
-      'NX',
-      'EX',
-      300
-    );
+    const lock = await redis.set('vbrowser:' + id, '1', 'NX', 'EX', 300);
     if (!lock) {
       console.log('failed to acquire lock on VM:', id);
       continue;
@@ -210,11 +204,24 @@ async function resizeVMGroup() {
   const maxAvailable = Number(process.env.VBROWSER_VM_BUFFER) || 0;
   const availableCount = await redis.llen('availableList');
   if (availableCount < maxAvailable) {
-    console.log('[RESIZE-LAUNCH]', 'desired:', maxAvailable, 'available:', availableCount);
+    console.log(
+      '[RESIZE-LAUNCH]',
+      'desired:',
+      maxAvailable,
+      'available:',
+      availableCount
+    );
     launchVM();
   } else if (availableCount > maxAvailable) {
     const id = await redis.lpop('availableList');
-    console.log('[RESIZE-TERMINATE]', id, 'desired:', maxAvailable, 'available:', availableCount);
+    console.log(
+      '[RESIZE-TERMINATE]',
+      id,
+      'desired:',
+      maxAvailable,
+      'available:',
+      availableCount
+    );
     terminateVM(id);
   }
 }
@@ -224,11 +231,13 @@ async function cleanupVMGroup() {
   // It's possible we created a VM but lost track of it in redis
   // Take the list of VMs from API, subtract VMs that have a lock in redis or are in the available pool, delete the rest
   const allVMs = await listVMs();
-  const usedKeys = (await redis.keys('vbrowser:*')).map(key => key.slice('vbrowser:'.length));
+  const usedKeys = (await redis.keys('vbrowser:*')).map((key) =>
+    key.slice('vbrowser:'.length)
+  );
   const availableKeys = await redis.lrange('availableList', 0, -1);
   const dontDelete = new Set([...usedKeys, ...availableKeys]);
   console.log(dontDelete);
-  for(let i = 0; i < allVMs.length; i++) {
+  for (let i = 0; i < allVMs.length; i++) {
     const server = allVMs[i];
     if (!dontDelete.has(server.id)) {
       console.log('terminating hanging vm:', server.id);

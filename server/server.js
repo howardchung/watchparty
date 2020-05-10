@@ -23,7 +23,11 @@ if (process.env.REDIS_URL) {
   redis = new Redis(process.env.REDIS_URL);
 }
 const Room = require('./room');
-const { resizeVMGroup, cleanupVMGroup, isVBrowserFeatureEnabled } = require('./vm');
+const {
+  resizeVMGroup,
+  cleanupVMGroup,
+  isVBrowserFeatureEnabled,
+} = require('./vm');
 
 const names = Moniker.generator([
   Moniker.adjective,
