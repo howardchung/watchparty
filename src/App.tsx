@@ -1200,7 +1200,13 @@ class Banner extends React.Component<{ fbUserID: string | undefined }> {
               </div>
             </div>
           </a>
-          <div style={{ display: 'flex', marginLeft: '10px', alignItems: 'center' }}>
+          <div
+            style={{
+              display: 'flex',
+              marginLeft: '10px',
+              alignItems: 'center',
+            }}
+          >
             <a
               href="https://discord.gg/3rYj5HV"
               target="_blank"
