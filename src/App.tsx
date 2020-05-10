@@ -1585,6 +1585,28 @@ class VideoChat extends React.Component<VideoChatProps> {
       this.updateWebRTC();
     }
   }
+<<<<<<< Updated upstream
+=======
+
+  handleSignal = async (data: any) => {
+      // Handle messages received from signaling server
+      const msg = data.msg;
+      const from = data.from;
+      const pc = this.videoPCs[from];
+      console.log('recv', from, data);
+      if (msg.ice !== undefined) {
+        pc.addIceCandidate(new RTCIceCandidate(msg.ice));
+      } else if (msg.sdp && msg.sdp.type === 'offer') {
+        // console.log('offer');
+        await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        this.sendSignal(from, { sdp: pc.localDescription });
+      } else if (msg.sdp && msg.sdp.type === 'answer') {
+        pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
+      }
+  };
+>>>>>>> Stashed changes
 
   handleSignal = async (data: any) => {
     // Handle messages received from signaling server

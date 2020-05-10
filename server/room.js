@@ -416,6 +416,144 @@ module.exports = class Room {
         // TODO If no questions left, go next round
       });
 
+      function emitState() {
+        io.of(roomId).emit('JPD:state', this.jpd.public);
+      }
+
+      function resetAfterQuestion() {
+        this.jpd.public.canBuzz = false;
+        this.jpd.public.buzzes = {};
+        this.jpd.currentAnswer = null;
+        this.jpd.public.currentAnswer = null;
+      }
+
+      function nextRound() {
+        resetAfterQuestion();
+        // advance round counter
+        // TODO If double, person with lowest score is picker
+        if (this.jpd.public.round === 'single') {
+          this.jpd.public.round === 'double';
+        } else if (this.jpd.public.round === 'double') {
+          this.jpd.public.round === 'final';
+        }
+        emitState();
+      }
+
+      function revealAnswer() {
+        this.jpd.public.canBuzz = false;
+        this.jpd.buzzes = {};
+        this.jpd.public.answers = this.jpd.answers;
+        this.jpd.public.currentAnswer = this.jpd.currentAnswer;
+        emitState();
+      }
+      socket.on('JPD:start', (episode) => {
+        // TODO manually skip clues
+        this.jpd = {
+          questions: [],
+          answers: {},
+          readingState: {},
+          currentAnswer: null,
+          public: {
+            board: [], // categories and dollar amounts
+            scores: {}, // player scores
+            episodeNumber: 0,
+            airDate: null,
+            currentQ: null,
+            currentAnswer: null,
+            answers: {},
+            canBuzz: false,
+            buzzes: {},
+            round: 'single', // single or double or final
+            isDailyDouble: false,
+            dailyDoublePlayer: undefined,
+            picker: null, // If null let anyone pick, otherwise last correct answer
+          }
+        };
+        // const episodes = fs.readdirSync();
+        // const episode = fs.readFileSync();
+        // TODO search for the the number
+        // TODO or get the number range and random
+        loadEpisode();
+        emitState();
+
+        function loadEpisode(number) {
+          // Load question data into game
+        }
+      });
+      socket.on('JPD:wager', (wager) => {
+        // User setting a wager for DD or final
+        // TODO validate wager based on player's current score
+        // Can bet up to current score, minimum of 1000 in single or 2000 in double, 0 in final
+        if (socket.id === this.public.dailyDoublePlayer) {
+          this.public.currentQ.value = Number(wager) || 0;
+          emitState();
+        }
+      });
+      socket.on('JPD:pickQ', () => {
+        // TODO depends on question format, input coordinates or question id?
+        // Put Q in public state
+        // Put A in private state
+        // Remove from board
+        emitState();
+      });
+      socket.on('JPD:readingDone', () => {
+        // When all players done, can buzz
+        // TODO add a max timeout of 10 seconds
+        this.jpd.readingState[socket.id] = true;
+        if (Object.keys(this.jpd.readingState).length >= this.roster.length) {
+          this.jpd.public.canBuzz = true;
+          emitState();
+        }
+      });
+      socket.on('JPD:buzz', () => {
+        // User wants to answer
+        if (!this.jpd.public.canBuzz) {
+          return;
+        }
+        if (this.jpd.public.buzzes[socket.id]) {
+          return;
+        }
+        this.jpd.public.buzzes[socket.id] = Number(new Date());
+        emitState();
+      });
+      socket.on('JPD:answer', (answer) => {
+        // Get a player's answer
+        this.jpd.answers[socket.id] = answer;
+        // TODO if all players have answered or timeout exceeded
+        if (Object.keys(this.jpd.answers).length >= this.roster.length) {
+          revealAnswer();
+        }
+      });
+      socket.on('JPD:pickCorrect', (id) => {
+        // Currently anyone can pick the correct answer
+        // Can turn this into a vote or make a non-player the host
+        // Go through answers, if incorrect and before the correct, subtract
+        // If correct, add
+        // If incorrect and after the correct, do nothing
+        let foundCorrect = false;
+        Object.keys(this.jpd.answers).forEach(key => {
+          const answer = this.jpd.answers[key];
+          const isCorrect = key === id;
+          if (isCorrect) {
+            foundCorrect = true;
+          }
+          this.jpd.public.scores[key] = this.jpd.public.scores[key] || 0;
+          if (!foundCorrect && !isCorrect) {
+            this.jpd.public.scores[key] -= this.jpd.currentQ.value;
+          }
+          if (isCorrect) {
+            this.jpd.public.scores[key] += this.jpd.currentQ.value;
+          }
+        });
+        // Correct person is next picker
+        if (id) {
+          this.jpd.public.picker = id;
+        }
+        resetAfterQuestion();
+        emitState();
+        // TODO If no questions left, go next round
+      });
+
       socket.on('disconnect', () => {
         let index = this.roster.findIndex((user) => user.id === socket.id);
         const removed = this.roster.splice(index, 1)[0];
