@@ -78,7 +78,7 @@ async function init() {
               6 * 60 * 60 * 1000 ||
             room.roster.length === 0
           ) {
-            console.log('resetting VM in room', room.roomId);
+            console.log('[RESET] VM in room:', room.roomId);
             room.resetRoomVM();
           }
         }
@@ -89,14 +89,14 @@ async function init() {
       for (let i = 0; i < roomArr.length; i++) {
         const room = roomArr[i];
         if (room.vBrowser && room.vBrowser.id) {
-          console.log('renewing VM in room', room.roomId, room.vBrowser.id);
+          console.log('[RENEW] VM in room:', room.roomId, room.vBrowser.id);
           // Renew the lock on the VM
-          await redis.expire('vbrowser:' + room.vBrowser.id, 180);
+          await redis.expire('vbrowser:' + room.vBrowser.id, 300);
         }
       }
     };
-    setInterval(resizeVMGroup, 10 * 1000);
-    setInterval(cleanupVMGroup, 3 * 60 * 1000);
+    setInterval(resizeVMGroup, 20 * 1000);
+    setInterval(cleanupVMGroup, 60 * 1000);
     setInterval(renew, 30 * 1000);
     setInterval(release, 5 * 60 * 1000);
   }

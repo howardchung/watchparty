@@ -178,13 +178,15 @@ async function assignVM() {
   }
   let selected = null;
   while (!selected) {
-    let id = await redis.blpop('availableList');
+    let resp = await redis.blpop('availableList', 0);
+    const id = resp[1];
+    console.log('[ASSIGN]', id);
     const lock = await redis.set(
       'vbrowser:' + id,
       '1',
       'NX',
       'EX',
-      180
+      300
     );
     if (!lock) {
       console.log('failed to acquire lock on VM:', id);
@@ -198,7 +200,6 @@ async function assignVM() {
       selected = candidate;
     }
   }
-  await redis.expire('vbrowser:' + selected.id, 180);
   return selected;
 }
 
@@ -209,11 +210,11 @@ async function resizeVMGroup() {
   const maxAvailable = Number(process.env.VBROWSER_VM_BUFFER) || 0;
   const availableCount = await redis.llen('availableList');
   if (availableCount < maxAvailable) {
-    console.log('[LAUNCH]', 'desired:', maxAvailable, 'available:', availableCount);
+    console.log('[RESIZE-LAUNCH]', 'desired:', maxAvailable, 'available:', availableCount);
     launchVM();
   } else if (availableCount > maxAvailable) {
     const id = await redis.lpop('availableList');
-    console.log('[TERMINATE]', id, 'desired:', maxAvailable, 'available:', availableCount);
+    console.log('[RESIZE-TERMINATE]', id, 'desired:', maxAvailable, 'available:', availableCount);
     terminateVM(id);
   }
 }
