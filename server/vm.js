@@ -42,7 +42,7 @@ async function launchVM() {
       image: '8e96c468-2769-4314-bb39-f3c941f63d48', // debian customized
       volumes: {},
       organization: SCW_ORGANIZATION_ID,
-      tags: [VBROWSER_TAG, 'available'],
+      tags: [VBROWSER_TAG],
     },
   });
   // console.log(response.data);
@@ -78,6 +78,7 @@ docker run -d --rm --name=vbrowser -v /usr/share/fonts:/usr/share/fonts --log-op
   });
   // console.log(response3.data);
   let result = await getVM(id);
+  await redis.rpush('availableList', id);
   return result;
 }
 
@@ -120,7 +121,7 @@ async function resetVM(id) {
   //   },
   //   data: {
   //     name: password,
-  //     tags: [VBROWSER_TAG, 'available'],
+  //     tags: [VBROWSER_TAG],
   //   },
   // });
 }
@@ -176,47 +177,23 @@ async function assignVM() {
     return null;
   }
   let selected = null;
-  let lock = null;
   while (!selected) {
-    let candidate = null;
-    let pool = await listVMs();
-    let availables = await listVMs('available');
-    let available = availables[Math.floor(Math.random() * availables.length)];
-    if (available) {
-      console.log('got available VM from pool:', available);
-      candidate = available;
-    } else {
-      console.log('creating VM');
-      await launchVM();
-      continue;
-    }
+    let id = await redis.blpop('availableList');
     const lock = await redis.set(
-      'vbrowser:' + candidate.id,
+      'vbrowser:' + id,
       '1',
       'NX',
       'EX',
       180
     );
     if (!lock) {
-      console.log('failed to acquire lock on VM:', candidate.id);
+      console.log('failed to acquire lock on VM:', id);
       continue;
     }
-    // Tag it with inuse so it doesn't get assigned again
-    const response = await axios({
-      method: 'PATCH',
-      url: `https://api.scaleway.com/instance/v1/zones/fr-par-1/servers/${candidate.id}`,
-      headers: {
-        'X-Auth-Token': SCW_SECRET_KEY,
-        'Content-Type': 'application/json',
-      },
-      data: {
-        tags: [VBROWSER_TAG, 'inUse'],
-      },
-    });
+    let candidate = await getVM(id);
     const ready = await checkVMReady(candidate.host);
     if (!ready) {
       await terminateVM(candidate.id);
-      return null;
     } else {
       selected = candidate;
     }
@@ -226,49 +203,35 @@ async function assignVM() {
 }
 
 async function resizeVMGroup() {
-  // Clean up any unused VMs
-  // allow a buffer of available VMs to exist for fast assignment
+  // Compare availableList with desired size
+  // If shorter, launch
+  // If longer, delete
   const maxAvailable = Number(process.env.VBROWSER_VM_BUFFER) || 0;
-  const [pool, available, used] = await Promise.all([
-    listVMs(),
-    listVMs('available'),
-    listVMs('inUse'),
-  ]);
-  console.log(
-    new Date(),
-    'pool:',
-    pool.length,
-    'available:',
-    available.length,
-    'used:',
-    used.length
-  );
-  // check if there are any vms that are tagged inUse but don't have a redis lock
-  for (let i = 0; i < used.length; i++) {
-    const server = used[i];
-    const hasLock = await redis.get('vbrowser:' + server.id);
-    if (!hasLock) {
-      console.log('terminating vm tagged inUse without lock:', server.id);
-      await terminateVM(server.id);
-    }
+  const availableCount = await redis.llen('availableList');
+  if (availableCount < maxAvailable) {
+    console.log('[LAUNCH]', 'desired:', maxAvailable, 'available:', availableCount);
+    launchVM();
+  } else if (availableCount > maxAvailable) {
+    const id = await redis.lpop('availableList');
+    console.log('[TERMINATE]', id, 'desired:', maxAvailable, 'available:', availableCount);
+    terminateVM(id);
   }
-  let extras = available.length - maxAvailable;
-  if (extras > 0) {
-    const deletes = available.slice(0, extras);
-    for (let i = 0; i < deletes.length; i++) {
-      const server = deletes[i];
-      const hasLock = await redis.get('vbrowser:' + server.id);
-      if (!hasLock) {
-        console.log('terminating extra vm:', server.id);
-        await terminateVM(server.id);
-      }
-    }
-  }
-  if (extras < 0) {
-    const needs = extras * -1;
-    for (let i = 0; i < needs; i++) {
-      console.log('creating extra vm');
-      await launchVM();
+}
+
+async function cleanupVMGroup() {
+  // Clean up hanging VMs
+  // It's possible we created a VM but lost track of it in redis
+  // Take the list of VMs from API, subtract VMs that have a lock in redis or are in the available pool, delete the rest
+  const allVMs = await listVMs();
+  const usedKeys = (await redis.keys('vbrowser:*')).map(key => key.slice('vbrowser:'.length));
+  const availableKeys = await redis.lrange('availableList', 0, -1);
+  const dontDelete = new Set([...usedKeys, ...availableKeys]);
+  console.log(dontDelete);
+  for(let i = 0; i < allVMs.length; i++) {
+    const server = allVMs[i];
+    if (!dontDelete.has(server.id)) {
+      console.log('terminating hanging vm:', server.id);
+      terminateVM(server.id);
     }
   }
 }
@@ -326,6 +289,7 @@ module.exports = {
   terminateVM,
   listVMs,
   resizeVMGroup,
+  cleanupVMGroup,
   assignVM,
   checkVMReady,
   resetVM,
