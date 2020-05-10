@@ -281,15 +281,18 @@ module.exports = class Room {
       function constructBoard(questions, isPublic) {
         // Map of x_y coordinates to questions
         let output = {};
-        questions.forEach(q => {
+        questions.forEach((q) => {
           if (isPublic) {
             output[`${q.xcoord}_${q.ycoord}`] = q;
           } else {
-            output[`${q.xcoord}_${q.ycoord}`] = { question: q.question, category: q.category };
+            output[`${q.xcoord}_${q.ycoord}`] = {
+              question: q.question,
+              category: q.category,
+            };
           }
         });
         return output;
-      };
+      }
 
       this.loadEpisode = (number) => {
         // Load question data into game
@@ -301,7 +304,7 @@ module.exports = class Room {
         let loadedData = jData[number];
         const epNum = loadedData.epNum;
         const airDate = loadedData.airDate;
-        
+
         this.jpd = {
           loadedData,
           answers: {},
@@ -322,14 +325,14 @@ module.exports = class Room {
             isDailyDouble: false,
             dailyDoublePlayer: undefined,
             picker: null, // If null let anyone pick, otherwise last correct answer
-          }
+          },
         };
         this.nextRound();
-      }
+      };
 
       this.emitState = () => {
         io.of(roomId).emit('JPD:state', this.jpd.public);
-      }
+      };
 
       this.resetAfterQuestion = () => {
         this.jpd.answers = {};
@@ -340,10 +343,10 @@ module.exports = class Room {
         this.jpd.public.currentAnswer = null;
         this.jpd.public.currentValue = 0;
         this.jpd.public.customCurrentValue = {};
-      }
+      };
 
-       this.nextRound = () => {
-        resetAfterQuestion();
+      this.nextRound = () => {
+        this.resetAfterQuestion();
         // advance round counter
         // TODO If double, person with lowest score is picker
         if (this.jpd.public.round === 'jeopardy') {
@@ -353,19 +356,26 @@ module.exports = class Room {
         } else {
           this.jpd.public.round = 'jeopardy';
         }
-        this.jpd.board = constructBoard(this.jpd.loadedData[this.jpd.public.round])
-        this.jpd.public.board = constructBoard(this.jpd.loadedData[this.jpd.public.round], true);
+        this.jpd.board = constructBoard(
+          this.jpd.loadedData[this.jpd.public.round]
+        );
+        this.jpd.public.board = constructBoard(
+          this.jpd.loadedData[this.jpd.public.round],
+          true
+        );
         this.emitState();
       };
 
       this.revealAnswer = () => {
         // Add empty answers for anyone who buzzed but didn't submit anything
-        Object.keys(this.jpd.public.buzzes).forEach(key => {
+        Object.keys(this.jpd.public.buzzes).forEach((key) => {
           this.jpd.answers[key] = '';
         });
         this.jpd.public.canBuzz = false;
         this.jpd.public.answers = this.jpd.answers;
-        this.jpd.public.currentAnswer = this.jpd.board[this.jpd.public.currentQ];
+        this.jpd.public.currentAnswer = this.jpd.board[
+          this.jpd.public.currentQ
+        ];
         this.emitState();
       };
 
@@ -383,7 +393,11 @@ module.exports = class Room {
         }
       });
       socket.on('JPD:pickQ', (id) => {
-        if (this.jpd.public.picker && this.roster.find(p => p.id === picker) && this.jpd.public.picker !== socket.id) {
+        if (
+          this.jpd.public.picker &&
+          this.roster.find((p) => p.id === picker) &&
+          this.jpd.public.picker !== socket.id
+        ) {
           return;
         }
         if (this.jpd.public.currentQ) {
@@ -438,7 +452,7 @@ module.exports = class Room {
         // If correct, add
         // If incorrect and after the correct, do nothing
         let foundCorrect = false;
-        Object.keys(this.jpd.answers).forEach(key => {
+        Object.keys(this.jpd.answers).forEach((key) => {
           const answer = this.jpd.answers[key];
           const isCorrect = key === id;
           if (isCorrect) {
@@ -446,10 +460,14 @@ module.exports = class Room {
           }
           this.jpd.public.scores[key] = this.jpd.public.scores[key] || 0;
           if (!foundCorrect && !isCorrect) {
-            this.jpd.public.scores[key] -= this.jpd.public.customCurrentValue[socket.id] || this.jpd.public.currentValue;
+            this.jpd.public.scores[key] -=
+              this.jpd.public.customCurrentValue[socket.id] ||
+              this.jpd.public.currentValue;
           }
           if (isCorrect) {
-            this.jpd.public.scores[key] += this.jpd.public.customCurrentValue[socket.id] || this.jpd.public.currentValue;
+            this.jpd.public.scores[key] +=
+              this.jpd.public.customCurrentValue[socket.id] ||
+              this.jpd.public.currentValue;
           }
         });
         // Correct person is next picker

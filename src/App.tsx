@@ -1063,7 +1063,13 @@ export default class App extends React.Component<null, AppState> {
             <Grid.Row>
               {
                 <Grid.Column width={12}>
-                  {this.state.state === 'connected' && <Jeopardy socket={this.socket} nameMap={this.state.nameMap} pictureMap={this.state.pictureMap} />}
+                  {this.state.state === 'connected' && (
+                    <Jeopardy
+                      socket={this.socket}
+                      nameMap={this.state.nameMap}
+                      pictureMap={this.state.pictureMap}
+                    />
+                  )}
                 </Grid.Column>
               }
               {
@@ -1337,22 +1343,22 @@ class VideoChat extends React.Component<VideoChatProps> {
   }
 
   handleSignal = async (data: any) => {
-      // Handle messages received from signaling server
-      const msg = data.msg;
-      const from = data.from;
-      const pc = this.videoPCs[from];
-      console.log('recv', from, data);
-      if (msg.ice !== undefined) {
-        pc.addIceCandidate(new RTCIceCandidate(msg.ice));
-      } else if (msg.sdp && msg.sdp.type === 'offer') {
-        // console.log('offer');
-        await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-        this.sendSignal(from, { sdp: pc.localDescription });
-      } else if (msg.sdp && msg.sdp.type === 'answer') {
-        pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
-      }
+    // Handle messages received from signaling server
+    const msg = data.msg;
+    const from = data.from;
+    const pc = this.videoPCs[from];
+    console.log('recv', from, data);
+    if (msg.ice !== undefined) {
+      pc.addIceCandidate(new RTCIceCandidate(msg.ice));
+    } else if (msg.sdp && msg.sdp.type === 'offer') {
+      // console.log('offer');
+      await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      this.sendSignal(from, { sdp: pc.localDescription });
+    } else if (msg.sdp && msg.sdp.type === 'answer') {
+      pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
+    }
   };
 
   setupWebRTC = async () => {
@@ -2458,7 +2464,11 @@ class Controls extends React.Component<ControlsProps> {
   }
 }
 
-class Jeopardy extends React.Component<{ socket: any, nameMap: StringDict, pictureMap: StringDict }> {
+class Jeopardy extends React.Component<{
+  socket: any;
+  nameMap: StringDict;
+  pictureMap: StringDict;
+}> {
   public state = { gameState: null };
   componentDidMount() {
     this.props.socket.emit('JPD:start');
@@ -2470,7 +2480,7 @@ class Jeopardy extends React.Component<{ socket: any, nameMap: StringDict, pictu
   setupJeopardy = async () => {
     // optionally send an episode number
     this.props.socket.emit('JPD:start', null);
-  }
+  };
 
   render() {
     // TODO jeopardy intro:
@@ -2480,8 +2490,12 @@ class Jeopardy extends React.Component<{ socket: any, nameMap: StringDict, pictu
     // TODO read out clues
     // TODO board
     // TODO if clue, show that instead
-    return <div>
-      <pre>{JSON.stringify(this.state.gameState)}</pre>
-    </div>
+    return (
+      <div>
+        <pre style={{ color: 'white' }}>
+          {JSON.stringify(this.state.gameState, null, 2)}
+        </pre>
+      </div>
+    );
   }
 }

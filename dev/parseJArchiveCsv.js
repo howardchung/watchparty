@@ -4,7 +4,7 @@ const fs = require('fs');
 const dataDir = '../j-archive-parser/j-archive-csv/';
 const files = fs.readdirSync(dataDir);
 let all = [];
-files.forEach(file => {
+files.forEach((file) => {
   const episode = fs.readFileSync(dataDir + file, 'utf-8');
   const output = Papa.parse(episode, { header: true });
   all = [...all, ...output.data];
@@ -33,7 +33,7 @@ all.forEach((row, i) => {
 });
 // Store a set of episode IDs, map to episode info
 let output = {};
-all.forEach(row => {
+all.forEach((row) => {
   if (!row.epNum) {
     return;
   }
