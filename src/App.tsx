@@ -326,7 +326,7 @@ export default class App extends React.Component<null, AppState> {
           const leftVideo = document.getElementById(
             'leftVideo'
           ) as HTMLMediaElement;
-          leftVideo!.pause();
+          leftVideo?.pause();
           this.watchPartyYTPlayer?.stopVideo();
 
           // If we can't autoplay, start muted
@@ -344,7 +344,7 @@ export default class App extends React.Component<null, AppState> {
             if (!data.paused) {
               this.doPlay();
             }
-            leftVideo!.addEventListener(
+            leftVideo?.addEventListener(
               'loadedmetadata',
               () => {
                 this.setState({ loading: false });
@@ -352,7 +352,7 @@ export default class App extends React.Component<null, AppState> {
               { once: true }
             );
             // One time, when we're ready to play
-            leftVideo!.addEventListener(
+            leftVideo?.addEventListener(
               'canplay',
               () => {
                 this.setState({ loading: false });
@@ -1456,7 +1456,13 @@ class Banner extends React.Component<{ fbUserID: string | undefined }> {
               </div>
             </div>
           </a>
-          <div style={{ display: 'flex', marginLeft: '10px', alignItems: 'center' }}>
+          <div
+            style={{
+              display: 'flex',
+              marginLeft: '10px',
+              alignItems: 'center',
+            }}
+          >
             <a
               href="https://discord.gg/3rYj5HV"
               target="_blank"
