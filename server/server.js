@@ -23,7 +23,7 @@ if (process.env.REDIS_URL) {
   redis = new Redis(process.env.REDIS_URL);
 }
 const Room = require('./room');
-const { resizeVMGroup, isVBrowserFeatureEnabled } = require('./vm');
+const { resizeVMGroup, cleanupVMGroup, isVBrowserFeatureEnabled } = require('./vm');
 
 const names = Moniker.generator([
   Moniker.adjective,
@@ -95,8 +95,8 @@ async function init() {
         }
       }
     };
-    resizeVMGroup();
-    setInterval(resizeVMGroup, 60 * 1000);
+    setInterval(resizeVMGroup, 10 * 1000);
+    setInterval(cleanupVMGroup, 3 * 60 * 1000);
     setInterval(renew, 30 * 1000);
     setInterval(release, 5 * 60 * 1000);
   }
