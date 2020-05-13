@@ -57,6 +57,7 @@ all.forEach((row) => {
     answer: row.answer,
     category: row.category,
     daily_double: row.daily_double,
+    value: row.value,
   });
 });
 fs.writeFileSync('./jeopardy.json', JSON.stringify(output));

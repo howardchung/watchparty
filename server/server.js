@@ -104,6 +104,11 @@ async function init() {
     setInterval(renew, 30 * 1000);
     setInterval(release, 5 * 60 * 1000);
   }
+
+  if (process.env.NODE_ENV !== 'production') {
+    await require('kill-port')(process.env.PORT || 8080);
+  }
+  server.listen(process.env.PORT || 8080);
 }
 
 if (process.env.YOUTUBE_API_KEY) {
@@ -112,8 +117,6 @@ if (process.env.YOUTUBE_API_KEY) {
     key: process.env.YOUTUBE_API_KEY,
   });
 }
-
-server.listen(process.env.PORT || 8080);
 
 app.use(cors());
 app.use(express.static('build'));
@@ -183,17 +186,6 @@ app.get('/settings', (req, res) => {
   }
   return res.json({});
 });
-
-if (process.env.NODE_ENV === 'development') {
-  process.on('exit', () => {
-    server.close(() => {
-      process.exit();
-    });
-    setImmediate(function () {
-      server.emit('close');
-    });
-  });
-}
 
 // const Turn = require('node-turn');
 // const turnServer = new Turn({

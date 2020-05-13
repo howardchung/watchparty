@@ -49,6 +49,7 @@ import {
 } from './utils';
 import { getCurrentSettings } from './Settings';
 import Video from './vbrowser/Video';
+import './Jeopardy.css';
 
 declare global {
   interface Window {
@@ -1066,6 +1067,7 @@ export default class App extends React.Component<null, AppState> {
                   {this.state.state === 'connected' && (
                     <Jeopardy
                       socket={this.socket}
+                      participants={this.state.participants}
                       nameMap={this.state.nameMap}
                       pictureMap={this.state.pictureMap}
                     />
@@ -2466,36 +2468,493 @@ class Controls extends React.Component<ControlsProps> {
 
 class Jeopardy extends React.Component<{
   socket: any;
+  participants: User[];
   nameMap: StringDict;
   pictureMap: StringDict;
 }> {
-  public state = { gameState: null };
-  componentDidMount() {
-    this.props.socket.emit('JPD:start');
-    this.props.socket.on('JPD:state', (gameState: any) => {
-      this.setState({ gameState });
+  public state = {
+    game: null as any,
+    isIntroPlaying: false,
+    localAnswer: '',
+    localWager: '',
+    localAnswerSubmitted: false,
+    localWagerSubmitted: false,
+    isQuestionTimerActive: false,
+    categoryMask: [],
+    categoryReadTime: 0,
+  };
+  async componentDidMount() {
+    this.props.socket.emit('JPD:init');
+    this.props.socket.on('JPD:state', (game: any) => {
+      this.setState({ game });
+    });
+    this.props.socket.on('JPD:playIntro', () => {
+      this.playIntro();
+    });
+    this.props.socket.on('JPD:playTimesUp', () => {
+      new Audio('/jeopardy/jeopardy-times-up.mp3').play();
     });
   }
 
-  setupJeopardy = async () => {
+  async componentDidUpdate(prevProps: any, prevState: any) {
+    if (
+      !prevState.game?.currentQ &&
+      this.state.game?.currentQ &&
+      !this.state.game?.currentAnswer
+    ) {
+      this.setState({
+        localAnswer: '',
+        localWager: '',
+        localWagerSubmitted: false,
+        localAnswerSubmitted: false,
+      });
+      // Read the question
+      const clue = this.state.game.board[this.state.game.currentQ];
+      if (clue) {
+        await this.sayText(clue.question);
+        // Send reading done signal when done
+        this.props.socket.emit('JPD:readingDone');
+      }
+    }
+    if (!prevState.game?.canBuzz && this.state.game?.canBuzz) {
+      // Start the question timer
+      this.setState({ isQuestionTimerActive: true });
+    }
+    if (prevState.game?.canBuzz && !this.state.game?.canBuzz) {
+      // Stop the question timer
+      this.setState({ isQuestionTimerActive: false });
+    }
+    // TODO test triggering this from the server
+    if (
+      (this.state.game?.round === 'jeopardy' ||
+        this.state.game?.round === 'double') &&
+      prevState.game?.round !== this.state.game?.round
+    ) {
+      const now = Number(new Date());
+      this.setState({
+        categoryMask: Array(6).fill(false),
+        categoryReadTime: now,
+      });
+      const categories = this.getCategories();
+      // Run board intro sequence
+      // Play the fill sound
+      new Audio('/jeopardy/jeopardy-board-fill.mp3').play();
+      await new Promise((resolve) => setTimeout(resolve, 4000));
+      // Reveal and read categories
+      await this.sayText('Here are the categories.');
+      for (let i = 0; i < this.state.categoryMask.length; i++) {
+        if (this.state.categoryReadTime !== now) {
+          continue;
+        }
+        let newMask: Boolean[] = [...this.state.categoryMask];
+        newMask[i] = true;
+        this.setState({ categoryMask: newMask });
+        await this.sayText(categories[i]);
+      }
+    }
+  }
+
+  newGame = async () => {
+    this.setState({ game: null });
     // optionally send an episode number
     this.props.socket.emit('JPD:start', null);
   };
 
+  playIntro = async () => {
+    this.setState({ isIntroPlaying: true });
+    document.getElementById('intro')!.innerHTML = '';
+    let introVideo = document.createElement('video');
+    let introMusic = new Audio('/jeopardy/jeopardy-intro-full.ogg');
+    document.getElementById('intro')?.appendChild(introVideo);
+    introVideo.muted = true;
+    introVideo.src = '/jeopardy/jeopardy-intro-video.mp4';
+    introVideo.play();
+    introMusic.volume = 0.5;
+    introMusic.play();
+    setTimeout(async () => {
+      await this.sayText('This is Jeopardy!');
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await this.sayText("Here are today's contestants.");
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      for (let i = 0; i < this.props.participants.length; i++) {
+        const p = this.props.participants[i];
+        const name = this.props.nameMap[p.id];
+        const player = document.createElement('img');
+        player.src =
+          getDefaultPicture(this.props.nameMap[p.id], getColorHex(p.id)) ||
+          this.props.pictureMap[p.id];
+        player.style.width = '200px';
+        player.style.height = '200px';
+        player.style.position = 'absolute';
+        player.style.margin = 'auto';
+        player.style.top = '0px';
+        player.style.bottom = '0px';
+        player.style.left = '0px';
+        player.style.right = '0px';
+        document.getElementById('intro')!.appendChild(player);
+        // maybe we can look up the location by IP?
+        await this.sayText('A person from somewhere, ' + name);
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        document.getElementById('intro')!.removeChild(player);
+      }
+    }, 10000);
+    setTimeout(() => {
+      introMusic.pause();
+      introVideo.pause();
+      introVideo = null as any;
+      introMusic = null as any;
+      document.getElementById('intro')!.innerHTML = '';
+      this.setState({ isIntroPlaying: false });
+    }, 38500);
+  };
+
+  sayText = async (text: string) => {
+    await new Promise((resolve) => {
+      window.speechSynthesis.cancel();
+      const utterThis = new SpeechSynthesisUtterance(text);
+      // let retryCount = 0;
+      // while (speechSynthesis.getVoices().length === 0 && retryCount < 5) {
+      //   retryCount += 1;
+      //   await new Promise((resolve) => setTimeout(resolve, 1000));
+      // }
+      // let voices = speechSynthesis.getVoices();
+      // let target = voices.find(
+      //   (voice) => voice.name === 'Google UK English Male'
+      // );
+      // if (target) {
+      //   utterThis.voice = target;
+      // }
+      window.speechSynthesis.speak(utterThis);
+      utterThis.onend = resolve;
+    });
+  };
+
+  pickQ = (id: string) => {
+    this.props.socket.emit('JPD:pickQ', id);
+  };
+
+  submitWager = () => {
+    this.props.socket.emit('JPD:wager', this.state.localWager);
+    this.setState({ localWager: '', localWagerSubmitted: true });
+  };
+
+  submitAnswer = () => {
+    this.props.socket.emit('JPD:answer', this.state.localAnswer);
+    this.setState({ localAnswer: '', localAnswerSubmitted: true });
+  };
+
+  judgeAnswer = (id: string, correct: boolean) => {
+    this.props.socket.emit('JPD:judge', { id, correct });
+  };
+
+  getCategories = () => {
+    const game = this.state.game;
+    if (!game) {
+      return [];
+    }
+    let categories: string[] = Array(6).fill('');
+    Object.keys(game.board).forEach((key) => {
+      const col = Number(key.split('_')[0]) - 1;
+      categories[col] = game.board[key].category;
+    });
+    return categories;
+  };
+
   render() {
-    // TODO jeopardy intro:
-    // This is Jeopardy! Here are today's contestants:
-    // A person from somewhere, {name}
-    // TODO jeopardy music
-    // TODO read out clues
-    // TODO board
-    // TODO if clue, show that instead
+    // TODO daily double pic/sound
+    // TODO final jeopardy/music
+    const game = this.state.game;
+    const categories = this.getCategories();
     return (
-      <div>
-        <pre style={{ color: 'white' }}>
-          {JSON.stringify(this.state.gameState, null, 2)}
-        </pre>
-      </div>
+      <React.Fragment>
+        <div id="intro" />
+        {Boolean(game) && !this.state.isIntroPlaying && (
+          <div>
+            {/* TODO replace with waitingWager */}
+            {Boolean(game.currentDailyDouble) && (
+              <div
+                style={{
+                  backgroundImage: 'url(/jeopardy/jeopardy-daily-double.png)',
+                }}
+              >
+                {!game.currentAnswer &&
+                !this.state.localWagerSubmitted &&
+                (game.round === 'final' ||
+                  game.dailyDoublePlayer === this.props.socket.id) ? (
+                  <Input
+                    autoFocus
+                    label="Wager"
+                    value={this.state.localWager}
+                    onChange={(e) =>
+                      this.setState({ localWager: e.target.value })
+                    }
+                    onKeyPress={(e: any) =>
+                      e.key === 'Enter' && this.submitWager()
+                    }
+                    icon={
+                      <Icon
+                        onClick={this.submitWager}
+                        name="arrow right"
+                        inverted
+                        circular
+                        link
+                      />
+                    }
+                  />
+                ) : null}
+              </div>
+            )}
+            {Boolean(game.currentQ) && (
+              <div className="clueContainer">
+                <div className="category box" style={{ height: '30px' }}>
+                  {game.board[game.currentQ].category}
+                </div>
+                <div className="category box" style={{ height: '30px' }}>
+                  {game.currentValue}
+                </div>
+                <div className="clue box">
+                  {game.board[game.currentQ].question}
+                </div>
+                <div className="box" style={{ height: '60px' }}>
+                  {!game.currentAnswer &&
+                  !game.buzzes[this.props.socket.id] &&
+                  !game.submitted[this.props.socket.id] ? (
+                    <div style={{ display: 'flex' }}>
+                      <Button
+                        disabled={!game.canBuzz}
+                        color="green"
+                        size="huge"
+                        onClick={() => this.props.socket.emit('JPD:buzz')}
+                        icon
+                        labelPosition="left"
+                      >
+                        <Icon name="lightbulb" />
+                        Buzz
+                      </Button>
+                      <Button
+                        disabled={!game.canBuzz}
+                        color="red"
+                        size="huge"
+                        onClick={() =>
+                          this.props.socket.emit('JPD:answer', null)
+                        }
+                        icon
+                        labelPosition="left"
+                      >
+                        <Icon name="close" />
+                        Pass
+                      </Button>
+                    </div>
+                  ) : null}
+                  {!game.currentAnswer &&
+                  !this.state.localAnswerSubmitted &&
+                  game.buzzes[this.props.socket.id] ? (
+                    <Input
+                      autoFocus
+                      label="Answer"
+                      value={this.state.localAnswer}
+                      onChange={(e) =>
+                        this.setState({ localAnswer: e.target.value })
+                      }
+                      onKeyPress={(e: any) =>
+                        e.key === 'Enter' && this.submitAnswer()
+                      }
+                      icon={
+                        <Icon
+                          onClick={this.submitAnswer}
+                          name="arrow right"
+                          inverted
+                          circular
+                          link
+                        />
+                      }
+                    />
+                  ) : null}
+                </div>
+                <div className="category box" style={{ height: '30px' }}>
+                  {game.currentAnswer}
+                </div>
+                {this.state.isQuestionTimerActive && (
+                  <TimerBar duration={15000} />
+                )}
+                <div style={{ position: 'absolute', top: '0px', right: '0px' }}>
+                  <Button
+                    onClick={() => this.props.socket.emit('JPD:skipQ')}
+                    icon
+                    labelPosition="left"
+                  >
+                    <Icon name="forward" />
+                    Next Question
+                  </Button>
+                </div>
+              </div>
+            )}
+            {!Boolean(game.currentQ) && (
+              <div className="board">
+                {categories.map((cat, i) => (
+                  <div className="category box">
+                    {this.state.categoryMask[i] ? cat : ''}
+                  </div>
+                ))}
+                {Array.from(Array(5)).map((_, i) => {
+                  return (
+                    <React.Fragment>
+                      {categories.map((cat, j) => {
+                        const id = `${j + 1}_${i + 1}`;
+                        const clue = game.board[id];
+                        return (
+                          <div
+                            onClick={clue ? () => this.pickQ(id) : undefined}
+                            className="value box"
+                          >
+                            {clue ? clue.value : ''}
+                          </div>
+                        );
+                      })}
+                    </React.Fragment>
+                  );
+                })}
+              </div>
+            )}
+            <div style={{ height: '8px' }} />
+            <div style={{ display: 'flex' }}>
+              {this.props.participants.map((p) => {
+                return (
+                  <div className="scoreboard">
+                    <div
+                      style={{
+                        display: 'flex',
+                        padding: '4px',
+                        alignItems: 'center',
+                        height: '60px',
+                      }}
+                    >
+                      {p.id in game.answers ? (
+                        <Label size="large" pointing="below" fluid>
+                          {/* <Label size="tiny" circular>1</Label> */}
+                          {game.answers[p.id]}
+                        </Label>
+                      ) : null}
+                    </div>
+                    <div className="picture" style={{ position: 'relative' }}>
+                      <img
+                        src={
+                          this.props.pictureMap[p.id] ||
+                          getDefaultPicture(
+                            this.props.nameMap[p.id],
+                            getColorHex(p.id)
+                          )
+                        }
+                      />
+                      <div className="icons">
+                        {!game.picker || game.picker === p.id ? (
+                          <Icon
+                            title="Controlling the board"
+                            name="pointing up"
+                          />
+                        ) : null}
+                        {game.skips[p.id] ? (
+                          <Icon title="Voted to skip" name="forward" />
+                        ) : null}
+                      </div>
+                      {p.id === game.currentJudgeAnswer ? (
+                        <div className="judgeButtons">
+                          <Button
+                            onClick={() => this.judgeAnswer(p.id, true)}
+                            color="green"
+                            size="tiny"
+                            icon
+                            fluid
+                          >
+                            <Icon name="check" />
+                          </Button>
+                          <Button
+                            onClick={() => this.judgeAnswer(p.id, false)}
+                            color="red"
+                            size="tiny"
+                            icon
+                            fluid
+                          >
+                            <Icon name="close" />
+                          </Button>
+                        </div>
+                      ) : null}
+                    </div>
+                    <div
+                      style={{
+                        border: game.buzzes[p.id]
+                          ? 'solid 4px white'
+                          : 'solid 4px black',
+                      }}
+                    >
+                      <div
+                        className={`score ${
+                          game.scores[p.id] < 0 ? 'negative' : ''
+                        }`}
+                      >
+                        {(game.scores[p.id] || 0).toLocaleString()}
+                      </div>
+                      <div className="name">{this.props.nameMap[p.id]}</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+        <div
+          className="title"
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            color: 'white',
+            padding: '10px',
+          }}
+        >
+          <Button
+            onClick={() => this.props.socket.emit('JPD:cmdIntro')}
+            icon
+            labelPosition="left"
+          >
+            <Icon name="film" />
+            Play Intro
+          </Button>
+          <Button onClick={this.newGame} icon labelPosition="left">
+            <Icon name="certificate" />
+            New Game
+          </Button>
+          <div>Jeopardy!</div>
+          {game && <div>{'#' + game.epNum}</div>}
+          {game && <div>{new Date(game.airDate).toDateString()}</div>}
+        </div>
+        {process.env.NODE_ENV === 'development' && <pre style={{ color: 'white', maxHeight: '200px', overflow: 'scroll' }}>
+          {JSON.stringify(game, null, 2)}
+        </pre>}
+      </React.Fragment>
+    );
+  }
+}
+
+class TimerBar extends React.Component<{ duration: number }> {
+  public state = { width: '0%' };
+  componentDidMount() {
+    requestAnimationFrame(() => {
+      this.setState({ width: '100%' });
+    });
+  }
+  render() {
+    return (
+      <div
+        style={{
+          position: 'absolute',
+          bottom: '0px',
+          left: '0px',
+          height: '10px',
+          width: this.state.width,
+          backgroundColor: '#0E6EB8',
+          transition: `${this.props.duration / 1000}s width linear`,
+        }}
+      />
     );
   }
 }

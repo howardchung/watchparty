@@ -1,0 +1,142 @@
+@font-face {
+  font-family: 'Korinna';
+  font-style: normal;
+  font-weight: 400;
+  src: url('/jeopardy/korinna-regular.otf');
+}
+
+@font-face {
+  font-family: 'Swiss 911';
+  font-style: normal;
+  font-weight: 400;
+  src: url('/jeopardy/swiss911-xcm-bt.ttf');
+}
+
+.title {
+  font-size: 24px;
+}
+
+.board {
+  background-color: black;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
+  grid-template-rows: repeat(6, 80px);
+  grid-gap: 6px;
+  padding: 6px;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.box {
+  align-items: center;
+  justify-content: center;
+  display: flex;
+  background-color: #0000b5;
+  padding: 4px;
+  height: 100%;
+  width: 100%;
+}
+
+.category {
+  font-family: 'Swiss 911';
+  font-size: 22px;
+  line-height: 22px;
+  letter-spacing: 1px;
+  color: #e1f3ff;
+}
+
+.value {
+  font-family: 'Swiss 911';
+  font-size: 60px;
+  color: #d7a04b;
+  cursor: pointer;
+  text-shadow: black 4px 4px;
+}
+
+.clueContainer {
+  height: 522px;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 60px;
+  background-color: #0000b5;
+  position: relative;
+}
+
+.clue {
+  font-family: 'Korinna';
+  text-transform: uppercase;
+  color: white;
+  font-size: 36px;
+  line-height: 36px;
+  text-align: center;
+}
+
+.scoreboard {
+  display: flex;
+  flex-direction: column;
+  width: 120px;
+  margin-right: 4px;
+}
+
+.scoreboard .icons {
+  position: absolute;
+  top: 0;
+  right: 0;
+  color: white;
+}
+
+.scoreboard .picture {
+  width: 120px;
+  height: 120px;
+}
+
+.scoreboard .picture img {
+  width: 100%;
+}
+
+.scoreboard .name {
+  color: white;
+  background-color: #0000b5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  line-height: 12px;
+  padding: 4px;
+}
+
+.scoreboard .score {
+  font-family: 'Swiss 911';
+  color: white;
+  background-color: #0000b5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  line-height: 30px;
+  padding: 10px 4px;
+}
+
+.scoreboard .score.negative {
+  color: red;
+}
+
+.judgeButtons {
+  position: absolute;
+  top: 0px;
+  display: flex;
+  justify-content: center;
+}
+
+#intro {
+  width: 100%;
+  position: relative;
+  display: 'flex';
+  align-items: center;
+  justify-content: center;
+}
+
+#intro video {
+  width: 100%;
+}
