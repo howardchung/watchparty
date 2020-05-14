@@ -2512,8 +2512,6 @@ class Jeopardy extends React.Component<{
       // Read the question
       // console.log('JPD:playClue', text);
       await this.sayText(text);
-      // Send reading done signal when done
-      this.props.socket.emit('JPD:playClueDone', qid);
     });
     this.props.socket.on('JPD:playCategories', async () => {
       const now = Number(new Date());
@@ -2702,7 +2700,7 @@ class Jeopardy extends React.Component<{
                   {Boolean(game.currentValue) && game.currentValue}
                 </div>
                 {
-                  <div className="clue">
+                  <div className={`clue`}>
                     {game.board[game.currentQ] &&
                       game.board[game.currentQ].question}
                   </div>
@@ -2785,9 +2783,12 @@ class Jeopardy extends React.Component<{
                     />
                   ) : null}
                 </div>
-                <div className="answer" style={{ height: '30px' }}>
+                <div className={`answer`} style={{ height: '30px' }}>
                   {game.currentAnswer}
                 </div>
+                {Boolean(game.playClueDuration) && (
+                  <TimerBar duration={game.playClueDuration} />
+                )}
                 {Boolean(game.questionDuration) && (
                   <TimerBar duration={game.questionDuration} />
                 )}
@@ -2878,7 +2879,7 @@ class Jeopardy extends React.Component<{
                         <div
                           style={{
                             position: 'absolute',
-                            bottom: '0px',
+                            bottom: '8px',
                             right: '0px',
                           }}
                         >
@@ -2921,13 +2922,13 @@ class Jeopardy extends React.Component<{
                         </div>
                       ) : null}
                     </div>
-                      <div
-                        className={`points ${
-                          game.scores[p.id] < 0 ? 'negative' : ''
-                        }`}
-                      >
-                        {(game.scores[p.id] || 0).toLocaleString()}
-                      </div>
+                    <div
+                      className={`points ${
+                        game.scores[p.id] < 0 ? 'negative' : ''
+                      }`}
+                    >
+                      {(game.scores[p.id] || 0).toLocaleString()}
+                    </div>
                     <div
                       className={`answerBox ${game.buzzes[p.id] ? 'buzz' : ''}`}
                     >
@@ -2962,7 +2963,9 @@ class Jeopardy extends React.Component<{
           </Button>
           <div>Jeopardy!</div>
           {game && <div>{'#' + game.epNum}</div>}
-          {game && <div>{new Date(game.airDate + 'T00:00').toDateString()}</div>}
+          {game && (
+            <div>{new Date(game.airDate + 'T00:00').toDateString()}</div>
+          )}
         </div>
         {process.env.NODE_ENV === 'development' && (
           <pre

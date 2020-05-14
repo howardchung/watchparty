@@ -294,6 +294,18 @@ module.exports = class Room {
         return output;
       }
 
+      function syllableCount(word) {
+        word = word.toLowerCase(); //word.downcase!
+        if (word.length <= 3) {
+          return 1;
+        }
+        word = word.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/, ''); //word.sub!(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/, '')
+        word = word.replace(/^y/, '');
+        let vowels = word.match(/[aeiouy]{1,2}/g);
+        // Use 3 as the default if no letters, it's probably a year
+        return vowels ? vowels.length : 3;
+      }
+
       this.loadEpisode = (number) => {
         // Load question data into game
         if (!number) {
@@ -334,6 +346,7 @@ module.exports = class Room {
           currentJudgeAnswerIndex: null,
           currentDailyDouble: false,
           waitingForWager: null,
+          playClueDuration: 0,
           questionDuration: 0,
           answers: {},
           submitted: {},
@@ -361,7 +374,7 @@ module.exports = class Room {
         this.jpd.wagers = {};
         clearTimeout(this.jpd.playClueTimeout);
         clearTimeout(this.jpd.questionAnswerTimeout);
-        this.jpd.public = {...this.jpd.public, ...this.getPerQuestionState()};
+        this.jpd.public = { ...this.jpd.public, ...this.getPerQuestionState() };
       };
 
       this.nextQuestion = () => {
@@ -567,26 +580,32 @@ module.exports = class Room {
       };
 
       this.triggerPlayClue = () => {
-        // trigger reads on players, keep track of current roster
-        // When all of those players report read done, unlock buzz/start DD/final timer
-        // We do the snapshot to avoid issues if people join during the reading
-        this.jpd.snapshotRoster = [...this.roster];
         const clue = this.jpd.public.board[this.jpd.public.currentQ];
         io.of(roomId).emit(
           'JPD:playClue',
           this.jpd.public.currentQ,
           clue && clue.question
         );
-        // Set a max time limit for waiting for playClueDones
+        let speakingTime = 0;
+        if (clue && clue.question) {
+          // Allow some time for reading the text, based on content
+          // Count syllables in text, assume speaking rate of 4 syll/sec
+          const syllCountArr = clue.question.split(' ').map(word => syllableCount(word));
+          const totalSyll = syllCountArr.reduce((a, b) => a + b, 0);
+          speakingTime = totalSyll / 4  * 1000;
+          console.log('[TRIGGERPLAYCLUE]', clue.question, totalSyll, speakingTime);
+          this.jpd.public.playClueDuration = speakingTime;
+        }
         clearTimeout(this.jpd.playClueTimeout);
         this.jpd.playClueTimeout = setTimeout(() => {
-          console.log('playClueTimeout', this.jpd.playClueTimeout);
           this.playClueDone();
-        }, 30000);
+        }, speakingTime);
       };
 
       this.playClueDone = () => {
         clearTimeout(this.jpd.playClueTimeout);
+        this.jpd.public.playClueDuration = 0;
+
         if (this.jpd.public.currentDailyDouble) {
           this.unlockAnswer();
         } else if (this.jpd.public.round === 'final') {
@@ -650,22 +669,6 @@ module.exports = class Room {
           this.triggerPlayClue();
         }
         this.emitState();
-      });
-      socket.on('JPD:playClueDone', (question) => {
-        // Make sure it matches the current question, or reject it
-        // console.log('[PLAYCLUEDONE]', socket.id, question, this.jpd.public.currentQ);
-        if (question !== this.jpd.public.currentQ) {
-          return;
-        }
-        // When all players done, trigger playClueDone
-        this.jpd.public.readings[socket.id] = true;
-        if (
-          this.jpd.snapshotRoster.every((p) => p.id in this.jpd.public.readings)
-        ) {
-          this.playClueDone();
-        } else {
-          this.emitState();
-        }
       });
       socket.on('JPD:buzz', () => {
         if (!this.jpd.public.canBuzz) {
