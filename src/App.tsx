@@ -19,6 +19,7 @@ import {
   DropdownProps,
   Menu,
   Popup,
+  Checkbox,
 } from 'semantic-ui-react';
 //@ts-ignore
 import { Slider } from 'react-semantic-ui-range';
@@ -2481,8 +2482,12 @@ class Jeopardy extends React.Component<{
     localWagerSubmitted: false,
     categoryMask: Array(6).fill(true),
     categoryReadTime: 0,
+    readingDisabled: false,
   };
   async componentDidMount() {
+    this.setState({
+      readingDisabled: Boolean(window.localStorage.getItem('jeopardy-readingDisabled')),
+    });
     this.props.socket.emit('JPD:init');
     this.props.socket.on('JPD:state', (game: any) => {
       this.setState({ game });
@@ -2596,6 +2601,9 @@ class Jeopardy extends React.Component<{
 
   sayText = async (text: string) => {
     await new Promise((resolve) => {
+      if (this.state.readingDisabled) {
+        return resolve();
+      }
       window.speechSynthesis.cancel();
       const utterThis = new SpeechSynthesisUtterance(text);
       // let retryCount = 0;
@@ -2612,6 +2620,7 @@ class Jeopardy extends React.Component<{
       // }
       window.speechSynthesis.speak(utterThis);
       utterThis.onend = resolve;
+      utterThis.onerror = resolve;
     });
   };
 
@@ -2966,6 +2975,22 @@ class Jeopardy extends React.Component<{
           {game && (
             <div>{new Date(game.airDate + 'T00:00').toDateString()}</div>
           )}
+          <div>
+            <Checkbox
+              toggle
+              onChange={() => {
+                const checked = !this.state.readingDisabled
+                this.setState({ readingDisabled: checked });
+                if (checked) {
+                  window.localStorage.setItem('jeopardy-readingDisabled', '1');
+                } else {
+                  window.localStorage.removeItem('jeopardy-readingDisabled');
+                }
+              }}
+              checked={this.state.readingDisabled}
+              label="Disable reading"
+            />
+          </div>
         </div>
         {process.env.NODE_ENV === 'development' && (
           <pre

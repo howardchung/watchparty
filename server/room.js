@@ -283,11 +283,11 @@ module.exports = class Room {
         let output = {};
         questions.forEach((q) => {
           if (!isPublic) {
-            output[`${q.xcoord}_${q.ycoord}`] = q;
+            output[`${q.x}_${q.y}`] = q;
           } else {
-            output[`${q.xcoord}_${q.ycoord}`] = {
-              value: q.value,
-              category: q.category,
+            output[`${q.x}_${q.y}`] = {
+              value: q.val,
+              category: q.cat,
             };
           }
         });
@@ -469,7 +469,7 @@ module.exports = class Room {
         this.jpd.public.answers = this.jpd.answers;
         this.jpd.public.currentAnswer = this.jpd.board[
           this.jpd.public.currentQ
-        ].answer;
+        ].a;
         this.advanceJudging();
         if (!this.jpd.public.currentJudgeAnswer) {
           this.jpd.public.canNextQ = true;
@@ -559,7 +559,7 @@ module.exports = class Room {
           this.jpd.public.waitingForWager = null;
           this.jpd.public.board[
             this.jpd.public.currentQ
-          ].question = this.jpd.board[this.jpd.public.currentQ].question;
+          ].question = this.jpd.board[this.jpd.public.currentQ].q;
           this.triggerPlayClue();
           this.emitState();
         }
@@ -572,7 +572,7 @@ module.exports = class Room {
             this.jpd.public.waitingForWager = null;
             this.jpd.public.board[
               this.jpd.public.currentQ
-            ].question = this.jpd.board[this.jpd.public.currentQ].question;
+            ].question = this.jpd.board[this.jpd.public.currentQ].q;
             this.triggerPlayClue();
           }
           this.emitState();
@@ -590,10 +590,17 @@ module.exports = class Room {
         if (clue && clue.question) {
           // Allow some time for reading the text, based on content
           // Count syllables in text, assume speaking rate of 4 syll/sec
-          const syllCountArr = clue.question.split(' ').map(word => syllableCount(word));
+          const syllCountArr = clue.question
+            .split(' ')
+            .map((word) => syllableCount(word));
           const totalSyll = syllCountArr.reduce((a, b) => a + b, 0);
-          speakingTime = totalSyll / 4  * 1000;
-          console.log('[TRIGGERPLAYCLUE]', clue.question, totalSyll, speakingTime);
+          speakingTime = (totalSyll / 4) * 1000;
+          console.log(
+            '[TRIGGERPLAYCLUE]',
+            clue.question,
+            totalSyll,
+            speakingTime
+          );
           this.jpd.public.playClueDuration = speakingTime;
         }
         clearTimeout(this.jpd.playClueTimeout);
@@ -645,9 +652,9 @@ module.exports = class Room {
           return;
         }
         this.jpd.public.currentQ = id;
-        this.jpd.public.currentValue = this.jpd.public.board[id].value;
+        this.jpd.public.currentValue = this.jpd.public.board[id].val;
         // check if it's a daily double
-        if (this.jpd.board[id].daily_double) {
+        if (this.jpd.board[id].dd) {
           // if it is, don't show it yet, we need to collect wager info based only on category
           this.jpd.public.currentDailyDouble = true;
           this.jpd.public.dailyDoublePlayer = socket.id;
@@ -665,7 +672,7 @@ module.exports = class Room {
           // Put Q in public state
           this.jpd.public.board[
             this.jpd.public.currentQ
-          ].question = this.jpd.board[this.jpd.public.currentQ].question;
+          ].question = this.jpd.board[this.jpd.public.currentQ].q;
           this.triggerPlayClue();
         }
         this.emitState();

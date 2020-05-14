@@ -26,8 +26,8 @@
 .board {
   background-color: black;
   display: grid;
-  grid-template-columns: repeat(6, 120px);
-  grid-template-rows: repeat(6, 70px);
+  grid-template-columns: repeat(6, 110px);
+  grid-template-rows: repeat(6, 65px);
   grid-gap: 6px;
   padding: 6px;
   align-items: center;
@@ -68,8 +68,8 @@
 }
 
 .clueContainer {
-  width: 762px;
-  height: 462px;
+  width: 702px;
+  height: 432px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -103,7 +103,7 @@
 .scoreboard {
   display: flex;
   flex-direction: column;
-  width: 120px;
+  width: 110px;
   margin-right: 8px;
 }
 

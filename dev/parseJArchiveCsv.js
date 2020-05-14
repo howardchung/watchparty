@@ -37,10 +37,6 @@ all.forEach((row) => {
   if (!row.epNum) {
     return;
   }
-  // TODO temporarily exclude older games to reduce data file size
-  if (Number(row.epNum) < 4000) {
-    return;
-  }
   if (!output[row.epNum]) {
     output[row.epNum] = {
       epNum: row.epNum,
@@ -55,13 +51,13 @@ all.forEach((row) => {
     return;
   }
   output[row.epNum][row.round_name].push({
-    xcoord: row.xcoord,
-    ycoord: row.ycoord,
-    question: row.question,
-    answer: row.answer,
-    category: row.category,
-    daily_double: row.daily_double,
-    value: row.value,
+    x: row.xcoord,
+    y: row.ycoord,
+    q: row.question,
+    a: row.answer,
+    cat: row.category,
+    dd: row.daily_double,
+    val: row.value,
   });
 });
 fs.writeFileSync('./jeopardy.json', JSON.stringify(output));
