@@ -37,6 +37,10 @@ all.forEach((row) => {
   if (!row.epNum) {
     return;
   }
+  // TODO temporarily exclude older games to reduce data file size
+  if (Number(row.epNum) < 4000) {
+    return;
+  }
   if (!output[row.epNum]) {
     output[row.epNum] = {
       epNum: row.epNum,
