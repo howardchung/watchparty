@@ -652,7 +652,7 @@ module.exports = class Room {
           return;
         }
         this.jpd.public.currentQ = id;
-        this.jpd.public.currentValue = this.jpd.public.board[id].val;
+        this.jpd.public.currentValue = this.jpd.public.board[id].value;
         // check if it's a daily double
         if (this.jpd.board[id].dd) {
           // if it is, don't show it yet, we need to collect wager info based only on category
