@@ -2786,7 +2786,7 @@ class Jeopardy extends React.Component<{
                     />
                   ) : null}
                 </div>
-                <div className="category" style={{ height: '30px' }}>
+                <div className="answer" style={{ height: '30px' }}>
                   {game.currentAnswer}
                 </div>
                 {Boolean(game.questionDuration) && (
@@ -2820,7 +2820,7 @@ class Jeopardy extends React.Component<{
                         return (
                           <div
                             onClick={clue ? () => this.pickQ(id) : undefined}
-                            className="value box"
+                            className={`${clue ? 'value' : ''} box`}
                           >
                             {clue ? clue.value : ''}
                           </div>
@@ -2839,7 +2839,6 @@ class Jeopardy extends React.Component<{
                     <div
                       style={{
                         display: 'flex',
-                        height: '60px',
                       }}
                     >
                       {p.id in game.answers ? (
@@ -2859,6 +2858,48 @@ class Jeopardy extends React.Component<{
                           )
                         }
                       />
+                      <div
+                        style={{
+                          position: 'absolute',
+                          bottom: '4px',
+                          left: '0px',
+                          width: '100%',
+                          backgroundColor: '#' + getColorHex(p.id),
+                          color: 'white',
+                          borderRadius: '4px',
+                          fontSize: '10px',
+                          fontWeight: 700,
+                          display: 'flex',
+                        }}
+                      >
+                        <div
+                          title={this.props.nameMap[p.id] || p.id}
+                          style={{
+                            width: '100%',
+                            backdropFilter: 'brightness(80%)',
+                            padding: '4px',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            display: 'inline-block',
+                          }}
+                        >
+                          {this.props.nameMap[p.id] || p.id}
+                        </div>
+                      </div>
+                      {p.id in game.wagers ? (
+                        <div
+                          style={{
+                            position: 'absolute',
+                            bottom: '0px',
+                            right: '0px',
+                          }}
+                        >
+                          <Label title="Wager" circular size="tiny">
+                            {game.wagers[p.id] || 0}
+                          </Label>
+                        </div>
+                      ) : null}
                       <div className="icons">
                         {!game.picker || game.picker === p.id ? (
                           <Icon
@@ -2901,17 +2942,11 @@ class Jeopardy extends React.Component<{
                       }}
                     >
                       <div
-                        className={`score ${
+                        className={`points ${
                           game.scores[p.id] < 0 ? 'negative' : ''
                         }`}
                       >
                         {(game.scores[p.id] || 0).toLocaleString()}
-                      </div>
-                      <div className="name">{this.props.nameMap[p.id]}</div>
-                      <div className="name">
-                        {p.id in game.wagers
-                          ? `Wager: ${game.wagers[p.id]}`
-                          : ''}
                       </div>
                     </div>
                   </div>

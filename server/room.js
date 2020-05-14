@@ -468,14 +468,25 @@ module.exports = class Room {
         this.jpd.public.currentAnswer = this.jpd.board[
           this.jpd.public.currentQ
         ].answer;
-        this.jpd.public.currentJudgeAnswerIndex = 0;
+        this.advanceJudging();
+        if (!this.jpd.public.currentJudgeAnswer) {
+          this.jpd.public.canNextQ = true;
+        }
+        this.emitState();
+      };
+
+      this.advanceJudging = () => {
+        if (this.jpd.public.currentJudgeAnswerIndex === null) {
+          this.jpd.public.currentJudgeAnswerIndex = 0;
+        } else {
+          this.jpd.public.currentJudgeAnswerIndex += 1;
+        }
         this.jpd.public.currentJudgeAnswer = Object.keys(
           this.jpd.public.buzzes
         )[this.jpd.public.currentJudgeAnswerIndex];
         this.jpd.public.wagers[
           this.jpd.public.currentJudgeAnswer
         ] = this.jpd.wagers[this.jpd.public.currentJudgeAnswer];
-        this.emitState();
       };
 
       this.judgeAnswer = ({ id, correct }) => {
@@ -501,21 +512,17 @@ module.exports = class Room {
             this.jpd.public.currentJudgeAnswer &&
             this.jpd.public.currentJudgeAnswer in this.jpd.public.judges
           ) {
-            this.jpd.public.currentJudgeAnswerIndex += 1;
-            this.jpd.public.currentJudgeAnswer = Object.keys(
-              this.jpd.public.buzzes
-            )[this.jpd.public.currentJudgeAnswerIndex];
-            this.jpd.public.wagers[
-              this.jpd.public.currentJudgeAnswer
-            ] = this.jpd.wagers[this.jpd.public.currentJudgeAnswer];
+            this.advanceJudging();
           }
         }
         if (this.jpd.public.round === 'final') {
           // We can have multiple correct answers in final, so only move on if everyone is done
           if (this.roster.every((p) => p.id in this.jpd.public.judges)) {
+            this.jpd.public.canNextQ = true;
             this.nextQuestion();
           }
         } else if (correct || !this.jpd.public.currentJudgeAnswer) {
+          this.jpd.public.canNextQ = true;
           this.nextQuestion();
         }
         this.emitState();
@@ -706,8 +713,12 @@ module.exports = class Room {
       socket.on('JPD:judge', this.judgeAnswer);
       socket.on('JPD:skipQ', () => {
         this.jpd.public.skips[socket.id] = true;
-        if (this.roster.every((p) => p.id in this.jpd.public.skips)) {
+        if (
+          this.jpd.public.canNextQ ||
+          this.roster.every((p) => p.id in this.jpd.public.skips)
+        ) {
           // If everyone votes to skip move to the next question
+          // Or we are in the post-judging phase and can move on
           this.nextQuestion();
         }
         this.emitState();

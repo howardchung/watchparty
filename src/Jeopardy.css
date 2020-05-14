@@ -26,13 +26,15 @@
 .board {
   background-color: black;
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
-  grid-template-rows: repeat(6, 80px);
+  grid-template-columns: repeat(6, 120px);
+  grid-template-rows: repeat(6, 70px);
   grid-gap: 6px;
   padding: 6px;
   align-items: center;
   justify-content: center;
   text-align: center;
+  width: fit-content;
+  margin: 0 auto;
 }
 
 .box {
@@ -47,40 +49,55 @@
 
 .category {
   font-family: 'Swiss 911';
-  font-size: 22px;
-  line-height: 22px;
+  font-size: 18px;
+  line-height: 18px;
   letter-spacing: 1px;
   color: #e1f3ff;
 }
 
 .value {
   font-family: 'Swiss 911';
-  font-size: 60px;
+  font-size: 50px;
   color: #d7a04b;
-  cursor: pointer;
   text-shadow: black 4px 4px;
 }
 
+.value:hover {
+  cursor: pointer;
+  border: 1px solid white;
+}
+
 .clueContainer {
-  height: 522px;
+  width: 762px;
+  height: 462px;
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 20px 60px;
   background-color: #0000b5;
   position: relative;
+  margin: 0 auto;
 }
 
 .clue {
   font-family: 'Korinna';
   text-transform: uppercase;
   color: white;
-  font-size: 36px;
-  line-height: 36px;
+  font-size: 30px;
+  line-height: 30px;
   text-align: center;
   flex-grow: 1;
   display: flex;
   align-items: center;
+}
+
+.answer {
+  font-family: 'Korinna';
+  text-transform: uppercase;
+  color: white;
+  font-size: 22px;
+  line-height: 22px;
+  text-align: center;
 }
 
 .scoreboard {
@@ -99,6 +116,7 @@
 
 .scoreboard .picture {
   width: 100%;
+  margin-bottom: -4px;
 }
 
 .scoreboard .picture img {
@@ -116,7 +134,7 @@
   padding: 8px;
 }
 
-.scoreboard .score {
+.scoreboard .points {
   font-family: 'Univers';
   color: white;
   background-color: #0000b5;
@@ -125,10 +143,10 @@
   justify-content: center;
   font-size: 24px;
   line-height: 30px;
-  padding: 10px 4px;
+  padding: 4px 10px;
 }
 
-.scoreboard .score.negative {
+.scoreboard .points.negative {
   color: red;
 }
 
