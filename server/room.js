@@ -282,16 +282,13 @@ module.exports = class Room {
         // Map of x_y coordinates to questions
         let output = {};
         questions.forEach((q) => {
-          // TODO just for testing DD, remove this later
-          if (q.daily_double) {
-            if (!isPublic) {
-              output[`${q.xcoord}_${q.ycoord}`] = q;
-            } else {
-              output[`${q.xcoord}_${q.ycoord}`] = {
-                value: q.value,
-                category: q.category,
-              };
-            }
+          if (!isPublic) {
+            output[`${q.xcoord}_${q.ycoord}`] = q;
+          } else {
+            output[`${q.xcoord}_${q.ycoord}`] = {
+              value: q.value,
+              category: q.category,
+            };
           }
         });
         return output;
@@ -311,47 +308,61 @@ module.exports = class Room {
         this.jpd = {
           loadedData,
           answers: {},
+          wagers: {},
           board: {},
-          unlockBuzzTimeout: null,
+          playClueTimeout: null,
           questionAnswerTimeout: null,
           public: {
             epNum,
             airDate,
             board: {},
             scores: {}, // player scores
+            round: '', // jeopardy or double or final
+            picker: null, // If null let anyone pick, otherwise last correct answer
             currentQ: null,
             currentAnswer: null,
             currentValue: 0,
             currentJudgeAnswer: null,
             currentJudgeAnswerIndex: null,
             currentDailyDouble: false,
+            waitingForWager: null,
+            questionDuration: 0,
             answers: {},
             submitted: {},
             buzzes: {},
             readings: {},
             skips: {},
             judges: {},
+            wagers: {},
             canBuzz: false,
             canNextQ: false,
-            round: '', // jeopardy or double or final
-            dailyDoublePlayer: undefined,
-            picker: null, // If null let anyone pick, otherwise last correct answer
+            dailyDoublePlayer: null,
           },
         };
         this.nextRound();
-        this.emitState();
       };
 
       this.emitState = () => {
         io.of(roomId).emit('JPD:state', this.jpd.public);
       };
 
+      this.playCategories = () => {
+        io.of(roomId).emit('JPD:playCategories');
+      };
+
       this.resetAfterQuestion = () => {
         this.jpd.answers = {};
-        clearTimeout(this.jpd.unlockBuzzTimeout);
-        this.jpd.unlockBuzzTimeout = null;
+        this.jpd.wagers = {};
+        clearTimeout(this.jpd.playClueTimeout);
         clearTimeout(this.jpd.questionAnswerTimeout);
-        this.jpd.questionAnswerTimeout = null;
+        this.jpd.public.currentQ = null;
+        this.jpd.public.currentAnswer = null;
+        this.jpd.public.currentValue = 0;
+        this.jpd.public.currentJudgeAnswer = null;
+        this.jpd.public.currentJudgeAnswerIndex = null;
+        this.jpd.public.currentDailyDouble = false;
+        this.jpd.public.waitingForWager = null;
+        this.jpd.public.questionDuration = 0;
         this.jpd.public.answers = {};
         this.jpd.public.submitted = {};
         this.jpd.public.buzzes = {};
@@ -361,12 +372,7 @@ module.exports = class Room {
         this.jpd.public.wagers = {};
         this.jpd.public.canBuzz = false;
         this.jpd.public.canNextQ = false;
-        this.jpd.public.currentQ = null;
-        this.jpd.public.currentAnswer = null;
-        this.jpd.public.currentJudgeAnswer = null;
-        this.jpd.public.currentJudgeAnswerIndex = null;
-        this.jpd.public.currentValue = 0;
-        this.jpd.public.currentDailyDouble = false;
+        this.jpd.public.dailyDoublePlayer = null;
       };
 
       this.nextQuestion = () => {
@@ -393,34 +399,64 @@ module.exports = class Room {
           });
         } else if (this.jpd.public.round === 'double') {
           this.jpd.public.round = 'final';
+          this.jpd.public.waitingForWager = {};
+          this.roster.forEach((p) => {
+            this.jpd.public.waitingForWager[p.id] = true;
+          });
+          // autopick the question
+          this.jpd.public.currentQ = '1_1';
+          // autobuzz the players in ascending score order
+          let playerIds = this.roster.map((p) => p.id);
+          playerIds.sort(
+            (a, b) =>
+              Number(this.jpd.public.scores[a] || 0) -
+              Number(this.jpd.public.scores[b] || 0)
+          );
+          playerIds.forEach((pid) => {
+            this.jpd.public.buzzes[pid] = true;
+          });
+          // Play the category sound
+          io.of(roomId).emit('JPD:playRightanswer');
         } else if (this.jpd.public.round === 'final') {
           this.jpd.public.round = 'end';
         } else {
           this.jpd.public.round = 'jeopardy';
         }
-        this.jpd.board = constructBoard(
-          this.jpd.loadedData[this.jpd.public.round]
-        );
-        this.jpd.public.board = constructBoard(
-          this.jpd.loadedData[this.jpd.public.round],
-          true
-        );
+        if (this.jpd.public.round !== 'end') {
+          this.jpd.board = constructBoard(
+            this.jpd.loadedData[this.jpd.public.round]
+          );
+          this.jpd.public.board = constructBoard(
+            this.jpd.loadedData[this.jpd.public.round],
+            true
+          );
+        }
+        this.emitState();
+        if (
+          this.jpd.public.round === 'jeopardy' ||
+          this.jpd.public.round === 'double'
+        ) {
+          this.playCategories();
+        }
       };
 
-      this.unlockBuzz = () => {
-        this.jpd.public.canBuzz = true;
-        clearTimeout(this.jpd.unlockBuzzTimeout);
-        this.jpd.unlockBuzzTimeout = null;
+      this.unlockAnswer = (duration) => {
+        const durationMs = Number(duration || 15000);
+        this.jpd.public.questionDuration = durationMs;
+        clearTimeout(this.jpd.questionAnswerTimeout);
         this.jpd.questionAnswerTimeout = setTimeout(() => {
-          io.of(roomId).emit('JPD:playTimesUp');
+          if (this.jpd.public.round !== 'final') {
+            io.of(roomId).emit('JPD:playTimesUp');
+          }
+          console.log('questionAnswerTimeout', this.jpd.questionAnswerTimeout);
           this.revealAnswer();
-        }, 15000);
-        this.emitState();
+        }, durationMs);
       };
 
       this.revealAnswer = () => {
         clearTimeout(this.jpd.questionAnswerTimeout);
-        this.jpd.questionAnswerTimeout = null;
+        this.jpd.public.questionDuration = 0;
+
         // Add empty answers for anyone who buzzed but didn't submit anything
         Object.keys(this.jpd.public.buzzes).forEach((key) => {
           if (!this.jpd.answers[key]) {
@@ -436,6 +472,9 @@ module.exports = class Room {
         this.jpd.public.currentJudgeAnswer = Object.keys(
           this.jpd.public.buzzes
         )[this.jpd.public.currentJudgeAnswerIndex];
+        this.jpd.public.wagers[
+          this.jpd.public.currentJudgeAnswer
+        ] = this.jpd.wagers[this.jpd.public.currentJudgeAnswer];
         this.emitState();
       };
 
@@ -466,15 +505,101 @@ module.exports = class Room {
             this.jpd.public.currentJudgeAnswer = Object.keys(
               this.jpd.public.buzzes
             )[this.jpd.public.currentJudgeAnswerIndex];
+            this.jpd.public.wagers[
+              this.jpd.public.currentJudgeAnswer
+            ] = this.jpd.wagers[this.jpd.public.currentJudgeAnswer];
           }
         }
         if (this.jpd.public.round === 'final') {
           // We can have multiple correct answers in final, so only move on if everyone is done
-          if (this.roster.every(p => p.id in this.jpd.public.judges)) {
+          if (this.roster.every((p) => p.id in this.jpd.public.judges)) {
             this.nextQuestion();
           }
         } else if (correct || !this.jpd.public.currentJudgeAnswer) {
           this.nextQuestion();
+        }
+        this.emitState();
+      };
+
+      this.submitWager = (id, wager) => {
+        if (id in this.jpd.wagers) {
+          return;
+        }
+        // User setting a wager for DD or final
+        // Can bet up to current score, minimum of 1000 in single or 2000 in double, 0 in final
+        let maxWager = 0;
+        let minWager = 5;
+        if (this.jpd.public.round === 'jeopardy') {
+          maxWager = Math.max(this.jpd.public.scores[id] || 0, 1000);
+        } else if (this.jpd.public.round === 'double') {
+          maxWager = Math.max(this.jpd.public.scores[id] || 0, 2000);
+        } else if (this.jpd.public.round === 'final') {
+          minWager = 0;
+          maxWager = Math.max(this.jpd.public.scores[id] || 0, 0);
+        }
+        let numWager = Number(wager);
+        if (Number.isNaN(Number(wager))) {
+          numWager = minWager;
+        } else {
+          numWager = Math.min(Math.max(numWager, minWager), maxWager);
+        }
+        console.log('[WAGER]', id, wager, numWager);
+        if (id === this.jpd.public.dailyDoublePlayer) {
+          this.jpd.wagers[id] = numWager;
+          this.jpd.public.wagers[id] = numWager;
+          this.jpd.public.waitingForWager = null;
+          this.jpd.public.board[
+            this.jpd.public.currentQ
+          ].question = this.jpd.board[this.jpd.public.currentQ].question;
+          this.triggerPlayClue();
+          this.emitState();
+        }
+        if (this.jpd.public.round === 'final' && this.jpd.public.currentQ) {
+          // store the wagers privately until everyone's made one
+          this.jpd.wagers[id] = numWager;
+          delete this.jpd.public.waitingForWager[id];
+          if (this.roster.every((p) => p.id in this.jpd.wagers)) {
+            // if final, reveal clue if all players made wager
+            this.jpd.public.waitingForWager = null;
+            this.jpd.public.board[
+              this.jpd.public.currentQ
+            ].question = this.jpd.board[this.jpd.public.currentQ].question;
+            this.triggerPlayClue();
+          }
+          this.emitState();
+        }
+      };
+
+      this.triggerPlayClue = () => {
+        // trigger reads on players, keep track of current roster
+        // When all of those players report read done, unlock buzz/start DD/final timer
+        // We do the snapshot to avoid issues if people join during the reading
+        this.jpd.snapshotRoster = [...this.roster];
+        const clue = this.jpd.public.board[this.jpd.public.currentQ];
+        io.of(roomId).emit(
+          'JPD:playClue',
+          this.jpd.public.currentQ,
+          clue && clue.question
+        );
+        // Set a max time limit for waiting for playClueDones
+        clearTimeout(this.jpd.playClueTimeout);
+        this.jpd.playClueTimeout = setTimeout(() => {
+          console.log('playClueTimeout', this.jpd.playClueTimeout);
+          this.playClueDone();
+        }, 30000);
+      };
+
+      this.playClueDone = () => {
+        clearTimeout(this.jpd.playClueTimeout);
+        if (this.jpd.public.currentDailyDouble) {
+          this.unlockAnswer();
+        } else if (this.jpd.public.round === 'final') {
+          this.unlockAnswer(30000);
+          // Play final jeopardy music
+          io.of(roomId).emit('JPD:playFinalJeopardy');
+        } else {
+          this.jpd.public.canBuzz = true;
+          this.unlockAnswer();
         }
         this.emitState();
       };
@@ -504,27 +629,47 @@ module.exports = class Room {
         if (!this.jpd.public.board[id]) {
           return;
         }
+        this.jpd.public.currentQ = id;
+        this.jpd.public.currentValue = this.jpd.public.board[id].value;
         // check if it's a daily double
         if (this.jpd.board[id].daily_double) {
+          // if it is, don't show it yet, we need to collect wager info based only on category
           this.jpd.public.currentDailyDouble = true;
           this.jpd.public.dailyDoublePlayer = socket.id;
-          // if it is, don't show it yet, we need to collect wager info based only on category
+          this.jpd.public.waitingForWager = { [socket.id]: true };
+          // Autobuzz the player, all others pass
+          this.roster.forEach((p) => {
+            if (p.id === socket.id) {
+              this.jpd.public.buzzes[p.id] = true;
+            } else {
+              this.jpd.public.submitted[p.id] = true;
+            }
+          });
+          io.of(roomId).emit('JPD:playDailyDouble');
         } else {
           // Put Q in public state
-          this.jpd.public.currentQ = id;
-          this.jpd.public.currentValue = this.jpd.public.board[id].value;
-          this.jpd.public.board[id].question = this.jpd.board[id].question;
-          this.jpd.unlockBuzzTimeout = setTimeout(this.unlockBuzz, 30000);
+          this.jpd.public.board[
+            this.jpd.public.currentQ
+          ].question = this.jpd.board[this.jpd.public.currentQ].question;
+          this.triggerPlayClue();
         }
         this.emitState();
       });
-      socket.on('JPD:readingDone', () => {
-        // When all players done, can buzz
-        this.jpd.public.readings[socket.id] = true;
-        if (this.roster.every((p) => p.id in this.jpd.public.readings)) {
-          this.unlockBuzz();
+      socket.on('JPD:playClueDone', (question) => {
+        // Make sure it matches the current question, or reject it
+        // console.log('[PLAYCLUEDONE]', socket.id, question, this.jpd.public.currentQ);
+        if (question !== this.jpd.public.currentQ) {
+          return;
         }
-        this.emitState();
+        // When all players done, trigger playClueDone
+        this.jpd.public.readings[socket.id] = true;
+        if (
+          this.jpd.snapshotRoster.every((p) => p.id in this.jpd.public.readings)
+        ) {
+          this.playClueDone();
+        } else {
+          this.emitState();
+        }
       });
       socket.on('JPD:buzz', () => {
         if (!this.jpd.public.canBuzz) {
@@ -536,40 +681,28 @@ module.exports = class Room {
         this.jpd.public.buzzes[socket.id] = Number(new Date());
         this.emitState();
       });
-      socket.on('JPD:answer', (answer) => {
-        if (!this.jpd.questionAnswerTimeout) {
+      socket.on('JPD:answer', (question, answer) => {
+        if (question !== this.jpd.public.currentQ) {
           return;
         }
-        console.log('[ANSWER]', socket.id, answer);
+        if (!this.jpd.public.questionDuration) {
+          return;
+        }
+        console.log('[ANSWER]', socket.id, question, answer);
         if (answer) {
           this.jpd.answers[socket.id] = answer;
         }
         this.jpd.public.submitted[socket.id] = true;
         this.emitState();
-        if (this.roster.every((p) => p.id in this.jpd.public.submitted)) {
+        if (
+          this.jpd.public.round !== 'final' &&
+          this.roster.every((p) => p.id in this.jpd.public.submitted)
+        ) {
           this.revealAnswer();
         }
       });
 
-      socket.on('JPD:wager', (wager) => {
-        if (socket.id in this.jpd.public.wagers) {
-          return;
-        }
-        // User setting a wager for DD or final
-        // Can bet up to current score, minimum of 1000 in single or 2000 in double, 0 in final
-        // TODO validate wager based on player's current score
-        if (socket.id === this.jpd.public.dailyDoublePlayer) {
-          this.jpd.public.wagers[socket.id] = Number(wager) || 0;
-          // TODO, if DD, reveal the clue
-          // Set the user as buzzed manually
-          this.jpd.public.buzzes[socket.id] = true;
-          this.emitState();
-        }
-        if (this.jpd.public.round === 'final') {
-          // TODO if final, reveal clue if all players made wager
-          // TODO
-        }
-      });
+      socket.on('JPD:wager', (wager) => this.submitWager(socket.id, wager));
       socket.on('JPD:judge', this.judgeAnswer);
       socket.on('JPD:skipQ', () => {
         this.jpd.public.skips[socket.id] = true;
@@ -596,6 +729,13 @@ module.exports = class Room {
             this.judgeAnswer({ id: socket.id, correct: false });
           } else {
             this.jpd.public.judges[socket.id] = false;
+          }
+          // If player who needs to submit wager leaves, submit 0
+          if (
+            this.jpd.public.waitingForWager &&
+            this.jpd.public.waitingForWager[socket.id]
+          ) {
+            this.submitWager(socket.id, 0);
           }
         }
       });

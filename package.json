@@ -42,7 +42,7 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "dev": "nodemon --watch server server/server",
+    "dev": "nodemon --delay 1500 --watch server server/server",
     "server": "node server/server",
     "prettier": "prettier --single-quote --write ."
   },

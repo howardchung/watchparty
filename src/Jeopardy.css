@@ -12,6 +12,13 @@
   src: url('/jeopardy/swiss911-xcm-bt.ttf');
 }
 
+@font-face {
+  font-family: 'Univers';
+  font-style: normal;
+  font-weight: 400;
+  src: url('/jeopardy/univers-75-black.ttf');
+}
+
 .title {
   font-size: 24px;
 }
@@ -58,6 +65,7 @@
   height: 522px;
   display: flex;
   flex-direction: column;
+  align-items: center;
   padding: 20px 60px;
   background-color: #0000b5;
   position: relative;
@@ -70,13 +78,16 @@
   font-size: 36px;
   line-height: 36px;
   text-align: center;
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
 }
 
 .scoreboard {
   display: flex;
   flex-direction: column;
   width: 120px;
-  margin-right: 4px;
+  margin-right: 8px;
 }
 
 .scoreboard .icons {
@@ -87,8 +98,7 @@
 }
 
 .scoreboard .picture {
-  width: 120px;
-  height: 120px;
+  width: 100%;
 }
 
 .scoreboard .picture img {
@@ -103,17 +113,17 @@
   justify-content: center;
   font-size: 12px;
   line-height: 12px;
-  padding: 4px;
+  padding: 8px;
 }
 
 .scoreboard .score {
-  font-family: 'Swiss 911';
+  font-family: 'Univers';
   color: white;
   background-color: #0000b5;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 30px;
+  font-size: 24px;
   line-height: 30px;
   padding: 10px 4px;
 }
@@ -139,4 +149,14 @@
 
 #intro video {
   width: 100%;
+}
+
+#endgame {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  position: absolute;
+  width: 100%;
+  padding: 20px;
 }
