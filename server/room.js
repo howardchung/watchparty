@@ -319,27 +319,33 @@ module.exports = class Room {
             scores: {}, // player scores
             round: '', // jeopardy or double or final
             picker: null, // If null let anyone pick, otherwise last correct answer
-            currentQ: null,
-            currentAnswer: null,
-            currentValue: 0,
-            currentJudgeAnswer: null,
-            currentJudgeAnswerIndex: null,
-            currentDailyDouble: false,
-            waitingForWager: null,
-            questionDuration: 0,
-            answers: {},
-            submitted: {},
-            buzzes: {},
-            readings: {},
-            skips: {},
-            judges: {},
-            wagers: {},
-            canBuzz: false,
-            canNextQ: false,
-            dailyDoublePlayer: null,
+            ...this.getPerQuestionState(),
           },
         };
         this.nextRound();
+      };
+
+      this.getPerQuestionState = () => {
+        return {
+          currentQ: null,
+          currentAnswer: null,
+          currentValue: 0,
+          currentJudgeAnswer: null,
+          currentJudgeAnswerIndex: null,
+          currentDailyDouble: false,
+          waitingForWager: null,
+          questionDuration: 0,
+          answers: {},
+          submitted: {},
+          buzzes: {},
+          readings: {},
+          skips: {},
+          judges: {},
+          wagers: {},
+          canBuzz: false,
+          canNextQ: false,
+          dailyDoublePlayer: null,
+        };
       };
 
       this.emitState = () => {
@@ -355,24 +361,7 @@ module.exports = class Room {
         this.jpd.wagers = {};
         clearTimeout(this.jpd.playClueTimeout);
         clearTimeout(this.jpd.questionAnswerTimeout);
-        this.jpd.public.currentQ = null;
-        this.jpd.public.currentAnswer = null;
-        this.jpd.public.currentValue = 0;
-        this.jpd.public.currentJudgeAnswer = null;
-        this.jpd.public.currentJudgeAnswerIndex = null;
-        this.jpd.public.currentDailyDouble = false;
-        this.jpd.public.waitingForWager = null;
-        this.jpd.public.questionDuration = 0;
-        this.jpd.public.answers = {};
-        this.jpd.public.submitted = {};
-        this.jpd.public.buzzes = {};
-        this.jpd.public.readings = {};
-        this.jpd.public.skips = {};
-        this.jpd.public.judges = {};
-        this.jpd.public.wagers = {};
-        this.jpd.public.canBuzz = false;
-        this.jpd.public.canNextQ = false;
-        this.jpd.public.dailyDoublePlayer = null;
+        this.jpd.public = {...this.jpd.public, ...this.getPerQuestionState()};
       };
 
       this.nextQuestion = () => {

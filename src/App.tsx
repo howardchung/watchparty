@@ -2765,7 +2765,6 @@ class Jeopardy extends React.Component<{
                   {game.waitingForWager &&
                   game.waitingForWager[this.props.socket.id] ? (
                     <Input
-                      autoFocus
                       label="Wager"
                       value={this.state.localWager}
                       onChange={(e) =>
@@ -2836,18 +2835,6 @@ class Jeopardy extends React.Component<{
               {this.props.participants.map((p) => {
                 return (
                   <div className="scoreboard">
-                    <div
-                      style={{
-                        display: 'flex',
-                      }}
-                    >
-                      {p.id in game.answers ? (
-                        <Label size="large" pointing="below" fluid>
-                          {/* <Label size="tiny" circular>1</Label> */}
-                          {game.answers[p.id]}
-                        </Label>
-                      ) : null}
-                    </div>
                     <div className="picture" style={{ position: 'relative' }}>
                       <img
                         src={
@@ -2934,13 +2921,6 @@ class Jeopardy extends React.Component<{
                         </div>
                       ) : null}
                     </div>
-                    <div
-                      style={{
-                        border: game.buzzes[p.id]
-                          ? 'solid 4px white'
-                          : 'solid 4px black',
-                      }}
-                    >
                       <div
                         className={`points ${
                           game.scores[p.id] < 0 ? 'negative' : ''
@@ -2948,6 +2928,10 @@ class Jeopardy extends React.Component<{
                       >
                         {(game.scores[p.id] || 0).toLocaleString()}
                       </div>
+                    <div
+                      className={`answerBox ${game.buzzes[p.id] ? 'buzz' : ''}`}
+                    >
+                      {game && game.answers[p.id]}
                     </div>
                   </div>
                 );
@@ -2978,7 +2962,7 @@ class Jeopardy extends React.Component<{
           </Button>
           <div>Jeopardy!</div>
           {game && <div>{'#' + game.epNum}</div>}
-          {game && <div>{new Date(game.airDate).toDateString()}</div>}
+          {game && <div>{new Date(game.airDate + 'T00:00').toDateString()}</div>}
         </div>
         {process.env.NODE_ENV === 'development' && (
           <pre
