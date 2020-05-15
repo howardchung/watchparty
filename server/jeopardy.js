@@ -31,11 +31,13 @@ function syllableCount(word) {
 module.exports = class Jeopardy {
   constructor(io, roomId, roster) {
     this.jpd = this.getGameState(null, null, null, [], [], []);
+    this.io = io;
+    this.roomId = roomId;
     this.roster = roster;
 
-    io.of(roomId).on('connection', (socket) => {
+    this.io.of(this.roomId).on('connection', (socket) => {
       socket.on('JPD:cmdIntro', () => {
-        io.of(roomId).emit('JPD:playIntro');
+        this.io.of(this.roomId).emit('JPD:playIntro');
       });
       socket.on('JPD:init', () => {
         if (this.jpd) {
@@ -75,7 +77,7 @@ module.exports = class Jeopardy {
               this.jpd.public.submitted[p.id] = true;
             }
           });
-          io.of(roomId).emit('JPD:playDailyDouble');
+          this.io.of(this.roomId).emit('JPD:playDailyDouble');
         } else {
           // Put Q in public state
           this.jpd.public.board[
@@ -217,11 +219,11 @@ module.exports = class Jeopardy {
   }
 
   emitState() {
-    io.of(roomId).emit('JPD:state', this.jpd.public);
+    this.io.of(this.roomId).emit('JPD:state', this.jpd.public);
   }
 
   playCategories() {
-    io.of(roomId).emit('JPD:playCategories');
+    this.io.of(this.roomId).emit('JPD:playCategories');
   }
 
   resetAfterQuestion() {
@@ -273,7 +275,7 @@ module.exports = class Jeopardy {
         this.jpd.public.buzzes[pid] = true;
       });
       // Play the category sound
-      io.of(roomId).emit('JPD:playRightanswer');
+      this.io.of(this.roomId).emit('JPD:playRightanswer');
     } else if (this.jpd.public.round === 'final') {
       this.jpd.public.round = 'end';
     } else {
@@ -301,7 +303,7 @@ module.exports = class Jeopardy {
     clearTimeout(this.jpd.questionAnswerTimeout);
     this.jpd.questionAnswerTimeout = setTimeout(() => {
       if (this.jpd.public.round !== 'final') {
-        io.of(roomId).emit('JPD:playTimesUp');
+        this.io.of(this.roomId).emit('JPD:playTimesUp');
       }
       console.log('questionAnswerTimeout', this.jpd.questionAnswerTimeout);
       this.revealAnswer();
@@ -432,7 +434,7 @@ module.exports = class Jeopardy {
 
   triggerPlayClue() {
     const clue = this.jpd.public.board[this.jpd.public.currentQ];
-    io.of(roomId).emit(
+    this.io.of(this.roomId).emit(
       'JPD:playClue',
       this.jpd.public.currentQ,
       clue && clue.question
@@ -464,7 +466,7 @@ module.exports = class Jeopardy {
     } else if (this.jpd.public.round === 'final') {
       this.unlockAnswer(30000);
       // Play final jeopardy music
-      io.of(roomId).emit('JPD:playFinalJeopardy');
+      this.io.of(this.roomId).emit('JPD:playFinalJeopardy');
     } else {
       this.jpd.public.canBuzz = true;
       this.unlockAnswer();
