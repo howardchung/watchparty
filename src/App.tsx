@@ -47,6 +47,7 @@ import {
   debounce,
   decodeEntities,
   getMediaPathForList,
+  shuffle,
 } from './utils';
 import { getCurrentSettings } from './Settings';
 import Video from './vbrowser/Video';
@@ -2482,6 +2483,7 @@ class Jeopardy extends React.Component<{
     localWagerSubmitted: false,
     categoryMask: Array(6).fill(true),
     categoryReadTime: 0,
+    clueMask: {} as any,
     readingDisabled: false,
   };
   async componentDidMount() {
@@ -2520,16 +2522,37 @@ class Jeopardy extends React.Component<{
     });
     this.props.socket.on('JPD:playCategories', async () => {
       const now = Number(new Date());
+      const clueMask: any = {};
+      const clueMaskOrder = [];
+      for (let i = 1; i <= 6; i++) {
+        for (let j = 1; j <= 5; j++) {
+          clueMask[`${i}_${j}`] = true;
+          clueMaskOrder.push(`${i}_${j}`);
+        }
+      }
       this.setState({
         categoryMask: Array(6).fill(false),
         categoryReadTime: now,
+        clueMask,
       });
-      const categories = this.getCategories();
       // Run board intro sequence
       // Play the fill sound
       new Audio('/jeopardy/jeopardy-board-fill.mp3').play();
-      await new Promise((resolve) => setTimeout(resolve, 4000));
+      // Randomly choose ordering of the 30 clues
+      // Split into 6 sets of 5
+      // Each half second show another set of 5
+      shuffle(clueMaskOrder);
+      const clueSets = [];
+      for (let i = 0; i < clueMaskOrder.length; i += 5) {
+        clueSets.push(clueMaskOrder.slice(i, i + 5));
+      }
+      for (let i = 0; i < clueSets.length; i++) {
+        await new Promise((resolve) => setTimeout(resolve, 400));
+        clueSets[i].forEach(clue => delete this.state.clueMask[clue]);
+        this.setState({ clueMask: this.state.clueMask });
+      }
       // Reveal and read categories
+      const categories = this.getCategories();
       await this.sayText('Here are the categories.');
       for (let i = 0; i < this.state.categoryMask.length; i++) {
         if (this.state.categoryReadTime !== now) {
@@ -2831,7 +2854,7 @@ class Jeopardy extends React.Component<{
                             onClick={clue ? () => this.pickQ(id) : undefined}
                             className={`${clue ? 'value' : ''} box`}
                           >
-                            {clue ? clue.value : ''}
+                            {(!this.state.clueMask[id] && clue) ? clue.value : ''}
                           </div>
                         );
                       })}
@@ -2975,7 +2998,7 @@ class Jeopardy extends React.Component<{
           {game && (
             <div>{new Date(game.airDate + 'T00:00').toDateString()}</div>
           )}
-          <div>
+          <div style={{ display: 'flex' }}>
             <Checkbox
               toggle
               onChange={() => {
@@ -2988,8 +3011,8 @@ class Jeopardy extends React.Component<{
                 }
               }}
               checked={this.state.readingDisabled}
-              label="Disable reading"
             />
+            <div style={{ color: 'white', fontSize: '12px', marginLeft: '4px' }}>Disable reading</div>
           </div>
         </div>
         {process.env.NODE_ENV === 'development' && (

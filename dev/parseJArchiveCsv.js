@@ -38,9 +38,25 @@ all.forEach((row) => {
     return;
   }
   if (!output[row.epNum]) {
+    let info = undefined;
+    if (/^\d{4} Teen Tournament/.test(row.extra_info)) {
+      info = 'teen';
+    } else if (/^\d{4} College Championship/.test(row.extra_info)) {
+      info = 'college';
+    } else if (/^\d{4} Kids Week/.test(row.extra_info)) {
+      info = 'kids';
+    } else if (/^\d{4} Celebrity/.test(row.extra_info)) {
+      info = 'celebrity';
+    } else if (/^\d{4} Teacher/.test(row.extra_info)) {
+      info = 'teacher';
+    }
+    if (info) {
+      console.log(row.extra_info);
+    }
     output[row.epNum] = {
       epNum: row.epNum,
       airDate: row.airDate,
+      info,
       jeopardy: [],
       double: [],
       final: [],
