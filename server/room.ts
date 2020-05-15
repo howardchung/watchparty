@@ -1,5 +1,4 @@
 import { assignVM, resetVM } from './vm';
-import { Jeopardy } from './jeopardy';
 import { Socket } from 'socket.io';
 
 module.exports = class Room {
@@ -14,12 +13,10 @@ module.exports = class Room {
   private vBrowser:
     | { assignTime?: number; pass?: string; host?: string; id?: string }
     | undefined = undefined;
-  private jpd: Jeopardy | null = null;
   private io: SocketIO.Server;
   public roomId: string;
 
   constructor(io: SocketIO.Server, roomId: string, roomData: string) {
-    this.jpd = new Jeopardy(io, roomId, this.roster);
     this.roomId = roomId;
     this.io = io;
 
