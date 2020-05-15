@@ -543,22 +543,33 @@ export class Jeopardy extends React.Component<{
             text="New Game"
           >
             <Dropdown.Menu>
-            {[
-              { key: 'all', value: null, text: 'Any' },
-              { key: 'kids', value: 'kids', text: 'Kids Week' },
-              { key: 'teen', value: 'teen', text: 'Teen Tournament' },
-              {
-                key: 'college',
-                value: 'college',
-                text: 'College Championship',
-              },
-              {
-                key: 'celebrity',
-                value: 'celebrity',
-                text: 'Celebrity Jeopardy',
-              },
-              { key: 'teacher', value: 'teacher', text: 'Teachers Tournament' },
-            ].map(item => <Dropdown.Item key={item.key} onClick={() => this.newGame(null, item.value)}>{item.text}</Dropdown.Item>)}
+              {[
+                { key: 'all', value: null, text: 'Any' },
+                { key: 'kids', value: 'kids', text: 'Kids Week' },
+                { key: 'teen', value: 'teen', text: 'Teen Tournament' },
+                {
+                  key: 'college',
+                  value: 'college',
+                  text: 'College Championship',
+                },
+                {
+                  key: 'celebrity',
+                  value: 'celebrity',
+                  text: 'Celebrity Jeopardy',
+                },
+                {
+                  key: 'teacher',
+                  value: 'teacher',
+                  text: 'Teachers Tournament',
+                },
+              ].map((item) => (
+                <Dropdown.Item
+                  key={item.key}
+                  onClick={() => this.newGame(null, item.value)}
+                >
+                  {item.text}
+                </Dropdown.Item>
+              ))}
             </Dropdown.Menu>
           </Dropdown>
           <div>Jeopardy!</div>
