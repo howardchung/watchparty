@@ -39,8 +39,6 @@ import {
   getMediaType,
   isMobile,
   formatSpeed,
-  getDefaultPicture,
-  getColorHex,
   formatTimestamp,
   debounce,
   decodeEntities,
