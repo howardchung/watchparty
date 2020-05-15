@@ -1,12 +1,13 @@
 import React from 'react';
 import { Button, Input, Icon, Comment, Segment } from 'semantic-ui-react';
 import { formatTimestamp, getDefaultPicture, getColorHex } from './utils';
+import { Socket } from 'socket.io';
 
 interface ChatProps {
   chat: ChatMessage[];
   nameMap: StringDict;
   pictureMap: StringDict;
-  socket: any;
+  socket: Socket;
   scrollTimestamp: number;
   className?: string;
   getMediaDisplayName: Function;

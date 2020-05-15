@@ -1,95 +1,27 @@
-const { assignVM, resetVM } = require('./vm');
+import { assignVM, resetVM } from './vm';
+import { Jeopardy } from './jeopardy';
+import { Socket } from 'socket.io';
 
 module.exports = class Room {
-  constructor(io, roomId, roomData) {
-    this.video = '';
-    this.videoTS = 0;
-    this.paused = false;
-    this.roster = [];
-    this.chat = [];
-    this.tsMap = {};
-    this.nameMap = {};
-    this.pictureMap = {};
-    this.vBrowser = undefined;
+  private video = '';
+  private videoTS = 0;
+  private paused = false;
+  private roster: User[] = [];
+  private chat: ChatMessage[] = [];
+  private tsMap: NumberDict = {};
+  private nameMap: StringDict = {};
+  private pictureMap: StringDict = {};
+  private vBrowser:
+    | { assignTime?: number; pass?: string; host?: string; id?: string }
+    | undefined = undefined;
+  private jpd: Jeopardy | null = null;
+  private io: SocketIO.Server;
+  public roomId: string;
+
+  constructor(io: SocketIO.Server, roomId: string, roomData: string) {
+    this.jpd = new Jeopardy(io, roomId, this.roster);
     this.roomId = roomId;
-
-    this.serialize = () => {
-      return JSON.stringify({
-        video: this.video,
-        videoTS: this.videoTS,
-        paused: this.paused,
-        nameMap: this.nameMap,
-        pictureMap: this.pictureMap,
-        chat: this.chat,
-        vBrowser: this.vBrowser,
-      });
-    };
-
-    this.deserialize = (roomData) => {
-      this.video = roomData.video;
-      this.videoTS = roomData.videoTS;
-      this.paused = roomData.paused;
-      if (roomData.chat) {
-        this.chat = roomData.chat;
-      }
-      if (roomData.nameMap) {
-        this.nameMap = roomData.nameMap;
-      }
-      if (roomData.pictureMap) {
-        this.pictureMap = roomData.pictureMap;
-      }
-      if (roomData.vBrowser) {
-        this.vBrowser = roomData.vBrowser;
-      }
-    };
-
-    this.getHostState = () => {
-      return {
-        video: this.video,
-        videoTS: this.videoTS,
-        paused: this.paused,
-      };
-    };
-
-    this.resetRoomVM = async () => {
-      const id = this.vBrowser && this.vBrowser.id;
-      this.vBrowser = undefined;
-      this.roster.forEach((user, i) => {
-        this.roster[i].isController = false;
-      });
-      this.cmdHost(null, '');
-      if (id) {
-        try {
-          await resetVM(id);
-        } catch (e) {
-          console.error(e);
-        }
-      }
-    };
-
-    this.cmdHost = (socket, data) => {
-      this.video = data;
-      this.videoTS = 0;
-      this.paused = false;
-      this.tsMap = {};
-      io.of(roomId).emit('REC:tsMap', this.tsMap);
-      io.of(roomId).emit('REC:host', this.getHostState());
-      if (socket && data) {
-        const chatMsg = { id: socket.id, cmd: 'host', msg: data };
-        this.addChatMessage(socket, chatMsg);
-      }
-    };
-
-    this.addChatMessage = (socket, chatMsg) => {
-      const chatWithTime = {
-        ...chatMsg,
-        timestamp: new Date().toISOString(),
-        videoTS: this.tsMap[socket.id],
-      };
-      this.chat.push(chatWithTime);
-      this.chat = this.chat.splice(-100);
-      io.of(roomId).emit('REC:chat', chatWithTime);
-    };
+    this.io = io;
 
     if (roomData) {
       this.deserialize(roomData);
@@ -100,7 +32,7 @@ module.exports = class Room {
       io.of(roomId).emit('REC:tsMap', this.tsMap);
     }, 1000);
 
-    io.of(roomId).on('connection', (socket) => {
+    io.of(roomId).on('connection', (socket: Socket) => {
       // console.log(socket.id);
       this.roster.push({ id: socket.id });
 
@@ -111,7 +43,7 @@ module.exports = class Room {
       socket.emit('chatinit', this.chat);
       io.of(roomId).emit('roster', this.roster);
 
-      socket.on('CMD:name', (data) => {
+      socket.on('CMD:name', (data: string) => {
         if (!data) {
           return;
         }
@@ -121,14 +53,14 @@ module.exports = class Room {
         this.nameMap[socket.id] = data;
         io.of(roomId).emit('REC:nameMap', this.nameMap);
       });
-      socket.on('CMD:picture', (data) => {
+      socket.on('CMD:picture', (data: string) => {
         if (data && data.length > 10000) {
           return;
         }
         this.pictureMap[socket.id] = data;
         io.of(roomId).emit('REC:pictureMap', this.pictureMap);
       });
-      socket.on('CMD:host', (data) => {
+      socket.on('CMD:host', (data: string) => {
         if (data && data.length > 20000) {
           return;
         }
@@ -159,19 +91,19 @@ module.exports = class Room {
         this.paused = true;
         this.addChatMessage(socket, chatMsg);
       });
-      socket.on('CMD:seek', (data) => {
+      socket.on('CMD:seek', (data: number) => {
         this.videoTS = data;
         socket.broadcast.emit('REC:seek', data);
         const chatMsg = { id: socket.id, cmd: 'seek', msg: data };
         this.addChatMessage(socket, chatMsg);
       });
-      socket.on('CMD:ts', (data) => {
+      socket.on('CMD:ts', (data: number) => {
         if (data > this.videoTS) {
           this.videoTS = data;
         }
         this.tsMap[socket.id] = data;
       });
-      socket.on('CMD:chat', (data) => {
+      socket.on('CMD:chat', (data: string) => {
         if (data && data.length > 65536) {
           // TODO add some validation on client side too so we don't just drop long messages
           return;
@@ -179,21 +111,21 @@ module.exports = class Room {
         const chatMsg = { id: socket.id, msg: data };
         this.addChatMessage(socket, chatMsg);
       });
-      socket.on('CMD:joinVideo', (data) => {
+      socket.on('CMD:joinVideo', () => {
         const match = this.roster.find((user) => user.id === socket.id);
         if (match) {
           match.isVideoChat = true;
         }
         io.of(roomId).emit('roster', this.roster);
       });
-      socket.on('CMD:leaveVideo', (data) => {
+      socket.on('CMD:leaveVideo', () => {
         const match = this.roster.find((user) => user.id === socket.id);
         if (match) {
           match.isVideoChat = false;
         }
         io.of(roomId).emit('roster', this.roster);
       });
-      socket.on('CMD:joinScreenShare', (data) => {
+      socket.on('CMD:joinScreenShare', (data: { file: boolean }) => {
         const sharer = this.roster.find((user) => user.isScreenShare);
         if (sharer) {
           return;
@@ -209,7 +141,7 @@ module.exports = class Room {
         }
         io.of(roomId).emit('roster', this.roster);
       });
-      socket.on('CMD:leaveScreenShare', (data) => {
+      socket.on('CMD:leaveScreenShare', () => {
         // console.log('CMD:leaveScreenShare');
         const match = this.roster.find((user) => user.id === socket.id);
         if (match) {
@@ -244,13 +176,13 @@ module.exports = class Room {
           }
         });
         this.cmdHost(
-          null,
+          undefined,
           'vbrowser://' + this.vBrowser.pass + '@' + this.vBrowser.host
         );
         io.of(roomId).emit('roster', this.roster);
       });
       socket.on('CMD:stopVBrowser', () => this.resetRoomVM());
-      socket.on('CMD:changeController', (data) => {
+      socket.on('CMD:changeController', (data: string) => {
         this.roster.forEach((user, i) => {
           if (user.id === data) {
             this.roster[i].isController = true;
@@ -263,18 +195,21 @@ module.exports = class Room {
       socket.on('CMD:askHost', () => {
         socket.emit('REC:host', this.getHostState());
       });
-      socket.on('signal', (data) => {
+      socket.on('signal', (data: { to: string; msg: string }) => {
         io.of(roomId)
           .to(data.to)
           .emit('signal', { from: socket.id, msg: data.msg });
       });
-      socket.on('signalSS', (data) => {
-        io.of(roomId).to(data.to).emit('signalSS', {
-          from: socket.id,
-          sharer: data.sharer,
-          msg: data.msg,
-        });
-      });
+      socket.on(
+        'signalSS',
+        (data: { to: string; sharer: boolean; msg: string }) => {
+          io.of(roomId).to(data.to).emit('signalSS', {
+            from: socket.id,
+            sharer: data.sharer,
+            msg: data.msg,
+          });
+        }
+      );
 
       socket.on('disconnect', () => {
         let index = this.roster.findIndex((user) => user.id === socket.id);
@@ -288,5 +223,84 @@ module.exports = class Room {
         // delete nameMap[socket.id];
       });
     });
+  }
+
+  serialize() {
+    return JSON.stringify({
+      video: this.video,
+      videoTS: this.videoTS,
+      paused: this.paused,
+      nameMap: this.nameMap,
+      pictureMap: this.pictureMap,
+      chat: this.chat,
+      vBrowser: this.vBrowser,
+    });
+  }
+
+  deserialize(roomData: string) {
+    const roomObj = JSON.parse(roomData);
+    this.video = roomObj.video;
+    this.videoTS = roomObj.videoTS;
+    this.paused = roomObj.paused;
+    if (roomObj.chat) {
+      this.chat = roomObj.chat;
+    }
+    if (roomObj.nameMap) {
+      this.nameMap = roomObj.nameMap;
+    }
+    if (roomObj.pictureMap) {
+      this.pictureMap = roomObj.pictureMap;
+    }
+    if (roomObj.vBrowser) {
+      this.vBrowser = roomObj.vBrowser;
+    }
+  }
+
+  getHostState() {
+    return {
+      video: this.video,
+      videoTS: this.videoTS,
+      paused: this.paused,
+    };
+  }
+
+  async resetRoomVM() {
+    const id = this.vBrowser && this.vBrowser.id;
+    this.vBrowser = undefined;
+    this.roster.forEach((user, i) => {
+      this.roster[i].isController = false;
+    });
+    this.cmdHost(undefined, '');
+    if (id) {
+      try {
+        await resetVM(id);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  }
+
+  cmdHost(socket: Socket | undefined, data: string) {
+    this.video = data;
+    this.videoTS = 0;
+    this.paused = false;
+    this.tsMap = {};
+    this.io.of(this.roomId).emit('REC:tsMap', this.tsMap);
+    this.io.of(this.roomId).emit('REC:host', this.getHostState());
+    if (socket && data) {
+      const chatMsg = { id: socket.id, cmd: 'host', msg: data };
+      this.addChatMessage(socket, chatMsg);
+    }
+  }
+
+  addChatMessage(socket: Socket | undefined, chatMsg: any) {
+    const chatWithTime: ChatMessage = {
+      ...chatMsg,
+      timestamp: new Date().toISOString(),
+      videoTS: socket ? this.tsMap[socket.id] : undefined,
+    };
+    this.chat.push(chatWithTime);
+    this.chat = this.chat.splice(-100);
+    this.io.of(this.roomId).emit('REC:chat', chatWithTime);
   }
 };
