@@ -540,9 +540,11 @@ export class Jeopardy extends React.Component<{
             className="icon"
             labeled
             icon="certificate"
-            onChange={(_: any, data: any) => this.newGame(null, data.value)}
-            options={[
-              { key: 'all', value: undefined, text: 'Any' },
+            text="New Game"
+          >
+            <Dropdown.Menu>
+            {[
+              { key: 'all', value: null, text: 'Any' },
               { key: 'kids', value: 'kids', text: 'Kids Week' },
               { key: 'teen', value: 'teen', text: 'Teen Tournament' },
               {
@@ -556,9 +558,9 @@ export class Jeopardy extends React.Component<{
                 text: 'Celebrity Jeopardy',
               },
               { key: 'teacher', value: 'teacher', text: 'Teachers Tournament' },
-            ]}
-            text="New Game"
-          />
+            ].map(item => <Dropdown.Item key={item.key} onClick={() => this.newGame(null, item.value)}>{item.text}</Dropdown.Item>)}
+            </Dropdown.Menu>
+          </Dropdown>
           <div>Jeopardy!</div>
           {game && <div>{'#' + game.epNum}</div>}
           {game && (
