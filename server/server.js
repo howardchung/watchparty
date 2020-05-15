@@ -105,9 +105,6 @@ async function init() {
     setInterval(release, 5 * 60 * 1000);
   }
 
-  if (process.env.NODE_ENV !== 'production') {
-    await require('kill-port')(process.env.PORT || 8080);
-  }
   server.listen(process.env.PORT || 8080);
 }
 

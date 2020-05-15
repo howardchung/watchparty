@@ -40,7 +40,7 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "dev": "nodemon --delay 1500 --watch server server/server",
+    "dev": "nodemon --watch server --exec '(fuser -k -TERM -n tcp 8080 || true) && node server/server.js'",
     "server": "node server/server",
     "prettier": "prettier --single-quote --write ."
   },
