@@ -146,7 +146,7 @@ export class Jeopardy {
       });
 
       socket.on('JPD:wager', (wager) => this.submitWager(socket.id, wager));
-      socket.on('JPD:judge', this.judgeAnswer);
+      socket.on('JPD:judge', (data) => this.judgeAnswer(data));
       socket.on('JPD:skipQ', () => {
         this.jpd.public.skips[socket.id] = true;
         if (
