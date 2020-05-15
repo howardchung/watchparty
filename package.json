@@ -21,7 +21,6 @@
     "magnet-uri": "^5.2.4",
     "moniker": "^0.1.2",
     "node-turn": "0.0.4",
-    "nodemon": "^2.0.3",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-scripts": "3.4.1",
@@ -41,7 +40,7 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "dev": "nodemon --watch server server/server",
+    "dev": "nodemon --delay 1500 --watch server server/server",
     "server": "node server/server",
     "prettier": "prettier --single-quote --write ."
   },
@@ -61,6 +60,9 @@
     ]
   },
   "devDependencies": {
+    "kill-port": "^1.6.0",
+    "nodemon": "^2.0.3",
+    "papaparse": "^5.2.0",
     "prettier": "2.0.5"
   }
 }
