@@ -1,7 +1,7 @@
 import uuid from 'uuid';
 import axios from 'axios';
 import Redis from 'ioredis';
-let redis = undefined as unknown as Redis.Redis;
+let redis = (undefined as unknown) as Redis.Redis;
 if (process.env.REDIS_URL) {
   redis = new Redis(process.env.REDIS_URL);
 }
