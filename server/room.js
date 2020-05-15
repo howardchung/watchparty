@@ -306,16 +306,23 @@ module.exports = class Room {
         return vowels ? vowels.length : 3;
       }
 
-      this.loadEpisode = (number) => {
+      this.loadEpisode = (number, filter) => {
         // Load question data into game
+        let nums = Object.keys(jData);
+        if (filter) {
+          // Only load episodes with info matching the filter: kids, teen, college etc.
+          nums = nums.filter(
+            (num) => jData[num].info && jData[num].info === filter
+          );
+        }
         if (!number) {
-          // Random
-          const nums = Object.keys(jData);
+          // Random an episode
           number = Number(nums[Math.floor(Math.random() * nums.length)]);
         }
         let loadedData = jData[number];
         const epNum = loadedData.epNum;
         const airDate = loadedData.airDate;
+        const info = loadedData.info;
 
         this.jpd = {
           loadedData,
@@ -327,6 +334,7 @@ module.exports = class Room {
           public: {
             epNum,
             airDate,
+            info,
             board: {},
             scores: {}, // player scores
             round: '', // jeopardy or double or final
@@ -634,8 +642,8 @@ module.exports = class Room {
           socket.emit('JPD:state', this.jpd.public);
         }
       });
-      socket.on('JPD:start', (episode) => {
-        this.loadEpisode(episode);
+      socket.on('JPD:start', (episode, filter) => {
+        this.loadEpisode(episode, filter);
       });
       socket.on('JPD:pickQ', (id) => {
         if (

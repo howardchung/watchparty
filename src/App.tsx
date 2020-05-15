@@ -2488,7 +2488,9 @@ class Jeopardy extends React.Component<{
   };
   async componentDidMount() {
     this.setState({
-      readingDisabled: Boolean(window.localStorage.getItem('jeopardy-readingDisabled')),
+      readingDisabled: Boolean(
+        window.localStorage.getItem('jeopardy-readingDisabled')
+      ),
     });
     this.props.socket.emit('JPD:init');
     this.props.socket.on('JPD:state', (game: any) => {
@@ -2548,7 +2550,7 @@ class Jeopardy extends React.Component<{
       }
       for (let i = 0; i < clueSets.length; i++) {
         await new Promise((resolve) => setTimeout(resolve, 400));
-        clueSets[i].forEach(clue => delete this.state.clueMask[clue]);
+        clueSets[i].forEach((clue) => delete this.state.clueMask[clue]);
         this.setState({ clueMask: this.state.clueMask });
       }
       // Reveal and read categories
@@ -2568,10 +2570,10 @@ class Jeopardy extends React.Component<{
 
   async componentDidUpdate(prevProps: any, prevState: any) {}
 
-  newGame = async () => {
+  newGame = async (episode: number | null, filter: string | null) => {
     this.setState({ game: null });
     // optionally send an episode number
-    this.props.socket.emit('JPD:start', null);
+    this.props.socket.emit('JPD:start', episode, filter);
   };
 
   playIntro = async () => {
@@ -2854,7 +2856,7 @@ class Jeopardy extends React.Component<{
                             onClick={clue ? () => this.pickQ(id) : undefined}
                             className={`${clue ? 'value' : ''} box`}
                           >
-                            {(!this.state.clueMask[id] && clue) ? clue.value : ''}
+                            {!this.state.clueMask[id] && clue ? clue.value : ''}
                           </div>
                         );
                       })}
@@ -2989,10 +2991,30 @@ class Jeopardy extends React.Component<{
             <Icon name="film" />
             Play Intro
           </Button>
-          <Button onClick={this.newGame} icon labelPosition="left">
-            <Icon name="certificate" />
-            New Game
-          </Button>
+          <Dropdown
+            button
+            className="icon"
+            labeled
+            icon="certificate"
+            onChange={(_: any, data: any) => this.newGame(null, data.value)}
+            options={[
+              { key: 'all', value: undefined, text: 'Any' },
+              { key: 'kids', value: 'kids', text: 'Kids Week' },
+              { key: 'teen', value: 'teen', text: 'Teen Tournament' },
+              {
+                key: 'college',
+                value: 'college',
+                text: 'College Championship',
+              },
+              {
+                key: 'celebrity',
+                value: 'celebrity',
+                text: 'Celebrity Jeopardy',
+              },
+              { key: 'teacher', value: 'teacher', text: 'Teachers Tournament' },
+            ]}
+            text="New Game"
+          />
           <div>Jeopardy!</div>
           {game && <div>{'#' + game.epNum}</div>}
           {game && (
@@ -3002,7 +3024,7 @@ class Jeopardy extends React.Component<{
             <Checkbox
               toggle
               onChange={() => {
-                const checked = !this.state.readingDisabled
+                const checked = !this.state.readingDisabled;
                 this.setState({ readingDisabled: checked });
                 if (checked) {
                   window.localStorage.setItem('jeopardy-readingDisabled', '1');
@@ -3012,7 +3034,11 @@ class Jeopardy extends React.Component<{
               }}
               checked={this.state.readingDisabled}
             />
-            <div style={{ color: 'white', fontSize: '12px', marginLeft: '4px' }}>Disable reading</div>
+            <div
+              style={{ color: 'white', fontSize: '12px', marginLeft: '4px' }}
+            >
+              Disable reading
+            </div>
           </div>
         </div>
         {process.env.NODE_ENV === 'development' && (
