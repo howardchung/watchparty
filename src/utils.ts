@@ -180,3 +180,18 @@ export function shuffle(array: any[]) {
     array[j] = temp;
   }
 }
+
+export const iceServers = () => [
+  { urls: 'stun:stun.l.google.com:19302' },
+  // { urls: 'turn:13.66.162.252:3478', username: 'username', credential: 'password' },
+  {
+    urls: 'turn:212.47.251.184:3478',
+    username: 'username',
+    credential: 'password',
+  },
+  {
+    urls: 'turn:numb.viagenie.ca',
+    credential: 'watchparty',
+    username: 'howardzchung@gmail.com',
+  },
+];
