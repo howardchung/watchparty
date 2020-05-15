@@ -1089,7 +1089,7 @@ export default class App extends React.Component<null, AppState> {
                             <Button
                               fluid
                               className="toolButton"
-                              disabled={this.socket?.id !== sharer?.id}
+                              disabled={sharer && (this.socket?.id !== sharer?.id)}
                               icon
                               labelPosition="left"
                               color={'instagram'}
@@ -1108,7 +1108,7 @@ export default class App extends React.Component<null, AppState> {
                             <Button
                               fluid
                               className="toolButton"
-                              disabled={this.socket?.id !== sharer?.id}
+                              disabled={sharer && (this.socket?.id !== sharer?.id)}
                               icon
                               labelPosition="left"
                               onClick={this.setupFileShare}
@@ -1126,7 +1126,7 @@ export default class App extends React.Component<null, AppState> {
                             <Button
                               fluid
                               className="toolButton"
-                              disabled={this.socket?.id !== sharer?.id}
+                              disabled={sharer && (this.socket?.id !== sharer?.id)}
                               icon
                               labelPosition="left"
                               color="green"
