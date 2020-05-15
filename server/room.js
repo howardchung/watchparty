@@ -14,84 +14,7 @@ module.exports = class Room {
     this.vBrowser = undefined;
     this.jpd = new Jeopardy(io, roomId, this.roster);
     this.roomId = roomId;
-
-    this.serialize = () => {
-      return JSON.stringify({
-        video: this.video,
-        videoTS: this.videoTS,
-        paused: this.paused,
-        nameMap: this.nameMap,
-        pictureMap: this.pictureMap,
-        chat: this.chat,
-        vBrowser: this.vBrowser,
-      });
-    };
-
-    this.deserialize = (roomData) => {
-      this.video = roomData.video;
-      this.videoTS = roomData.videoTS;
-      this.paused = roomData.paused;
-      if (roomData.chat) {
-        this.chat = roomData.chat;
-      }
-      if (roomData.nameMap) {
-        this.nameMap = roomData.nameMap;
-      }
-      if (roomData.pictureMap) {
-        this.pictureMap = roomData.pictureMap;
-      }
-      if (roomData.vBrowser) {
-        this.vBrowser = roomData.vBrowser;
-      }
-    };
-
-    this.getHostState = () => {
-      return {
-        video: this.video,
-        videoTS: this.videoTS,
-        paused: this.paused,
-      };
-    };
-
-    this.resetRoomVM = async () => {
-      const id = this.vBrowser && this.vBrowser.id;
-      this.vBrowser = undefined;
-      this.roster.forEach((user, i) => {
-        this.roster[i].isController = false;
-      });
-      this.cmdHost(null, '');
-      if (id) {
-        try {
-          await resetVM(id);
-        } catch (e) {
-          console.error(e);
-        }
-      }
-    };
-
-    this.cmdHost = (socket, data) => {
-      this.video = data;
-      this.videoTS = 0;
-      this.paused = false;
-      this.tsMap = {};
-      io.of(roomId).emit('REC:tsMap', this.tsMap);
-      io.of(roomId).emit('REC:host', this.getHostState());
-      if (socket && data) {
-        const chatMsg = { id: socket.id, cmd: 'host', msg: data };
-        this.addChatMessage(socket, chatMsg);
-      }
-    };
-
-    this.addChatMessage = (socket, chatMsg) => {
-      const chatWithTime = {
-        ...chatMsg,
-        timestamp: new Date().toISOString(),
-        videoTS: this.tsMap[socket.id],
-      };
-      this.chat.push(chatWithTime);
-      this.chat = this.chat.splice(-100);
-      io.of(roomId).emit('REC:chat', chatWithTime);
-    };
+    this.io = io;
 
     if (roomData) {
       this.deserialize(roomData);
@@ -290,5 +213,83 @@ module.exports = class Room {
         // delete nameMap[socket.id];
       });
     });
+  }
+
+  serialize() {
+    return JSON.stringify({
+      video: this.video,
+      videoTS: this.videoTS,
+      paused: this.paused,
+      nameMap: this.nameMap,
+      pictureMap: this.pictureMap,
+      chat: this.chat,
+      vBrowser: this.vBrowser,
+    });
+  }
+
+  deserialize(roomData) {
+    this.video = roomData.video;
+    this.videoTS = roomData.videoTS;
+    this.paused = roomData.paused;
+    if (roomData.chat) {
+      this.chat = roomData.chat;
+    }
+    if (roomData.nameMap) {
+      this.nameMap = roomData.nameMap;
+    }
+    if (roomData.pictureMap) {
+      this.pictureMap = roomData.pictureMap;
+    }
+    if (roomData.vBrowser) {
+      this.vBrowser = roomData.vBrowser;
+    }
+  }
+
+  getHostState() {
+    return {
+      video: this.video,
+      videoTS: this.videoTS,
+      paused: this.paused,
+    };
+  }
+
+  async resetRoomVM() {
+    const id = this.vBrowser && this.vBrowser.id;
+    this.vBrowser = undefined;
+    this.roster.forEach((user, i) => {
+      this.roster[i].isController = false;
+    });
+    this.cmdHost(null, '');
+    if (id) {
+      try {
+        await resetVM(id);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  }
+
+  cmdHost(socket, data) {
+    this.video = data;
+    this.videoTS = 0;
+    this.paused = false;
+    this.tsMap = {};
+    this.io.of(this.roomId).emit('REC:tsMap', this.tsMap);
+    this.io.of(this.roomId).emit('REC:host', this.getHostState());
+    if (socket && data) {
+      const chatMsg = { id: socket.id, cmd: 'host', msg: data };
+      this.addChatMessage(socket, chatMsg);
+    }
+  }
+
+  addChatMessage(socket, chatMsg) {
+    const chatWithTime = {
+      ...chatMsg,
+      timestamp: new Date().toISOString(),
+      videoTS: this.tsMap[socket.id],
+    };
+    this.chat.push(chatWithTime);
+    this.chat = this.chat.splice(-100);
+    this.io.of(this.roomId).emit('REC:chat', chatWithTime);
   }
 };

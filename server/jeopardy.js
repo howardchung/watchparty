@@ -434,11 +434,9 @@ module.exports = class Jeopardy {
 
   triggerPlayClue() {
     const clue = this.jpd.public.board[this.jpd.public.currentQ];
-    this.io.of(this.roomId).emit(
-      'JPD:playClue',
-      this.jpd.public.currentQ,
-      clue && clue.question
-    );
+    this.io
+      .of(this.roomId)
+      .emit('JPD:playClue', this.jpd.public.currentQ, clue && clue.question);
     let speakingTime = 0;
     if (clue && clue.question) {
       // Allow some time for reading the text, based on content
