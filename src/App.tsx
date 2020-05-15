@@ -50,6 +50,7 @@ import Video from './vbrowser/Video';
 import { VideoChat } from './VideoChat';
 import { Chat } from './Chat';
 import { Jeopardy } from './Jeopardy';
+import { Socket } from 'socket.io';
 
 declare global {
   interface Window {
@@ -134,7 +135,7 @@ export default class App extends React.Component<null, AppState> {
     error: '',
     settings: {},
   };
-  socket: any = null;
+  socket: Socket = null as any;
   watchPartyYTPlayer: any = null;
   ytDebounce = true;
   screenShareStream?: MediaStream;

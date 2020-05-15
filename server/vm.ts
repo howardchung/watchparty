@@ -1,7 +1,7 @@
-const uuid = require('uuid');
-const axios = require('axios');
-const Redis = require('ioredis');
-let redis = undefined;
+import uuid from 'uuid';
+import axios from 'axios';
+import Redis from 'ioredis';
+let redis = undefined as unknown as Redis.Redis;
 if (process.env.REDIS_URL) {
   redis = new Redis(process.env.REDIS_URL);
 }
@@ -10,10 +10,10 @@ const VBROWSER_TAG = process.env.VBROWSER_TAG || 'vbrowser';
 const SCW_SECRET_KEY = process.env.SCW_SECRET_KEY;
 const SCW_ORGANIZATION_ID = process.env.SCW_ORGANIZATION_ID;
 
-const isVBrowserFeatureEnabled = () =>
-  Boolean(redis && SCW_SECRET_KEY && SCW_ORGANIZATION_ID);
+export const isVBrowserFeatureEnabled = () =>
+  Boolean(process.env.REDIS_URL && SCW_SECRET_KEY && SCW_ORGANIZATION_ID);
 
-const mapServerObject = (server) => ({
+const mapServerObject = (server: any) => ({
   id: server.id,
   pass: server.name,
   // The gateway handles SSL termination and proxies to the private IP
@@ -82,7 +82,7 @@ docker run -d --rm --name=vbrowser -v /usr/share/fonts:/usr/share/fonts --log-op
   return result;
 }
 
-async function terminateVM(id) {
+async function terminateVM(id: string) {
   const response = await axios({
     method: 'POST',
     url: `https://api.scaleway.com/instance/v1/zones/fr-par-1/servers/${id}/action`,
@@ -96,7 +96,7 @@ async function terminateVM(id) {
   });
 }
 
-async function resetVM(id) {
+export async function resetVM(id: string) {
   // We can reboot the VM with new password which is slightly faster but more complicated locking
   // Just terminate it for now
   terminateVM(id);
@@ -126,7 +126,7 @@ async function resetVM(id) {
   // });
 }
 
-async function getVM(id) {
+async function getVM(id: string) {
   let result = null;
   while (!result) {
     const response = await axios({
@@ -147,12 +147,12 @@ async function getVM(id) {
   return result;
 }
 
-async function listVMs(filter) {
-  const mapping = {
+async function listVMs(filter?: string) {
+  const mapping: StringDict = {
     available: 'available',
     inUse: 'inUse',
   };
-  let tags = mapping[filter];
+  let tags = mapping[filter as string];
   // console.log(filter, tags);
   const response = await axios({
     method: 'GET',
@@ -168,11 +168,13 @@ async function listVMs(filter) {
     },
   });
   return response.data.servers
-    .filter((server) => server.tags.includes(VBROWSER_TAG) && server.private_ip)
+    .filter(
+      (server: any) => server.tags.includes(VBROWSER_TAG) && server.private_ip
+    )
     .map(mapServerObject);
 }
 
-async function assignVM() {
+export async function assignVM() {
   if (!isVBrowserFeatureEnabled()) {
     return null;
   }
@@ -197,7 +199,7 @@ async function assignVM() {
   return selected;
 }
 
-async function resizeVMGroup() {
+export async function resizeVMGroup() {
   // Compare availableList with desired size
   // If shorter, launch
   // If longer, delete
@@ -226,7 +228,7 @@ async function resizeVMGroup() {
   }
 }
 
-async function cleanupVMGroup() {
+export async function cleanupVMGroup() {
   // Clean up hanging VMs
   // It's possible we created a VM but lost track of it in redis
   // Take the list of VMs from API, subtract VMs that have a lock in redis or are in the available pool, delete the rest
@@ -246,7 +248,7 @@ async function cleanupVMGroup() {
   }
 }
 
-async function checkVMReady(host) {
+export async function checkVMReady(host: string) {
   let state = '';
   let retryCount = 0;
   while (!state) {
@@ -277,7 +279,7 @@ async function checkVMReady(host) {
   return true;
 }
 
-const cloudInitWithTls = (host) => `#!/bin/bash
+const cloudInitWithTls = (host: string, imageName: string) => `#!/bin/bash
 until nslookup ${host}
 do
 sleep 5
@@ -293,15 +295,3 @@ iptables -t nat -A PREROUTING -p tcp --dport 443 -j REDIRECT --to-port 5000
 sed -i 's/scripts-user$/\[scripts-user, always\]/' /etc/cloud/cloud.cfg
 docker run -d --rm --name=vbrowser -v /etc/letsencrypt/archive/${host}:/cert -v /usr/share/fonts:/usr/share/fonts --log-opt max-size=1g --net=host --shm-size=1g --cap-add="SYS_ADMIN" -e DISPLAY=":99.0" -e SCREEN="1280x720@30" -e NEKO_PASSWORD=$(hostname) -e NEKO_PASSWORD_ADMIN=$(hostname) -e NEKO_BIND=":5000" -e NEKO_EPR=":59000-59100" -e NEKO_KEY="/cert/privkey1.pem" -e NEKO_CERT="/cert/fullchain1.pem" ${imageName}
 `;
-
-module.exports = {
-  launchVM,
-  terminateVM,
-  listVMs,
-  resizeVMGroup,
-  cleanupVMGroup,
-  assignVM,
-  checkVMReady,
-  resetVM,
-  isVBrowserFeatureEnabled,
-};

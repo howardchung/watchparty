@@ -6,9 +6,10 @@ import {
   formatTimestamp,
   iceServers,
 } from './utils';
+import { Socket } from 'socket.io';
 
 interface VideoChatProps {
-  socket: any;
+  socket: Socket;
   participants: User[];
   pictureMap: StringDict;
   nameMap: StringDict;

@@ -1,24 +1,29 @@
 require('dotenv').config();
-const { v4 } = require('uuid');
-const fs = require('fs');
-const util = require('util');
-const express = require('express');
-// const axios = require('axios');
-const Moniker = require('moniker');
-const Youtube = require('youtube-api');
-const cors = require('cors');
-const Redis = require('ioredis');
+import fs from 'fs';
+import util from 'util';
+import express from 'express';
+//@ts-ignore
+import Moniker from 'moniker';
+//@ts-ignore
+import Youtube from 'youtube-api';
+//@ts-ignore
+import cors from 'cors';
+import Redis from 'ioredis';
+import https from 'https';
+import http from 'http';
+import socketIO from 'socket.io';
+
 const app = express();
-let server = null;
+let server: any = null;
 if (process.env.HTTPS) {
-  const key = fs.readFileSync(process.env.SSL_KEY_FILE);
-  const cert = fs.readFileSync(process.env.SSL_CRT_FILE);
-  server = require('https').createServer({ key: key, cert: cert }, app);
+  const key = fs.readFileSync(process.env.SSL_KEY_FILE as string);
+  const cert = fs.readFileSync(process.env.SSL_CRT_FILE as string);
+  server = https.createServer({ key: key, cert: cert }, app);
 } else {
-  server = require('http').Server(app);
+  server = new http.Server(app);
 }
-const io = require('socket.io')(server, { origins: '*:*' });
-let redis = undefined;
+const io = socketIO(server, { origins: '*:*' });
+let redis = undefined as unknown as Redis.Redis;
 if (process.env.REDIS_URL) {
   redis = new Redis(process.env.REDIS_URL);
 }
@@ -39,7 +44,7 @@ const rooms = new Map();
 init();
 
 async function init() {
-  if (redis) {
+  if (process.env.REDIS_URL) {
     // Load rooms from Redis
     console.log('loading rooms from redis');
     const keys = await redis.keys('/*');
@@ -47,9 +52,8 @@ async function init() {
     for (let i = 0; i < keys.length; i++) {
       const key = keys[i];
       const roomData = await redis.get(key);
-      console.log(key, roomData.length);
-      const roomObj = JSON.parse(roomData);
-      rooms.set(key, new Room(io, key, roomObj));
+      console.log(key, roomData?.length);
+      rooms.set(key, new Room(io, key, roomData));
     }
     // Start saving rooms to Redis
     setInterval(() => {
@@ -124,7 +128,7 @@ app.get('/ping', (req, res) => {
 
 app.get('/stats', (req, res) => {
   if (req.query.key && req.query.key === process.env.STATS_KEY) {
-    const roomData = [];
+    const roomData: any[] = [];
     rooms.forEach((room) => {
       roomData.push({
         roomId: room.roomId,
@@ -145,9 +149,9 @@ app.get('/stats', (req, res) => {
 app.get('/youtube', (req, res) => {
   Youtube.search.list(
     { part: 'snippet', type: 'video', maxResults: 25, q: req.query.q },
-    (err, data) => {
+    (err: any, data: any) => {
       if (data && data.items) {
-        const response = data.items.map((video) => {
+        const response = data.items.map((video: any) => {
           return {
             url: 'https://www.youtube.com/watch?v=' + video.id.videoId,
             name: video.snippet.title,
@@ -183,16 +187,3 @@ app.get('/settings', (req, res) => {
   }
   return res.json({});
 });
-
-// const Turn = require('node-turn');
-// const turnServer = new Turn({
-//   // set options
-//   listeningIps: ['0.0.0.0'],
-//   // relayIps: ['13.66.162.252'],
-//   authMech: 'long-term',
-//   credentials: {
-//     username: "password"
-//   },
-//   debugLevel: 'DEBUG',
-// });
-// turnServer.start();

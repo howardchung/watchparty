@@ -9,9 +9,10 @@ import {
 } from 'semantic-ui-react';
 import './Jeopardy.css';
 import { getDefaultPicture, getColorHex, shuffle } from './utils';
+import { Socket } from 'socket.io';
 
 export class Jeopardy extends React.Component<{
-  socket: any;
+  socket: Socket;
   participants: User[];
   nameMap: StringDict;
   pictureMap: StringDict;
