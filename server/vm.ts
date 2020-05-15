@@ -1,4 +1,4 @@
-import uuid from 'uuid';
+import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
 import Redis from 'ioredis';
 let redis = (undefined as unknown) as Redis.Redis;
@@ -26,7 +26,7 @@ const mapServerObject = (server: any) => ({
 
 async function launchVM() {
   // generate credentials and boot a VM
-  const password = uuid.v4();
+  const password = uuidv4();
   const response = await axios({
     method: 'POST',
     url: 'https://api.scaleway.com/instance/v1/zones/fr-par-1/servers',
@@ -100,7 +100,7 @@ export async function resetVM(id: string) {
   // We can reboot the VM with new password which is slightly faster but more complicated locking
   // Just terminate it for now
   terminateVM(id);
-  // const password = uuid.v4();
+  // const password = uuidv4();
   // const response2 = await axios({
   //   method: 'POST',
   //   url: `https://api.scaleway.com/instance/v1/zones/fr-par-1/servers/${id}/action`,
