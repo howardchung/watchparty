@@ -268,7 +268,7 @@ export class Jeopardy extends React.Component<{
       <React.Fragment>
         <div id="intro" />
         {Boolean(game) && !this.state.isIntroPlaying && (
-          <div style={{ position: 'relative' }}>
+          <div>
             {Boolean(game) && game.round === 'end' && (
               <div id="endgame">
                 <h1 style={{ color: 'white' }}>Winner!</h1>
@@ -286,131 +286,7 @@ export class Jeopardy extends React.Component<{
                 ))}
               </div>
             )}
-            {Boolean(game.currentQ) && (
-              <div
-                className="clueContainer"
-                style={{
-                  backgroundSize: 'cover',
-                  backgroundImage:
-                    game.currentDailyDouble && game.waitingForWager
-                      ? `url(/jeopardy/jeopardy-daily-double.png)`
-                      : undefined,
-                }}
-              >
-                <div className="category" style={{ height: '30px' }}>
-                  {game.board[game.currentQ] &&
-                    game.board[game.currentQ].category}
-                </div>
-                <div className="category" style={{ height: '30px' }}>
-                  {Boolean(game.currentValue) && game.currentValue}
-                </div>
-                {
-                  <div className={`clue`}>
-                    {game.board[game.currentQ] &&
-                      game.board[game.currentQ].question}
-                  </div>
-                }
-                <div className="" style={{ height: '60px' }}>
-                  {!game.currentAnswer &&
-                  !game.buzzes[this.props.socket.id] &&
-                  !game.submitted[this.props.socket.id] &&
-                  !game.currentDailyDouble &&
-                  game.round !== 'final' ? (
-                    <div style={{ display: 'flex' }}>
-                      <Button
-                        disabled={!game.canBuzz}
-                        color="green"
-                        size="huge"
-                        onClick={() => this.props.socket.emit('JPD:buzz')}
-                        icon
-                        labelPosition="left"
-                      >
-                        <Icon name="lightbulb" />
-                        Buzz
-                      </Button>
-                      <Button
-                        disabled={!game.canBuzz}
-                        color="red"
-                        size="huge"
-                        onClick={() => this.submitAnswer(null)}
-                        icon
-                        labelPosition="left"
-                      >
-                        <Icon name="close" />
-                        Pass
-                      </Button>
-                    </div>
-                  ) : null}
-                  {!game.currentAnswer &&
-                  !this.state.localAnswerSubmitted &&
-                  game.buzzes[this.props.socket.id] &&
-                  game.questionDuration ? (
-                    <Input
-                      autoFocus
-                      label="Answer"
-                      value={this.state.localAnswer}
-                      onChange={(e) =>
-                        this.setState({ localAnswer: e.target.value })
-                      }
-                      onKeyPress={(e: any) =>
-                        e.key === 'Enter' && this.submitAnswer()
-                      }
-                      icon={
-                        <Icon
-                          onClick={this.submitAnswer}
-                          name="arrow right"
-                          inverted
-                          circular
-                          link
-                        />
-                      }
-                    />
-                  ) : null}
-                  {game.waitingForWager &&
-                  game.waitingForWager[this.props.socket.id] ? (
-                    <Input
-                      label="Wager"
-                      value={this.state.localWager}
-                      onChange={(e) =>
-                        this.setState({ localWager: e.target.value })
-                      }
-                      onKeyPress={(e: any) =>
-                        e.key === 'Enter' && this.submitWager()
-                      }
-                      icon={
-                        <Icon
-                          onClick={this.submitWager}
-                          name="arrow right"
-                          inverted
-                          circular
-                          link
-                        />
-                      }
-                    />
-                  ) : null}
-                </div>
-                <div className={`answer`} style={{ height: '30px' }}>
-                  {game.currentAnswer}
-                </div>
-                {Boolean(game.playClueDuration) && (
-                  <TimerBar duration={game.playClueDuration} />
-                )}
-                {Boolean(game.questionDuration) && (
-                  <TimerBar duration={game.questionDuration} />
-                )}
-                <div style={{ position: 'absolute', top: '0px', right: '0px' }}>
-                  <Button
-                    onClick={() => this.props.socket.emit('JPD:skipQ')}
-                    icon
-                    labelPosition="left"
-                  >
-                    <Icon name="forward" />
-                    Next Question
-                  </Button>
-                </div>
-              </div>
-            )}
-            {!Boolean(game.currentQ) && (
+            {
               <div className="board">
                 {categories.map((cat, i) => (
                   <div className="category box">
@@ -435,8 +311,140 @@ export class Jeopardy extends React.Component<{
                     </React.Fragment>
                   );
                 })}
+                {Boolean(game.currentQ) && (
+                  <div className="clueContainerContainer">
+                    <div
+                      className="clueContainer"
+                      style={{
+                        backgroundSize: 'cover',
+                        backgroundImage:
+                          game.currentDailyDouble && game.waitingForWager
+                            ? `url(/jeopardy/jeopardy-daily-double.png)`
+                            : undefined,
+                      }}
+                    >
+                      <div className="category" style={{ height: '30px' }}>
+                        {game.board[game.currentQ] &&
+                          game.board[game.currentQ].category}
+                      </div>
+                      <div className="category" style={{ height: '30px' }}>
+                        {Boolean(game.currentValue) && game.currentValue}
+                      </div>
+                      {
+                        <div className={`clue`}>
+                          {game.board[game.currentQ] &&
+                            game.board[game.currentQ].question}
+                        </div>
+                      }
+                      <div className="" style={{ height: '60px' }}>
+                        {!game.currentAnswer &&
+                        !game.buzzes[this.props.socket.id] &&
+                        !game.submitted[this.props.socket.id] &&
+                        !game.currentDailyDouble &&
+                        game.round !== 'final' ? (
+                          <div style={{ display: 'flex' }}>
+                            <Button
+                              disabled={!game.canBuzz}
+                              color="green"
+                              size="huge"
+                              onClick={() => this.props.socket.emit('JPD:buzz')}
+                              icon
+                              labelPosition="left"
+                            >
+                              <Icon name="lightbulb" />
+                              Buzz
+                            </Button>
+                            <Button
+                              disabled={!game.canBuzz}
+                              color="red"
+                              size="huge"
+                              onClick={() => this.submitAnswer(null)}
+                              icon
+                              labelPosition="left"
+                            >
+                              <Icon name="close" />
+                              Pass
+                            </Button>
+                          </div>
+                        ) : null}
+                        {!game.currentAnswer &&
+                        !this.state.localAnswerSubmitted &&
+                        game.buzzes[this.props.socket.id] &&
+                        game.questionDuration ? (
+                          <Input
+                            autoFocus
+                            label="Answer"
+                            value={this.state.localAnswer}
+                            onChange={(e) =>
+                              this.setState({ localAnswer: e.target.value })
+                            }
+                            onKeyPress={(e: any) =>
+                              e.key === 'Enter' && this.submitAnswer()
+                            }
+                            icon={
+                              <Icon
+                                onClick={this.submitAnswer}
+                                name="arrow right"
+                                inverted
+                                circular
+                                link
+                              />
+                            }
+                          />
+                        ) : null}
+                        {game.waitingForWager &&
+                        game.waitingForWager[this.props.socket.id] ? (
+                          <Input
+                            label="Wager"
+                            value={this.state.localWager}
+                            onChange={(e) =>
+                              this.setState({ localWager: e.target.value })
+                            }
+                            onKeyPress={(e: any) =>
+                              e.key === 'Enter' && this.submitWager()
+                            }
+                            icon={
+                              <Icon
+                                onClick={this.submitWager}
+                                name="arrow right"
+                                inverted
+                                circular
+                                link
+                              />
+                            }
+                          />
+                        ) : null}
+                      </div>
+                      <div className={`answer`} style={{ height: '30px' }}>
+                        {game.currentAnswer}
+                      </div>
+                      {Boolean(game.playClueDuration) && (
+                        <TimerBar duration={game.playClueDuration} />
+                      )}
+                      {Boolean(game.questionDuration) && (
+                        <TimerBar duration={game.questionDuration} />
+                      )}
+                      <div
+                        style={{
+                          position: 'absolute',
+                          top: '0px',
+                          right: '0px',
+                        }}
+                      >
+                        <Button
+                          onClick={() => this.props.socket.emit('JPD:skipQ')}
+                          icon
+                          labelPosition="left"
+                        >
+                          <Icon name="forward" />
+                          Next Question
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
+            }
             <div style={{ height: '8px' }} />
             <div style={{ display: 'flex' }}>
               {this.props.participants.map((p) => {
