@@ -24,7 +24,9 @@ module.exports = class Room {
 
     if (roomData) {
       this.deserialize(roomData);
-    } else {
+    }
+
+    if (!this.jpd) {
       this.jpd = new Jeopardy(io, roomId, this.roster);
     }
 
