@@ -30,6 +30,7 @@ export class Jeopardy extends React.Component<{
     readingDisabled: false,
   };
   async componentDidMount() {
+    window.speechSynthesis.getVoices();
     this.setState({
       readingDisabled: Boolean(
         window.localStorage.getItem('jeopardy-readingDisabled')
@@ -185,17 +186,17 @@ export class Jeopardy extends React.Component<{
       window.speechSynthesis.cancel();
       const utterThis = new SpeechSynthesisUtterance(text);
       // let retryCount = 0;
-      // while (speechSynthesis.getVoices().length === 0 && retryCount < 5) {
+      // while (speechSynthesis.getVoices().length === 0 && retryCount < 3) {
       //   retryCount += 1;
-      //   await new Promise((resolve) => setTimeout(resolve, 1000));
+      //   await new Promise((resolve) => setTimeout(resolve, 500));
       // }
-      // let voices = speechSynthesis.getVoices();
-      // let target = voices.find(
-      //   (voice) => voice.name === 'Google UK English Male'
-      // );
-      // if (target) {
-      //   utterThis.voice = target;
-      // }
+      let voices = window.speechSynthesis.getVoices();
+      let target = voices.find(
+        (voice) => voice.name === 'Google UK English Male'
+      );
+      if (target) {
+        utterThis.voice = target;
+      }
       window.speechSynthesis.speak(utterThis);
       utterThis.onend = resolve;
       utterThis.onerror = resolve;
