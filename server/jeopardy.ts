@@ -159,13 +159,21 @@ export class Jeopardy {
           return;
         }
         // Transfer old state to this player, scores, waitingForWager, dailyDoublePlayer
-        this.jpd.public.scores[socket.id] = this.jpd.public.scores[id];
-        delete this.jpd.public.scores[id];
+        if (this.jpd.public.scores && this.jpd.public.scores[id]) {
+          this.jpd.public.scores[socket.id] = this.jpd.public.scores[id];
+          delete this.jpd.public.scores[id];
+        }
         if (this.jpd.public.waitingForWager) {
           this.jpd.public.waitingForWager[
             socket.id
           ] = this.jpd.public.waitingForWager[id];
           delete this.jpd.public.waitingForWager[id];
+        }
+        if (this.jpd.public.buzzes) {
+          this.jpd.public.buzzes[
+            socket.id
+          ] = this.jpd.public.buzzes[id];
+          delete this.jpd.public.buzzes[id];
         }
         if (this.jpd.public.dailyDoublePlayer === id) {
           this.jpd.public.dailyDoublePlayer = socket.id;
@@ -273,12 +281,12 @@ export class Jeopardy {
             this.jpd.public.judges[socket.id] = false;
           }
           // If player who needs to submit wager leaves, submit 0
-          if (
-            this.jpd.public.waitingForWager &&
-            this.jpd.public.waitingForWager[socket.id]
-          ) {
-            this.submitWager(socket.id, 0);
-          }
+          // if (
+          //   this.jpd.public.waitingForWager &&
+          //   this.jpd.public.waitingForWager[socket.id]
+          // ) {
+          //   this.submitWager(socket.id, 0);
+          // }
         }
       });
     });
@@ -419,7 +427,10 @@ export class Jeopardy {
       }
     });
     this.jpd.public.canBuzz = false;
-    this.jpd.public.answers = { ...this.jpd.answers };
+    if (this.jpd.public.round !== 'final') {
+      // In final, reveal one by one during judging
+      this.jpd.public.answers = { ...this.jpd.answers };
+    }
     this.jpd.public.currentAnswer = this.jpd.board[this.jpd.public.currentQ].a;
     this.advanceJudging();
     if (!this.jpd.public.currentJudgeAnswer) {
@@ -440,6 +451,9 @@ export class Jeopardy {
     this.jpd.public.wagers[
       this.jpd.public.currentJudgeAnswer
     ] = this.jpd.wagers[this.jpd.public.currentJudgeAnswer];
+    this.jpd.public.answers[
+      this.jpd.public.currentJudgeAnswer
+    ] = this.jpd.answers[this.jpd.public.currentJudgeAnswer];
   }
 
   judgeAnswer({ id, correct }: { id: string; correct: boolean }) {
@@ -454,31 +468,37 @@ export class Jeopardy {
     if (correct) {
       this.jpd.public.scores[id] +=
         this.jpd.public.wagers[id] || this.jpd.public.currentValue;
-
       // Correct answer is next picker
       this.jpd.public.picker = id;
     } else {
       this.jpd.public.scores[id] -=
         this.jpd.public.wagers[id] || this.jpd.public.currentValue;
-
-      while (
-        this.jpd.public.currentJudgeAnswer &&
-        this.jpd.public.currentJudgeAnswer in this.jpd.public.judges
-      ) {
-        this.advanceJudging();
-      }
     }
+
+    // Advance judging to the next available
+    // Stop if we don't have any more answers to judge or we find a new one
+    while (
+      this.jpd.public.currentJudgeAnswer &&
+      this.jpd.public.currentJudgeAnswer in this.jpd.public.judges
+    ) {
+      this.advanceJudging();
+    }
+
     if (this.jpd.public.round === 'final') {
       // We can have multiple correct answers in final, so only move on if everyone is done
-      if (this.roster.every((p) => p.id in this.jpd.public.judges)) {
+      if (!this.jpd.public.currentJudgeAnswer) {
         this.jpd.public.canNextQ = true;
         this.nextQuestion();
+      } else {
+        this.emitState();
       }
-    } else if (correct || !this.jpd.public.currentJudgeAnswer) {
-      this.jpd.public.canNextQ = true;
-      this.nextQuestion();
     } else {
-      this.emitState();
+      if (correct || !this.jpd.public.currentJudgeAnswer) {
+        this.jpd.public.canNextQ = true;
+        this.nextQuestion();
+      } else {
+        this.emitState();
+      }
     }
   }
 

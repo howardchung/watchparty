@@ -65,7 +65,7 @@ export class Jeopardy extends React.Component<{
       dailyDouble.volume = 0.5;
       dailyDouble.play();
     });
-    this.props.socket.on('JPD:playFinalJeopardy', () => {
+    this.props.socket.on('JPD:playFinalJeopardy', async () => {
       think.play();
     });
     this.props.socket.on('JPD:playRightanswer', () => {
@@ -77,6 +77,8 @@ export class Jeopardy extends React.Component<{
           'Make a selection, {name}',
           'You have command of the board, {name}',
           'Pick a clue, {name}',
+          'Select a category, {name}',
+          'Go again, {name}',
         ];
         const random =
           selectionText[Math.floor(Math.random() * selectionText.length)];
