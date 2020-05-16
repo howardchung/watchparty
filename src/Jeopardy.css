@@ -39,16 +39,17 @@
 .board {
   background-color: black;
   display: grid;
-  grid-template-columns: repeat(6, 110px);
-  grid-template-rows: repeat(6, 65px);
+  grid-template-columns: repeat(6, 1fr);
+  grid-template-rows: repeat(6, 1fr);
   grid-gap: 6px;
   padding: 6px;
   align-items: center;
   justify-content: center;
   text-align: center;
-  width: fit-content;
   margin: 0 auto;
   position: relative;
+  width: 100vh;
+  height: 60vh;
 }
 
 .box {
@@ -63,15 +64,15 @@
 
 .category {
   font-family: 'Swiss 911';
-  font-size: 18px;
-  line-height: 18px;
+  font-size: 2.5vh;
+  line-height: 2.5vh;
   letter-spacing: 1px;
   color: #e1f3ff;
 }
 
 .value {
   font-family: 'Swiss 911';
-  font-size: 50px;
+  font-size: 6vh;
   color: #d7a04b;
   text-shadow: black 4px 4px;
 }
@@ -143,17 +144,6 @@
 
 .scoreboard .picture img {
   width: 100%;
-}
-
-.scoreboard .name {
-  color: white;
-  background-color: #0000b5;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  line-height: 12px;
-  padding: 8px;
 }
 
 .scoreboard .points {
