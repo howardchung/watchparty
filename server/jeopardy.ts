@@ -257,8 +257,9 @@ export class Jeopardy {
           // If everyone votes to skip move to the next question
           // Or we are in the post-judging phase and can move on
           this.nextQuestion();
+        } else {
+          this.emitState();
         }
-        this.emitState();
       });
       socket.on('disconnect', () => {
         if (this.jpd && this.jpd.public) {
@@ -321,8 +322,10 @@ export class Jeopardy {
     this.resetAfterQuestion();
     if (Object.keys(this.jpd.public.board).length === 0) {
       this.nextRound();
+    } else {
+      this.emitState();
+      this.io.of(this.roomId).emit('JPD:playMakeSelection');
     }
-    this.io.of(this.roomId).emit('JPD:playMakeSelection');
   }
 
   nextRound() {
@@ -471,8 +474,9 @@ export class Jeopardy {
     } else if (correct || !this.jpd.public.currentJudgeAnswer) {
       this.jpd.public.canNextQ = true;
       this.nextQuestion();
+    } else {
+      this.emitState();
     }
-    this.emitState();
   }
 
   submitWager(id: string, wager: number) {

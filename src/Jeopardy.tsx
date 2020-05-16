@@ -56,7 +56,9 @@ export class Jeopardy extends React.Component<{
       new Audio('/jeopardy/jeopardy-times-up.mp3').play();
     });
     this.props.socket.on('JPD:playDailyDouble', () => {
-      new Audio('/jeopardy/jeopardy-daily-double.mp3').play();
+      const audio = new Audio('/jeopardy/jeopardy-daily-double.mp3');
+      audio.volume = 0.5;
+      audio.play();
     });
     this.props.socket.on('JPD:playFinalJeopardy', () => {
       new Audio('/jeopardy/jeopardy-think.mp3').play();
