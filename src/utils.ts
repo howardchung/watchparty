@@ -195,3 +195,9 @@ export const iceServers = () => [
     username: 'howardzchung@gmail.com',
   },
 ];
+
+export const serverPath =
+  process.env.REACT_APP_SERVER_HOST ||
+  `${window.location.protocol}//${window.location.hostname}${
+    process.env.NODE_ENV === 'production' ? '' : ':8080'
+  }`;

@@ -44,11 +44,13 @@ import {
   decodeEntities,
   getMediaPathForList,
   iceServers,
+  serverPath,
 } from './utils';
 import { getCurrentSettings } from './Settings';
 import Video from './vbrowser/Video';
 import { VideoChat } from './VideoChat';
 import { Chat } from './Chat';
+import { TopBar } from './TopBar';
 import { Jeopardy } from './Jeopardy';
 
 declare global {
@@ -59,12 +61,6 @@ declare global {
     fbAsyncInit: Function;
   }
 }
-
-const serverPath =
-  process.env.REACT_APP_SERVER_HOST ||
-  `${window.location.protocol}//${window.location.hostname}${
-    process.env.NODE_ENV === 'production' ? '' : ':8080'
-  }`;
 
 interface AppState {
   state: 'init' | 'starting' | 'connected';
@@ -1044,7 +1040,7 @@ export default class App extends React.Component<null, AppState> {
             </div>
           </Modal>
         )}
-        <Banner fbUserID={this.state.fbUserID} />
+        <TopBar fbUserID={this.state.fbUserID} />
         {
           <Grid stackable celled="internally">
             <Grid.Row>
@@ -1370,192 +1366,6 @@ export default class App extends React.Component<null, AppState> {
             rosterUpdateTS={this.state.rosterUpdateTS}
           />
         )}
-      </React.Fragment>
-    );
-  }
-}
-
-class Banner extends React.Component<{ fbUserID: string | undefined }> {
-  createRoom = async () => {
-    const response = await window.fetch(serverPath + '/createRoom', {
-      method: 'POST',
-    });
-    const data = await response.json();
-    const { name } = data;
-    window.location.hash = '#' + name;
-    window.location.reload();
-  };
-
-  render() {
-    const { fbUserID } = this.props;
-    return (
-      <React.Fragment>
-        <div
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            padding: '1em',
-            paddingBottom: '0px',
-          }}
-        >
-          <a href="/" style={{ display: 'flex' }}>
-            <div
-              style={{ height: '85px', width: '85px', position: 'relative' }}
-            >
-              <Icon
-                inverted
-                name="film"
-                size="big"
-                circular
-                color="blue"
-                style={{ position: 'absolute' }}
-              />
-              <Icon
-                inverted
-                name="group"
-                size="big"
-                circular
-                color="green"
-                style={{ position: 'absolute', right: 0, bottom: 0 }}
-              />
-            </div>
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                width: '130px',
-              }}
-            >
-              <div
-                style={{
-                  textTransform: 'uppercase',
-                  letterSpacing: '1px',
-                  fontWeight: 700,
-                  color: '#2185d0',
-                  fontSize: '30px',
-                  lineHeight: '30px',
-                }}
-              >
-                Watch
-              </div>
-              <div
-                style={{
-                  textTransform: 'uppercase',
-                  letterSpacing: '1px',
-                  fontWeight: 700,
-                  color: '#21ba45',
-                  fontSize: '30px',
-                  lineHeight: '30px',
-                  marginLeft: 'auto',
-                }}
-              >
-                Party
-              </div>
-            </div>
-          </a>
-          <div
-            style={{
-              display: 'flex',
-              marginLeft: '10px',
-              alignItems: 'center',
-            }}
-          >
-            <a
-              href="https://discord.gg/3rYj5HV"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="footerIcon"
-              title="Discord"
-            >
-              <Icon name="discord" size="big" link />
-            </a>
-            <a
-              href="https://github.com/howardchung/watchparty"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="footerIcon"
-              title="GitHub"
-            >
-              <Icon name="github" size="big" link />
-            </a>
-          </div>
-          <div
-            className="mobileStack"
-            style={{
-              display: 'flex',
-              width: '450px',
-              marginLeft: 'auto',
-            }}
-          >
-            <Popup
-              content="Create a new room with a random URL that you can share with friends"
-              trigger={
-                <Button
-                  fluid
-                  color="blue"
-                  size="medium"
-                  icon
-                  labelPosition="left"
-                  onClick={this.createRoom}
-                  className="toolButton"
-                >
-                  <Icon name="certificate" />
-                  New Room
-                </Button>
-              }
-            />
-            {!fbUserID && (
-              <Popup
-                content="Optionally sign in with Facebook to use your profile photo in chat"
-                trigger={
-                  <Button
-                    fluid
-                    icon
-                    labelPosition="left"
-                    onClick={() =>
-                      window.FB.login(
-                        (response: any) => {
-                          window.location.reload();
-                        },
-                        { scope: 'public_profile,email' }
-                      )
-                    }
-                    color="facebook"
-                    className="toolButton"
-                  >
-                    <Icon name="facebook" />
-                    Sign in
-                  </Button>
-                }
-              />
-            )}
-            {fbUserID && (
-              <Button
-                fluid
-                icon
-                labelPosition="left"
-                onClick={() =>
-                  window.FB.logout((response: any) => {
-                    window.location.reload();
-                  })
-                }
-                color="facebook"
-                className="toolButton"
-              >
-                <Icon name="facebook" />
-                Sign out
-              </Button>
-            )}
-            {/* <SettingsModal trigger={<Button fluid inverted color="green" size="medium" icon labelPosition="left" className="toolButton"><Icon name="setting" />Settings</Button>} /> */}
-          </div>
-        </div>
-        <Divider inverted horizontal>
-          <Header inverted as="h4">
-            <Icon name="film" />
-            Watch videos with your friends!
-          </Header>
-        </Divider>
       </React.Fragment>
     );
   }
