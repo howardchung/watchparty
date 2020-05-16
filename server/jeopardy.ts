@@ -150,10 +150,27 @@ export class Jeopardy {
           socket.emit('JPD:state', this.jpd.public);
         }
       });
+      socket.on('JPD:reconnect', (id: string) => {
+        // Make sure the ID doesn't belong to a player already in the roster
+        if (this.roster.some(p => p.id === id)) {
+          return;
+        }
+        // Transfer old state to this player, scores, waitingForWager, dailyDoublePlayer
+        this.jpd.public.scores[socket.id] = this.jpd.public.scores[id];
+        delete this.jpd.public.scores[id];
+        if (this.jpd.public.waitingForWager) {
+          this.jpd.public.waitingForWager[socket.id] = this.jpd.public.waitingForWager[id];
+          delete this.jpd.public.waitingForWager[id];
+        }
+        if (this.jpd.public.dailyDoublePlayer === id) {
+          this.jpd.public.dailyDoublePlayer = socket.id;
+        }
+        this.emitState();
+      });
       socket.on('JPD:start', (episode, filter) => {
         this.loadEpisode(episode, filter);
       });
-      socket.on('JPD:pickQ', (id) => {
+      socket.on('JPD:pickQ', (id: string) => {
         if (
           this.jpd.public.picker &&
           this.roster.find((p) => p.id === this.jpd.public.picker) &&

@@ -35,6 +35,15 @@ export class Jeopardy extends React.Component<{
         window.localStorage.getItem('jeopardy-readingDisabled')
       ),
     });
+
+    // If we stored an old ID in localstorage, send reconnection request
+    const savedId = window.localStorage.getItem('jeopardy-savedId');
+    if (savedId) {
+      this.props.socket.emit('JPD:reconnect', savedId);
+    }
+    // Save our current ID to localstorage
+    window.localStorage.setItem('jeopardy-savedId', this.props.socket.id);
+
     this.props.socket.emit('JPD:init');
     this.props.socket.on('JPD:state', (game: any) => {
       this.setState({ game });
@@ -168,10 +177,11 @@ export class Jeopardy extends React.Component<{
   };
 
   sayText = async (text: string) => {
+    if (this.state.readingDisabled) {
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      return;
+    }
     await new Promise((resolve) => {
-      if (this.state.readingDisabled) {
-        return resolve();
-      }
       window.speechSynthesis.cancel();
       const utterThis = new SpeechSynthesisUtterance(text);
       // let retryCount = 0;
