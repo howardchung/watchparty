@@ -19,6 +19,19 @@
   src: url('/jeopardy/univers-75-black.ttf');
 }
 
+@font-face {
+  font-family: 'Gyparody';
+  font-style: normal;
+  font-weight: 400;
+  src: url('/jeopardy/gyparody.ttf');
+}
+
+.logo {
+  font-family: 'Gyparody';
+  font-size: 30px;
+  text-transform: uppercase;
+}
+
 .title {
   font-size: 24px;
 }

@@ -19,12 +19,13 @@ module.exports = class Room {
   public roomId: string;
 
   constructor(io: SocketIO.Server, roomId: string, roomData: string) {
-    this.jpd = new Jeopardy(io, roomId, this.roster);
     this.roomId = roomId;
     this.io = io;
 
     if (roomData) {
       this.deserialize(roomData);
+    } else {
+      this.jpd = new Jeopardy(io, roomId, this.roster);
     }
 
     setInterval(() => {
@@ -234,6 +235,7 @@ module.exports = class Room {
       pictureMap: this.pictureMap,
       chat: this.chat,
       vBrowser: this.vBrowser,
+      jpd: this.jpd,
     });
   }
 
@@ -253,6 +255,9 @@ module.exports = class Room {
     }
     if (roomObj.vBrowser) {
       this.vBrowser = roomObj.vBrowser;
+    }
+    if (roomObj.jpd) {
+      this.jpd = new Jeopardy(this.io, this.roomId, this.roster, roomObj.jpd);
     }
   }
 

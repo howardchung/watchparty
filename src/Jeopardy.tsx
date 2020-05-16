@@ -573,9 +573,10 @@ export class Jeopardy extends React.Component<{
               ))}
             </Dropdown.Menu>
           </Dropdown>
-          <div>Jeopardy!</div>
-          {game && <div>{'#' + game.epNum}</div>}
-          {game && (
+          <div className="logo">Jeopardy!</div>
+          {game && game.epNum && <div>{'#' + game.epNum}</div>}
+          {game && game.info && <div>({game.info})</div>}
+          {game && game.airDate && (
             <div>{new Date(game.airDate + 'T00:00').toDateString()}</div>
           )}
           <div style={{ display: 'flex' }}>
