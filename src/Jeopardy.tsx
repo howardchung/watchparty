@@ -31,6 +31,12 @@ export class Jeopardy extends React.Component<{
   };
   async componentDidMount() {
     window.speechSynthesis.getVoices();
+    const dailyDouble = new Audio('/jeopardy/jeopardy-daily-double.mp3');
+    const boardFill = new Audio('/jeopardy/jeopardy-board-fill.mp3');
+    const think = new Audio('/jeopardy/jeopardy-think.mp3');
+    const timesUp = new Audio('/jeopardy/jeopardy-times-up.mp3');
+    const rightAnswer = new Audio('/jeopardy/jeopardy-rightanswer.mp3');
+
     this.setState({
       readingDisabled: Boolean(
         window.localStorage.getItem('jeopardy-readingDisabled')
@@ -53,18 +59,17 @@ export class Jeopardy extends React.Component<{
       this.playIntro();
     });
     this.props.socket.on('JPD:playTimesUp', () => {
-      new Audio('/jeopardy/jeopardy-times-up.mp3').play();
+      timesUp.play();
     });
     this.props.socket.on('JPD:playDailyDouble', () => {
-      const audio = new Audio('/jeopardy/jeopardy-daily-double.mp3');
-      audio.volume = 0.5;
-      audio.play();
+      dailyDouble.volume = 0.5;
+      dailyDouble.play();
     });
     this.props.socket.on('JPD:playFinalJeopardy', () => {
-      new Audio('/jeopardy/jeopardy-think.mp3').play();
+      think.play();
     });
     this.props.socket.on('JPD:playRightanswer', () => {
-      new Audio('/jeopardy/jeopardy-rightanswer.mp3').play();
+      rightAnswer.play();
     });
     this.props.socket.on('JPD:playMakeSelection', () => {
       if (this.state.game.picker) {
@@ -108,7 +113,7 @@ export class Jeopardy extends React.Component<{
       });
       // Run board intro sequence
       // Play the fill sound
-      new Audio('/jeopardy/jeopardy-board-fill.mp3').play();
+      boardFill.play();
       // Randomly choose ordering of the 30 clues
       // Split into 6 sets of 5
       // Each half second show another set of 5
