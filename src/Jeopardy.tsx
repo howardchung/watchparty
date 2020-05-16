@@ -137,7 +137,24 @@ export class Jeopardy extends React.Component<{
     });
   }
 
-  async componentDidUpdate(prevProps: any, prevState: any) {}
+  async componentDidUpdate(prevProps: any, prevState: any) {
+    if (!prevState.game?.currentQ && this.state.game?.currentQ) {
+      // Run growing clue animation
+      const clue = document.getElementById(
+        'clueContainerContainer'
+      ) as HTMLElement;
+      const box = document.getElementById(
+        this.state.game?.currentQ
+      ) as HTMLElement;
+      clue.style.left = box.offsetLeft + 'px';
+      clue.style.top = box.offsetTop + 'px';
+      setTimeout(() => {
+        clue.style.left = '0px';
+        clue.style.top = '0px';
+        clue.style.transform = 'scale(1)';
+      }, 1);
+    }
+  }
 
   newGame = async (episode: number | null, filter: string | null) => {
     this.setState({ game: null });
@@ -269,23 +286,6 @@ export class Jeopardy extends React.Component<{
         <div id="intro" />
         {Boolean(game) && !this.state.isIntroPlaying && (
           <div>
-            {Boolean(game) && game.round === 'end' && (
-              <div id="endgame">
-                <h1 style={{ color: 'white' }}>Winner!</h1>
-                {this.getWinners().map((winner: string) => (
-                  <img
-                    alt=""
-                    style={{ width: '200px', height: '200px' }}
-                    src={
-                      getDefaultPicture(
-                        this.props.nameMap[winner],
-                        getColorHex(winner)
-                      ) || this.props.pictureMap[winner]
-                    }
-                  />
-                ))}
-              </div>
-            )}
             {
               <div className="board">
                 {categories.map((cat, i) => (
@@ -301,6 +301,7 @@ export class Jeopardy extends React.Component<{
                         const clue = game.board[id];
                         return (
                           <div
+                            id={id}
                             onClick={clue ? () => this.pickQ(id) : undefined}
                             className={`${clue ? 'value' : ''} box`}
                           >
@@ -312,8 +313,12 @@ export class Jeopardy extends React.Component<{
                   );
                 })}
                 {Boolean(game.currentQ) && (
-                  <div className="clueContainerContainer">
+                  <div
+                    id="clueContainerContainer"
+                    className="clueContainerContainer"
+                  >
                     <div
+                      id="clueContainer"
                       className="clueContainer"
                       style={{
                         backgroundSize: 'cover',
@@ -441,6 +446,23 @@ export class Jeopardy extends React.Component<{
                         </Button>
                       </div>
                     </div>
+                  </div>
+                )}
+                {Boolean(game) && game.round === 'end' && (
+                  <div id="endgame">
+                    <h1 style={{ color: 'white' }}>Winner!</h1>
+                    {this.getWinners().map((winner: string) => (
+                      <img
+                        alt=""
+                        style={{ width: '200px', height: '200px' }}
+                        src={
+                          getDefaultPicture(
+                            this.props.nameMap[winner],
+                            getColorHex(winner)
+                          ) || this.props.pictureMap[winner]
+                        }
+                      />
+                    ))}
                   </div>
                 )}
               </div>
