@@ -27,20 +27,37 @@ export class TopBar extends React.Component<{ fbUserID: string | undefined }> {
         >
           <a href="/" style={{ display: 'flex' }}>
             <div
-              style={{ height: '48px', width: '48px', marginRight: '10px', borderRadius: '50%', position: 'relative', backgroundColor: '#' + getColorHex('blue8') }}
+              style={{
+                height: '48px',
+                width: '48px',
+                marginRight: '10px',
+                borderRadius: '50%',
+                position: 'relative',
+                backgroundColor: '#' + getColorHex('blue8'),
+              }}
             >
               <Icon
                 inverted
                 name="film"
                 size="large"
-                style={{ position: 'absolute', top: 8, width: '100%', margin: '0 auto' }}
+                style={{
+                  position: 'absolute',
+                  top: 8,
+                  width: '100%',
+                  margin: '0 auto',
+                }}
               />
               <Icon
                 inverted
                 name="group"
                 size="large"
                 color="green"
-                style={{ position: 'absolute', bottom: 8, width: '100%', margin: '0 auto' }}
+                style={{
+                  position: 'absolute',
+                  bottom: 8,
+                  width: '100%',
+                  margin: '0 auto',
+                }}
               />
             </div>
             <div
@@ -52,7 +69,6 @@ export class TopBar extends React.Component<{ fbUserID: string | undefined }> {
               <div
                 style={{
                   textTransform: 'uppercase',
-                  letterSpacing: '1px',
                   fontWeight: 700,
                   color: '#2185d0',
                   fontSize: '30px',
@@ -64,7 +80,6 @@ export class TopBar extends React.Component<{ fbUserID: string | undefined }> {
               <div
                 style={{
                   textTransform: 'uppercase',
-                  letterSpacing: '1px',
                   fontWeight: 700,
                   color: '#21ba45',
                   fontSize: '30px',
