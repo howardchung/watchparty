@@ -64,6 +64,20 @@ export class Jeopardy extends React.Component<{
     this.props.socket.on('JPD:playRightanswer', () => {
       new Audio('/jeopardy/jeopardy-rightanswer.mp3').play();
     });
+    this.props.socket.on('JPD:playMakeSelection', () => {
+      if (this.state.game.picker) {
+        const selectionText = [
+          'Make a selection, {name}',
+          'You have command of the board, {name}',
+          'Pick a clue, {name}',
+        ];
+        const random =
+          selectionText[Math.floor(Math.random() * selectionText.length)];
+        this.sayText(
+          random.replace('{name}', this.props.nameMap[this.state.game.picker])
+        );
+      }
+    });
     this.props.socket.on('JPD:playClue', async (qid: string, text: string) => {
       this.setState({
         localAnswer: '',

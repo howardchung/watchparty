@@ -152,18 +152,23 @@ export class Jeopardy {
       });
       socket.on('JPD:reconnect', (id: string) => {
         // Make sure the ID doesn't belong to a player already in the roster
-        if (this.roster.some(p => p.id === id)) {
+        if (this.roster.some((p) => p.id === id)) {
           return;
         }
         // Transfer old state to this player, scores, waitingForWager, dailyDoublePlayer
         this.jpd.public.scores[socket.id] = this.jpd.public.scores[id];
         delete this.jpd.public.scores[id];
         if (this.jpd.public.waitingForWager) {
-          this.jpd.public.waitingForWager[socket.id] = this.jpd.public.waitingForWager[id];
+          this.jpd.public.waitingForWager[
+            socket.id
+          ] = this.jpd.public.waitingForWager[id];
           delete this.jpd.public.waitingForWager[id];
         }
         if (this.jpd.public.dailyDoublePlayer === id) {
           this.jpd.public.dailyDoublePlayer = socket.id;
+        }
+        if (this.jpd.public.picker === id) {
+          this.jpd.public.picker = socket.id;
         }
         this.emitState();
       });
@@ -317,6 +322,7 @@ export class Jeopardy {
     if (Object.keys(this.jpd.public.board).length === 0) {
       this.nextRound();
     }
+    this.io.of(this.roomId).emit('JPD:playMakeSelection');
   }
 
   nextRound() {
@@ -387,9 +393,9 @@ export class Jeopardy {
 
   setQuestionAnswerTimeout(durationMs: number) {
     this.questionAnswerTimeout = setTimeout(() => {
-    if (this.jpd.public.round !== 'final') {
-      this.io.of(this.roomId).emit('JPD:playTimesUp');
-    }
+      if (this.jpd.public.round !== 'final') {
+        this.io.of(this.roomId).emit('JPD:playTimesUp');
+      }
       this.revealAnswer();
     }, durationMs);
   }
