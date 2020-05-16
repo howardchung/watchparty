@@ -170,9 +170,7 @@ export class Jeopardy {
           delete this.jpd.public.waitingForWager[id];
         }
         if (this.jpd.public.buzzes) {
-          this.jpd.public.buzzes[
-            socket.id
-          ] = this.jpd.public.buzzes[id];
+          this.jpd.public.buzzes[socket.id] = this.jpd.public.buzzes[id];
           delete this.jpd.public.buzzes[id];
         }
         if (this.jpd.public.dailyDoublePlayer === id) {
@@ -307,9 +305,11 @@ export class Jeopardy {
       number = nums[Math.floor(Math.random() * nums.length)];
     }
     let loadedData = (jData as any)[number];
-    const { epNum, airDate, info, jeopardy, double, final } = loadedData;
-    this.jpd = getGameState(epNum, airDate, info, jeopardy, double, final);
-    this.nextRound();
+    if (loadedData) {
+      const { epNum, airDate, info, jeopardy, double, final } = loadedData;
+      this.jpd = getGameState(epNum, airDate, info, jeopardy, double, final);
+      this.nextRound();
+    }
   }
 
   emitState() {

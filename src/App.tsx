@@ -3,7 +3,6 @@ import {
   Button,
   Grid,
   Segment,
-  Divider,
   Dimmer,
   Loader,
   Header,
@@ -48,9 +47,9 @@ import {
 } from './utils';
 import { getCurrentSettings } from './Settings';
 import Video from './vbrowser/Video';
-import { VideoChat } from './VideoChat';
+// import { VideoChat } from './VideoChat';
 import { Chat } from './Chat';
-import { TopBar } from './TopBar';
+import { JeopardyTopBar } from './TopBar';
 import { Jeopardy } from './Jeopardy';
 
 declare global {
@@ -1040,12 +1039,12 @@ export default class App extends React.Component<null, AppState> {
             </div>
           </Modal>
         )}
-        <TopBar fbUserID={this.state.fbUserID} />
+        <JeopardyTopBar />
         {
           <Grid stackable celled="internally">
             <Grid.Row>
               {
-                <Grid.Column width={12}>
+                <Grid.Column width={12} className="fullHeightColumn">
                   {this.state.state === 'connected' && (
                     <Jeopardy
                       socket={this.socket}
@@ -1356,16 +1355,6 @@ export default class App extends React.Component<null, AppState> {
             </Grid.Row>
           </Grid>
         }
-        {this.state.state === 'connected' && (
-          <VideoChat
-            socket={this.socket}
-            participants={this.state.participants}
-            nameMap={this.state.nameMap}
-            pictureMap={this.state.pictureMap}
-            tsMap={this.state.tsMap}
-            rosterUpdateTS={this.state.rosterUpdateTS}
-          />
-        )}
       </React.Fragment>
     );
   }

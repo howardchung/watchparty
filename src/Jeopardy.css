@@ -28,12 +28,16 @@
 
 .logo {
   font-family: 'Gyparody';
-  font-size: 30px;
+  font-size: 48px;
+  line-height: 48px;
   text-transform: uppercase;
+  color: white;
+  text-shadow: 1px 1px 4px #fff, 1px 1px 4px #ccc;
 }
 
-.title {
-  font-size: 24px;
+.logo.small {
+  font-size: 30px;
+  line-height: 30px;
 }
 
 .board {
@@ -49,7 +53,6 @@
   margin: 0 auto;
   position: relative;
   width: 100vh;
-  height: 60vh;
 }
 
 .box {
@@ -190,9 +193,13 @@
 }
 
 #intro {
+  position: absolute;
   width: 100%;
-  position: relative;
-  display: 'flex';
+  height: 100%;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  display: flex;
   align-items: center;
   justify-content: center;
 }
