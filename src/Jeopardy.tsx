@@ -287,7 +287,8 @@ export class Jeopardy extends React.Component<{
                   {!game.currentAnswer &&
                   !game.buzzes[this.props.socket.id] &&
                   !game.submitted[this.props.socket.id] &&
-                  !game.currentDailyDouble ? (
+                  !game.currentDailyDouble &&
+                  game.round !== 'final' ? (
                     <div style={{ display: 'flex' }}>
                       <Button
                         disabled={!game.canBuzz}

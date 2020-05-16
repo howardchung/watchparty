@@ -62,7 +62,9 @@ function getPerQuestionState() {
     currentDailyDouble: false,
     waitingForWager: undefined as BooleanDict | undefined,
     playClueDuration: 0,
+    playClueEndTS: 0,
     questionDuration: 0,
+    questionEndTS: 0,
     answers: {} as StringDict,
     submitted: {} as BooleanDict,
     buzzes: {} as NumberDict,
@@ -124,6 +126,17 @@ export class Jeopardy {
 
     if (gameData) {
       this.jpd = gameData;
+      // Reconstruct the timeouts from the saved state
+      if (this.jpd.public.questionEndTS) {
+        const remaining = this.jpd.public.questionEndTS - Number(new Date());
+        console.log('[QUESTIONENDTS]', remaining);
+        this.setQuestionAnswerTimeout(remaining);
+      }
+      if (this.jpd.public.playClueEndTS) {
+        const remaining = this.jpd.public.playClueEndTS - Number(new Date());
+        console.log('[PLAYCLUEENDTS]', remaining);
+        this.setPlayClueTimeout(remaining);
+      }
     } else {
       this.jpd = getGameState(undefined, undefined, undefined, [], [], []);
     }
@@ -351,18 +364,24 @@ export class Jeopardy {
   unlockAnswer(duration = 15000) {
     const durationMs = Number(duration);
     this.jpd.public.questionDuration = durationMs;
-    clearTimeout(this.questionAnswerTimeout);
+    this.jpd.public.questionEndTS = Number(new Date()) + durationMs;
+    this.setQuestionAnswerTimeout(duration);
+  }
+
+  setQuestionAnswerTimeout(durationMs: number) {
     this.questionAnswerTimeout = setTimeout(() => {
-      if (this.jpd.public.round !== 'final') {
-        this.io.of(this.roomId).emit('JPD:playTimesUp');
-      }
+    if (this.jpd.public.round !== 'final') {
+      this.io.of(this.roomId).emit('JPD:playTimesUp');
+    }
       this.revealAnswer();
     }, durationMs);
   }
 
   revealAnswer() {
+    console.log('[REVEALANSWER]');
     clearTimeout(this.questionAnswerTimeout);
     this.jpd.public.questionDuration = 0;
+    this.jpd.public.questionEndTS = 0;
 
     // Add empty answers for anyone who buzzed but didn't submit anything
     Object.keys(this.jpd.public.buzzes).forEach((key) => {
@@ -500,16 +519,22 @@ export class Jeopardy {
       speakingTime = (totalSyll / 4) * 1000;
       console.log('[TRIGGERPLAYCLUE]', clue.question, totalSyll, speakingTime);
       this.jpd.public.playClueDuration = speakingTime;
+      this.jpd.public.playClueEndTS = Number(new Date()) + speakingTime;
     }
-    clearTimeout(this.playClueTimeout);
+    this.setPlayClueTimeout(speakingTime);
+  }
+
+  setPlayClueTimeout(duration: number) {
     this.playClueTimeout = setTimeout(() => {
       this.playClueDone();
-    }, speakingTime);
+    }, duration);
   }
 
   playClueDone() {
+    console.log('[PLAYCLUEDONE]');
     clearTimeout(this.playClueTimeout);
     this.jpd.public.playClueDuration = 0;
+    this.jpd.public.playClueEndTS = 0;
 
     if (this.jpd.public.currentDailyDouble) {
       this.unlockAnswer();
