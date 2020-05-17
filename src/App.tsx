@@ -2,7 +2,6 @@ import React from 'react';
 import {
   Button,
   Grid,
-  Segment,
   Dimmer,
   Loader,
   Header,
@@ -296,11 +295,11 @@ export default class App extends React.Component<null, AppState> {
           loading: Boolean(data.video),
         },
         () => {
-          if (this.state.isScreenSharingFile) {
+          if (this.state.isScreenSharingFile || this.isVBrowser()) {
             console.log(
-              'skipping REC:host video since fileshare is using leftVideo'
+              'skipping REC:host video since fileshare is using leftVideo or this is a vbrowser'
             );
-            this.setState({ loading: false });
+            this.setLoadingFalse();
             return;
           }
           // Stop all players
@@ -325,18 +324,11 @@ export default class App extends React.Component<null, AppState> {
             if (!data.paused) {
               this.doPlay();
             }
-            leftVideo?.addEventListener(
-              'loadedmetadata',
-              () => {
-                this.setState({ loading: false });
-              },
-              { once: true }
-            );
             // One time, when we're ready to play
             leftVideo?.addEventListener(
               'canplay',
               () => {
-                this.setState({ loading: false });
+                this.setLoadingFalse();
                 this.jumpToLeader();
               },
               { once: true }
@@ -992,6 +984,10 @@ export default class App extends React.Component<null, AppState> {
     return input.split('/').slice(-1)[0];
   };
 
+  setLoadingFalse = () => {
+    this.setState({ loading: false });
+  }
+
   render() {
     const sharer = this.state.participants.find((p) => p.isScreenShare);
     const controller = this.state.participants.find((p) => p.isController);
@@ -1235,6 +1231,7 @@ export default class App extends React.Component<null, AppState> {
                           password={this.getVBrowserPass()}
                           hostname={this.getVBrowserHost()}
                           controlling={this.state.isControlling}
+                          setLoadingFalse={this.setLoadingFalse}
                         />
                       ) : (
                         <video
