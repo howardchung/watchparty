@@ -611,6 +611,7 @@ export class Jeopardy extends React.Component<{
                 onClick={() => this.props.socket.emit('JPD:cmdIntro')}
                 icon
                 labelPosition="left"
+                color="blue"
               >
                 <Icon name="film" />
                 Play Intro
@@ -653,6 +654,7 @@ export class Jeopardy extends React.Component<{
                 </Dropdown.Menu>
               </Dropdown>
               <Input
+                className="gameSelector"
                 style={{ marginRight: '.25em' }}
                 label="Game #"
                 value={this.state.localEpNum}
@@ -694,6 +696,7 @@ export class Jeopardy extends React.Component<{
               <Button
                 icon
                 labelPosition="left"
+                color={this.state.readingDisabled ? 'red' : 'green'}
                 onClick={() => {
                   const checked = !this.state.readingDisabled;
                   this.setState({ readingDisabled: checked });
