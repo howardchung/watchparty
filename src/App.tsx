@@ -1186,12 +1186,11 @@ export default class App extends React.Component<null, AppState> {
                       id="playerContainer"
                       tabIndex={1}
                       onKeyDown={this.onVideoKeydown}
-                      style={{ height: '100%', position: 'relative' }}
                     >
                       {(this.state.loading || !this.state.currentMedia) && (
-                        <Segment
-                          inverted
+                        <div
                           id="loader"
+                          className="videoContent"
                           style={{
                             display: 'flex',
                             alignItems: 'center',
@@ -1211,7 +1210,7 @@ export default class App extends React.Component<null, AppState> {
                               content="Pick something to watch from the menu above."
                             />
                           )}
-                        </Segment>
+                        </div>
                       )}
                       <iframe
                         style={{
@@ -1222,6 +1221,7 @@ export default class App extends React.Component<null, AppState> {
                         }}
                         title="YouTube"
                         id="leftYt"
+                        className="videoContent"
                         allowFullScreen
                         frameBorder="0"
                         allow="autoplay"
@@ -1245,6 +1245,7 @@ export default class App extends React.Component<null, AppState> {
                                 : 'none',
                           }}
                           id="leftVideo"
+                          className="videoContent"
                         ></video>
                       )}
                       {this.state.fullScreen && this.state.currentMedia && (

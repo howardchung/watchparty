@@ -265,7 +265,7 @@ export default class Video extends React.Component<{
 
   render() {
     return (
-      <div ref={this._container}>
+      <div ref={this._container} style={{ position: 'relative' }}>
         <video ref={this._video} id="leftVideo" style={{ width: '100%' }} />
         <div
           ref={this._overlay}
