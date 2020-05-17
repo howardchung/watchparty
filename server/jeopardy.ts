@@ -252,7 +252,7 @@ export class Jeopardy {
         this.emitState();
         if (
           this.jpd.public.round !== 'final' &&
-          Object.keys(this.jpd.public.buzzes).every((id) => id in this.jpd.public.submitted)
+          this.roster.every((p) => p.id in this.jpd.public.submitted)
         ) {
           this.revealAnswer();
         }
