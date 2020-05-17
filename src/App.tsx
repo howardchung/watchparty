@@ -188,7 +188,7 @@ export default class App extends React.Component<null, AppState> {
             this.setState({ fbUserID });
             this.updateName(null, { value: name });
             this.updatePicture(picture);
-          }
+          },
         );
       }
     });
@@ -297,14 +297,14 @@ export default class App extends React.Component<null, AppState> {
         () => {
           if (this.state.isScreenSharingFile || this.isVBrowser()) {
             console.log(
-              'skipping REC:host video since fileshare is using leftVideo or this is a vbrowser'
+              'skipping REC:host video since fileshare is using leftVideo or this is a vbrowser',
             );
             this.setLoadingFalse();
             return;
           }
           // Stop all players
           const leftVideo = document.getElementById(
-            'leftVideo'
+            'leftVideo',
           ) as HTMLMediaElement;
           leftVideo?.pause();
           this.watchPartyYTPlayer?.stopVideo();
@@ -316,7 +316,7 @@ export default class App extends React.Component<null, AppState> {
 
           if (this.isYouTube() && !this.watchPartyYTPlayer) {
             console.log(
-              'YT player not ready, onReady callback will retry when it is'
+              'YT player not ready, onReady callback will retry when it is',
             );
           } else {
             // Start this video
@@ -331,7 +331,7 @@ export default class App extends React.Component<null, AppState> {
                 this.setLoadingFalse();
                 this.jumpToLeader();
               },
-              { once: true }
+              { once: true },
             );
 
             // Progress updater
@@ -340,7 +340,7 @@ export default class App extends React.Component<null, AppState> {
             if (currentMedia.includes('/stream?torrent=magnet')) {
               this.progressUpdater = window.setInterval(async () => {
                 const response = await window.fetch(
-                  currentMedia.replace('/stream', '/progress')
+                  currentMedia.replace('/stream', '/progress'),
                 );
                 const data = await response.json();
                 this.setState({
@@ -352,7 +352,7 @@ export default class App extends React.Component<null, AppState> {
               }, 1000);
             }
           }
-        }
+        },
       );
     });
     socket.on('REC:chat', (data: ChatMessage) => {
@@ -380,7 +380,7 @@ export default class App extends React.Component<null, AppState> {
         () => {
           this.updateScreenShare();
           this.updateVBrowser();
-        }
+        },
       );
     });
     socket.on('chatinit', (data: any) => {
@@ -426,7 +426,7 @@ export default class App extends React.Component<null, AppState> {
     inputElement.addEventListener('change', () => {
       const file = inputElement.files![0];
       const leftVideo = document.getElementById(
-        'leftVideo'
+        'leftVideo',
       ) as HTMLMediaElement;
       leftVideo.src = URL.createObjectURL(file);
       leftVideo.play();
@@ -538,7 +538,7 @@ export default class App extends React.Component<null, AppState> {
         const stream = event.stream;
         // console.log(stream);
         const leftVideo = document.getElementById(
-          'leftVideo'
+          'leftVideo',
         ) as HTMLMediaElement;
         if (leftVideo) {
           leftVideo.src = '';
@@ -610,7 +610,7 @@ export default class App extends React.Component<null, AppState> {
   getCurrentTime = () => {
     if (this.isVideo()) {
       const leftVideo = document.getElementById(
-        'leftVideo'
+        'leftVideo',
       ) as HTMLMediaElement;
       return leftVideo?.currentTime;
     }
@@ -622,7 +622,7 @@ export default class App extends React.Component<null, AppState> {
   getDuration = () => {
     if (this.isVideo()) {
       const leftVideo = document.getElementById(
-        'leftVideo'
+        'leftVideo',
       ) as HTMLMediaElement;
       return leftVideo.duration;
     }
@@ -635,7 +635,7 @@ export default class App extends React.Component<null, AppState> {
   isPaused = () => {
     if (this.isVideo()) {
       const leftVideo = document.getElementById(
-        'leftVideo'
+        'leftVideo',
       ) as HTMLMediaElement;
       return leftVideo.paused || leftVideo.ended;
     }
@@ -653,7 +653,7 @@ export default class App extends React.Component<null, AppState> {
   isMuted = () => {
     if (this.isVideo()) {
       const leftVideo = document.getElementById(
-        'leftVideo'
+        'leftVideo',
       ) as HTMLMediaElement;
       return leftVideo?.muted;
     }
@@ -666,7 +666,7 @@ export default class App extends React.Component<null, AppState> {
   isSubtitled = () => {
     if (this.isVideo()) {
       const leftVideo = document.getElementById(
-        'leftVideo'
+        'leftVideo',
       ) as HTMLMediaElement;
       return (
         leftVideo.textTracks[0] && leftVideo.textTracks[0].mode === 'showing'
@@ -701,7 +701,7 @@ export default class App extends React.Component<null, AppState> {
     }
     if (this.isVideo()) {
       const leftVideo = document.getElementById(
-        'leftVideo'
+        'leftVideo',
       ) as HTMLMediaElement;
       if (leftVideo) {
         leftVideo.srcObject = null;
@@ -743,7 +743,7 @@ export default class App extends React.Component<null, AppState> {
     this.setState({ currentMediaPaused: false }, async () => {
       if (this.isVideo()) {
         const leftVideo = document.getElementById(
-          'leftVideo'
+          'leftVideo',
         ) as HTMLMediaElement;
         await leftVideo?.play();
       }
@@ -758,7 +758,7 @@ export default class App extends React.Component<null, AppState> {
     this.setState({ currentMediaPaused: true }, async () => {
       if (this.isVideo()) {
         const leftVideo = document.getElementById(
-          'leftVideo'
+          'leftVideo',
         ) as HTMLMediaElement;
         leftVideo.pause();
       }
@@ -772,7 +772,7 @@ export default class App extends React.Component<null, AppState> {
   doSeek = (time: number) => {
     if (this.isVideo()) {
       const leftVideo = document.getElementById(
-        'leftVideo'
+        'leftVideo',
       ) as HTMLMediaElement;
       leftVideo.currentTime = time;
     }
@@ -785,7 +785,7 @@ export default class App extends React.Component<null, AppState> {
     let shouldPlay = true;
     if (this.isVideo()) {
       const leftVideo = document.getElementById(
-        'leftVideo'
+        'leftVideo',
       ) as HTMLMediaElement;
       shouldPlay = leftVideo.paused || leftVideo.ended;
     } else if (this.isYouTube()) {
@@ -836,11 +836,11 @@ export default class App extends React.Component<null, AppState> {
 
   fullScreen = async (bVideoOnly: boolean) => {
     let container = document.getElementById(
-      'fullScreenContainer'
+      'fullScreenContainer',
     ) as HTMLElement;
     if (bVideoOnly || isMobile()) {
       container = document.getElementById(
-        this.isYouTube() ? 'leftYt' : 'leftVideo'
+        this.isYouTube() ? 'leftYt' : 'leftVideo',
       ) as HTMLElement;
     }
     if (!document.fullscreenElement) {
@@ -861,7 +861,7 @@ export default class App extends React.Component<null, AppState> {
   setMute = (muted: boolean) => {
     if (this.isVideo()) {
       const leftVideo = document.getElementById(
-        'leftVideo'
+        'leftVideo',
       ) as HTMLMediaElement;
       if (leftVideo) {
         leftVideo.muted = muted;
@@ -879,7 +879,7 @@ export default class App extends React.Component<null, AppState> {
   setVolume = (volume: number) => {
     if (this.isVideo()) {
       const leftVideo = document.getElementById(
-        'leftVideo'
+        'leftVideo',
       ) as HTMLMediaElement;
       leftVideo.volume = volume;
     }
@@ -891,7 +891,7 @@ export default class App extends React.Component<null, AppState> {
   getVolume = () => {
     if (this.isVideo()) {
       const leftVideo = document.getElementById(
-        'leftVideo'
+        'leftVideo',
       ) as HTMLMediaElement;
       return leftVideo.volume;
     }
@@ -904,7 +904,7 @@ export default class App extends React.Component<null, AppState> {
   toggleSubtitle = () => {
     if (this.isVideo()) {
       const leftVideo = document.getElementById(
-        'leftVideo'
+        'leftVideo',
       ) as HTMLMediaElement;
       if (leftVideo.textTracks[0]) {
         leftVideo.textTracks[0].mode =
@@ -921,7 +921,7 @@ export default class App extends React.Component<null, AppState> {
         this.watchPartyYTPlayer?.setOption('captions', 'reload', true);
         const tracks = this.watchPartyYTPlayer?.getOption(
           'captions',
-          'tracklist'
+          'tracklist',
         );
         this.watchPartyYTPlayer?.setOption('captions', 'track', tracks[0]);
       }
@@ -986,7 +986,7 @@ export default class App extends React.Component<null, AppState> {
 
   setLoadingFalse = () => {
     this.setState({ loading: false });
-  }
+  };
 
   render() {
     const sharer = this.state.participants.find((p) => p.isScreenShare);
@@ -1309,7 +1309,7 @@ export default class App extends React.Component<null, AppState> {
                         label={
                           Math.min(
                             (this.state.downloaded / this.state.total) * 100,
-                            100
+                            100,
                           ).toFixed(2) +
                           '% - ' +
                           formatSpeed(this.state.speed) +
@@ -1431,7 +1431,7 @@ class SearchComponent extends React.Component<SearchComponentProps> {
   setMedia = (e: any, data: DropdownProps) => {
     window.setTimeout(
       () => this.setState({ resetDropdown: Number(new Date()) }),
-      200
+      200,
     );
     this.props.setMedia(e, data);
   };
@@ -1514,7 +1514,7 @@ const YouTubeSearchResult = (props: SearchResult & { setMedia: Function }) => {
 };
 
 const MediaPathSearchResult = (
-  props: SearchResult & { setMedia: Function }
+  props: SearchResult & { setMedia: Function },
 ) => {
   const result = props;
   const setMedia = props.setMedia;
@@ -1550,13 +1550,13 @@ class StreamPathSearchResult extends React.Component<
             let response = await window.fetch(
               this.props.streamPath +
                 '/data?torrent=' +
-                encodeURIComponent(result.magnet!)
+                encodeURIComponent(result.magnet!),
             );
             let metadata = await response.json();
             // console.log(metadata);
             if (
               metadata.files.filter(
-                (file: any) => file.length > 10 * 1024 * 1024
+                (file: any) => file.length > 10 * 1024 * 1024,
               ).length > 1
             ) {
               // Multiple large files, present user selection
@@ -1569,10 +1569,10 @@ class StreamPathSearchResult extends React.Component<
                     encodeURIComponent(result.magnet!) +
                     '&fileIndex=' +
                     i,
-                })
+                }),
               );
               multiStreamSelection.sort((a: any, b: any) =>
-                a.name.localeCompare(b.name)
+                a.name.localeCompare(b.name),
               );
               this.props.launchMultiSelect(multiStreamSelection);
             } else {
@@ -1625,7 +1625,7 @@ class ComboBox extends React.Component<ComboBoxProps> {
   setMedia = (e: any, data: DropdownProps) => {
     window.setTimeout(
       () => this.setState({ inputMedia: undefined, results: undefined }),
-      200
+      200,
     );
     this.props.setMedia(e, data);
   };
@@ -1651,7 +1651,7 @@ class ComboBox extends React.Component<ComboBoxProps> {
             if (this.props.mediaPath) {
               const data = await getMediaPathResults(
                 this.props.mediaPath,
-                query
+                query,
               );
               results = data.map((result: SearchResult) => (
                 <MediaPathSearchResult {...result} setMedia={this.setMedia} />
@@ -1670,7 +1670,7 @@ class ComboBox extends React.Component<ComboBoxProps> {
               if (this.props.streamPath) {
                 const data = await getStreamPathResults(
                   this.props.streamPath,
-                  query
+                  query,
                 );
                 results = data.map((result: SearchResult) => (
                   <StreamPathSearchResult
@@ -1727,7 +1727,7 @@ class ComboBox extends React.Component<ComboBoxProps> {
                   ) {
                     this.doSearch(e);
                   }
-                }
+                },
               );
               setTimeout(() => e.target.select(), 100);
             }}
@@ -1735,7 +1735,7 @@ class ComboBox extends React.Component<ComboBoxProps> {
               setTimeout(
                 () =>
                   this.setState({ inputMedia: undefined, results: undefined }),
-                100
+                100,
               )
             }
             onKeyPress={(e: any) => {
@@ -1790,7 +1790,7 @@ class ComboBox extends React.Component<ComboBoxProps> {
 
 async function getMediaPathResults(
   mediaPath: string,
-  query: string
+  query: string,
 ): Promise<SearchResult[]> {
   // Get media list if provided
   const response = await window.fetch(mediaPath);
@@ -1800,7 +1800,7 @@ async function getMediaPathResults(
     const xml = await response.text();
     const data = await parseStringPromise(xml);
     let filtered = data.ListBucketResult.Contents.filter(
-      (file: any) => !file.Key[0].includes('/')
+      (file: any) => !file.Key[0].includes('/'),
     );
     results = filtered.map((file: any) => ({
       url: mediaPath + '/' + file.Key[0],
@@ -1823,10 +1823,10 @@ async function getMediaPathResults(
 
 async function getStreamPathResults(
   streamPath: string,
-  query: string
+  query: string,
 ): Promise<SearchResult[]> {
   const response = await window.fetch(
-    streamPath + '/search?q=' + encodeURIComponent(query)
+    streamPath + '/search?q=' + encodeURIComponent(query),
   );
   const data = await response.json();
   return data;
@@ -1834,7 +1834,7 @@ async function getStreamPathResults(
 
 async function getYouTubeResults(query: string): Promise<SearchResult[]> {
   const response = await window.fetch(
-    serverPath + '/youtube?q=' + encodeURIComponent(query)
+    serverPath + '/youtube?q=' + encodeURIComponent(query),
   );
   const data = await response.json();
   return data;

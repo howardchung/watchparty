@@ -54,7 +54,9 @@ export abstract class BaseClient extends EventEmitter<any> {
 
     if (!this.supported) {
       this.onDisconnected(
-        new Error('browser does not support webrtc (RTCPeerConnection missing)')
+        new Error(
+          'browser does not support webrtc (RTCPeerConnection missing)',
+        ),
       );
       return;
     }
@@ -105,11 +107,11 @@ export abstract class BaseClient extends EventEmitter<any> {
 
   public sendData(
     event: 'wheel' | 'mousemove',
-    data: { x: number; y: number }
+    data: { x: number; y: number },
   ): void;
   public sendData(
     event: 'mousedown' | 'mouseup' | 'keydown' | 'keyup',
-    data: { key: number }
+    data: { key: number },
   ): void;
   public sendData(event: string, data: any) {
     if (!this.connected) {
@@ -170,7 +172,7 @@ export abstract class BaseClient extends EventEmitter<any> {
     this.emit(
       'debug',
       `sending event '${event}' ${payload ? `with payload: ` : ''}`,
-      payload
+      payload,
     );
     this._ws!.send(JSON.stringify({ event, ...payload }));
   }
@@ -181,7 +183,7 @@ export abstract class BaseClient extends EventEmitter<any> {
       this.emit(
         'warn',
         `attempting to create peer with no websocket: `,
-        this._ws ? `state: ${this._ws.readyState}` : 'no socket'
+        this._ws ? `state: ${this._ws.readyState}` : 'no socket',
       );
       return;
     }
@@ -202,7 +204,7 @@ export abstract class BaseClient extends EventEmitter<any> {
       this.emit(
         'debug',
         `peer connection state changed`,
-        this._peer ? this._peer.connectionState : undefined
+        this._peer ? this._peer.connectionState : undefined,
       );
     };
 
@@ -210,7 +212,7 @@ export abstract class BaseClient extends EventEmitter<any> {
       this.emit(
         'debug',
         `peer signaling state changed`,
-        this._peer ? this._peer.signalingState : undefined
+        this._peer ? this._peer.signalingState : undefined,
       );
     };
 
@@ -219,7 +221,7 @@ export abstract class BaseClient extends EventEmitter<any> {
 
       this.emit(
         'debug',
-        `peer ice connection state changed: ${this._peer!.iceConnectionState}`
+        `peer ice connection state changed: ${this._peer!.iceConnectionState}`,
       );
 
       switch (this._state) {
@@ -249,7 +251,7 @@ export abstract class BaseClient extends EventEmitter<any> {
     this._channel.onmessage = this.onData.bind(this);
     this._channel.onclose = this.onDisconnected.bind(
       this,
-      new Error('peer data channel closed')
+      new Error('peer data channel closed'),
     );
 
     this._peer.setRemoteDescription({ type: 'offer', sdp });
@@ -262,7 +264,7 @@ export abstract class BaseClient extends EventEmitter<any> {
             event: EVENT.SIGNAL.ANSWER,
             sdp: d.sdp,
             displayname: this._displayname,
-          })
+          }),
         );
       })
       .catch((err) => this.emit('error', err));
@@ -274,7 +276,7 @@ export abstract class BaseClient extends EventEmitter<any> {
     this.emit(
       'debug',
       `received websocket event ${event} ${payload ? `with payload: ` : ''}`,
-      payload
+      payload,
     );
 
     if (event === EVENT.SIGNAL.PROVIDE) {
@@ -301,13 +303,13 @@ export abstract class BaseClient extends EventEmitter<any> {
     this.emit(
       'debug',
       `received ${event.track.kind} track from peer: ${event.track.id}`,
-      event
+      event,
     );
     const stream = event.streams[0];
     if (!stream) {
       this.emit(
         'warn',
-        `no stream provided for track ${event.track.id}(${event.track.label})`
+        `no stream provided for track ${event.track.id}(${event.track.label})`,
       );
       return;
     }
