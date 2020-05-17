@@ -60,6 +60,7 @@ export class Jeopardy extends React.Component<{
       dailyDouble.play();
     });
     this.props.socket.on('JPD:playFinalJeopardy', async () => {
+      think.volume = 0.5;
       think.play();
     });
     this.props.socket.on('JPD:playRightanswer', () => {
@@ -641,7 +642,7 @@ export class Jeopardy extends React.Component<{
               </Dropdown>
               <Input
                 style={{ marginRight: '.25em' }}
-                label="#"
+                label="Game #"
                 value={this.state.localEpNum}
                 onChange={(e) => this.setState({ localEpNum: e.target.value })}
                 onKeyPress={(e: any) =>
@@ -700,7 +701,7 @@ export class Jeopardy extends React.Component<{
             </div>
           </React.Fragment>
         }
-        {false && process.env.NODE_ENV === 'development' && (
+        {process.env.NODE_ENV === 'development' && (
           <pre
             style={{ color: 'white', maxHeight: '200px', overflow: 'scroll' }}
           >

@@ -158,18 +158,21 @@ export class Jeopardy {
         if (this.roster.some((p) => p.id === id)) {
           return;
         }
-        // Transfer old state to this player, scores, waitingForWager, dailyDoublePlayer
+        // Transfer old state to this player
         if (this.jpd.public.scores && this.jpd.public.scores[id]) {
           this.jpd.public.scores[socket.id] = this.jpd.public.scores[id];
           delete this.jpd.public.scores[id];
         }
-        if (this.jpd.public.waitingForWager) {
+        if (
+          this.jpd.public.waitingForWager &&
+          this.jpd.public.waitingForWager[id]
+        ) {
           this.jpd.public.waitingForWager[
             socket.id
           ] = this.jpd.public.waitingForWager[id];
           delete this.jpd.public.waitingForWager[id];
         }
-        if (this.jpd.public.buzzes) {
+        if (this.jpd.public.buzzes && this.jpd.public.buzzes[id]) {
           this.jpd.public.buzzes[socket.id] = this.jpd.public.buzzes[id];
           delete this.jpd.public.buzzes[id];
         }
@@ -272,11 +275,11 @@ export class Jeopardy {
       });
       socket.on('disconnect', () => {
         if (this.jpd && this.jpd.public) {
-          // If player being judged leaves, set them to false
+          // If player being judged leaves, rule them wrong
           if (this.jpd.public.currentJudgeAnswer === socket.id) {
+            // This is done for now to run the rest of the code around judging
+            // Might be better not to penalize and treat as just not having answered
             this.judgeAnswer({ id: socket.id, correct: false });
-          } else {
-            this.jpd.public.judges[socket.id] = false;
           }
           // If player who needs to submit wager leaves, submit 0
           // if (
@@ -440,6 +443,7 @@ export class Jeopardy {
   }
 
   advanceJudging() {
+    console.log('[ADVANCEJUDGING]', this.jpd.public.currentJudgeAnswerIndex);
     if (this.jpd.public.currentJudgeAnswerIndex === undefined) {
       this.jpd.public.currentJudgeAnswerIndex = 0;
     } else {
@@ -454,6 +458,15 @@ export class Jeopardy {
     this.jpd.public.answers[
       this.jpd.public.currentJudgeAnswer
     ] = this.jpd.answers[this.jpd.public.currentJudgeAnswer];
+
+    // If the current judge player isn't connected, advance again
+    if (
+      this.jpd.public.currentJudgeAnswer &&
+      !this.roster.some((p) => p.id === this.jpd.public.currentJudgeAnswer)
+    ) {
+      console.log('[ADVANCEJUDGING] player not found, moving on:', this.jpd.public.currentJudgeAnswer);
+      this.advanceJudging();
+    }
   }
 
   judgeAnswer({ id, correct }: { id: string; correct: boolean }) {
@@ -475,14 +488,7 @@ export class Jeopardy {
         this.jpd.public.wagers[id] || this.jpd.public.currentValue;
     }
 
-    // Advance judging to the next available
-    // Stop if we don't have any more answers to judge or we find a new one
-    while (
-      this.jpd.public.currentJudgeAnswer &&
-      this.jpd.public.currentJudgeAnswer in this.jpd.public.judges
-    ) {
-      this.advanceJudging();
-    }
+    this.advanceJudging();
 
     if (this.jpd.public.round === 'final') {
       // We can have multiple correct answers in final, so only move on if everyone is done
