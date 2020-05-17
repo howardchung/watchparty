@@ -1,6 +1,16 @@
 import { Socket } from 'socket.io';
 const jData = require('../jeopardy.json');
 
+// Do a game count
+// let counts: NumberDict = {};
+// Object.values(jData).forEach((ep: any) => {
+//   if (!counts[ep.info]) {
+//     counts[ep.info] = 0;
+//   }
+//   counts[ep.info] += 1;
+// });
+// console.log(counts);
+
 interface RawQuestion {
   val: number;
   cat: string;
