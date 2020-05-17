@@ -358,6 +358,7 @@ export class Jeopardy {
       });
     } else if (this.jpd.public.round === 'double') {
       this.jpd.public.round = 'final';
+      const now = Number(new Date());
       this.jpd.public.waitingForWager = {};
       this.roster.forEach((p) => {
         this.jpd.public.waitingForWager![p.id] = true;
@@ -372,7 +373,7 @@ export class Jeopardy {
           Number(this.jpd.public.scores[b] || 0)
       );
       playerIds.forEach((pid) => {
-        this.jpd.public.buzzes[pid] = Number(new Date());
+        this.jpd.public.buzzes[pid] = now;
       });
       // Play the category sound
       this.io.of(this.roomId).emit('JPD:playRightanswer');

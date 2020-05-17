@@ -201,15 +201,15 @@ export class Jeopardy extends React.Component<{
         await new Promise((resolve) => setTimeout(resolve, 1000));
         document.getElementById('intro')!.removeChild(player);
       }
-    }, 10000);
-    setTimeout(() => {
+      await this.sayText('And now, here is the host of Jeopardy, your computer!');
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       introMusic.pause();
       introVideo.pause();
       introVideo = null as any;
       introMusic = null as any;
       document.getElementById('intro')!.innerHTML = '';
       this.setState({ isIntroPlaying: false });
-    }, 38500);
+    }, 10000);
   };
 
   sayText = async (text: string) => {
@@ -716,9 +716,9 @@ export class Jeopardy extends React.Component<{
             </div>
           </React.Fragment>
         }
-        {process.env.NODE_ENV === 'development' && (
+        {false && process.env.NODE_ENV === 'development' && (
           <pre
-            style={{ color: 'white', maxHeight: '200px', overflow: 'scroll' }}
+            style={{ color: 'white', height: '200px', overflow: 'scroll' }}
           >
             {JSON.stringify(game, null, 2)}
           </pre>
