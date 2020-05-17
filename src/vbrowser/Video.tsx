@@ -8,6 +8,7 @@ export default class Video extends React.Component<{
   password: string;
   hostname: string;
   controlling: boolean;
+  setLoadingFalse: Function;
 }> {
   //@ts-ignore
   // private observer = new ResizeObserver(this.onResize);
@@ -33,18 +34,28 @@ export default class Video extends React.Component<{
     if (this.props.controlling) {
       this.takeControl();
     }
+
+    this.$client.on(EVENT.DISCONNECTED, () => {
+      this.$client.login(url, this.props.password, this.props.username);
+    });
     this.$client.on(EVENT.SCREEN.RESOLUTION, (data) => {
       this.width = data.width;
       this.height = data.height;
     });
-    const url = 'wss://' + this.props.hostname + '/';
-    this.$client.login(url, this.props.password, this.props.username);
-    this.$client.on(EVENT.DISCONNECTED, () => {
-      this.$client.login(url, this.props.password, this.props.username);
+    this.$client.on(EVENT.TRACK, (stream) => {
+      // console.log(track, streams);
+      const video = document.getElementById('leftVideo') as HTMLVideoElement;
+      video.src = '';
+      video.srcObject = stream;
+      video.play();
     });
+
     if (process.env.NODE_ENV === 'development') {
       this.$client.on('debug', (e, data) => console.log(e, data));
     }
+
+    const url = 'wss://' + this.props.hostname + '/';
+    this.$client.login(url, this.props.password, this.props.username);
 
     // this._container.current?.addEventListener('resize', this.onResize);
     // this.onResize();
