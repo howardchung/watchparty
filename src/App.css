@@ -29,6 +29,12 @@ body {
   letter-spacing: 1px;
 }
 
+.controlsContainer {
+  position: absolute;
+  width: 100%;
+  bottom: 0px;
+}
+
 .controls {
   color: white;
   display: flex;
@@ -54,14 +60,23 @@ body {
   min-width: initial;
 }
 
-.leftYtContainer {
-  position: relative;
+#loader {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
-  height: 0;
-  padding-bottom: 56.25%;
+  height: 100%;
 }
 
 #leftYt {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+#leftVideo {
   position: absolute;
   top: 0;
   left: 0;
@@ -75,28 +90,11 @@ body {
 }
 
 .fullScreenContainer:fullscreen > #playerContainer {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.fullScreenContainer .videoOuter {
-  /* min-height: 70vh;
-    max-height: 75vh; */
   width: 75vw;
-  max-height: 100vh;
 }
 
-.fullScreenContainer .fullScreenChat {
-  /* max-height: 23vh; */
+.fullScreenChat.fullScreenChat.fullScreenChat {
   width: 25vw;
-  max-height: 100vh;
-}
-
-.videoOuter {
-  width: 100%;
-  min-height: 400px;
-  max-height: 80vh;
 }
 
 #leftVideo::-webkit-media-controls {
@@ -119,7 +117,7 @@ body {
 }
 
 .videoChatContent {
-  height: 120px;
+  height: 110px;
   border-radius: 4px;
   object-fit: contain;
 }
