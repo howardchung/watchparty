@@ -109,8 +109,8 @@
   font-family: 'Korinna';
   text-transform: uppercase;
   color: white;
-  font-size: 30px;
-  line-height: 30px;
+  font-size: 3.5vh;
+  line-height: 3.5vh;
   text-align: center;
   flex-grow: 1;
   display: flex;
