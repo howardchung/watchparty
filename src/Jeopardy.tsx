@@ -274,11 +274,20 @@ export class Jeopardy extends React.Component<{
   };
 
   getWinners = () => {
-    const max = Math.max(...Object.values<number>(this.state.game.scores)) || 0;
+    const max = Math.max(...Object.values<number>(this.state.game?.scores || {})) || 0;
     return this.props.participants
       .filter((p) => (this.state.game.scores[p.id] || 0) === max)
       .map((p) => p.id);
   };
+
+  getFirstBuzzTS = () => {
+    const min = Math.min(...Object.values<number>(this.state.game?.buzzes || {})) || 0;
+    return min;
+  }
+
+  getBuzzOffset = (id: string) => {
+    return this.state.game?.buzzes[id] - this.getFirstBuzzTS();
+  }
 
   render() {
     const game = this.state.game;
@@ -579,9 +588,12 @@ export class Jeopardy extends React.Component<{
                     <div
                       className={`answerBox ${
                         game?.buzzes[p.id] ? 'buzz' : ''
+                      } ${
+                        game?.judges[p.id] === false ? 'negative' : ''
                       }`}
                     >
                       {game && game.answers[p.id]}
+                      <div className="timeOffset">{this.getBuzzOffset(p.id) ? `+${(this.getBuzzOffset(p.id) / 1000).toFixed(3)}` : ''}</div>
                     </div>
                   </div>
                 );

@@ -166,6 +166,10 @@
   color: red;
 }
 
+.scoreboard .answerBox.negative {
+  color: red;
+}
+
 .judgeButtons {
   position: absolute;
   top: 0px;
@@ -186,10 +190,21 @@
   padding: 4px;
   word-break: break-word;
   border: 4px solid black;
+  position: relative;
 }
 
 .scoreboard .answerBox.buzz {
   border: 4px solid white;
+}
+
+.scoreboard .answerBox .timeOffset {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  font-size: 10px;
+  font-family: initial;
+  padding: 0px 3px;
+  border-radius: 3px;
 }
 
 #intro {
