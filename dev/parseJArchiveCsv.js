@@ -49,9 +49,11 @@ all.forEach((row) => {
       info = 'celebrity';
     } else if (/^\d{4} Teacher/.test(row.extra_info)) {
       info = 'teacher';
+    } else if (/^\d{4} Tournament of Champions/.test(row.extra_info)) {
+      info = 'champions';
     }
     if (info) {
-      console.log(row.extra_info);
+      console.log(row.extra_info, info);
     }
     output[row.epNum] = {
       epNum: row.epNum,

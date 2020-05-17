@@ -645,6 +645,11 @@ export class Jeopardy extends React.Component<{
                       value: 'teacher',
                       text: 'Teachers Tournament',
                     },
+                    {
+                      key: 'champions',
+                      value: 'champions',
+                      text: 'Tournament of Champions',
+                    },
                   ].map((item) => (
                     <Dropdown.Item
                       key={item.key}
