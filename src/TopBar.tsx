@@ -70,7 +70,6 @@ export class TopBar extends React.Component<{ fbUserID: string | undefined }> {
               <div
                 style={{
                   textTransform: 'uppercase',
-                  letterSpacing: '1px',
                   fontWeight: 700,
                   color: '#2185d0',
                   fontSize: '30px',
@@ -82,7 +81,6 @@ export class TopBar extends React.Component<{ fbUserID: string | undefined }> {
               <div
                 style={{
                   textTransform: 'uppercase',
-                  letterSpacing: '1px',
                   fontWeight: 700,
                   color: '#21ba45',
                   fontSize: '30px',
@@ -229,7 +227,7 @@ export class JeopardyTopBar extends React.Component {
                 marginRight: '10px',
                 borderRadius: '50%',
                 position: 'relative',
-                backgroundColor: 'rgb(111, 111, 111)',
+                backgroundColor: '#209CEE',
               }}
             >
               J!
