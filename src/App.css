@@ -60,23 +60,7 @@ body {
   min-width: initial;
 }
 
-#loader {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-}
-
-#leftYt {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-}
-
-#leftVideo {
+.videoContent {
   position: absolute;
   top: 0;
   left: 0;
@@ -87,6 +71,13 @@ body {
 .fullScreenContainer {
   display: flex;
   flex-direction: row;
+}
+
+#playerContainer {
+  height: 100%;
+  position: relative;
+  display: flex;
+  align-items: center;
 }
 
 .fullScreenContainer:fullscreen > #playerContainer {
