@@ -196,6 +196,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
               style={{
                 display: 'flex',
                 flexWrap: 'wrap',
+                width: '90px',
               }}
             >
               <Button

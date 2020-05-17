@@ -90,7 +90,6 @@ export class Chat extends React.Component<ChatProps> {
         style={{
           display: 'flex',
           flexDirection: 'column',
-          width: '100%',
           flexGrow: '1',
           minHeight: 0,
           marginTop: 0,
