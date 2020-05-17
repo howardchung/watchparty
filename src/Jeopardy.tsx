@@ -467,18 +467,20 @@ export class Jeopardy extends React.Component<{
                   {Boolean(game) && game.round === 'end' && (
                     <div id="endgame">
                       <h1 style={{ color: 'white' }}>Winner!</h1>
-                      {this.getWinners().map((winner: string) => (
-                        <img
-                          alt=""
-                          style={{ width: '200px', height: '200px' }}
-                          src={
-                            getDefaultPicture(
-                              this.props.nameMap[winner],
-                              getColorHex(winner)
-                            ) || this.props.pictureMap[winner]
-                          }
-                        />
-                      ))}
+                      <div style={{ display: 'flex' }}>
+                        {this.getWinners().map((winner: string) => (
+                          <img
+                            alt=""
+                            style={{ width: '200px', height: '200px' }}
+                            src={
+                              getDefaultPicture(
+                                this.props.nameMap[winner],
+                                getColorHex(winner)
+                              ) || this.props.pictureMap[winner]
+                            }
+                          />
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>

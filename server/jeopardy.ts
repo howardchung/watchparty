@@ -252,7 +252,7 @@ export class Jeopardy {
         this.emitState();
         if (
           this.jpd.public.round !== 'final' &&
-          this.roster.every((p) => p.id in this.jpd.public.submitted)
+          Object.keys(this.jpd.public.buzzes).every((id) => id in this.jpd.public.submitted)
         ) {
           this.revealAnswer();
         }
@@ -282,12 +282,12 @@ export class Jeopardy {
             this.judgeAnswer({ id: socket.id, correct: false });
           }
           // If player who needs to submit wager leaves, submit 0
-          // if (
-          //   this.jpd.public.waitingForWager &&
-          //   this.jpd.public.waitingForWager[socket.id]
-          // ) {
-          //   this.submitWager(socket.id, 0);
-          // }
+          if (
+            this.jpd.public.waitingForWager &&
+            this.jpd.public.waitingForWager[socket.id]
+          ) {
+            this.submitWager(socket.id, 0);
+          }
         }
       });
     });
@@ -463,7 +463,7 @@ export class Jeopardy {
     // If the current judge player isn't connected, advance again
     if (
       this.jpd.public.currentJudgeAnswer &&
-      !this.roster.some((p) => p.id === this.jpd.public.currentJudgeAnswer)
+      !this.roster.find((p) => p.id === this.jpd.public.currentJudgeAnswer)
     ) {
       console.log('[ADVANCEJUDGING] player not found, moving on:', this.jpd.public.currentJudgeAnswer);
       this.advanceJudging();
@@ -548,7 +548,7 @@ export class Jeopardy {
       if (this.jpd.public.waitingForWager) {
         delete this.jpd.public.waitingForWager[id];
       }
-      if (this.roster.every((p) => p.id in this.jpd.wagers)) {
+      if (Object.keys(this.jpd.public.buzzes).every((id) => id in this.jpd.wagers)) {
         // if final, reveal clue if all players made wager
         this.jpd.public.waitingForWager = undefined;
         this.jpd.public.board[
