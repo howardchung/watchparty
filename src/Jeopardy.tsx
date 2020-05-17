@@ -404,7 +404,7 @@ export class Jeopardy extends React.Component<{
                               }
                               icon={
                                 <Icon
-                                  onClick={this.submitAnswer}
+                                  onClick={() => this.submitAnswer()}
                                   name="arrow right"
                                   inverted
                                   circular
@@ -426,7 +426,7 @@ export class Jeopardy extends React.Component<{
                               }
                               icon={
                                 <Icon
-                                  onClick={this.submitWager}
+                                  onClick={() => this.submitWager()}
                                   name="arrow right"
                                   inverted
                                   circular
