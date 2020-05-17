@@ -163,7 +163,7 @@ app.get('/youtube', (req, res) => {
         console.error(data);
         return res.status(500).json({ error: 'youtube error' });
       }
-    }
+    },
   );
 });
 

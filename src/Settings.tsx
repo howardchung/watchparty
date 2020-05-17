@@ -19,7 +19,7 @@ export const SettingsModal = ({ trigger }: any) => (
         inverted
         onClick={() => {
           const newSetting = (document.getElementById(
-            'settings_textarea'
+            'settings_textarea',
           ) as HTMLTextAreaElement)!.value;
           try {
             validateSettingsString(newSetting);
@@ -62,7 +62,7 @@ export function getCurrentSettings(): Settings {
  * Validate a setting string. Return a parsed setting object if valid, otherwise throw exception
  */
 export function validateSettingsString(
-  setting: string | null
+  setting: string | null,
 ): Settings | null {
   // Don't have a setting or invalid value
   let settingObject: Settings = JSON.parse(setting as any);

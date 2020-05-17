@@ -154,7 +154,7 @@ export function debounce(func: Function, wait: number, immediate?: boolean) {
 export const getMediaPathForList = (list: string) => {
   if (list.startsWith('https://gitlab.com/')) {
     const match = list.match(
-      /https:\/\/gitlab.com\/api\/v4\/projects\/(.*)\/repository\/tree/
+      /https:\/\/gitlab.com\/api\/v4\/projects\/(.*)\/repository\/tree/,
     );
     const name = match && match[1];
     const decoded = decodeURIComponent(name || '');
