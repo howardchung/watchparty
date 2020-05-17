@@ -9,6 +9,7 @@ import Redis from 'ioredis';
 import https from 'https';
 import http from 'http';
 import socketIO from 'socket.io';
+import { searchYoutube } from './utils/searchYoutube';
 
 const app = express();
 let server: any = null;
@@ -144,26 +145,15 @@ app.get('/stats', (req, res) => {
 });
 
 app.get('/youtube', (req, res) => {
-  Youtube.search.list(
-    { part: 'snippet', type: 'video', maxResults: 25, q: req.query.q },
-    (err: any, data: any) => {
-      console.log(err)
-      if (data && data.items) {
-        const response = data.items.map((video: any) => {
-          return {
-            url: 'https://www.youtube.com/watch?v=' + video.id.videoId,
-            name: video.snippet.title,
-            img: video.snippet.thumbnails.default.url,
-          };
-        });
-        res.json(response);
-      } else {
-        console.log(data)
-        console.error(data);
+  if (typeof req.query.q === 'string') {
+    searchYoutube(req.query.q)
+      .then(items => res.json(items))
+      .catch(() => {
         return res.status(500).json({ error: 'youtube error' });
-      }
-    }
-  );
+      })
+  } else {
+    return res.status(500).json({ error: 'query must be a string' });
+  }
 });
 
 app.post('/createRoom', (req, res) => {
