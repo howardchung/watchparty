@@ -2,11 +2,8 @@ require('dotenv').config();
 import fs from 'fs';
 import util from 'util';
 import express from 'express';
-//@ts-ignore
 import Moniker from 'moniker';
-//@ts-ignore
 import Youtube from 'youtube-api';
-//@ts-ignore
 import cors from 'cors';
 import Redis from 'ioredis';
 import https from 'https';
@@ -83,7 +80,7 @@ async function init() {
         if (room.vBrowser && room.vBrowser.assignTime) {
           if (
             Number(new Date()) - room.vBrowser.assignTime >
-              6 * 60 * 60 * 1000 ||
+            6 * 60 * 60 * 1000 ||
             room.roster.length === 0
           ) {
             console.log('[RESET] VM in room:', room.roomId);
@@ -150,6 +147,7 @@ app.get('/youtube', (req, res) => {
   Youtube.search.list(
     { part: 'snippet', type: 'video', maxResults: 25, q: req.query.q },
     (err: any, data: any) => {
+      console.log(err)
       if (data && data.items) {
         const response = data.items.map((video: any) => {
           return {
@@ -160,6 +158,7 @@ app.get('/youtube', (req, res) => {
         });
         res.json(response);
       } else {
+        console.log(data)
         console.error(data);
         return res.status(500).json({ error: 'youtube error' });
       }

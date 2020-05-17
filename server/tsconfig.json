@@ -4,6 +4,9 @@
     "allowJs": true,
     "strict": true,
     "esModuleInterop": true,
-    "module": "commonjs"
-  }
+    "module": "commonjs",
+  },
+  "include": [
+    "../global.d.ts"
+  ]
 }
