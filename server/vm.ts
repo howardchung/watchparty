@@ -180,6 +180,10 @@ export async function assignVM() {
   }
   let selected = null;
   while (!selected) {
+    const currSize = await redis.llen('availableList');
+    if (currSize === 0) {
+      await launchVM();
+    }
     let resp = await redis.blpop('availableList', 0);
     const id = resp[1];
     console.log('[ASSIGN]', id);
