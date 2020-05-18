@@ -13,6 +13,11 @@ An website for playing Jeopardy! together
 Reading:
 * Uses text-to-speech to read clues
 
+Buzzing:
+* After a set time (based on number of syllables in the clue text), buzzing is unlocked
+* Buzzing in enables a user to submit an answer
+* Answers will be judged in buzz order
+
 Judging:
 * Players judge answer correctness themselves.
 * Auto-judging is quite a difficult problem to solve, due to the number of ways answers can be represented, and spelling errors.
