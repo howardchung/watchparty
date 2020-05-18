@@ -1,29 +1,29 @@
-# WatchParty
+# Jeopardy
 
-An website for watching videos together.
+An website for playing Jeopardy! together
 
 ## Description
 
-- Synchronizes the video being watched with the current room
-- Plays, pauses, and seeks are synced to all watchers
-- Supports:
-  - YouTube videos
-  - Screen sharing (Chrome tab or application)
-  - Stream-your-own-file
-  - Video files on the Internet (anything accessible via HTTP)
-  - Launch a shared virtual browser in the cloud (similar to rabb.it)
-- Create separate rooms for users on demand
-- Text chat
-- Video chat
+- Implements the game show Jeopardy!, including the Jeopardy, Double Jeopardy, and Final Jeopardy rounds. Daily Doubles are also included.
+- Any archived episode of Jeopardy! can be loaded, with options for loading specific event games (e.g. College Championship)
+- Load games by episode number
+- Supports creating multiple rooms for private/simultaneous games.
+- Text chat included
+
+Reading:
+* Uses text-to-speech to read clues
+
+Judging:
+* Players judge answer correctness themselves.
+* Auto-judging is quite a difficult problem to solve, due to the number of ways answers can be represented, and spelling errors.
+* Rule-based approaches will not scale sufficiently, and probably something ML/AI-powered is required for a usable/non-frustrating experience.
+
+Data:
+* Game data is from http://j-archive.com/
+* Games might be incomplete if some clues weren't revealed on the show.
 
 ## Configuration
 
-- `REACT_APP_MEDIA_PATH`: Optional, URL of a server with media files on it.
-  - The client will query this for a listing of available files.
-  - Currently supported: Nginx, S3 bucket, GitLab repo. Possibly Plex media servers in the future
-  - For optimal performance, the server should support requests for 206 Partial Content and have CORS enabled.
-- `REACT_APP_STREAM_PATH`: Optional, URL of a PeerStream server for searching streams
-- `YOUTUBE_API_KEY`: Provide one to enable searching YouTube
 - `REDIS_URL`: Provide to allow persisting rooms to Redis so they survive server reboots
 
 ## Tech
