@@ -10,20 +10,20 @@ An website for playing Jeopardy! together
 - Supports creating multiple rooms for private/simultaneous games.
 - Text chat included
 
-Reading:
+### Reading:
 * Uses text-to-speech to read clues
 
-Buzzing:
+### Buzzing:
 * After a set time (based on number of syllables in the clue text), buzzing is unlocked
 * Buzzing in enables a user to submit an answer
 * Answers will be judged in buzz order
 
-Judging:
+### Judging:
 * Players judge answer correctness themselves.
 * Auto-judging is quite a difficult problem to solve, due to the number of ways answers can be represented, and spelling errors.
 * Rule-based approaches will not scale sufficiently, and probably something ML/AI-powered is required for a usable/non-frustrating experience.
 
-Data:
+### Data:
 * Game data is from http://j-archive.com/
 * Games might be incomplete if some clues weren't revealed on the show.
 
