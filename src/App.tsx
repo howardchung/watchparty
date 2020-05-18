@@ -1304,7 +1304,6 @@ export default class App extends React.Component<null, AppState> {
                         inverted
                         value={this.state.downloaded}
                         total={this.state.total}
-                        active
                         // indicating
                         label={
                           Math.min(
@@ -1972,8 +1971,7 @@ class Controls extends React.Component<ControlsProps> {
           }}
           value={currentTime}
           total={duration}
-          active
-        >
+          >
           {duration < Infinity && this.state.showTimestamp && (
             <div
               style={{
