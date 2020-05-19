@@ -81,11 +81,11 @@ body {
 }
 
 .fullScreenContainer:fullscreen > #playerContainer {
-  width: 75vw;
+  width: 80vw;
 }
 
 .fullScreenChat.fullScreenChat.fullScreenChat {
-  width: 25vw;
+  width: 20vw;
 }
 
 #leftVideo::-webkit-media-controls {

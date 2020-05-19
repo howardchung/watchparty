@@ -276,7 +276,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
                         bottom: '4px',
                         left: '0px',
                         width: '100%',
-                        backgroundColor: '#' + getColorHex(p.id),
+                        backgroundColor: 'rgba(0,0,0,0)',
                         color: 'white',
                         borderRadius: '4px',
                         fontSize: '10px',
