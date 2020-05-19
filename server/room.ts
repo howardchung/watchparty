@@ -105,6 +105,11 @@ module.exports = class Room {
           // TODO add some validation on client side too so we don't just drop long messages
           return;
         }
+        if (process.env.NODE_ENV === 'development' && data === '/clear') {
+          this.chat.length = 0;
+          io.of(roomId).emit('chatinit', this.chat);
+          return;
+        }
         const chatMsg = { id: socket.id, msg: data };
         this.addChatMessage(socket, chatMsg);
       });

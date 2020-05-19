@@ -2,7 +2,7 @@ import React from 'react';
 import { serverPath, getColorHex } from './utils';
 import { Icon, Popup, Button } from 'semantic-ui-react';
 
-export class TopBar extends React.Component<{ fbUserID: string | undefined }> {
+export class NewRoomButton extends React.Component<{ size?: string }> {
   createRoom = async () => {
     const response = await window.fetch(serverPath + '/createRoom', {
       method: 'POST',
@@ -12,7 +12,34 @@ export class TopBar extends React.Component<{ fbUserID: string | undefined }> {
     window.location.hash = '#' + name;
     window.location.reload();
   };
+  render() {
+    return (
+      <Popup
+        content="Create a new room with a random URL that you can share with friends"
+        trigger={
+          <Button
+            fluid
+            color="blue"
+            size={this.props.size as any}
+            icon
+            labelPosition="left"
+            onClick={this.createRoom}
+            className="toolButton"
+          >
+            <Icon name="certificate" />
+            New Room
+          </Button>
+        }
+      />
+    );
+  }
+}
 
+export class TopBar extends React.Component<{
+  fbUserID?: string;
+  hideNewRoom?: boolean;
+  hideSignin?: boolean;
+}> {
   render() {
     const { fbUserID } = this.props;
     return (
@@ -125,24 +152,8 @@ export class TopBar extends React.Component<{ fbUserID: string | undefined }> {
               marginLeft: 'auto',
             }}
           >
-            <Popup
-              content="Create a new room with a random URL that you can share with friends"
-              trigger={
-                <Button
-                  fluid
-                  color="blue"
-                  size="medium"
-                  icon
-                  labelPosition="left"
-                  onClick={this.createRoom}
-                  className="toolButton"
-                >
-                  <Icon name="certificate" />
-                  New Room
-                </Button>
-              }
-            />
-            {!fbUserID && (
+            {!this.props.hideNewRoom && <NewRoomButton />}
+            {!this.props.hideSignin && !fbUserID && (
               <Popup
                 content="Optionally sign in with Facebook to use your profile photo in chat"
                 trigger={
