@@ -9,7 +9,7 @@ import Redis from "ioredis";
 import https from "https";
 import http from "http";
 import socketIO from "socket.io";
-import { authenticateYoutube, searchYoutube } from "./utils/youtube";
+import { searchYoutube } from "./utils/youtube";
 
 const app = express();
 let server: any = null;
@@ -20,7 +20,7 @@ if (process.env.HTTPS) {
 } else {
   server = new http.Server(app);
 }
-const io = socketIO(server, { origins: '*:*' });
+const io = socketIO(server, { origins: "*:*" });
 let redis = (undefined as unknown) as Redis.Redis;
 if (process.env.REDIS_URL) {
   redis = new Redis(process.env.REDIS_URL);
