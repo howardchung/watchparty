@@ -20,7 +20,7 @@ if (process.env.HTTPS) {
 } else {
   server = new http.Server(app);
 }
-const io = socketIO(server, { origins: "*:*" });
+const io = socketIO(server, { origins: '*:*' });
 let redis = (undefined as unknown) as Redis.Redis;
 if (process.env.REDIS_URL) {
   redis = new Redis(process.env.REDIS_URL);
