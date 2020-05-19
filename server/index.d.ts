@@ -31,3 +31,23 @@ interface Settings {
   mediaPath?: string;
   streamPath?: string;
 }
+
+export interface YoutubeResult {
+  id: {
+    videoId: string;
+  };
+  snippet: {
+    title: string;
+    thumbnails: {
+      default: {
+        url: string;
+      };
+    };
+  };
+}
+
+export interface YoutubeVideo {
+  url: string;
+  name: string;
+  img: string;
+}

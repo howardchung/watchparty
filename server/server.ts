@@ -2,16 +2,14 @@ require('dotenv').config();
 import fs from 'fs';
 import util from 'util';
 import express from 'express';
-//@ts-ignore
 import Moniker from 'moniker';
-//@ts-ignore
 import Youtube from 'youtube-api';
-//@ts-ignore
 import cors from 'cors';
 import Redis from 'ioredis';
 import https from 'https';
 import http from 'http';
 import socketIO from 'socket.io';
+import { searchYoutube } from './utils/youtube';
 
 const app = express();
 let server: any = null;
@@ -112,13 +110,6 @@ async function init() {
   server.listen(process.env.PORT || 8080);
 }
 
-if (process.env.YOUTUBE_API_KEY) {
-  Youtube.authenticate({
-    type: 'key',
-    key: process.env.YOUTUBE_API_KEY,
-  });
-}
-
 app.use(cors());
 app.use(express.static('build'));
 
@@ -146,25 +137,17 @@ app.get('/stats', (req, res) => {
   }
 });
 
-app.get('/youtube', (req, res) => {
-  Youtube.search.list(
-    { part: 'snippet', type: 'video', maxResults: 25, q: req.query.q },
-    (err: any, data: any) => {
-      if (data && data.items) {
-        const response = data.items.map((video: any) => {
-          return {
-            url: 'https://www.youtube.com/watch?v=' + video.id.videoId,
-            name: video.snippet.title,
-            img: video.snippet.thumbnails.default.url,
-          };
-        });
-        res.json(response);
-      } else {
-        console.error(data);
-        return res.status(500).json({ error: 'youtube error' });
-      }
+app.get('/youtube', async (req, res) => {
+  if (typeof req.query.q === 'string') {
+    try {
+      const items = await searchYoutube(req.query.q);
+      res.json(items);
+    } catch {
+      return res.status(500).json({ error: 'youtube error' });
     }
-  );
+  } else {
+    return res.status(500).json({ error: 'query must be a string' });
+  }
 });
 
 app.post('/createRoom', (req, res) => {
