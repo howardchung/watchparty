@@ -155,7 +155,7 @@ export class TopBar extends React.Component<{ fbUserID: string | undefined }> {
                         (response: any) => {
                           window.location.reload();
                         },
-                        { scope: 'public_profile,email' },
+                        { scope: 'public_profile,email' }
                       )
                     }
                     color="facebook"
