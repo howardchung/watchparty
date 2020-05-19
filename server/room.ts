@@ -1,5 +1,6 @@
 import { assignVM, resetVM } from './vm';
 import { Socket } from 'socket.io';
+import { User, ChatMessage, NumberDict, StringDict } from '.';
 
 module.exports = class Room {
   private video = '';
