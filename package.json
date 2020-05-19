@@ -39,6 +39,11 @@
     "server": "node buildServer/server.js",
     "prettier": "prettier --write ."
   },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run prettier"
+    }
+  },
   "eslintConfig": {
     "extends": "react-app"
   },
