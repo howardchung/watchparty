@@ -60,6 +60,7 @@
     ]
   },
   "devDependencies": {
+    "@types/cors": "^2.8.6",
     "@types/express": "^4.17.6",
     "@types/ioredis": "^4.16.2",
     "@types/jest": "^25.2.1",
