@@ -6,5 +6,5 @@
     "esModuleInterop": true,
     "module": "commonjs"
   },
-  "include": ["../global.d.ts"]
+  "include": [".ts", "../global.d.ts"]
 }
