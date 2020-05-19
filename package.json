@@ -37,7 +37,7 @@
     "eject": "react-scripts eject",
     "dev": "(fuser -k -TERM -n tcp 8080 || true) && ts-node-dev --respawn --transpileOnly --project server/tsconfig.json server/server.ts",
     "server": "node buildServer/server.js",
-    "prettier": "prettier --single-quote --write ."
+    "prettier": "prettier --write ."
   },
   "eslintConfig": {
     "extends": "react-app"
@@ -63,6 +63,7 @@
     "@types/react-dom": "^16.9.6",
     "@types/socket.io": "^2.1.4",
     "@types/uuid": "^7.0.3",
+    "husky": "^4.2.5",
     "papaparse": "^5.2.0",
     "prettier": "2.0.5",
     "ts-node-dev": "^1.0.0-pre.44",
