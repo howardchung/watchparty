@@ -9,8 +9,7 @@ import Redis from "ioredis";
 import https from "https";
 import http from "http";
 import socketIO from "socket.io";
-import { searchYoutube } from "./utils/searchYoutube";
-import { authenticateYoutube } from "./utils/authenticateYoutubeApi";
+import { authenticateYoutube, searchYoutube } from "./utils/youtube";
 
 const app = express();
 let server: any = null;
@@ -110,8 +109,6 @@ async function init() {
 
   server.listen(process.env.PORT || 8080);
 }
-
-authenticateYoutube();
 
 app.use(cors());
 app.use(express.static("build"));

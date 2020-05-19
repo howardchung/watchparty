@@ -1,6 +1,20 @@
 import Youtube from "youtube-api";
-import { YoutubeVideo } from "../index.d";
-import { mapYoutubeResult } from "./mapYoutubeResult";
+import { YoutubeVideo, YoutubeResult } from "../index.d";
+
+if (process.env.YOUTUBE_API_KEY) {
+  Youtube.authenticate({
+    type: "key",
+    key: process.env.YOUTUBE_API_KEY,
+  });
+}
+
+export const mapYoutubeResult = (video: YoutubeResult): YoutubeVideo => {
+  return {
+    url: "https://www.youtube.com/watch?v=" + video.id.videoId,
+    name: video.snippet.title,
+    img: video.snippet.thumbnails.default.url,
+  };
+};
 
 export const searchYoutube = (query: string): Promise<YoutubeVideo[]> => {
   return new Promise((resolve, reject) => {

@@ -1,2 +1,2 @@
-declare module "youtube-api";
-declare module "moniker";
+declare module 'youtube-api';
+declare module 'moniker';
