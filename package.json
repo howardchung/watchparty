@@ -41,8 +41,14 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "npm run prettier"
+      "pre-commit": "lint-staged"
     }
+  },
+  "lint-staged": {
+    "./src/**/*.{tsx,ts,js}": [
+      "prettier --write",
+      "git add"
+    ]
   },
   "eslintConfig": {
     "extends": "react-app"
@@ -69,6 +75,7 @@
     "@types/socket.io": "^2.1.4",
     "@types/uuid": "^7.0.3",
     "husky": "^4.2.5",
+    "lint-staged": "^10.2.4",
     "papaparse": "^5.2.0",
     "prettier": "2.0.5",
     "ts-node-dev": "^1.0.0-pre.44",
