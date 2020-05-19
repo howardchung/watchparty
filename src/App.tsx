@@ -1063,14 +1063,6 @@ export default class App extends React.Component<null, AppState> {
                   {/* <Divider inverted horizontal></Divider> */}
                   <div style={{ height: '4px' }} />
                   <div className="mobileStack" style={{ display: 'flex' }}>
-                    {
-                      <SearchComponent
-                        setMedia={this.setMedia}
-                        type={'youtube'}
-                        streamPath={this.state.settings.streamPath}
-                        mediaPath={this.state.settings.mediaPath}
-                      />
-                    }
                     {this.screenShareStream && (
                       <Button
                         fluid
@@ -1099,24 +1091,6 @@ export default class App extends React.Component<null, AppState> {
                           >
                             <Icon name={'slideshare'} />
                             Screenshare
-                          </Button>
-                        }
-                      />
-                    )}
-                    {!this.screenShareStream && !this.isVBrowser() && (
-                      <Popup
-                        content="Stream your own video file"
-                        trigger={
-                          <Button
-                            fluid
-                            className="toolButton"
-                            disabled={sharer && this.socket?.id !== sharer?.id}
-                            icon
-                            labelPosition="left"
-                            onClick={this.setupFileShare}
-                          >
-                            <Icon name="file" />
-                            File
                           </Button>
                         }
                       />
@@ -1169,6 +1143,32 @@ export default class App extends React.Component<null, AppState> {
                         Stop VBrowser
                       </Button>
                     )}
+                    {!this.screenShareStream && !this.isVBrowser() && (
+                      <Popup
+                        content="Stream your own video file"
+                        trigger={
+                          <Button
+                            fluid
+                            className="toolButton"
+                            disabled={sharer && this.socket?.id !== sharer?.id}
+                            icon
+                            labelPosition="left"
+                            onClick={this.setupFileShare}
+                          >
+                            <Icon name="file" />
+                            File
+                          </Button>
+                        }
+                      />
+                    )}
+                    {
+                      <SearchComponent
+                        setMedia={this.setMedia}
+                        type={'youtube'}
+                        streamPath={this.state.settings.streamPath}
+                        mediaPath={this.state.settings.mediaPath}
+                      />
+                    }
                   </div>
                   <div style={{ height: '4px' }} />
                   <div
@@ -1971,7 +1971,7 @@ class Controls extends React.Component<ControlsProps> {
           }}
           value={currentTime}
           total={duration}
-          >
+        >
           {duration < Infinity && this.state.showTimestamp && (
             <div
               style={{
