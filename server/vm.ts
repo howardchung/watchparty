@@ -169,7 +169,7 @@ async function listVMs(filter?: string) {
   });
   return response.data.servers
     .filter(
-      (server: any) => server.tags.includes(VBROWSER_TAG) && server.private_ip,
+      (server: any) => server.tags.includes(VBROWSER_TAG) && server.private_ip
     )
     .map(mapServerObject);
 }
@@ -215,7 +215,7 @@ export async function resizeVMGroup() {
       'desired:',
       maxAvailable,
       'available:',
-      availableCount,
+      availableCount
     );
     launchVM();
   } else if (availableCount > maxAvailable) {
@@ -226,7 +226,7 @@ export async function resizeVMGroup() {
       'desired:',
       maxAvailable,
       'available:',
-      availableCount,
+      availableCount
     );
     terminateVM(id);
   }
@@ -238,7 +238,7 @@ export async function cleanupVMGroup() {
   // Take the list of VMs from API, subtract VMs that have a lock in redis or are in the available pool, delete the rest
   const allVMs = await listVMs();
   const usedKeys = (await redis.keys('vbrowser:*')).map((key) =>
-    key.slice('vbrowser:'.length),
+    key.slice('vbrowser:'.length)
   );
   const availableKeys = await redis.lrange('availableList', 0, -1);
   const dontDelete = new Set([...usedKeys, ...availableKeys]);

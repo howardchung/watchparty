@@ -174,7 +174,7 @@ module.exports = class Room {
         });
         this.cmdHost(
           undefined,
-          'vbrowser://' + this.vBrowser.pass + '@' + this.vBrowser.host,
+          'vbrowser://' + this.vBrowser.pass + '@' + this.vBrowser.host
         );
         io.of(roomId).emit('roster', this.roster);
       });
@@ -205,7 +205,7 @@ module.exports = class Room {
             sharer: data.sharer,
             msg: data.msg,
           });
-        },
+        }
       );
 
       socket.on('disconnect', () => {
