@@ -986,7 +986,7 @@ export default class App extends React.Component<null, AppState> {
 
   setLoadingFalse = () => {
     this.setState({ loading: false });
-  }
+  };
 
   render() {
     const sharer = this.state.participants.find((p) => p.isScreenShare);
