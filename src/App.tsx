@@ -295,7 +295,7 @@ export default class App extends React.Component<null, AppState> {
           loading: Boolean(data.video),
         },
         () => {
-          if (this.state.isScreenSharingFile || this.isVBrowser()) {
+          if (this.state.isScreenSharingFile || (this.isVBrowser() && this.getVBrowserHost())) {
             console.log(
               'skipping REC:host video since fileshare is using leftVideo or this is a vbrowser'
             );
