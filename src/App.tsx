@@ -295,7 +295,10 @@ export default class App extends React.Component<null, AppState> {
           loading: Boolean(data.video),
         },
         () => {
-          if (this.state.isScreenSharingFile || (this.isVBrowser() && this.getVBrowserHost())) {
+          if (
+            this.state.isScreenSharingFile ||
+            (this.isVBrowser() && this.getVBrowserHost())
+          ) {
             console.log(
               'skipping REC:host video since fileshare is using leftVideo or this is a vbrowser'
             );
@@ -428,13 +431,14 @@ export default class App extends React.Component<null, AppState> {
       const leftVideo = document.getElementById(
         'leftVideo'
       ) as HTMLMediaElement;
+      leftVideo.srcObject = null;
       leftVideo.src = URL.createObjectURL(file);
       leftVideo.play();
       //@ts-ignore
       const stream = leftVideo.captureStream();
       // Can render video to a canvas to resize it, reduce size
       stream.onaddtrack = () => {
-        // console.log(stream, stream.getVideoTracks(), stream.getAudioTracks());
+        console.log(stream, stream.getVideoTracks(), stream.getAudioTracks());
         if (
           !this.screenShareStream &&
           stream.getVideoTracks().length &&
