@@ -32,6 +32,8 @@ An website for watching videos together.
 
 This project is using the YouTube API which means you will need to setup an API key. You can get one from Google [here](https://console.developers.google.com/?hl=de).
 
+Without an API key you won't be able to search for videos via the searchbox.
+
 After creating a **YouTube Data API V3** access, you can create an API key which you can add to your environment variables by copying the `.env.example`, renaming it to `.env` and adding the key to the YOUTUBE_API_KEY variable.
 
 After that restart your server to enable the YouTube API access on your server.
