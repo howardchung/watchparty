@@ -1,6 +1,7 @@
 import React from 'react';
-import { NekoClient } from '.';
+
 import { EVENT } from './events';
+import { NekoClient } from '.';
 // import { EVENT } from './events';
 
 export default class Video extends React.Component<{

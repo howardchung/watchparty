@@ -1,9 +1,10 @@
 import React from 'react';
-import { TopBar, NewRoomButton } from './TopBar';
-import { Divider, Icon, Header, Step } from 'semantic-ui-react';
+import { Divider, Header, Icon, Step } from 'semantic-ui-react';
+
+import { NewRoomButton, TopBar } from '../../../components/TopBar';
 import styles from './Home.module.css';
 
-export const Home = () => {
+export const Home: React.FC = () => {
   return (
     <div>
       <TopBar hideNewRoom hideSignin />
