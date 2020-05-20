@@ -167,6 +167,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
           width: '100%',
           paddingLeft: '1em',
           overflowX: 'scroll',
+          flexShrink: 0,
         }}
       >
         <div
