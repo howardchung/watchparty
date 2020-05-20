@@ -30,7 +30,7 @@ An website for watching videos together.
 
 ### YouTube API
 
-This project is using the YouTube API which means you will need to setup an API key. You can get one from Google [here](https://console.developers.google.com/?hl=de).
+This project is using the YouTube API which means you will need to setup an API key. You can get one from Google [here](https://console.developers.google.com).
 
 Without an API key you won't be able to search for videos via the searchbox.
 
