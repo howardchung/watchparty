@@ -1,13 +1,13 @@
 import EventEmitter from 'eventemitter3';
+
+import { iceServers } from '../../utils';
 import { OPCODE } from './data';
 import { EVENT, WebSocketEvents } from './events';
-
 import {
+  SignalProvidePayload,
   WebSocketMessages,
   WebSocketPayloads,
-  SignalProvidePayload,
 } from './messages';
-import { iceServers } from '../utils';
 
 export abstract class BaseClient extends EventEmitter<any> {
   protected _ws?: WebSocket;

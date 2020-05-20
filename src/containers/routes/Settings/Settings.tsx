@@ -1,6 +1,6 @@
 import React from 'react';
 //@ts-ignore
-import { Button, Header, Modal, Form, TextArea, Icon } from 'semantic-ui-react';
+import { Button, Form, Header, Icon, Modal, TextArea } from 'semantic-ui-react';
 
 export const SettingsModal = ({ trigger }: any) => (
   <Modal trigger={trigger} basic closeIcon size="small">
