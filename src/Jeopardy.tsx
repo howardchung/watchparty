@@ -333,14 +333,7 @@ export class Jeopardy extends React.Component<{
                     >
                       <div
                         id="clueContainer"
-                        className="clueContainer"
-                        style={{
-                          backgroundSize: 'cover',
-                          backgroundImage:
-                            game.currentDailyDouble && game.waitingForWager
-                              ? `url(/jeopardy/jeopardy-daily-double.png)`
-                              : undefined,
-                        }}
+                        className={`clueContainer ${(game.currentDailyDouble && game.waitingForWager) ? 'dailyDouble' : ''}`}
                       >
                         <div className="category" style={{ height: '30px' }}>
                           {game.board[game.currentQ] &&
