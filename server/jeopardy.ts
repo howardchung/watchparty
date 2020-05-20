@@ -481,6 +481,10 @@ export class Jeopardy {
   }
 
   judgeAnswer({ id, correct }: { id: string; correct: boolean }) {
+    if (id in this.jpd.public.judges) {
+      // Already judged this player
+      return;
+    }
     console.log('[JUDGE]', id, correct);
     // Currently anyone can pick the correct answer
     // Can turn this into a vote or make a non-player the host
