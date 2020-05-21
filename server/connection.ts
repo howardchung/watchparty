@@ -14,7 +14,16 @@ class Connection {
     this.room = room;
     this.room.roster.push({ id: socket.id });
     this.room.io.emit('roster', this.room.roster);
+    this.emitInitEvents();
     this.setupSocketListeners();
+  }
+
+  emitInitEvents() {
+    this.socket.emit('REC:host', this.room.getHostState());
+    this.socket.emit('REC:nameMap', this.room.nameMap);
+    this.socket.emit('REC:pictureMap', this.room.pictureMap);
+    this.socket.emit('REC:tsMap', this.room.tsMap);
+    this.socket.emit('chatinit', this.room.chat);
   }
 
   setupSocketListeners() {

@@ -37,11 +37,6 @@ export class Room {
 
     io.of(roomId).on('connection', (socket: Socket) => {
       new Connection(socket, this);
-      socket.emit('REC:host', this.getHostState());
-      socket.emit('REC:nameMap', this.nameMap);
-      socket.emit('REC:pictureMap', this.pictureMap);
-      socket.emit('REC:tsMap', this.tsMap);
-      socket.emit('chatinit', this.chat);
     });
   }
 
