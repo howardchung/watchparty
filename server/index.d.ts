@@ -32,22 +32,78 @@ interface Settings {
   streamPath?: string;
 }
 
+export interface PlaylistVideo {
+  url: string;
+  name: string;
+  img?: string;
+}
+
+export interface YoutubeAPIVideoResult {
+  kind: string;
+  etag: string;
+  items: YoutubeResult[];
+  pageInfo: { totalResults: number; resultsPerPage: number };
+}
+
 export interface YoutubeResult {
-  id: {
-    videoId: string;
-  };
+  kind: string;
+  etag: string;
+  id:
+    | string
+    | {
+        videoId: string;
+      };
   snippet: {
+    publishedAt: string;
+    channelId: string;
     title: string;
+    description: string;
     thumbnails: {
       default: {
         url: string;
+        width: number;
+        height: number;
+      };
+      medium: {
+        url: string;
+        width: number;
+        height: number;
+      };
+      high: {
+        url: string;
+        width: number;
+        height: number;
+      };
+      standard: {
+        url: string;
+        width: number;
+        height: number;
       };
     };
+    channelTitle: string;
+    tags: string[];
+    categoryId: string;
+    liveBroadcastContent: string;
+    localized: {
+      title: string;
+      description: string;
+    };
+    defaultAudioLanguage: string;
   };
-}
-
-export interface YoutubeVideo {
-  url: string;
-  name: string;
-  img: string;
+  contentDetails: {
+    duration: string;
+    dimension: string;
+    definition: string;
+    caption: string;
+    licensedContent: boolean;
+    contentRating: any;
+    projection: string;
+  };
+  statistics: {
+    viewCount: string;
+    likeCount: string;
+    dislikeCount: string;
+    favoriteCount: string;
+    commentCount: string;
+  };
 }

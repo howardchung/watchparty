@@ -282,18 +282,31 @@ export default class App extends React.Component<null, AppState> {
     });
     socket.on('REC:host', (data: any) => {
       let currentMedia = data.video || '';
-      if (this.isScreenShare() && !currentMedia.startsWith('screenshare://')) {
+      if (
+        this.isScreenShare() &&
+        typeof currentMedia === 'string' &&
+        !currentMedia.startsWith('screenshare://')
+      ) {
         this.stopScreenShare();
       }
-      if (this.isFileShare() && !currentMedia.startsWith('fileshare://')) {
+      if (
+        this.isFileShare() &&
+        typeof currentMedia === 'string' &&
+        !currentMedia.startsWith('fileshare://')
+      ) {
         this.stopScreenShare();
       }
-      if (this.isVBrowser() && !currentMedia.startsWith('vbrowser://')) {
+      if (
+        this.isVBrowser() &&
+        typeof currentMedia === 'string' &&
+        !currentMedia.startsWith('vbrowser://')
+      ) {
         this.stopVBrowser();
       }
+      console.log(currentMedia);
       this.setState(
         {
-          currentMedia,
+          currentMedia: currentMedia.url || '',
           currentMediaPaused: data.paused,
           loading: Boolean(data.video),
         },
@@ -343,7 +356,10 @@ export default class App extends React.Component<null, AppState> {
             // Progress updater
             window.clearInterval(this.progressUpdater);
             this.setState({ downloaded: 0, total: 0, speed: 0 });
-            if (currentMedia.includes('/stream?torrent=magnet')) {
+            if (
+              typeof currentMedia === 'string' &&
+              currentMedia.includes('/stream?torrent=magnet')
+            ) {
               this.progressUpdater = window.setInterval(async () => {
                 const response = await window.fetch(
                   currentMedia.replace('/stream', '/progress')
@@ -595,7 +611,10 @@ export default class App extends React.Component<null, AppState> {
   };
 
   isScreenShare = () => {
-    return this.state.currentMedia.startsWith('screenshare://');
+    return (
+      typeof this.state.currentMedia === 'string' &&
+      this.state.currentMedia.startsWith('screenshare://')
+    );
   };
 
   isFileShare = () => {
@@ -700,26 +719,28 @@ export default class App extends React.Component<null, AppState> {
     }
   };
 
-  doSrc = async (src: string, time: number) => {
+  doSrc = async (src: any, time: number) => {
     console.log('doSrc', src, time);
     if (this.isScreenShare() || this.isFileShare() || this.isVBrowser()) {
       // No-op as we'll set video when WebRTC completes
       return;
     }
+
     if (this.isVideo()) {
       const leftVideo = document.getElementById(
         'leftVideo'
       ) as HTMLMediaElement;
+
       if (leftVideo) {
         leftVideo.srcObject = null;
-        leftVideo.src = src;
+        leftVideo.src = src.url;
         leftVideo.currentTime = time;
         // Clear subtitles
         leftVideo.innerHTML = '';
         let subtitleSrc = '';
-        if (src.includes('/stream?torrent=magnet')) {
+        if (typeof src === 'string' && src.includes('/stream?torrent=magnet')) {
           subtitleSrc = src.replace('/stream', '/subtitles2');
-        } else if (src.startsWith('http')) {
+        } else if (typeof src === 'string' && src.startsWith('http')) {
           const subtitlePath = src.slice(0, src.lastIndexOf('/') + 1);
           // Expect subtitle name to be file name + .srt
           subtitleSrc =
@@ -739,9 +760,13 @@ export default class App extends React.Component<null, AppState> {
         }
       }
     }
+
+    console.log(this.isYouTube());
+
     if (this.isYouTube()) {
-      let url = new window.URL(src);
+      let url = new window.URL(src.url);
       let videoId = querystring.parse(url.search.substring(1))['v'];
+      console.log({ videoId });
       this.watchPartyYTPlayer?.cueVideoById(videoId, time);
     }
   };
@@ -959,10 +984,15 @@ export default class App extends React.Component<null, AppState> {
     this.socket.emit('CMD:picture', url);
   };
 
-  getMediaDisplayName = (input: string) => {
+  getMediaDisplayName = (input: any) => {
     if (!input) {
       return '';
     }
+
+    if (typeof input !== 'string') {
+      return input.title || '';
+    }
+
     // Show the whole URL for youtube
     if (getMediaType(input) === 'youtube') {
       return input;

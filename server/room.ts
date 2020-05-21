@@ -1,12 +1,13 @@
 import { Socket } from 'socket.io';
 
+import { fetchYoutubeVideo, getYoutubeVideoID } from './utils/youtube';
 import { assignVM, resetVM } from './vm';
-import { ChatMessage, NumberDict, StringDict, User } from '.';
+import { ChatMessage, NumberDict, PlaylistVideo, StringDict, User } from '.';
 
 module.exports = class Room {
-  private video = '';
+  private video?: PlaylistVideo | string;
   private videoTS = 0;
-  private videoPlaylist: string[] = [];
+  private videoPlaylist: PlaylistVideo[] = [];
   private paused = false;
   private roster: User[] = [];
   private chat: ChatMessage[] = [];
@@ -89,39 +90,53 @@ module.exports = class Room {
     this.io.of(this.roomId).emit('REC:pictureMap', this.pictureMap);
   };
 
-  host = (data: string) => {
+  host = (data: string | PlaylistVideo) => {
     if (!this.socket) {
       return;
     }
 
-    if (data && data.length > 20000) {
+    if (data && typeof data === 'string' && data.length > 20000) {
       return;
     }
+
     const sharer = this.roster.find((user) => user.isScreenShare);
     if (sharer) {
       // Can't update the video while someone is screensharing
       return;
     }
-    this.cmdHost(this.socket, data);
+    this.cmdHost(data);
   };
 
-  addVideoToPlaylist = (data: string) => {
-    console.log(data);
+  addVideoToPlaylist = async (data: string) => {
     if (!this.socket || !data) {
       return;
     }
 
-    this.videoPlaylist.push(data);
+    const youtubeVideoID = getYoutubeVideoID(data);
+    let video: PlaylistVideo;
+
+    if (youtubeVideoID) {
+      video = await fetchYoutubeVideo(youtubeVideoID);
+    } else {
+      video = {
+        name: data,
+        url: data,
+        img: undefined,
+      };
+    }
+
+    this.videoPlaylist.push(video);
     console.log(this.videoPlaylist);
 
     if (!this.video) {
       this.video = this.videoPlaylist[0] || '';
+      this.cmdHost(this.video);
     }
 
     const chatMsg = {
       id: this.socket.id,
       cmd: 'addToPlaylist',
-      msg: data,
+      msg: video,
     };
 
     this.addChatMessage(chatMsg);
@@ -231,9 +246,9 @@ module.exports = class Room {
       return;
     }
     if (data && data.file) {
-      this.cmdHost(this.socket, 'fileshare://' + this.socket.id);
+      this.cmdHost('fileshare://' + this.socket.id);
     } else {
-      this.cmdHost(this.socket, 'screenshare://' + this.socket.id);
+      this.cmdHost('screenshare://' + this.socket.id);
     }
     const match = this.roster.find((user) =>
       this.socket ? user.id === this.socket.id : false
@@ -255,7 +270,7 @@ module.exports = class Room {
     if (match) {
       match.isScreenShare = false;
     }
-    this.cmdHost(this.socket, '');
+    this.cmdHost('');
     this.io.of(this.roomId).emit('roster', this.roster);
   };
 
@@ -264,11 +279,11 @@ module.exports = class Room {
       // Maybe terminate the existing instance and spawn a new one
       return;
     }
-    this.cmdHost(this.socket, 'vbrowser://');
+    this.cmdHost('vbrowser://');
     this.vBrowser = {};
     const assignment = await assignVM();
     if (!assignment) {
-      this.cmdHost(this.socket, '');
+      this.cmdHost('');
       this.vBrowser = undefined;
       return;
     }
@@ -284,10 +299,7 @@ module.exports = class Room {
         this.roster[i].isController = false;
       }
     });
-    this.cmdHost(
-      undefined,
-      'vbrowser://' + this.vBrowser.pass + '@' + this.vBrowser.host
-    );
+    this.cmdHost('vbrowser://' + this.vBrowser.pass + '@' + this.vBrowser.host);
     this.io.of(this.roomId).emit('roster', this.roster);
   };
 
@@ -349,7 +361,7 @@ module.exports = class Room {
     this.io.of(this.roomId).emit('roster', this.roster);
     if (removed.isScreenShare) {
       // Reset the room state since we lost the screen sharer
-      this.cmdHost(this.socket, '');
+      this.cmdHost('');
     }
     delete this.tsMap[this.socket.id];
     // delete nameMap[socket.id];
@@ -400,7 +412,7 @@ module.exports = class Room {
     this.roster.forEach((user, i) => {
       this.roster[i].isController = false;
     });
-    this.cmdHost(undefined, '');
+    this.cmdHost('');
     if (id) {
       try {
         await resetVM(id);
@@ -410,15 +422,19 @@ module.exports = class Room {
     }
   }
 
-  cmdHost(socket: Socket | undefined, data: string) {
+  cmdHost(data: string | PlaylistVideo) {
+    if (!this.socket) {
+      return;
+    }
+
     this.video = data;
     this.videoTS = 0;
     this.paused = false;
     this.tsMap = {};
     this.io.of(this.roomId).emit('REC:tsMap', this.tsMap);
     this.io.of(this.roomId).emit('REC:host', this.getHostState());
-    if (socket && data) {
-      const chatMsg = { id: socket.id, cmd: 'host', msg: data };
+    if (this.socket && data) {
+      const chatMsg = { id: this.socket.id, cmd: 'host', msg: data };
       this.addChatMessage(chatMsg);
     }
   }

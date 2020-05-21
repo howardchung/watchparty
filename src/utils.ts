@@ -85,13 +85,15 @@ export function getColorHex(id: string) {
 export const getFbPhoto = (fbId: string) =>
   `https://graph.facebook.com/${fbId}/picture?type=normal`;
 
-export const getMediaType = (input: string) => {
-  if (!input) {
+export const getMediaType = (input: any) => {
+  if (typeof input === 'string' && !input) {
     return '';
   }
+
   if (input.startsWith('https://www.youtube.com/')) {
     return 'youtube';
   }
+
   return 'video';
 };
 
