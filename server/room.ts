@@ -2,7 +2,7 @@ import { assignVM, resetVM } from './vm';
 import { Socket } from 'socket.io';
 import { User, ChatMessage, NumberDict, StringDict } from '.';
 
-module.exports = class Room {
+export class Room {
   private video = '';
   private videoTS = 0;
   private paused = false;
@@ -17,7 +17,11 @@ module.exports = class Room {
   private io: SocketIO.Server;
   public roomId: string;
 
-  constructor(io: SocketIO.Server, roomId: string, roomData: string) {
+  constructor(
+    io: SocketIO.Server,
+    roomId: string,
+    roomData?: string | null | undefined
+  ) {
     this.roomId = roomId;
     this.io = io;
 
@@ -306,4 +310,4 @@ module.exports = class Room {
     this.chat = this.chat.splice(-100);
     this.io.of(this.roomId).emit('REC:chat', chatWithTime);
   }
-};
+}

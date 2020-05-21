@@ -36,7 +36,7 @@
     "buildServer": "tsc --project server/tsconfig.json --outDir buildServer",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "dev": "(fuser -k -TERM -n tcp 8080 || true) && ts-node-dev --respawn --transpileOnly --project server/tsconfig.json server/server.ts",
+    "dev": "ts-node-dev --respawn --transpileOnly --project server/tsconfig.json server/server.ts",
     "server": "node buildServer/server.js",
     "prettier": "prettier --write ."
   },

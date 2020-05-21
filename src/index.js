@@ -4,7 +4,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 
 import App from './components/App';
-import { Home } from './components/routes/Home';
+import { Home } from './components/Home';
 import * as serviceWorker from './serviceWorker';
 
 const isHome = !Boolean(window.location.hash.substring(1));
