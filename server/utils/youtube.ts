@@ -3,7 +3,8 @@ import Youtube from 'youtube-api';
 import {
   PlaylistVideo,
   YoutubeAPIVideoResult,
-  YoutubeResult,
+  YoutubeListResult,
+  YoutubeSearchResult,
 } from '../index.d';
 import { YOUTUBE_VIDEO_ID_REGEX } from './regex';
 
@@ -14,8 +15,14 @@ if (process.env.YOUTUBE_API_KEY) {
   });
 }
 
-export const mapYoutubeResult = (video: YoutubeResult): PlaylistVideo => {
-  const videoId = typeof video.id === 'string' ? video.id : video.id.videoId;
+export const resolveYoutubeVideoID = (
+  video: YoutubeListResult | YoutubeSearchResult
+) => (typeof video.id === 'string' ? video.id : video.id.videoId);
+
+export const mapYoutubeResult = (
+  video: YoutubeListResult | YoutubeSearchResult
+): PlaylistVideo => {
+  const videoId = resolveYoutubeVideoID(video);
   return {
     url: 'https://www.youtube.com/watch?v=' + videoId,
     name: video.snippet.title,

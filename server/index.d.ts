@@ -41,18 +41,13 @@ export interface PlaylistVideo {
 export interface YoutubeAPIVideoResult {
   kind: string;
   etag: string;
-  items: YoutubeResult[];
+  items: YoutubeListResult[];
   pageInfo: { totalResults: number; resultsPerPage: number };
 }
 
 export interface YoutubeResult {
   kind: string;
   etag: string;
-  id:
-    | string
-    | {
-        videoId: string;
-      };
   snippet: {
     publishedAt: string;
     channelId: string;
@@ -106,4 +101,14 @@ export interface YoutubeResult {
     favoriteCount: string;
     commentCount: string;
   };
+}
+
+export interface YoutubeSearchResult extends YoutubeResult {
+  id: {
+    videoId: string;
+  };
+}
+
+export interface YoutubeListResult extends YoutubeResult {
+  id: string;
 }
