@@ -1,16 +1,19 @@
 import { Socket } from 'socket.io';
 
 import Connection from './connection';
+import { getVideoDuration } from './utils/youtube';
 import { assignVM, resetVM } from './vm';
 import { ChatMessage, NumberDict, PlaylistVideo, StringDict, User } from '.';
 
 export class Room {
+  public roomInterval: NodeJS.Timeout;
   public io: SocketIO.Server;
   public nameMap: StringDict = {};
   public pictureMap: StringDict = {};
   public roster: User[] = [];
   public roomId: string;
   public video?: PlaylistVideo | string;
+  public videoDuration?: number;
   public videoTS = 0;
   public videoPlaylist: PlaylistVideo[] = [];
   public paused = false;
@@ -32,7 +35,7 @@ export class Room {
       this.deserialize(roomData);
     }
 
-    setInterval(() => {
+    this.roomInterval = setInterval(() => {
       io.of(roomId).emit('REC:tsMap', this.tsMap);
     }, 1000);
 
@@ -60,11 +63,17 @@ export class Room {
       // Maybe terminate the existing instance and spawn a new one
       return;
     }
-    this.cmdHost(socket, 'vbrowser://');
+    this.cmdHost(socket, {
+      url: 'vbrowser://',
+      channel: '',
+      duration: '',
+      name: 'Virtual Browser',
+      img: undefined,
+    });
     this.vBrowser = {};
     const assignment = await assignVM();
     if (!assignment) {
-      this.cmdHost(socket, '');
+      this.cmdHost(socket);
       this.vBrowser = undefined;
       return;
     }
@@ -80,10 +89,13 @@ export class Room {
         this.roster[i].isController = false;
       }
     });
-    this.cmdHost(
-      socket,
-      'vbrowser://' + this.vBrowser.pass + '@' + this.vBrowser.host
-    );
+    this.cmdHost(socket, {
+      url: 'vbrowser://' + this.vBrowser.pass + '@' + this.vBrowser.host,
+      channel: '',
+      duration: '',
+      name: 'Screenshare',
+      img: undefined,
+    });
     this.io.of(this.roomId).emit('roster', this.roster);
   };
 
@@ -93,7 +105,7 @@ export class Room {
     this.roster.forEach((user, i) => {
       this.roster[i].isController = false;
     });
-    this.cmdHost(socket, '');
+    this.cmdHost(socket);
     if (id) {
       try {
         await resetVM(id);
@@ -106,6 +118,7 @@ export class Room {
   serialize() {
     return JSON.stringify({
       video: this.video,
+      videoDuration: this.videoDuration,
       videoTS: this.videoTS,
       paused: this.paused,
       nameMap: this.nameMap,
@@ -118,6 +131,7 @@ export class Room {
   deserialize(roomData: string) {
     const roomObj = JSON.parse(roomData);
     this.video = roomObj.video;
+    this.videoDuration = roomObj.videoDuration;
     this.videoTS = roomObj.videoTS;
     this.paused = roomObj.paused;
     if (roomObj.chat) {
@@ -137,24 +151,28 @@ export class Room {
   getHostState() {
     return {
       video: this.video,
+      videoDuration: this.videoDuration,
       videoTS: this.videoTS,
       paused: this.paused,
     };
   }
 
-  cmdHost(socket: Socket, data: string) {
+  cmdHost(socket: Socket, data?: PlaylistVideo) {
     if (!socket) {
       return;
     }
 
-    // remove hosted video from the playlist
-    this.videoPlaylist = this.videoPlaylist.filter(
-      (video) => video.url !== data
-    );
-    socket.emit('playlistUpdate', this.videoPlaylist);
+    if (data) {
+      // remove next hosted video from the playlist
+      this.videoPlaylist = this.videoPlaylist.filter(
+        (video) => video.url !== data.url
+      );
+      socket.emit('playlistUpdate', this.videoPlaylist);
+    }
 
-    this.video = data;
+    this.video = data ? data.url : '';
     this.videoTS = 0;
+    this.videoDuration = data ? getVideoDuration(data.duration) : 0;
     this.paused = false;
     this.tsMap = {};
     this.io.of(this.roomId).emit('REC:tsMap', this.tsMap);

@@ -36,6 +36,8 @@ export interface PlaylistVideo {
   url: string;
   name: string;
   img?: string;
+  duration: string;
+  channel: string;
 }
 
 export interface YoutubeAPIVideoResult {
@@ -85,6 +87,16 @@ export interface YoutubeResult {
     };
     defaultAudioLanguage: string;
   };
+}
+
+export interface YoutubeSearchResult extends YoutubeResult {
+  id: {
+    videoId: string;
+  };
+}
+
+export interface YoutubeListResult extends YoutubeResult {
+  id: string;
   contentDetails: {
     duration: string;
     dimension: string;
@@ -101,14 +113,4 @@ export interface YoutubeResult {
     favoriteCount: string;
     commentCount: string;
   };
-}
-
-export interface YoutubeSearchResult extends YoutubeResult {
-  id: {
-    videoId: string;
-  };
-}
-
-export interface YoutubeListResult extends YoutubeResult {
-  id: string;
 }

@@ -1,4 +1,4 @@
-.ChatPlaylistCard {
+.Card {
   display: flex;
   align-items: center;
   color: inherit;
@@ -8,7 +8,7 @@
   margin: 4px 0;
 }
 
-.ChatPlaylistCard__ThumbnailBox {
+.ThumbnailBox {
   flex: 0 0 auto;
   height: 67.5px;
   margin-right: 16px;
@@ -16,7 +16,7 @@
   width: 120px;
 }
 
-.ChatPlaylistCard__ThumbnailImage {
+.ThumbnailImage {
   width: 100%;
   height: 100%;
   position: absolute;

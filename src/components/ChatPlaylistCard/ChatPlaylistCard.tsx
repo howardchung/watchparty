@@ -1,6 +1,6 @@
-import './ChatPlaylistCard.css';
-
 import React from 'react';
+
+import styles from './ChatPlaylistCard.module.css';
 
 const ChatPlaylistCard: React.FC<{
   video: PlaylistVideo;
@@ -13,11 +13,11 @@ const ChatPlaylistCard: React.FC<{
       target="_blank"
       rel="noopener noreferrer"
       title={video.name}
-      className="ChatPlaylistCard"
+      className={styles.Card}
     >
-      <div className="ChatPlaylistCard__ThumbnailBox">
+      <div className={styles.ThumbnailBox}>
         <img
-          className="ChatPlaylistCard__ThumbnailImage"
+          className={styles.ThumbnailImage}
           src={video.img}
           alt={video.name}
         />
