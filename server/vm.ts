@@ -10,6 +10,12 @@ if (process.env.REDIS_URL) {
 const VBROWSER_TAG = process.env.VBROWSER_TAG || 'vbrowser';
 const SCW_SECRET_KEY = process.env.SCW_SECRET_KEY;
 const SCW_ORGANIZATION_ID = process.env.SCW_ORGANIZATION_ID;
+const region = 'nl-ams-1';
+const gatewayHost = 'gateway2.watchparty.me';
+const imageId = '09f99a78-f093-4438-99c0-8a0705bf245b';
+// const region = 'fr-par-1';
+// const gatewayHost = 'gateway.watchparty.me';
+// const imageId = '8e96c468-2769-4314-bb39-f3c941f63d48';
 
 export const isVBrowserFeatureEnabled = () =>
   Boolean(process.env.REDIS_URL && SCW_SECRET_KEY && SCW_ORGANIZATION_ID);
@@ -18,7 +24,7 @@ const mapServerObject = (server: any) => ({
   id: server.id,
   pass: server.name,
   // The gateway handles SSL termination and proxies to the private IP
-  host: 'gateway.watchparty.me/?ip=' + server.private_ip,
+  host: `${gatewayHost}/?ip=${server.private_ip}`,
   private_ip: server.private_ip,
   state: server.state,
   tags: server.tags,
@@ -30,7 +36,7 @@ async function launchVM() {
   const password = uuidv4();
   const response = await axios({
     method: 'POST',
-    url: 'https://api.scaleway.com/instance/v1/zones/fr-par-1/servers',
+    url: `https://api.scaleway.com/instance/v1/zones/${region}/servers`,
     headers: {
       'X-Auth-Token': SCW_SECRET_KEY,
       'Content-Type': 'application/json',
@@ -38,9 +44,8 @@ async function launchVM() {
     data: {
       name: password,
       dynamic_ip_required: true,
-      commercial_type: 'DEV1-S',
-      // image: 'ce6c9d21-0ff3-4355-b385-c930c9f22d9d', // ubuntu focal
-      image: '8e96c468-2769-4314-bb39-f3c941f63d48', // debian customized
+      commercial_type: 'DEV1-S', // maybe DEV1-M for subscribers
+      image: imageId,
       volumes: {},
       organization: SCW_ORGANIZATION_ID,
       tags: [VBROWSER_TAG],
@@ -57,7 +62,7 @@ docker run -d --rm --name=vbrowser -v /usr/share/fonts:/usr/share/fonts --log-op
 `;
   const response2 = await axios({
     method: 'PATCH',
-    url: `https://api.scaleway.com/instance/v1/zones/fr-par-1/servers/${id}/user_data/cloud-init`,
+    url: `https://api.scaleway.com/instance/v1/zones/${region}/servers/${id}/user_data/cloud-init`,
     headers: {
       'X-Auth-Token': SCW_SECRET_KEY,
       'Content-Type': 'text/plain',
@@ -68,7 +73,7 @@ docker run -d --rm --name=vbrowser -v /usr/share/fonts:/usr/share/fonts --log-op
   // boot the instance
   const response3 = await axios({
     method: 'POST',
-    url: `https://api.scaleway.com/instance/v1/zones/fr-par-1/servers/${id}/action`,
+    url: `https://api.scaleway.com/instance/v1/zones/${region}/servers/${id}/action`,
     headers: {
       'X-Auth-Token': SCW_SECRET_KEY,
       'Content-Type': 'application/json',
@@ -86,7 +91,7 @@ docker run -d --rm --name=vbrowser -v /usr/share/fonts:/usr/share/fonts --log-op
 async function terminateVM(id: string) {
   const response = await axios({
     method: 'POST',
-    url: `https://api.scaleway.com/instance/v1/zones/fr-par-1/servers/${id}/action`,
+    url: `https://api.scaleway.com/instance/v1/zones/${region}/servers/${id}/action`,
     headers: {
       'X-Auth-Token': SCW_SECRET_KEY,
       'Content-Type': 'application/json',
@@ -105,7 +110,7 @@ export async function resetVM(id: string) {
   // Update the VM's name (also the HOST env var that will be used as password)
   const response = await axios({
     method: 'PATCH',
-    url: `https://api.scaleway.com/instance/v1/zones/fr-par-1/servers/${id}`,
+    url: `https://api.scaleway.com/instance/v1/zones/${region}/servers/${id}`,
     headers: {
       'X-Auth-Token': SCW_SECRET_KEY,
       'Content-Type': 'application/json',
@@ -118,7 +123,7 @@ export async function resetVM(id: string) {
   // Reboot the VM (also destroys the Docker container since it has --rm flag)
   const response2 = await axios({
     method: 'POST',
-    url: `https://api.scaleway.com/instance/v1/zones/fr-par-1/servers/${id}/action`,
+    url: `https://api.scaleway.com/instance/v1/zones/${region}/servers/${id}/action`,
     headers: {
       'X-Auth-Token': SCW_SECRET_KEY,
       'Content-Type': 'application/json',
@@ -138,7 +143,7 @@ async function getVM(id: string) {
   while (!result) {
     const response = await axios({
       method: 'GET',
-      url: `https://api.scaleway.com/instance/v1/zones/fr-par-1/servers/${id}`,
+      url: `https://api.scaleway.com/instance/v1/zones/${region}/servers/${id}`,
       headers: {
         'X-Auth-Token': SCW_SECRET_KEY,
         'Content-Type': 'application/json',
@@ -163,7 +168,7 @@ async function listVMs(filter?: string) {
   // console.log(filter, tags);
   const response = await axios({
     method: 'GET',
-    url: `https://api.scaleway.com/instance/v1/zones/fr-par-1/servers`,
+    url: `https://api.scaleway.com/instance/v1/zones/${region}/servers`,
     headers: {
       'X-Auth-Token': SCW_SECRET_KEY,
       'Content-Type': 'application/json',
