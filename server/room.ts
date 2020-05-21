@@ -121,7 +121,7 @@ module.exports = class Room {
     const chatMsg = {
       id: this.socket.id,
       cmd: 'addToPlaylist',
-      msg: this.tsMap[this.socket.id],
+      msg: data,
     };
 
     this.addChatMessage(chatMsg);

@@ -1,7 +1,8 @@
 import React from 'react';
-import { Button, Input, Icon, Comment, Segment } from 'semantic-ui-react';
-import { formatTimestamp, getDefaultPicture, getColorHex } from './utils';
+import { Button, Comment, Icon, Input, Segment } from 'semantic-ui-react';
 import { Socket } from 'socket.io';
+
+import { formatTimestamp, getColorHex, getDefaultPicture } from './utils';
 
 interface ChatProps {
   chat: ChatMessage[];
@@ -63,23 +64,32 @@ export class Chat extends React.Component<ChatProps> {
   };
 
   formatMessage = (cmd: string, msg: string): React.ReactNode | string => {
-    if (cmd === 'host') {
-      return (
-        <React.Fragment>
-          {`changed the video to `}
-          <span style={{ textTransform: 'initial' }}>
-            {this.props.getMediaDisplayName(msg)}
-          </span>
-        </React.Fragment>
-      );
-    } else if (cmd === 'seek') {
-      return `jumped to ${formatTimestamp(msg)}`;
-    } else if (cmd === 'play') {
-      return `started the video at ${formatTimestamp(msg)}`;
-    } else if (cmd === 'pause') {
-      return `paused the video at ${formatTimestamp(msg)}`;
+    switch (cmd) {
+      case 'host':
+        return (
+          <React.Fragment>
+            {`changed the video to `}
+            <span style={{ textTransform: 'initial' }}>
+              {this.props.getMediaDisplayName(msg)}
+            </span>
+          </React.Fragment>
+        );
+
+      case 'seek':
+        return `jumped to ${formatTimestamp(msg)}`;
+
+      case 'play':
+        return `started the video at ${formatTimestamp(msg)}`;
+
+      case 'pause':
+        return `paused the video at ${formatTimestamp(msg)}`;
+
+      case 'addToPlaylist':
+        return `added video ${msg} to playlist`;
+
+      default:
+        return cmd;
     }
-    return cmd;
   };
 
   render() {
