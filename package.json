@@ -45,7 +45,7 @@
     }
   },
   "lint-staged": {
-    "./{server,src}/**/*.*": [
+    "./**/*.*": [
       "prettier --write"
     ]
   },
