@@ -2,7 +2,6 @@ import { Socket } from 'socket.io';
 
 import { Room } from './room';
 import { fetchYoutubeVideo, getYoutubeVideoID } from './utils/youtube';
-import { assignVM, resetVM } from './vm';
 import { PlaylistVideo } from '.';
 
 class Connection {
@@ -61,10 +60,6 @@ class Connection {
   };
 
   addPicture = (data: string) => {
-    if (!this.socket) {
-      return;
-    }
-
     if (data && data.length > 10000) {
       return;
     }
@@ -75,10 +70,6 @@ class Connection {
   };
 
   host = (data: string | PlaylistVideo) => {
-    if (!this.socket) {
-      return;
-    }
-
     if (data && typeof data === 'string' && data.length > 20000) {
       return;
     }
@@ -127,10 +118,6 @@ class Connection {
   };
 
   playVideo = () => {
-    if (!this.socket) {
-      return;
-    }
-
     this.socket.broadcast.emit('REC:play', this.room.video);
     const chatMsg = {
       id: this.socket.id,
@@ -142,10 +129,6 @@ class Connection {
   };
 
   pauseVideo = () => {
-    if (!this.socket) {
-      return;
-    }
-
     this.socket.broadcast.emit('REC:pause');
     const chatMsg = {
       id: this.socket.id,
@@ -157,10 +140,6 @@ class Connection {
   };
 
   seekVideo = (time: number) => {
-    if (!this.socket) {
-      return;
-    }
-
     this.room.videoTS = time;
     this.socket.broadcast.emit('REC:seek', time);
     const chatMsg = { id: this.socket.id, cmd: 'seek', msg: time };
@@ -168,10 +147,6 @@ class Connection {
   };
 
   sendVideoTimestamp = (time: number) => {
-    if (!this.socket) {
-      return;
-    }
-
     if (time > this.room.videoTS) {
       this.room.videoTS = time;
     }
@@ -183,10 +158,6 @@ class Connection {
   };
 
   joinVideo = () => {
-    if (!this.socket) {
-      return;
-    }
-
     const match = this.room.roster.find((user) =>
       this.socket ? user.id === this.socket.id : false
     );
@@ -197,10 +168,6 @@ class Connection {
   };
 
   leaveVideo = () => {
-    if (!this.socket) {
-      return;
-    }
-
     const match = this.room.roster.find((user) =>
       this.socket ? user.id === this.socket.id : false
     );
@@ -211,10 +178,6 @@ class Connection {
   };
 
   joinScreenShare = (data: { file: boolean }) => {
-    if (!this.socket) {
-      return;
-    }
-
     const sharer = this.room.roster.find((user) => user.isScreenShare);
     if (sharer) {
       return;
@@ -234,10 +197,6 @@ class Connection {
   };
 
   leaveScreenShare = () => {
-    if (!this.socket) {
-      return;
-    }
-
     const match = this.room.roster.find((user) =>
       this.socket ? user.id === this.socket.id : false
     );
@@ -257,10 +216,6 @@ class Connection {
   };
 
   changeController = (data: string) => {
-    if (!this.socket) {
-      return;
-    }
-
     this.room.roster.forEach((user, i) => {
       if (user.id === data) {
         this.room.roster[i].isController = true;
@@ -272,18 +227,10 @@ class Connection {
   };
 
   askHost = () => {
-    if (!this.socket) {
-      return;
-    }
-
     this.socket.emit('REC:host', this.room.getHostState());
   };
 
   emitSignal = (data: { to: string; msg: string }) => {
-    if (!this.socket) {
-      return;
-    }
-
     this.room.io
       .of(this.room.roomId)
       .to(data.to)
@@ -291,10 +238,6 @@ class Connection {
   };
 
   emitSSSignal = (data: { to: string; sharer: boolean; msg: string }) => {
-    if (!this.socket) {
-      return;
-    }
-
     this.room.io.of(this.room.roomId).to(data.to).emit('signalSS', {
       from: this.socket.id,
       sharer: data.sharer,
@@ -303,10 +246,6 @@ class Connection {
   };
 
   disconnect = () => {
-    if (!this.socket) {
-      return;
-    }
-
     let index = this.room.roster.findIndex((user) =>
       this.socket ? user.id === this.socket.id : false
     );
