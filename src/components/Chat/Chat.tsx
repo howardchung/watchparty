@@ -3,6 +3,7 @@ import { Button, Comment, Icon, Input, Segment } from 'semantic-ui-react';
 import { Socket } from 'socket.io';
 
 import { formatTimestamp, getColorHex, getDefaultPicture } from '../../utils';
+import ChatPlaylistCard from '../ChatPlaylistCard';
 
 interface ChatProps {
   chat: ChatMessage[];
@@ -63,7 +64,7 @@ export class Chat extends React.Component<ChatProps> {
     }
   };
 
-  formatMessage = (cmd: string, msg: string): React.ReactNode | string => {
+  formatMessage = (cmd: string, msg: any): React.ReactNode | string => {
     switch (cmd) {
       case 'host':
         return (
@@ -85,7 +86,12 @@ export class Chat extends React.Component<ChatProps> {
         return `paused the video at ${formatTimestamp(msg)}`;
 
       case 'addToPlaylist':
-        return `added video ${msg} to playlist`;
+        return (
+          <React.Fragment>
+            Added video to playlist
+            <ChatPlaylistCard video={msg} />
+          </React.Fragment>
+        );
 
       default:
         return cmd;

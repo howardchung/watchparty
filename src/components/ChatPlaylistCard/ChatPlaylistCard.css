@@ -1,0 +1,28 @@
+.ChatPlaylistCard {
+  display: flex;
+  align-items: center;
+  color: inherit;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  padding: 8px;
+  margin: 4px 0;
+}
+
+.ChatPlaylistCard__ThumbnailBox {
+  flex: 0 0 auto;
+  height: 67.5px;
+  margin-right: 16px;
+  position: relative;
+  width: 120px;
+}
+
+.ChatPlaylistCard__ThumbnailImage {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  object-fit: cover;
+  border-radius: 8px;
+}
