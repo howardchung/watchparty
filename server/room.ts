@@ -12,7 +12,7 @@ export class Room {
   public pictureMap: StringDict = {};
   public roster: User[] = [];
   public roomId: string;
-  public video?: PlaylistVideo | string;
+  public video?: string;
   public videoDuration?: number;
   public videoTS = 0;
   public videoPlaylist: PlaylistVideo[] = [];
