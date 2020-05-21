@@ -179,17 +179,7 @@ class Connection {
   };
 
   sendChatMessage = (message: string) => {
-    if ((message && message.length > 65536) || !this.socket) {
-      // TODO add some validation on client side too so we don't just drop long messages
-      return;
-    }
-    if (process.env.NODE_ENV === 'development' && message === '/clear') {
-      this.room.chat.length = 0;
-      this.room.io.of(this.room.roomId).emit('chatinit', this.room.chat);
-      return;
-    }
-    const chatMsg = { id: this.socket.id, msg: message };
-    this.room.addChatMessage(this.socket, chatMsg);
+    this.room.sendChatMesage(this.socket, message);
   };
 
   joinVideo = () => {
@@ -258,53 +248,13 @@ class Connection {
     this.room.io.of(this.room.roomId).emit('roster', this.room.roster);
   };
 
-  startVBrowser = async () => {
-    if (this.room.vBrowser || !this.socket) {
-      // Maybe terminate the existing instance and spawn a new one
-      return;
-    }
-    this.room.cmdHost(this.socket, 'vbrowser://');
-    this.room.vBrowser = {};
-    const assignment = await assignVM();
-    if (!assignment) {
-      this.room.cmdHost(this.socket, '');
-      this.room.vBrowser = undefined;
-      return;
-    }
-    const { pass, host, id } = assignment;
-    this.room.vBrowser.assignTime = Number(new Date());
-    this.room.vBrowser.pass = pass;
-    this.room.vBrowser.host = host;
-    this.room.vBrowser.id = id;
-    this.room.roster.forEach((user, i) => {
-      if (this.socket ? user.id === this.socket.id : false) {
-        this.room.roster[i].isController = true;
-      } else {
-        this.room.roster[i].isController = false;
-      }
-    });
-    this.room.cmdHost(
-      this.socket,
-      'vbrowser://' + this.room.vBrowser.pass + '@' + this.room.vBrowser.host
-    );
-    this.room.io.of(this.room.roomId).emit('roster', this.room.roster);
-  };
-
-  async stopVBrowser() {
-    const id = this.room.vBrowser && this.room.vBrowser.id;
-    this.room.vBrowser = undefined;
-    this.room.roster.forEach((user, i) => {
-      this.room.roster[i].isController = false;
-    });
-    this.room.cmdHost(this.socket, '');
-    if (id) {
-      try {
-        await resetVM(id);
-      } catch (e) {
-        console.error(e);
-      }
-    }
+  startVBrowser() {
+    this.room.startVBrowser(this.socket);
   }
+
+  stopVBrowser = () => {
+    this.room.stopVBrowser(this.socket);
+  };
 
   changeController = (data: string) => {
     if (!this.socket) {

@@ -1,6 +1,7 @@
 import { Socket } from 'socket.io';
 
 import Connection from './connection';
+import { assignVM, resetVM } from './vm';
 import { ChatMessage, NumberDict, PlaylistVideo, StringDict, User } from '.';
 
 export class Room {
@@ -38,6 +39,68 @@ export class Room {
     io.of(roomId).on('connection', (socket: Socket) => {
       new Connection(socket, this);
     });
+  }
+
+  sendChatMesage = (socket: Socket, message: string) => {
+    if ((message && message.length > 65536) || !socket) {
+      // TODO add some validation on client side too so we don't just drop long messages
+      return;
+    }
+    if (process.env.NODE_ENV === 'development' && message === '/clear') {
+      this.chat.length = 0;
+      this.io.of(this.roomId).emit('chatinit', this.chat);
+      return;
+    }
+    const chatMsg = { id: socket.id, msg: message };
+    this.addChatMessage(socket, chatMsg);
+  };
+
+  startVBrowser = async (socket: Socket) => {
+    if (this.vBrowser || !socket) {
+      // Maybe terminate the existing instance and spawn a new one
+      return;
+    }
+    this.cmdHost(socket, 'vbrowser://');
+    this.vBrowser = {};
+    const assignment = await assignVM();
+    if (!assignment) {
+      this.cmdHost(socket, '');
+      this.vBrowser = undefined;
+      return;
+    }
+    const { pass, host, id } = assignment;
+    this.vBrowser.assignTime = Number(new Date());
+    this.vBrowser.pass = pass;
+    this.vBrowser.host = host;
+    this.vBrowser.id = id;
+    this.roster.forEach((user, i) => {
+      if (socket ? user.id === socket.id : false) {
+        this.roster[i].isController = true;
+      } else {
+        this.roster[i].isController = false;
+      }
+    });
+    this.cmdHost(
+      socket,
+      'vbrowser://' + this.vBrowser.pass + '@' + this.vBrowser.host
+    );
+    this.io.of(this.roomId).emit('roster', this.roster);
+  };
+
+  async stopVBrowser(socket: Socket) {
+    const id = this.vBrowser && this.vBrowser.id;
+    this.vBrowser = undefined;
+    this.roster.forEach((user, i) => {
+      this.roster[i].isController = false;
+    });
+    this.cmdHost(socket, '');
+    if (id) {
+      try {
+        await resetVM(id);
+      } catch (e) {
+        console.error(e);
+      }
+    }
   }
 
   serialize() {
