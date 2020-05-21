@@ -1,11 +1,24 @@
 import React from 'react';
-import { Button, Comment, Icon, Input, Segment } from 'semantic-ui-react';
+import {
+  Button,
+  Comment,
+  Icon,
+  Input,
+  InputOnChangeData,
+  Segment,
+} from 'semantic-ui-react';
 import { Socket } from 'socket.io';
 
 import { formatTimestamp, getColorHex, getDefaultPicture } from '../../utils';
+import { generateName } from '../../utils/generateName';
 import ChatVideoCard from '../ChatPlaylistCard';
 
 interface ChatProps {
+  userName: string;
+  onUserNameChange: (
+    e: React.ChangeEvent<HTMLInputElement> | null,
+    data: InputOnChangeData
+  ) => void;
   chat: ChatMessage[];
   nameMap: StringDict;
   pictureMap: StringDict;
@@ -98,67 +111,87 @@ export class Chat extends React.Component<ChatProps> {
 
   render() {
     return (
-      <Segment
-        className={this.props.className}
-        inverted
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          flexGrow: '1',
-          minHeight: 0,
-          marginTop: 0,
-        }}
-      >
-        <div
-          className="chatContainer"
-          ref={this.messagesRef}
-          style={{ position: 'relative' }}
-        >
-          <Comment.Group>
-            {this.props.chat.map((msg) => (
-              <ChatMessage
-                key={msg.timestamp + msg.id}
-                {...msg}
-                pictureMap={this.props.pictureMap}
-                nameMap={this.props.nameMap}
-                formatMessage={this.formatMessage}
-              />
-            ))}
-            {/* <div ref={this.messagesEndRef} /> */}
-          </Comment.Group>
-          {!this.state.isNearBottom && (
-            <Button
-              size="tiny"
-              onClick={this.scrollToBottom}
-              style={{
-                position: 'sticky',
-                bottom: 0,
-                display: 'block',
-                margin: '0 auto',
-              }}
-            >
-              Jump to bottom
-            </Button>
-          )}
-        </div>
+      <>
         <Input
           inverted
           fluid
-          onKeyPress={(e: any) => e.key === 'Enter' && this.sendChatMsg()}
-          onChange={this.updateChatMsg}
-          value={this.state.chatMsg}
+          label={'My name is:'}
+          value={this.props.userName}
+          onChange={this.props.onUserNameChange}
           icon={
             <Icon
-              onClick={this.sendChatMsg}
-              name="send"
+              onClick={() =>
+                this.props.onUserNameChange(null, { value: generateName() })
+              }
+              name="refresh"
               inverted
               circular
               link
             />
           }
-          placeholder="Enter a message..."
         />
-      </Segment>
+        <Segment
+          className={this.props.className}
+          inverted
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            flexGrow: '1',
+            minHeight: 0,
+            marginTop: 0,
+          }}
+        >
+          <div
+            className="chatContainer"
+            ref={this.messagesRef}
+            style={{ position: 'relative' }}
+          >
+            <Comment.Group>
+              {this.props.chat.map((msg) => (
+                <ChatMessage
+                  key={msg.timestamp + msg.id}
+                  {...msg}
+                  pictureMap={this.props.pictureMap}
+                  nameMap={this.props.nameMap}
+                  formatMessage={this.formatMessage}
+                />
+              ))}
+              {/* <div ref={this.messagesEndRef} /> */}
+            </Comment.Group>
+            {!this.state.isNearBottom && (
+              <Button
+                size="tiny"
+                onClick={this.scrollToBottom}
+                style={{
+                  position: 'sticky',
+                  bottom: 0,
+                  display: 'block',
+                  margin: '0 auto',
+                }}
+              >
+                Jump to bottom
+              </Button>
+            )}
+          </div>
+          <Input
+            inverted
+            fluid
+            onKeyPress={(e: any) => e.key === 'Enter' && this.sendChatMsg()}
+            onChange={this.updateChatMsg}
+            value={this.state.chatMsg}
+            icon={
+              <Icon
+                onClick={this.sendChatMsg}
+                name="send"
+                inverted
+                circular
+                link
+              />
+            }
+            placeholder="Enter a message..."
+          />
+        </Segment>
+      </>
     );
   }
 }

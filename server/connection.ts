@@ -95,7 +95,8 @@ class Connection {
         name: data,
         url: data,
         img: undefined,
-        duration: '',
+        duration: 0,
+        durationObject: { h: 0, m: 0, s: 0 },
         channel: '',
       };
     }
@@ -183,7 +184,8 @@ class Connection {
       this.room.cmdHost(this.socket, {
         url: 'fileshare://' + this.socket.id,
         channel: '',
-        duration: '',
+        duration: 0,
+        durationObject: { h: 0, m: 0, s: 0 },
         name: 'Fileshare',
         img: undefined,
       });
@@ -191,7 +193,8 @@ class Connection {
       this.room.cmdHost(this.socket, {
         url: 'screenshare://' + this.socket.id,
         channel: '',
-        duration: '',
+        duration: 0,
+        durationObject: { h: 0, m: 0, s: 0 },
         name: 'Screenshare',
         img: undefined,
       });

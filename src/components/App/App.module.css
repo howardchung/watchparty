@@ -1,0 +1,42 @@
+.Layout {
+  display: grid;
+  grid-template-areas:
+    'navbar navbar navbar'
+    'video playlist chat';
+  grid-template-rows: auto 1fr;
+  grid-template-columns: 1fr auto auto;
+  height: 100%;
+  min-height: 100vh;
+}
+
+.Navbar {
+  grid-area: navbar;
+}
+
+.Video {
+  grid-area: video;
+}
+
+.Playlist {
+  grid-area: playlist;
+  width: 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.PlaylistOpen {
+  width: 300px;
+}
+
+.Chat {
+  grid-area: chat;
+  width: 400px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.Footer {
+  grid-area: footer;
+}

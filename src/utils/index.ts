@@ -1,5 +1,6 @@
 //@ts-ignore
 import canAutoplay from 'can-autoplay';
+import { parseStringPromise } from 'xml2js';
 
 export function formatTimestamp(input: any) {
   if (
@@ -203,3 +204,57 @@ export const serverPath =
   `${window.location.protocol}//${window.location.hostname}${
     process.env.NODE_ENV === 'production' ? '' : ':8080'
   }`;
+
+export async function getMediaPathResults(
+  mediaPath: string,
+  query: string
+): Promise<SearchResult[]> {
+  // Get media list if provided
+  const response = await window.fetch(mediaPath);
+  let results: SearchResult[] = [];
+  if (mediaPath.includes('s3.')) {
+    // S3-style buckets return data in XML
+    const xml = await response.text();
+    const data = await parseStringPromise(xml);
+    let filtered = data.ListBucketResult.Contents.filter(
+      (file: any) => !file.Key[0].includes('/')
+    );
+    results = filtered.map((file: any) => ({
+      url: mediaPath + '/' + file.Key[0],
+      name: mediaPath + '/' + file.Key[0],
+    }));
+  } else {
+    const data = await response.json();
+    results = data
+      .filter((file: any) => file.type === 'file')
+      .map((file: any) => ({
+        url: file.url || getMediaPathForList(mediaPath) + file.name,
+        name: getMediaPathForList(mediaPath) + file.name,
+      }));
+  }
+  // results = results.filter((option: SearchResult) =>
+  //   option.name.toLowerCase().includes(query.toLowerCase())
+  // );
+  return results;
+}
+
+export async function getStreamPathResults(
+  streamPath: string,
+  query: string
+): Promise<SearchResult[]> {
+  const response = await window.fetch(
+    streamPath + '/search?q=' + encodeURIComponent(query)
+  );
+  const data = await response.json();
+  return data;
+}
+
+export async function getYouTubeResults(
+  query: string
+): Promise<SearchResult[]> {
+  const response = await window.fetch(
+    serverPath + '/youtube?q=' + encodeURIComponent(query)
+  );
+  const data = await response.json();
+  return data;
+}

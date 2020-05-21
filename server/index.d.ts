@@ -33,11 +33,16 @@ interface Settings {
 }
 
 export interface PlaylistVideo {
+  channel: string;
   url: string;
   name: string;
   img?: string;
-  duration: string;
-  channel: string;
+  duration: number;
+  durationObject: {
+    h: number;
+    m: number;
+    s: number;
+  };
 }
 
 export interface YoutubeAPIVideoResult {

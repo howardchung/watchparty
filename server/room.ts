@@ -38,7 +38,11 @@ export class Room {
 
     this.roomInterval = setInterval(() => {
       io.of(roomId).emit('REC:tsMap', this.tsMap);
-      if (this.videoDuration && this.videoTS >= this.videoDuration) {
+      if (
+        this.videoDuration !== 0 &&
+        this.videoDuration &&
+        this.videoTS >= this.videoDuration
+      ) {
         setTimeout(() => {
           this.nextVideo();
         }, 1000);
@@ -91,7 +95,8 @@ export class Room {
     this.cmdHost(socket, {
       url: 'vbrowser://',
       channel: '',
-      duration: '',
+      duration: 0,
+      durationObject: { h: 0, m: 0, s: 0 },
       name: 'Virtual Browser',
       img: undefined,
     });
@@ -117,7 +122,8 @@ export class Room {
     this.cmdHost(socket, {
       url: 'vbrowser://' + this.vBrowser.pass + '@' + this.vBrowser.host,
       channel: '',
-      duration: '',
+      duration: 0,
+      durationObject: { h: 0, m: 0, s: 0 },
       name: 'Screenshare',
       img: undefined,
     });
@@ -205,7 +211,7 @@ export class Room {
 
     this.video = data ? data.url : '';
     this.videoTS = 0;
-    this.videoDuration = data ? getVideoDuration(data.duration) : 0;
+    this.videoDuration = data ? data.duration : 0;
     this.paused = false;
     this.tsMap = {};
     this.io.of(this.roomId).emit('REC:tsMap', this.tsMap);

@@ -7,20 +7,14 @@ import querystring from 'querystring';
 import magnet from 'magnet-uri';
 import React from 'react';
 //@ts-ignore
-import { Slider } from 'react-semantic-ui-range';
 import {
   Button,
   Dimmer,
   Dropdown,
   DropdownProps,
-  Grid,
   Header,
   Icon,
-  Input,
-  Label,
-  List,
   Loader,
-  Menu,
   Message,
   Modal,
   Popup,
@@ -30,30 +24,37 @@ import {
 import io from 'socket.io-client';
 //@ts-ignore
 import VTTConverter from 'srt-webvtt';
-//@ts-ignore
-import { parseStringPromise } from 'xml2js';
 
 import {
   debounce,
-  decodeEntities,
   formatSpeed,
-  formatTimestamp,
-  getMediaPathForList,
+  getMediaPathResults,
   getMediaType,
+  getStreamPathResults,
+  getYouTubeResults,
   iceServers,
   isMobile,
   serverPath,
   testAutoplay,
 } from '../../utils';
-import { examples } from '../../utils/examples';
 import { generateName } from '../../utils/generateName';
 import { Chat } from '../Chat';
+import ComboBox from '../ComboBox';
+import {
+  MediaPathSearchResult,
+  StreamPathSearchResult,
+} from '../ComboBox/ComboBox';
+import Controls from '../Controls';
 import LobbyWrapper from '../LobbyWrapper';
+import MultiStreamModal from '../MultiStreamModal';
+import Playlist from '../Playlist';
 import { PlaylistWrapper } from '../PlaylistWrapper';
 import { getCurrentSettings } from '../Settings';
 import { TopBar } from '../TopBar';
 import { VBrowser } from '../VBrowser';
 import { VideoChat } from '../VideoChat';
+import YouTubeSearchResult from '../YouTubeSearchResult';
+import classes from './App.module.css';
 
 declare global {
   interface Window {
@@ -96,6 +97,7 @@ interface AppState {
   multiStreamSelection?: any[];
   error: string;
   settings: Settings;
+  playlistOpen: boolean;
 }
 
 export default class App extends React.Component<null, AppState> {
@@ -131,6 +133,7 @@ export default class App extends React.Component<null, AppState> {
     multiStreamSelection: undefined,
     error: '',
     settings: {},
+    playlistOpen: false,
   };
   socket: any = null;
   watchPartyYTPlayer: any = null;
@@ -692,6 +695,10 @@ export default class App extends React.Component<null, AppState> {
     return false;
   };
 
+  togglePlaylist = () => {
+    this.setState({ playlistOpen: !this.state.playlistOpen });
+  };
+
   jumpToLeader = () => {
     // Jump to the leader's position
     const maxTS = Math.max(...Object.values(this.state.tsMap));
@@ -1008,6 +1015,12 @@ export default class App extends React.Component<null, AppState> {
   render() {
     const sharer = this.state.participants.find((p) => p.isScreenShare);
     const controller = this.state.participants.find((p) => p.isController);
+    const playlistClasses = [classes.Playlist];
+
+    if (this.state.playlistOpen) {
+      playlistClasses.push(classes.PlaylistOpen);
+    }
+
     return (
       <LobbyWrapper>
         {this.socket && (
@@ -1059,343 +1072,319 @@ export default class App extends React.Component<null, AppState> {
                 </div>
               </Modal>
             )}
-            <TopBar fbUserID={this.state.fbUserID} />
-            {
-              <Grid stackable celled="internally">
-                <Grid.Row>
-                  <Grid.Column width={12} className="fullHeightColumn">
-                    <div
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        height: '100%',
-                      }}
-                    >
-                      <ComboBox
+            <div className={classes.Layout}>
+              <div className={classes.Navbar}>
+                <TopBar fbUserID={this.state.fbUserID} />
+              </div>
+              <div className={classes.Video}>
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    height: '100%',
+                  }}
+                >
+                  <ComboBox
+                    setMedia={this.setMedia}
+                    currentMedia={this.state.currentMedia}
+                    getMediaDisplayName={this.getMediaDisplayName}
+                    launchMultiSelect={this.launchMultiSelect}
+                    streamPath={this.state.settings.streamPath}
+                    mediaPath={this.state.settings.mediaPath}
+                  />
+                  {/* <Divider inverted horizontal></Divider> */}
+                  <div style={{ height: '4px' }} />
+                  <div className="mobileStack" style={{ display: 'flex' }}>
+                    {this.screenShareStream && (
+                      <Button
+                        fluid
+                        className="toolButton"
+                        icon
+                        labelPosition="left"
+                        color="red"
+                        onClick={this.stopScreenShare}
+                      >
+                        <Icon name="cancel" />
+                        Stop Share
+                      </Button>
+                    )}
+                    {!this.screenShareStream && !this.isVBrowser() && (
+                      <Popup
+                        content={`Share a tab or an application. Make sure to check "Share audio" for best results.`}
+                        trigger={
+                          <Button
+                            fluid
+                            className="toolButton"
+                            disabled={sharer && this.socket?.id !== sharer?.id}
+                            icon
+                            labelPosition="left"
+                            color={'instagram'}
+                            onClick={this.setupScreenShare}
+                          >
+                            <Icon name={'slideshare'} />
+                            Screenshare
+                          </Button>
+                        }
+                      />
+                    )}
+                    {!this.screenShareStream && !this.isVBrowser() && (
+                      <Popup
+                        content="Launch a shared virtual browser"
+                        trigger={
+                          <Button
+                            fluid
+                            className="toolButton"
+                            disabled={sharer && this.socket?.id !== sharer?.id}
+                            icon
+                            labelPosition="left"
+                            color="green"
+                            onClick={this.setupVBrowser}
+                          >
+                            <Icon name="desktop" />
+                            VBrowser
+                          </Button>
+                        }
+                      />
+                    )}
+                    {this.isVBrowser() && (
+                      <Dropdown
+                        icon="keyboard"
+                        labeled
+                        className="icon"
+                        button
+                        value={controller && controller!.id}
+                        placeholder="No controller"
+                        onChange={this.changeController}
+                        selection
+                        options={this.state.participants.map((p) => ({
+                          text: this.state.nameMap[p.id] || p.id,
+                          value: p.id,
+                        }))}
+                      ></Dropdown>
+                    )}
+                    {this.isVBrowser() && (
+                      <Button
+                        fluid
+                        className="toolButton"
+                        icon
+                        labelPosition="left"
+                        color="red"
+                        onClick={this.stopVBrowser}
+                      >
+                        <Icon name="cancel" />
+                        Stop VBrowser
+                      </Button>
+                    )}
+                    {!this.screenShareStream && !this.isVBrowser() && (
+                      <Popup
+                        content="Stream your own video file"
+                        trigger={
+                          <Button
+                            fluid
+                            className="toolButton"
+                            disabled={sharer && this.socket?.id !== sharer?.id}
+                            icon
+                            labelPosition="left"
+                            onClick={this.setupFileShare}
+                          >
+                            <Icon name="file" />
+                            File
+                          </Button>
+                        }
+                      />
+                    )}
+                    {
+                      <SearchComponent
                         setMedia={this.setMedia}
-                        currentMedia={this.state.currentMedia}
-                        getMediaDisplayName={this.getMediaDisplayName}
-                        launchMultiSelect={this.launchMultiSelect}
+                        type={'youtube'}
                         streamPath={this.state.settings.streamPath}
                         mediaPath={this.state.settings.mediaPath}
                       />
-                      {/* <Divider inverted horizontal></Divider> */}
-                      <div style={{ height: '4px' }} />
-                      <div className="mobileStack" style={{ display: 'flex' }}>
-                        {this.screenShareStream && (
-                          <Button
-                            fluid
-                            className="toolButton"
-                            icon
-                            labelPosition="left"
-                            color="red"
-                            onClick={this.stopScreenShare}
-                          >
-                            <Icon name="cancel" />
-                            Stop Share
-                          </Button>
-                        )}
-                        {!this.screenShareStream && !this.isVBrowser() && (
-                          <Popup
-                            content={`Share a tab or an application. Make sure to check "Share audio" for best results.`}
-                            trigger={
-                              <Button
-                                fluid
-                                className="toolButton"
-                                disabled={
-                                  sharer && this.socket?.id !== sharer?.id
-                                }
-                                icon
-                                labelPosition="left"
-                                color={'instagram'}
-                                onClick={this.setupScreenShare}
-                              >
-                                <Icon name={'slideshare'} />
-                                Screenshare
-                              </Button>
-                            }
-                          />
-                        )}
-                        {!this.screenShareStream && !this.isVBrowser() && (
-                          <Popup
-                            content="Launch a shared virtual browser"
-                            trigger={
-                              <Button
-                                fluid
-                                className="toolButton"
-                                disabled={
-                                  sharer && this.socket?.id !== sharer?.id
-                                }
-                                icon
-                                labelPosition="left"
-                                color="green"
-                                onClick={this.setupVBrowser}
-                              >
-                                <Icon name="desktop" />
-                                VBrowser
-                              </Button>
-                            }
-                          />
-                        )}
-                        {this.isVBrowser() && (
-                          <Dropdown
-                            icon="keyboard"
-                            labeled
-                            className="icon"
-                            button
-                            value={controller && controller!.id}
-                            placeholder="No controller"
-                            onChange={this.changeController}
-                            selection
-                            options={this.state.participants.map((p) => ({
-                              text: this.state.nameMap[p.id] || p.id,
-                              value: p.id,
-                            }))}
-                          ></Dropdown>
-                        )}
-                        {this.isVBrowser() && (
-                          <Button
-                            fluid
-                            className="toolButton"
-                            icon
-                            labelPosition="left"
-                            color="red"
-                            onClick={this.stopVBrowser}
-                          >
-                            <Icon name="cancel" />
-                            Stop VBrowser
-                          </Button>
-                        )}
-                        {!this.screenShareStream && !this.isVBrowser() && (
-                          <Popup
-                            content="Stream your own video file"
-                            trigger={
-                              <Button
-                                fluid
-                                className="toolButton"
-                                disabled={
-                                  sharer && this.socket?.id !== sharer?.id
-                                }
-                                icon
-                                labelPosition="left"
-                                onClick={this.setupFileShare}
-                              >
-                                <Icon name="file" />
-                                File
-                              </Button>
-                            }
-                          />
-                        )}
-                        {
-                          <SearchComponent
-                            setMedia={this.setMedia}
-                            type={'youtube'}
-                            streamPath={this.state.settings.streamPath}
-                            mediaPath={this.state.settings.mediaPath}
-                          />
-                        }
-                      </div>
-                      <div style={{ height: '4px' }} />
-                      <div
-                        id="fullScreenContainer"
-                        className={
-                          this.state.fullScreen ? 'fullScreenContainer' : ''
-                        }
-                        style={{ flexGrow: 1 }}
-                      >
+                    }
+                  </div>
+                  <div style={{ height: '4px' }} />
+                  <div
+                    id="fullScreenContainer"
+                    className={
+                      this.state.fullScreen ? 'fullScreenContainer' : ''
+                    }
+                    style={{ flexGrow: 1 }}
+                  >
+                    <div
+                      id="playerContainer"
+                      tabIndex={1}
+                      onKeyDown={this.onVideoKeydown}
+                    >
+                      {(this.state.loading || !this.state.currentMedia) && (
                         <div
-                          id="playerContainer"
-                          tabIndex={1}
-                          onKeyDown={this.onVideoKeydown}
+                          id="loader"
+                          className="videoContent"
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
                         >
-                          {(this.state.loading || !this.state.currentMedia) && (
-                            <div
-                              id="loader"
-                              className="videoContent"
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                              }}
-                            >
-                              {this.state.loading && (
-                                <Dimmer active>
-                                  <Loader />
-                                </Dimmer>
-                              )}
-                              {!this.state.loading &&
-                                !this.state.currentMedia && (
-                                  <Message
-                                    color="yellow"
-                                    icon="hand point up"
-                                    header="You're not watching anything!"
-                                    content="Pick something to watch from the menu above."
-                                  />
-                                )}
-                            </div>
+                          {this.state.loading && (
+                            <Dimmer active>
+                              <Loader />
+                            </Dimmer>
                           )}
-                          <iframe
-                            style={{
-                              display:
-                                this.isYouTube() && !this.state.loading
-                                  ? 'block'
-                                  : 'none',
-                            }}
-                            title="YouTube"
-                            id="leftYt"
-                            className="videoContent"
-                            allowFullScreen
-                            frameBorder="0"
-                            allow="autoplay"
-                            src="https://www.youtube.com/embed/?enablejsapi=1&controls=0&rel=0"
-                          />
-                          {this.isVBrowser() &&
-                          this.getVBrowserPass() &&
-                          this.getVBrowserHost() ? (
-                            <VBrowser
-                              username={this.socket.id}
-                              password={this.getVBrowserPass()}
-                              hostname={this.getVBrowserHost()}
-                              controlling={this.state.isControlling}
-                              setLoadingFalse={this.setLoadingFalse}
+                          {!this.state.loading && !this.state.currentMedia && (
+                            <Message
+                              color="yellow"
+                              icon="hand point up"
+                              header="You're not watching anything!"
+                              content="Pick something to watch from the menu above."
                             />
-                          ) : (
-                            <video
-                              style={{
-                                display:
-                                  this.isVideo() && !this.state.loading
-                                    ? 'block'
-                                    : 'none',
-                                width: '100%',
-                              }}
-                              id="leftVideo"
-                            ></video>
-                          )}
-                          {this.state.fullScreen && this.state.currentMedia && (
-                            <div className="controlsContainer">
-                              <Controls
-                                key={this.state.controlsTimestamp}
-                                togglePlay={this.togglePlay}
-                                onSeek={this.onSeek}
-                                fullScreen={this.fullScreen}
-                                toggleMute={this.toggleMute}
-                                toggleSubtitle={this.toggleSubtitle}
-                                setVolume={this.setVolume}
-                                getVolume={this.getVolume}
-                                jumpToLeader={this.jumpToLeader}
-                                paused={this.isPaused()}
-                                muted={this.isMuted()}
-                                subtitled={this.isSubtitled()}
-                                currentTime={this.getCurrentTime()}
-                                duration={this.getDuration()}
-                              />
-                            </div>
                           )}
                         </div>
-                        {this.state.fullScreen && (
-                          <Chat
-                            className="fullScreenChat"
-                            chat={this.state.chat}
-                            nameMap={this.state.nameMap}
-                            pictureMap={this.state.pictureMap}
-                            socket={this.socket}
-                            scrollTimestamp={this.state.scrollTimestamp}
-                            getMediaDisplayName={this.getMediaDisplayName}
+                      )}
+                      <iframe
+                        style={{
+                          display:
+                            this.isYouTube() && !this.state.loading
+                              ? 'block'
+                              : 'none',
+                        }}
+                        title="YouTube"
+                        id="leftYt"
+                        className="videoContent"
+                        allowFullScreen
+                        frameBorder="0"
+                        allow="autoplay"
+                        src="https://www.youtube.com/embed/?enablejsapi=1&controls=0&rel=0"
+                      />
+                      {this.isVBrowser() &&
+                      this.getVBrowserPass() &&
+                      this.getVBrowserHost() ? (
+                        <VBrowser
+                          username={this.socket.id}
+                          password={this.getVBrowserPass()}
+                          hostname={this.getVBrowserHost()}
+                          controlling={this.state.isControlling}
+                          setLoadingFalse={this.setLoadingFalse}
+                        />
+                      ) : (
+                        <video
+                          style={{
+                            display:
+                              this.isVideo() && !this.state.loading
+                                ? 'block'
+                                : 'none',
+                            width: '100%',
+                          }}
+                          id="leftVideo"
+                        ></video>
+                      )}
+                      {this.state.fullScreen && this.state.currentMedia && (
+                        <div className="controlsContainer">
+                          <Controls
+                            key={this.state.controlsTimestamp}
+                            togglePlay={this.togglePlay}
+                            onSeek={this.onSeek}
+                            fullScreen={this.fullScreen}
+                            toggleMute={this.toggleMute}
+                            toggleSubtitle={this.toggleSubtitle}
+                            setVolume={this.setVolume}
+                            getVolume={this.getVolume}
+                            jumpToLeader={this.jumpToLeader}
+                            paused={this.isPaused()}
+                            muted={this.isMuted()}
+                            subtitled={this.isSubtitled()}
+                            currentTime={this.getCurrentTime()}
+                            duration={this.getDuration()}
                           />
-                        )}
-                      </div>
-                      {this.state.currentMedia && (
-                        <Controls
-                          key={this.state.controlsTimestamp}
-                          togglePlay={this.togglePlay}
-                          onSeek={this.onSeek}
-                          fullScreen={this.fullScreen}
-                          toggleMute={this.toggleMute}
-                          toggleSubtitle={this.toggleSubtitle}
-                          setVolume={this.setVolume}
-                          getVolume={this.getVolume}
-                          jumpToLeader={this.jumpToLeader}
-                          paused={this.isPaused()}
-                          muted={this.isMuted()}
-                          subtitled={this.isSubtitled()}
-                          currentTime={this.getCurrentTime()}
-                          duration={this.getDuration()}
-                        />
-                      )}
-                      {Boolean(this.state.total) && (
-                        <div>
-                          <Progress
-                            size="tiny"
-                            color="green"
-                            inverted
-                            value={this.state.downloaded}
-                            total={this.state.total}
-                            // indicating
-                            label={
-                              Math.min(
-                                (this.state.downloaded / this.state.total) *
-                                  100,
-                                100
-                              ).toFixed(2) +
-                              '% - ' +
-                              formatSpeed(this.state.speed) +
-                              ' - ' +
-                              this.state.connections +
-                              ' connections'
-                            }
-                          ></Progress>
                         </div>
-                      )}
-                      {this.state.state === 'connected' && (
-                        <VideoChat
-                          socket={this.socket}
-                          participants={this.state.participants}
-                          nameMap={this.state.nameMap}
-                          pictureMap={this.state.pictureMap}
-                          tsMap={this.state.tsMap}
-                          rosterUpdateTS={this.state.rosterUpdateTS}
-                        />
                       )}
                     </div>
-                  </Grid.Column>
-                  <Grid.Column
-                    width={4}
-                    style={{ display: 'flex', flexDirection: 'column' }}
-                    className="fullHeightColumn"
-                  >
-                    <Input
-                      inverted
-                      fluid
-                      label={'My name is:'}
-                      value={this.state.myName}
-                      onChange={this.updateName}
-                      icon={
-                        <Icon
-                          onClick={() =>
-                            this.updateName(null, { value: generateName() })
-                          }
-                          name="refresh"
-                          inverted
-                          circular
-                          link
+                    {this.state.fullScreen && (
+                      <div className={classes.Chat}>
+                        <Chat
+                          className="fullScreenChat"
+                          chat={this.state.chat}
+                          nameMap={this.state.nameMap}
+                          onUserNameChange={this.updateName}
+                          userName={this.state.myName}
+                          pictureMap={this.state.pictureMap}
+                          socket={this.socket}
+                          scrollTimestamp={this.state.scrollTimestamp}
+                          getMediaDisplayName={this.getMediaDisplayName}
                         />
-                      }
-                    />
-                    {/* <Divider inverted horizontal></Divider> */}
-                    {!this.state.fullScreen && (
-                      <Chat
-                        chat={this.state.chat}
-                        nameMap={this.state.nameMap}
-                        pictureMap={this.state.pictureMap}
-                        socket={this.socket}
-                        scrollTimestamp={this.state.scrollTimestamp}
-                        getMediaDisplayName={this.getMediaDisplayName}
-                      />
+                      </div>
                     )}
-                  </Grid.Column>
-                </Grid.Row>
-              </Grid>
-            }
+                  </div>
+                  {this.state.currentMedia && (
+                    <Controls
+                      key={this.state.controlsTimestamp}
+                      togglePlay={this.togglePlay}
+                      onSeek={this.onSeek}
+                      fullScreen={this.fullScreen}
+                      toggleMute={this.toggleMute}
+                      toggleSubtitle={this.toggleSubtitle}
+                      setVolume={this.setVolume}
+                      getVolume={this.getVolume}
+                      jumpToLeader={this.jumpToLeader}
+                      paused={this.isPaused()}
+                      muted={this.isMuted()}
+                      subtitled={this.isSubtitled()}
+                      currentTime={this.getCurrentTime()}
+                      duration={this.getDuration()}
+                    />
+                  )}
+                  {Boolean(this.state.total) && (
+                    <div>
+                      <Progress
+                        size="tiny"
+                        color="green"
+                        inverted
+                        value={this.state.downloaded}
+                        total={this.state.total}
+                        // indicating
+                        label={
+                          Math.min(
+                            (this.state.downloaded / this.state.total) * 100,
+                            100
+                          ).toFixed(2) +
+                          '% - ' +
+                          formatSpeed(this.state.speed) +
+                          ' - ' +
+                          this.state.connections +
+                          ' connections'
+                        }
+                      ></Progress>
+                    </div>
+                  )}
+                  {this.state.state === 'connected' && (
+                    <VideoChat
+                      socket={this.socket}
+                      participants={this.state.participants}
+                      nameMap={this.state.nameMap}
+                      pictureMap={this.state.pictureMap}
+                      tsMap={this.state.tsMap}
+                      rosterUpdateTS={this.state.rosterUpdateTS}
+                    />
+                  )}
+                </div>
+              </div>
+              <div className={playlistClasses.join(' ')}>
+                <Playlist />
+              </div>
+              <div className={classes.Chat}>
+                {!this.state.fullScreen && (
+                  <Chat
+                    onUserNameChange={this.updateName}
+                    userName={this.state.myName}
+                    chat={this.state.chat}
+                    nameMap={this.state.nameMap}
+                    pictureMap={this.state.pictureMap}
+                    socket={this.socket}
+                    scrollTimestamp={this.state.scrollTimestamp}
+                    getMediaDisplayName={this.getMediaDisplayName}
+                  />
+                )}
+              </div>
+            </div>
           </PlaylistWrapper>
         )}
       </LobbyWrapper>
@@ -1519,545 +1508,6 @@ class SearchComponent extends React.Component<SearchComponentProps> {
           ) : null}
         </Dropdown>
       </React.Fragment>
-    );
-  }
-}
-
-const YouTubeSearchResult = (props: SearchResult & { setMedia: Function }) => {
-  const result = props;
-  const setMedia = props.setMedia;
-  return (
-    <Menu.Item
-      onClick={(e) => {
-        setMedia(e, { value: result.url });
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center' }}>
-        <img style={{ height: '40px' }} src={result.img} alt={result.name} />
-        <Icon name="youtube" />
-        <div style={{ marginLeft: '5px' }}>{decodeEntities(result.name)}</div>
-      </div>
-    </Menu.Item>
-  );
-};
-
-const MediaPathSearchResult = (
-  props: SearchResult & { setMedia: Function }
-) => {
-  const result = props;
-  const setMedia = props.setMedia;
-  return (
-    <Menu.Item
-      onClick={(e) => {
-        setMedia(e, { value: result.url });
-      }}
-    >
-      <div style={{ display: 'flex' }}>
-        <Icon name="file" />
-        {result.name}
-      </div>
-    </Menu.Item>
-  );
-};
-
-class StreamPathSearchResult extends React.Component<
-  SearchResult & {
-    setMedia: Function;
-    launchMultiSelect: Function;
-    streamPath: string;
-  }
-> {
-  render() {
-    const result = this.props;
-    const setMedia = this.props.setMedia;
-    return (
-      <React.Fragment>
-        <Menu.Item
-          onClick={async (e) => {
-            this.props.launchMultiSelect([]);
-            let response = await window.fetch(
-              this.props.streamPath +
-                '/data?torrent=' +
-                encodeURIComponent(result.magnet!)
-            );
-            let metadata = await response.json();
-            // console.log(metadata);
-            if (
-              metadata.files.filter(
-                (file: any) => file.length > 10 * 1024 * 1024
-              ).length > 1
-            ) {
-              // Multiple large files, present user selection
-              const multiStreamSelection = metadata.files.map(
-                (file: any, i: number) => ({
-                  ...file,
-                  url:
-                    this.props.streamPath +
-                    '/stream?torrent=' +
-                    encodeURIComponent(result.magnet!) +
-                    '&fileIndex=' +
-                    i,
-                })
-              );
-              multiStreamSelection.sort((a: any, b: any) =>
-                a.name.localeCompare(b.name)
-              );
-              this.props.launchMultiSelect(multiStreamSelection);
-            } else {
-              this.props.launchMultiSelect(undefined);
-              setMedia(e, {
-                value:
-                  this.props.streamPath +
-                  '/stream?torrent=' +
-                  encodeURIComponent(result.magnet!),
-              });
-            }
-          }}
-        >
-          <Label
-            circular
-            empty
-            color={Number(result.seeders) ? 'green' : 'red'}
-          />
-          <Icon name="film" />
-          {result.name +
-            ' - ' +
-            result.size +
-            ' - ' +
-            result.seeders +
-            ' peers'}
-        </Menu.Item>
-      </React.Fragment>
-    );
-  }
-}
-
-interface ComboBoxProps {
-  setMedia: Function;
-  currentMedia: string;
-  getMediaDisplayName: Function;
-  launchMultiSelect: Function;
-  mediaPath: string | undefined;
-  streamPath: string | undefined;
-}
-
-class ComboBox extends React.Component<ComboBoxProps> {
-  state = {
-    inputMedia: undefined as string | undefined,
-    results: undefined,
-    loading: false,
-    lastResultTimestamp: Number(new Date()),
-  };
-  debounced: any = null;
-
-  setMedia = (e: any, data: DropdownProps) => {
-    window.setTimeout(
-      () => this.setState({ inputMedia: undefined, results: undefined }),
-      200
-    );
-    this.props.setMedia(e, data);
-  };
-
-  doSearch = async (e: any) => {
-    e.persist();
-    this.setState({ inputMedia: e.target.value }, () => {
-      if (!this.debounced) {
-        this.debounced = debounce(async () => {
-          this.setState({ loading: true });
-          const query: string = this.state.inputMedia || '';
-          let timestamp = Number(new Date());
-          /* 
-          If input is empty or starts with http
-            If we have a mediaPath use that for results
-            Else show the default list of demo videos
-          If input is anything else:
-            If we have a stream server use that for results
-            Else search YouTube
-        */
-          let results: JSX.Element[] | undefined = undefined;
-          if (query === '' || (query && query.startsWith('http'))) {
-            if (this.props.mediaPath) {
-              const data = await getMediaPathResults(
-                this.props.mediaPath,
-                query
-              );
-              results = data.map((result: SearchResult) => (
-                <MediaPathSearchResult {...result} setMedia={this.setMedia} />
-              ));
-            } else {
-              results = examples.map((option: any) => (
-                <Menu.Item
-                  onClick={(e: any) => this.setMedia(e, { value: option.url })}
-                >
-                  {option.url}
-                </Menu.Item>
-              ));
-            }
-          } else {
-            if (query && query.length >= 2) {
-              if (this.props.streamPath) {
-                const data = await getStreamPathResults(
-                  this.props.streamPath,
-                  query
-                );
-                results = data.map((result: SearchResult) => (
-                  <StreamPathSearchResult
-                    {...result}
-                    setMedia={this.setMedia}
-                    launchMultiSelect={this.props.launchMultiSelect}
-                    streamPath={this.props.streamPath || ''}
-                  />
-                ));
-              } else {
-                const data = await getYouTubeResults(query);
-                results = data.map((result) => (
-                  <YouTubeSearchResult {...result} setMedia={this.setMedia} />
-                ));
-              }
-            }
-          }
-          if (timestamp > this.state.lastResultTimestamp) {
-            this.setState({
-              loading: false,
-              results,
-              lastResultTimestamp: timestamp,
-            });
-          }
-        }, 500);
-      }
-      this.debounced();
-    });
-  };
-
-  render() {
-    const { currentMedia, getMediaDisplayName } = this.props;
-    const { results } = this.state;
-    return (
-      <div style={{ position: 'relative' }}>
-        <div style={{ display: 'flex' }}>
-          <Input
-            style={{ flexGrow: 1 }}
-            inverted
-            fluid
-            focus
-            onChange={this.doSearch}
-            onFocus={(e: any) => {
-              e.persist();
-              this.setState(
-                {
-                  inputMedia: getMediaDisplayName(currentMedia),
-                },
-                () => {
-                  if (
-                    !this.state.inputMedia ||
-                    (this.state.inputMedia &&
-                      this.state.inputMedia.startsWith('http'))
-                  ) {
-                    this.doSearch(e);
-                  }
-                }
-              );
-              setTimeout(() => e.target.select(), 100);
-            }}
-            onBlur={() =>
-              setTimeout(
-                () =>
-                  this.setState({ inputMedia: undefined, results: undefined }),
-                100
-              )
-            }
-            onKeyPress={(e: any) => {
-              if (e.key === 'Enter') {
-                this.setMedia(e, {
-                  value: this.state.inputMedia,
-                });
-              }
-            }}
-            icon={
-              <Icon
-                onClick={(e: any) =>
-                  this.setMedia(e, {
-                    value: this.state.inputMedia,
-                  })
-                }
-                name="arrow right"
-                link
-                circular
-                //bordered
-              />
-            }
-            loading={this.state.loading}
-            label={'Now Watching:'}
-            placeholder="Enter URL (YouTube, video file, etc.), or enter search term"
-            value={
-              this.state.inputMedia !== undefined
-                ? this.state.inputMedia
-                : getMediaDisplayName(currentMedia)
-            }
-          />
-        </div>
-        {Boolean(results) && this.state.inputMedia !== undefined && (
-          <Menu
-            fluid
-            vertical
-            style={{
-              position: 'absolute',
-              top: '22px',
-              maxHeight: '250px',
-              overflow: 'scroll',
-              zIndex: 1001,
-            }}
-          >
-            {results}
-          </Menu>
-        )}
-      </div>
-    );
-  }
-}
-
-async function getMediaPathResults(
-  mediaPath: string,
-  query: string
-): Promise<SearchResult[]> {
-  // Get media list if provided
-  const response = await window.fetch(mediaPath);
-  let results: SearchResult[] = [];
-  if (mediaPath.includes('s3.')) {
-    // S3-style buckets return data in XML
-    const xml = await response.text();
-    const data = await parseStringPromise(xml);
-    let filtered = data.ListBucketResult.Contents.filter(
-      (file: any) => !file.Key[0].includes('/')
-    );
-    results = filtered.map((file: any) => ({
-      url: mediaPath + '/' + file.Key[0],
-      name: mediaPath + '/' + file.Key[0],
-    }));
-  } else {
-    const data = await response.json();
-    results = data
-      .filter((file: any) => file.type === 'file')
-      .map((file: any) => ({
-        url: file.url || getMediaPathForList(mediaPath) + file.name,
-        name: getMediaPathForList(mediaPath) + file.name,
-      }));
-  }
-  // results = results.filter((option: SearchResult) =>
-  //   option.name.toLowerCase().includes(query.toLowerCase())
-  // );
-  return results;
-}
-
-async function getStreamPathResults(
-  streamPath: string,
-  query: string
-): Promise<SearchResult[]> {
-  const response = await window.fetch(
-    streamPath + '/search?q=' + encodeURIComponent(query)
-  );
-  const data = await response.json();
-  return data;
-}
-
-async function getYouTubeResults(query: string): Promise<SearchResult[]> {
-  const response = await window.fetch(
-    serverPath + '/youtube?q=' + encodeURIComponent(query)
-  );
-  const data = await response.json();
-  return data;
-}
-
-const MultiStreamModal = ({
-  streams,
-  setMedia,
-  resetMultiSelect,
-}: {
-  streams: any[];
-  setMedia: Function;
-  resetMultiSelect: Function;
-}) => (
-  <Modal inverted basic open closeIcon onClose={resetMultiSelect as any}>
-    <Modal.Header>Select a file</Modal.Header>
-    <Modal.Content>
-      {streams.length === 0 && <Loader />}
-      {streams && (
-        <List inverted>
-          {streams.map((file: any) => (
-            <List.Item>
-              <List.Icon name="file" />
-              <List.Content>
-                <List.Header
-                  as="a"
-                  onClick={() => {
-                    setMedia(null, { value: file.url });
-                    resetMultiSelect();
-                  }}
-                >
-                  {file.name}
-                </List.Header>
-                <List.Description>
-                  {file.length.toLocaleString()} bytes
-                </List.Description>
-              </List.Content>
-            </List.Item>
-          ))}
-        </List>
-      )}
-    </Modal.Content>
-  </Modal>
-);
-
-interface ControlsProps {
-  duration: number;
-  togglePlay: Function;
-  onSeek: Function;
-  fullScreen: Function;
-  toggleMute: Function;
-  toggleSubtitle: Function;
-  jumpToLeader: Function;
-  paused: boolean;
-  muted: boolean;
-  subtitled: boolean;
-  currentTime: number;
-  getVolume: Function;
-  setVolume: Function;
-}
-class Controls extends React.Component<ControlsProps> {
-  state = {
-    showTimestamp: false,
-    currTimestamp: 0,
-    posTimestamp: 0,
-  };
-
-  onMouseOver = () => {
-    // console.log('mouseover');
-    this.setState({ showTimestamp: true });
-  };
-
-  onMouseOut = () => {
-    // console.log('mouseout');
-    this.setState({ showTimestamp: false });
-  };
-
-  onMouseMove = (e: any) => {
-    const rect = e.target.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const max = rect.width;
-    const pct = x / max;
-    // console.log(x, max);
-    const target = pct * this.props.duration;
-    // console.log(pct);
-    if (pct >= 0) {
-      this.setState({ currTimestamp: target, posTimestamp: pct });
-    }
-  };
-
-  render() {
-    const {
-      togglePlay,
-      onSeek,
-      fullScreen,
-      toggleMute,
-      toggleSubtitle,
-      jumpToLeader,
-      paused,
-      muted,
-      subtitled,
-      currentTime,
-      duration,
-    } = this.props;
-    return (
-      <div className="controls">
-        <Icon
-          size="large"
-          onClick={togglePlay}
-          className="control action"
-          name={paused ? 'play' : 'pause'}
-        />
-        <Icon
-          size="large"
-          onClick={jumpToLeader}
-          className="control action"
-          name={'angle double right'}
-        />
-        <div className="control">{formatTimestamp(currentTime)}</div>
-        <Progress
-          size="tiny"
-          color="blue"
-          onClick={duration < Infinity ? onSeek : undefined}
-          onMouseOver={this.onMouseOver}
-          onMouseOut={this.onMouseOut}
-          onMouseMove={this.onMouseMove}
-          className="control action"
-          inverted
-          style={{
-            flexGrow: 1,
-            marginTop: 0,
-            marginBottom: 0,
-            position: 'relative',
-            minWidth: '100px',
-          }}
-          value={currentTime}
-          total={duration}
-        >
-          {duration < Infinity && this.state.showTimestamp && (
-            <div
-              style={{
-                position: 'absolute',
-                bottom: '0px',
-                left: `calc(${this.state.posTimestamp * 100 + '% - 27px'})`,
-                pointerEvents: 'none',
-              }}
-            >
-              <Label basic color="blue" pointing="below">
-                <div style={{ width: '34px' }}>
-                  {formatTimestamp(this.state.currTimestamp)}
-                </div>
-              </Label>
-            </div>
-          )}
-        </Progress>
-        <div className="control">{formatTimestamp(duration)}</div>
-        <Icon
-          size="large"
-          onClick={toggleSubtitle}
-          className="control action"
-          name={subtitled ? 'closed captioning' : 'closed captioning outline'}
-        />
-        <Icon
-          size="large"
-          onClick={() => fullScreen(false)}
-          className="control action"
-          name="window maximize outline"
-        />
-        <Icon
-          size="large"
-          onClick={() => fullScreen(true)}
-          className="control action"
-          name="expand"
-        />
-        <Icon
-          size="large"
-          onClick={toggleMute}
-          className="control action"
-          name={muted ? 'volume off' : 'volume up'}
-        />
-        <div style={{ width: '100px', marginRight: '10px' }}>
-          <Slider
-            value={this.props.getVolume()}
-            color="blue"
-            settings={{
-              min: 0,
-              max: 1,
-              step: 0.01,
-              onChange: (value: number) => {
-                this.props.setVolume(value);
-              },
-            }}
-          />
-        </div>
-      </div>
     );
   }
 }
