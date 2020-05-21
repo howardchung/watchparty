@@ -32,7 +32,6 @@ import io from 'socket.io-client';
 import VTTConverter from 'srt-webvtt';
 //@ts-ignore
 import { parseStringPromise } from 'xml2js';
-
 import {
   debounce,
   decodeEntities,
@@ -52,6 +51,13 @@ import { TopBar } from '../TopBar';
 import { VBrowser } from '../VBrowser';
 import { VideoChat } from '../VideoChat';
 import { getCurrentSettings } from '../Settings';
+import firebase from 'firebase';
+import 'firebase/auth';
+
+const firebaseConfig = process.env.REACT_APP_FIREBASE_CONFIG;
+if (firebaseConfig) {
+  firebase.initializeApp(JSON.parse(firebaseConfig));
+}
 
 declare global {
   interface Window {
@@ -83,8 +89,7 @@ interface AppState {
   isScreenSharingFile: boolean;
   isControlling: boolean;
   isVBrowser: boolean;
-  fbUserID?: string;
-  isFBReady: boolean;
+  user: any;
   isYouTubeReady: boolean;
   isAutoPlayable: boolean;
   downloaded: number;
@@ -118,8 +123,7 @@ export default class App extends React.Component<null, AppState> {
     isScreenSharingFile: false,
     isControlling: false,
     isVBrowser: false,
-    fbUserID: undefined,
-    isFBReady: false,
+    user: undefined,
     isYouTubeReady: false,
     isAutoPlayable: true,
     downloaded: 0,
@@ -151,8 +155,15 @@ export default class App extends React.Component<null, AppState> {
       window.fetch(serverPath + '/ping');
     }, 10 * 60 * 1000);
 
+    firebase.auth().onAuthStateChanged((user: any) => {
+      if (user) {
+        // console.log(user);
+        this.setState({ user }, () => {
+          this.loadSignInData();
+        });
+      }
+    });
     this.loadSettings();
-    this.loadFBData();
     this.loadYouTube();
     this.init();
   }
@@ -165,36 +176,15 @@ export default class App extends React.Component<null, AppState> {
     this.setState({ settings });
   };
 
-  loadFBData = () => {
-    if (!window.FB || !this.socket) {
-      setTimeout(this.loadFBData, 1000);
-      return;
+  loadSignInData = () => {
+    if (this.state.user) {
+      // NOTE: firebase auth doesn't provide the actual first name data that individual providers (G/FB) do
+      // It's accessible at the time the user logs in but not afterward
+      // If we want accurate surname/given name we'll need to save that somewhere
+      const firstName = this.state.user.displayName.split(' ')[0];
+      this.updateName(null, { value: firstName });
+      this.updatePicture(this.state.user.photoURL + '?height=128&width=128');
     }
-    window.FB.getLoginStatus((response: any) => {
-      this.setState({ isFBReady: true });
-      const fbUserID =
-        response.status === 'connected' && response.authResponse.userID;
-      if (fbUserID) {
-        window.FB.api(
-          '/me',
-          {
-            fields: 'id,first_name,name,email,picture.width(256).height(256)',
-          },
-          (response: any) => {
-            // console.log(response);
-            const picture =
-              response &&
-              response.picture &&
-              response.picture.data &&
-              response.picture.data.url;
-            const name = response && response.first_name;
-            this.setState({ fbUserID });
-            this.updateName(null, { value: name });
-            this.updatePicture(picture);
-          }
-        );
-      }
-    });
   };
 
   loadYouTube = () => {
@@ -265,7 +255,7 @@ export default class App extends React.Component<null, AppState> {
       // Load username from localstorage
       let userName = window.localStorage.getItem('watchparty-username');
       this.updateName(null, { value: userName || generateName() });
-      this.loadFBData();
+      this.loadSignInData();
     });
     socket.on('error', (err: any) => {
       console.error(err);
@@ -1047,7 +1037,7 @@ export default class App extends React.Component<null, AppState> {
             </div>
           </Modal>
         )}
-        <TopBar fbUserID={this.state.fbUserID} />
+        <TopBar user={this.state.user} />
         {
           <Grid stackable celled="internally">
             <Grid.Row>
