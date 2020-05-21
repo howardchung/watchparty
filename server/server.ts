@@ -10,6 +10,13 @@ import https from 'https';
 import http from 'http';
 import socketIO from 'socket.io';
 import { searchYoutube } from './utils/youtube';
+import { Room } from './room';
+import {
+  resizeVMGroupIncr,
+  resizeVMGroupDecr,
+  cleanupVMGroup,
+  isVBrowserFeatureEnabled,
+} from './vm';
 
 const app = express();
 let server: any = null;
@@ -25,12 +32,6 @@ let redis = (undefined as unknown) as Redis.Redis;
 if (process.env.REDIS_URL) {
   redis = new Redis(process.env.REDIS_URL);
 }
-const Room = require('./room');
-const {
-  resizeVMGroup,
-  cleanupVMGroup,
-  isVBrowserFeatureEnabled,
-} = require('./vm');
 
 const names = Moniker.generator([
   Moniker.adjective,
@@ -101,7 +102,8 @@ async function init() {
         }
       }
     };
-    setInterval(resizeVMGroup, 20 * 1000);
+    setInterval(resizeVMGroupIncr, 15 * 1000);
+    setInterval(resizeVMGroupDecr, 15 * 60 * 1000);
     setInterval(cleanupVMGroup, 60 * 1000);
     setInterval(renew, 30 * 1000);
     setInterval(release, 5 * 60 * 1000);

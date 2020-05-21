@@ -98,33 +98,39 @@ async function terminateVM(id: string) {
 }
 
 export async function resetVM(id: string) {
-  // We can reboot the VM with new password which is slightly faster but more complicated locking
-  // Just terminate it for now
-  terminateVM(id);
-  // const password = uuidv4();
-  // const response2 = await axios({
-  //   method: 'POST',
-  //   url: `https://api.scaleway.com/instance/v1/zones/fr-par-1/servers/${id}/action`,
-  //   headers: {
-  //     'X-Auth-Token': SCW_SECRET_KEY,
-  //     'Content-Type': 'application/json',
-  //   },
-  //   data: {
-  //     action: 'reboot',
-  //   },
-  // });
-  // const response = await axios({
-  //   method: 'PATCH',
-  //   url: `https://api.scaleway.com/instance/v1/zones/fr-par-1/servers/${id}`,
-  //   headers: {
-  //     'X-Auth-Token': SCW_SECRET_KEY,
-  //     'Content-Type': 'application/json',
-  //   },
-  //   data: {
-  //     name: password,
-  //     tags: [VBROWSER_TAG],
-  //   },
-  // });
+  // We can attempt to reuse the instance which is more efficient if users tend to use them for a short time
+  // Otherwise terminating them is simpler but more expensive
+  // terminateVM(id);
+  const password = uuidv4();
+  // Update the VM's name (also the HOST env var that will be used as password)
+  const response = await axios({
+    method: 'PATCH',
+    url: `https://api.scaleway.com/instance/v1/zones/fr-par-1/servers/${id}`,
+    headers: {
+      'X-Auth-Token': SCW_SECRET_KEY,
+      'Content-Type': 'application/json',
+    },
+    data: {
+      name: password,
+      tags: [VBROWSER_TAG],
+    },
+  });
+  // Reboot the VM (also destroys the Docker container since it has --rm flag)
+  const response2 = await axios({
+    method: 'POST',
+    url: `https://api.scaleway.com/instance/v1/zones/fr-par-1/servers/${id}/action`,
+    headers: {
+      'X-Auth-Token': SCW_SECRET_KEY,
+      'Content-Type': 'application/json',
+    },
+    data: {
+      action: 'reboot',
+    },
+  });
+  // Add the VM back to the pool
+  let result = await getVM(id);
+  await redis.del('vbrowser:' + id);
+  await redis.rpush('availableList', id);
 }
 
 async function getVM(id: string) {
@@ -196,7 +202,7 @@ export async function assignVM() {
     let candidate = await getVM(id);
     const ready = await checkVMReady(candidate.host);
     if (!ready) {
-      await terminateVM(candidate.id);
+      await resetVM(candidate.id);
     } else {
       selected = candidate;
     }
@@ -204,10 +210,7 @@ export async function assignVM() {
   return selected;
 }
 
-export async function resizeVMGroup() {
-  // Compare availableList with desired size
-  // If shorter, launch
-  // If longer, delete
+export async function resizeVMGroupIncr() {
   const maxAvailable = Number(process.env.VBROWSER_VM_BUFFER) || 0;
   const availableCount = await redis.llen('availableList');
   if (availableCount < maxAvailable) {
@@ -219,17 +222,27 @@ export async function resizeVMGroup() {
       availableCount
     );
     launchVM();
-  } else if (availableCount > maxAvailable) {
-    const id = await redis.lpop('availableList');
-    console.log(
-      '[RESIZE-TERMINATE]',
-      id,
-      'desired:',
-      maxAvailable,
-      'available:',
-      availableCount
-    );
-    terminateVM(id);
+  }
+}
+
+export async function resizeVMGroupDecr() {
+  while (true) {
+    const maxAvailable = Number(process.env.VBROWSER_VM_BUFFER) || 0;
+    const availableCount = await redis.llen('availableList');
+    if (availableCount > maxAvailable) {
+      const id = await redis.rpop('availableList');
+      console.log(
+        '[RESIZE-TERMINATE]',
+        id,
+        'desired:',
+        maxAvailable,
+        'available:',
+        availableCount
+      );
+      await terminateVM(id);
+    } else {
+      break;
+    }
   }
 }
 
@@ -243,7 +256,6 @@ export async function cleanupVMGroup() {
   );
   const availableKeys = await redis.lrange('availableList', 0, -1);
   const dontDelete = new Set([...usedKeys, ...availableKeys]);
-  console.log(dontDelete);
   for (let i = 0; i < allVMs.length; i++) {
     const server = allVMs[i];
     if (!dontDelete.has(server.id)) {

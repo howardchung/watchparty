@@ -35,14 +35,19 @@
     "buildServer": "tsc --project server/tsconfig.json --outDir buildServer",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "dev": "(fuser -k -TERM -n tcp 8080 || true) && ts-node-dev --respawn --transpileOnly --project server/tsconfig.json server/server.ts",
+    "dev": "ts-node-dev --respawn --transpileOnly --project server/tsconfig.json server/server.ts",
     "server": "node buildServer/server.js",
     "prettier": "prettier --write ."
   },
   "husky": {
     "hooks": {
-      "pre-commit": "npm run prettier"
+      "pre-commit": "lint-staged"
     }
+  },
+  "lint-staged": {
+    "./**/*.*": [
+      "prettier --write"
+    ]
   },
   "eslintConfig": {
     "extends": "react-app"
@@ -70,6 +75,7 @@
     "@types/socket.io": "^2.1.4",
     "@types/uuid": "^7.0.3",
     "husky": "^4.2.5",
+    "lint-staged": "^10.2.4",
     "papaparse": "^5.2.0",
     "prettier": "2.0.5",
     "ts-node-dev": "^1.0.0-pre.44",

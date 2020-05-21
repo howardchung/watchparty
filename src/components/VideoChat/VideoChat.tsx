@@ -1,12 +1,13 @@
 import React from 'react';
 import { Button, Icon } from 'semantic-ui-react';
-import {
-  getDefaultPicture,
-  getColorHex,
-  formatTimestamp,
-  iceServers,
-} from './utils';
 import { Socket } from 'socket.io';
+
+import {
+  formatTimestamp,
+  getColorHex,
+  getDefaultPicture,
+  iceServers,
+} from '../../utils';
 
 interface VideoChatProps {
   socket: Socket;

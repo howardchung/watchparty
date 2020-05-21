@@ -4,7 +4,7 @@ import { fetchYoutubeVideo, getYoutubeVideoID } from './utils/youtube';
 import { assignVM, resetVM } from './vm';
 import { ChatMessage, NumberDict, PlaylistVideo, StringDict, User } from '.';
 
-module.exports = class Room {
+export class Room {
   private video?: PlaylistVideo | string;
   private videoTS = 0;
   private videoPlaylist: PlaylistVideo[] = [];
@@ -21,7 +21,11 @@ module.exports = class Room {
   private socket?: Socket;
   public roomId: string;
 
-  constructor(io: SocketIO.Server, roomId: string, roomData: string) {
+  constructor(
+    io: SocketIO.Server,
+    roomId: string,
+    roomData?: string | null | undefined
+  ) {
     this.roomId = roomId;
     this.io = io;
 
@@ -453,4 +457,4 @@ module.exports = class Room {
     this.chat = this.chat.splice(-100);
     this.io.of(this.roomId).emit('REC:chat', chatWithTime);
   }
-};
+}

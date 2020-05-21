@@ -33,12 +33,6 @@ import VTTConverter from 'srt-webvtt';
 //@ts-ignore
 import { parseStringPromise } from 'xml2js';
 
-import { Chat } from './Chat';
-import { getCurrentSettings } from './Settings';
-import { TopBar } from './TopBar';
-import { VideoChat } from './VideoChat';
-import { examples } from './examples';
-import { generateName } from './generateName';
 import {
   debounce,
   decodeEntities,
@@ -50,8 +44,14 @@ import {
   isMobile,
   serverPath,
   testAutoplay,
-} from './utils';
-import Video from './vbrowser/Video';
+} from '../../utils';
+import { examples } from '../../utils/examples';
+import { generateName } from '../../utils/generateName';
+import { Chat } from '../Chat';
+import { getCurrentSettings } from '../Settings';
+import { TopBar } from '../TopBar';
+import { VBrowser } from '../VBrowser';
+import { VideoChat } from '../VideoChat';
 
 declare global {
   interface Window {
@@ -478,7 +478,7 @@ export default class App extends React.Component<null, AppState> {
   setupScreenShare = async () => {
     //@ts-ignore
     const stream = await navigator.mediaDevices.getDisplayMedia({
-      video: { cursor: 'never', width: 720, logicalSurface: true },
+      video: { cursor: 'never', width: 1280, logicalSurface: true },
       audio: true,
     });
     stream.getVideoTracks()[0].onended = this.stopScreenShare;
@@ -1264,7 +1264,7 @@ export default class App extends React.Component<null, AppState> {
                       {this.isVBrowser() &&
                       this.getVBrowserPass() &&
                       this.getVBrowserHost() ? (
-                        <Video
+                        <VBrowser
                           username={this.socket.id}
                           password={this.getVBrowserPass()}
                           hostname={this.getVBrowserHost()}
@@ -1278,9 +1278,9 @@ export default class App extends React.Component<null, AppState> {
                               this.isVideo() && !this.state.loading
                                 ? 'block'
                                 : 'none',
+                            width: '100%',
                           }}
                           id="leftVideo"
-                          className="videoContent"
                         ></video>
                       )}
                       {this.state.fullScreen && this.state.currentMedia && (

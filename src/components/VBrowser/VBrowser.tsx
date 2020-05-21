@@ -1,9 +1,11 @@
 import React from 'react';
-import { NekoClient } from '.';
+
 import { EVENT } from './events';
+import { NekoClient } from '.';
+
 // import { EVENT } from './events';
 
-export default class Video extends React.Component<{
+export default class VBrowser extends React.Component<{
   username: string;
   password: string;
   hostname: string;
@@ -31,10 +33,12 @@ export default class Video extends React.Component<{
 
   componentDidMount() {
     this.controlling = this.props.controlling;
-    if (this.props.controlling) {
-      this.takeControl();
-    }
 
+    this.$client.on(EVENT.CONNECTED, () => {
+      if (this.props.controlling) {
+        this.takeControl();
+      }
+    });
     this.$client.on(EVENT.DISCONNECTED, () => {
       this.$client.login(url, this.props.password, this.props.username);
     });
@@ -82,6 +86,7 @@ export default class Video extends React.Component<{
   }
 
   componentWillUnmount() {
+    this.$client.removeAllListeners();
     this.$client.logout();
   }
 
