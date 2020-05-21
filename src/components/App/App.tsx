@@ -51,7 +51,7 @@ import { Chat } from '../Chat';
 import { TopBar } from '../TopBar';
 import { VBrowser } from '../VBrowser';
 import { VideoChat } from '../VideoChat';
-import { getCurrentSettings } from '../routes/Settings';
+import { getCurrentSettings } from '../Settings';
 
 declare global {
   interface Window {
