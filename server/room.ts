@@ -22,6 +22,7 @@ export class Room {
   public vBrowser:
     | { assignTime?: number; pass?: string; host?: string; id?: string }
     | undefined = undefined;
+  public connections: Connection[] = [];
 
   constructor(
     io: SocketIO.Server,
@@ -37,11 +38,30 @@ export class Room {
 
     this.roomInterval = setInterval(() => {
       io.of(roomId).emit('REC:tsMap', this.tsMap);
+      console.log(this.videoDuration, this.videoTS);
+      if (this.videoDuration && this.videoTS >= this.videoDuration) {
+        setTimeout(() => {
+          this.nextVideo();
+        }, 1000);
+      }
     }, 1000);
 
     io.of(roomId).on('connection', (socket: Socket) => {
-      new Connection(socket, this);
+      this.connections.push(new Connection(socket, this));
     });
+  }
+
+  nextVideo() {
+    this.video = undefined;
+
+    if (this.videoPlaylist.length > 0) {
+      const nextVideo = this.videoPlaylist.splice(0, 1);
+      this.video = nextVideo[0].url;
+      for (const connection of this.connections) {
+        connection.socket.emit('playlistUpdate', this.videoPlaylist);
+        this.cmdHost(connection.socket, nextVideo[0]);
+      }
+    }
   }
 
   sendChatMessage = (socket: Socket, message: string) => {

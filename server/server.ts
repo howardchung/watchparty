@@ -1,21 +1,24 @@
 require('dotenv').config();
+
 import fs from 'fs';
-import util from 'util';
-import express from 'express';
-import Moniker from 'moniker';
-import Youtube from 'youtube-api';
-import cors from 'cors';
-import Redis from 'ioredis';
-import https from 'https';
 import http from 'http';
+import https from 'https';
+import util from 'util';
+
+import cors from 'cors';
+import express from 'express';
+import Redis from 'ioredis';
+import Moniker from 'moniker';
 import socketIO from 'socket.io';
-import { searchYoutube } from './utils/youtube';
+import Youtube from 'youtube-api';
+
 import { Room } from './room';
+import { searchYoutube } from './utils/youtube';
 import {
-  resizeVMGroupIncr,
-  resizeVMGroupDecr,
   cleanupVMGroup,
   isVBrowserFeatureEnabled,
+  resizeVMGroupDecr,
+  resizeVMGroupIncr,
 } from './vm';
 
 const app = express();
@@ -65,10 +68,6 @@ async function init() {
       });
       // console.timeEnd('roomSave');
     }, 1000);
-  }
-
-  if (!rooms.has('/default')) {
-    rooms.set('/default', new Room(io, '/default'));
   }
 
   if (isVBrowserFeatureEnabled()) {

@@ -5,8 +5,8 @@ import { fetchYoutubeVideo, getYoutubeVideoID } from './utils/youtube';
 import { PlaylistVideo } from '.';
 
 class Connection {
-  private socket: Socket;
-  private room: Room;
+  public socket: Socket;
+  public room: Room;
 
   constructor(socket: Socket, room: Room) {
     this.socket = socket;
@@ -139,7 +139,7 @@ class Connection {
   };
 
   seekVideo = (time: number) => {
-    this.room.videoTS = time;
+    this.room.videoTS = Math.ceil(time);
     this.socket.broadcast.emit('REC:seek', time);
     const chatMsg = { id: this.socket.id, cmd: 'seek', msg: time };
     this.room.addChatMessage(this.socket, chatMsg);
@@ -147,7 +147,7 @@ class Connection {
 
   sendVideoTimestamp = (time: number) => {
     if (time > this.room.videoTS) {
-      this.room.videoTS = time;
+      this.room.videoTS = Math.ceil(time);
     }
     this.room.tsMap[this.socket.id] = time;
   };

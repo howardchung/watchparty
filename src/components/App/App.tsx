@@ -250,8 +250,7 @@ export default class App extends React.Component<null, AppState> {
   };
 
   init = () => {
-    // Load room ID from url
-    let roomId = '/default';
+    let roomId = '';
     let query = window.location.hash.substring(1);
     if (query) {
       roomId = '/' + query;
