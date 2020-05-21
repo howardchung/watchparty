@@ -50,22 +50,14 @@ import { Chat } from '../Chat';
 import { TopBar } from '../TopBar';
 import { VBrowser } from '../VBrowser';
 import { VideoChat } from '../VideoChat';
-import { getCurrentSettings } from '../routes/Settings';
+import { getCurrentSettings } from '../Settings';
 import firebase from 'firebase';
 import 'firebase/auth';
 
-// Your web app's Firebase configuration
-var firebaseConfig = {
-  apiKey: 'AIzaSyA2fkXeFokJ-Ei_jnzDso5AmjbIaMdzuEc',
-  authDomain: 'watchparty-273604.firebaseapp.com',
-  databaseURL: 'https://watchparty-273604.firebaseio.com',
-  projectId: 'watchparty-273604',
-  storageBucket: 'watchparty-273604.appspot.com',
-  messagingSenderId: '769614672795',
-  appId: '1:769614672795:web:54bbda86288ab1a034273e',
-};
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
+const firebaseConfig = process.env.REACT_APP_FIREBASE_CONFIG;
+if (firebaseConfig) {
+  firebase.initializeApp(JSON.parse(firebaseConfig));
+}
 
 declare global {
   interface Window {
@@ -460,7 +452,7 @@ export default class App extends React.Component<null, AppState> {
   setupScreenShare = async () => {
     //@ts-ignore
     const stream = await navigator.mediaDevices.getDisplayMedia({
-      video: { cursor: 'never', width: 720, logicalSurface: true },
+      video: { cursor: 'never', width: 1280, logicalSurface: true },
       audio: true,
     });
     stream.getVideoTracks()[0].onended = this.stopScreenShare;
@@ -1200,7 +1192,11 @@ export default class App extends React.Component<null, AppState> {
                         >
                           {this.state.loading && (
                             <Dimmer active>
-                              <Loader />
+                              <Loader>
+                                {this.isVBrowser()
+                                  ? 'Launching virtual browser. You may see a black screen while the browser starts.'
+                                  : ''}
+                              </Loader>
                             </Dimmer>
                           )}
                           {!this.state.loading && !this.state.currentMedia && (
@@ -1245,9 +1241,9 @@ export default class App extends React.Component<null, AppState> {
                               this.isVideo() && !this.state.loading
                                 ? 'block'
                                 : 'none',
+                            width: '100%',
                           }}
                           id="leftVideo"
-                          className="videoContent"
                         ></video>
                       )}
                       {this.state.fullScreen && this.state.currentMedia && (
