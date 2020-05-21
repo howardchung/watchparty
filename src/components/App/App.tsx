@@ -33,9 +33,6 @@ import VTTConverter from 'srt-webvtt';
 //@ts-ignore
 import { parseStringPromise } from 'xml2js';
 
-import { Chat } from '../../components/Chat';
-import { TopBar } from '../../components/TopBar';
-import { VideoChat } from '../../components/VideoChat';
 import {
   debounce,
   decodeEntities,
@@ -50,7 +47,10 @@ import {
 } from '../../utils';
 import { examples } from '../../utils/examples';
 import { generateName } from '../../utils/generateName';
-import Video from '../VBrowser/Video';
+import { Chat } from '../Chat';
+import { TopBar } from '../TopBar';
+import { VBrowser } from '../VBrowser';
+import { VideoChat } from '../VideoChat';
 import { getCurrentSettings } from '../routes/Settings';
 
 declare global {
@@ -1233,7 +1233,7 @@ export default class App extends React.Component<null, AppState> {
                       {this.isVBrowser() &&
                       this.getVBrowserPass() &&
                       this.getVBrowserHost() ? (
-                        <Video
+                        <VBrowser
                           username={this.socket.id}
                           password={this.getVBrowserPass()}
                           hostname={this.getVBrowserHost()}

@@ -1,23 +1,15 @@
 import EventEmitter from 'eventemitter3';
+
 import { BaseClient } from './base';
 //import { Member } from './types';
 import { EVENT } from './events';
-
 import {
-  DisconnectPayload,
-  //SignalProvidePayload,
-  //MemberListPayload,
-  //MemberDisconnectPayload,
-  //MemberPayload,
+  ControlClipboardPayload,
   ControlPayload,
   ControlTargetPayload,
-  //ChatPayload,
-  //EmotePayload,
-  ControlClipboardPayload,
+  DisconnectPayload,
   ScreenConfigurationsPayload,
   ScreenResolutionPayload,
-  //AdminPayload,
-  //AdminTargetPayload,
 } from './messages';
 
 export class NekoClient extends BaseClient implements EventEmitter<any> {
@@ -110,3 +102,5 @@ export class NekoClient extends BaseClient implements EventEmitter<any> {
     this.emit(EVENT.SCREEN.RESOLUTION, { width, height });
   }
 }
+
+export { default as VBrowser } from './VBrowser';

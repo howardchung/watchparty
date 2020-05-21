@@ -3,8 +3,8 @@ import './index.css';
 import React from 'react';
 import ReactDOM from 'react-dom';
 
-import App from './containers/App';
-import { Home } from './containers/routes/Home';
+import App from './components/App';
+import { Home } from './components/routes/Home';
 import * as serviceWorker from './serviceWorker';
 
 const isHome = !Boolean(window.location.hash.substring(1));
