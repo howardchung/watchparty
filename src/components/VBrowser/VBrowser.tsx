@@ -86,6 +86,7 @@ export default class VBrowser extends React.Component<{
   }
 
   componentWillUnmount() {
+    this.$client.removeAllListeners();
     this.$client.logout();
   }
 
