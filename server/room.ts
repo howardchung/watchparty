@@ -44,7 +44,7 @@ export class Room {
     });
   }
 
-  sendChatMesage = (socket: Socket, message: string) => {
+  sendChatMessage = (socket: Socket, message: string) => {
     if ((message && message.length > 65536) || !socket) {
       // TODO add some validation on client side too so we don't just drop long messages
       return;

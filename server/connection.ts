@@ -153,7 +153,7 @@ class Connection {
   };
 
   sendChatMessage = (message: string) => {
-    this.room.sendChatMesage(this.socket, message);
+    this.room.sendChatMessage(this.socket, message);
   };
 
   joinVideo = () => {
