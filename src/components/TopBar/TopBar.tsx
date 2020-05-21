@@ -1,6 +1,7 @@
 import React from 'react';
-import { serverPath, getColorHex } from './utils';
-import { Icon, Popup, Button } from 'semantic-ui-react';
+import { Button, Icon, Popup } from 'semantic-ui-react';
+
+import { getColorHex, serverPath } from '../../utils';
 
 export class NewRoomButton extends React.Component<{ size?: string }> {
   createRoom = async () => {
