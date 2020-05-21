@@ -33,10 +33,12 @@ export default class VBrowser extends React.Component<{
 
   componentDidMount() {
     this.controlling = this.props.controlling;
-    if (this.props.controlling) {
-      this.takeControl();
-    }
 
+    this.$client.on(EVENT.CONNECTED, () => {
+      if (this.props.controlling) {
+        this.takeControl();
+      }
+    });
     this.$client.on(EVENT.DISCONNECTED, () => {
       this.$client.login(url, this.props.password, this.props.username);
     });
