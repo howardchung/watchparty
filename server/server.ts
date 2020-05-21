@@ -42,6 +42,18 @@ const names = Moniker.generator([
 const rooms = new Map();
 init();
 
+async function saveRoomsToRedis() {
+  while (true) {
+    console.time('roomSave');
+    const roomArr = Array.from(rooms.values());
+    for (let i = 0; i < roomArr.length; i++) {
+      const roomData = roomArr[i].serialize();
+      const key = roomArr[i].roomId;
+      await redis.setex(key, 24 * 60 * 60, roomData);
+    }
+    console.timeEnd('roomSave');
+  }
+}
 async function init() {
   if (process.env.REDIS_URL) {
     // Load rooms from Redis
@@ -55,16 +67,7 @@ async function init() {
       rooms.set(key, new Room(io, key, roomData));
     }
     // Start saving rooms to Redis
-    setInterval(() => {
-      // console.time('roomSave');
-      rooms.forEach((value, key) => {
-        if (value.roster.length) {
-          const roomData = value.serialize();
-          redis.setex(key, 24 * 60 * 60, roomData);
-        }
-      });
-      // console.timeEnd('roomSave');
-    }, 1000);
+    saveRoomsToRedis();
   }
 
   if (!rooms.has('/default')) {
