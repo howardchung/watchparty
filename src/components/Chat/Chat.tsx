@@ -3,7 +3,7 @@ import { Button, Comment, Icon, Input, Segment } from 'semantic-ui-react';
 import { Socket } from 'socket.io';
 
 import { formatTimestamp, getColorHex, getDefaultPicture } from '../../utils';
-import ChatPlaylistCard from '../ChatPlaylistCard';
+import ChatVideoCard from '../ChatPlaylistCard';
 
 interface ChatProps {
   chat: ChatMessage[];
@@ -70,9 +70,7 @@ export class Chat extends React.Component<ChatProps> {
         return (
           <React.Fragment>
             {`changed the video to `}
-            <span style={{ textTransform: 'initial' }}>
-              {this.props.getMediaDisplayName(msg)}
-            </span>
+            <ChatVideoCard video={msg} />
           </React.Fragment>
         );
 
@@ -89,7 +87,7 @@ export class Chat extends React.Component<ChatProps> {
         return (
           <React.Fragment>
             Added video to playlist
-            <ChatPlaylistCard video={msg} />
+            <ChatVideoCard video={msg} />
           </React.Fragment>
         );
 

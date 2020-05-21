@@ -1,1 +1,1 @@
-export { default } from './ChatPlaylistCard';
+export { default } from './ChatVideoCard';

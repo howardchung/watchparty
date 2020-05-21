@@ -64,7 +64,7 @@ export class Room {
       this.video = nextVideo[0].url;
       for (const connection of this.connections) {
         connection.socket.emit('playlistUpdate', this.videoPlaylist);
-        this.cmdHost(connection.socket, nextVideo[0]);
+        this.cmdHost(connection.socket, nextVideo[0], { skipMessage: true });
       }
     }
   }
@@ -130,7 +130,11 @@ export class Room {
     this.roster.forEach((user, i) => {
       this.roster[i].isController = false;
     });
-    this.cmdHost(socket);
+    if (this.videoPlaylist.length > 0) {
+      this.nextVideo();
+    } else {
+      this.cmdHost(socket);
+    }
     if (id) {
       try {
         await resetVM(id);
@@ -182,7 +186,11 @@ export class Room {
     };
   }
 
-  cmdHost(socket: Socket, data?: PlaylistVideo) {
+  cmdHost(
+    socket: Socket,
+    data?: PlaylistVideo,
+    options = { skipMessage: false }
+  ) {
     if (!socket) {
       return;
     }
@@ -202,7 +210,7 @@ export class Room {
     this.tsMap = {};
     this.io.of(this.roomId).emit('REC:tsMap', this.tsMap);
     this.io.of(this.roomId).emit('REC:host', this.getHostState());
-    if (socket && data) {
+    if (socket && data && !options.skipMessage) {
       const chatMsg = { id: socket.id, cmd: 'host', msg: data };
       this.addChatMessage(socket, chatMsg);
     }

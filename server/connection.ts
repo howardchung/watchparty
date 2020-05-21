@@ -105,15 +105,13 @@ class Connection {
     } else {
       this.room.videoPlaylist.push(video);
       this.socket.emit('playlistUpdate', this.room.videoPlaylist);
+      const chatMsg = {
+        id: this.socket.id,
+        cmd: 'addToPlaylist',
+        msg: video,
+      };
+      this.room.addChatMessage(this.socket, chatMsg);
     }
-
-    const chatMsg = {
-      id: this.socket.id,
-      cmd: 'addToPlaylist',
-      msg: video,
-    };
-
-    this.room.addChatMessage(this.socket, chatMsg);
   };
 
   playVideo = () => {
@@ -214,7 +212,11 @@ class Connection {
     if (match) {
       match.isScreenShare = false;
     }
-    this.room.cmdHost(this.socket);
+    if (this.room.videoPlaylist.length > 0) {
+      this.room.nextVideo();
+    } else {
+      this.room.cmdHost(this.socket);
+    }
     this.room.io.of(this.room.roomId).emit('roster', this.room.roster);
   };
 

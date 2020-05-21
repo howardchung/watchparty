@@ -1,8 +1,8 @@
 import React from 'react';
 
-import styles from './ChatPlaylistCard.module.css';
+import styles from './ChatVideoCard.module.css';
 
-const ChatPlaylistCard: React.FC<{
+const ChatVideoCard: React.FC<{
   video: PlaylistVideo;
 }> = (props) => {
   const { video } = props;
@@ -16,11 +16,13 @@ const ChatPlaylistCard: React.FC<{
       className={styles.Card}
     >
       <div className={styles.ThumbnailBox}>
-        <img
-          className={styles.ThumbnailImage}
-          src={video.img}
-          alt={video.name}
-        />
+        {video.img && (
+          <img
+            className={styles.ThumbnailImage}
+            src={video.img}
+            alt={video.name}
+          />
+        )}
       </div>
       <div>
         <div>{video.name}</div>
@@ -29,4 +31,4 @@ const ChatPlaylistCard: React.FC<{
   );
 };
 
-export default ChatPlaylistCard;
+export default ChatVideoCard;
