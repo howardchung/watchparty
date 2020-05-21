@@ -1202,7 +1202,11 @@ export default class App extends React.Component<null, AppState> {
                         >
                           {this.state.loading && (
                             <Dimmer active>
-                              <Loader />
+                              <Loader>
+                                {this.isVBrowser()
+                                  ? 'Launching virtual browser. You may see a black screen while the browser starts.'
+                                  : ''}
+                              </Loader>
                             </Dimmer>
                           )}
                           {!this.state.loading && !this.state.currentMedia && (
