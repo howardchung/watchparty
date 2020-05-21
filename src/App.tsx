@@ -1,54 +1,57 @@
-import React from 'react';
-import {
-  Button,
-  Grid,
-  Dimmer,
-  Loader,
-  Header,
-  Label,
-  Input,
-  Icon,
-  List,
-  Progress,
-  Dropdown,
-  Message,
-  Modal,
-  DropdownProps,
-  Menu,
-  Popup,
-} from 'semantic-ui-react';
-//@ts-ignore
-import { Slider } from 'react-semantic-ui-range';
+import './App.css';
+
 // import { v4 as uuidv4 } from 'uuid';
 import querystring from 'querystring';
-import { generateName } from './generateName';
-//@ts-ignore
-import VTTConverter from 'srt-webvtt';
+
 //@ts-ignore
 import magnet from 'magnet-uri';
+import React from 'react';
+//@ts-ignore
+import { Slider } from 'react-semantic-ui-range';
+import {
+  Button,
+  Dimmer,
+  Dropdown,
+  DropdownProps,
+  Grid,
+  Header,
+  Icon,
+  Input,
+  Label,
+  List,
+  Loader,
+  Menu,
+  Message,
+  Modal,
+  Popup,
+  Progress,
+} from 'semantic-ui-react';
 //@ts-ignore
 import io from 'socket.io-client';
 //@ts-ignore
+import VTTConverter from 'srt-webvtt';
+//@ts-ignore
 import { parseStringPromise } from 'xml2js';
-import './App.css';
+
+import { Chat } from './Chat';
+import { getCurrentSettings } from './Settings';
+import { TopBar } from './TopBar';
+import { VideoChat } from './VideoChat';
 import { examples } from './examples';
+import { generateName } from './generateName';
 import {
-  testAutoplay,
-  getMediaType,
-  isMobile,
-  formatSpeed,
-  formatTimestamp,
   debounce,
   decodeEntities,
+  formatSpeed,
+  formatTimestamp,
   getMediaPathForList,
+  getMediaType,
   iceServers,
+  isMobile,
   serverPath,
+  testAutoplay,
 } from './utils';
-import { getCurrentSettings } from './Settings';
 import Video from './vbrowser/Video';
-import { VideoChat } from './VideoChat';
-import { Chat } from './Chat';
-import { TopBar } from './TopBar';
 
 declare global {
   interface Window {
@@ -933,7 +936,8 @@ export default class App extends React.Component<null, AppState> {
   };
 
   setMedia = (e: any, data: DropdownProps) => {
-    this.socket.emit('CMD:host', data.value);
+    this.socket.emit('CMD:addVideoToPlaylist', data.value);
+    // this.socket.emit('CMD:host', data.value);
   };
 
   launchMultiSelect = (data: any) => {
