@@ -266,6 +266,7 @@ class Connection {
       // Reset the room state since we lost the screen sharer
       this.room.cmdHost(this.socket);
     }
+    this.room.removeConnection(this.socket.id);
     delete this.room.tsMap[this.socket.id];
     // delete nameMap[socket.id];
   };

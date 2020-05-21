@@ -38,7 +38,6 @@ export class Room {
 
     this.roomInterval = setInterval(() => {
       io.of(roomId).emit('REC:tsMap', this.tsMap);
-      console.log(this.videoDuration, this.videoTS);
       if (this.videoDuration && this.videoTS >= this.videoDuration) {
         setTimeout(() => {
           this.nextVideo();
@@ -50,6 +49,12 @@ export class Room {
       this.connections.push(new Connection(socket, this));
     });
   }
+
+  removeConnection = (socketId: string) => {
+    this.connections = this.connections.filter(
+      (connection) => connection.socket.id !== socketId
+    );
+  };
 
   nextVideo() {
     this.video = undefined;
