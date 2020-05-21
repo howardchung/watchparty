@@ -44,7 +44,7 @@ async function launchVM() {
     data: {
       name: password,
       dynamic_ip_required: true,
-      commercial_type: 'DEV1-S', // maybe DEV1-M for subscribers
+      commercial_type: 'DEV1-M', // maybe DEV1-M for subscribers
       image: imageId,
       volumes: {},
       organization: SCW_ORGANIZATION_ID,
