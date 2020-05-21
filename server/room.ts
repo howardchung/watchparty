@@ -142,10 +142,16 @@ export class Room {
     };
   }
 
-  cmdHost(socket: Socket, data: string | PlaylistVideo) {
+  cmdHost(socket: Socket, data: string) {
     if (!socket) {
       return;
     }
+
+    // remove hosted video from the playlist
+    this.videoPlaylist = this.videoPlaylist.filter(
+      (video) => video.url !== data
+    );
+    socket.emit('playlistUpdate', this.videoPlaylist);
 
     this.video = data;
     this.videoTS = 0;

@@ -23,6 +23,7 @@ class Connection {
     this.socket.emit('REC:pictureMap', this.room.pictureMap);
     this.socket.emit('REC:tsMap', this.room.tsMap);
     this.socket.emit('chatinit', this.room.chat);
+    this.socket.emit('playlistUpdate', this.room.videoPlaylist);
   }
 
   setupSocketListeners() {
@@ -83,7 +84,7 @@ class Connection {
   };
 
   addVideoToPlaylist = async (data: string) => {
-    if (!this.socket || !data) {
+    if (!data) {
       return;
     }
 
@@ -100,12 +101,12 @@ class Connection {
       };
     }
 
-    this.room.videoPlaylist.push(video);
-    console.log(this.room.videoPlaylist);
-
     if (!this.room.video) {
-      this.room.video = this.room.videoPlaylist[0] || '';
-      this.room.cmdHost(this.socket, this.room.video);
+      this.room.video = video;
+      this.room.cmdHost(this.socket, video.url);
+    } else {
+      this.room.videoPlaylist.push(video);
+      this.socket.emit('playlistUpdate', this.room.videoPlaylist);
     }
 
     const chatMsg = {
