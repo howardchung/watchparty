@@ -462,7 +462,7 @@ export default class App extends React.Component<null, AppState> {
   setupScreenShare = async () => {
     //@ts-ignore
     const stream = await navigator.mediaDevices.getDisplayMedia({
-      video: { cursor: 'never', width: 720, logicalSurface: true },
+      video: { cursor: 'never', width: 1280, logicalSurface: true },
       audio: true,
     });
     stream.getVideoTracks()[0].onended = this.stopScreenShare;
@@ -1247,9 +1247,9 @@ export default class App extends React.Component<null, AppState> {
                               this.isVideo() && !this.state.loading
                                 ? 'block'
                                 : 'none',
+                            width: '100%',
                           }}
                           id="leftVideo"
-                          className="videoContent"
                         ></video>
                       )}
                       {this.state.fullScreen && this.state.currentMedia && (

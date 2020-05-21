@@ -226,11 +226,10 @@ export async function resizeVMGroupIncr() {
 }
 
 export async function resizeVMGroupDecr() {
-  const maxAvailable = Number(process.env.VBROWSER_VM_BUFFER) || 0;
-  const availableCount = await redis.llen('availableList');
-  if (availableCount > maxAvailable) {
-    const diff = availableCount - maxAvailable;
-    for (let i = 0; i < diff; i++) {
+  while (true) {
+    const maxAvailable = Number(process.env.VBROWSER_VM_BUFFER) || 0;
+    const availableCount = await redis.llen('availableList');
+    if (availableCount > maxAvailable) {
       const id = await redis.rpop('availableList');
       console.log(
         '[RESIZE-TERMINATE]',
@@ -241,6 +240,8 @@ export async function resizeVMGroupDecr() {
         availableCount
       );
       await terminateVM(id);
+    } else {
+      break;
     }
   }
 }
