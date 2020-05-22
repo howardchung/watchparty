@@ -150,10 +150,10 @@ app.get('/stats', async (req, res) => {
       if (obj.vBrowserTime) {
         currentVBrowser += 1;
       }
-      if (obj.video.startsWith('screenshare://')) {
+      if (obj.video?.startsWith('screenshare://')) {
         currentScreenShare += 1;
       }
-      if (obj.video.startsWith('fileshare://')) {
+      if (obj.video?.startsWith('fileshare://')) {
         currentFileShare += 1;
       }
       roomData.push(obj);
