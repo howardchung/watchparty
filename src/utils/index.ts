@@ -86,8 +86,8 @@ export function getColorHex(id: string) {
 export const getFbPhoto = (fbId: string) =>
   `https://graph.facebook.com/${fbId}/picture?type=normal`;
 
-export const getMediaType = (input: any) => {
-  if (typeof input === 'string' && !input) {
+export const getMediaType = (input: string) => {
+  if (!input) {
     return '';
   }
 
