@@ -51,7 +51,7 @@ import { TopBar } from '../TopBar';
 import { VBrowser } from '../VBrowser';
 import { VideoChat } from '../VideoChat';
 import { getCurrentSettings } from '../Settings';
-import firebase from 'firebase';
+import firebase from 'firebase/app';
 import 'firebase/auth';
 
 const firebaseConfig = process.env.REACT_APP_FIREBASE_CONFIG;
@@ -1760,7 +1760,7 @@ class ComboBox extends React.Component<ComboBoxProps> {
             }
             loading={this.state.loading}
             label={'Now Watching:'}
-            placeholder="Enter URL (YouTube, video file, etc.), or enter search term"
+            placeholder="Enter video file URL, YouTube link, or search term"
             value={
               this.state.inputMedia !== undefined
                 ? this.state.inputMedia
@@ -1952,6 +1952,7 @@ class Controls extends React.Component<ControlsProps> {
           onClick={jumpToLeader}
           className="control action"
           name={'angle double right'}
+          title="Sync timestamp to leader"
         />
         <div className="control">{formatTimestamp(currentTime)}</div>
         <Progress
@@ -1996,24 +1997,28 @@ class Controls extends React.Component<ControlsProps> {
           onClick={toggleSubtitle}
           className="control action"
           name={subtitled ? 'closed captioning' : 'closed captioning outline'}
+          title="Captions"
         />
         <Icon
           size="large"
           onClick={() => fullScreen(false)}
           className="control action"
           name="window maximize outline"
+          title="Theater Mode"
         />
         <Icon
           size="large"
           onClick={() => fullScreen(true)}
           className="control action"
           name="expand"
+          title="Fullscreen"
         />
         <Icon
           size="large"
           onClick={toggleMute}
           className="control action"
           name={muted ? 'volume off' : 'volume up'}
+          title="Mute"
         />
         <div style={{ width: '100px', marginRight: '10px' }}>
           <Slider

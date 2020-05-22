@@ -178,26 +178,32 @@ export class TopBar extends React.Component<{
           >
             {!this.props.hideNewRoom && <NewRoomButton />}
             {!this.props.hideSignin && !this.props.user && (
-              <Dropdown
-                style={{ height: '36px' }}
-                icon="sign in"
-                labeled
-                className="icon"
-                button
-                text="Sign in"
-              >
-                <Dropdown.Menu>
-                  <Dropdown.Item onClick={this.facebookSignIn}>
-                    <Icon name="facebook" />
-                    Facebook
-                  </Dropdown.Item>
-                  <Dropdown.Item onClick={this.googleSignIn}>
-                    <Icon name="google" />
-                    Google
-                  </Dropdown.Item>
-                  {/* <Dropdown.Item onClick={this.emailSignIn}>Email</Dropdown.Item> */}
-                </Dropdown.Menu>
-              </Dropdown>
+              <Popup
+                basic
+                content="Sign in to automatically set your name and picture"
+                trigger={
+                  <Dropdown
+                    style={{ height: '36px' }}
+                    icon="sign in"
+                    labeled
+                    className="icon"
+                    button
+                    text="Sign in"
+                  >
+                    <Dropdown.Menu>
+                      <Dropdown.Item onClick={this.facebookSignIn}>
+                        <Icon name="facebook" />
+                        Facebook
+                      </Dropdown.Item>
+                      <Dropdown.Item onClick={this.googleSignIn}>
+                        <Icon name="google" />
+                        Google
+                      </Dropdown.Item>
+                      {/* <Dropdown.Item onClick={this.emailSignIn}>Email</Dropdown.Item> */}
+                    </Dropdown.Menu>
+                  </Dropdown>
+                }
+              />
             )}
             {!this.props.hideSignin && this.props.user && (
               <Button
