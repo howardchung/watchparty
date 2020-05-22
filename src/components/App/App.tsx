@@ -26,12 +26,8 @@ import io from 'socket.io-client';
 import VTTConverter from 'srt-webvtt';
 
 import {
-  debounce,
   formatSpeed,
-  getMediaPathResults,
   getMediaType,
-  getStreamPathResults,
-  getYouTubeResults,
   iceServers,
   isMobile,
   serverPath,
@@ -40,10 +36,6 @@ import {
 import { generateName } from '../../utils/generateName';
 import { Chat } from '../Chat';
 import ComboBox from '../ComboBox';
-import {
-  MediaPathSearchResult,
-  StreamPathSearchResult,
-} from '../ComboBox/ComboBox';
 import Controls from '../Controls';
 import LobbyWrapper from '../LobbyWrapper';
 import MultiStreamModal from '../MultiStreamModal';
@@ -53,7 +45,7 @@ import { getCurrentSettings } from '../Settings';
 import { TopBar } from '../TopBar';
 import { VBrowser } from '../VBrowser';
 import { VideoChat } from '../VideoChat';
-import YouTubeSearchResult from '../YouTubeSearchResult';
+import YouTubeSearchBar from '../YouTubeSearchBar';
 import classes from './App.module.css';
 
 declare global {
@@ -723,7 +715,7 @@ export default class App extends React.Component<null, AppState> {
 
       if (leftVideo) {
         leftVideo.srcObject = null;
-        leftVideo.src = src.url;
+        leftVideo.src = src;
         leftVideo.currentTime = time;
         // Clear subtitles
         leftVideo.innerHTML = '';
@@ -1016,11 +1008,6 @@ export default class App extends React.Component<null, AppState> {
   render() {
     const sharer = this.state.participants.find((p) => p.isScreenShare);
     const controller = this.state.participants.find((p) => p.isController);
-    const playlistClasses = [classes.Playlist];
-
-    if (this.state.playlistOpen) {
-      playlistClasses.push(classes.PlaylistOpen);
-    }
 
     return (
       <LobbyWrapper>
@@ -1195,7 +1182,7 @@ export default class App extends React.Component<null, AppState> {
                       />
                     )}
                     {
-                      <SearchComponent
+                      <YouTubeSearchBar
                         setMedia={this.setMedia}
                         type={'youtube'}
                         streamPath={this.state.settings.streamPath}
@@ -1276,6 +1263,7 @@ export default class App extends React.Component<null, AppState> {
                             width: '100%',
                           }}
                           id="leftVideo"
+                          src={this.state.currentMedia}
                         ></video>
                       )}
                       {this.state.fullScreen && this.state.currentMedia && (
@@ -1368,9 +1356,11 @@ export default class App extends React.Component<null, AppState> {
                   )}
                 </div>
               </div>
-              <div className={playlistClasses.join(' ')}>
-                <Playlist />
-              </div>
+              {this.state.playlistOpen && (
+                <div className={classes.Playlist}>
+                  <Playlist />
+                </div>
+              )}
               <div className={classes.Chat}>
                 {!this.state.fullScreen && (
                   <Chat
@@ -1389,126 +1379,6 @@ export default class App extends React.Component<null, AppState> {
           </PlaylistWrapper>
         )}
       </LobbyWrapper>
-    );
-  }
-}
-
-interface SearchComponentProps {
-  setMedia: Function;
-  type?: 'youtube' | 'mediaServer' | 'searchServer';
-  launchMultiSelect?: Function;
-  mediaPath: string | undefined;
-  streamPath: string | undefined;
-}
-
-class SearchComponent extends React.Component<SearchComponentProps> {
-  state = {
-    results: [] as SearchResult[],
-    resetDropdown: Number(new Date()),
-    loading: false,
-    lastResultTimestamp: Number(new Date()),
-    inputMedia: undefined,
-  };
-  debounced: any = null;
-
-  doSearch = async (e: any) => {
-    e.persist();
-    this.setState({ inputMedia: e.target.value }, () => {
-      if (!this.debounced) {
-        this.debounced = debounce(async () => {
-          this.setState({ loading: true });
-          let query = this.state.inputMedia || '';
-          let results: SearchResult[] = [];
-          let timestamp = Number(new Date());
-          if (this.props.type === 'youtube') {
-            results = await getYouTubeResults(query);
-          } else if (
-            this.props.type === 'mediaServer' &&
-            this.props.mediaPath
-          ) {
-            results = await getMediaPathResults(this.props.mediaPath, query);
-          } else if (
-            this.props.type === 'searchServer' &&
-            this.props.streamPath
-          ) {
-            results = await getStreamPathResults(this.props.streamPath, query);
-          }
-          if (timestamp > this.state.lastResultTimestamp) {
-            this.setState({
-              loading: false,
-              results,
-              lastResultTimestamp: timestamp,
-            });
-          }
-        }, 500);
-      }
-      this.debounced();
-    });
-  };
-
-  setMedia = (e: any, data: DropdownProps) => {
-    window.setTimeout(
-      () => this.setState({ resetDropdown: Number(new Date()) }),
-      200
-    );
-    this.props.setMedia(e, data);
-  };
-
-  render() {
-    const setMedia = this.setMedia;
-    let placeholder = 'Search for streams';
-    let icon = 'film';
-    if (this.props.type === 'youtube') {
-      placeholder = 'Search YouTube';
-      icon = 'youtube';
-    } else if (this.props.type === 'mediaServer') {
-      placeholder = 'Search files';
-      icon = 'file';
-    }
-    if (this.state.loading) {
-      icon = 'loading circle notch';
-    }
-    return (
-      <React.Fragment>
-        <Dropdown
-          key={this.state.resetDropdown}
-          fluid
-          button
-          icon={icon}
-          className="icon"
-          labeled
-          search={(() => {}) as any}
-          text={placeholder}
-          onSearchChange={this.doSearch}
-          // onBlur={() => this.setState({ results: this.state.watchOptions })}
-          //searchQuery={this.state.query}
-          //loading={this.state.loading}
-        >
-          {Boolean(this.state.results.length) ? (
-            <Dropdown.Menu>
-              {this.state.results.map((result: SearchResult) => {
-                if (this.props.type === 'youtube') {
-                  return (
-                    <YouTubeSearchResult {...result} setMedia={setMedia} />
-                  );
-                } else if (this.props.type === 'mediaServer') {
-                  return (
-                    <MediaPathSearchResult {...result} setMedia={setMedia} />
-                  );
-                }
-                return (
-                  <StreamPathSearchResult
-                    {...result}
-                    setMedia={setMedia}
-                    launchMultiSelect={this.props.launchMultiSelect as Function}
-                    streamPath={this.props.streamPath || ''}
-                  />
-                );
-              })}
-            </Dropdown.Menu>
-          ) : null}
-        </Dropdown>
-      </React.Fragment>
     );
   }
 }

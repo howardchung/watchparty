@@ -1,6 +1,7 @@
 import { Socket } from 'socket.io';
 
 import Connection from './connection';
+import { findPlaylistVideoByUrl } from './utils';
 import { assignVM, resetVM } from './vm';
 import { ChatMessage, NumberDict, PlaylistVideo, StringDict, User } from '.';
 
@@ -68,7 +69,7 @@ export class Room {
 
     if (this.videoPlaylist.length > 0) {
       const nextVideo = this.videoPlaylist[0];
-      this.startVideo(nextVideo);
+      this.startVideo(nextVideo.url);
     }
   };
 
@@ -91,18 +92,11 @@ export class Room {
       // Maybe terminate the existing instance and spawn a new one
       return;
     }
-    this.cmdHost(socket, {
-      url: 'vbrowser://',
-      channel: '',
-      duration: 0,
-      durationObject: { h: 0, m: 0, s: 0 },
-      name: 'Virtual Browser',
-      img: undefined,
-    });
+    this.cmdHost(socket, 'vbrowser://');
     this.vBrowser = {};
     const assignment = await assignVM();
     if (!assignment) {
-      this.cmdHost(socket);
+      this.cmdHost(socket, '');
       this.vBrowser = undefined;
       return;
     }
@@ -118,14 +112,10 @@ export class Room {
         this.roster[i].isController = false;
       }
     });
-    this.cmdHost(socket, {
-      url: 'vbrowser://' + this.vBrowser.pass + '@' + this.vBrowser.host,
-      channel: '',
-      duration: 0,
-      durationObject: { h: 0, m: 0, s: 0 },
-      name: 'Screenshare',
-      img: undefined,
-    });
+    this.cmdHost(
+      socket,
+      'vbrowser://' + this.vBrowser.pass + '@' + this.vBrowser.host
+    );
     this.io.of(this.roomId).emit('roster', this.roster);
   };
 
@@ -138,7 +128,7 @@ export class Room {
     if (this.videoPlaylist.length > 0) {
       this.nextVideo();
     } else {
-      this.cmdHost(socket);
+      this.cmdHost(socket, '');
     }
     if (id) {
       try {
@@ -191,11 +181,11 @@ export class Room {
     };
   }
 
-  startVideo = (data?: PlaylistVideo) => {
+  startVideo = (data?: string, duration?: number) => {
     // remove next hosted video from the playlist
     if (data) {
       const videoIndex = this.videoPlaylist.findIndex(
-        (video) => video.url === data.url
+        (video) => video.url === data
       );
       if (videoIndex !== -1) {
         this.videoPlaylist.splice(videoIndex, 1);
@@ -203,28 +193,32 @@ export class Room {
       }
     }
 
-    this.video = data ? data.url : '';
+    this.video = data || '';
     this.videoTS = 0;
-    this.videoDuration = data ? data.duration : 0;
+    this.videoDuration = duration || 0;
     this.paused = false;
     this.tsMap = {};
     this.io.of(this.roomId).emit('REC:tsMap', this.tsMap);
     this.io.of(this.roomId).emit('REC:host', this.getHostState());
   };
 
-  cmdHost(
-    socket: Socket,
-    data?: PlaylistVideo,
-    options = { skipMessage: false }
-  ) {
+  cmdHost(socket: Socket, data?: string, options = { skipMessage: false }) {
     if (!socket) {
       return;
     }
 
-    this.startVideo(data);
+    const playlistVideo = findPlaylistVideoByUrl(this.videoPlaylist, data);
+    const duration = playlistVideo ? playlistVideo.duration : 0;
+    this.startVideo(data, duration);
+
+    const cmd = playlistVideo ? 'host:video' : 'host';
 
     if (socket && data && !options.skipMessage) {
-      const chatMsg = { id: socket.id, cmd: 'host', msg: data };
+      const chatMsg = {
+        id: socket.id,
+        cmd,
+        msg: playlistVideo || data,
+      };
       this.addChatMessage(socket, chatMsg);
     }
   }

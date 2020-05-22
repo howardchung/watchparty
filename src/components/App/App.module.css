@@ -2,7 +2,8 @@
   display: grid;
   grid-template-areas:
     'navbar navbar navbar'
-    'video playlist chat';
+    'video playlist chat'
+    'footer footer chat';
   grid-template-rows: 80px 1fr;
   grid-template-columns: 1fr auto auto;
   height: 100%;
@@ -22,16 +23,12 @@
 
 .Playlist {
   grid-area: playlist;
-  width: 0;
+  width: 400px;
+  padding: 0 0.5em;
   position: relative;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-}
-
-.PlaylistOpen {
-  width: 400px;
-  padding: 0 0.5em;
 }
 
 .Chat {

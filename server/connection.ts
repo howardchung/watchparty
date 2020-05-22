@@ -77,7 +77,7 @@ class Connection {
       return;
     }
 
-    this.room.cmdHost(this.socket, data);
+    this.room.cmdHost(this.socket, data.url);
   };
 
   addVideoToPlaylist = async (data: string) => {
@@ -96,22 +96,21 @@ class Connection {
         url: data,
         img: undefined,
         duration: 0,
-        durationObject: { h: 0, m: 0, s: 0 },
         channel: '',
       };
     }
 
+    this.room.videoPlaylist.push(video);
+    this.socket.emit('playlistUpdate', this.room.videoPlaylist);
+    const chatMsg = {
+      id: this.socket.id,
+      cmd: 'addToPlaylist',
+      msg: video,
+    };
+    this.room.addChatMessage(this.socket, chatMsg);
+
     if (!this.room.video) {
-      this.room.cmdHost(this.socket, video);
-    } else {
-      this.room.videoPlaylist.push(video);
-      this.socket.emit('playlistUpdate', this.room.videoPlaylist);
-      const chatMsg = {
-        id: this.socket.id,
-        cmd: 'addToPlaylist',
-        msg: video,
-      };
-      this.room.addChatMessage(this.socket, chatMsg);
+      this.room.cmdHost(this.socket, video.url);
     }
   };
 
@@ -181,23 +180,9 @@ class Connection {
       return;
     }
     if (data && data.file) {
-      this.room.cmdHost(this.socket, {
-        url: 'fileshare://' + this.socket.id,
-        channel: '',
-        duration: 0,
-        durationObject: { h: 0, m: 0, s: 0 },
-        name: 'Fileshare',
-        img: undefined,
-      });
+      this.room.cmdHost(this.socket, 'fileshare://' + this.socket.id);
     } else {
-      this.room.cmdHost(this.socket, {
-        url: 'screenshare://' + this.socket.id,
-        channel: '',
-        duration: 0,
-        durationObject: { h: 0, m: 0, s: 0 },
-        name: 'Screenshare',
-        img: undefined,
-      });
+      this.room.cmdHost(this.socket, 'screenshare://' + this.socket.id);
     }
     const match = this.room.roster.find((user) =>
       this.socket ? user.id === this.socket.id : false
@@ -218,7 +203,7 @@ class Connection {
     if (this.room.videoPlaylist.length > 0) {
       this.room.nextVideo();
     } else {
-      this.room.cmdHost(this.socket);
+      this.room.cmdHost(this.socket, '');
     }
     this.room.io.of(this.room.roomId).emit('roster', this.room.roster);
   };
@@ -269,7 +254,7 @@ class Connection {
     this.room.io.of(this.room.roomId).emit('roster', this.room.roster);
     if (removed.isScreenShare) {
       // Reset the room state since we lost the screen sharer
-      this.room.cmdHost(this.socket);
+      this.room.cmdHost(this.socket, '');
     }
     this.room.removeConnection(this.socket.id);
     delete this.room.tsMap[this.socket.id];

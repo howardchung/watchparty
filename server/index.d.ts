@@ -38,11 +38,6 @@ export interface PlaylistVideo {
   name: string;
   img?: string;
   duration: number;
-  durationObject: {
-    h: number;
-    m: number;
-    s: number;
-  };
 }
 
 export interface YoutubeAPIVideoResult {

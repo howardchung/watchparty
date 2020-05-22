@@ -79,13 +79,16 @@ export class Chat extends React.Component<ChatProps> {
 
   formatMessage = (cmd: string, msg: any): React.ReactNode | string => {
     switch (cmd) {
-      case 'host':
+      case 'host:video':
         return (
           <React.Fragment>
             {`changed the video to `}
             <ChatVideoCard video={msg} />
           </React.Fragment>
         );
+
+      case 'host':
+        return `started sharing media`;
 
       case 'seek':
         return `jumped to ${formatTimestamp(msg)}`;

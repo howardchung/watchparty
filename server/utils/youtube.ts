@@ -34,7 +34,6 @@ export const mapYoutubeSearchResult = (
     img: video.snippet.thumbnails.default.url,
     channel: video.snippet.channelTitle,
     duration: 0,
-    durationObject: { h: 0, m: 0, s: 0 },
   };
 };
 
@@ -48,7 +47,6 @@ export const mapYoutubeListResult = (
     img: video.snippet.thumbnails.default.url,
     channel: video.snippet.channelTitle,
     duration: getVideoDuration(video.contentDetails.duration),
-    durationObject: getVideoDurationObject(video.contentDetails.duration),
   };
 };
 
@@ -105,7 +103,7 @@ export const fetchYoutubeVideo = (id: string): Promise<PlaylistVideo> => {
   });
 };
 
-export const getVideoDurationObject = (string: string) => {
+export const getVideoDuration = (string: string) => {
   const hoursParts = PT_HOURS_REGEX.exec(string);
   const minutesParts = PT_MINUTES_REGEX.exec(string);
   const secondsParts = PT_SECONDS_REGEX.exec(string);
@@ -114,20 +112,6 @@ export const getVideoDurationObject = (string: string) => {
   const minutes = minutesParts ? parseInt(minutesParts[1]) : 0;
   const seconds = secondsParts ? parseInt(secondsParts[1]) : 0;
 
-  return {
-    h: hours,
-    m: minutes,
-    s: seconds,
-  };
-};
-
-export const getVideoDuration = (string: string) => {
-  const durationObject = getVideoDurationObject(string);
-  if (!durationObject) {
-    return 0;
-  }
-
-  const totalSeconds =
-    durationObject.s + durationObject.m * 60 + durationObject.h * 60 * 60;
+  const totalSeconds = seconds + minutes * 60 + hours * 60 * 60;
   return totalSeconds;
 };
