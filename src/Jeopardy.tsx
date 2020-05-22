@@ -281,6 +281,9 @@ export class Jeopardy extends React.Component<{
   };
 
   getBuzzOffset = (id: string) => {
+    if (!this.state.game?.buzzUnlockTS) {
+      return 0;
+    }
     return this.state.game?.buzzes[id] - this.state.game?.buzzUnlockTS;
   }
 
