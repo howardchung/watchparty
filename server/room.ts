@@ -1,21 +1,23 @@
 import { assignVM, resetVM } from './vm';
 import { Socket } from 'socket.io';
 import { User, ChatMessage, NumberDict, StringDict } from '.';
+import { redisCount } from './utils/redis';
 
 export class Room {
-  private video = '';
-  private videoTS = 0;
+  public video = '';
+  public videoTS = 0;
   private paused = false;
-  private roster: User[] = [];
+  public roster: User[] = [];
   private chat: ChatMessage[] = [];
   private tsMap: NumberDict = {};
   private nameMap: StringDict = {};
   private pictureMap: StringDict = {};
-  private vBrowser:
+  public vBrowser:
     | { assignTime?: number; pass?: string; host?: string; id?: string }
     | undefined = undefined;
   private io: SocketIO.Server;
   public roomId: string;
+  public creationTime: Date = new Date();
 
   constructor(
     io: SocketIO.Server,
@@ -37,6 +39,7 @@ export class Room {
     io.of(roomId).on('connection', (socket: Socket) => {
       // console.log(socket.id);
       this.roster.push({ id: socket.id });
+      redisCount('connectStarts');
 
       socket.emit('REC:host', this.getHostState());
       socket.emit('REC:nameMap', this.nameMap);
@@ -115,6 +118,7 @@ export class Room {
           io.of(roomId).emit('chatinit', this.chat);
           return;
         }
+        redisCount('chatMessages');
         const chatMsg = { id: socket.id, msg: data };
         this.addChatMessage(socket, chatMsg);
       });
@@ -122,6 +126,7 @@ export class Room {
         const match = this.roster.find((user) => user.id === socket.id);
         if (match) {
           match.isVideoChat = true;
+          redisCount('videoChatStarts');
         }
         io.of(roomId).emit('roster', this.roster);
       });
@@ -139,8 +144,10 @@ export class Room {
         }
         if (data && data.file) {
           this.cmdHost(socket, 'fileshare://' + socket.id);
+          redisCount('fileShareStarts');
         } else {
           this.cmdHost(socket, 'screenshare://' + socket.id);
+          redisCount('screenShareStarts');
         }
         const match = this.roster.find((user) => user.id === socket.id);
         if (match) {
@@ -162,6 +169,7 @@ export class Room {
           // Maybe terminate the existing instance and spawn a new one
           return;
         }
+        redisCount('vBrowserStarts');
         this.cmdHost(socket, 'vbrowser://');
         this.vBrowser = {};
         const assignment = await assignVM();
@@ -241,6 +249,7 @@ export class Room {
       pictureMap: this.pictureMap,
       chat: this.chat,
       vBrowser: this.vBrowser,
+      creationTime: this.creationTime,
     });
   }
 
@@ -248,7 +257,9 @@ export class Room {
     const roomObj = JSON.parse(roomData);
     this.video = roomObj.video;
     this.videoTS = roomObj.videoTS;
-    this.paused = roomObj.paused;
+    if (roomObj.paused) {
+      this.paused = roomObj.paused;
+    }
     if (roomObj.chat) {
       this.chat = roomObj.chat;
     }
@@ -260,6 +271,9 @@ export class Room {
     }
     if (roomObj.vBrowser) {
       this.vBrowser = roomObj.vBrowser;
+    }
+    if (roomObj.creationTime) {
+      this.creationTime = new Date(roomObj.creationTime);
     }
   }
 
