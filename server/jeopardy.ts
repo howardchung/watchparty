@@ -75,6 +75,7 @@ function getPerQuestionState() {
     playClueEndTS: 0,
     questionDuration: 0,
     questionEndTS: 0,
+    buzzUnlockTS: 0,
     answers: {} as StringDict,
     submitted: {} as BooleanDict,
     buzzes: {} as NumberDict,
@@ -606,6 +607,7 @@ export class Jeopardy {
     clearTimeout(this.playClueTimeout);
     this.jpd.public.playClueDuration = 0;
     this.jpd.public.playClueEndTS = 0;
+    this.jpd.public.buzzUnlockTS = Number(new Date());
 
     if (this.jpd.public.currentDailyDouble) {
       this.unlockAnswer();

@@ -280,13 +280,8 @@ export class Jeopardy extends React.Component<{
       .map((p) => p.id);
   };
 
-  getFirstBuzzTS = () => {
-    const min = Math.min(...Object.values<number>(this.state.game?.buzzes || {})) || 0;
-    return min;
-  }
-
   getBuzzOffset = (id: string) => {
-    return this.state.game?.buzzes[id] - this.getFirstBuzzTS();
+    return this.state.game?.buzzes[id] - this.state.game?.buzzUnlockTS;
   }
 
   render() {
