@@ -706,27 +706,6 @@ export default class App extends React.Component<null, AppState> {
         leftVideo.currentTime = time;
         // Clear subtitles
         leftVideo.innerHTML = '';
-        let subtitleSrc = '';
-        if (src.includes('/stream?torrent=magnet')) {
-          subtitleSrc = src.replace('/stream', '/subtitles2');
-        } else if (src.startsWith('http')) {
-          const subtitlePath = src.slice(0, src.lastIndexOf('/') + 1);
-          // Expect subtitle name to be file name + .srt
-          subtitleSrc =
-            subtitlePath + 'subtitles/' + this.getFileName(src) + '.srt';
-        }
-        if (subtitleSrc) {
-          const response = await window.fetch(subtitleSrc);
-          const buffer = await response.arrayBuffer();
-          const vttConverter = new VTTConverter(new Blob([buffer]));
-          const url = await vttConverter.getURL();
-          const track = document.createElement('track');
-          track.kind = 'captions';
-          track.label = 'English';
-          track.srclang = 'en';
-          track.src = url;
-          leftVideo.appendChild(track);
-        }
       }
     }
     if (this.isYouTube()) {
@@ -898,14 +877,44 @@ export default class App extends React.Component<null, AppState> {
     }
   };
 
+  loadSubtitles = async () => {
+    const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
+    // Clear subtitles
+    leftVideo.innerHTML = '';
+    let subtitleSrc = '';
+    const src = this.state.currentMedia;
+    if (src.includes('/stream?torrent=magnet')) {
+      subtitleSrc = src.replace('/stream', '/subtitles2');
+    } else if (src.startsWith('http')) {
+      const subtitlePath = src.slice(0, src.lastIndexOf('/') + 1);
+      // Expect subtitle name to be file name + .srt
+      subtitleSrc =
+        subtitlePath + 'subtitles/' + this.getFileName(src) + '.srt';
+    }
+    if (subtitleSrc) {
+      const response = await window.fetch(subtitleSrc);
+      const buffer = await response.arrayBuffer();
+      const vttConverter = new VTTConverter(new Blob([buffer]));
+      const url = await vttConverter.getURL();
+      const track = document.createElement('track');
+      track.kind = 'captions';
+      track.label = 'English';
+      track.srclang = 'en';
+      track.src = url;
+      leftVideo.appendChild(track);
+      leftVideo.textTracks[0].mode = 'showing';
+    }
+  };
+
   toggleSubtitle = () => {
     if (this.isVideo()) {
       const leftVideo = document.getElementById(
         'leftVideo'
       ) as HTMLMediaElement;
-      if (leftVideo.textTracks[0]) {
-        leftVideo.textTracks[0].mode =
-          leftVideo.textTracks[0].mode === 'showing' ? 'hidden' : 'showing';
+      if (this.isSubtitled()) {
+        leftVideo.innerHTML = '';
+      } else {
+        this.loadSubtitles();
       }
     }
     if (this.isYouTube()) {
@@ -1431,7 +1440,7 @@ class SearchComponent extends React.Component<SearchComponentProps> {
   setMedia = (e: any, data: DropdownProps) => {
     window.setTimeout(
       () => this.setState({ resetDropdown: Number(new Date()) }),
-      200
+      300
     );
     this.props.setMedia(e, data);
   };
@@ -1625,7 +1634,7 @@ class ComboBox extends React.Component<ComboBoxProps> {
   setMedia = (e: any, data: DropdownProps) => {
     window.setTimeout(
       () => this.setState({ inputMedia: undefined, results: undefined }),
-      200
+      300
     );
     this.props.setMedia(e, data);
   };
