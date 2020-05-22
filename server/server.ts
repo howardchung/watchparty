@@ -143,17 +143,17 @@ app.get('/stats', async (req, res) => {
         vBrowserTime: room.vBrowser?.assignTime,
         vBrowserElapsed: room.vBrowser?.assignTime
           ? now - room.vBrowser?.assignTime
-          : null,
+          : undefined,
       };
       currentUsers += obj.rosterLength;
       currentVideoChat += obj.videoChats;
       if (obj.vBrowserTime) {
         currentVBrowser += 1;
       }
-      if (obj.video?.startsWith('screenshare://')) {
+      if (obj.video?.startsWith('screenshare://') && obj.rosterLength) {
         currentScreenShare += 1;
       }
-      if (obj.video?.startsWith('fileshare://')) {
+      if (obj.video?.startsWith('fileshare://') && obj.rosterLength) {
         currentFileShare += 1;
       }
       roomData.push(obj);
