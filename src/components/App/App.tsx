@@ -385,6 +385,7 @@ export default class App extends React.Component<null, AppState> {
       this.setState({ pictureMap: data });
     });
     socket.on('roster', (data: User[]) => {
+      console.log('ROSTER_UPDATE', data);
       this.setState(
         { participants: data, rosterUpdateTS: Number(new Date()) },
         () => {

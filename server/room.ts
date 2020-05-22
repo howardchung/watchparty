@@ -1,12 +1,12 @@
 import { Socket } from 'socket.io';
 
 import Connection from './connection';
-import { getVideoDuration } from './utils/youtube';
 import { assignVM, resetVM } from './vm';
 import { ChatMessage, NumberDict, PlaylistVideo, StringDict, User } from '.';
 
 export class Room {
-  public roomInterval: NodeJS.Timeout;
+  public tsInterval: NodeJS.Timeout;
+  public playlistInterval: NodeJS.Timeout;
   public io: SocketIO.Server;
   public nameMap: StringDict = {};
   public pictureMap: StringDict = {};
@@ -36,8 +36,11 @@ export class Room {
       this.deserialize(roomData);
     }
 
-    this.roomInterval = setInterval(() => {
+    this.tsInterval = setInterval(() => {
       io.of(roomId).emit('REC:tsMap', this.tsMap);
+    }, 1000);
+
+    this.playlistInterval = setInterval(() => {
       if (
         this.videoDuration !== 0 &&
         this.videoDuration &&
@@ -60,18 +63,14 @@ export class Room {
     );
   };
 
-  nextVideo() {
+  nextVideo = () => {
     this.video = undefined;
 
     if (this.videoPlaylist.length > 0) {
-      const nextVideo = this.videoPlaylist.splice(0, 1);
-      this.video = nextVideo[0].url;
-      for (const connection of this.connections) {
-        connection.socket.emit('playlistUpdate', this.videoPlaylist);
-        this.cmdHost(connection.socket, nextVideo[0], { skipMessage: true });
-      }
+      const nextVideo = this.videoPlaylist[0];
+      this.startVideo(nextVideo);
     }
-  }
+  };
 
   sendChatMessage = (socket: Socket, message: string) => {
     if ((message && message.length > 65536) || !socket) {
@@ -192,21 +191,16 @@ export class Room {
     };
   }
 
-  cmdHost(
-    socket: Socket,
-    data?: PlaylistVideo,
-    options = { skipMessage: false }
-  ) {
-    if (!socket) {
-      return;
-    }
-
+  startVideo = (data?: PlaylistVideo) => {
+    // remove next hosted video from the playlist
     if (data) {
-      // remove next hosted video from the playlist
-      this.videoPlaylist = this.videoPlaylist.filter(
-        (video) => video.url !== data.url
+      const videoIndex = this.videoPlaylist.findIndex(
+        (video) => video.url === data.url
       );
-      socket.emit('playlistUpdate', this.videoPlaylist);
+      if (videoIndex !== -1) {
+        this.videoPlaylist.splice(videoIndex, 1);
+        this.io.of(this.roomId).emit('playlistUpdate', this.videoPlaylist);
+      }
     }
 
     this.video = data ? data.url : '';
@@ -216,6 +210,19 @@ export class Room {
     this.tsMap = {};
     this.io.of(this.roomId).emit('REC:tsMap', this.tsMap);
     this.io.of(this.roomId).emit('REC:host', this.getHostState());
+  };
+
+  cmdHost(
+    socket: Socket,
+    data?: PlaylistVideo,
+    options = { skipMessage: false }
+  ) {
+    if (!socket) {
+      return;
+    }
+
+    this.startVideo(data);
+
     if (socket && data && !options.skipMessage) {
       const chatMsg = { id: socket.id, cmd: 'host', msg: data };
       this.addChatMessage(socket, chatMsg);

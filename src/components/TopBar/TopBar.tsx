@@ -49,8 +49,9 @@ export class TopBar extends React.Component<{
           style={{
             display: 'flex',
             flexWrap: 'wrap',
-            padding: '1em',
-            paddingBottom: '0px',
+            paddingLeft: '1em',
+            paddingRight: '1em',
+            width: '100%',
           }}
         >
           <a href="/" style={{ display: 'flex' }}>

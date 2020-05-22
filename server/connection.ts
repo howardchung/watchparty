@@ -12,7 +12,6 @@ class Connection {
     this.socket = socket;
     this.room = room;
     this.room.roster.push({ id: socket.id });
-    this.room.io.emit('roster', this.room.roster);
     this.emitInitEvents();
     this.setupSocketListeners();
   }
@@ -24,6 +23,7 @@ class Connection {
     this.socket.emit('REC:tsMap', this.room.tsMap);
     this.socket.emit('chatinit', this.room.chat);
     this.socket.emit('playlistUpdate', this.room.videoPlaylist);
+    this.room.io.of(this.room.roomId).emit('roster', this.room.roster);
   }
 
   setupSocketListeners() {
