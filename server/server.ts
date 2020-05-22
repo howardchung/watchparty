@@ -11,13 +11,8 @@ import http from 'http';
 import socketIO from 'socket.io';
 import { searchYoutube } from './utils/youtube';
 import { Room } from './room';
-import {
-  resizeVMGroupIncr,
-  resizeVMGroupDecr,
-  cleanupVMGroup,
-  isVBrowserFeatureEnabled,
-} from './vm';
 import { getRedisCountDay } from './utils/redis';
+import { Scaleway } from './vm/scaleway';
 
 const app = express();
 let server: any = null;
@@ -41,6 +36,8 @@ const names = Moniker.generator([
 ]);
 
 const rooms = new Map<string, Room>();
+// Start the VM manager
+const vmManager = new Scaleway(rooms);
 init();
 
 async function saveRoomsToRedis() {
@@ -65,52 +62,14 @@ async function init() {
       const key = keys[i];
       const roomData = await redis.get(key);
       console.log(key, roomData?.length);
-      rooms.set(key, new Room(io, key, roomData));
+      rooms.set(key, new Room(io, vmManager, key, roomData));
     }
     // Start saving rooms to Redis
     saveRoomsToRedis();
   }
 
   if (!rooms.has('/default')) {
-    rooms.set('/default', new Room(io, '/default'));
-  }
-
-  if (isVBrowserFeatureEnabled()) {
-    const release = async () => {
-      // Reset VMs in rooms that are:
-      // assigned more than 6 hours ago
-      // assigned to a room with no users
-      const roomArr = Array.from(rooms.values());
-      for (let i = 0; i < roomArr.length; i++) {
-        const room = roomArr[i];
-        if (room.vBrowser && room.vBrowser.assignTime) {
-          if (
-            Number(new Date()) - room.vBrowser.assignTime >
-              6 * 60 * 60 * 1000 ||
-            room.roster.length === 0
-          ) {
-            console.log('[RESET] VM in room:', room.roomId);
-            room.resetRoomVM();
-          }
-        }
-      }
-    };
-    const renew = async () => {
-      const roomArr = Array.from(rooms.values());
-      for (let i = 0; i < roomArr.length; i++) {
-        const room = roomArr[i];
-        if (room.vBrowser && room.vBrowser.id) {
-          console.log('[RENEW] VM in room:', room.roomId, room.vBrowser.id);
-          // Renew the lock on the VM
-          await redis.expire('vbrowser:' + room.vBrowser.id, 300);
-        }
-      }
-    };
-    setInterval(resizeVMGroupIncr, 15 * 1000);
-    setInterval(resizeVMGroupDecr, 15 * 60 * 1000);
-    setInterval(cleanupVMGroup, 60 * 1000);
-    setInterval(renew, 30 * 1000);
-    setInterval(release, 5 * 60 * 1000);
+    rooms.set('/default', new Room(io, vmManager, '/default'));
   }
 
   server.listen(process.env.PORT || 8080);
@@ -215,7 +174,7 @@ app.post('/createRoom', (req, res) => {
     name = names.choose();
   }
   console.log('createRoom: ', name);
-  rooms.set('/' + name, new Room(io, '/' + name));
+  rooms.set('/' + name, new Room(io, vmManager, '/' + name));
   res.json({ name });
 });
 
