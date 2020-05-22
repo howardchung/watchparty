@@ -1,5 +1,8 @@
 #!/bin/bash
 
+apt-get update
+apt-get install -y curl
+
 # install docker
 curl -fsSL https://get.docker.com | sh
 # pull vbrowser image

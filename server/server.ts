@@ -17,6 +17,7 @@ import {
   cleanupVMGroup,
   isVBrowserFeatureEnabled,
 } from './vm';
+import { getRedisCountDay } from './utils/redis';
 
 const app = express();
 let server: any = null;
@@ -39,19 +40,19 @@ const names = Moniker.generator([
   Moniker.verb,
 ]);
 
-const rooms = new Map();
+const rooms = new Map<string, Room>();
 init();
 
 async function saveRoomsToRedis() {
   while (true) {
-    console.time('roomSave');
+    // console.time('roomSave');
     const roomArr = Array.from(rooms.values());
     for (let i = 0; i < roomArr.length; i++) {
       const roomData = roomArr[i].serialize();
       const key = roomArr[i].roomId;
       await redis.setex(key, 24 * 60 * 60, roomData);
     }
-    console.timeEnd('roomSave');
+    // console.timeEnd('roomSave');
   }
 }
 async function init() {
@@ -122,19 +123,71 @@ app.get('/ping', (req, res) => {
   res.json('pong');
 });
 
-app.get('/stats', (req, res) => {
+app.get('/stats', async (req, res) => {
   if (req.query.key && req.query.key === process.env.STATS_KEY) {
     const roomData: any[] = [];
+    const now = Number(new Date());
+    let currentUsers = 0;
+    let currentVBrowser = 0;
+    let currentScreenShare = 0;
+    let currentFileShare = 0;
+    let currentVideoChat = 0;
     rooms.forEach((room) => {
-      roomData.push({
+      const obj = {
+        creationTime: room.creationTime,
         roomId: room.roomId,
         video: room.video,
         videoTS: room.videoTS,
         rosterLength: room.roster.length,
-      });
+        videoChats: room.roster.filter((p) => p.isVideoChat).length,
+        vBrowserTime: room.vBrowser?.assignTime,
+        vBrowserElapsed: room.vBrowser?.assignTime
+          ? now - room.vBrowser?.assignTime
+          : null,
+      };
+      currentUsers += obj.rosterLength;
+      currentVideoChat += obj.videoChats;
+      if (obj.vBrowserTime) {
+        currentVBrowser += 1;
+      }
+      if (obj.video.startsWith('screenshare://')) {
+        currentScreenShare += 1;
+      }
+      if (obj.video.startsWith('fileshare://')) {
+        currentFileShare += 1;
+      }
+      roomData.push(obj);
     });
+    // Sort newest first
+    roomData.sort((a, b) => b.creationTime - a.creationTime);
+    const redisUsage = (await redis.info())
+      .split('\n')
+      .find((line) => line.startsWith('used_memory:'))
+      ?.split(':')[1]
+      .trim();
+    const availableVBrowsers = await redis.llen('availableList');
+    const chatMessages = await getRedisCountDay('chatMessages');
+    const vBrowserStarts = await getRedisCountDay('vBrowserStarts');
+    const screenShareStarts = await getRedisCountDay('screenShareStarts');
+    const fileShareStarts = await getRedisCountDay('fileShareStarts');
+    const videoChatStarts = await getRedisCountDay('videoChatStarts');
+    const connectStarts = await getRedisCountDay('connectStarts');
+
     res.json({
       roomCount: rooms.size,
+      redisUsage,
+      availableVBrowsers,
+      chatMessages,
+      vBrowserStarts,
+      screenShareStarts,
+      fileShareStarts,
+      videoChatStarts,
+      connectStarts,
+      currentUsers,
+      currentVBrowser,
+      currentScreenShare,
+      currentFileShare,
+      currentVideoChat,
       rooms: roomData,
     });
   } else {
