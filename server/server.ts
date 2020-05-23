@@ -130,6 +130,11 @@ app.get('/stats', async (req, res) => {
     const chatMessages = await getRedisCountDay('chatMessages');
     const vBrowserStarts = await getRedisCountDay('vBrowserStarts');
     const vBrowserLaunches = await getRedisCountDay('vBrowserLaunches');
+    const vBrowserLaunchTimes = await redis.lrange(
+      'vBrowserLaunchTimes',
+      0,
+      -1
+    );
     const screenShareStarts = await getRedisCountDay('screenShareStarts');
     const fileShareStarts = await getRedisCountDay('fileShareStarts');
     const videoChatStarts = await getRedisCountDay('videoChatStarts');
@@ -143,6 +148,7 @@ app.get('/stats', async (req, res) => {
       chatMessages,
       vBrowserStarts,
       vBrowserLaunches,
+      vBrowserLaunchTimes,
       screenShareStarts,
       fileShareStarts,
       videoChatStarts,
