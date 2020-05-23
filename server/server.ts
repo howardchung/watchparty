@@ -55,6 +55,7 @@ async function saveRoomsToRedis() {
       }
     }
     // console.timeEnd('roomSave');
+    await new Promise((resolve) => setTimeout(resolve, 1000));
   }
 }
 async function init() {
