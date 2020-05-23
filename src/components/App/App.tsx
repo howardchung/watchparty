@@ -99,6 +99,7 @@ interface AppState {
   multiStreamSelection?: any[];
   error: string;
   settings: Settings;
+  vBrowserResolution: string;
 }
 
 export default class App extends React.Component<null, AppState> {
@@ -133,6 +134,7 @@ export default class App extends React.Component<null, AppState> {
     multiStreamSelection: undefined,
     error: '',
     settings: {},
+    vBrowserResolution: '1280x720@30',
   };
   socket: any = null;
   watchPartyYTPlayer: any = null;
@@ -1136,6 +1138,32 @@ export default class App extends React.Component<null, AppState> {
                         }))}
                       ></Dropdown>
                     )}
+                    {process.env.NODE_ENV === 'development' &&
+                      this.isVBrowser() && (
+                        <Dropdown
+                          icon="desktop"
+                          labeled
+                          className="icon"
+                          button
+                          value={this.state.vBrowserResolution}
+                          onChange={(e, data) =>
+                            this.setState({
+                              vBrowserResolution: data.value as string,
+                            })
+                          }
+                          selection
+                          options={[
+                            {
+                              text: '720p',
+                              value: '1280x720@30',
+                            },
+                            {
+                              text: '1080p',
+                              value: '1920x1080@30',
+                            },
+                          ]}
+                        ></Dropdown>
+                      )}
                     {this.isVBrowser() && (
                       <Button
                         fluid
@@ -1242,6 +1270,7 @@ export default class App extends React.Component<null, AppState> {
                           hostname={this.getVBrowserHost()}
                           controlling={this.state.isControlling}
                           setLoadingFalse={this.setLoadingFalse}
+                          resolution={this.state.vBrowserResolution}
                         />
                       ) : (
                         <video
