@@ -1,20 +1,10 @@
 import React from 'react';
-import {
-  Button,
-  Grid,
-  Header,
-  Input,
-  Icon,
-  Modal,
-} from 'semantic-ui-react';
+import { Button, Grid, Header, Input, Icon, Modal } from 'semantic-ui-react';
 import { generateName } from './generateName';
 //@ts-ignore
 import io from 'socket.io-client';
 import './App.css';
-import {
-  testAutoplay,
-  serverPath,
-} from './utils';
+import { testAutoplay, serverPath } from './utils';
 import { getCurrentSettings } from './Settings';
 import { Chat } from './Chat';
 import { JeopardyTopBar } from './TopBar';
@@ -127,7 +117,6 @@ export default class App extends React.Component<null, AppState> {
     });
   };
 
-
   init = () => {
     // Load room ID from url
     let roomId = '/default';
@@ -169,14 +158,11 @@ export default class App extends React.Component<null, AppState> {
       this.setState({ pictureMap: data });
     });
     socket.on('roster', (data: User[]) => {
-      this.setState(
-        { participants: data, rosterUpdateTS: Number(new Date()) },
-      );
+      this.setState({ participants: data, rosterUpdateTS: Number(new Date()) });
     });
     socket.on('chatinit', (data: any) => {
       this.setState({ chat: data, scrollTimestamp: Number(new Date()) });
     });
-
   };
 
   updateName = (e: any, data: { value: string }) => {
@@ -288,6 +274,3 @@ export default class App extends React.Component<null, AppState> {
     );
   }
 }
-
-
-

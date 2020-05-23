@@ -22,6 +22,7 @@ export class Jeopardy extends React.Component<{
     categoryReadTime: 0,
     clueMask: {} as any,
     readingDisabled: false,
+    buzzFrozen: false,
   };
   async componentDidMount() {
     window.speechSynthesis.getVoices();
@@ -201,7 +202,9 @@ export class Jeopardy extends React.Component<{
         await new Promise((resolve) => setTimeout(resolve, 1000));
         document.getElementById('intro')!.removeChild(player);
       }
-      await this.sayText('And now, here is the host of Jeopardy, your computer!');
+      await this.sayText(
+        'And now, here is the host of Jeopardy, your computer!'
+      );
       await new Promise((resolve) => setTimeout(resolve, 1000));
       introMusic.pause();
       introVideo.pause();
@@ -274,7 +277,8 @@ export class Jeopardy extends React.Component<{
   };
 
   getWinners = () => {
-    const max = Math.max(...Object.values<number>(this.state.game?.scores || {})) || 0;
+    const max =
+      Math.max(...Object.values<number>(this.state.game?.scores || {})) || 0;
     return this.props.participants
       .filter((p) => (this.state.game.scores[p.id] || 0) === max)
       .map((p) => p.id);
@@ -285,7 +289,7 @@ export class Jeopardy extends React.Component<{
       return 0;
     }
     return this.state.game?.buzzes[id] - this.state.game?.buzzUnlockTS;
-  }
+  };
 
   render() {
     const game = this.state.game;
@@ -331,7 +335,11 @@ export class Jeopardy extends React.Component<{
                     >
                       <div
                         id="clueContainer"
-                        className={`clueContainer ${(game.currentDailyDouble && game.waitingForWager) ? 'dailyDouble' : ''}`}
+                        className={`clueContainer ${
+                          game.currentDailyDouble && game.waitingForWager
+                            ? 'dailyDouble'
+                            : ''
+                        }`}
                       >
                         <div className="category" style={{ height: '30px' }}>
                           {game.board[game.currentQ] &&
@@ -354,12 +362,22 @@ export class Jeopardy extends React.Component<{
                           game.round !== 'final' ? (
                             <div style={{ display: 'flex' }}>
                               <Button
-                                disabled={!game.canBuzz}
+                                disabled={this.state.buzzFrozen}
                                 color="green"
                                 size="huge"
-                                onClick={() =>
-                                  this.props.socket.emit('JPD:buzz')
-                                }
+                                onClick={() => {
+                                  if (game.canBuzz) {
+                                    this.props.socket.emit('JPD:buzz');
+                                  } else {
+                                    // Freeze the buzzer for 0.5 seconds
+                                    this.setState({ buzzFrozen: true });
+                                    setTimeout(
+                                      () =>
+                                        this.setState({ buzzFrozen: false }),
+                                      500
+                                    );
+                                  }
+                                }}
                                 icon
                                 labelPosition="left"
                               >
@@ -367,10 +385,22 @@ export class Jeopardy extends React.Component<{
                                 Buzz
                               </Button>
                               <Button
-                                disabled={!game.canBuzz}
+                                disabled={this.state.buzzFrozen}
                                 color="red"
                                 size="huge"
-                                onClick={() => this.submitAnswer(null)}
+                                onClick={() => {
+                                  if (game.canBuzz) {
+                                    this.submitAnswer(null);
+                                  } else {
+                                    // Freeze the buzzer for 0.5 seconds
+                                    this.setState({ buzzFrozen: true });
+                                    setTimeout(
+                                      () =>
+                                        this.setState({ buzzFrozen: false }),
+                                      500
+                                    );
+                                  }
+                                }}
                                 icon
                                 labelPosition="left"
                               >
@@ -581,12 +611,14 @@ export class Jeopardy extends React.Component<{
                     <div
                       className={`answerBox ${
                         game?.buzzes[p.id] ? 'buzz' : ''
-                      } ${
-                        game?.judges[p.id] === false ? 'negative' : ''
-                      }`}
+                      } ${game?.judges[p.id] === false ? 'negative' : ''}`}
                     >
                       {game && game.answers[p.id]}
-                      <div className="timeOffset">{this.getBuzzOffset(p.id) ? `+${(this.getBuzzOffset(p.id) / 1000).toFixed(3)}` : ''}</div>
+                      <div className="timeOffset">
+                        {this.getBuzzOffset(p.id)
+                          ? `+${(this.getBuzzOffset(p.id) / 1000).toFixed(3)}`
+                          : ''}
+                      </div>
                     </div>
                   </div>
                 );
@@ -715,9 +747,7 @@ export class Jeopardy extends React.Component<{
           </React.Fragment>
         }
         {false && process.env.NODE_ENV === 'development' && (
-          <pre
-            style={{ color: 'white', height: '200px', overflow: 'scroll' }}
-          >
+          <pre style={{ color: 'white', height: '200px', overflow: 'scroll' }}>
             {JSON.stringify(game, null, 2)}
           </pre>
         )}

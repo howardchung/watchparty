@@ -110,7 +110,7 @@
   background-size: contain;
   background-repeat: no-repeat;
   background-image: url('/jeopardy/jeopardy-daily-double.png');
-  background-color: rgba(0,0,0,1);
+  background-color: rgba(0, 0, 0, 1);
 }
 
 .clue {

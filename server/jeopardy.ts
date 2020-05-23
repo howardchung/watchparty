@@ -360,7 +360,10 @@ export class Jeopardy {
       this.jpd.public.round = 'double';
       // If double, person with lowest score is picker
       // This is nlogn rather than n, but prob ok for small numbers of players
-      const playersWithScores = this.roster.map(p => ({ id: p.id, score: this.jpd.public.scores[p.id] || 0 }));
+      const playersWithScores = this.roster.map((p) => ({
+        id: p.id,
+        score: this.jpd.public.scores[p.id] || 0,
+      }));
       playersWithScores.sort((a, b) => a.score - b.score);
       this.jpd.public.picker = playersWithScores[0]?.id;
     } else if (this.jpd.public.round === 'double') {
@@ -472,7 +475,10 @@ export class Jeopardy {
       this.jpd.public.currentJudgeAnswer &&
       !this.roster.find((p) => p.id === this.jpd.public.currentJudgeAnswer)
     ) {
-      console.log('[ADVANCEJUDGING] player not found, moving on:', this.jpd.public.currentJudgeAnswer);
+      console.log(
+        '[ADVANCEJUDGING] player not found, moving on:',
+        this.jpd.public.currentJudgeAnswer
+      );
       this.advanceJudging();
     }
   }
@@ -559,7 +565,9 @@ export class Jeopardy {
       if (this.jpd.public.waitingForWager) {
         delete this.jpd.public.waitingForWager[id];
       }
-      if (Object.keys(this.jpd.public.buzzes).every((id) => id in this.jpd.wagers)) {
+      if (
+        Object.keys(this.jpd.public.buzzes).every((id) => id in this.jpd.wagers)
+      ) {
         // if final, reveal clue if all players made wager
         this.jpd.public.waitingForWager = undefined;
         this.jpd.public.board[
