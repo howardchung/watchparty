@@ -55,11 +55,11 @@ export abstract class VMManager {
     const assignStart = Number(new Date());
     let selected = null;
     while (!selected) {
-      const currSize = await redis.llen('availableList');
+      const currSize = await redis.llen(this.redisQueueKey);
       if (currSize === 0) {
         await this.launchVM();
       }
-      let resp = await redis.blpop('availableList', 0);
+      let resp = await redis.blpop(this.redisQueueKey, 0);
       const id = resp[1];
       console.log('[ASSIGN]', id);
       const lock = await redis.set('vbrowser:' + id, '1', 'NX', 'EX', 300);
@@ -70,15 +70,15 @@ export abstract class VMManager {
       let candidate = await this.getVM(id);
       const ready = await this.checkVMReady(candidate.host);
       if (!ready) {
-        await this.resetVM(candidate.id);
+        await this.terminateVM(candidate.id);
       } else {
         selected = candidate;
       }
     }
     const assignEnd = Number(new Date());
     const assignElapsed = assignEnd - assignStart;
-    await redis.lpush('vBrowserLaunchTimes', assignElapsed);
-    await redis.ltrim('vBrowserLaunchTimes', 0, 24);
+    await redis.lpush('vBrowserStartMS', assignElapsed);
+    await redis.ltrim('vBrowserStartMS', 0, 24);
     return selected;
   };
 
@@ -86,17 +86,17 @@ export abstract class VMManager {
     // We can attempt to reuse the instance which is more efficient if users tend to use them for a short time
     // Otherwise terminating them is simpler but more expensive
     // TODO if VM is older than 45 minutes, terminate it, otherwise reboot to try to recycle
-    // await terminateVM(id);
+    // await this.terminateVM(id);
     await this.rebootVM(id);
     // Delete any locks
     await redis.del('vbrowser:' + id);
     // Add the VM back to the pool
-    await redis.rpush('availableList', id);
+    await redis.rpush(this.redisQueueKey, id);
   };
 
   protected resizeVMGroupIncr = async () => {
     const maxAvailable = Number(process.env.VBROWSER_VM_BUFFER) || 0;
-    const availableCount = await redis.llen('availableList');
+    const availableCount = await redis.llen(this.redisQueueKey);
     if (availableCount < maxAvailable) {
       console.log(
         '[RESIZE-LAUNCH]',
@@ -112,9 +112,9 @@ export abstract class VMManager {
   protected resizeVMGroupDecr = async () => {
     while (true) {
       const maxAvailable = Number(process.env.VBROWSER_VM_BUFFER) || 0;
-      const availableCount = await redis.llen('availableList');
+      const availableCount = await redis.llen(this.redisQueueKey);
       if (availableCount > maxAvailable) {
-        const id = await redis.rpop('availableList');
+        const id = await redis.rpop(this.redisQueueKey);
         console.log(
           '[RESIZE-TERMINATE]',
           id,
@@ -138,12 +138,13 @@ export abstract class VMManager {
     const usedKeys = (await redis.keys('vbrowser:*')).map((key) =>
       key.slice('vbrowser:'.length)
     );
-    const availableKeys = await redis.lrange('availableList', 0, -1);
+    const availableKeys = await redis.lrange(this.redisQueueKey, 0, -1);
     const dontDelete = new Set([...usedKeys, ...availableKeys]);
+    // console.log(allVMs, dontDelete);
     for (let i = 0; i < allVMs.length; i++) {
       const server = allVMs[i];
       if (!dontDelete.has(server.id)) {
-        console.log('terminating hanging vm:', server.id);
+        console.log('[CLEANUP] terminating:', server.id);
         this.terminateVM(server.id);
       }
     }
@@ -186,12 +187,12 @@ export abstract class VMManager {
     // generate credentials and boot a VM
     const password = uuidv4();
     const id = await this.startVM(password);
-    let result = await this.getVM(id);
-    await redis.rpush('availableList', id);
+    await redis.rpush(this.redisQueueKey, id);
     redisCount('vBrowserLaunches');
-    return result;
+    return id;
   };
 
+  public abstract redisQueueKey: string;
   protected abstract startVM: (name: string) => Promise<string>;
   protected abstract rebootVM: (id: string) => Promise<void>;
   protected abstract terminateVM: (id: string) => Promise<void>;
@@ -207,4 +208,5 @@ export interface VM {
   state: string;
   tags: string[];
   creation_date: string;
+  originalName?: string;
 }

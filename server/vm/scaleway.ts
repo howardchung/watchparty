@@ -3,6 +3,7 @@ import axios from 'axios';
 import { StringDict } from '..';
 import { VMManager, VM } from './base';
 import { Room } from '../room';
+import { cloudInit, imageName } from './utils';
 
 const VBROWSER_TAG = process.env.VBROWSER_TAG || 'vbrowser';
 const SCW_SECRET_KEY = process.env.SCW_SECRET_KEY;
@@ -26,6 +27,7 @@ const mapServerObject = (server: any): VM => ({
 });
 
 export class Scaleway extends VMManager {
+  redisQueueKey = 'availableListScaleway';
   startVM = async (name: string) => {
     const response = await axios({
       method: 'POST',
@@ -37,7 +39,7 @@ export class Scaleway extends VMManager {
       data: {
         name: name,
         dynamic_ip_required: true,
-        commercial_type: 'DEV1-M', // maybe DEV1-M for subscribers
+        commercial_type: 'DEV1-M', // DEV1-S, DEV1-M
         image: imageId,
         volumes: {},
         organization: SCW_ORGANIZATION_ID,
@@ -46,13 +48,6 @@ export class Scaleway extends VMManager {
     });
     // console.log(response.data);
     const id = response.data.server.id;
-    const imageName = 'nurdism/neko:chromium';
-    // set userdata for boot action
-    const cloudInit = `#!/bin/bash
-iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 5000
-sed -i 's/scripts-user$/\[scripts-user, always\]/' /etc/cloud/cloud.cfg
-docker run -d --rm --name=vbrowser -v /usr/share/fonts:/usr/share/fonts --log-opt max-size=1g --net=host --shm-size=1g --cap-add="SYS_ADMIN" -e DISPLAY=":99.0" -e SCREEN="1280x720@30" -e NEKO_PASSWORD=$(hostname) -e NEKO_PASSWORD_ADMIN=$(hostname) -e NEKO_BIND=":5000" -e NEKO_EPR=":59000-59100" ${imageName}
-`;
     const response2 = await axios({
       method: 'PATCH',
       url: `https://api.scaleway.com/instance/v1/zones/${region}/servers/${id}/user_data/cloud-init`,
@@ -60,7 +55,8 @@ docker run -d --rm --name=vbrowser -v /usr/share/fonts:/usr/share/fonts --log-op
         'X-Auth-Token': SCW_SECRET_KEY,
         'Content-Type': 'text/plain',
       },
-      data: cloudInit,
+      // set userdata for boot action
+      data: cloudInit(imageName),
     });
     // console.log(response2.data);
     // boot the instance
@@ -166,9 +162,9 @@ docker run -d --rm --name=vbrowser -v /usr/share/fonts:/usr/share/fonts --log-op
       },
     });
     return response.data.servers
+      .map(mapServerObject)
       .filter(
         (server: any) => server.tags.includes(VBROWSER_TAG) && server.private_ip
-      )
-      .map(mapServerObject);
+      );
   };
 }

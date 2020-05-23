@@ -14,6 +14,7 @@ import { searchYoutube } from './utils/youtube';
 import { Room } from './room';
 import { getRedisCountDay } from './utils/redis';
 import { Scaleway } from './vm/scaleway';
+import { Hetzner } from './vm/hetzner';
 
 const app = express();
 let server: any = null;
@@ -38,7 +39,8 @@ const names = Moniker.generator([
 
 const rooms = new Map<string, Room>();
 // Start the VM manager
-const vmManager = new Scaleway(rooms);
+const vmManager = new Hetzner(rooms);
+// const vmManager2 = new Scaleway(rooms);
 init();
 
 async function saveRoomsToRedis() {
@@ -126,15 +128,15 @@ app.get('/stats', async (req, res) => {
       .find((line) => line.startsWith('used_memory:'))
       ?.split(':')[1]
       .trim();
-    const availableVBrowsers = await redis.llen('availableList');
-    const chatMessages = await getRedisCountDay('chatMessages');
-    const vBrowserStarts = await getRedisCountDay('vBrowserStarts');
-    const vBrowserLaunches = await getRedisCountDay('vBrowserLaunches');
-    const vBrowserLaunchTimes = await redis.lrange(
-      'vBrowserLaunchTimes',
+    const availableVBrowsers = await redis.lrange(
+      vmManager.redisQueueKey,
       0,
       -1
     );
+    const chatMessages = await getRedisCountDay('chatMessages');
+    const vBrowserStarts = await getRedisCountDay('vBrowserStarts');
+    const vBrowserLaunches = await getRedisCountDay('vBrowserLaunches');
+    const vBrowserStartMS = await redis.lrange('vBrowserStartMS', 0, -1);
     const screenShareStarts = await getRedisCountDay('screenShareStarts');
     const fileShareStarts = await getRedisCountDay('fileShareStarts');
     const videoChatStarts = await getRedisCountDay('videoChatStarts');
@@ -148,7 +150,7 @@ app.get('/stats', async (req, res) => {
       chatMessages,
       vBrowserStarts,
       vBrowserLaunches,
-      vBrowserLaunchTimes,
+      vBrowserStartMS,
       screenShareStarts,
       fileShareStarts,
       videoChatStarts,
@@ -197,4 +199,12 @@ app.get('/settings', (req, res) => {
     });
   }
   return res.json({});
+});
+
+app.get('/kv', async (req, res) => {
+  if (req.query.key === process.env.KV_KEY) {
+    return res.end(await redis.get(('kv:' + req.query.k) as string));
+  } else {
+    return res.status(403).json({ error: 'Access Denied' });
+  }
 });
