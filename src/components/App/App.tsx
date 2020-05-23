@@ -1,55 +1,12 @@
 import './App.css';
-
-// import { v4 as uuidv4 } from 'uuid';
-import querystring from 'querystring';
-
-//@ts-ignore
-import magnet from 'magnet-uri';
 import React from 'react';
-//@ts-ignore
-import { Slider } from 'react-semantic-ui-range';
-import {
-  Button,
-  Dimmer,
-  Dropdown,
-  DropdownProps,
-  Grid,
-  Header,
-  Icon,
-  Input,
-  Label,
-  List,
-  Loader,
-  Menu,
-  Message,
-  Modal,
-  Popup,
-  Progress,
-} from 'semantic-ui-react';
+import { Button, Grid, Header, Icon, Input, Modal } from 'semantic-ui-react';
 //@ts-ignore
 import io from 'socket.io-client';
-//@ts-ignore
-import VTTConverter from 'srt-webvtt';
-//@ts-ignore
-import { parseStringPromise } from 'xml2js';
-import {
-  debounce,
-  decodeEntities,
-  formatSpeed,
-  formatTimestamp,
-  getMediaPathForList,
-  getMediaType,
-  iceServers,
-  isMobile,
-  serverPath,
-  testAutoplay,
-} from '../../utils';
-import { examples } from '../../utils/examples';
+import { serverPath, testAutoplay } from '../../utils';
 import { generateName } from '../../utils/generateName';
 import { Chat } from '../Chat';
-import { TopBar, JeopardyTopBar } from '../TopBar';
-import { VBrowser } from '../VBrowser';
-import { VideoChat } from '../VideoChat';
+import { JeopardyTopBar } from '../TopBar';
 import { getCurrentSettings } from '../Settings';
 import { Jeopardy } from '../../Jeopardy';
 import firebase from 'firebase/app';

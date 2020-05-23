@@ -1,4 +1,5 @@
 import { Socket } from 'socket.io';
+import { BooleanDict, StringDict, NumberDict, User } from '.';
 const jData = require('../jeopardy.json');
 
 // Do a game count

@@ -3,7 +3,7 @@ import { serverPath, getColorHex } from '../../utils';
 import { Icon, Popup, Button, Dropdown } from 'semantic-ui-react';
 import * as firebase from 'firebase/app';
 import 'firebase/auth';
-import './Jeopardy.css';
+import '../../Jeopardy.css';
 
 export class NewRoomButton extends React.Component<{ size?: string }> {
   createRoom = async () => {

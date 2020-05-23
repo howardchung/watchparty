@@ -1,1 +1,1 @@
-export { TopBar, NewRoomButton } from './TopBar';
+export { TopBar, NewRoomButton, JeopardyTopBar } from './TopBar';
