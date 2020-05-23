@@ -1195,14 +1195,31 @@ export default class App extends React.Component<null, AppState> {
                         }
                       />
                     )}
-                    {
+                    {false && (
                       <SearchComponent
                         setMedia={this.setMedia}
                         type={'youtube'}
                         streamPath={this.state.settings.streamPath}
                         mediaPath={this.state.settings.mediaPath}
                       />
-                    }
+                    )}
+                    {Boolean(this.state.settings.mediaPath) && (
+                      <SearchComponent
+                        setMedia={this.setMedia}
+                        type={'media'}
+                        streamPath={this.state.settings.streamPath}
+                        mediaPath={this.state.settings.mediaPath}
+                      />
+                    )}
+                    {Boolean(this.state.settings.streamPath) && (
+                      <SearchComponent
+                        setMedia={this.setMedia}
+                        type={'stream'}
+                        streamPath={this.state.settings.streamPath}
+                        mediaPath={this.state.settings.mediaPath}
+                        launchMultiSelect={this.launchMultiSelect}
+                      />
+                    )}
                   </div>
                   <div style={{ height: '4px' }} />
                   <div
@@ -1415,7 +1432,7 @@ export default class App extends React.Component<null, AppState> {
 
 interface SearchComponentProps {
   setMedia: Function;
-  type?: 'youtube' | 'mediaServer' | 'searchServer';
+  type?: 'youtube' | 'media' | 'stream';
   launchMultiSelect?: Function;
   mediaPath: string | undefined;
   streamPath: string | undefined;
@@ -1442,15 +1459,9 @@ class SearchComponent extends React.Component<SearchComponentProps> {
           let timestamp = Number(new Date());
           if (this.props.type === 'youtube') {
             results = await getYouTubeResults(query);
-          } else if (
-            this.props.type === 'mediaServer' &&
-            this.props.mediaPath
-          ) {
+          } else if (this.props.type === 'media' && this.props.mediaPath) {
             results = await getMediaPathResults(this.props.mediaPath, query);
-          } else if (
-            this.props.type === 'searchServer' &&
-            this.props.streamPath
-          ) {
+          } else if (this.props.type === 'stream' && this.props.streamPath) {
             results = await getStreamPathResults(this.props.streamPath, query);
           }
           if (timestamp > this.state.lastResultTimestamp) {
@@ -1476,13 +1487,13 @@ class SearchComponent extends React.Component<SearchComponentProps> {
 
   render() {
     const setMedia = this.setMedia;
-    let placeholder = 'Search for streams';
+    let placeholder = 'Search streams';
     let icon = 'film';
     if (this.props.type === 'youtube') {
       placeholder = 'Search YouTube';
       icon = 'youtube';
-    } else if (this.props.type === 'mediaServer') {
-      placeholder = 'Search files';
+    } else if (this.props.type === 'media') {
+      placeholder = this.props.mediaPath || '';
       icon = 'file';
     }
     if (this.state.loading) {
@@ -1500,6 +1511,11 @@ class SearchComponent extends React.Component<SearchComponentProps> {
           search={(() => {}) as any}
           text={placeholder}
           onSearchChange={this.doSearch}
+          onFocus={async (e) => {
+            if (this.props.type === 'media' && this.props.mediaPath) {
+              this.doSearch(e);
+            }
+          }}
           // onBlur={() => this.setState({ results: this.state.watchOptions })}
           //searchQuery={this.state.query}
           //loading={this.state.loading}
@@ -1511,7 +1527,7 @@ class SearchComponent extends React.Component<SearchComponentProps> {
                   return (
                     <YouTubeSearchResult {...result} setMedia={setMedia} />
                   );
-                } else if (this.props.type === 'mediaServer') {
+                } else if (this.props.type === 'media') {
                   return (
                     <MediaPathSearchResult {...result} setMedia={setMedia} />
                   );
@@ -1676,55 +1692,20 @@ class ComboBox extends React.Component<ComboBoxProps> {
           this.setState({ loading: true });
           const query: string = this.state.inputMedia || '';
           let timestamp = Number(new Date());
-          /* 
-          If input is empty or starts with http
-            If we have a mediaPath use that for results
-            Else show the default list of demo videos
-          If input is anything else:
-            If we have a stream server use that for results
-            Else search YouTube
-        */
           let results: JSX.Element[] | undefined = undefined;
           if (query === '' || (query && query.startsWith('http'))) {
-            if (this.props.mediaPath) {
-              const data = await getMediaPathResults(
-                this.props.mediaPath,
-                query
-              );
-              results = data.map((result: SearchResult) => (
-                <MediaPathSearchResult {...result} setMedia={this.setMedia} />
-              ));
-            } else {
-              results = examples.map((option: any) => (
-                <Menu.Item
-                  onClick={(e: any) => this.setMedia(e, { value: option.url })}
-                >
-                  {option.url}
-                </Menu.Item>
-              ));
-            }
+            results = examples.map((option: any) => (
+              <Menu.Item
+                onClick={(e: any) => this.setMedia(e, { value: option.url })}
+              >
+                {option.url}
+              </Menu.Item>
+            ));
           } else {
-            if (query && query.length >= 2) {
-              if (this.props.streamPath) {
-                const data = await getStreamPathResults(
-                  this.props.streamPath,
-                  query
-                );
-                results = data.map((result: SearchResult) => (
-                  <StreamPathSearchResult
-                    {...result}
-                    setMedia={this.setMedia}
-                    launchMultiSelect={this.props.launchMultiSelect}
-                    streamPath={this.props.streamPath || ''}
-                  />
-                ));
-              } else {
-                const data = await getYouTubeResults(query);
-                results = data.map((result) => (
-                  <YouTubeSearchResult {...result} setMedia={this.setMedia} />
-                ));
-              }
-            }
+            const data = await getYouTubeResults(query);
+            results = data.map((result) => (
+              <YouTubeSearchResult {...result} setMedia={this.setMedia} />
+            ));
           }
           if (timestamp > this.state.lastResultTimestamp) {
             this.setState({
@@ -1798,7 +1779,7 @@ class ComboBox extends React.Component<ComboBoxProps> {
             }
             loading={this.state.loading}
             label={'Now Watching:'}
-            placeholder="Enter video file URL, YouTube link, or search term"
+            placeholder="Enter video file URL, YouTube link, or YouTube search term"
             value={
               this.state.inputMedia !== undefined
                 ? this.state.inputMedia
@@ -1853,9 +1834,9 @@ async function getMediaPathResults(
         name: getMediaPathForList(mediaPath) + file.name,
       }));
   }
-  // results = results.filter((option: SearchResult) =>
-  //   option.name.toLowerCase().includes(query.toLowerCase())
-  // );
+  results = results.filter((option: SearchResult) =>
+    option.name.toLowerCase().includes(query.toLowerCase())
+  );
   return results;
 }
 

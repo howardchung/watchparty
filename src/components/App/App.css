@@ -129,6 +129,13 @@ body {
   border: 0px;
 }
 
+.ui.search.dropdown > .text {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  width: 100%;
+  overflow: hidden;
+}
+
 .footerIcon {
   color: white;
   margin-right: 10px;
