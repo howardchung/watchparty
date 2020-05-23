@@ -4,6 +4,7 @@ import util from 'util';
 import express from 'express';
 import Moniker from 'moniker';
 import Youtube from 'youtube-api';
+import os from 'os';
 import cors from 'cors';
 import Redis from 'ioredis';
 import https from 'https';
@@ -119,6 +120,7 @@ app.get('/stats', async (req, res) => {
     });
     // Sort newest first
     roomData.sort((a, b) => b.creationTime - a.creationTime);
+    const cpuUsage = os.loadavg();
     const redisUsage = (await redis.info())
       .split('\n')
       .find((line) => line.startsWith('used_memory:'))
@@ -127,6 +129,7 @@ app.get('/stats', async (req, res) => {
     const availableVBrowsers = await redis.llen('availableList');
     const chatMessages = await getRedisCountDay('chatMessages');
     const vBrowserStarts = await getRedisCountDay('vBrowserStarts');
+    const vBrowserLaunches = await getRedisCountDay('vBrowserLaunches');
     const screenShareStarts = await getRedisCountDay('screenShareStarts');
     const fileShareStarts = await getRedisCountDay('fileShareStarts');
     const videoChatStarts = await getRedisCountDay('videoChatStarts');
@@ -134,10 +137,12 @@ app.get('/stats', async (req, res) => {
 
     res.json({
       roomCount: rooms.size,
+      cpuUsage,
       redisUsage,
       availableVBrowsers,
       chatMessages,
       vBrowserStarts,
+      vBrowserLaunches,
       screenShareStarts,
       fileShareStarts,
       videoChatStarts,

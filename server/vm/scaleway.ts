@@ -1,13 +1,8 @@
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
-import Redis from 'ioredis';
 import { StringDict } from '..';
 import { VMManager, VM } from './base';
 import { Room } from '../room';
-let redis = (undefined as unknown) as Redis.Redis;
-if (process.env.REDIS_URL) {
-  redis = new Redis(process.env.REDIS_URL);
-}
 
 const VBROWSER_TAG = process.env.VBROWSER_TAG || 'vbrowser';
 const SCW_SECRET_KEY = process.env.SCW_SECRET_KEY;
@@ -31,9 +26,7 @@ const mapServerObject = (server: any): VM => ({
 });
 
 export class Scaleway extends VMManager {
-  launchVM = async () => {
-    // generate credentials and boot a VM
-    const password = uuidv4();
+  startVM = async (name: string) => {
     const response = await axios({
       method: 'POST',
       url: `https://api.scaleway.com/instance/v1/zones/${region}/servers`,
@@ -42,7 +35,7 @@ export class Scaleway extends VMManager {
         'Content-Type': 'application/json',
       },
       data: {
-        name: password,
+        name: name,
         dynamic_ip_required: true,
         commercial_type: 'DEV1-M', // maybe DEV1-M for subscribers
         image: imageId,
@@ -83,9 +76,7 @@ docker run -d --rm --name=vbrowser -v /usr/share/fonts:/usr/share/fonts --log-op
       },
     });
     // console.log(response3.data);
-    let result = await this.getVM(id);
-    await redis.rpush('availableList', id);
-    return result;
+    return id;
   };
 
   terminateVM = async (id: string) => {
@@ -102,10 +93,8 @@ docker run -d --rm --name=vbrowser -v /usr/share/fonts:/usr/share/fonts --log-op
     });
   };
 
-  resetVM = async (id: string) => {
-    // We can attempt to reuse the instance which is more efficient if users tend to use them for a short time
-    // Otherwise terminating them is simpler but more expensive
-    // terminateVM(id);
+  rebootVM = async (id: string) => {
+    // Generate a new password
     const password = uuidv4();
     // Update the VM's name (also the HOST env var that will be used as password)
     const response = await axios({
@@ -132,10 +121,7 @@ docker run -d --rm --name=vbrowser -v /usr/share/fonts:/usr/share/fonts --log-op
         action: 'reboot',
       },
     });
-    // Add the VM back to the pool
-    let result = await this.getVM(id);
-    await redis.del('vbrowser:' + id);
-    await redis.rpush('availableList', id);
+    return;
   };
 
   getVM = async (id: string) => {
