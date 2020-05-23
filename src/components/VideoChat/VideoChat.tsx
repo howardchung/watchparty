@@ -1,12 +1,13 @@
 import React from 'react';
 import { Button, Icon } from 'semantic-ui-react';
-import {
-  getDefaultPicture,
-  getColorHex,
-  formatTimestamp,
-  iceServers,
-} from './utils';
 import { Socket } from 'socket.io';
+
+import {
+  formatTimestamp,
+  getColorHex,
+  getDefaultPicture,
+  iceServers,
+} from '../../utils';
 
 interface VideoChatProps {
   socket: Socket;
@@ -167,6 +168,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
           width: '100%',
           paddingLeft: '1em',
           overflowX: 'scroll',
+          flexShrink: 0,
         }}
       >
         <div
@@ -276,7 +278,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
                         bottom: '4px',
                         left: '0px',
                         width: '100%',
-                        backgroundColor: '#' + getColorHex(p.id),
+                        backgroundColor: 'rgba(0,0,0,0)',
                         color: 'white',
                         borderRadius: '4px',
                         fontSize: '10px',

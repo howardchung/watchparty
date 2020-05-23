@@ -1,7 +1,8 @@
 import React from 'react';
-import { Button, Input, Icon, Comment, Segment } from 'semantic-ui-react';
-import { formatTimestamp, getDefaultPicture, getColorHex } from './utils';
+import { Button, Comment, Icon, Input, Segment } from 'semantic-ui-react';
 import { Socket } from 'socket.io';
+
+import { formatTimestamp, getColorHex, getDefaultPicture } from '../../utils';
 
 interface ChatProps {
   chat: ChatMessage[];

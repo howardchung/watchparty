@@ -1,26 +1,36 @@
-import { assignVM, resetVM } from './vm';
 import { Jeopardy } from './jeopardy';
 import { Socket } from 'socket.io';
+import { User, ChatMessage, NumberDict, StringDict } from '.';
+import { redisCount } from './utils/redis';
+import { VMManager } from './vm/base';
 
-module.exports = class Room {
-  private video = '';
-  private videoTS = 0;
+export class Room {
+  public video = '';
+  public videoTS = 0;
   private paused = false;
-  private roster: User[] = [];
+  public roster: User[] = [];
   private chat: ChatMessage[] = [];
   private tsMap: NumberDict = {};
   private nameMap: StringDict = {};
   private pictureMap: StringDict = {};
-  private vBrowser:
+  public vBrowser:
     | { assignTime?: number; pass?: string; host?: string; id?: string }
     | undefined = undefined;
   private jpd: Jeopardy | null = null;
   private io: SocketIO.Server;
   public roomId: string;
+  public creationTime: Date = new Date();
+  private vmManager: VMManager;
 
-  constructor(io: SocketIO.Server, roomId: string, roomData: string) {
+  constructor(
+    io: SocketIO.Server,
+    vmManager: VMManager,
+    roomId: string,
+    roomData?: string | null | undefined
+  ) {
     this.roomId = roomId;
     this.io = io;
+    this.vmManager = vmManager;
 
     if (roomData) {
       this.deserialize(roomData);
@@ -38,6 +48,7 @@ module.exports = class Room {
     io.of(roomId).on('connection', (socket: Socket) => {
       // console.log(socket.id);
       this.roster.push({ id: socket.id });
+      redisCount('connectStarts');
 
       socket.emit('REC:host', this.getHostState());
       socket.emit('REC:nameMap', this.nameMap);
@@ -111,6 +122,12 @@ module.exports = class Room {
           // TODO add some validation on client side too so we don't just drop long messages
           return;
         }
+        if (process.env.NODE_ENV === 'development' && data === '/clear') {
+          this.chat.length = 0;
+          io.of(roomId).emit('chatinit', this.chat);
+          return;
+        }
+        redisCount('chatMessages');
         const chatMsg = { id: socket.id, msg: data };
         this.addChatMessage(socket, chatMsg);
       });
@@ -118,6 +135,7 @@ module.exports = class Room {
         const match = this.roster.find((user) => user.id === socket.id);
         if (match) {
           match.isVideoChat = true;
+          redisCount('videoChatStarts');
         }
         io.of(roomId).emit('roster', this.roster);
       });
@@ -135,8 +153,10 @@ module.exports = class Room {
         }
         if (data && data.file) {
           this.cmdHost(socket, 'fileshare://' + socket.id);
+          redisCount('fileShareStarts');
         } else {
           this.cmdHost(socket, 'screenshare://' + socket.id);
+          redisCount('screenShareStarts');
         }
         const match = this.roster.find((user) => user.id === socket.id);
         if (match) {
@@ -158,9 +178,10 @@ module.exports = class Room {
           // Maybe terminate the existing instance and spawn a new one
           return;
         }
+        redisCount('vBrowserStarts');
         this.cmdHost(socket, 'vbrowser://');
         this.vBrowser = {};
-        const assignment = await assignVM();
+        const assignment = await this.vmManager.assignVM();
         if (!assignment) {
           this.cmdHost(socket, '');
           this.vBrowser = undefined;
@@ -237,6 +258,7 @@ module.exports = class Room {
       pictureMap: this.pictureMap,
       chat: this.chat,
       vBrowser: this.vBrowser,
+      creationTime: this.creationTime,
       jpd: this.jpd,
     });
   }
@@ -245,7 +267,9 @@ module.exports = class Room {
     const roomObj = JSON.parse(roomData);
     this.video = roomObj.video;
     this.videoTS = roomObj.videoTS;
-    this.paused = roomObj.paused;
+    if (roomObj.paused) {
+      this.paused = roomObj.paused;
+    }
     if (roomObj.chat) {
       this.chat = roomObj.chat;
     }
@@ -257,6 +281,9 @@ module.exports = class Room {
     }
     if (roomObj.vBrowser) {
       this.vBrowser = roomObj.vBrowser;
+    }
+    if (roomObj.creationTime) {
+      this.creationTime = new Date(roomObj.creationTime);
     }
     if (roomObj.jpd) {
       this.jpd = new Jeopardy(this.io, this.roomId, this.roster, roomObj.jpd);
@@ -280,7 +307,7 @@ module.exports = class Room {
     this.cmdHost(undefined, '');
     if (id) {
       try {
-        await resetVM(id);
+        await this.vmManager.resetVM(id);
       } catch (e) {
         console.error(e);
       }
@@ -310,4 +337,4 @@ module.exports = class Room {
     this.chat = this.chat.splice(-100);
     this.io.of(this.roomId).emit('REC:chat', chatWithTime);
   }
-};
+}

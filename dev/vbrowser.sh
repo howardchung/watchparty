@@ -1,5 +1,8 @@
 #!/bin/bash
 
+apt-get update
+apt-get install -y curl
+
 # install docker
 curl -fsSL https://get.docker.com | sh
 # pull vbrowser image
@@ -10,5 +13,3 @@ apt-get install -y fonts-noto-cjk
 apt-get install -y dnsutils
 # disable unattended-upgrades
 apt-get remove -y unattended-upgrades
-# install certbot
-DEBIAN_FRONTEND=noninteractive apt-get install -y certbot

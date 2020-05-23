@@ -78,14 +78,16 @@ body {
   position: relative;
   display: flex;
   align-items: center;
+  justify-content: center;
+  min-height: 62vh;
 }
 
 .fullScreenContainer:fullscreen > #playerContainer {
-  width: 75vw;
+  width: 80vw;
 }
 
 .fullScreenChat.fullScreenChat.fullScreenChat {
-  width: 25vw;
+  width: 20vw;
 }
 
 #leftVideo::-webkit-media-controls {
@@ -125,6 +127,13 @@ body {
 .ui.selection.dropdown.ui.selection.dropdown {
   min-height: 1em;
   border: 0px;
+}
+
+.ui.search.dropdown > .text {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  width: 100%;
+  overflow: hidden;
 }
 
 .footerIcon {

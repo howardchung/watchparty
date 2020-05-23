@@ -1,11 +1,13 @@
+import './index.css';
+
 import React from 'react';
 import ReactDOM from 'react-dom';
-import './index.css';
-import App from './App';
-import { Home } from './Home';
+
+import App from './components/App';
+import { Home } from './components/Home';
 import * as serviceWorker from './serviceWorker';
 
-const isHome = false && !Boolean(window.location.hash.substring(1));
+const isHome = !Boolean(window.location.hash.substring(1));
 ReactDOM.render(
   <React.StrictMode>{isHome ? <Home /> : <App />}</React.StrictMode>,
   document.getElementById('root')

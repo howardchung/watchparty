@@ -1,14 +1,17 @@
 import React from 'react';
-import { NekoClient } from '.';
+
 import { EVENT } from './events';
+import { NekoClient } from '.';
+
 // import { EVENT } from './events';
 
-export default class Video extends React.Component<{
+export default class VBrowser extends React.Component<{
   username: string;
   password: string;
   hostname: string;
   controlling: boolean;
   setLoadingFalse: Function;
+  resolution: string;
 }> {
   //@ts-ignore
   // private observer = new ResizeObserver(this.onResize);
@@ -31,10 +34,13 @@ export default class Video extends React.Component<{
 
   componentDidMount() {
     this.controlling = this.props.controlling;
-    if (this.props.controlling) {
-      this.takeControl();
-    }
 
+    this.$client.on(EVENT.CONNECTED, () => {
+      if (this.props.controlling) {
+        this.takeControl();
+      }
+      this.setResolution(this.props.resolution);
+    });
     this.$client.on(EVENT.DISCONNECTED, () => {
       this.$client.login(url, this.props.password, this.props.username);
     });
@@ -77,11 +83,14 @@ export default class Video extends React.Component<{
     this.controlling = this.props.controlling;
     if (this.props.controlling && !prevProps.controlling) {
       this.takeControl();
-      // Sthis.$client.sendMessage(EVENT.SCREEN.SET, { width: 1920, height: 1080, rate: 30 });
+    }
+    if (this.props.resolution !== prevProps.resolution) {
+      this.setResolution(this.props.resolution);
     }
   }
 
   componentWillUnmount() {
+    this.$client.removeAllListeners();
     this.$client.logout();
   }
 
@@ -93,6 +102,14 @@ export default class Video extends React.Component<{
         this.$client.sendMessage(EVENT.ADMIN.CONTROL);
       });
     }
+  };
+
+  setResolution = (resString: string) => {
+    const split = resString.split(/x|@/);
+    const width = Number(split[0]);
+    const height = Number(split[1]);
+    const rate = Number(split[2]);
+    this.$client.sendMessage(EVENT.SCREEN.SET, { width, height, rate });
   };
 
   // onClipboardChanged(clipboard: string) {

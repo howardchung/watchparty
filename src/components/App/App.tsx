@@ -1,14 +1,64 @@
+import './App.css';
+
+// import { v4 as uuidv4 } from 'uuid';
+import querystring from 'querystring';
+
+//@ts-ignore
+import magnet from 'magnet-uri';
 import React from 'react';
-import { Button, Grid, Header, Input, Icon, Modal } from 'semantic-ui-react';
-import { generateName } from './generateName';
+//@ts-ignore
+import { Slider } from 'react-semantic-ui-range';
+import {
+  Button,
+  Dimmer,
+  Dropdown,
+  DropdownProps,
+  Grid,
+  Header,
+  Icon,
+  Input,
+  Label,
+  List,
+  Loader,
+  Menu,
+  Message,
+  Modal,
+  Popup,
+  Progress,
+} from 'semantic-ui-react';
 //@ts-ignore
 import io from 'socket.io-client';
-import './App.css';
-import { testAutoplay, serverPath } from './utils';
-import { getCurrentSettings } from './Settings';
-import { Chat } from './Chat';
-import { JeopardyTopBar } from './TopBar';
-import { Jeopardy } from './Jeopardy';
+//@ts-ignore
+import VTTConverter from 'srt-webvtt';
+//@ts-ignore
+import { parseStringPromise } from 'xml2js';
+import {
+  debounce,
+  decodeEntities,
+  formatSpeed,
+  formatTimestamp,
+  getMediaPathForList,
+  getMediaType,
+  iceServers,
+  isMobile,
+  serverPath,
+  testAutoplay,
+} from '../../utils';
+import { examples } from '../../utils/examples';
+import { generateName } from '../../utils/generateName';
+import { Chat } from '../Chat';
+import { TopBar, JeopardyTopBar } from '../TopBar';
+import { VBrowser } from '../VBrowser';
+import { VideoChat } from '../VideoChat';
+import { getCurrentSettings } from '../Settings';
+import { Jeopardy } from '../../Jeopardy';
+import firebase from 'firebase/app';
+import 'firebase/auth';
+
+const firebaseConfig = process.env.REACT_APP_FIREBASE_CONFIG;
+if (firebaseConfig) {
+  firebase.initializeApp(JSON.parse(firebaseConfig));
+}
 
 declare global {
   interface Window {
@@ -31,11 +81,10 @@ interface AppState {
   myPicture: string;
   scrollTimestamp: number;
   fullScreen: boolean;
-  fbUserID?: string;
-  isFBReady: boolean;
   isAutoPlayable: boolean;
   error: string;
   settings: Settings;
+  vBrowserResolution: string;
 }
 
 export default class App extends React.Component<null, AppState> {
@@ -51,11 +100,10 @@ export default class App extends React.Component<null, AppState> {
     myPicture: '',
     scrollTimestamp: 0,
     fullScreen: false,
-    fbUserID: undefined,
-    isFBReady: false,
     isAutoPlayable: true,
     error: '',
     settings: {},
+    vBrowserResolution: '1280x720@30',
   };
   socket: any = null;
 
@@ -73,7 +121,6 @@ export default class App extends React.Component<null, AppState> {
     }, 10 * 60 * 1000);
 
     this.loadSettings();
-    this.loadFBData();
     this.init();
   }
 
@@ -83,38 +130,6 @@ export default class App extends React.Component<null, AppState> {
     const customSettings = await customSettingsData.json();
     let settings = { ...getCurrentSettings(), ...customSettings };
     this.setState({ settings });
-  };
-
-  loadFBData = () => {
-    if (!window.FB || !this.socket) {
-      setTimeout(this.loadFBData, 1000);
-      return;
-    }
-    window.FB.getLoginStatus((response: any) => {
-      this.setState({ isFBReady: true });
-      const fbUserID =
-        response.status === 'connected' && response.authResponse.userID;
-      if (fbUserID) {
-        window.FB.api(
-          '/me',
-          {
-            fields: 'id,first_name,name,email,picture.width(256).height(256)',
-          },
-          (response: any) => {
-            // console.log(response);
-            const picture =
-              response &&
-              response.picture &&
-              response.picture.data &&
-              response.picture.data.url;
-            const name = response && response.first_name;
-            this.setState({ fbUserID });
-            this.updateName(null, { value: name });
-            this.updatePicture(picture);
-          }
-        );
-      }
-    });
   };
 
   init = () => {
@@ -135,7 +150,6 @@ export default class App extends React.Component<null, AppState> {
       // Load username from localstorage
       let userName = window.localStorage.getItem('watchparty-username');
       this.updateName(null, { value: userName || generateName() });
-      this.loadFBData();
     });
     socket.on('error', (err: any) => {
       console.error(err);
