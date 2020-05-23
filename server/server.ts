@@ -39,8 +39,8 @@ const names = Moniker.generator([
 
 const rooms = new Map<string, Room>();
 // Start the VM manager
-const vmManager = new Hetzner(rooms);
-// const vmManager2 = new Scaleway(rooms);
+// const vmManager = new Hetzner(rooms);
+const vmManager = new Scaleway(rooms);
 init();
 
 async function saveRoomsToRedis() {
