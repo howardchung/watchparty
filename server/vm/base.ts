@@ -2,6 +2,7 @@ import { Room } from '../room';
 import Redis from 'ioredis';
 import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
+import { redisCount } from '../utils/redis';
 
 let redis = (undefined as unknown) as Redis.Redis;
 if (process.env.REDIS_URL) {
@@ -51,6 +52,7 @@ export abstract class VMManager {
   }
 
   public assignVM = async () => {
+    const assignStart = Number(new Date());
     let selected = null;
     while (!selected) {
       const currSize = await redis.llen('availableList');
@@ -73,6 +75,10 @@ export abstract class VMManager {
         selected = candidate;
       }
     }
+    const assignEnd = Number(new Date());
+    const assignElapsed = assignEnd - assignStart;
+    await redis.lpush('vBrowserLaunchTimes', assignElapsed);
+    await redis.ltrim('vBrowserLaunchTimes', 0, 24);
     return selected;
   };
 
@@ -182,6 +188,7 @@ export abstract class VMManager {
     const id = await this.startVM(password);
     let result = await this.getVM(id);
     await redis.rpush('availableList', id);
+    redisCount('vBrowserLaunches');
     return result;
   };
 
