@@ -1,7 +1,7 @@
-import { assignVM, resetVM } from './vm';
 import { Socket } from 'socket.io';
 import { User, ChatMessage, NumberDict, StringDict } from '.';
 import { redisCount } from './utils/redis';
+import { VMManager } from './vm/base';
 
 export class Room {
   public video = '';
@@ -18,14 +18,17 @@ export class Room {
   private io: SocketIO.Server;
   public roomId: string;
   public creationTime: Date = new Date();
+  private vmManager: VMManager;
 
   constructor(
     io: SocketIO.Server,
+    vmManager: VMManager,
     roomId: string,
     roomData?: string | null | undefined
   ) {
     this.roomId = roomId;
     this.io = io;
+    this.vmManager = vmManager;
 
     if (roomData) {
       this.deserialize(roomData);
@@ -172,7 +175,7 @@ export class Room {
         redisCount('vBrowserStarts');
         this.cmdHost(socket, 'vbrowser://');
         this.vBrowser = {};
-        const assignment = await assignVM();
+        const assignment = await this.vmManager.assignVM();
         if (!assignment) {
           this.cmdHost(socket, '');
           this.vBrowser = undefined;
@@ -294,7 +297,7 @@ export class Room {
     this.cmdHost(undefined, '');
     if (id) {
       try {
-        await resetVM(id);
+        await this.vmManager.resetVM(id);
       } catch (e) {
         console.error(e);
       }
