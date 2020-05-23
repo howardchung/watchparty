@@ -1,6 +1,7 @@
 import { Room } from '../room';
 import Redis from 'ioredis';
 import axios from 'axios';
+import { v4 as uuidv4 } from 'uuid';
 
 let redis = (undefined as unknown) as Redis.Redis;
 if (process.env.REDIS_URL) {
@@ -49,7 +50,7 @@ export abstract class VMManager {
     setInterval(release, 5 * 60 * 1000);
   }
 
-  assignVM = async () => {
+  public assignVM = async () => {
     let selected = null;
     while (!selected) {
       const currSize = await redis.llen('availableList');
@@ -75,7 +76,19 @@ export abstract class VMManager {
     return selected;
   };
 
-  resizeVMGroupIncr = async () => {
+  public resetVM = async (id: string) => {
+    // We can attempt to reuse the instance which is more efficient if users tend to use them for a short time
+    // Otherwise terminating them is simpler but more expensive
+    // TODO if VM is older than 45 minutes, terminate it, otherwise reboot to try to recycle
+    // await terminateVM(id);
+    await this.rebootVM(id);
+    // Delete any locks
+    await redis.del('vbrowser:' + id);
+    // Add the VM back to the pool
+    await redis.rpush('availableList', id);
+  };
+
+  protected resizeVMGroupIncr = async () => {
     const maxAvailable = Number(process.env.VBROWSER_VM_BUFFER) || 0;
     const availableCount = await redis.llen('availableList');
     if (availableCount < maxAvailable) {
@@ -90,7 +103,7 @@ export abstract class VMManager {
     }
   };
 
-  resizeVMGroupDecr = async () => {
+  protected resizeVMGroupDecr = async () => {
     while (true) {
       const maxAvailable = Number(process.env.VBROWSER_VM_BUFFER) || 0;
       const availableCount = await redis.llen('availableList');
@@ -111,7 +124,7 @@ export abstract class VMManager {
     }
   };
 
-  cleanupVMGroup = async () => {
+  protected cleanupVMGroup = async () => {
     // Clean up hanging VMs
     // It's possible we created a VM but lost track of it in redis
     // Take the list of VMs from API, subtract VMs that have a lock in redis or are in the available pool, delete the rest
@@ -130,7 +143,7 @@ export abstract class VMManager {
     }
   };
 
-  checkVMReady = async (host: string) => {
+  protected checkVMReady = async (host: string) => {
     let state = '';
     let retryCount = 0;
     while (!state) {
@@ -162,11 +175,21 @@ export abstract class VMManager {
     }
     return true;
   };
-  abstract launchVM: () => Promise<VM>;
-  abstract resetVM: (id: string) => Promise<void>;
-  abstract terminateVM: (id: string) => Promise<void>;
-  abstract getVM: (id: string) => Promise<VM>;
-  abstract listVMs: (filter?: string) => Promise<VM[]>;
+
+  protected launchVM = async () => {
+    // generate credentials and boot a VM
+    const password = uuidv4();
+    const id = await this.startVM(password);
+    let result = await this.getVM(id);
+    await redis.rpush('availableList', id);
+    return result;
+  };
+
+  protected abstract startVM: (name: string) => Promise<string>;
+  protected abstract rebootVM: (id: string) => Promise<void>;
+  protected abstract terminateVM: (id: string) => Promise<void>;
+  protected abstract getVM: (id: string) => Promise<VM>;
+  protected abstract listVMs: (filter?: string) => Promise<VM[]>;
 }
 
 export interface VM {
