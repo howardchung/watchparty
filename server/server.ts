@@ -48,9 +48,11 @@ async function saveRoomsToRedis() {
     // console.time('roomSave');
     const roomArr = Array.from(rooms.values());
     for (let i = 0; i < roomArr.length; i++) {
-      const roomData = roomArr[i].serialize();
-      const key = roomArr[i].roomId;
-      await redis.setex(key, 24 * 60 * 60, roomData);
+      if (roomArr[i].roster.length) {
+        const roomData = roomArr[i].serialize();
+        const key = roomArr[i].roomId;
+        await redis.setex(key, 24 * 60 * 60, roomData);
+      }
     }
     // console.timeEnd('roomSave');
   }
