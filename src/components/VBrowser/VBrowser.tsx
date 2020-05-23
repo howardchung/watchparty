@@ -11,6 +11,7 @@ export default class VBrowser extends React.Component<{
   hostname: string;
   controlling: boolean;
   setLoadingFalse: Function;
+  resolution: string;
 }> {
   //@ts-ignore
   // private observer = new ResizeObserver(this.onResize);
@@ -38,6 +39,7 @@ export default class VBrowser extends React.Component<{
       if (this.props.controlling) {
         this.takeControl();
       }
+      this.setResolution(this.props.resolution);
     });
     this.$client.on(EVENT.DISCONNECTED, () => {
       this.$client.login(url, this.props.password, this.props.username);
@@ -81,7 +83,9 @@ export default class VBrowser extends React.Component<{
     this.controlling = this.props.controlling;
     if (this.props.controlling && !prevProps.controlling) {
       this.takeControl();
-      // Sthis.$client.sendMessage(EVENT.SCREEN.SET, { width: 1920, height: 1080, rate: 30 });
+    }
+    if (this.props.resolution !== prevProps.resolution) {
+      this.setResolution(this.props.resolution);
     }
   }
 
@@ -98,6 +102,14 @@ export default class VBrowser extends React.Component<{
         this.$client.sendMessage(EVENT.ADMIN.CONTROL);
       });
     }
+  };
+
+  setResolution = (resString: string) => {
+    const split = resString.split(/x|@/);
+    const width = Number(split[0]);
+    const height = Number(split[1]);
+    const rate = Number(split[2]);
+    this.$client.sendMessage(EVENT.SCREEN.SET, { width, height, rate });
   };
 
   // onClipboardChanged(clipboard: string) {
