@@ -16,7 +16,7 @@ const gatewayHost = 'gateway3.watchparty.me';
 const imageId = '16820085';
 
 const mapServerObject = (server: any): VM => ({
-  id: server.id.toString(),
+  id: server.id?.toString(),
   pass: server.name,
   // The gateway handles SSL termination and proxies to the private IP
   host: `${gatewayHost}/?ip=${server.private_net[0]?.ip}`,
@@ -30,35 +30,31 @@ const mapServerObject = (server: any): VM => ({
 export class Hetzner extends VMManager {
   redisQueueKey = 'availableListHetzner';
   startVM = async (name: string) => {
-    try {
-      const response = await axios({
-        method: 'POST',
-        url: `https://api.hetzner.cloud/v1/servers`,
-        headers: {
-          Authorization: 'Bearer ' + HETZNER_TOKEN,
-          'Content-Type': 'application/json',
+    const response = await axios({
+      method: 'POST',
+      url: `https://api.hetzner.cloud/v1/servers`,
+      headers: {
+        Authorization: 'Bearer ' + HETZNER_TOKEN,
+        'Content-Type': 'application/json',
+      },
+      data: {
+        name: name,
+        server_type: 'cpx11', // cx11, cpx11, cpx21
+        start_after_create: true,
+        image: imageId,
+        ssh_keys: [1570536],
+        networks: [91163],
+        user_data: cloudInit(imageName, true),
+        labels: {
+          [VBROWSER_TAG]: '1',
+          originalName: name,
         },
-        data: {
-          name: name,
-          server_type: 'cpx11', // cx11, cpx11, cpx21
-          start_after_create: true,
-          image: imageId,
-          ssh_keys: [1570536],
-          networks: [91163],
-          user_data: cloudInit(imageName, true),
-          labels: {
-            [VBROWSER_TAG]: '1',
-            originalName: name,
-          },
-          location: region,
-        },
-      });
-      await redis.setex(`kv:${name}`, 24 * 3600, name);
-      const id = response.data.server.id;
-      return id;
-    } catch (e) {
-      console.log(e);
-    }
+        location: region,
+      },
+    });
+    await redis.setex(`kv:${name}`, 24 * 3600, name);
+    const id = response.data.server.id;
+    return id;
   };
 
   terminateVM = async (id: string) => {
