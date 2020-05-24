@@ -79,10 +79,12 @@ export abstract class VMManager {
     const assignElapsed = assignEnd - assignStart;
     await redis.lpush('vBrowserStartMS', assignElapsed);
     await redis.ltrim('vBrowserStartMS', 0, 24);
+    console.log('[ASSIGN]', selected.id, assignElapsed + 'ms');
     return selected;
   };
 
   public resetVM = async (id: string) => {
+    console.log('[RESET]', id);
     // We can attempt to reuse the instance which is more efficient if users tend to use them for a short time
     // Otherwise terminating them is simpler but more expensive
     // TODO if VM is older than 45 minutes, terminate it, otherwise reboot to try to recycle
@@ -171,6 +173,7 @@ export abstract class VMManager {
           e.response && e.response.data === '404 page not found\n'
             ? 'ready'
             : '';
+        break;
       }
       console.log(retryCount, url, state);
       retryCount += 1;
