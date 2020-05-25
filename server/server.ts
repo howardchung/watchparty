@@ -40,9 +40,9 @@ const names = Moniker.generator([
 
 const rooms = new Map<string, Room>();
 // Start the VM manager
-const vmManager = new Scaleway(rooms, 0);
+const vmManager3 = new Scaleway(rooms, 0);
 const vmManager2 = new Hetzner(rooms, 0);
-const vmManager3 = new DigitalOcean(rooms);
+const vmManager = new DigitalOcean(rooms);
 init();
 
 async function saveRoomsToRedis() {
