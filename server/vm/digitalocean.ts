@@ -11,22 +11,6 @@ const gatewayHost = 'gateway4.watchparty.me';
 const imageId = 64175544;
 const sshKeys = ['cc:3d:a7:d3:99:17:fe:b7:dd:59:c4:78:14:d4:02:d1'];
 
-const mapServerObject = (server: any): VM => {
-  const ip = server.networks.v4.find(
-    (network: any) => network.type === 'private'
-  )?.ip_address;
-  return {
-    id: server.id?.toString(),
-    pass: server.name,
-    // The gateway handles SSL termination and proxies to the private IP
-    host: `${gatewayHost}/?ip=${ip}`,
-    private_ip: ip,
-    state: server.status,
-    tags: server.tags,
-    creation_date: server.created_at,
-  };
-};
-
 export class DigitalOcean extends VMManager {
   redisQueueKey = 'availableListDO';
   startVM = async (name: string) => {
@@ -119,7 +103,7 @@ export class DigitalOcean extends VMManager {
           'Content-Type': 'application/json',
         },
       });
-      let server = mapServerObject(response.data.droplet);
+      let server = this.mapServerObject(response.data.droplet);
       if (server.private_ip) {
         result = server;
       } else {
@@ -145,9 +129,26 @@ export class DigitalOcean extends VMManager {
       },
     });
     return response.data.droplets
-      .map(mapServerObject)
+      .map(this.mapServerObject)
       .filter(
         (server: any) => server.tags.includes(VBROWSER_TAG) && server.private_ip
       );
+  };
+
+  mapServerObject = (server: any): VM => {
+    const ip = server.networks.v4.find(
+      (network: any) => network.type === 'private'
+    )?.ip_address;
+    return {
+      id: server.id?.toString(),
+      pass: server.name,
+      // The gateway handles SSL termination and proxies to the private IP
+      host: `${gatewayHost}/?ip=${ip}`,
+      private_ip: ip,
+      state: server.status,
+      tags: server.tags,
+      creation_date: server.created_at,
+      provider: this.redisQueueKey,
+    };
   };
 }

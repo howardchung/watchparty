@@ -18,18 +18,6 @@ const sshKeys = [1570536];
 const networks = [91163];
 const imageId = '16820085';
 
-const mapServerObject = (server: any): VM => ({
-  id: server.id?.toString(),
-  pass: server.name,
-  // The gateway handles SSL termination and proxies to the private IP
-  host: `${gatewayHost}/?ip=${server.private_net[0]?.ip}`,
-  private_ip: server.private_net[0]?.ip,
-  state: server.status,
-  tags: Object.keys(server.labels),
-  creation_date: server.created,
-  originalName: server.labels.originalName,
-});
-
 export class Hetzner extends VMManager {
   redisQueueKey = 'availableListHetzner';
   startVM = async (name: string) => {
@@ -47,7 +35,7 @@ export class Hetzner extends VMManager {
         image: imageId,
         ssh_keys: sshKeys,
         networks,
-        user_data: cloudInit(imageName, true),
+        user_data: cloudInit(imageName),
         labels: {
           [VBROWSER_TAG]: '1',
           originalName: name,
@@ -73,16 +61,10 @@ export class Hetzner extends VMManager {
   };
 
   rebootVM = async (id: string) => {
-    // Hetzner does not update the hostname on instance name update
-    // Workaround is to stick the password in Redis and serve it to the instance
-    // Instance will use this instead of hostname as the password
+    // Hetzner does not update the hostname automatically on instance name update + reboot
+    // It requires a rebuild command
     // Generate a new password
     const password = uuidv4();
-    // Get the original hostname and update Redis
-    const old = await this.getVM(id);
-    await axios.post(
-      `${process.env.SERVER_DOMAIN}/kv?k=${old.originalName}&v=${password}&key=${process.env.KV_KEY}`
-    );
 
     // Update the VM's name
     const response = await axios({
@@ -97,12 +79,15 @@ export class Hetzner extends VMManager {
       },
     });
 
-    // Reboot the VM (also destroys the Docker container since it has --rm flag)
+    // Rebuild the VM
     const response2 = await axios({
       method: 'POST',
-      url: `https://api.hetzner.cloud/v1/servers/${id}/actions/reboot`,
+      url: `https://api.hetzner.cloud/v1/servers/${id}/actions/rebuild`,
       headers: {
         Authorization: 'Bearer ' + HETZNER_TOKEN,
+      },
+      data: {
+        image: imageId,
       },
     });
     return;
@@ -118,7 +103,7 @@ export class Hetzner extends VMManager {
           Authorization: 'Bearer ' + HETZNER_TOKEN,
         },
       });
-      let server = mapServerObject(response.data.server);
+      let server = this.mapServerObject(response.data.server);
       if (server.private_ip) {
         result = server;
       } else {
@@ -142,9 +127,22 @@ export class Hetzner extends VMManager {
       },
     });
     return response.data.servers
-      .map(mapServerObject)
+      .map(this.mapServerObject)
       .filter(
         (server: any) => server.tags.includes(VBROWSER_TAG) && server.private_ip
       );
   };
+
+  mapServerObject = (server: any): VM => ({
+    id: server.id?.toString(),
+    pass: server.name,
+    // The gateway handles SSL termination and proxies to the private IP
+    host: `${gatewayHost}/?ip=${server.private_net[0]?.ip}`,
+    private_ip: server.private_net[0]?.ip,
+    state: server.status,
+    tags: Object.keys(server.labels),
+    creation_date: server.created,
+    originalName: server.labels.originalName,
+    provider: this.redisQueueKey,
+  });
 }

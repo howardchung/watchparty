@@ -16,17 +16,6 @@ const imageId = '09f99a78-f093-4438-99c0-8a0705bf245b';
 // const gatewayHost = 'gateway.watchparty.me';
 // const imageId = '8e96c468-2769-4314-bb39-f3c941f63d48';
 
-const mapServerObject = (server: any): VM => ({
-  id: server.id,
-  pass: server.name,
-  // The gateway handles SSL termination and proxies to the private IP
-  host: `${gatewayHost}/?ip=${server.private_ip}`,
-  private_ip: server.private_ip,
-  state: server.state,
-  tags: server.tags,
-  creation_date: server.creation_date,
-});
-
 export class Scaleway extends VMManager {
   redisQueueKey = 'availableListScaleway';
   startVM = async (name: string) => {
@@ -132,7 +121,7 @@ export class Scaleway extends VMManager {
           'Content-Type': 'application/json',
         },
       });
-      let server = mapServerObject(response.data.server);
+      let server = this.mapServerObject(response.data.server);
       if (server.private_ip) {
         result = server;
       } else {
@@ -163,9 +152,20 @@ export class Scaleway extends VMManager {
       },
     });
     return response.data.servers
-      .map(mapServerObject)
+      .map(this.mapServerObject)
       .filter(
         (server: any) => server.tags.includes(VBROWSER_TAG) && server.private_ip
       );
   };
+  mapServerObject = (server: any): VM => ({
+    id: server.id,
+    pass: server.name,
+    // The gateway handles SSL termination and proxies to the private IP
+    host: `${gatewayHost}/?ip=${server.private_ip}`,
+    private_ip: server.private_ip,
+    state: server.state,
+    tags: server.tags,
+    creation_date: server.creation_date,
+    provider: this.redisQueueKey,
+  });
 }

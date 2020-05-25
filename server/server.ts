@@ -40,9 +40,9 @@ const names = Moniker.generator([
 
 const rooms = new Map<string, Room>();
 // Start the VM manager
-// const vmManager = new Hetzner(rooms);
-// const vmManager = new DigitalOcean(rooms);
 const vmManager = new Scaleway(rooms);
+const vmManager2 = new Hetzner(rooms, 0);
+const vmManager3 = new DigitalOcean(rooms, 0);
 init();
 
 async function saveRoomsToRedis() {
@@ -108,14 +108,13 @@ app.get('/stats', async (req, res) => {
         videoTS: room.videoTS,
         rosterLength: room.roster.length,
         videoChats: room.roster.filter((p) => p.isVideoChat).length,
-        vBrowserTime: room.vBrowser?.assignTime,
-        vBrowserElapsed: room.vBrowser?.assignTime
-          ? now - room.vBrowser?.assignTime
-          : undefined,
+        vBrowser: room.vBrowser,
+        vBrowserElapsed:
+          room.vBrowser?.assignTime && now - room.vBrowser?.assignTime,
       };
       currentUsers += obj.rosterLength;
       currentVideoChat += obj.videoChats;
-      if (obj.vBrowserTime) {
+      if (obj.vBrowser) {
         currentVBrowser += 1;
       }
       if (obj.video?.startsWith('screenshare://') && obj.rosterLength) {
