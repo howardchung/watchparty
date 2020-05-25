@@ -2,7 +2,7 @@ import { Socket } from 'socket.io';
 import { User, ChatMessage, NumberDict, StringDict } from '.';
 import Redis from 'ioredis';
 import { redisCount } from './utils/redis';
-import { VMManager } from './vm/base';
+import { VMManager, AssignedVM } from './vm/base';
 
 let redis = (undefined as unknown) as Redis.Redis;
 if (process.env.REDIS_URL) {
@@ -18,9 +18,7 @@ export class Room {
   private tsMap: NumberDict = {};
   private nameMap: StringDict = {};
   private pictureMap: StringDict = {};
-  public vBrowser:
-    | { assignTime?: number; pass?: string; host?: string; id?: string }
-    | undefined = undefined;
+  public vBrowser: AssignedVM | undefined = undefined;
   private io: SocketIO.Server;
   public roomId: string;
   public creationTime: Date = new Date();
@@ -181,18 +179,13 @@ export class Room {
         }
         redisCount('vBrowserStarts');
         this.cmdHost(socket, 'vbrowser://');
-        this.vBrowser = {};
         const assignment = await this.vmManager.assignVM();
         if (!assignment) {
           this.cmdHost(socket, '');
           this.vBrowser = undefined;
           return;
         }
-        const { pass, host, id } = assignment;
-        this.vBrowser.assignTime = Number(new Date());
-        this.vBrowser.pass = pass;
-        this.vBrowser.host = host;
-        this.vBrowser.id = id;
+        this.vBrowser = assignment;
         this.roster.forEach((user, i) => {
           if (user.id === socket.id) {
             this.roster[i].isController = true;

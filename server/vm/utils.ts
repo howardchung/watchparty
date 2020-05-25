@@ -9,13 +9,7 @@ ${
     ? `sed -i 's/scripts-user$/\[scripts-user, always\]/' /etc/cloud/cloud.cfg.d/90-hetznercloud.cfg`
     : ''
 }
-${
-  hetznerCloudInit
-    ? `PASSWORD=$(curl "${
-        process.env.SERVER_DOMAIN || 'https://www.watchparty.me'
-      }/kv?k=$(hostname)&key=${process.env.KV_KEY}")`
-    : 'PASSWORD=$(hostname)'
-}
+PASSWORD=$(hostname)
 docker run -d --rm --name=vbrowser -v /usr/share/fonts:/usr/share/fonts --log-opt max-size=1g --net=host --shm-size=1g --cap-add="SYS_ADMIN" -e DISPLAY=":99.0" -e SCREEN="1280x720@30" -e NEKO_PASSWORD=$PASSWORD -e NEKO_PASSWORD_ADMIN=$PASSWORD -e NEKO_BIND=":5000" -e NEKO_EPR=":59000-59100" ${imageName}
 `;
 
