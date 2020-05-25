@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Label, Input, Icon, Dropdown } from 'semantic-ui-react';
+import { Button, Label, Input, Icon, Dropdown, Popup } from 'semantic-ui-react';
 import './Jeopardy.css';
 import { getDefaultPicture, getColorHex, shuffle, getColor } from './utils';
 import { Socket } from 'socket.io';
@@ -580,24 +580,34 @@ export class Jeopardy extends React.Component<{
                       )}
                       {game && p.id === game.currentJudgeAnswer ? (
                         <div className="judgeButtons">
-                          <Button
-                            onClick={() => this.judgeAnswer(p.id, true)}
-                            color="green"
-                            size="tiny"
-                            icon
-                            fluid
-                          >
-                            <Icon name="check" />
-                          </Button>
-                          <Button
-                            onClick={() => this.judgeAnswer(p.id, false)}
-                            color="red"
-                            size="tiny"
-                            icon
-                            fluid
-                          >
-                            <Icon name="close" />
-                          </Button>
+                          <Popup
+                            content="Correct"
+                            trigger={
+                              <Button
+                                onClick={() => this.judgeAnswer(p.id, true)}
+                                color="green"
+                                size="tiny"
+                                icon
+                                fluid
+                              >
+                                <Icon name="check" />
+                              </Button>
+                            }
+                          />
+                          <Popup
+                            content="Incorrect"
+                            trigger={
+                              <Button
+                                onClick={() => this.judgeAnswer(p.id, false)}
+                                color="red"
+                                size="tiny"
+                                icon
+                                fluid
+                              >
+                                <Icon name="close" />
+                              </Button>
+                            }
+                          />
                         </div>
                       ) : null}
                     </div>
@@ -615,7 +625,8 @@ export class Jeopardy extends React.Component<{
                     >
                       {game && game.answers[p.id]}
                       <div className="timeOffset">
-                        {this.getBuzzOffset(p.id)
+                        {this.getBuzzOffset(p.id) &&
+                        this.getBuzzOffset(p.id) > 0
                           ? `+${(this.getBuzzOffset(p.id) / 1000).toFixed(3)}`
                           : ''}
                       </div>
