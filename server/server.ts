@@ -141,6 +141,8 @@ app.get('/stats', async (req, res) => {
     const vBrowserStarts = await getRedisCountDay('vBrowserStarts');
     const vBrowserLaunches = await getRedisCountDay('vBrowserLaunches');
     const vBrowserStartMS = await redis.lrange('vBrowserStartMS', 0, -1);
+    const vBrowserSessionMS = await redis.lrange('vBrowserSessionMS', 0, -1);
+    const vBrowserVMLifetime = await redis.lrange('vBrowserVMLifetime', 0, -1);
     const screenShareStarts = await getRedisCountDay('screenShareStarts');
     const fileShareStarts = await getRedisCountDay('fileShareStarts');
     const videoChatStarts = await getRedisCountDay('videoChatStarts');
@@ -155,6 +157,8 @@ app.get('/stats', async (req, res) => {
       vBrowserStarts,
       vBrowserLaunches,
       vBrowserStartMS,
+      vBrowserSessionMS,
+      vBrowserVMLifetime,
       screenShareStarts,
       fileShareStarts,
       videoChatStarts,
@@ -208,6 +212,20 @@ app.get('/settings', (req, res) => {
 app.get('/kv', async (req, res) => {
   if (req.query.key === process.env.KV_KEY) {
     return res.end(await redis.get(('kv:' + req.query.k) as string));
+  } else {
+    return res.status(403).json({ error: 'Access Denied' });
+  }
+});
+
+app.post('/kv', async (req, res) => {
+  if (req.query.key === process.env.KV_KEY) {
+    return res.end(
+      await redis.setex(
+        'kv:' + req.query.k,
+        24 * 60 * 60,
+        req.query.v as string
+      )
+    );
   } else {
     return res.status(403).json({ error: 'Access Denied' });
   }
