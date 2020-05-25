@@ -39,8 +39,8 @@ const names = Moniker.generator([
 
 const rooms = new Map<string, Room>();
 // Start the VM manager
-const vmManager = new Hetzner(rooms);
-// const vmManager2 = new Scaleway(rooms);
+// const vmManager = new Hetzner(rooms);
+const vmManager = new Scaleway(rooms);
 init();
 
 async function saveRoomsToRedis() {
@@ -48,10 +48,11 @@ async function saveRoomsToRedis() {
     // console.time('roomSave');
     const roomArr = Array.from(rooms.values());
     for (let i = 0; i < roomArr.length; i++) {
-      if (roomArr[i].roster.length) {
+      if (roomArr[i].roster.length || roomArr[i].isRoomDirty) {
         const roomData = roomArr[i].serialize();
         const key = roomArr[i].roomId;
         await redis.setex(key, 24 * 60 * 60, roomData);
+        roomArr[i].isRoomDirty = false;
       }
     }
     // console.timeEnd('roomSave');

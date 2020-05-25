@@ -21,6 +21,7 @@ export class Room {
   public roomId: string;
   public creationTime: Date = new Date();
   private vmManager: VMManager;
+  public isRoomDirty = false; // Indicates the room needs to be saved, e.g. we unassign a VM from an empty room
 
   constructor(
     io: SocketIO.Server,
@@ -305,6 +306,7 @@ export class Room {
       this.roster[i].isController = false;
     });
     this.cmdHost(undefined, '');
+    this.isRoomDirty = true;
     if (id) {
       try {
         await this.vmManager.resetVM(id);

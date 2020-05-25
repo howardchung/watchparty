@@ -59,7 +59,7 @@ export abstract class VMManager {
       if (currSize === 0) {
         await this.launchVM();
       }
-      let resp = await redis.blpop(this.redisQueueKey, 0);
+      let resp = await redis.brpop(this.redisQueueKey, 0);
       const id = resp[1];
       console.log('[ASSIGN]', id);
       const lock = await redis.set('vbrowser:' + id, '1', 'NX', 'EX', 300);
@@ -79,10 +79,12 @@ export abstract class VMManager {
     const assignElapsed = assignEnd - assignStart;
     await redis.lpush('vBrowserStartMS', assignElapsed);
     await redis.ltrim('vBrowserStartMS', 0, 24);
+    console.log('[ASSIGN]', selected.id, assignElapsed + 'ms');
     return selected;
   };
 
   public resetVM = async (id: string) => {
+    console.log('[RESET]', id);
     // We can attempt to reuse the instance which is more efficient if users tend to use them for a short time
     // Otherwise terminating them is simpler but more expensive
     // TODO if VM is older than 45 minutes, terminate it, otherwise reboot to try to recycle
@@ -91,7 +93,7 @@ export abstract class VMManager {
     // Delete any locks
     await redis.del('vbrowser:' + id);
     // Add the VM back to the pool
-    await redis.rpush(this.redisQueueKey, id);
+    await redis.lpush(this.redisQueueKey, id);
   };
 
   protected resizeVMGroupIncr = async () => {
@@ -114,7 +116,7 @@ export abstract class VMManager {
       const maxAvailable = Number(process.env.VBROWSER_VM_BUFFER) || 0;
       const availableCount = await redis.llen(this.redisQueueKey);
       if (availableCount > maxAvailable) {
-        const id = await redis.rpop(this.redisQueueKey);
+        const id = await redis.lpop(this.redisQueueKey);
         console.log(
           '[RESIZE-TERMINATE]',
           id,
@@ -171,13 +173,14 @@ export abstract class VMManager {
           e.response && e.response.data === '404 page not found\n'
             ? 'ready'
             : '';
+        break;
       }
       console.log(retryCount, url, state);
       retryCount += 1;
-      if (retryCount >= 50) {
+      if (retryCount >= 60) {
         return false;
       } else {
-        await new Promise((resolve) => setTimeout(resolve, 3000));
+        await new Promise((resolve) => setTimeout(resolve, 2000));
       }
     }
     return true;
@@ -187,7 +190,7 @@ export abstract class VMManager {
     // generate credentials and boot a VM
     const password = uuidv4();
     const id = await this.startVM(password);
-    await redis.rpush(this.redisQueueKey, id);
+    await redis.lpush(this.redisQueueKey, id);
     redisCount('vBrowserLaunches');
     return id;
   };
