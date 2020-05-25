@@ -15,6 +15,7 @@ import { Room } from './room';
 import { getRedisCountDay } from './utils/redis';
 import { Scaleway } from './vm/scaleway';
 import { Hetzner } from './vm/hetzner';
+import { DigitalOcean } from './vm/digitalocean';
 
 const app = express();
 let server: any = null;
@@ -40,6 +41,7 @@ const names = Moniker.generator([
 const rooms = new Map<string, Room>();
 // Start the VM manager
 // const vmManager = new Hetzner(rooms);
+// const vmManager = new DigitalOcean(rooms);
 const vmManager = new Scaleway(rooms);
 init();
 

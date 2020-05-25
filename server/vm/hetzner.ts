@@ -12,7 +12,10 @@ if (process.env.REDIS_URL) {
 const VBROWSER_TAG = process.env.VBROWSER_TAG || 'vbrowser';
 const HETZNER_TOKEN = process.env.HETZNER_TOKEN;
 const region = 'nbg1';
+const size = 'cpx11'; // cx11, cpx11, cpx21
 const gatewayHost = 'gateway3.watchparty.me';
+const sshKeys = [1570536];
+const networks = [91163];
 const imageId = '16820085';
 
 const mapServerObject = (server: any): VM => ({
@@ -39,11 +42,11 @@ export class Hetzner extends VMManager {
       },
       data: {
         name: name,
-        server_type: 'cpx11', // cx11, cpx11, cpx21
+        server_type: size,
         start_after_create: true,
         image: imageId,
-        ssh_keys: [1570536],
-        networks: [91163],
+        ssh_keys: sshKeys,
+        networks,
         user_data: cloudInit(imageName, true),
         labels: {
           [VBROWSER_TAG]: '1',

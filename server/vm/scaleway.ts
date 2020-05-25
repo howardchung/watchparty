@@ -8,6 +8,7 @@ import { cloudInit, imageName } from './utils';
 const VBROWSER_TAG = process.env.VBROWSER_TAG || 'vbrowser';
 const SCW_SECRET_KEY = process.env.SCW_SECRET_KEY;
 const SCW_ORGANIZATION_ID = process.env.SCW_ORGANIZATION_ID;
+const size = 'DEV1-M'; // DEV1-S, DEV1-M, DEV1-L
 const region = 'nl-ams-1';
 const gatewayHost = 'gateway2.watchparty.me';
 const imageId = '09f99a78-f093-4438-99c0-8a0705bf245b';
@@ -39,7 +40,7 @@ export class Scaleway extends VMManager {
       data: {
         name: name,
         dynamic_ip_required: true,
-        commercial_type: 'DEV1-M', // DEV1-S, DEV1-M
+        commercial_type: size,
         image: imageId,
         volumes: {},
         organization: SCW_ORGANIZATION_ID,
@@ -92,7 +93,7 @@ export class Scaleway extends VMManager {
   rebootVM = async (id: string) => {
     // Generate a new password
     const password = uuidv4();
-    // Update the VM's name (also the HOST env var that will be used as password)
+    // Update the VM's name (also the hostname that will be used as password)
     const response = await axios({
       method: 'PATCH',
       url: `https://api.scaleway.com/instance/v1/zones/${region}/servers/${id}`,
