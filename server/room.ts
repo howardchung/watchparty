@@ -1,7 +1,13 @@
 import { Socket } from 'socket.io';
 import { User, ChatMessage, NumberDict, StringDict } from '.';
+import Redis from 'ioredis';
 import { redisCount } from './utils/redis';
 import { VMManager } from './vm/base';
+
+let redis = (undefined as unknown) as Redis.Redis;
+if (process.env.REDIS_URL) {
+  redis = new Redis(process.env.REDIS_URL);
+}
 
 export class Room {
   public video = '';
@@ -290,6 +296,7 @@ export class Room {
   }
 
   async resetRoomVM() {
+    const assignTime = this.vBrowser && this.vBrowser.assignTime;
     const id = this.vBrowser && this.vBrowser.id;
     this.vBrowser = undefined;
     this.roster.forEach((user, i) => {
@@ -297,6 +304,10 @@ export class Room {
     });
     this.cmdHost(undefined, '');
     this.isRoomDirty = true;
+    if (redis && assignTime) {
+      await redis.lpush('vBrowserSessionMS', Number(new Date()) - assignTime);
+      await redis.ltrim('vBrowserSessionMS', 0, 24);
+    }
     if (id) {
       try {
         await this.vmManager.resetVM(id);

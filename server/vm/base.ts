@@ -70,7 +70,7 @@ export abstract class VMManager {
       let candidate = await this.getVM(id);
       const ready = await this.checkVMReady(candidate.host);
       if (!ready) {
-        await this.terminateVM(candidate.id);
+        await this.terminateVMWrapper(candidate.id);
       } else {
         selected = candidate;
       }
@@ -86,9 +86,7 @@ export abstract class VMManager {
   public resetVM = async (id: string) => {
     console.log('[RESET]', id);
     // We can attempt to reuse the instance which is more efficient if users tend to use them for a short time
-    // Otherwise terminating them is simpler but more expensive
-    // TODO if VM is older than 45 minutes, terminate it, otherwise reboot to try to recycle
-    // await this.terminateVM(id);
+    // Otherwise terminating them is simpler but more expensive since they're billed for an hour
     await this.rebootVM(id);
     // Delete any locks
     await redis.del('vbrowser:' + id);
@@ -125,7 +123,7 @@ export abstract class VMManager {
           'available:',
           availableCount
         );
-        await this.terminateVM(id);
+        await this.terminateVMWrapper(id);
       } else {
         break;
       }
@@ -147,7 +145,7 @@ export abstract class VMManager {
       const server = allVMs[i];
       if (!dontDelete.has(server.id)) {
         console.log('[CLEANUP] terminating:', server.id);
-        this.terminateVM(server.id);
+        this.terminateVMWrapper(server.id);
       }
     }
   };
@@ -193,6 +191,27 @@ export abstract class VMManager {
     await redis.lpush(this.redisQueueKey, id);
     redisCount('vBrowserLaunches');
     return id;
+  };
+
+  protected terminateVMWrapper = async (id: string) => {
+    // Get the VM data to calculate lifetime, if we fail do the terminate anyway
+    const lifetime = await this.terminateVMMetrics(id);
+    await this.terminateVM(id);
+    if (lifetime) {
+      await redis.lpush('vBrowserVMLifetime', lifetime);
+      await redis.ltrim('vBrowserVMLifetime', 0, 24);
+    }
+  };
+
+  protected terminateVMMetrics = async (id: string) => {
+    try {
+      const vm = await this.getVM(id);
+      const lifetime = Number(new Date()) - Number(new Date(vm.creation_date));
+      return lifetime;
+    } catch (e) {
+      console.warn(e);
+    }
+    return 0;
   };
 
   public abstract redisQueueKey: string;

@@ -52,7 +52,9 @@ export class Hetzner extends VMManager {
         location: region,
       },
     });
-    await redis.setex(`kv:${name}`, 24 * 3600, name);
+    await axios.post(
+      `${process.env.SERVER_DOMAIN}/kv?k=${name}&v=${name}&key=${process.env.KV_KEY}`
+    );
     const id = response.data.server.id;
     return id;
   };
@@ -75,7 +77,9 @@ export class Hetzner extends VMManager {
     const password = uuidv4();
     // Get the original hostname and update Redis
     const old = await this.getVM(id);
-    await redis.setex(`kv:${old.originalName}`, 24 * 3600, password);
+    await axios.post(
+      `${process.env.SERVER_DOMAIN}/kv?k=${old.originalName}&v=${password}&key=${process.env.KV_KEY}`
+    );
 
     // Update the VM's name
     const response = await axios({
