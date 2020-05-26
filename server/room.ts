@@ -42,7 +42,7 @@ export class Room {
     }
 
     if (!this.jpd) {
-      this.jpd = new Jeopardy(io, roomId, this.roster);
+      this.jpd = new Jeopardy(io, roomId, this.roster, this);
     }
 
     setInterval(() => {
@@ -287,7 +287,13 @@ export class Room {
       this.creationTime = new Date(roomObj.creationTime);
     }
     if (roomObj.jpd) {
-      this.jpd = new Jeopardy(this.io, this.roomId, this.roster, roomObj.jpd);
+      this.jpd = new Jeopardy(
+        this.io,
+        this.roomId,
+        this.roster,
+        this,
+        roomObj.jpd
+      );
     }
   }
 

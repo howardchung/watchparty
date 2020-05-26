@@ -79,6 +79,13 @@ export class Chat extends React.Component<ChatProps> {
       return `started the video at ${formatTimestamp(msg)}`;
     } else if (cmd === 'pause') {
       return `paused the video at ${formatTimestamp(msg)}`;
+    } else if (cmd === 'judge') {
+      const { id, correct, answer } = JSON.parse(msg);
+      return (
+        <span style={{ color: correct ? '#21ba45' : '#db2828' }}>{`ruled ${
+          this.props.nameMap[id]
+        } ${correct ? 'correct' : 'incorrect'}: ${answer} `}</span>
+      );
     }
     return cmd;
   };

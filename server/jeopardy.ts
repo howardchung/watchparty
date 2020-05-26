@@ -1,5 +1,6 @@
 import { Socket } from 'socket.io';
 import { BooleanDict, StringDict, NumberDict, User } from '.';
+import { Room } from './room';
 const jData = require('../jeopardy.json');
 
 // Do a game count
@@ -123,6 +124,7 @@ export class Jeopardy {
   public roomId: string;
   private io: SocketIO.Server;
   private roster: User[];
+  private room: Room;
   private playClueTimeout: NodeJS.Timeout = (undefined as unknown) as NodeJS.Timeout;
   private questionAnswerTimeout: NodeJS.Timeout = (undefined as unknown) as NodeJS.Timeout;
 
@@ -130,11 +132,13 @@ export class Jeopardy {
     io: SocketIO.Server,
     roomId: string,
     roster: User[],
+    room: Room,
     gameData?: any
   ) {
     this.io = io;
     this.roomId = roomId;
     this.roster = roster;
+    this.room = room;
 
     if (gameData) {
       this.jpd = gameData;
@@ -271,7 +275,21 @@ export class Jeopardy {
       });
 
       socket.on('JPD:wager', (wager) => this.submitWager(socket.id, wager));
-      socket.on('JPD:judge', (data) => this.judgeAnswer(data));
+      socket.on('JPD:judge', (data) => {
+        const msg = {
+          id: socket.id,
+          cmd: 'judge',
+          msg: JSON.stringify({
+            id: data.id,
+            answer: this.jpd.public.answers[data.id],
+            correct: data.correct,
+          }),
+        };
+        const success = this.judgeAnswer(data);
+        if (success) {
+          this.room.addChatMessage(socket, msg);
+        }
+      });
       socket.on('JPD:skipQ', () => {
         this.jpd.public.skips[socket.id] = true;
         if (
@@ -487,7 +505,7 @@ export class Jeopardy {
   judgeAnswer({ id, correct }: { id: string; correct: boolean }) {
     if (id in this.jpd.public.judges) {
       // Already judged this player
-      return;
+      return false;
     }
     console.log('[JUDGE]', id, correct);
     // Currently anyone can pick the correct answer
@@ -525,6 +543,7 @@ export class Jeopardy {
         this.emitState();
       }
     }
+    return true;
   }
 
   submitWager(id: string, wager: number) {
