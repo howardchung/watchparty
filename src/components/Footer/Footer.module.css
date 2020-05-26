@@ -1,0 +1,13 @@
+.Wrapper {
+  display: flex;
+  align-items: center;
+}
+
+.Content {
+  flex: 1 1 auto;
+}
+
+.Buttons {
+  flex: 0 0 auto;
+  margin-left: 24px;
+}

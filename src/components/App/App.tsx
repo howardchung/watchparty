@@ -37,10 +37,12 @@ import { generateName } from '../../utils/generateName';
 import { Chat } from '../Chat';
 import ComboBox from '../ComboBox';
 import Controls from '../Controls';
+import Footer from '../Footer';
 import LobbyWrapper from '../LobbyWrapper';
 import MultiStreamModal from '../MultiStreamModal';
 import Playlist from '../Playlist';
 import { PlaylistWrapper } from '../PlaylistWrapper';
+import { PlaylistContext } from '../PlaylistWrapper/PlaylistWrapper';
 import { getCurrentSettings } from '../Settings';
 import { TopBar } from '../TopBar';
 import { VBrowser } from '../VBrowser';
@@ -56,6 +58,20 @@ declare global {
     fbAsyncInit: Function;
   }
 }
+
+const PlaylistSidebar: React.FC = () => {
+  const playlistContext = React.useContext(PlaylistContext);
+
+  if (!playlistContext.showPlaylist) {
+    return null;
+  }
+
+  return (
+    <div className={classes.Playlist}>
+      <Playlist />
+    </div>
+  );
+};
 
 interface AppState {
   state: 'init' | 'starting' | 'connected';
@@ -686,10 +702,6 @@ export default class App extends React.Component<null, AppState> {
       }
     }
     return false;
-  };
-
-  togglePlaylist = () => {
-    this.setState({ playlistOpen: !this.state.playlistOpen });
   };
 
   jumpToLeader = () => {
@@ -1344,23 +1356,21 @@ export default class App extends React.Component<null, AppState> {
                       ></Progress>
                     </div>
                   )}
-                  {this.state.state === 'connected' && (
-                    <VideoChat
-                      socket={this.socket}
-                      participants={this.state.participants}
-                      nameMap={this.state.nameMap}
-                      pictureMap={this.state.pictureMap}
-                      tsMap={this.state.tsMap}
-                      rosterUpdateTS={this.state.rosterUpdateTS}
-                    />
-                  )}
+                  <Footer>
+                    {this.state.state === 'connected' && (
+                      <VideoChat
+                        socket={this.socket}
+                        participants={this.state.participants}
+                        nameMap={this.state.nameMap}
+                        pictureMap={this.state.pictureMap}
+                        tsMap={this.state.tsMap}
+                        rosterUpdateTS={this.state.rosterUpdateTS}
+                      />
+                    )}
+                  </Footer>
                 </div>
               </div>
-              {this.state.playlistOpen && (
-                <div className={classes.Playlist}>
-                  <Playlist />
-                </div>
-              )}
+              <PlaylistSidebar />
               <div className={classes.Chat}>
                 {!this.state.fullScreen && (
                   <Chat
