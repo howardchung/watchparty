@@ -154,7 +154,7 @@ export class Scaleway extends VMManager {
     return response.data.servers
       .map(this.mapServerObject)
       .filter(
-        (server: any) => server.tags.includes(VBROWSER_TAG) && server.private_ip
+        (server: VM) => server.tags.includes(VBROWSER_TAG) && server.private_ip
       );
   };
   mapServerObject = (server: any): VM => ({

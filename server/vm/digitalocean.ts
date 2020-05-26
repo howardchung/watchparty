@@ -6,7 +6,7 @@ import { cloudInit, imageName } from './utils';
 const VBROWSER_TAG = process.env.VBROWSER_TAG || 'vbrowser';
 const DO_TOKEN = process.env.DO_TOKEN;
 const region = 'sfo2';
-const size = 's-2vcpu-2gb'; // s-1vcpu-1gb, s-2vcpu-2gb
+const size = 's-1vcpu-2gb'; // s-1vcpu-1gb, s-1vcpu-2gb, s-2vcpu-2gb
 const gatewayHost = 'gateway4.watchparty.me';
 const imageId = 64175544;
 const sshKeys = ['cc:3d:a7:d3:99:17:fe:b7:dd:59:c4:78:14:d4:02:d1'];
@@ -125,13 +125,13 @@ export class DigitalOcean extends VMManager {
       params: {
         // TODO need to update if over 100 results
         per_page: 100,
-        filter,
+        tag_name: filter,
       },
     });
     return response.data.droplets
       .map(this.mapServerObject)
       .filter(
-        (server: any) => server.tags.includes(VBROWSER_TAG) && server.private_ip
+        (server: VM) => server.tags.includes(VBROWSER_TAG) && server.private_ip
       );
   };
 

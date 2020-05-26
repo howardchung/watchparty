@@ -1154,12 +1154,20 @@ export default class App extends React.Component<null, AppState> {
                           selection
                           options={[
                             {
+                              text: '1080p',
+                              value: '1920x1080@30',
+                            },
+                            {
                               text: '720p',
                               value: '1280x720@30',
                             },
                             {
-                              text: '1080p',
-                              value: '1920x1080@30',
+                              text: '576p',
+                              value: '1024x576@60',
+                            },
+                            {
+                              text: '480p',
+                              value: '640x480@60',
                             },
                           ]}
                         ></Dropdown>
