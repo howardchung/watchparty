@@ -6,8 +6,7 @@
     'footer footer chat';
   grid-template-rows: 80px 1fr;
   grid-template-columns: 1fr auto auto;
-  height: 100%;
-  min-height: 100vh;
+  height: 100vh;
 }
 
 .Navbar {
