@@ -8,7 +8,7 @@ const DO_TOKEN = process.env.DO_TOKEN;
 const region = 'sfo2';
 const size = 's-1vcpu-2gb'; // s-1vcpu-1gb, s-1vcpu-2gb, s-2vcpu-2gb
 const gatewayHost = 'gateway4.watchparty.me';
-const imageId = 64175544; // new: 64224943
+const imageId = 64226647;
 const sshKeys = ['cc:3d:a7:d3:99:17:fe:b7:dd:59:c4:78:14:d4:02:d1'];
 
 export class DigitalOcean extends VMManager {
