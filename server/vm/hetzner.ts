@@ -12,20 +12,11 @@ if (process.env.REDIS_URL) {
 const VBROWSER_TAG = process.env.VBROWSER_TAG || 'vbrowser';
 const HETZNER_TOKEN = process.env.HETZNER_TOKEN;
 const region = 'nbg1';
+const size = 'cpx11'; // cx11, cpx11, cpx21
 const gatewayHost = 'gateway3.watchparty.me';
-const imageId = '16820085';
-
-const mapServerObject = (server: any): VM => ({
-  id: server.id?.toString(),
-  pass: server.name,
-  // The gateway handles SSL termination and proxies to the private IP
-  host: `${gatewayHost}/?ip=${server.private_net[0]?.ip}`,
-  private_ip: server.private_net[0]?.ip,
-  state: server.status,
-  tags: Object.keys(server.labels),
-  creation_date: server.created,
-  originalName: server.labels.originalName,
-});
+const sshKeys = [1570536];
+const networks = [91163];
+const imageId = 16969556;
 
 export class Hetzner extends VMManager {
   redisQueueKey = 'availableListHetzner';
@@ -39,12 +30,12 @@ export class Hetzner extends VMManager {
       },
       data: {
         name: name,
-        server_type: 'cpx11', // cx11, cpx11, cpx21
+        server_type: size,
         start_after_create: true,
         image: imageId,
-        ssh_keys: [1570536],
-        networks: [91163],
-        user_data: cloudInit(imageName, true),
+        ssh_keys: sshKeys,
+        networks,
+        user_data: cloudInit(imageName),
         labels: {
           [VBROWSER_TAG]: '1',
           originalName: name,
@@ -52,7 +43,9 @@ export class Hetzner extends VMManager {
         location: region,
       },
     });
-    await redis.setex(`kv:${name}`, 24 * 3600, name);
+    await axios.post(
+      `${process.env.SERVER_DOMAIN}/kv?k=${name}&v=${name}&key=${process.env.KV_KEY}`
+    );
     const id = response.data.server.id;
     return id;
   };
@@ -68,14 +61,10 @@ export class Hetzner extends VMManager {
   };
 
   rebootVM = async (id: string) => {
-    // Hetzner does not update the hostname on instance name update
-    // Workaround is to stick the password in Redis and serve it to the instance
-    // Instance will use this instead of hostname as the password
+    // Hetzner does not update the hostname automatically on instance name update + reboot
+    // It requires a rebuild command
     // Generate a new password
     const password = uuidv4();
-    // Get the original hostname and update Redis
-    const old = await this.getVM(id);
-    await redis.setex(`kv:${old.originalName}`, 24 * 3600, password);
 
     // Update the VM's name
     const response = await axios({
@@ -90,12 +79,15 @@ export class Hetzner extends VMManager {
       },
     });
 
-    // Reboot the VM (also destroys the Docker container since it has --rm flag)
+    // Rebuild the VM
     const response2 = await axios({
       method: 'POST',
-      url: `https://api.hetzner.cloud/v1/servers/${id}/actions/reboot`,
+      url: `https://api.hetzner.cloud/v1/servers/${id}/actions/rebuild`,
       headers: {
         Authorization: 'Bearer ' + HETZNER_TOKEN,
+      },
+      data: {
+        image: imageId,
       },
     });
     return;
@@ -111,7 +103,7 @@ export class Hetzner extends VMManager {
           Authorization: 'Bearer ' + HETZNER_TOKEN,
         },
       });
-      let server = mapServerObject(response.data.server);
+      let server = this.mapServerObject(response.data.server);
       if (server.private_ip) {
         result = server;
       } else {
@@ -135,9 +127,22 @@ export class Hetzner extends VMManager {
       },
     });
     return response.data.servers
-      .map(mapServerObject)
+      .map(this.mapServerObject)
       .filter(
-        (server: any) => server.tags.includes(VBROWSER_TAG) && server.private_ip
+        (server: VM) => server.tags.includes(VBROWSER_TAG) && server.private_ip
       );
   };
+
+  mapServerObject = (server: any): VM => ({
+    id: server.id?.toString(),
+    pass: server.name,
+    // The gateway handles SSL termination and proxies to the private IP
+    host: `${gatewayHost}/?ip=${server.private_net[0]?.ip}`,
+    private_ip: server.private_net[0]?.ip,
+    state: server.status,
+    tags: Object.keys(server.labels),
+    creation_date: server.created,
+    originalName: server.labels.originalName,
+    provider: this.redisQueueKey,
+  });
 }

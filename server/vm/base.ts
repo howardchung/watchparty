@@ -10,10 +10,16 @@ if (process.env.REDIS_URL) {
 }
 
 export abstract class VMManager {
-  constructor(rooms: Map<string, Room>) {
+  public vmBufferSize = Number(process.env.VBROWSER_VM_BUFFER) || 0;
+
+  constructor(rooms: Map<string, Room>, vmBufferSize?: number) {
     if (!redis) {
       return;
     }
+    if (vmBufferSize !== undefined) {
+      this.vmBufferSize = vmBufferSize;
+    }
+
     const release = async () => {
       // Reset VMs in rooms that are:
       // assigned more than 6 hours ago
@@ -21,7 +27,12 @@ export abstract class VMManager {
       const roomArr = Array.from(rooms.values());
       for (let i = 0; i < roomArr.length; i++) {
         const room = roomArr[i];
-        if (room.vBrowser && room.vBrowser.assignTime) {
+        if (
+          room.vBrowser &&
+          room.vBrowser.assignTime &&
+          (!room.vBrowser.provider ||
+            room.vBrowser.provider === this.redisQueueKey)
+        ) {
           if (
             Number(new Date()) - room.vBrowser.assignTime >
               6 * 60 * 60 * 1000 ||
@@ -45,13 +56,13 @@ export abstract class VMManager {
       }
     };
     setInterval(this.resizeVMGroupIncr, 15 * 1000);
-    setInterval(this.resizeVMGroupDecr, 15 * 60 * 1000);
-    setInterval(this.cleanupVMGroup, 60 * 1000);
+    setInterval(this.resizeVMGroupDecr, 20 * 60 * 1000);
+    setInterval(this.cleanupVMGroup, 3 * 60 * 1000);
     setInterval(renew, 30 * 1000);
     setInterval(release, 5 * 60 * 1000);
   }
 
-  public assignVM = async () => {
+  public assignVM = async (): Promise<AssignedVM> => {
     const assignStart = Number(new Date());
     let selected = null;
     while (!selected) {
@@ -70,7 +81,7 @@ export abstract class VMManager {
       let candidate = await this.getVM(id);
       const ready = await this.checkVMReady(candidate.host);
       if (!ready) {
-        await this.terminateVM(candidate.id);
+        await this.terminateVMWrapper(candidate.id);
       } else {
         selected = candidate;
       }
@@ -80,15 +91,14 @@ export abstract class VMManager {
     await redis.lpush('vBrowserStartMS', assignElapsed);
     await redis.ltrim('vBrowserStartMS', 0, 24);
     console.log('[ASSIGN]', selected.id, assignElapsed + 'ms');
-    return selected;
+    const retVal = { ...selected, assignTime: Number(new Date()) };
+    return retVal;
   };
 
-  public resetVM = async (id: string) => {
+  public resetVM = async (id: string): Promise<void> => {
     console.log('[RESET]', id);
     // We can attempt to reuse the instance which is more efficient if users tend to use them for a short time
-    // Otherwise terminating them is simpler but more expensive
-    // TODO if VM is older than 45 minutes, terminate it, otherwise reboot to try to recycle
-    // await this.terminateVM(id);
+    // Otherwise terminating them is simpler but more expensive since they're billed for an hour
     await this.rebootVM(id);
     // Delete any locks
     await redis.del('vbrowser:' + id);
@@ -97,7 +107,7 @@ export abstract class VMManager {
   };
 
   protected resizeVMGroupIncr = async () => {
-    const maxAvailable = Number(process.env.VBROWSER_VM_BUFFER) || 0;
+    const maxAvailable = this.vmBufferSize;
     const availableCount = await redis.llen(this.redisQueueKey);
     if (availableCount < maxAvailable) {
       console.log(
@@ -113,7 +123,7 @@ export abstract class VMManager {
 
   protected resizeVMGroupDecr = async () => {
     while (true) {
-      const maxAvailable = Number(process.env.VBROWSER_VM_BUFFER) || 0;
+      const maxAvailable = this.vmBufferSize;
       const availableCount = await redis.llen(this.redisQueueKey);
       if (availableCount > maxAvailable) {
         const id = await redis.lpop(this.redisQueueKey);
@@ -125,7 +135,7 @@ export abstract class VMManager {
           'available:',
           availableCount
         );
-        await this.terminateVM(id);
+        await this.terminateVMWrapper(id);
       } else {
         break;
       }
@@ -147,7 +157,7 @@ export abstract class VMManager {
       const server = allVMs[i];
       if (!dontDelete.has(server.id)) {
         console.log('[CLEANUP] terminating:', server.id);
-        this.terminateVM(server.id);
+        this.terminateVMWrapper(server.id);
       }
     }
   };
@@ -173,17 +183,18 @@ export abstract class VMManager {
           e.response && e.response.data === '404 page not found\n'
             ? 'ready'
             : '';
-        break;
       }
       console.log(retryCount, url, state);
       retryCount += 1;
-      if (retryCount >= 60) {
+      if (state === 'ready') {
+        return true;
+      } else if (retryCount >= 60) {
         return false;
       } else {
         await new Promise((resolve) => setTimeout(resolve, 2000));
       }
     }
-    return true;
+    return false;
   };
 
   protected launchVM = async () => {
@@ -195,12 +206,34 @@ export abstract class VMManager {
     return id;
   };
 
+  protected terminateVMWrapper = async (id: string) => {
+    // Get the VM data to calculate lifetime, if we fail do the terminate anyway
+    const lifetime = await this.terminateVMMetrics(id);
+    await this.terminateVM(id);
+    if (lifetime) {
+      await redis.lpush('vBrowserVMLifetime', lifetime);
+      await redis.ltrim('vBrowserVMLifetime', 0, 24);
+    }
+  };
+
+  protected terminateVMMetrics = async (id: string) => {
+    try {
+      const vm = await this.getVM(id);
+      const lifetime = Number(new Date()) - Number(new Date(vm.creation_date));
+      return lifetime;
+    } catch (e) {
+      console.warn(e);
+    }
+    return 0;
+  };
+
   public abstract redisQueueKey: string;
   protected abstract startVM: (name: string) => Promise<string>;
   protected abstract rebootVM: (id: string) => Promise<void>;
   protected abstract terminateVM: (id: string) => Promise<void>;
   protected abstract getVM: (id: string) => Promise<VM>;
   protected abstract listVMs: (filter?: string) => Promise<VM[]>;
+  protected abstract mapServerObject: (server: any) => VM;
 }
 
 export interface VM {
@@ -211,5 +244,10 @@ export interface VM {
   state: string;
   tags: string[];
   creation_date: string;
+  provider: string;
   originalName?: string;
+}
+
+export interface AssignedVM extends VM {
+  assignTime: number;
 }

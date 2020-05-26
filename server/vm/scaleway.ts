@@ -8,23 +8,13 @@ import { cloudInit, imageName } from './utils';
 const VBROWSER_TAG = process.env.VBROWSER_TAG || 'vbrowser';
 const SCW_SECRET_KEY = process.env.SCW_SECRET_KEY;
 const SCW_ORGANIZATION_ID = process.env.SCW_ORGANIZATION_ID;
+const size = 'DEV1-M'; // DEV1-S, DEV1-M, DEV1-L
 const region = 'nl-ams-1';
 const gatewayHost = 'gateway2.watchparty.me';
-const imageId = '09f99a78-f093-4438-99c0-8a0705bf245b';
+const imageId = '1e72e882-f000-4c6e-b538-974af74c2a6a';
 // const region = 'fr-par-1';
 // const gatewayHost = 'gateway.watchparty.me';
 // const imageId = '8e96c468-2769-4314-bb39-f3c941f63d48';
-
-const mapServerObject = (server: any): VM => ({
-  id: server.id,
-  pass: server.name,
-  // The gateway handles SSL termination and proxies to the private IP
-  host: `${gatewayHost}/?ip=${server.private_ip}`,
-  private_ip: server.private_ip,
-  state: server.state,
-  tags: server.tags,
-  creation_date: server.creation_date,
-});
 
 export class Scaleway extends VMManager {
   redisQueueKey = 'availableListScaleway';
@@ -39,7 +29,7 @@ export class Scaleway extends VMManager {
       data: {
         name: name,
         dynamic_ip_required: true,
-        commercial_type: 'DEV1-M', // DEV1-S, DEV1-M
+        commercial_type: size,
         image: imageId,
         volumes: {},
         organization: SCW_ORGANIZATION_ID,
@@ -92,7 +82,7 @@ export class Scaleway extends VMManager {
   rebootVM = async (id: string) => {
     // Generate a new password
     const password = uuidv4();
-    // Update the VM's name (also the HOST env var that will be used as password)
+    // Update the VM's name (also the hostname that will be used as password)
     const response = await axios({
       method: 'PATCH',
       url: `https://api.scaleway.com/instance/v1/zones/${region}/servers/${id}`,
@@ -131,7 +121,7 @@ export class Scaleway extends VMManager {
           'Content-Type': 'application/json',
         },
       });
-      let server = mapServerObject(response.data.server);
+      let server = this.mapServerObject(response.data.server);
       if (server.private_ip) {
         result = server;
       } else {
@@ -162,9 +152,20 @@ export class Scaleway extends VMManager {
       },
     });
     return response.data.servers
-      .map(mapServerObject)
+      .map(this.mapServerObject)
       .filter(
-        (server: any) => server.tags.includes(VBROWSER_TAG) && server.private_ip
+        (server: VM) => server.tags.includes(VBROWSER_TAG) && server.private_ip
       );
   };
+  mapServerObject = (server: any): VM => ({
+    id: server.id,
+    pass: server.name,
+    // The gateway handles SSL termination and proxies to the private IP
+    host: `${gatewayHost}/?ip=${server.private_ip}`,
+    private_ip: server.private_ip,
+    state: server.state,
+    tags: server.tags,
+    creation_date: server.creation_date,
+    provider: this.redisQueueKey,
+  });
 }

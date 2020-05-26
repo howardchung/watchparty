@@ -15,6 +15,7 @@ import { Room } from './room';
 import { getRedisCountDay } from './utils/redis';
 import { Scaleway } from './vm/scaleway';
 import { Hetzner } from './vm/hetzner';
+import { DigitalOcean } from './vm/digitalocean';
 
 const app = express();
 let server: any = null;
@@ -39,8 +40,9 @@ const names = Moniker.generator([
 
 const rooms = new Map<string, Room>();
 // Start the VM manager
-// const vmManager = new Hetzner(rooms);
-const vmManager = new Scaleway(rooms);
+const vmManager3 = new Scaleway(rooms, 0);
+const vmManager2 = new Hetzner(rooms, 0);
+const vmManager = new DigitalOcean(rooms);
 init();
 
 async function saveRoomsToRedis() {
@@ -106,14 +108,13 @@ app.get('/stats', async (req, res) => {
         videoTS: room.videoTS,
         rosterLength: room.roster.length,
         videoChats: room.roster.filter((p) => p.isVideoChat).length,
-        vBrowserTime: room.vBrowser?.assignTime,
-        vBrowserElapsed: room.vBrowser?.assignTime
-          ? now - room.vBrowser?.assignTime
-          : undefined,
+        vBrowser: room.vBrowser,
+        vBrowserElapsed:
+          room.vBrowser?.assignTime && now - room.vBrowser?.assignTime,
       };
       currentUsers += obj.rosterLength;
       currentVideoChat += obj.videoChats;
-      if (obj.vBrowserTime) {
+      if (obj.vBrowser) {
         currentVBrowser += 1;
       }
       if (obj.video?.startsWith('screenshare://') && obj.rosterLength) {
@@ -141,6 +142,9 @@ app.get('/stats', async (req, res) => {
     const vBrowserStarts = await getRedisCountDay('vBrowserStarts');
     const vBrowserLaunches = await getRedisCountDay('vBrowserLaunches');
     const vBrowserStartMS = await redis.lrange('vBrowserStartMS', 0, -1);
+    const vBrowserSessionMS = await redis.lrange('vBrowserSessionMS', 0, -1);
+    const vBrowserVMLifetime = await redis.lrange('vBrowserVMLifetime', 0, -1);
+    const urlStarts = await getRedisCountDay('urlStarts');
     const screenShareStarts = await getRedisCountDay('screenShareStarts');
     const fileShareStarts = await getRedisCountDay('fileShareStarts');
     const videoChatStarts = await getRedisCountDay('videoChatStarts');
@@ -155,6 +159,9 @@ app.get('/stats', async (req, res) => {
       vBrowserStarts,
       vBrowserLaunches,
       vBrowserStartMS,
+      vBrowserSessionMS,
+      vBrowserVMLifetime,
+      urlStarts,
       screenShareStarts,
       fileShareStarts,
       videoChatStarts,
@@ -208,6 +215,20 @@ app.get('/settings', (req, res) => {
 app.get('/kv', async (req, res) => {
   if (req.query.key === process.env.KV_KEY) {
     return res.end(await redis.get(('kv:' + req.query.k) as string));
+  } else {
+    return res.status(403).json({ error: 'Access Denied' });
+  }
+});
+
+app.post('/kv', async (req, res) => {
+  if (req.query.key === process.env.KV_KEY) {
+    return res.end(
+      await redis.setex(
+        'kv:' + req.query.k,
+        24 * 60 * 60,
+        req.query.v as string
+      )
+    );
   } else {
     return res.status(403).json({ error: 'Access Denied' });
   }
