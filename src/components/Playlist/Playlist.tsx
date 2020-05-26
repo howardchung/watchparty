@@ -1,31 +1,74 @@
 import React from 'react';
 
+import { LobbyContext } from '../LobbyWrapper/LobbyWrapper';
 import { PlaylistContext } from '../PlaylistWrapper/PlaylistWrapper';
 import classes from './Playlist.module.css';
 import PlaylistItem from './PlaylistItem';
 
 const Playlist: React.FC = () => {
   const playlistData = React.useContext(PlaylistContext);
+  const lobbyData = React.useContext(LobbyContext);
+
+  const handlePlay = React.useCallback(
+    (url: string) => {
+      if (lobbyData.io) {
+        lobbyData.io.emit('CMD:playPlaylistVideo', url);
+      }
+    },
+    [lobbyData.io]
+  );
+
+  const handleRemove = React.useCallback(
+    (url: string) => {
+      if (lobbyData.io) {
+        lobbyData.io.emit('CMD:removePlaylistVideo', url);
+      }
+    },
+    [lobbyData.io]
+  );
+
+  const handlePlayNext = React.useCallback(
+    (url: string) => {
+      if (lobbyData.io) {
+        lobbyData.io.emit('CMD:playNextPlaylistVideo', url);
+      }
+    },
+    [lobbyData.io]
+  );
 
   return (
     <div>
-      <PlaylistContent items={playlistData.playlist} />
+      <PlaylistContent
+        items={playlistData.playlist}
+        onPlay={handlePlay}
+        onRemove={handleRemove}
+        onPlayNext={handlePlayNext}
+      />
     </div>
   );
 };
 
 const PlaylistContent: React.FC<{
   items: PlaylistVideo[];
-  currentVideo?: PlaylistVideo;
+  onPlay: (url: string) => void;
+  onRemove: (url: string) => void;
+  onPlayNext: (url: string) => void;
 }> = (props) => {
-  const { items } = props;
+  const { items, onPlay, onRemove, onPlayNext } = props;
 
   return (
     <div>
       <div>
         {items.map((item) => (
           <div className={classes.ItemWrapper}>
-            <PlaylistItem key={item.url} video={item} controls />
+            <PlaylistItem
+              onPlay={onPlay}
+              onRemove={onRemove}
+              onPlayNext={onPlayNext}
+              key={item.url}
+              video={item}
+              controls
+            />
           </div>
         ))}
       </div>

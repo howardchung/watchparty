@@ -1024,7 +1024,7 @@ export default class App extends React.Component<null, AppState> {
     const controller = this.state.participants.find((p) => p.isController);
 
     return (
-      <LobbyWrapper>
+      <LobbyWrapper io={this.socket}>
         {this.socket && (
           <PlaylistWrapper socket={this.socket}>
             {this.state.multiStreamSelection && (

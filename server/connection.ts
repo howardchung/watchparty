@@ -31,6 +31,9 @@ class Connection {
     this.socket.on('CMD:picture', this.addPicture);
     this.socket.on('CMD:host', this.host);
     this.socket.on('CMD:addVideoToPlaylist', this.addVideoToPlaylist);
+    this.socket.on('CMD:playPlaylistVideo', this.playPlaylistVideo);
+    this.socket.on('CMD:removePlaylistVideo', this.removePlaylistVideo);
+    this.socket.on('CMD:playNextPlaylistVideo', this.playNextPlaylistVideo);
     this.socket.on('CMD:play', this.playVideo);
     this.socket.on('CMD:pause', this.pauseVideo);
     this.socket.on('CMD:seek', this.seekVideo);
@@ -112,6 +115,23 @@ class Connection {
     if (!this.room.video) {
       this.room.cmdHost(this.socket, video.url);
     }
+  };
+
+  playPlaylistVideo = (url: string) => {
+    const requestedVideo = this.room.videoPlaylist.find(
+      (video) => video.url === url
+    );
+    if (requestedVideo) {
+      this.room.startVideo(requestedVideo.url);
+    }
+  };
+
+  removePlaylistVideo = (url: string) => {
+    this.room.removeVideoFromPlaylist(url);
+  };
+
+  playNextPlaylistVideo = (url: string) => {
+    this.room.moveVideoToIndex(url, 0);
   };
 
   playVideo = () => {

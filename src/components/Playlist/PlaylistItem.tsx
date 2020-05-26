@@ -6,8 +6,23 @@ import classes from './PlaylistItem.module.css';
 const PlaylistItem: React.FC<{
   video: PlaylistVideo;
   controls?: boolean;
+  onPlay: (url: string) => void;
+  onRemove: (url: string) => void;
+  onPlayNext: (url: string) => void;
 }> = (props) => {
-  const { video, controls } = props;
+  const { video, controls, onPlay, onPlayNext, onRemove } = props;
+
+  const handlePlayClick = React.useCallback(() => {
+    onPlay(video.url);
+  }, [onPlay, video.url]);
+
+  const handlePlayNextClick = React.useCallback(() => {
+    onPlayNext(video.url);
+  }, [onPlayNext, video.url]);
+
+  const handleRemoveClick = React.useCallback(() => {
+    onRemove(video.url);
+  }, [onRemove, video.url]);
 
   return (
     <div className={classes.Wrapper}>
@@ -29,13 +44,23 @@ const PlaylistItem: React.FC<{
       {controls && (
         <div className={classes.Controls}>
           <ButtonGroup size="mini">
-            <Button icon color="green" title="Play now">
+            <Button
+              icon
+              color="green"
+              title="Play now"
+              onClick={handlePlayClick}
+            >
               <Icon name="play" />
             </Button>
-            <Button icon color="red" title="Remove">
+            <Button icon color="red" title="Remove" onClick={handleRemoveClick}>
               <Icon name="trash" />
             </Button>
-            <Button icon color="black" title="Play next">
+            <Button
+              icon
+              color="black"
+              title="Play next"
+              onClick={handlePlayNextClick}
+            >
               <Icon name="arrow up" />
             </Button>
           </ButtonGroup>

@@ -49,7 +49,7 @@ export class Room {
       ) {
         setTimeout(() => {
           this.nextVideo();
-        }, 1000);
+        }, 3000);
       }
     }, 1000);
 
@@ -182,15 +182,8 @@ export class Room {
   }
 
   startVideo = (data?: string, duration?: number) => {
-    // remove next hosted video from the playlist
     if (data) {
-      const videoIndex = this.videoPlaylist.findIndex(
-        (video) => video.url === data
-      );
-      if (videoIndex !== -1) {
-        this.videoPlaylist.splice(videoIndex, 1);
-        this.io.of(this.roomId).emit('playlistUpdate', this.videoPlaylist);
-      }
+      this.removeVideoFromPlaylist(data);
     }
 
     this.video = data || '';
@@ -200,6 +193,29 @@ export class Room {
     this.tsMap = {};
     this.io.of(this.roomId).emit('REC:tsMap', this.tsMap);
     this.io.of(this.roomId).emit('REC:host', this.getHostState());
+  };
+
+  removeVideoFromPlaylist = (url: string) => {
+    const videoIndex = this.videoPlaylist.findIndex(
+      (video) => video.url === url
+    );
+    if (videoIndex !== -1) {
+      this.videoPlaylist.splice(videoIndex, 1);
+      this.io.of(this.roomId).emit('playlistUpdate', this.videoPlaylist);
+    }
+  };
+
+  moveVideoToIndex = (url: string, index: number) => {
+    const videoIndex = this.videoPlaylist.findIndex(
+      (video) => video.url === url
+    );
+
+    if (videoIndex !== -1) {
+      const items = this.videoPlaylist.splice(videoIndex, 1);
+      this.videoPlaylist.splice(index, 0, items[0]);
+    }
+
+    this.io.of(this.roomId).emit('playlistUpdate', this.videoPlaylist);
   };
 
   cmdHost(socket: Socket, data?: string, options = { skipMessage: false }) {
