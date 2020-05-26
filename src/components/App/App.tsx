@@ -1,3 +1,5 @@
+import 'semantic-ui-css/semantic.min.css';
+
 import './App.css';
 
 // import { v4 as uuidv4 } from 'uuid';

@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { PlaylistContext } from '../PlaylistWrapper/PlaylistWrapper';
+import classes from './Playlist.module.css';
 import PlaylistItem from './PlaylistItem';
 
 const Playlist: React.FC = () => {
@@ -8,7 +9,6 @@ const Playlist: React.FC = () => {
 
   return (
     <div>
-      <h3>Playlist</h3>
       <PlaylistContent items={playlistData.playlist} />
     </div>
   );
@@ -16,14 +16,19 @@ const Playlist: React.FC = () => {
 
 const PlaylistContent: React.FC<{
   items: PlaylistVideo[];
+  currentVideo?: PlaylistVideo;
 }> = (props) => {
   const { items } = props;
 
   return (
     <div>
-      {items.map((item) => (
-        <PlaylistItem video={item} />
-      ))}
+      <div>
+        {items.map((item) => (
+          <div className={classes.ItemWrapper}>
+            <PlaylistItem key={item.url} video={item} controls />
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
