@@ -79,9 +79,10 @@ export class Room {
         }
         const sharer = this.roster.find((user) => user.isScreenShare);
         if (sharer) {
-          // Can't update the video while someone is screensharing
+          // Can't update the video while someone is screensharing/filesharing
           return;
         }
+        redisCount('urlStarts');
         this.cmdHost(socket, data);
       });
       socket.on('CMD:play', () => {
