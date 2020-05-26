@@ -16,7 +16,7 @@ const size = 'cpx11'; // cx11, cpx11, cpx21
 const gatewayHost = 'gateway3.watchparty.me';
 const sshKeys = [1570536];
 const networks = [91163];
-const imageId = '16820085';
+const imageId = 16969556;
 
 export class Hetzner extends VMManager {
   redisQueueKey = 'availableListHetzner';
