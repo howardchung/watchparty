@@ -77,6 +77,25 @@ export class DigitalOcean extends VMManager {
         name: password,
       },
     });
+
+    const actionId = response.data.action.id;
+    // Wait for the rename action to complete
+    while (true) {
+      const response3 = await axios({
+        method: 'GET',
+        url: `https://api.digitalocean.com/v2/actions/${actionId}`,
+        headers: {
+          Authorization: 'Bearer ' + DO_TOKEN,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (response3?.data?.action?.status === 'completed') {
+        break;
+      } else {
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+      }
+    }
+
     // Rebuild the VM
     const response2 = await axios({
       method: 'POST',
@@ -102,23 +121,6 @@ export class DigitalOcean extends VMManager {
     //     type: 'reboot',
     //   },
     // });
-    const actionId = response.data.action.id;
-    // Wait for the rename action to complete
-    while (true) {
-      const response3 = await axios({
-        method: 'GET',
-        url: `https://api.digitalocean.com/v2/actions/${actionId}`,
-        headers: {
-          Authorization: 'Bearer ' + DO_TOKEN,
-          'Content-Type': 'application/json',
-        },
-      });
-      if (response3?.data?.action?.status === 'completed') {
-        break;
-      } else {
-        await new Promise((resolve) => setTimeout(resolve, 3000));
-      }
-    }
     return;
   };
 
