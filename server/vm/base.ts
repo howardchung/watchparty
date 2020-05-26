@@ -56,8 +56,8 @@ export abstract class VMManager {
       }
     };
     setInterval(this.resizeVMGroupIncr, 15 * 1000);
-    setInterval(this.resizeVMGroupDecr, 15 * 60 * 1000);
-    setInterval(this.cleanupVMGroup, 60 * 1000);
+    setInterval(this.resizeVMGroupDecr, 20 * 60 * 1000);
+    setInterval(this.cleanupVMGroup, 3 * 60 * 1000);
     setInterval(renew, 30 * 1000);
     setInterval(release, 5 * 60 * 1000);
   }
