@@ -1,9 +1,9 @@
 import React from 'react';
 
+import ChatVideoCard from '../ChatPlaylistCard';
 import { LobbyContext } from '../LobbyWrapper/LobbyWrapper';
 import { PlaylistContext } from '../PlaylistWrapper/PlaylistWrapper';
 import classes from './Playlist.module.css';
-import PlaylistItem from './PlaylistItem';
 
 const Playlist: React.FC = () => {
   const playlistData = React.useContext(PlaylistContext);
@@ -61,7 +61,7 @@ const PlaylistContent: React.FC<{
       <div>
         {items.map((item) => (
           <div className={classes.ItemWrapper}>
-            <PlaylistItem
+            <ChatVideoCard
               onPlay={onPlay}
               onRemove={onRemove}
               onPlayNext={onPlayNext}
