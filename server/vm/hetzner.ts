@@ -20,6 +20,7 @@ const imageId = 16969556;
 
 export class Hetzner extends VMManager {
   redisQueueKey = 'availableListHetzner';
+  redisStagingKey = 'stagingListHetzner';
   startVM = async (name: string) => {
     const response = await axios({
       method: 'POST',
@@ -94,23 +95,18 @@ export class Hetzner extends VMManager {
   };
 
   getVM = async (id: string) => {
-    let result = null;
-    while (!result) {
-      const response = await axios({
-        method: 'GET',
-        url: `https://api.hetzner.cloud/v1/servers/${id}`,
-        headers: {
-          Authorization: 'Bearer ' + HETZNER_TOKEN,
-        },
-      });
-      let server = this.mapServerObject(response.data.server);
-      if (server.private_ip) {
-        result = server;
-      } else {
-        await new Promise((resolve) => setTimeout(resolve, 3000));
-      }
+    const response = await axios({
+      method: 'GET',
+      url: `https://api.hetzner.cloud/v1/servers/${id}`,
+      headers: {
+        Authorization: 'Bearer ' + HETZNER_TOKEN,
+      },
+    });
+    let server = this.mapServerObject(response.data.server);
+    if (!server.private_ip) {
+      throw new Error('vm not ready');
     }
-    return result;
+    return server;
   };
 
   listVMs = async (filter?: string) => {

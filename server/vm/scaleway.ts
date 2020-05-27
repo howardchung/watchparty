@@ -18,6 +18,7 @@ const imageId = '1e72e882-f000-4c6e-b538-974af74c2a6a';
 
 export class Scaleway extends VMManager {
   redisQueueKey = 'availableListScaleway';
+  redisStagingKey = 'stagingListScaleway';
   startVM = async (name: string) => {
     const response = await axios({
       method: 'POST',
@@ -111,24 +112,19 @@ export class Scaleway extends VMManager {
   };
 
   getVM = async (id: string) => {
-    let result = null;
-    while (!result) {
-      const response = await axios({
-        method: 'GET',
-        url: `https://api.scaleway.com/instance/v1/zones/${region}/servers/${id}`,
-        headers: {
-          'X-Auth-Token': SCW_SECRET_KEY,
-          'Content-Type': 'application/json',
-        },
-      });
-      let server = this.mapServerObject(response.data.server);
-      if (server.private_ip) {
-        result = server;
-      } else {
-        await new Promise((resolve) => setTimeout(resolve, 3000));
-      }
+    const response = await axios({
+      method: 'GET',
+      url: `https://api.scaleway.com/instance/v1/zones/${region}/servers/${id}`,
+      headers: {
+        'X-Auth-Token': SCW_SECRET_KEY,
+        'Content-Type': 'application/json',
+      },
+    });
+    let server = this.mapServerObject(response.data.server);
+    if (!server.private_ip) {
+      throw new Error('vm not ready');
     }
-    return result;
+    return server;
   };
 
   listVMs = async (filter?: string) => {
