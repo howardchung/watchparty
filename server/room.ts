@@ -1,37 +1,46 @@
+import Redis from 'ioredis';
 import { Socket } from 'socket.io';
 
 import Connection from './connection';
 import { findPlaylistVideoByUrl } from './utils';
-import { assignVM, resetVM } from './vm';
+import { redisCount } from './utils/redis';
+import { AssignedVM, VMManager } from './vm/base';
 import { ChatMessage, NumberDict, PlaylistVideo, StringDict, User } from '.';
 
+const redis = process.env.REDIS_URL
+  ? new Redis(process.env.REDIS_URL)
+  : undefined;
+
 export class Room {
-  public tsInterval: NodeJS.Timeout;
-  public playlistInterval: NodeJS.Timeout;
+  private vmManager: VMManager;
+  public chat: ChatMessage[] = [];
+  public connections: Connection[] = [];
+  public creationTime: Date = new Date();
   public io: SocketIO.Server;
+  public isRoomDirty = false; // Indicates the room needs to be saved, e.g. we unassign a VM from an empty room
   public nameMap: StringDict = {};
+  public paused = false;
   public pictureMap: StringDict = {};
-  public roster: User[] = [];
+  public playlistInterval: NodeJS.Timeout;
   public roomId: string;
+  public roster: User[] = [];
+  public tsInterval: NodeJS.Timeout;
+  public tsMap: NumberDict = {};
+  public vBrowser: AssignedVM | undefined = undefined;
   public video?: string;
   public videoDuration?: number;
-  public videoTS = 0;
   public videoPlaylist: PlaylistVideo[] = [];
-  public paused = false;
-  public chat: ChatMessage[] = [];
-  public tsMap: NumberDict = {};
-  public vBrowser:
-    | { assignTime?: number; pass?: string; host?: string; id?: string }
-    | undefined = undefined;
-  public connections: Connection[] = [];
+  public videoTS = 0;
 
   constructor(
     io: SocketIO.Server,
+    vmManager: VMManager,
     roomId: string,
     roomData?: string | null | undefined
   ) {
     this.roomId = roomId;
     this.io = io;
+    this.vmManager = vmManager;
 
     if (roomData) {
       this.deserialize(roomData);
@@ -45,6 +54,7 @@ export class Room {
 
     io.of(roomId).on('connection', (socket: Socket) => {
       this.connections.push(new Connection(socket, this));
+      redisCount('connectStarts');
     });
   }
 
@@ -92,21 +102,17 @@ export class Room {
       // Maybe terminate the existing instance and spawn a new one
       return;
     }
+    redisCount('vBrowserStarts');
     this.cmdHost(socket, 'vbrowser://');
-    this.vBrowser = {};
-    const assignment = await assignVM();
+    const assignment = await this.vmManager.assignVM();
     if (!assignment) {
       this.cmdHost(socket, '');
       this.vBrowser = undefined;
       return;
     }
-    const { pass, host, id } = assignment;
-    this.vBrowser.assignTime = Number(new Date());
-    this.vBrowser.pass = pass;
-    this.vBrowser.host = host;
-    this.vBrowser.id = id;
+    this.vBrowser = assignment;
     this.roster.forEach((user, i) => {
-      if (socket ? user.id === socket.id : false) {
+      if (user.id === socket.id) {
         this.roster[i].isController = true;
       } else {
         this.roster[i].isController = false;
@@ -120,19 +126,25 @@ export class Room {
   };
 
   async stopVBrowser(socket: Socket) {
+    const assignTime = this.vBrowser && this.vBrowser.assignTime;
     const id = this.vBrowser && this.vBrowser.id;
     this.vBrowser = undefined;
-    this.roster.forEach((user, i) => {
+    this.roster.forEach((_USER, i) => {
       this.roster[i].isController = false;
     });
     if (this.videoPlaylist.length > 0) {
       this.nextVideo();
     } else {
       this.cmdHost(socket, '');
+      this.isRoomDirty = true;
+    }
+    if (redis && assignTime) {
+      await redis.lpush('vBrowserSessionMS', Number(new Date()) - assignTime);
+      await redis.ltrim('vBrowserSessionMS', 0, 24);
     }
     if (id) {
       try {
-        await resetVM(id);
+        await this.vmManager.resetVM(id);
       } catch (e) {
         console.error(e);
       }
@@ -149,6 +161,7 @@ export class Room {
       pictureMap: this.pictureMap,
       chat: this.chat,
       vBrowser: this.vBrowser,
+      creationTime: this.creationTime,
     });
   }
 
@@ -157,7 +170,9 @@ export class Room {
     this.video = roomObj.video;
     this.videoDuration = roomObj.videoDuration;
     this.videoTS = roomObj.videoTS;
-    this.paused = roomObj.paused;
+    if (roomObj.paused) {
+      this.paused = roomObj.paused;
+    }
     if (roomObj.chat) {
       this.chat = roomObj.chat;
     }
@@ -169,6 +184,9 @@ export class Room {
     }
     if (roomObj.vBrowser) {
       this.vBrowser = roomObj.vBrowser;
+    }
+    if (roomObj.creationTime) {
+      this.creationTime = new Date(roomObj.creationTime);
     }
   }
 

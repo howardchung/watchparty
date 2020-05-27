@@ -9,7 +9,7 @@ const TogglePlaylistButton: React.FC = () => {
 
   const onButtonClick = React.useCallback(() => {
     playlistContext.setPlaylistVisibility(!playlistContext.showPlaylist);
-  }, [playlistContext.showPlaylist, playlistContext.setPlaylistVisibility]);
+  }, [playlistContext]);
 
   const label = `${playlistContext.playlist.length}`;
 

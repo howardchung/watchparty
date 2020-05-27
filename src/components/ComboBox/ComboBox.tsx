@@ -1,12 +1,7 @@
 import React from 'react';
-import { DropdownProps, Icon, Input, Label, Menu } from 'semantic-ui-react';
+import { DropdownProps, Icon, Input, Menu } from 'semantic-ui-react';
 
-import {
-  debounce,
-  getMediaPathResults,
-  getStreamPathResults,
-  getYouTubeResults,
-} from '../../utils';
+import { debounce, getYouTubeResults } from '../../utils';
 import { examples } from '../../utils/examples';
 import YouTubeSearchResult from '../YouTubeSearchResult';
 
@@ -17,97 +12,6 @@ interface ComboBoxProps {
   launchMultiSelect: Function;
   mediaPath: string | undefined;
   streamPath: string | undefined;
-}
-
-export const MediaPathSearchResult = (
-  props: SearchResult & { setMedia: Function }
-) => {
-  const result = props;
-  const setMedia = props.setMedia;
-  return (
-    <Menu.Item
-      onClick={(e) => {
-        setMedia(e, { value: result.url });
-      }}
-    >
-      <div style={{ display: 'flex' }}>
-        <Icon name="file" />
-        {result.name}
-      </div>
-    </Menu.Item>
-  );
-};
-
-export class StreamPathSearchResult extends React.Component<
-  SearchResult & {
-    setMedia: Function;
-    launchMultiSelect: Function;
-    streamPath: string;
-  }
-> {
-  render() {
-    const result = this.props;
-    const setMedia = this.props.setMedia;
-    return (
-      <React.Fragment>
-        <Menu.Item
-          onClick={async (e) => {
-            this.props.launchMultiSelect([]);
-            let response = await window.fetch(
-              this.props.streamPath +
-                '/data?torrent=' +
-                encodeURIComponent(result.magnet!)
-            );
-            let metadata = await response.json();
-            // console.log(metadata);
-            if (
-              metadata.files.filter(
-                (file: any) => file.length > 10 * 1024 * 1024
-              ).length > 1
-            ) {
-              // Multiple large files, present user selection
-              const multiStreamSelection = metadata.files.map(
-                (file: any, i: number) => ({
-                  ...file,
-                  url:
-                    this.props.streamPath +
-                    '/stream?torrent=' +
-                    encodeURIComponent(result.magnet!) +
-                    '&fileIndex=' +
-                    i,
-                })
-              );
-              multiStreamSelection.sort((a: any, b: any) =>
-                a.name.localeCompare(b.name)
-              );
-              this.props.launchMultiSelect(multiStreamSelection);
-            } else {
-              this.props.launchMultiSelect(undefined);
-              setMedia(e, {
-                value:
-                  this.props.streamPath +
-                  '/stream?torrent=' +
-                  encodeURIComponent(result.magnet!),
-              });
-            }
-          }}
-        >
-          <Label
-            circular
-            empty
-            color={Number(result.seeders) ? 'green' : 'red'}
-          />
-          <Icon name="film" />
-          {result.name +
-            ' - ' +
-            result.size +
-            ' - ' +
-            result.seeders +
-            ' peers'}
-        </Menu.Item>
-      </React.Fragment>
-    );
-  }
 }
 
 class ComboBox extends React.Component<ComboBoxProps> {
@@ -122,7 +26,7 @@ class ComboBox extends React.Component<ComboBoxProps> {
   setMedia = (e: any, data: DropdownProps) => {
     window.setTimeout(
       () => this.setState({ inputMedia: undefined, results: undefined }),
-      200
+      300
     );
     this.props.setMedia(e, data);
   };
@@ -135,54 +39,21 @@ class ComboBox extends React.Component<ComboBoxProps> {
           this.setState({ loading: true });
           const query: string = this.state.inputMedia || '';
           let timestamp = Number(new Date());
-          /* 
-          If input is empty or starts with http
-            If we have a mediaPath use that for results
-            Else show the default list of demo videos
-          If input is anything else:
-            If we have a stream server use that for results
-            Else search YouTube
-        */
           let results: JSX.Element[] | undefined = undefined;
           if (query === '' || (query && query.startsWith('http'))) {
-            if (this.props.mediaPath) {
-              const data = await getMediaPathResults(
-                this.props.mediaPath,
-                query
-              );
-              results = data.map((result: SearchResult) => (
-                <MediaPathSearchResult {...result} setMedia={this.setMedia} />
-              ));
-            } else {
-              results = examples.map((option: any) => (
-                <Menu.Item
-                  onClick={(e: any) => this.setMedia(e, { value: option.url })}
-                >
-                  {option.url}
-                </Menu.Item>
-              ));
-            }
+            results = examples.map((option: any) => (
+              <Menu.Item
+                onClick={(e: any) => this.setMedia(e, { value: option.url })}
+              >
+                {option.url}
+              </Menu.Item>
+            ));
           } else {
-            if (query && query.length >= 2) {
-              if (this.props.streamPath) {
-                const data = await getStreamPathResults(
-                  this.props.streamPath,
-                  query
-                );
-                results = data.map((result: SearchResult) => (
-                  <StreamPathSearchResult
-                    {...result}
-                    setMedia={this.setMedia}
-                    launchMultiSelect={this.props.launchMultiSelect}
-                    streamPath={this.props.streamPath || ''}
-                  />
-                ));
-              } else {
-                const data = await getYouTubeResults(query);
-                results = data.map((result) => (
-                  <YouTubeSearchResult {...result} setMedia={this.setMedia} />
-                ));
-              }
+            const data = await getYouTubeResults(query);
+            if (data && data.map) {
+              results = data.map((result) => (
+                <YouTubeSearchResult {...result} setMedia={this.setMedia} />
+              ));
             }
           }
           if (timestamp > this.state.lastResultTimestamp) {
@@ -257,7 +128,7 @@ class ComboBox extends React.Component<ComboBoxProps> {
             }
             loading={this.state.loading}
             label={'Now Watching:'}
-            placeholder="Enter URL (YouTube, video file, etc.), or enter search term"
+            placeholder="Enter video file URL, YouTube link, or YouTube search term"
             value={
               this.state.inputMedia !== undefined
                 ? this.state.inputMedia

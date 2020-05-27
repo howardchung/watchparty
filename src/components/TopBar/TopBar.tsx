@@ -1,7 +1,8 @@
 import React from 'react';
-import { Button, Icon, Popup } from 'semantic-ui-react';
-
-import { getColorHex, serverPath } from '../../utils';
+import { serverPath, getColorHex } from '../../utils';
+import { Icon, Popup, Button, Dropdown } from 'semantic-ui-react';
+import * as firebase from 'firebase/app';
+import 'firebase/auth';
 
 export class NewRoomButton extends React.Component<{ size?: string }> {
   createRoom = async () => {
@@ -19,7 +20,6 @@ export class NewRoomButton extends React.Component<{ size?: string }> {
         content="Create a new room with a random URL that you can share with friends"
         trigger={
           <Button
-            fluid
             color="blue"
             size={this.props.size as any}
             icon
@@ -37,12 +37,36 @@ export class NewRoomButton extends React.Component<{ size?: string }> {
 }
 
 export class TopBar extends React.Component<{
-  fbUserID?: string;
+  user?: any;
   hideNewRoom?: boolean;
   hideSignin?: boolean;
 }> {
+  facebookSignIn = async () => {
+    const provider = new firebase.auth.FacebookAuthProvider();
+    const user = await firebase.auth().signInWithPopup(provider);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(user);
+    }
+  };
+
+  googleSignIn = async () => {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    const user = await firebase.auth().signInWithPopup(provider);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(user);
+    }
+  };
+
+  emailSignIn = (email: string, password: string) => {
+    firebase.auth().createUserWithEmailAndPassword(email, password);
+  };
+
+  signOut = () => {
+    firebase.auth().signOut();
+    window.location.reload();
+  };
+
   render() {
-    const { fbUserID } = this.props;
     return (
       <React.Fragment>
         <div
@@ -150,50 +174,46 @@ export class TopBar extends React.Component<{
             className="mobileStack"
             style={{
               display: 'flex',
-              width: '450px',
               marginLeft: 'auto',
             }}
           >
             {!this.props.hideNewRoom && <NewRoomButton />}
-            {!this.props.hideSignin && !fbUserID && (
+            {!this.props.hideSignin && !this.props.user && (
               <Popup
-                content="Optionally sign in with Facebook to use your profile photo in chat"
+                basic
+                content="Sign in to automatically set your name and picture"
                 trigger={
-                  <Button
-                    fluid
-                    icon
-                    labelPosition="left"
-                    onClick={() =>
-                      window.FB.login(
-                        (response: any) => {
-                          window.location.reload();
-                        },
-                        { scope: 'public_profile,email' }
-                      )
-                    }
-                    color="facebook"
-                    className="toolButton"
+                  <Dropdown
+                    style={{ height: '36px' }}
+                    icon="sign in"
+                    labeled
+                    className="icon"
+                    button
+                    text="Sign in"
                   >
-                    <Icon name="facebook" />
-                    Sign in
-                  </Button>
+                    <Dropdown.Menu>
+                      <Dropdown.Item onClick={this.facebookSignIn}>
+                        <Icon name="facebook" />
+                        Facebook
+                      </Dropdown.Item>
+                      <Dropdown.Item onClick={this.googleSignIn}>
+                        <Icon name="google" />
+                        Google
+                      </Dropdown.Item>
+                      {/* <Dropdown.Item onClick={this.emailSignIn}>Email</Dropdown.Item> */}
+                    </Dropdown.Menu>
+                  </Dropdown>
                 }
               />
             )}
-            {fbUserID && (
+            {!this.props.hideSignin && this.props.user && (
               <Button
-                fluid
+                style={{ height: '36px' }}
                 icon
                 labelPosition="left"
-                onClick={() =>
-                  window.FB.logout((response: any) => {
-                    window.location.reload();
-                  })
-                }
-                color="facebook"
-                className="toolButton"
+                onClick={this.signOut}
               >
-                <Icon name="facebook" />
+                <Icon name="sign out" />
                 Sign out
               </Button>
             )}

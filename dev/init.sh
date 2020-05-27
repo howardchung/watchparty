@@ -11,3 +11,4 @@ docker run -d --network=host instrumentisto/coturn \
   --no-tlsv1 --no-tlsv1_1 \
   --realm=watchparty \  
 # TODO use turnadmin to create username and password
+

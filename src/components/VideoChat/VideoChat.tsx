@@ -179,9 +179,18 @@ export class VideoChat extends React.Component<VideoChatProps> {
             justifyContent: 'center',
           }}
         >
+          <div
+            style={{
+              fontSize: '10px',
+              color: 'lightgray',
+              textTransform: 'uppercase',
+              whiteSpace: 'nowrap',
+              textAlign: 'center',
+            }}
+          >{`${this.props.participants.length} Online`}</div>
           {!this.ourStream && (
             <Button
-              //fluid
+              title="Join Video Chat"
               color={'purple'}
               circular
               size="big"
@@ -241,7 +250,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
             </div>
           )}
         </div>
-        <div style={{ display: 'flex' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap' }}>
           {participants.map((p) => {
             return (
               <div key={p.id}>
@@ -265,6 +274,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
                     ) : (
                       <img
                         className="videoChatContent"
+                        // broken image: https://ui-avatars.com/api/?name=haidee&background=B03060&size=256&color=ffffff
                         src={
                           pictureMap[p.id] ||
                           getDefaultPicture(nameMap[p.id], getColorHex(p.id))

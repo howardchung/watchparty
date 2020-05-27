@@ -232,9 +232,9 @@ export async function getMediaPathResults(
         name: getMediaPathForList(mediaPath) + file.name,
       }));
   }
-  // results = results.filter((option: SearchResult) =>
-  //   option.name.toLowerCase().includes(query.toLowerCase())
-  // );
+  results = results.filter((option: SearchResult) =>
+    option.name.toLowerCase().includes(query.toLowerCase())
+  );
   return results;
 }
 

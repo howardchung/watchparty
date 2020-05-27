@@ -7,15 +7,13 @@ import {
   getStreamPathResults,
   getYouTubeResults,
 } from '../../utils';
-import {
-  MediaPathSearchResult,
-  StreamPathSearchResult,
-} from '../ComboBox/ComboBox';
+import MediaPathSearchResult from '../MediaPathSearchResult';
+import StreamPathSearchResult from '../StreamPathSearchResult';
 import YouTubeSearchResult from '../YouTubeSearchResult';
 
 interface SearchComponentProps {
   setMedia: Function;
-  type?: 'youtube' | 'mediaServer' | 'searchServer';
+  type?: 'youtube' | 'media' | 'stream';
   launchMultiSelect?: Function;
   mediaPath: string | undefined;
   streamPath: string | undefined;
@@ -42,15 +40,9 @@ class YouTubeSearchBar extends React.Component<SearchComponentProps> {
           let timestamp = Number(new Date());
           if (this.props.type === 'youtube') {
             results = await getYouTubeResults(query);
-          } else if (
-            this.props.type === 'mediaServer' &&
-            this.props.mediaPath
-          ) {
+          } else if (this.props.type === 'media' && this.props.mediaPath) {
             results = await getMediaPathResults(this.props.mediaPath, query);
-          } else if (
-            this.props.type === 'searchServer' &&
-            this.props.streamPath
-          ) {
+          } else if (this.props.type === 'stream' && this.props.streamPath) {
             results = await getStreamPathResults(this.props.streamPath, query);
           }
           if (timestamp > this.state.lastResultTimestamp) {
@@ -69,20 +61,20 @@ class YouTubeSearchBar extends React.Component<SearchComponentProps> {
   setMedia = (e: any, data: DropdownProps) => {
     window.setTimeout(
       () => this.setState({ resetDropdown: Number(new Date()) }),
-      200
+      300
     );
     this.props.setMedia(e, data);
   };
 
   render() {
     const setMedia = this.setMedia;
-    let placeholder = 'Search for streams';
+    let placeholder = 'Search streams';
     let icon = 'film';
     if (this.props.type === 'youtube') {
       placeholder = 'Search YouTube';
       icon = 'youtube';
-    } else if (this.props.type === 'mediaServer') {
-      placeholder = 'Search files';
+    } else if (this.props.type === 'media') {
+      placeholder = this.props.mediaPath || '';
       icon = 'file';
     }
     if (this.state.loading) {
@@ -100,6 +92,11 @@ class YouTubeSearchBar extends React.Component<SearchComponentProps> {
           search={(() => {}) as any}
           text={placeholder}
           onSearchChange={this.doSearch}
+          onFocus={async (e) => {
+            if (this.props.type === 'media' && this.props.mediaPath) {
+              this.doSearch(e);
+            }
+          }}
           // onBlur={() => this.setState({ results: this.state.watchOptions })}
           //searchQuery={this.state.query}
           //loading={this.state.loading}
@@ -111,7 +108,7 @@ class YouTubeSearchBar extends React.Component<SearchComponentProps> {
                   return (
                     <YouTubeSearchResult {...result} setMedia={setMedia} />
                   );
-                } else if (this.props.type === 'mediaServer') {
+                } else if (this.props.type === 'media') {
                   return (
                     <MediaPathSearchResult {...result} setMedia={setMedia} />
                   );

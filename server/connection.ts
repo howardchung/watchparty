@@ -1,6 +1,7 @@
 import { Socket } from 'socket.io';
 
 import { Room } from './room';
+import { redisCount } from './utils/redis';
 import { fetchYoutubeVideo, getYoutubeVideoID } from './utils/youtube';
 import { PlaylistVideo } from '.';
 
@@ -80,6 +81,7 @@ class Connection {
       return;
     }
 
+    redisCount('urlStarts');
     this.room.cmdHost(this.socket, data.url);
   };
 
@@ -180,6 +182,7 @@ class Connection {
     );
     if (match) {
       match.isVideoChat = true;
+      redisCount('videoChatStarts');
     }
     this.room.io.of(this.room.roomId).emit('roster', this.room.roster);
   };
@@ -201,8 +204,10 @@ class Connection {
     }
     if (data && data.file) {
       this.room.cmdHost(this.socket, 'fileshare://' + this.socket.id);
+      redisCount('fileShareStarts');
     } else {
       this.room.cmdHost(this.socket, 'screenshare://' + this.socket.id);
+      redisCount('screenShareStarts');
     }
     const match = this.room.roster.find((user) =>
       this.socket ? user.id === this.socket.id : false

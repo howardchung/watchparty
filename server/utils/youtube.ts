@@ -13,6 +13,8 @@ import {
   YOUTUBE_VIDEO_ID_REGEX,
 } from './regex';
 
+require('dotenv').config();
+
 if (process.env.YOUTUBE_API_KEY) {
   Youtube.authenticate({
     type: 'key',
@@ -95,7 +97,8 @@ export const fetchYoutubeVideo = (id: string): Promise<PlaylistVideo> => {
           const video = data.items[0];
           resolve(mapYoutubeListResult(video));
         } else {
-          console.error(data);
+          console.error(err);
+          console.log(err);
           reject('unknown youtube api error');
         }
       }

@@ -1,10 +1,12 @@
 import 'semantic-ui-css/semantic.min.css';
+import 'firebase/auth';
 
 import './App.css';
 
 // import { v4 as uuidv4 } from 'uuid';
 import querystring from 'querystring';
 
+import firebase from 'firebase/app';
 //@ts-ignore
 import magnet from 'magnet-uri';
 import React from 'react';
@@ -52,6 +54,11 @@ import { VideoChat } from '../VideoChat';
 import YouTubeSearchBar from '../YouTubeSearchBar';
 import classes from './App.module.css';
 
+const firebaseConfig = process.env.REACT_APP_FIREBASE_CONFIG;
+if (firebaseConfig) {
+  firebase.initializeApp(JSON.parse(firebaseConfig));
+}
+
 declare global {
   interface Window {
     onYouTubeIframeAPIReady: any;
@@ -96,8 +103,7 @@ interface AppState {
   isScreenSharingFile: boolean;
   isControlling: boolean;
   isVBrowser: boolean;
-  fbUserID?: string;
-  isFBReady: boolean;
+  user: any;
   isYouTubeReady: boolean;
   isAutoPlayable: boolean;
   downloaded: number;
@@ -108,6 +114,7 @@ interface AppState {
   error: string;
   settings: Settings;
   playlistOpen: boolean;
+  vBrowserResolution: string;
 }
 
 export default class App extends React.Component<null, AppState> {
@@ -132,8 +139,7 @@ export default class App extends React.Component<null, AppState> {
     isScreenSharingFile: false,
     isControlling: false,
     isVBrowser: false,
-    fbUserID: undefined,
-    isFBReady: false,
+    user: undefined,
     isYouTubeReady: false,
     isAutoPlayable: true,
     downloaded: 0,
@@ -144,6 +150,7 @@ export default class App extends React.Component<null, AppState> {
     error: '',
     settings: {},
     playlistOpen: false,
+    vBrowserResolution: '1280x720@30',
   };
   socket: any = null;
   watchPartyYTPlayer: any = null;
@@ -166,8 +173,15 @@ export default class App extends React.Component<null, AppState> {
       window.fetch(serverPath + '/ping');
     }, 10 * 60 * 1000);
 
+    firebase.auth().onAuthStateChanged((user: any) => {
+      if (user) {
+        // console.log(user);
+        this.setState({ user }, () => {
+          this.loadSignInData();
+        });
+      }
+    });
     this.loadSettings();
-    this.loadFBData();
     this.loadYouTube();
     this.init();
   }
@@ -180,36 +194,15 @@ export default class App extends React.Component<null, AppState> {
     this.setState({ settings });
   };
 
-  loadFBData = () => {
-    if (!window.FB || !this.socket) {
-      setTimeout(this.loadFBData, 1000);
-      return;
+  loadSignInData = () => {
+    if (this.state.user) {
+      // NOTE: firebase auth doesn't provide the actual first name data that individual providers (G/FB) do
+      // It's accessible at the time the user logs in but not afterward
+      // If we want accurate surname/given name we'll need to save that somewhere
+      const firstName = this.state.user.displayName.split(' ')[0];
+      this.updateName(null, { value: firstName });
+      this.updatePicture(this.state.user.photoURL + '?height=128&width=128');
     }
-    window.FB.getLoginStatus((response: any) => {
-      this.setState({ isFBReady: true });
-      const fbUserID =
-        response.status === 'connected' && response.authResponse.userID;
-      if (fbUserID) {
-        window.FB.api(
-          '/me',
-          {
-            fields: 'id,first_name,name,email,picture.width(256).height(256)',
-          },
-          (response: any) => {
-            // console.log(response);
-            const picture =
-              response &&
-              response.picture &&
-              response.picture.data &&
-              response.picture.data.url;
-            const name = response && response.first_name;
-            this.setState({ fbUserID });
-            this.updateName(null, { value: name });
-            this.updatePicture(picture);
-          }
-        );
-      }
-    });
   };
 
   loadYouTube = () => {
@@ -279,7 +272,7 @@ export default class App extends React.Component<null, AppState> {
       // Load username from localstorage
       let userName = window.localStorage.getItem('watchparty-username');
       this.updateName(null, { value: userName || generateName() });
-      this.loadFBData();
+      this.loadSignInData();
     });
     socket.on('error', (err: any) => {
       console.error(err);
@@ -733,27 +726,6 @@ export default class App extends React.Component<null, AppState> {
         leftVideo.currentTime = time;
         // Clear subtitles
         leftVideo.innerHTML = '';
-        let subtitleSrc = '';
-        if (src.includes('/stream?torrent=magnet')) {
-          subtitleSrc = src.replace('/stream', '/subtitles2');
-        } else if (src.startsWith('http')) {
-          const subtitlePath = src.slice(0, src.lastIndexOf('/') + 1);
-          // Expect subtitle name to be file name + .srt
-          subtitleSrc =
-            subtitlePath + 'subtitles/' + this.getFileName(src) + '.srt';
-        }
-        if (subtitleSrc) {
-          const response = await window.fetch(subtitleSrc);
-          const buffer = await response.arrayBuffer();
-          const vttConverter = new VTTConverter(new Blob([buffer]));
-          const url = await vttConverter.getURL();
-          const track = document.createElement('track');
-          track.kind = 'captions';
-          track.label = 'English';
-          track.srclang = 'en';
-          track.src = url;
-          leftVideo.appendChild(track);
-        }
       }
     }
 
@@ -926,14 +898,44 @@ export default class App extends React.Component<null, AppState> {
     }
   };
 
+  loadSubtitles = async () => {
+    const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
+    // Clear subtitles
+    leftVideo.innerHTML = '';
+    let subtitleSrc = '';
+    const src = this.state.currentMedia;
+    if (src.includes('/stream?torrent=magnet')) {
+      subtitleSrc = src.replace('/stream', '/subtitles2');
+    } else if (src.startsWith('http')) {
+      const subtitlePath = src.slice(0, src.lastIndexOf('/') + 1);
+      // Expect subtitle name to be file name + .srt
+      subtitleSrc =
+        subtitlePath + 'subtitles/' + this.getFileName(src) + '.srt';
+    }
+    if (subtitleSrc) {
+      const response = await window.fetch(subtitleSrc);
+      const buffer = await response.arrayBuffer();
+      const vttConverter = new VTTConverter(new Blob([buffer]));
+      const url = await vttConverter.getURL();
+      const track = document.createElement('track');
+      track.kind = 'captions';
+      track.label = 'English';
+      track.srclang = 'en';
+      track.src = url;
+      leftVideo.appendChild(track);
+      leftVideo.textTracks[0].mode = 'showing';
+    }
+  };
+
   toggleSubtitle = () => {
     if (this.isVideo()) {
       const leftVideo = document.getElementById(
         'leftVideo'
       ) as HTMLMediaElement;
-      if (leftVideo.textTracks[0]) {
-        leftVideo.textTracks[0].mode =
-          leftVideo.textTracks[0].mode === 'showing' ? 'hidden' : 'showing';
+      if (this.isSubtitled()) {
+        leftVideo.innerHTML = '';
+      } else {
+        this.loadSubtitles();
       }
     }
     if (this.isYouTube()) {
@@ -1076,7 +1078,7 @@ export default class App extends React.Component<null, AppState> {
             )}
             <div className={classes.Layout}>
               <div className={classes.Navbar}>
-                <TopBar fbUserID={this.state.fbUserID} />
+                <TopBar user={this.state.user} />
               </div>
               <div className={classes.Video}>
                 <div
@@ -1164,6 +1166,40 @@ export default class App extends React.Component<null, AppState> {
                         }))}
                       ></Dropdown>
                     )}
+                    {process.env.NODE_ENV === 'development' &&
+                      this.isVBrowser() && (
+                        <Dropdown
+                          icon="desktop"
+                          labeled
+                          className="icon"
+                          button
+                          value={this.state.vBrowserResolution}
+                          onChange={(e, data) =>
+                            this.setState({
+                              vBrowserResolution: data.value as string,
+                            })
+                          }
+                          selection
+                          options={[
+                            {
+                              text: '1080p',
+                              value: '1920x1080@30',
+                            },
+                            {
+                              text: '720p',
+                              value: '1280x720@30',
+                            },
+                            {
+                              text: '576p',
+                              value: '1024x576@60',
+                            },
+                            {
+                              text: '480p',
+                              value: '640x480@60',
+                            },
+                          ]}
+                        ></Dropdown>
+                      )}
                     {this.isVBrowser() && (
                       <Button
                         fluid
@@ -1195,14 +1231,31 @@ export default class App extends React.Component<null, AppState> {
                         }
                       />
                     )}
-                    {
+                    {false && (
                       <YouTubeSearchBar
                         setMedia={this.setMedia}
                         type={'youtube'}
                         streamPath={this.state.settings.streamPath}
                         mediaPath={this.state.settings.mediaPath}
                       />
-                    }
+                    )}
+                    {Boolean(this.state.settings.mediaPath) && (
+                      <YouTubeSearchBar
+                        setMedia={this.setMedia}
+                        type={'media'}
+                        streamPath={this.state.settings.streamPath}
+                        mediaPath={this.state.settings.mediaPath}
+                      />
+                    )}
+                    {Boolean(this.state.settings.streamPath) && (
+                      <YouTubeSearchBar
+                        setMedia={this.setMedia}
+                        type={'stream'}
+                        streamPath={this.state.settings.streamPath}
+                        mediaPath={this.state.settings.mediaPath}
+                        launchMultiSelect={this.launchMultiSelect}
+                      />
+                    )}
                   </div>
                   <div style={{ height: '4px' }} />
                   <div
@@ -1229,7 +1282,11 @@ export default class App extends React.Component<null, AppState> {
                         >
                           {this.state.loading && (
                             <Dimmer active>
-                              <Loader />
+                              <Loader>
+                                {this.isVBrowser()
+                                  ? 'Launching virtual browser. You may see a black screen while the browser starts.'
+                                  : ''}
+                              </Loader>
                             </Dimmer>
                           )}
                           {!this.state.loading && !this.state.currentMedia && (
@@ -1266,6 +1323,7 @@ export default class App extends React.Component<null, AppState> {
                           hostname={this.getVBrowserHost()}
                           controlling={this.state.isControlling}
                           setLoadingFalse={this.setLoadingFalse}
+                          resolution={this.state.vBrowserResolution}
                         />
                       ) : (
                         <video
