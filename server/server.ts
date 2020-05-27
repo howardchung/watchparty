@@ -138,6 +138,11 @@ app.get('/stats', async (req, res) => {
       0,
       -1
     );
+    const stagingVBrowsers = await redis.lrange(
+      vmManager.redisStagingKey,
+      0,
+      -1
+    );
     const chatMessages = await getRedisCountDay('chatMessages');
     const vBrowserStarts = await getRedisCountDay('vBrowserStarts');
     const vBrowserLaunches = await getRedisCountDay('vBrowserLaunches');
@@ -155,6 +160,7 @@ app.get('/stats', async (req, res) => {
       cpuUsage,
       redisUsage,
       availableVBrowsers,
+      stagingVBrowsers,
       chatMessages,
       vBrowserStarts,
       vBrowserLaunches,
