@@ -41,17 +41,7 @@ export class Room {
       io.of(roomId).emit('REC:tsMap', this.tsMap);
     }, 1000);
 
-    this.playlistInterval = setInterval(() => {
-      if (
-        this.videoDuration !== 0 &&
-        this.videoDuration &&
-        this.videoTS >= this.videoDuration
-      ) {
-        setTimeout(() => {
-          this.nextVideo();
-        }, 3000);
-      }
-    }, 1000);
+    this.playlistInterval = setInterval(this.checkEndTime, 1000);
 
     io.of(roomId).on('connection', (socket: Socket) => {
       this.connections.push(new Connection(socket, this));
@@ -64,12 +54,22 @@ export class Room {
     );
   };
 
+  checkEndTime = () => {
+    if (
+      this.videoDuration !== 0 &&
+      this.videoDuration &&
+      this.videoTS >= this.videoDuration
+    ) {
+      setTimeout(this.nextVideo, 1000);
+    }
+  };
+
   nextVideo = () => {
     this.video = undefined;
 
     if (this.videoPlaylist.length > 0) {
       const nextVideo = this.videoPlaylist[0];
-      this.startVideo(nextVideo.url);
+      this.startVideo(nextVideo.url, nextVideo.duration);
     }
   };
 

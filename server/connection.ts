@@ -122,7 +122,7 @@ class Connection {
       (video) => video.url === url
     );
     if (requestedVideo) {
-      this.room.startVideo(requestedVideo.url);
+      this.room.startVideo(requestedVideo.url, requestedVideo.duration);
     }
   };
 
