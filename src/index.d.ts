@@ -1,6 +1,7 @@
 type StringDict = { [key: string]: string };
 type NumberDict = { [key: string]: number };
 type PCDict = { [key: string]: RTCPeerConnection };
+type MediaType = 'vbrowser' | 'screenshare' | 'video' | 'youtube';
 
 interface User {
   id: string;
@@ -29,4 +30,12 @@ interface SearchResult {
 interface Settings {
   mediaPath?: string;
   streamPath?: string;
+}
+
+interface PlaylistVideo {
+  url: string;
+  name: string;
+  img?: string;
+  channel: string;
+  duration: string;
 }

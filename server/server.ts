@@ -16,6 +16,7 @@ import { getRedisCountDay } from './utils/redis';
 import { Scaleway } from './vm/scaleway';
 import { Hetzner } from './vm/hetzner';
 import { DigitalOcean } from './vm/digitalocean';
+import { VMManager } from './vm/base';
 
 const app = express();
 let server: any = null;
@@ -40,9 +41,20 @@ const names = Moniker.generator([
 
 const rooms = new Map<string, Room>();
 // Start the VM manager
-const vmManager3 = new Scaleway(rooms, 0);
-const vmManager2 = new Hetzner(rooms, 0);
-const vmManager = new DigitalOcean(rooms);
+let vmManager: VMManager;
+if (
+  process.env.REDIS_URL &&
+  process.env.SCW_SECRET_KEY &&
+  process.env.SCW_ORGANIZATION
+) {
+  new Scaleway(rooms, 0);
+}
+if (process.env.REDIS_URL && process.env.HETZNER_TOKEN) {
+  new Hetzner(rooms, 0);
+}
+if (process.env.REDIS_URL && process.env.DO_TOKEN) {
+  vmManager = new DigitalOcean(rooms);
+}
 init();
 
 async function saveRoomsToRedis() {
@@ -138,6 +150,11 @@ app.get('/stats', async (req, res) => {
       0,
       -1
     );
+    const stagingVBrowsers = await redis.lrange(
+      vmManager.redisStagingKey,
+      0,
+      -1
+    );
     const chatMessages = await getRedisCountDay('chatMessages');
     const vBrowserStarts = await getRedisCountDay('vBrowserStarts');
     const vBrowserLaunches = await getRedisCountDay('vBrowserLaunches');
@@ -155,6 +172,7 @@ app.get('/stats', async (req, res) => {
       cpuUsage,
       redisUsage,
       availableVBrowsers,
+      stagingVBrowsers,
       chatMessages,
       vBrowserStarts,
       vBrowserLaunches,

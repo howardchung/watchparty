@@ -1,13 +1,7 @@
 import axios from 'axios';
-import Redis from 'ioredis';
 import { v4 as uuidv4 } from 'uuid';
 import { VMManager, VM } from './base';
 import { cloudInit, imageName } from './utils';
-
-let redis = (undefined as unknown) as Redis.Redis;
-if (process.env.REDIS_URL) {
-  redis = new Redis(process.env.REDIS_URL);
-}
 
 const VBROWSER_TAG = process.env.VBROWSER_TAG || 'vbrowser';
 const HETZNER_TOKEN = process.env.HETZNER_TOKEN;
@@ -20,6 +14,7 @@ const imageId = 16969556;
 
 export class Hetzner extends VMManager {
   redisQueueKey = 'availableListHetzner';
+  redisStagingKey = 'stagingListHetzner';
   startVM = async (name: string) => {
     const response = await axios({
       method: 'POST',
@@ -94,23 +89,18 @@ export class Hetzner extends VMManager {
   };
 
   getVM = async (id: string) => {
-    let result = null;
-    while (!result) {
-      const response = await axios({
-        method: 'GET',
-        url: `https://api.hetzner.cloud/v1/servers/${id}`,
-        headers: {
-          Authorization: 'Bearer ' + HETZNER_TOKEN,
-        },
-      });
-      let server = this.mapServerObject(response.data.server);
-      if (server.private_ip) {
-        result = server;
-      } else {
-        await new Promise((resolve) => setTimeout(resolve, 3000));
-      }
+    const response = await axios({
+      method: 'GET',
+      url: `https://api.hetzner.cloud/v1/servers/${id}`,
+      headers: {
+        Authorization: 'Bearer ' + HETZNER_TOKEN,
+      },
+    });
+    let server = this.mapServerObject(response.data.server);
+    if (!server.private_ip) {
+      throw new Error('vm not ready');
     }
-    return result;
+    return server;
   };
 
   listVMs = async (filter?: string) => {

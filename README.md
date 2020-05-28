@@ -2,16 +2,6 @@
 
 An website for playing Jeopardy! together
 
-## Quick Start
-
-1. Clone this repo via `git clone git@github.com:howardchung/watchparty.git`
-2. Install npm dependencies for the project via `npm install`
-3. Start the server via `npm run dev` (Notice: The default port for the server will be 8080 but can be changed by setting the REACT_APP_SERVER_HOST env variable to some other port)
-4. Start the react application in a separate shell via `npm run start`
-5. Duplicate the `.env.example` file
-6. Rename it to `.env`
-7. Add environment keys as described in the advanced setup below
-
 ## Description
 
 - Implements the game show Jeopardy!, including the Jeopardy, Double Jeopardy, and Final Jeopardy rounds. Daily Doubles are also included.
@@ -40,6 +30,16 @@ An website for playing Jeopardy! together
 
 - Game data is from http://j-archive.com/
 - Games might be incomplete if some clues weren't revealed on the show.
+
+## Quick Start
+
+1. Clone this repo via `git clone git@github.com:howardchung/watchparty.git`
+2. Install npm dependencies for the project via `npm install`
+3. Start the server via `npm run dev` (Notice: The default port for the server will be 8080 but can be changed by setting the REACT_APP_SERVER_HOST env variable to some other port)
+4. Start the react application in a separate shell via `npm run start`
+5. Duplicate the `.env.example` file
+6. Rename it to `.env`
+7. Add environment keys as described in the advanced setup below
 
 ## Advanced Setup
 

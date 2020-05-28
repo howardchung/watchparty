@@ -22,6 +22,7 @@
     "react-scripts": "3.4.1",
     "react-semantic-ui-range": "^0.7.0",
     "s3-client": "^4.4.2",
+    "semantic-ui-css": "^2.4.1",
     "semantic-ui-react": "^0.88.2",
     "socket.io": "^2.3.0",
     "socket.io-client": "^2.3.0",
@@ -46,7 +47,7 @@
     }
   },
   "lint-staged": {
-    "./**/*.*": [
+    "./**/*.{ts,tsx,js,jsx,css,html,json}": [
       "prettier --write"
     ]
   },
@@ -68,6 +69,7 @@
   "devDependencies": {
     "@types/cors": "^2.8.6",
     "@types/express": "^4.17.6",
+    "@types/firebase": "^3.2.1",
     "@types/ioredis": "^4.16.2",
     "@types/jest": "^25.2.1",
     "@types/node": "^13.13.9",
