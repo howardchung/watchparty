@@ -11,9 +11,6 @@ export abstract class VMManager {
   private redis3 = new Redis(process.env.REDIS_URL);
 
   constructor(rooms: Map<string, Room>, vmBufferSize?: number) {
-    if (!process.env.REDIS_URL) {
-      return;
-    }
     if (vmBufferSize !== undefined) {
       this.vmBufferSize = vmBufferSize;
     }
