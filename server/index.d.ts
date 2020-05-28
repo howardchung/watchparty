@@ -32,7 +32,7 @@ interface Settings {
   streamPath?: string;
 }
 
-export interface YoutubeVideo {
+export interface PlaylistVideo {
   channel: string;
   url: string;
   name: string;
