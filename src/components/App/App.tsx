@@ -280,6 +280,14 @@ export default class App extends React.Component<null, AppState> {
       if (this.isFileShare() && !currentMedia.startsWith('fileshare://')) {
         this.stopScreenShare();
       }
+      if (this.isScreenShare() && currentMedia.startsWith('screenshare://')) {
+        // Ignore, it's probably a reconnection
+        return;
+      }
+      if (this.isFileShare() && currentMedia.startsWith('fileshare://')) {
+        // Ignore, it's probably a reconnection
+        return;
+      }
       if (this.isVBrowser() && !currentMedia.startsWith('vbrowser://')) {
         this.stopVBrowser();
       }
