@@ -1,13 +1,7 @@
 import axios from 'axios';
-import Redis from 'ioredis';
 import { v4 as uuidv4 } from 'uuid';
 import { VMManager, VM } from './base';
 import { cloudInit, imageName } from './utils';
-
-let redis = (undefined as unknown) as Redis.Redis;
-if (process.env.REDIS_URL) {
-  redis = new Redis(process.env.REDIS_URL);
-}
 
 const VBROWSER_TAG = process.env.VBROWSER_TAG || 'vbrowser';
 const HETZNER_TOKEN = process.env.HETZNER_TOKEN;
