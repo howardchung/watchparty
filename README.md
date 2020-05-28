@@ -2,16 +2,6 @@
 
 An website for watching videos together.
 
-## Quick Start
-
-1. Clone this repo via `git clone git@github.com:howardchung/watchparty.git`
-2. Install npm dependencies for the project via `npm install`
-3. Start the server via `npm run dev` (Notice: The default port for the server will be 8080 but can be changed by setting the REACT_APP_SERVER_HOST env variable to some other port)
-4. Start the react application in a separate shell via `npm run start`
-5. Duplicate the `.env.example` file
-6. Rename it to `.env`
-7. Add environment keys as described in the advanced setup below
-
 ## Description
 
 - Synchronizes the video being watched with the current room
@@ -25,6 +15,16 @@ An website for watching videos together.
 - Create separate rooms for users on demand
 - Text chat
 - Video chat
+
+## Quick Start
+
+1. Clone this repo via `git clone git@github.com:howardchung/watchparty.git`
+2. Install npm dependencies for the project via `npm install`
+3. Start the server via `npm run dev` (Notice: The default port for the server will be 8080 but can be changed by setting the REACT_APP_SERVER_HOST env variable to some other port)
+4. Start the react application in a separate shell via `npm run start`
+5. Duplicate the `.env.example` file
+6. Rename it to `.env`
+7. Add environment keys as described in the advanced setup below
 
 ## Advanced Setup
 
