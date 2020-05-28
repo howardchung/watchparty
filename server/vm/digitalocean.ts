@@ -34,29 +34,6 @@ export class DigitalOcean extends VMManager {
       },
     });
     const id = response.data.droplet.id;
-    // Wait for the VM to be created
-    // while(true) {
-    //   try {
-    //     await this.getVM(id);
-    //     break;
-    //   } catch (e) {
-    //     // console.log(e);
-    //   }
-    //   await new Promise((resolve) => setTimeout(resolve, 1000));
-    // }
-    // // boot the instance
-    // const response3 = await axios({
-    //   method: 'POST',
-    //   url: `https://api.digitalocean.com/v2/droplets/${id}/actions`,
-    //   headers: {
-    //     Authorization: 'Bearer ' + DO_TOKEN,
-    //     'Content-Type': 'application/json',
-    //   },
-    //   data: {
-    //     type: 'power_on',
-    //   },
-    // });
-    // // console.log(response3.data);
     return id;
   };
 

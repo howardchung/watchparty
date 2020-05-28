@@ -177,15 +177,16 @@ export abstract class VMManager {
       // We wait first before checking to give the VM time to shut down (if it's restarting)
       await new Promise((resolve) => setTimeout(resolve, 2000));
       let ready = false;
+      let candidate = undefined;
       try {
-        const candidate = await this.getVM(id);
+        candidate = await this.getVM(id);
         ready = await this.checkVMReady(candidate.host);
       } catch (e) {
         // console.log(e);
       }
       const retryCount = await this.redis.incr(this.redisStagingKey + ':' + id);
       if (ready) {
-        console.log('[CHECKSTAGING] ready:', id);
+        console.log('[CHECKSTAGING] ready:', id, candidate?.host, retryCount);
         // If it is, move it to available list
         await this.redis
           .multi()
@@ -194,8 +195,13 @@ export abstract class VMManager {
           .del(this.redisStagingKey + ':' + id)
           .exec();
       } else {
-        console.log('[CHECKSTAGING] not ready:', id);
-        if (retryCount > 120) {
+        console.log(
+          '[CHECKSTAGING] not ready:',
+          id,
+          candidate?.host,
+          retryCount
+        );
+        if (retryCount > 60) {
           await this.redis.del(this.redisStagingKey + ':' + id);
           this.terminateVMWrapper(id);
         }
@@ -233,12 +239,12 @@ export abstract class VMManager {
   };
 
   protected terminateVMWrapper = async (id: string) => {
-    // Get the VM data to calculate lifetime, if we fail do the terminate anyway
-    const lifetime = await this.terminateVMMetrics(id);
-    await this.terminateVM(id);
     // Remove from lists, if it exists
     await this.redis.lrem(this.redisQueueKey, 1, id);
     await this.redis.lrem(this.redisStagingKey, 1, id);
+    // Get the VM data to calculate lifetime, if we fail do the terminate anyway
+    const lifetime = await this.terminateVMMetrics(id);
+    await this.terminateVM(id);
     if (lifetime) {
       await this.redis.lpush('vBrowserVMLifetime', lifetime);
       await this.redis.ltrim('vBrowserVMLifetime', 0, 24);
