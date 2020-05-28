@@ -1,5 +1,5 @@
 import Youtube from 'youtube-api';
-import { YoutubeVideo, YoutubeResult } from '../index.d';
+import { YoutubeVideo, YoutubeSearchResult } from '../index.d';
 
 if (process.env.YOUTUBE_API_KEY) {
   Youtube.authenticate({
@@ -8,8 +8,9 @@ if (process.env.YOUTUBE_API_KEY) {
   });
 }
 
-export const mapYoutubeResult = (video: YoutubeResult): YoutubeVideo => {
+export const mapYoutubeResult = (video: YoutubeSearchResult): YoutubeVideo => {
   return {
+    channel: video.snippet.channelTitle,
     url: 'https://www.youtube.com/watch?v=' + video.id.videoId,
     name: video.snippet.title,
     img: video.snippet.thumbnails.default.url,
