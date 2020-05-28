@@ -720,8 +720,11 @@ export default class App extends React.Component<null, AppState> {
     }
     if (this.isYouTube()) {
       let url = new window.URL(src);
+      // Standard link https://www.youtube.com/watch?v=ID
       let videoId = querystring.parse(url.search.substring(1))['v'];
-      this.watchPartyYTPlayer?.cueVideoById(videoId, time);
+      // Link shortener https://youtu.be/ID
+      let altVideoId = src.split('/').slice(-1)[0];
+      this.watchPartyYTPlayer?.cueVideoById(videoId || altVideoId, time);
     }
   };
 

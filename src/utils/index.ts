@@ -89,7 +89,10 @@ export const getMediaType = (input: string) => {
   if (!input) {
     return '';
   }
-  if (input.startsWith('https://www.youtube.com/')) {
+  if (
+    input.startsWith('https://www.youtube.com/') ||
+    input.startsWith('https://youtu.be/')
+  ) {
     return 'youtube';
   }
   return 'video';
