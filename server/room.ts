@@ -23,7 +23,7 @@ export class Room {
   public roomId: string;
   public creationTime: Date = new Date();
   private vmManager: VMManager;
-  public isRoomDirty = false; // Indicates the room needs to be saved, e.g. we unassign a VM from an empty room
+  public isRoomDirty = false; // Indicates an unattended room needs to be saved, e.g. we unassign a VM from an empty room
 
   constructor(
     io: SocketIO.Server,
@@ -200,7 +200,7 @@ export class Room {
         );
         io.of(roomId).emit('roster', this.roster);
       });
-      socket.on('CMD:stopVBrowser', () => this.resetRoomVM());
+      socket.on('CMD:stopVBrowser', () => this.stopVBrowser());
       socket.on('CMD:changeController', (data: string) => {
         this.roster.forEach((user, i) => {
           if (user.id === data) {
@@ -244,7 +244,7 @@ export class Room {
     });
   }
 
-  serialize() {
+  serialize = () => {
     return JSON.stringify({
       video: this.video,
       videoTS: this.videoTS,
@@ -255,9 +255,9 @@ export class Room {
       vBrowser: this.vBrowser,
       creationTime: this.creationTime,
     });
-  }
+  };
 
-  deserialize(roomData: string) {
+  deserialize = (roomData: string) => {
     const roomObj = JSON.parse(roomData);
     this.video = roomObj.video;
     this.videoTS = roomObj.videoTS;
@@ -279,17 +279,17 @@ export class Room {
     if (roomObj.creationTime) {
       this.creationTime = new Date(roomObj.creationTime);
     }
-  }
+  };
 
-  getHostState() {
+  getHostState = () => {
     return {
       video: this.video,
       videoTS: this.videoTS,
       paused: this.paused,
     };
-  }
+  };
 
-  async resetRoomVM() {
+  stopVBrowser = async () => {
     const assignTime = this.vBrowser && this.vBrowser.assignTime;
     const id = this.vBrowser && this.vBrowser.id;
     this.vBrowser = undefined;
@@ -309,9 +309,9 @@ export class Room {
         console.error(e);
       }
     }
-  }
+  };
 
-  cmdHost(socket: Socket | undefined, data: string) {
+  cmdHost = (socket: Socket | undefined, data: string) => {
     this.video = data;
     this.videoTS = 0;
     this.paused = false;
@@ -322,9 +322,9 @@ export class Room {
       const chatMsg = { id: socket.id, cmd: 'host', msg: data };
       this.addChatMessage(socket, chatMsg);
     }
-  }
+  };
 
-  addChatMessage(socket: Socket | undefined, chatMsg: any) {
+  addChatMessage = (socket: Socket | undefined, chatMsg: any) => {
     const chatWithTime: ChatMessage = {
       ...chatMsg,
       timestamp: new Date().toISOString(),
@@ -333,5 +333,5 @@ export class Room {
     this.chat.push(chatWithTime);
     this.chat = this.chat.splice(-100);
     this.io.of(this.roomId).emit('REC:chat', chatWithTime);
-  }
+  };
 }

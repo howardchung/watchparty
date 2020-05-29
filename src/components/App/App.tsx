@@ -319,6 +319,10 @@ export default class App extends React.Component<null, AppState> {
             console.log(
               'YT player not ready, onReady callback will retry when it is'
             );
+          } else if (this.isVBrowser()) {
+            console.log(
+              'not playing video as this is a vbrowser:// placeholder'
+            );
           } else {
             // Start this video
             this.doSrc(data.video, data.videoTS);

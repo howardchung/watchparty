@@ -33,8 +33,8 @@ export abstract class VMManager {
               6 * 60 * 60 * 1000 ||
             room.roster.length === 0
           ) {
-            console.log('[RESET] VM in room:', room.roomId);
-            room.resetRoomVM();
+            console.log('[RELEASE] VM in room:', room.roomId);
+            room.stopVBrowser();
           }
         }
       }
