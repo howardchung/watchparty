@@ -5,12 +5,12 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 
 import App from './components/App';
-import { Home } from './components/Home';
 import * as serviceWorker from './serviceWorker';
+import { JeopardyHome } from './components/Home/Home';
 
-const isHome = false && !Boolean(window.location.hash.substring(1));
+const isHome = !Boolean(window.location.hash.substring(1));
 ReactDOM.render(
-  <React.StrictMode>{isHome ? <Home /> : <App />}</React.StrictMode>,
+  <React.StrictMode>{isHome ? <JeopardyHome /> : <App />}</React.StrictMode>,
   document.getElementById('root')
 );
 

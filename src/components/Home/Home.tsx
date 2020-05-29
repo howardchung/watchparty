@@ -1,7 +1,7 @@
 import React from 'react';
 import { Divider, Header, Icon, Step } from 'semantic-ui-react';
 
-import { NewRoomButton, TopBar } from '../TopBar';
+import { NewRoomButton, TopBar, JeopardyTopBar } from '../TopBar';
 import styles from './Home.module.css';
 
 export const Home: React.FC = () => {
@@ -199,6 +199,50 @@ const Hero = ({
             alt="hero"
             style={{ width: '100%', borderRadius: '10px' }}
             src={image}
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export const JeopardyHome = () => {
+  return (
+    <div>
+      <JeopardyTopBar hideNewRoom />
+      <div className={styles.container}>
+        <Hero
+          heroText={'Play through episodes of Jeopardy! with friends.'}
+          subText={'Over 390,000 clues in 6,200 episodes and counting.'}
+          action={<NewRoomButton />}
+          image={'/screenshot3.png'}
+        />
+        <Divider horizontal>
+          <Header inverted as="h4">
+            <Icon name="cogs" />
+            Features
+          </Header>
+        </Divider>
+        <div className={styles.featureSection}>
+          <Feature
+            icon="hand point right"
+            title="Episode Selector"
+            text="Pick any episode by number, or play a random game."
+          />
+          <Feature
+            icon="lightbulb"
+            title="Buzzer"
+            text="Be fast on the buzzer to score points! But don't buzz too early or you'll be locked out for a brief period."
+          />
+          <Feature
+            icon="microphone"
+            title="Reading"
+            text="Clues are read to you by the computer for a realistic experience."
+          />
+          <Feature
+            icon="gavel"
+            title="Judging"
+            text="Players perform answer judging themselves, so you're not penalized for incorrect spelling."
           />
         </div>
       </div>

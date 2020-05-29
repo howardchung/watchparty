@@ -225,7 +225,7 @@ export class TopBar extends React.Component<{
   }
 }
 
-export class JeopardyTopBar extends React.Component {
+export class JeopardyTopBar extends React.Component<{ hideNewRoom?: boolean }> {
   createRoom = async () => {
     const response = await window.fetch(serverPath + '/createRoom', {
       method: 'POST',
@@ -273,31 +273,49 @@ export class JeopardyTopBar extends React.Component {
               <div className="logo">Jeopardy!</div>
             </div>
           </a>
+          {/* <div
+            style={{
+              display: 'flex',
+              marginLeft: '10px',
+              alignItems: 'center',
+            }}
+          >
+            <a
+              href="https://github.com/howardchung/jeopardy"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="footerIcon"
+              title="GitHub"
+            >
+              <Icon name="github" size="big" link />
+            </a>
+          </div> */}
           <div
-            className="mobileStack"
             style={{
               display: 'flex',
               width: '200px',
               marginLeft: 'auto',
             }}
           >
-            <Popup
-              content="Create a new room with a random URL that you can share with friends"
-              trigger={
-                <Button
-                  fluid
-                  color="blue"
-                  size="medium"
-                  icon
-                  labelPosition="left"
-                  onClick={this.createRoom}
-                  className="toolButton"
-                >
-                  <Icon name="certificate" />
-                  New Room
-                </Button>
-              }
-            />
+            {!this.props.hideNewRoom && (
+              <Popup
+                content="Create a new room with a random URL that you can share with friends"
+                trigger={
+                  <Button
+                    fluid
+                    color="blue"
+                    size="medium"
+                    icon
+                    labelPosition="left"
+                    onClick={this.createRoom}
+                    className="toolButton"
+                  >
+                    <Icon name="certificate" />
+                    New Room
+                  </Button>
+                }
+              />
+            )}
           </div>
         </div>
       </React.Fragment>

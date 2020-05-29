@@ -5,13 +5,15 @@ const jData = require('../jeopardy.json');
 
 // Do a game count
 // let counts: NumberDict = {};
+// let clueCount = 0;
 // Object.values(jData).forEach((ep: any) => {
 //   if (!counts[ep.info]) {
 //     counts[ep.info] = 0;
 //   }
 //   counts[ep.info] += 1;
+//   clueCount += ep.jeopardy.length + ep.double.length + ep.final.length;
 // });
-// console.log(counts);
+// console.log(counts, clueCount);
 
 interface RawQuestion {
   val: number;

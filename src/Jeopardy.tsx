@@ -174,6 +174,9 @@ export class Jeopardy extends React.Component<{
     introVideo.muted = true;
     introVideo.src = '/jeopardy/jeopardy-intro-video.mp4';
     introVideo.play();
+    introVideo.style.width = '100%';
+    introVideo.style.height = '100%';
+    introVideo.style.backgroundColor = '#000000';
     introMusic.volume = 0.5;
     introMusic.play();
     setTimeout(async () => {
