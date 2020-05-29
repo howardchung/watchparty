@@ -100,6 +100,7 @@ interface AppState {
   error: string;
   settings: Settings;
   vBrowserResolution: string;
+  nonPlayableMedia: boolean;
 }
 
 export default class App extends React.Component<null, AppState> {
@@ -135,6 +136,7 @@ export default class App extends React.Component<null, AppState> {
     error: '',
     settings: {},
     vBrowserResolution: '1280x720@30',
+    nonPlayableMedia: false,
   };
   socket: any = null;
   watchPartyYTPlayer: any = null;
@@ -296,6 +298,7 @@ export default class App extends React.Component<null, AppState> {
           currentMedia,
           currentMediaPaused: data.paused,
           loading: Boolean(data.video),
+          nonPlayableMedia: false,
         },
         () => {
           if (
@@ -451,6 +454,7 @@ export default class App extends React.Component<null, AppState> {
           this.screenShareStream = stream;
           this.socket.emit('CMD:joinScreenShare', { file: true });
           this.setState({ isScreenSharing: true, isScreenSharingFile: true });
+          stream.onaddtrack = undefined;
         }
       };
     });
@@ -734,7 +738,15 @@ export default class App extends React.Component<null, AppState> {
         const leftVideo = document.getElementById(
           'leftVideo'
         ) as HTMLMediaElement;
-        await leftVideo?.play();
+        try {
+          await leftVideo?.play();
+        } catch (e) {
+          // console.warn(e);
+          console.warn(e.name);
+          if (e.name === 'NotSupportedError') {
+            this.setState({ loading: false, nonPlayableMedia: true });
+          }
+        }
       }
       if (this.isYouTube()) {
         console.log('play yt');
@@ -1253,7 +1265,9 @@ export default class App extends React.Component<null, AppState> {
                       tabIndex={1}
                       onKeyDown={this.onVideoKeydown}
                     >
-                      {(this.state.loading || !this.state.currentMedia) && (
+                      {(this.state.loading ||
+                        !this.state.currentMedia ||
+                        this.state.nonPlayableMedia) && (
                         <div
                           id="loader"
                           className="videoContent"
@@ -1277,9 +1291,18 @@ export default class App extends React.Component<null, AppState> {
                               color="yellow"
                               icon="hand point up"
                               header="You're not watching anything!"
-                              content="Pick something to watch from the menu above."
+                              content="Pick something to watch above."
                             />
                           )}
+                          {!this.state.loading &&
+                            this.state.nonPlayableMedia && (
+                              <Message
+                                color="yellow"
+                                icon="frown"
+                                header="It doesn't look like this is a media file!"
+                                content="Maybe you meant to launch a VBrowser if you're trying to visit a web page?"
+                              />
+                            )}
                         </div>
                       )}
                       <iframe
