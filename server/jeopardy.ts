@@ -1,7 +1,13 @@
 import { Socket } from 'socket.io';
+import Redis from 'ioredis';
 import { BooleanDict, StringDict, NumberDict, User } from '.';
 import { Room } from './room';
 const jData = require('../jeopardy.json');
+
+let redis = (undefined as unknown) as Redis.Redis;
+if (process.env.REDIS_URL) {
+  redis = new Redis(process.env.REDIS_URL);
+}
 
 // Do a game count
 // let counts: NumberDict = {};
@@ -262,6 +268,9 @@ export class Jeopardy {
         if (!this.jpd.public.questionDuration) {
           return;
         }
+        if (answer && answer.length > 1024) {
+          return;
+        }
         console.log('[ANSWER]', socket.id, question, answer);
         if (answer) {
           this.jpd.answers[socket.id] = answer;
@@ -277,7 +286,7 @@ export class Jeopardy {
       });
 
       socket.on('JPD:wager', (wager) => this.submitWager(socket.id, wager));
-      socket.on('JPD:judge', (data) => {
+      socket.on('JPD:judge', async (data) => {
         const msg = {
           id: socket.id,
           cmd: 'judge',
@@ -287,9 +296,21 @@ export class Jeopardy {
             correct: data.correct,
           }),
         };
+        const correct = this.jpd.public.currentAnswer;
+        const submitted = this.jpd.public.answers[data.id];
         const success = this.judgeAnswer(data);
         if (success) {
           this.room.addChatMessage(socket, msg);
+          if (data.correct && redis) {
+            // If the answer was judged correct and non-trivial (equal lowercase), log it for analysis
+            if (correct?.toLowerCase() !== submitted?.toLowerCase()) {
+              await redis.lpush(
+                'jpd:nonTrivialJudges',
+                `${correct},${submitted},${1}`
+              );
+              await redis.ltrim('jpd:nonTrivialJudges', 0, 100000);
+            }
+          }
         }
       });
       socket.on('JPD:skipQ', () => {

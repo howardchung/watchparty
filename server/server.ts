@@ -146,12 +146,12 @@ app.get('/stats', async (req, res) => {
       ?.split(':')[1]
       .trim();
     const availableVBrowsers = await redis.lrange(
-      vmManager.redisQueueKey,
+      vmManager.redisQueueKey || 'availableList',
       0,
       -1
     );
     const stagingVBrowsers = await redis.lrange(
-      vmManager.redisStagingKey,
+      vmManager.redisStagingKey || 'stagingList',
       0,
       -1
     );
@@ -166,6 +166,7 @@ app.get('/stats', async (req, res) => {
     const fileShareStarts = await getRedisCountDay('fileShareStarts');
     const videoChatStarts = await getRedisCountDay('videoChatStarts');
     const connectStarts = await getRedisCountDay('connectStarts');
+    const nonTrivialJudges = await redis.llen('jpd:nonTrivialJudges');
 
     res.json({
       roomCount: rooms.size,
@@ -189,6 +190,7 @@ app.get('/stats', async (req, res) => {
       currentScreenShare,
       currentFileShare,
       currentVideoChat,
+      nonTrivialJudges,
       rooms: roomData,
     });
   } else {
