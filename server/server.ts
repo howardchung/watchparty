@@ -146,12 +146,12 @@ app.get('/stats', async (req, res) => {
       ?.split(':')[1]
       .trim();
     const availableVBrowsers = await redis.lrange(
-      vmManager.redisQueueKey || 'availableList',
+      vmManager?.redisQueueKey || 'availableList',
       0,
       -1
     );
     const stagingVBrowsers = await redis.lrange(
-      vmManager.redisStagingKey || 'stagingList',
+      vmManager?.redisStagingKey || 'stagingList',
       0,
       -1
     );
