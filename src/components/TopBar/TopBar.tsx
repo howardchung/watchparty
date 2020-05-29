@@ -8,6 +8,10 @@ export class NewRoomButton extends React.Component<{ size?: string }> {
   createRoom = async () => {
     const response = await window.fetch(serverPath + '/createRoom', {
       method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({}),
     });
     const data = await response.json();
     const { name } = data;

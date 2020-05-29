@@ -2,6 +2,8 @@ require('dotenv').config();
 import fs from 'fs';
 import util from 'util';
 import express from 'express';
+import bodyParser from 'body-parser';
+import compression from 'compression';
 import Moniker from 'moniker';
 import Youtube from 'youtube-api';
 import os from 'os';
@@ -97,6 +99,8 @@ async function init() {
 }
 
 app.use(cors());
+app.use(bodyParser.json());
+app.use(compression());
 app.use(express.static('build'));
 
 app.get('/ping', (req, res) => {
@@ -216,7 +220,9 @@ app.post('/createRoom', (req, res) => {
     name = names.choose();
   }
   console.log('createRoom: ', name);
-  rooms.set('/' + name, new Room(io, vmManager, '/' + name));
+  const newRoom = new Room(io, vmManager, '/' + name);
+  newRoom.video = req.body?.video || '';
+  rooms.set('/' + name, newRoom);
   res.json({ name });
 });
 
