@@ -3,10 +3,19 @@ import { User, ChatMessage, NumberDict, StringDict } from '.';
 import Redis from 'ioredis';
 import { redisCount } from './utils/redis';
 import { VMManager, AssignedVM } from './vm/base';
+import * as admin from 'firebase-admin';
 
 let redis = (undefined as unknown) as Redis.Redis;
 if (process.env.REDIS_URL) {
   redis = new Redis(process.env.REDIS_URL);
+}
+
+if (process.env.FIREBASE_ADMIN_SDK_CONFIG) {
+  admin.initializeApp({
+    credential: admin.credential.cert(
+      JSON.parse(process.env.FIREBASE_ADMIN_SDK_CONFIG)
+    ),
+  });
 }
 
 export class Room {
@@ -173,38 +182,59 @@ export class Room {
         this.cmdHost(socket, '');
         io.of(roomId).emit('roster', this.roster);
       });
-      socket.on('CMD:startVBrowser', async () => {
-        if (this.vBrowser) {
-          // Maybe terminate the existing instance and spawn a new one
-          return;
-        }
-        redisCount('vBrowserStarts');
-        this.cmdHost(socket, 'vbrowser://');
-        // TODO pick large based on whether user is sub
-        const isLarge = false;
-        const vmManager = isLarge
-          ? this.vmManagers?.large
-          : this.vmManagers?.standard;
-        const assignment = await vmManager?.assignVM();
-        if (!assignment) {
-          this.cmdHost(socket, '');
-          this.vBrowser = undefined;
-          return;
-        }
-        this.vBrowser = assignment;
-        this.roster.forEach((user, i) => {
-          if (user.id === socket.id) {
-            this.roster[i].isController = true;
-          } else {
-            this.roster[i].isController = false;
+      socket.on(
+        'CMD:startVBrowser',
+        async (data: { uid: string; token: any }) => {
+          if (this.vBrowser) {
+            // Maybe terminate the existing instance and spawn a new one
+            return;
           }
-        });
-        this.cmdHost(
-          undefined,
-          'vbrowser://' + this.vBrowser.pass + '@' + this.vBrowser.host
-        );
-        io.of(roomId).emit('roster', this.roster);
-      });
+          let isLarge = false;
+          if (
+            process.env.FIREBASE_ADMIN_SDK_CONFIG &&
+            data &&
+            data.uid &&
+            data.token
+          ) {
+            // Validate the user token
+            const decoded = await admin.auth().verifyIdToken(data.token);
+            if (data.uid !== decoded.uid) {
+              console.log('user token invalid');
+              return;
+            }
+            console.log(decoded);
+            // TODO Check if user is subscriber, if so set isLarge
+            if (decoded.uid === '6wR1m86OjEYP7dSBLKpD9TH2Cgs2') {
+              isLarge = true;
+            }
+          }
+
+          redisCount('vBrowserStarts');
+          this.cmdHost(socket, 'vbrowser://');
+          const vmManager = isLarge
+            ? this.vmManagers?.large
+            : this.vmManagers?.standard;
+          const assignment = await vmManager?.assignVM();
+          if (!assignment) {
+            this.cmdHost(socket, '');
+            this.vBrowser = undefined;
+            return;
+          }
+          this.vBrowser = assignment;
+          this.roster.forEach((user, i) => {
+            if (user.id === socket.id) {
+              this.roster[i].isController = true;
+            } else {
+              this.roster[i].isController = false;
+            }
+          });
+          this.cmdHost(
+            undefined,
+            'vbrowser://' + this.vBrowser.pass + '@' + this.vBrowser.host
+          );
+          io.of(roomId).emit('roster', this.roster);
+        }
+      );
       socket.on('CMD:stopVBrowser', () => this.stopVBrowser());
       socket.on('CMD:changeController', (data: string) => {
         this.roster.forEach((user, i) => {

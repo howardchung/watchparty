@@ -55,11 +55,11 @@ if (
 }
 if (process.env.REDIS_URL && process.env.HETZNER_TOKEN) {
   // new Hetzner(rooms, 0);
-  // new Hetzner(rooms, 0, true);
+  vmManagerLarge = new Hetzner(rooms, 0, true);
 }
 if (process.env.REDIS_URL && process.env.DO_TOKEN) {
   vmManager = new DigitalOcean(rooms);
-  vmManagerLarge = new DigitalOcean(rooms, 0, true);
+  // new DigitalOcean(rooms, 0, true);
 }
 const vmManagers = { standard: vmManager!, large: vmManagerLarge! };
 init();
