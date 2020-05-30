@@ -12,6 +12,7 @@ export default class VBrowser extends React.Component<{
   controlling: boolean;
   setLoadingFalse: Function;
   resolution: string;
+  setResolution: Function;
 }> {
   //@ts-ignore
   // private observer = new ResizeObserver(this.onResize);
@@ -23,6 +24,7 @@ export default class VBrowser extends React.Component<{
   private scroll_invert = true;
   private width = 1280;
   private height = 720;
+  private rate = 30;
   // private _component = React.createRef<HTMLDivElement>();
   private _container = React.createRef<HTMLDivElement>();
   private _overlay = React.createRef<HTMLDivElement>();
@@ -39,7 +41,6 @@ export default class VBrowser extends React.Component<{
       if (this.props.controlling) {
         this.takeControl();
       }
-      this.setResolution(this.props.resolution);
     });
     this.$client.on(EVENT.DISCONNECTED, () => {
       this.$client.login(url, this.props.password, this.props.username);
@@ -47,6 +48,9 @@ export default class VBrowser extends React.Component<{
     this.$client.on(EVENT.SCREEN.RESOLUTION, (data) => {
       this.width = data.width;
       this.height = data.height;
+      this.rate = data.rate;
+      // Update our state with the resolution sent from server
+      this.props.setResolution(`${this.width}x${this.height}@${this.rate}`);
     });
     this.$client.on(EVENT.TRACK, (stream) => {
       // console.log(track, streams);
@@ -85,7 +89,7 @@ export default class VBrowser extends React.Component<{
       this.takeControl();
     }
     if (this.props.resolution !== prevProps.resolution) {
-      this.setResolution(this.props.resolution);
+      this.changeResolution(this.props.resolution);
     }
   }
 
@@ -104,7 +108,7 @@ export default class VBrowser extends React.Component<{
     }
   };
 
-  setResolution = (resString: string) => {
+  changeResolution = (resString: string) => {
     const split = resString.split(/x|@/);
     const width = Number(split[0]);
     const height = Number(split[1]);

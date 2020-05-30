@@ -1326,6 +1326,9 @@ export default class App extends React.Component<null, AppState> {
                           controlling={this.state.isControlling}
                           setLoadingFalse={this.setLoadingFalse}
                           resolution={this.state.vBrowserResolution}
+                          setResolution={(data: string) =>
+                            this.setState({ vBrowserResolution: data })
+                          }
                         />
                       ) : (
                         <video

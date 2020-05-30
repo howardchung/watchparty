@@ -3,15 +3,15 @@ import axios from 'axios';
 import { VMManager, VM } from './base';
 import { cloudInit, imageName } from './utils';
 
-const VBROWSER_TAG = process.env.VBROWSER_TAG || 'vbrowser';
 const DO_TOKEN = process.env.DO_TOKEN;
 const region = 'sfo2';
-const size = 's-2vcpu-2gb'; // s-1vcpu-1gb, s-1vcpu-2gb, s-2vcpu-2gb
 const gatewayHost = 'gateway4.watchparty.me';
 const imageId = 64226647;
 const sshKeys = ['cc:3d:a7:d3:99:17:fe:b7:dd:59:c4:78:14:d4:02:d1'];
 
 export class DigitalOcean extends VMManager {
+  size = 's-2vcpu-2gb'; // s-1vcpu-1gb, s-1vcpu-2gb, s-2vcpu-2gb, s-4vcpu-8gb, c-2
+  largeSize = 's-4vcpu-8gb';
   redisQueueKey = 'availableListDO';
   redisStagingKey = 'stagingListDO';
   startVM = async (name: string) => {
@@ -25,12 +25,15 @@ export class DigitalOcean extends VMManager {
       data: {
         name: name,
         region: region,
-        size,
+        size: this.isLarge ? this.largeSize : this.size,
         image: imageId,
         ssh_keys: sshKeys,
         private_networking: true,
-        user_data: cloudInit(imageName),
-        tags: [VBROWSER_TAG],
+        user_data: cloudInit(
+          imageName,
+          this.isLarge ? '1920x1080@30' : undefined
+        ),
+        tags: [this.tag],
       },
     });
     const id = response.data.droplet.id;
@@ -145,7 +148,7 @@ export class DigitalOcean extends VMManager {
     return response.data.droplets
       .map(this.mapServerObject)
       .filter(
-        (server: VM) => server.tags.includes(VBROWSER_TAG) && server.private_ip
+        (server: VM) => server.tags.includes(this.tag) && server.private_ip
       );
   };
 
@@ -162,7 +165,8 @@ export class DigitalOcean extends VMManager {
       state: server.status,
       tags: server.tags,
       creation_date: server.created_at,
-      provider: this.redisQueueKey,
+      provider: this.getRedisQueueKey(),
+      large: this.isLarge,
     };
   };
 }
