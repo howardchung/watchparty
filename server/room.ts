@@ -22,18 +22,18 @@ export class Room {
   private io: SocketIO.Server;
   public roomId: string;
   public creationTime: Date = new Date();
-  private vmManager: VMManager;
+  private vmManagers: { standard: VMManager; large: VMManager } | undefined;
   public isRoomDirty = false; // Indicates an unattended room needs to be saved, e.g. we unassign a VM from an empty room
 
   constructor(
     io: SocketIO.Server,
-    vmManager: VMManager,
+    vmManagers: { standard: VMManager; large: VMManager },
     roomId: string,
     roomData?: string | null | undefined
   ) {
     this.roomId = roomId;
     this.io = io;
-    this.vmManager = vmManager;
+    this.vmManagers = vmManagers;
 
     if (roomData) {
       this.deserialize(roomData);
@@ -180,7 +180,12 @@ export class Room {
         }
         redisCount('vBrowserStarts');
         this.cmdHost(socket, 'vbrowser://');
-        const assignment = await this.vmManager.assignVM();
+        // TODO pick large based on whether user is sub
+        const isLarge = false;
+        const vmManager = isLarge
+          ? this.vmManagers?.large
+          : this.vmManagers?.standard;
+        const assignment = await vmManager?.assignVM();
         if (!assignment) {
           this.cmdHost(socket, '');
           this.vBrowser = undefined;
@@ -292,6 +297,7 @@ export class Room {
   stopVBrowser = async () => {
     const assignTime = this.vBrowser && this.vBrowser.assignTime;
     const id = this.vBrowser && this.vBrowser.id;
+    const isLarge = this.vBrowser?.large;
     this.vBrowser = undefined;
     this.roster.forEach((user, i) => {
       this.roster[i].isController = false;
@@ -304,7 +310,10 @@ export class Room {
     }
     if (id) {
       try {
-        await this.vmManager.resetVM(id);
+        const vmManager = isLarge
+          ? this.vmManagers?.large
+          : this.vmManagers?.standard;
+        await vmManager?.resetVM(id);
       } catch (e) {
         console.error(e);
       }
