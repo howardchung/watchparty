@@ -20,6 +20,7 @@ import {
   Modal,
   Popup,
   Progress,
+  Menu,
 } from 'semantic-ui-react';
 //@ts-ignore
 import io from 'socket.io-client';
@@ -93,6 +94,7 @@ interface AppState {
   settings: Settings;
   vBrowserResolution: string;
   nonPlayableMedia: boolean;
+  currentTab: string;
 }
 
 export default class App extends React.Component<null, AppState> {
@@ -129,6 +131,7 @@ export default class App extends React.Component<null, AppState> {
     settings: {},
     vBrowserResolution: '1280x720@30',
     nonPlayableMedia: false,
+    currentTab: 'chat',
   };
   socket: any = null;
   watchPartyYTPlayer: any = null;
@@ -552,6 +555,9 @@ export default class App extends React.Component<null, AppState> {
         if (leftVideo) {
           leftVideo.src = '';
           leftVideo.srcObject = stream;
+          if (!this.state.isAutoPlayable) {
+            this.setMute(true);
+          }
           leftVideo.play();
         }
       };
@@ -1094,8 +1100,7 @@ export default class App extends React.Component<null, AppState> {
                     streamPath={this.state.settings.streamPath}
                     mediaPath={this.state.settings.mediaPath}
                   />
-                  {/* <Divider inverted horizontal></Divider> */}
-                  <div style={{ height: '4px' }} />
+                  <Separator />
                   <div className="mobileStack" style={{ display: 'flex' }}>
                     {this.screenShareStream && (
                       <Button
@@ -1255,7 +1260,7 @@ export default class App extends React.Component<null, AppState> {
                       />
                     )}
                   </div>
-                  <div style={{ height: '4px' }} />
+                  <Separator />
                   <div
                     id="fullScreenContainer"
                     className={
@@ -1333,6 +1338,7 @@ export default class App extends React.Component<null, AppState> {
                           controlling={this.state.isControlling}
                           setLoadingFalse={this.setLoadingFalse}
                           resolution={this.state.vBrowserResolution}
+                          isAutoPlayable={this.state.isAutoPlayable}
                           setResolution={(data: string) =>
                             this.setState({ vBrowserResolution: data })
                           }
@@ -1423,16 +1429,6 @@ export default class App extends React.Component<null, AppState> {
                       ></Progress>
                     </div>
                   )}
-                  {this.state.state === 'connected' && (
-                    <VideoChat
-                      socket={this.socket}
-                      participants={this.state.participants}
-                      nameMap={this.state.nameMap}
-                      pictureMap={this.state.pictureMap}
-                      tsMap={this.state.tsMap}
-                      rosterUpdateTS={this.state.rosterUpdateTS}
-                    />
-                  )}
                 </div>
               </Grid.Column>
               <Grid.Column
@@ -1460,13 +1456,47 @@ export default class App extends React.Component<null, AppState> {
                 />
                 {/* <Divider inverted horizontal></Divider> */}
                 {!this.state.fullScreen && (
-                  <Chat
-                    chat={this.state.chat}
+                  <Menu
+                    inverted
+                    widths={2}
+                    style={{ marginTop: '4px', marginBottom: '4px' }}
+                  >
+                    <Menu.Item
+                      name="chat"
+                      active={this.state.currentTab === 'chat'}
+                      onClick={() => this.setState({ currentTab: 'chat' })}
+                      as="a"
+                    >
+                      Chat
+                    </Menu.Item>
+                    <Menu.Item
+                      name="people"
+                      active={this.state.currentTab === 'people'}
+                      onClick={() => this.setState({ currentTab: 'people' })}
+                      as="a"
+                    >
+                      People ({this.state.participants.length})
+                    </Menu.Item>
+                  </Menu>
+                )}
+                <Chat
+                  chat={this.state.chat}
+                  nameMap={this.state.nameMap}
+                  pictureMap={this.state.pictureMap}
+                  socket={this.socket}
+                  scrollTimestamp={this.state.scrollTimestamp}
+                  getMediaDisplayName={this.getMediaDisplayName}
+                  hide={this.state.currentTab !== 'chat'}
+                />
+                {this.state.state === 'connected' && (
+                  <VideoChat
+                    socket={this.socket}
+                    participants={this.state.participants}
                     nameMap={this.state.nameMap}
                     pictureMap={this.state.pictureMap}
-                    socket={this.socket}
-                    scrollTimestamp={this.state.scrollTimestamp}
-                    getMediaDisplayName={this.getMediaDisplayName}
+                    tsMap={this.state.tsMap}
+                    rosterUpdateTS={this.state.rosterUpdateTS}
+                    hide={this.state.currentTab !== 'people'}
                   />
                 )}
               </Grid.Column>
@@ -1477,3 +1507,5 @@ export default class App extends React.Component<null, AppState> {
     );
   }
 }
+
+const Separator = () => <div style={{ height: '4px', flexShrink: 0 }} />;
