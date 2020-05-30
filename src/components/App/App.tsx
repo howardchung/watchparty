@@ -81,7 +81,7 @@ interface AppState {
   isScreenSharingFile: boolean;
   isControlling: boolean;
   isVBrowser: boolean;
-  user: any;
+  user?: firebase.User;
   isYouTubeReady: boolean;
   isAutoPlayable: boolean;
   downloaded: number;
@@ -151,7 +151,7 @@ export default class App extends React.Component<null, AppState> {
       window.fetch(serverPath + '/ping');
     }, 10 * 60 * 1000);
 
-    firebase.auth().onAuthStateChanged((user: any) => {
+    firebase.auth().onAuthStateChanged((user: firebase.User | null) => {
       if (user) {
         // console.log(user);
         this.setState({ user }, () => {
@@ -177,8 +177,10 @@ export default class App extends React.Component<null, AppState> {
       // NOTE: firebase auth doesn't provide the actual first name data that individual providers (G/FB) do
       // It's accessible at the time the user logs in but not afterward
       // If we want accurate surname/given name we'll need to save that somewhere
-      const firstName = this.state.user.displayName.split(' ')[0];
-      this.updateName(null, { value: firstName });
+      const firstName = this.state.user.displayName?.split(' ')[0];
+      if (firstName) {
+        this.updateName(null, { value: firstName });
+      }
       this.updatePicture(this.state.user.photoURL + '?height=128&width=128');
     }
   };
@@ -557,7 +559,12 @@ export default class App extends React.Component<null, AppState> {
   };
 
   setupVBrowser = async () => {
-    this.socket.emit('CMD:startVBrowser');
+    // user.uid is the public user identifier
+    // user.getIdToken() is the secret access token we can send to the server to prove identity
+    const user = this.state.user;
+    const uid = user?.uid;
+    const token = await user?.getIdToken();
+    this.socket.emit('CMD:startVBrowser', { uid, token });
   };
 
   stopVBrowser = async () => {
