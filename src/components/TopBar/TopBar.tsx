@@ -174,7 +174,6 @@ export class TopBar extends React.Component<{
             </a>
           </div>
           <div
-            className="mobileStack"
             style={{
               display: 'flex',
               marginLeft: 'auto',

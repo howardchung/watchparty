@@ -16,6 +16,7 @@ interface VideoChatProps {
   nameMap: StringDict;
   tsMap: NumberDict;
   rosterUpdateTS: Number;
+  hide?: boolean;
 }
 
 export class VideoChat extends React.Component<VideoChatProps> {
@@ -164,92 +165,69 @@ export class VideoChat extends React.Component<VideoChatProps> {
     return (
       <div
         style={{
-          display: 'flex',
+          display: this.props.hide ? 'none' : 'flex',
           width: '100%',
-          paddingLeft: '1em',
-          overflowX: 'scroll',
-          flexShrink: 0,
+          flexDirection: 'column',
+          overflow: 'auto',
         }}
       >
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            maxWidth: '140px',
-            justifyContent: 'center',
-          }}
-        >
+        {!this.ourStream && (
+          <Button
+            title="Join Video Chat"
+            color={'purple'}
+            size="medium"
+            icon
+            labelPosition="left"
+            onClick={this.setupWebRTC}
+          >
+            <Icon name="video" />
+            {`Join Video`}
+          </Button>
+        )}
+        {this.ourStream && (
           <div
             style={{
-              fontSize: '10px',
-              color: 'lightgray',
-              textTransform: 'uppercase',
-              whiteSpace: 'nowrap',
-              textAlign: 'center',
+              display: 'flex',
+              flexWrap: 'wrap',
             }}
-          >{`${this.props.participants.length} Online`}</div>
-          {!this.ourStream && (
+          >
             <Button
-              title="Join Video Chat"
-              color={'purple'}
-              circular
-              size="big"
+              fluid
+              color={'red'}
+              size="medium"
               icon
-              //labelPosition="left"
-              onClick={this.setupWebRTC}
+              labelPosition="left"
+              onClick={this.stopWebRTC}
+            >
+              <Icon name="external" />
+              {`Leave`}
+            </Button>
+            <Button
+              fluid
+              color={this.getVideoWebRTC() ? 'green' : 'red'}
+              size="medium"
+              icon
+              labelPosition="left"
+              onClick={this.toggleVideoWebRTC}
             >
               <Icon name="video" />
-              {/* {`Join`} */}
+              {this.getVideoWebRTC() ? 'On' : 'Off'}
             </Button>
-          )}
-          {this.ourStream && (
-            <div
-              style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                width: '90px',
-              }}
+            <Button
+              fluid
+              color={this.getAudioWebRTC() ? 'green' : 'red'}
+              size="medium"
+              icon
+              labelPosition="left"
+              onClick={this.toggleAudioWebRTC}
             >
-              <Button
-                fluid
-                color={'red'}
-                size="tiny"
-                icon
-                labelPosition="left"
-                onClick={this.stopWebRTC}
-              >
-                <Icon name="external" />
-                {`Leave`}
-              </Button>
-              <Button
-                fluid
-                color={this.getVideoWebRTC() ? 'green' : 'red'}
-                size="tiny"
-                icon
-                labelPosition="left"
-                onClick={this.toggleVideoWebRTC}
-              >
-                <Icon name="video" />
-                {this.getVideoWebRTC() ? 'On' : 'Off'}
-              </Button>
-              <Button
-                fluid
-                color={this.getAudioWebRTC() ? 'green' : 'red'}
-                size="tiny"
-                icon
-                labelPosition="left"
-                onClick={this.toggleAudioWebRTC}
-              >
-                <Icon
-                  name={
-                    this.getAudioWebRTC() ? 'microphone' : 'microphone slash'
-                  }
-                />
-                {this.getAudioWebRTC() ? 'On' : 'Off'}
-              </Button>
-            </div>
-          )}
-        </div>
+              <Icon
+                name={this.getAudioWebRTC() ? 'microphone' : 'microphone slash'}
+              />
+              {this.getAudioWebRTC() ? 'On' : 'Off'}
+            </Button>
+          </div>
+        )}
         <div style={{ display: 'flex', flexWrap: 'wrap' }}>
           {participants.map((p) => {
             return (
@@ -257,7 +235,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
                 <div
                   style={{
                     position: 'relative',
-                    marginLeft: '4px',
+                    //marginLeft: '4px',
                   }}
                 >
                   <div>
