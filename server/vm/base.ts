@@ -38,13 +38,17 @@ export abstract class VMManager {
           (!room.vBrowser.provider ||
             room.vBrowser.provider === this.getRedisQueueKey())
         ) {
-          if (
-            Number(new Date()) - room.vBrowser.assignTime >
-              6 * 60 * 60 * 1000 ||
-            room.roster.length === 0
-          ) {
+          const isTimedOut =
+            Number(new Date()) - room.vBrowser.assignTime > 6 * 60 * 60 * 1000;
+          const isRoomEmpty = room.roster.length === 0;
+          if (isTimedOut || isRoomEmpty) {
             console.log('[RELEASE] VM in room:', room.roomId);
             room.stopVBrowser();
+            if (isTimedOut) {
+              redisCount('vBrowserTerminateTimeout');
+            } else if (isRoomEmpty) {
+              redisCount('vBrowserTerminateEmpty');
+            }
           }
         }
       }
