@@ -12,6 +12,7 @@ import Redis from 'ioredis';
 import https from 'https';
 import http from 'http';
 import socketIO from 'socket.io';
+import Stripe from 'stripe';
 import { searchYoutube } from './utils/youtube';
 import { Room } from './room';
 import { getRedisCountDay } from './utils/redis';
@@ -34,6 +35,9 @@ let redis = (undefined as unknown) as Redis.Redis;
 if (process.env.REDIS_URL) {
   redis = new Redis(process.env.REDIS_URL);
 }
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
+  apiVersion: '2020-03-02',
+});
 
 const names = Moniker.generator([
   Moniker.adjective,
@@ -103,9 +107,9 @@ async function init() {
   server.listen(process.env.PORT || 8080);
 }
 
-app.use(cors());
 app.use(bodyParser.json());
 app.use(compression());
+app.use(cors());
 app.use(express.static('build'));
 
 app.get('/ping', (req, res) => {
@@ -256,6 +260,16 @@ app.get('/settings', (req, res) => {
     });
   }
   return res.json({});
+});
+
+app.post('/manageSub', async (req, res) => {
+  const customerList = await stripe.customers.list({ email: req.body.email });
+  const customer = customerList.data[0];
+  const session = await stripe.billingPortal.sessions.create({
+    customer: customer?.id,
+    return_url: req.body.return_url,
+  });
+  res.json(session);
 });
 
 app.get('/kv', async (req, res) => {
