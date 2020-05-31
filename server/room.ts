@@ -4,6 +4,7 @@ import Redis from 'ioredis';
 import { redisCount } from './utils/redis';
 import { VMManager, AssignedVM } from './vm/base';
 import * as admin from 'firebase-admin';
+import Stripe from 'stripe';
 
 let redis = (undefined as unknown) as Redis.Redis;
 if (process.env.REDIS_URL) {
@@ -17,6 +18,10 @@ if (process.env.FIREBASE_ADMIN_SDK_CONFIG) {
     ),
   });
 }
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
+  apiVersion: '2020-03-02',
+});
 
 export class Room {
   public video = '';
@@ -203,12 +208,15 @@ export class Room {
               return;
             }
             console.log(decoded);
-            // TODO Check if user is subscriber, if so set isLarge
-            if (
-              process.env.NODE_ENV === 'development' &&
-              decoded.uid === '6wR1m86OjEYP7dSBLKpD9TH2Cgs2'
-            ) {
-              isLarge = true;
+            // Check if user is subscriber, if so set isLarge
+            if (process.env.NODE_ENV === 'development') {
+              const customer = await stripe.customers.list({
+                email: decoded.email,
+              });
+              if (customer?.data[0]?.subscriptions?.data[0]) {
+                console.log('found active sub for ', customer?.data[0]?.email);
+                isLarge = true;
+              }
             }
           }
 

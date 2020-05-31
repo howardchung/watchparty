@@ -44,6 +44,7 @@ import { MultiStreamModal } from '../Modal/MultiStreamModal';
 import { ComboBox } from '../ComboBox/ComboBox';
 import { SearchComponent } from '../SearchComponent/SearchComponent';
 import { Controls } from '../Controls/Controls';
+import { loadStripe } from '@stripe/stripe-js';
 import firebase from 'firebase/app';
 import 'firebase/auth';
 
@@ -51,6 +52,12 @@ const firebaseConfig = process.env.REACT_APP_FIREBASE_CONFIG;
 if (firebaseConfig) {
   firebase.initializeApp(JSON.parse(firebaseConfig));
 }
+
+// Make sure to call `loadStripe` outside of a component’s render to avoid
+// recreating the `Stripe` object on every render.
+const stripePromise = loadStripe(
+  process.env.REACT_APP_STRIPE_PUBLIC_KEY as string
+);
 
 declare global {
   interface Window {
@@ -1028,6 +1035,49 @@ export default class App extends React.Component<null, AppState> {
     this.setState({ loading: false });
   };
 
+  onSubscribe = async (event: any) => {
+    // When the customer clicks on the button, redirect them to Checkout.
+    const stripe = await stripePromise;
+    const result = await stripe?.redirectToCheckout({
+      lineItems: [
+        {
+          price:
+            process.env.NODE_ENV === 'development'
+              ? 'price_HNGtabCzD5qyfd'
+              : 'price_HNDBoPDI7yYRi9',
+          quantity: 1,
+        },
+      ] as any,
+      mode: 'subscription',
+      successUrl: window.location.href,
+      cancelUrl: window.location.href,
+      customerEmail: this.state.user?.email,
+      clientReferenceId: this.state.user?.uid,
+    } as any);
+    // If `redirectToCheckout` fails due to a browser or network
+    // error, display the localized error message to your customer
+    // using `error.message`.
+    if (result && result.error) {
+      console.error(result.error.message);
+    }
+  };
+
+  onManage = async () => {
+    const resp = await window.fetch(serverPath + '/manageSub', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: this.state.user?.email,
+        return_url: window.location.href,
+      }),
+    });
+    const session = await resp.json();
+    console.log(session);
+    window.location.assign(session.url);
+  };
+
   render() {
     const sharer = this.state.participants.find((p) => p.isScreenShare);
     const controller = this.state.participants.find((p) => p.isController);
@@ -1257,6 +1307,43 @@ export default class App extends React.Component<null, AppState> {
                         streamPath={this.state.settings.streamPath}
                         mediaPath={this.state.settings.mediaPath}
                         launchMultiSelect={this.launchMultiSelect}
+                      />
+                    )}
+                    {/* TODO show manage button if user is already subscribed */}
+                    {/* TODO user needs to login if they haven't already */}
+                    {/* TODO show features modal */}
+                    {process.env.NODE_ENV === 'development' && (
+                      <Popup
+                        content="Subscribe for higher resolution and faster virtual browsers!"
+                        trigger={
+                          <Button
+                            fluid
+                            className="toolButton"
+                            icon
+                            labelPosition="left"
+                            onClick={this.onSubscribe}
+                          >
+                            <Icon name="star" />
+                            Subscribe
+                          </Button>
+                        }
+                      />
+                    )}
+                    {process.env.NODE_ENV === 'development' && (
+                      <Popup
+                        content="Manage your subscription"
+                        trigger={
+                          <Button
+                            fluid
+                            className="toolButton"
+                            icon
+                            labelPosition="left"
+                            onClick={this.onManage}
+                          >
+                            <Icon name="wrench" />
+                            Manage
+                          </Button>
+                        }
                       />
                     )}
                   </div>
