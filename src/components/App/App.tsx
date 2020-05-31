@@ -1069,7 +1069,8 @@ export default class App extends React.Component<null, AppState> {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        email: this.state.user?.email,
+        uid: this.state.user?.uid,
+        token: await this.state.user?.getIdToken(),
         return_url: window.location.href,
       }),
     });

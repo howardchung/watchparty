@@ -3,25 +3,13 @@ import { User, ChatMessage, NumberDict, StringDict } from '.';
 import Redis from 'ioredis';
 import { redisCount } from './utils/redis';
 import { VMManager, AssignedVM } from './vm/base';
-import * as admin from 'firebase-admin';
-import Stripe from 'stripe';
+import { validateUserToken } from './utils/firebase';
+import { getCustomerByEmail } from './utils/stripe';
 
 let redis = (undefined as unknown) as Redis.Redis;
 if (process.env.REDIS_URL) {
   redis = new Redis(process.env.REDIS_URL);
 }
-
-if (process.env.FIREBASE_ADMIN_SDK_CONFIG) {
-  admin.initializeApp({
-    credential: admin.credential.cert(
-      JSON.parse(process.env.FIREBASE_ADMIN_SDK_CONFIG)
-    ),
-  });
-}
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
-  apiVersion: '2020-03-02',
-});
 
 export class Room {
   public video = '';
@@ -195,26 +183,13 @@ export class Room {
             return;
           }
           let isLarge = false;
-          if (
-            process.env.FIREBASE_ADMIN_SDK_CONFIG &&
-            data &&
-            data.uid &&
-            data.token
-          ) {
-            // Validate the user token
-            const decoded = await admin.auth().verifyIdToken(data.token);
-            if (data.uid !== decoded.uid) {
-              console.log('user token invalid');
-              return;
-            }
-            console.log(decoded);
+          if (data && data.uid && data.token) {
+            const decoded = await validateUserToken(data.uid, data.token);
             // Check if user is subscriber, if so set isLarge
-            if (process.env.NODE_ENV === 'development') {
-              const customer = await stripe.customers.list({
-                email: decoded.email,
-              });
-              if (customer?.data[0]?.subscriptions?.data[0]) {
-                console.log('found active sub for ', customer?.data[0]?.email);
+            if (decoded?.email) {
+              const customer = await getCustomerByEmail(decoded.email);
+              if (customer?.subscriptions?.data[0]) {
+                console.log('found active sub for ', customer?.email);
                 isLarge = true;
               }
             }

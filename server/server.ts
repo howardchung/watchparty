@@ -20,6 +20,8 @@ import { Scaleway } from './vm/scaleway';
 import { Hetzner } from './vm/hetzner';
 import { DigitalOcean } from './vm/digitalocean';
 import { VMManager } from './vm/base';
+import { getCustomerByEmail, createSelfServicePortal } from './utils/stripe';
+import { validateUserToken } from './utils/firebase';
 
 const app = express();
 let server: any = null;
@@ -35,9 +37,6 @@ let redis = (undefined as unknown) as Redis.Redis;
 if (process.env.REDIS_URL) {
   redis = new Redis(process.env.REDIS_URL);
 }
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
-  apiVersion: '2020-03-02',
-});
 
 const names = Moniker.generator([
   Moniker.adjective,
@@ -263,13 +262,22 @@ app.get('/settings', (req, res) => {
 });
 
 app.post('/manageSub', async (req, res) => {
-  const customerList = await stripe.customers.list({ email: req.body.email });
-  const customer = customerList.data[0];
-  const session = await stripe.billingPortal.sessions.create({
-    customer: customer?.id,
-    return_url: req.body.return_url,
-  });
-  res.json(session);
+  const decoded = await validateUserToken(req.body?.uid, req.body?.token);
+  if (!decoded) {
+    return res.status(400).json({ error: 'invalid user token' });
+  }
+  if (!decoded.email) {
+    return res.status(400).json({ error: 'no email found' });
+  }
+  const customer = await getCustomerByEmail(decoded.email);
+  if (!customer) {
+    return res.status(400).json({ error: 'customer not found' });
+  }
+  const session = await createSelfServicePortal(
+    customer.id,
+    req.body?.return_url
+  );
+  return res.json(session);
 });
 
 app.get('/kv', async (req, res) => {
