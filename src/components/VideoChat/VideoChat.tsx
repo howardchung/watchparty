@@ -172,17 +172,25 @@ export class VideoChat extends React.Component<VideoChatProps> {
         }}
       >
         {!this.ourStream && (
-          <Button
-            title="Join Video Chat"
-            color={'purple'}
-            size="medium"
-            icon
-            labelPosition="left"
-            onClick={this.setupWebRTC}
+          <div
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+            }}
           >
-            <Icon name="video" />
-            {`Join Video`}
-          </Button>
+            <Button
+              fluid
+              title="Join Video Chat"
+              color={'purple'}
+              size="medium"
+              icon
+              labelPosition="left"
+              onClick={this.setupWebRTC}
+            >
+              <Icon name="video" />
+              {`Join Video Chat`}
+            </Button>
+          </div>
         )}
         {this.ourStream && (
           <div
