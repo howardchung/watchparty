@@ -221,7 +221,10 @@ export class Room {
           io.of(roomId).emit('roster', this.roster);
         }
       );
-      socket.on('CMD:stopVBrowser', () => this.stopVBrowser());
+      socket.on('CMD:stopVBrowser', () => {
+        this.stopVBrowser();
+        redisCount('vBrowserTerminateManual');
+      });
       socket.on('CMD:changeController', (data: string) => {
         this.roster.forEach((user, i) => {
           if (user.id === data) {
