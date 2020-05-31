@@ -204,7 +204,10 @@ export class Room {
             }
             console.log(decoded);
             // TODO Check if user is subscriber, if so set isLarge
-            if (decoded.uid === '6wR1m86OjEYP7dSBLKpD9TH2Cgs2') {
+            if (
+              process.env.NODE_ENV === 'development' &&
+              decoded.uid === '6wR1m86OjEYP7dSBLKpD9TH2Cgs2'
+            ) {
               isLarge = true;
             }
           }
