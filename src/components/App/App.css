@@ -20,7 +20,7 @@ body {
 
 .chatContainer {
   flex-grow: 1;
-  overflow: scroll;
+  overflow: auto;
 }
 
 .system.system.system.system {

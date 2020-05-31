@@ -6,13 +6,23 @@ import { redisCount } from '../utils/redis';
 
 export abstract class VMManager {
   public vmBufferSize = Number(process.env.VBROWSER_VM_BUFFER) || 0;
+  protected tag = process.env.VBROWSER_TAG || 'vbrowser';
+  protected isLarge = false;
   private redis = new Redis(process.env.REDIS_URL);
   private redis2 = new Redis(process.env.REDIS_URL);
   private redis3 = new Redis(process.env.REDIS_URL);
 
-  constructor(rooms: Map<string, Room>, vmBufferSize?: number) {
+  constructor(
+    rooms: Map<string, Room>,
+    vmBufferSize?: number,
+    large?: boolean
+  ) {
     if (vmBufferSize !== undefined) {
       this.vmBufferSize = vmBufferSize;
+    }
+    if (large) {
+      this.tag += 'Large';
+      this.isLarge = true;
     }
 
     const release = async () => {
@@ -26,15 +36,19 @@ export abstract class VMManager {
           room.vBrowser &&
           room.vBrowser.assignTime &&
           (!room.vBrowser.provider ||
-            room.vBrowser.provider === this.redisQueueKey)
+            room.vBrowser.provider === this.getRedisQueueKey())
         ) {
-          if (
-            Number(new Date()) - room.vBrowser.assignTime >
-              6 * 60 * 60 * 1000 ||
-            room.roster.length === 0
-          ) {
-            console.log('[RESET] VM in room:', room.roomId);
-            room.resetRoomVM();
+          const isTimedOut =
+            Number(new Date()) - room.vBrowser.assignTime > 6 * 60 * 60 * 1000;
+          const isRoomEmpty = room.roster.length === 0;
+          if (isTimedOut || isRoomEmpty) {
+            console.log('[RELEASE] VM in room:', room.roomId);
+            room.stopVBrowser();
+            if (isTimedOut) {
+              redisCount('vBrowserTerminateTimeout');
+            } else if (isRoomEmpty) {
+              redisCount('vBrowserTerminateEmpty');
+            }
           }
         }
       }
@@ -47,7 +61,7 @@ export abstract class VMManager {
           room.vBrowser &&
           room.vBrowser.id &&
           (!room.vBrowser.provider ||
-            room.vBrowser.provider === this.redisQueueKey)
+            room.vBrowser.provider === this.getRedisQueueKey())
         ) {
           console.log('[RENEW] VM in room:', room.roomId, room.vBrowser.id);
           // Renew the lock on the VM
@@ -63,15 +77,23 @@ export abstract class VMManager {
     setTimeout(this.checkStaging, 100); // Add some delay to make sure the object is constructed first
   }
 
+  public getRedisQueueKey = () => {
+    return this.redisQueueKey + (this.isLarge ? 'Large' : '');
+  };
+
+  public getRedisStagingKey = () => {
+    return this.redisStagingKey + (this.isLarge ? 'Large' : '');
+  };
+
   public assignVM = async (): Promise<AssignedVM> => {
     const assignStart = Number(new Date());
     let selected = null;
     while (!selected) {
-      const currSize = await this.redis.llen(this.redisQueueKey);
+      const currSize = await this.redis.llen(this.getRedisQueueKey());
       if (currSize === 0) {
         await this.startVMWrapper();
       }
-      let resp = await this.redis2.brpop(this.redisQueueKey, 0);
+      let resp = await this.redis2.brpop(this.getRedisQueueKey(), 0);
       const id = resp[1];
       console.log('[ASSIGN]', id);
       const lock = await this.redis.set('vbrowser:' + id, '1', 'NX', 'EX', 300);
@@ -99,13 +121,13 @@ export abstract class VMManager {
     // Delete any locks
     await this.redis.del('vbrowser:' + id);
     // Add the VM back to the pool
-    await this.redis.lpush(this.redisStagingKey, id);
+    await this.redis.lpush(this.getRedisStagingKey(), id);
   };
 
   protected resizeVMGroupIncr = async () => {
     const maxAvailable = this.vmBufferSize;
-    const availableCount = await this.redis.llen(this.redisQueueKey);
-    const stagingCount = await this.redis.llen(this.redisStagingKey);
+    const availableCount = await this.redis.llen(this.getRedisQueueKey());
+    const stagingCount = await this.redis.llen(this.getRedisStagingKey());
     if (availableCount + stagingCount < maxAvailable) {
       console.log(
         '[RESIZE-LAUNCH]',
@@ -123,9 +145,9 @@ export abstract class VMManager {
   protected resizeVMGroupDecr = async () => {
     while (true) {
       const maxAvailable = this.vmBufferSize;
-      const availableCount = await this.redis.llen(this.redisQueueKey);
+      const availableCount = await this.redis.llen(this.getRedisQueueKey());
       if (availableCount > maxAvailable) {
-        const id = await this.redis.lpop(this.redisQueueKey);
+        const id = await this.redis.lpop(this.getRedisQueueKey());
         console.log(
           '[RESIZE-TERMINATE]',
           id,
@@ -150,8 +172,16 @@ export abstract class VMManager {
     const usedKeys = (await this.redis.keys('vbrowser:*')).map((key) =>
       key.slice('vbrowser:'.length)
     );
-    const availableKeys = await this.redis.lrange(this.redisQueueKey, 0, -1);
-    const stagingKeys = await this.redis.lrange(this.redisStagingKey, 0, -1);
+    const availableKeys = await this.redis.lrange(
+      this.getRedisQueueKey(),
+      0,
+      -1
+    );
+    const stagingKeys = await this.redis.lrange(
+      this.getRedisStagingKey(),
+      0,
+      -1
+    );
     const dontDelete = new Set([...usedKeys, ...availableKeys, ...stagingKeys]);
     // console.log(allVMs, dontDelete);
     for (let i = 0; i < allVMs.length; i++) {
@@ -167,8 +197,8 @@ export abstract class VMManager {
     while (true) {
       // Loop through staging list and check if VM is ready
       const id = await this.redis3.brpoplpush(
-        this.redisStagingKey,
-        this.redisStagingKey,
+        this.getRedisStagingKey(),
+        this.getRedisStagingKey(),
         0
       );
       // We wait first before checking to give the VM time to shut down (if it's restarting)
@@ -181,15 +211,17 @@ export abstract class VMManager {
       } catch (e) {
         // console.log(e);
       }
-      const retryCount = await this.redis.incr(this.redisStagingKey + ':' + id);
+      const retryCount = await this.redis.incr(
+        this.getRedisStagingKey() + ':' + id
+      );
       if (ready) {
         console.log('[CHECKSTAGING] ready:', id, candidate?.host, retryCount);
         // If it is, move it to available list
         await this.redis
           .multi()
-          .lrem(this.redisStagingKey, 1, id)
-          .lpush(this.redisQueueKey, id)
-          .del(this.redisStagingKey + ':' + id)
+          .lrem(this.getRedisStagingKey(), 1, id)
+          .lpush(this.getRedisQueueKey(), id)
+          .del(this.getRedisStagingKey() + ':' + id)
           .exec();
       } else {
         console.log(
@@ -199,7 +231,7 @@ export abstract class VMManager {
           retryCount
         );
         if (retryCount > 60) {
-          await this.redis.del(this.redisStagingKey + ':' + id);
+          await this.redis.del(this.getRedisStagingKey() + ':' + id);
           this.terminateVMWrapper(id);
         }
       }
@@ -230,15 +262,15 @@ export abstract class VMManager {
     // generate credentials and boot a VM
     const password = uuidv4();
     const id = await this.startVM(password);
-    await this.redis.lpush(this.redisStagingKey, id);
+    await this.redis.lpush(this.getRedisStagingKey(), id);
     redisCount('vBrowserLaunches');
     return id;
   };
 
   protected terminateVMWrapper = async (id: string) => {
     // Remove from lists, if it exists
-    await this.redis.lrem(this.redisQueueKey, 1, id);
-    await this.redis.lrem(this.redisStagingKey, 1, id);
+    await this.redis.lrem(this.getRedisQueueKey(), 1, id);
+    await this.redis.lrem(this.getRedisStagingKey(), 1, id);
     // Get the VM data to calculate lifetime, if we fail do the terminate anyway
     const lifetime = await this.terminateVMMetrics(id);
     await this.terminateVM(id);
@@ -259,8 +291,10 @@ export abstract class VMManager {
     return 0;
   };
 
-  public abstract redisQueueKey: string;
-  public abstract redisStagingKey: string;
+  protected abstract redisQueueKey: string;
+  protected abstract redisStagingKey: string;
+  protected abstract size: string;
+  protected abstract largeSize: string;
   protected abstract startVM: (name: string) => Promise<string>;
   protected abstract rebootVM: (id: string) => Promise<void>;
   protected abstract terminateVM: (id: string) => Promise<void>;
@@ -279,6 +313,7 @@ export interface VM {
   creation_date: string;
   provider: string;
   originalName?: string;
+  large: boolean;
 }
 
 export interface AssignedVM extends VM {

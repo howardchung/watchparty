@@ -3,16 +3,16 @@ import { v4 as uuidv4 } from 'uuid';
 import { VMManager, VM } from './base';
 import { cloudInit, imageName } from './utils';
 
-const VBROWSER_TAG = process.env.VBROWSER_TAG || 'vbrowser';
 const HETZNER_TOKEN = process.env.HETZNER_TOKEN;
 const region = 'nbg1';
-const size = 'cpx11'; // cx11, cpx11, cpx21
 const gatewayHost = 'gateway3.watchparty.me';
 const sshKeys = [1570536];
 const networks = [91163];
 const imageId = 16969556;
 
 export class Hetzner extends VMManager {
+  size = 'cpx11'; // cx11, cpx11, cpx21, cpx31, ccx11
+  largeSize = 'cpx31';
   redisQueueKey = 'availableListHetzner';
   redisStagingKey = 'stagingListHetzner';
   startVM = async (name: string) => {
@@ -25,14 +25,17 @@ export class Hetzner extends VMManager {
       },
       data: {
         name: name,
-        server_type: size,
+        server_type: this.isLarge ? this.largeSize : this.size,
         start_after_create: true,
         image: imageId,
         ssh_keys: sshKeys,
         networks,
-        user_data: cloudInit(imageName),
+        user_data: cloudInit(
+          imageName,
+          this.isLarge ? '1920x1080@30' : undefined
+        ),
         labels: {
-          [VBROWSER_TAG]: '1',
+          [this.tag]: '1',
           originalName: name,
         },
         location: region,
@@ -119,7 +122,7 @@ export class Hetzner extends VMManager {
     return response.data.servers
       .map(this.mapServerObject)
       .filter(
-        (server: VM) => server.tags.includes(VBROWSER_TAG) && server.private_ip
+        (server: VM) => server.tags.includes(this.tag) && server.private_ip
       );
   };
 
@@ -133,6 +136,7 @@ export class Hetzner extends VMManager {
     tags: Object.keys(server.labels),
     creation_date: server.created,
     originalName: server.labels.originalName,
-    provider: this.redisQueueKey,
+    provider: this.getRedisQueueKey(),
+    large: this.isLarge,
   });
 }

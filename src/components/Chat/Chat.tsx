@@ -12,6 +12,7 @@ interface ChatProps {
   scrollTimestamp: number;
   className?: string;
   getMediaDisplayName: Function;
+  hide?: boolean;
 }
 
 export class Chat extends React.Component<ChatProps> {
@@ -96,11 +97,12 @@ export class Chat extends React.Component<ChatProps> {
         className={this.props.className}
         inverted
         style={{
-          display: 'flex',
+          display: this.props.hide ? 'none' : 'flex',
           flexDirection: 'column',
           flexGrow: '1',
           minHeight: 0,
           marginTop: 0,
+          marginBottom: 0,
         }}
       >
         <div

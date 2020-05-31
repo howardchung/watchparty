@@ -4,10 +4,19 @@ import { User, ChatMessage, NumberDict, StringDict } from '.';
 import Redis from 'ioredis';
 import { redisCount } from './utils/redis';
 import { VMManager, AssignedVM } from './vm/base';
+import * as admin from 'firebase-admin';
 
 let redis = (undefined as unknown) as Redis.Redis;
 if (process.env.REDIS_URL) {
   redis = new Redis(process.env.REDIS_URL);
+}
+
+if (process.env.FIREBASE_ADMIN_SDK_CONFIG) {
+  admin.initializeApp({
+    credential: admin.credential.cert(
+      JSON.parse(process.env.FIREBASE_ADMIN_SDK_CONFIG)
+    ),
+  });
 }
 
 export class Room {
@@ -23,19 +32,19 @@ export class Room {
   private io: SocketIO.Server;
   public roomId: string;
   public creationTime: Date = new Date();
-  private vmManager: VMManager;
-  public isRoomDirty = false; // Indicates the room needs to be saved, e.g. we unassign a VM from an empty room
+  private vmManagers: { standard: VMManager; large: VMManager } | undefined;
+  public isRoomDirty = false; // Indicates an unattended room needs to be saved, e.g. we unassign a VM from an empty room
   private jpd: Jeopardy | null = null;
 
   constructor(
     io: SocketIO.Server,
-    vmManager: VMManager,
+    vmManagers: { standard: VMManager; large: VMManager },
     roomId: string,
     roomData?: string | null | undefined
   ) {
     this.roomId = roomId;
     this.io = io;
-    this.vmManager = vmManager;
+    this.vmManagers = vmManagers;
 
     if (roomData) {
       this.deserialize(roomData);
@@ -179,34 +188,66 @@ export class Room {
         this.cmdHost(socket, '');
         io.of(roomId).emit('roster', this.roster);
       });
-      socket.on('CMD:startVBrowser', async () => {
-        if (this.vBrowser) {
-          // Maybe terminate the existing instance and spawn a new one
-          return;
-        }
-        redisCount('vBrowserStarts');
-        this.cmdHost(socket, 'vbrowser://');
-        const assignment = await this.vmManager.assignVM();
-        if (!assignment) {
-          this.cmdHost(socket, '');
-          this.vBrowser = undefined;
-          return;
-        }
-        this.vBrowser = assignment;
-        this.roster.forEach((user, i) => {
-          if (user.id === socket.id) {
-            this.roster[i].isController = true;
-          } else {
-            this.roster[i].isController = false;
+      socket.on(
+        'CMD:startVBrowser',
+        async (data: { uid: string; token: any }) => {
+          if (this.vBrowser) {
+            // Maybe terminate the existing instance and spawn a new one
+            return;
           }
-        });
-        this.cmdHost(
-          undefined,
-          'vbrowser://' + this.vBrowser.pass + '@' + this.vBrowser.host
-        );
-        io.of(roomId).emit('roster', this.roster);
+          let isLarge = false;
+          if (
+            process.env.FIREBASE_ADMIN_SDK_CONFIG &&
+            data &&
+            data.uid &&
+            data.token
+          ) {
+            // Validate the user token
+            const decoded = await admin.auth().verifyIdToken(data.token);
+            if (data.uid !== decoded.uid) {
+              console.log('user token invalid');
+              return;
+            }
+            console.log(decoded);
+            // TODO Check if user is subscriber, if so set isLarge
+            if (
+              process.env.NODE_ENV === 'development' &&
+              decoded.uid === '6wR1m86OjEYP7dSBLKpD9TH2Cgs2'
+            ) {
+              isLarge = true;
+            }
+          }
+
+          redisCount('vBrowserStarts');
+          this.cmdHost(socket, 'vbrowser://');
+          const vmManager = isLarge
+            ? this.vmManagers?.large
+            : this.vmManagers?.standard;
+          const assignment = await vmManager?.assignVM();
+          if (!assignment) {
+            this.cmdHost(socket, '');
+            this.vBrowser = undefined;
+            return;
+          }
+          this.vBrowser = assignment;
+          this.roster.forEach((user, i) => {
+            if (user.id === socket.id) {
+              this.roster[i].isController = true;
+            } else {
+              this.roster[i].isController = false;
+            }
+          });
+          this.cmdHost(
+            undefined,
+            'vbrowser://' + this.vBrowser.pass + '@' + this.vBrowser.host
+          );
+          io.of(roomId).emit('roster', this.roster);
+        }
+      );
+      socket.on('CMD:stopVBrowser', () => {
+        this.stopVBrowser();
+        redisCount('vBrowserTerminateManual');
       });
-      socket.on('CMD:stopVBrowser', () => this.resetRoomVM());
       socket.on('CMD:changeController', (data: string) => {
         this.roster.forEach((user, i) => {
           if (user.id === data) {
@@ -250,7 +291,7 @@ export class Room {
     });
   }
 
-  serialize() {
+  serialize = () => {
     return JSON.stringify({
       video: this.video,
       videoTS: this.videoTS,
@@ -262,9 +303,9 @@ export class Room {
       creationTime: this.creationTime,
       jpd: this.jpd,
     });
-  }
+  };
 
-  deserialize(roomData: string) {
+  deserialize = (roomData: string) => {
     const roomObj = JSON.parse(roomData);
     this.video = roomObj.video;
     this.videoTS = roomObj.videoTS;
@@ -295,19 +336,20 @@ export class Room {
         roomObj.jpd
       );
     }
-  }
+  };
 
-  getHostState() {
+  getHostState = () => {
     return {
       video: this.video,
       videoTS: this.videoTS,
       paused: this.paused,
     };
-  }
+  };
 
-  async resetRoomVM() {
+  stopVBrowser = async () => {
     const assignTime = this.vBrowser && this.vBrowser.assignTime;
     const id = this.vBrowser && this.vBrowser.id;
+    const isLarge = this.vBrowser?.large;
     this.vBrowser = undefined;
     this.roster.forEach((user, i) => {
       this.roster[i].isController = false;
@@ -320,14 +362,17 @@ export class Room {
     }
     if (id) {
       try {
-        await this.vmManager.resetVM(id);
+        const vmManager = isLarge
+          ? this.vmManagers?.large
+          : this.vmManagers?.standard;
+        await vmManager?.resetVM(id);
       } catch (e) {
         console.error(e);
       }
     }
-  }
+  };
 
-  cmdHost(socket: Socket | undefined, data: string) {
+  cmdHost = (socket: Socket | undefined, data: string) => {
     this.video = data;
     this.videoTS = 0;
     this.paused = false;
@@ -338,9 +383,9 @@ export class Room {
       const chatMsg = { id: socket.id, cmd: 'host', msg: data };
       this.addChatMessage(socket, chatMsg);
     }
-  }
+  };
 
-  addChatMessage(socket: Socket | undefined, chatMsg: any) {
+  addChatMessage = (socket: Socket | undefined, chatMsg: any) => {
     const chatWithTime: ChatMessage = {
       ...chatMsg,
       timestamp: new Date().toISOString(),
@@ -349,5 +394,5 @@ export class Room {
     this.chat.push(chatWithTime);
     this.chat = this.chat.splice(-100);
     this.io.of(this.roomId).emit('REC:chat', chatWithTime);
-  }
+  };
 }

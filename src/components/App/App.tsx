@@ -42,6 +42,8 @@ interface AppState {
   error: string;
   settings: Settings;
   vBrowserResolution: string;
+  nonPlayableMedia: boolean;
+  currentTab: string;
 }
 
 export default class App extends React.Component<null, AppState> {
@@ -61,6 +63,8 @@ export default class App extends React.Component<null, AppState> {
     error: '',
     settings: {},
     vBrowserResolution: '1280x720@30',
+    nonPlayableMedia: false,
+    currentTab: 'chat',
   };
   socket: any = null;
 
@@ -227,16 +231,15 @@ export default class App extends React.Component<null, AppState> {
                   }
                 />
                 {/* <Divider inverted horizontal></Divider> */}
-                {!this.state.fullScreen && (
-                  <Chat
-                    chat={this.state.chat}
-                    nameMap={this.state.nameMap}
-                    pictureMap={this.state.pictureMap}
-                    socket={this.socket}
-                    scrollTimestamp={this.state.scrollTimestamp}
-                    getMediaDisplayName={() => ''}
-                  />
-                )}
+                <Chat
+                  chat={this.state.chat}
+                  nameMap={this.state.nameMap}
+                  pictureMap={this.state.pictureMap}
+                  socket={this.socket}
+                  scrollTimestamp={this.state.scrollTimestamp}
+                  getMediaDisplayName={() => ''}
+                  hide={this.state.currentTab !== 'chat'}
+                />
               </Grid.Column>
             </Grid.Row>
           </Grid>

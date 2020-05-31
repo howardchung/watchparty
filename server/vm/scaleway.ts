@@ -5,10 +5,8 @@ import { VMManager, VM } from './base';
 import { Room } from '../room';
 import { cloudInit, imageName } from './utils';
 
-const VBROWSER_TAG = process.env.VBROWSER_TAG || 'vbrowser';
 const SCW_SECRET_KEY = process.env.SCW_SECRET_KEY;
 const SCW_ORGANIZATION_ID = process.env.SCW_ORGANIZATION_ID;
-const size = 'DEV1-M'; // DEV1-S, DEV1-M, DEV1-L
 const region = 'nl-ams-1';
 const gatewayHost = 'gateway2.watchparty.me';
 const imageId = '1e72e882-f000-4c6e-b538-974af74c2a6a';
@@ -17,6 +15,8 @@ const imageId = '1e72e882-f000-4c6e-b538-974af74c2a6a';
 // const imageId = '8e96c468-2769-4314-bb39-f3c941f63d48';
 
 export class Scaleway extends VMManager {
+  size = 'DEV1-M'; // DEV1-S, DEV1-M, DEV1-L, GP1-XS
+  largeSize = 'GP1-XS';
   redisQueueKey = 'availableListScaleway';
   redisStagingKey = 'stagingListScaleway';
   startVM = async (name: string) => {
@@ -30,11 +30,11 @@ export class Scaleway extends VMManager {
       data: {
         name: name,
         dynamic_ip_required: true,
-        commercial_type: size,
+        commercial_type: this.isLarge ? this.largeSize : this.size,
         image: imageId,
         volumes: {},
         organization: SCW_ORGANIZATION_ID,
-        tags: [VBROWSER_TAG],
+        tags: [this.tag],
       },
     });
     // console.log(response.data);
@@ -47,7 +47,7 @@ export class Scaleway extends VMManager {
         'Content-Type': 'text/plain',
       },
       // set userdata for boot action
-      data: cloudInit(imageName),
+      data: cloudInit(imageName, this.isLarge ? '1920x1080@30' : undefined),
     });
     // console.log(response2.data);
     // boot the instance
@@ -93,7 +93,7 @@ export class Scaleway extends VMManager {
       },
       data: {
         name: password,
-        tags: [VBROWSER_TAG],
+        tags: [this.tag],
       },
     });
     // Reboot the VM (also destroys the Docker container since it has --rm flag)
@@ -150,7 +150,7 @@ export class Scaleway extends VMManager {
     return response.data.servers
       .map(this.mapServerObject)
       .filter(
-        (server: VM) => server.tags.includes(VBROWSER_TAG) && server.private_ip
+        (server: VM) => server.tags.includes(this.tag) && server.private_ip
       );
   };
   mapServerObject = (server: any): VM => ({
@@ -162,6 +162,7 @@ export class Scaleway extends VMManager {
     state: server.state,
     tags: server.tags,
     creation_date: server.creation_date,
-    provider: this.redisQueueKey,
+    provider: this.getRedisQueueKey(),
+    large: this.isLarge,
   });
 }
