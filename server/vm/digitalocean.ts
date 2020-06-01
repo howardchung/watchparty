@@ -6,12 +6,12 @@ import { cloudInit, imageName } from './utils';
 const DO_TOKEN = process.env.DO_TOKEN;
 const region = 'sfo2';
 const gatewayHost = 'gateway4.watchparty.me';
-const imageId = 64226647;
+const imageId = 64531018;
 const sshKeys = ['cc:3d:a7:d3:99:17:fe:b7:dd:59:c4:78:14:d4:02:d1'];
 
 export class DigitalOcean extends VMManager {
   size = 's-2vcpu-2gb'; // s-1vcpu-1gb, s-1vcpu-2gb, s-2vcpu-2gb, s-4vcpu-8gb, c-2
-  largeSize = 's-4vcpu-8gb';
+  largeSize = 's-2vcpu-2gb';
   redisQueueKey = 'availableListDO';
   redisStagingKey = 'stagingListDO';
   startVM = async (name: string) => {
