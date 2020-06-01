@@ -1393,7 +1393,7 @@ export default class App extends React.Component<null, AppState> {
                           {!this.state.loading &&
                             this.state.nonPlayableMedia && (
                               <Message
-                                color="yellow"
+                                color="red"
                                 icon="frown"
                                 header="It doesn't look like this is a media file!"
                                 content="Maybe you meant to launch a VBrowser if you're trying to visit a web page?"
