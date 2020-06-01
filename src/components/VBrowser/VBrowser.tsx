@@ -26,6 +26,7 @@ export default class VBrowser extends React.Component<{
   private width = 1280;
   private height = 720;
   private rate = 30;
+  private keepAliveInterval = 0;
   // private _component = React.createRef<HTMLDivElement>();
   private _container = React.createRef<HTMLDivElement>();
   private _overlay = React.createRef<HTMLDivElement>();
@@ -37,6 +38,10 @@ export default class VBrowser extends React.Component<{
 
   componentDidMount() {
     this.controlling = this.props.controlling;
+    this.keepAliveInterval = window.setInterval(
+      () => this.$client.sendMessage('ka'),
+      10000
+    );
 
     this.$client.on(EVENT.CONNECTED, () => {
       if (this.props.controlling) {
@@ -98,6 +103,7 @@ export default class VBrowser extends React.Component<{
   }
 
   componentWillUnmount() {
+    window.clearInterval(this.keepAliveInterval);
     this.$client.removeAllListeners();
     this.$client.logout();
   }
