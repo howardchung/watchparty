@@ -102,9 +102,10 @@ interface AppState {
   vBrowserResolution: string;
   nonPlayableMedia: boolean;
   currentTab: string;
+  isSubscriber: boolean;
 }
 
-export default class App extends React.Component<null, AppState> {
+export default class App extends React.Component<{}, AppState> {
   state: AppState = {
     state: 'starting',
     currentMedia: '',
@@ -139,6 +140,7 @@ export default class App extends React.Component<null, AppState> {
     vBrowserResolution: '1280x720@30',
     nonPlayableMedia: false,
     currentTab: 'chat',
+    isSubscriber: false,
   };
   socket: any = null;
   watchPartyYTPlayer: any = null;
@@ -164,8 +166,15 @@ export default class App extends React.Component<null, AppState> {
     firebase.auth().onAuthStateChanged((user: firebase.User | null) => {
       if (user) {
         // console.log(user);
-        this.setState({ user }, () => {
+        this.setState({ user }, async () => {
           this.loadSignInData();
+          // Check if user is subscriber by sending uid and token
+          const token = await user.getIdToken();
+          const response = await window.fetch(
+            serverPath + `/metadata?uid=${user.uid}&token=${token}`
+          );
+          const data = await response.json();
+          this.setState({ isSubscriber: data.isSubscriber });
         });
       }
     });
@@ -1310,43 +1319,46 @@ export default class App extends React.Component<null, AppState> {
                         launchMultiSelect={this.launchMultiSelect}
                       />
                     )}
-                    {/* TODO show manage button if user is already subscribed */}
                     {/* TODO user needs to login if they haven't already */}
                     {/* TODO show features modal */}
-                    {process.env.NODE_ENV === 'development' && (
-                      <Popup
-                        content="Subscribe for higher resolution and faster virtual browsers!"
-                        trigger={
-                          <Button
-                            fluid
-                            className="toolButton"
-                            icon
-                            labelPosition="left"
-                            onClick={this.onSubscribe}
-                          >
-                            <Icon name="star" />
-                            Subscribe
-                          </Button>
-                        }
-                      />
-                    )}
-                    {process.env.NODE_ENV === 'development' && (
-                      <Popup
-                        content="Manage your subscription"
-                        trigger={
-                          <Button
-                            fluid
-                            className="toolButton"
-                            icon
-                            labelPosition="left"
-                            onClick={this.onManage}
-                          >
-                            <Icon name="wrench" />
-                            Manage
-                          </Button>
-                        }
-                      />
-                    )}
+                    {process.env.NODE_ENV === 'development' &&
+                      !this.state.isSubscriber && (
+                        <Popup
+                          content="Subscribe to help support us and enable additional features!"
+                          trigger={
+                            <Button
+                              fluid
+                              color="orange"
+                              className="toolButton"
+                              icon
+                              labelPosition="left"
+                              onClick={this.onSubscribe}
+                            >
+                              <Icon name="plus" />
+                              Subscribe
+                            </Button>
+                          }
+                        />
+                      )}
+                    {process.env.NODE_ENV === 'development' &&
+                      this.state.isSubscriber && (
+                        <Popup
+                          content="Manage your subscription"
+                          trigger={
+                            <Button
+                              fluid
+                              color="orange"
+                              className="toolButton"
+                              icon
+                              labelPosition="left"
+                              onClick={this.onManage}
+                            >
+                              <Icon name="wrench" />
+                              Manage
+                            </Button>
+                          }
+                        />
+                      )}
                   </div>
                   <Separator />
                   <div

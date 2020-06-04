@@ -1,5 +1,4 @@
 import { Socket } from 'socket.io';
-import { User, ChatMessage, NumberDict, StringDict } from '.';
 import Redis from 'ioredis';
 import { redisCount } from './utils/redis';
 import { VMManager, AssignedVM } from './vm/base';
@@ -221,8 +220,11 @@ export class Room {
           io.of(roomId).emit('roster', this.roster);
         }
       );
-      socket.on('CMD:stopVBrowser', () => {
-        this.stopVBrowser();
+      socket.on('CMD:stopVBrowser', async () => {
+        if (!this.vBrowser) {
+          return;
+        }
+        await this.stopVBrowser();
         redisCount('vBrowserTerminateManual');
       });
       socket.on('CMD:changeController', (data: string) => {
