@@ -44,20 +44,14 @@ import { MultiStreamModal } from '../Modal/MultiStreamModal';
 import { ComboBox } from '../ComboBox/ComboBox';
 import { SearchComponent } from '../SearchComponent/SearchComponent';
 import { Controls } from '../Controls/Controls';
-import { loadStripe } from '@stripe/stripe-js';
 import firebase from 'firebase/app';
 import 'firebase/auth';
+import { SubscribeModal } from '../Modal/SubscribeModal';
 
 const firebaseConfig = process.env.REACT_APP_FIREBASE_CONFIG;
 if (firebaseConfig) {
   firebase.initializeApp(JSON.parse(firebaseConfig));
 }
-
-// Make sure to call `loadStripe` outside of a component’s render to avoid
-// recreating the `Stripe` object on every render.
-const stripePromise = loadStripe(
-  process.env.REACT_APP_STRIPE_PUBLIC_KEY as string
-);
 
 declare global {
   interface Window {
@@ -103,6 +97,7 @@ interface AppState {
   nonPlayableMedia: boolean;
   currentTab: string;
   isSubscriber: boolean;
+  isSubscribeModalOpen: boolean;
 }
 
 export default class App extends React.Component<{}, AppState> {
@@ -141,6 +136,7 @@ export default class App extends React.Component<{}, AppState> {
     nonPlayableMedia: false,
     currentTab: 'chat',
     isSubscriber: false,
+    isSubscribeModalOpen: false,
   };
   socket: any = null;
   watchPartyYTPlayer: any = null;
@@ -1044,33 +1040,6 @@ export default class App extends React.Component<{}, AppState> {
     this.setState({ loading: false });
   };
 
-  onSubscribe = async (event: any) => {
-    // When the customer clicks on the button, redirect them to Checkout.
-    const stripe = await stripePromise;
-    const result = await stripe?.redirectToCheckout({
-      lineItems: [
-        {
-          price:
-            process.env.NODE_ENV === 'development'
-              ? 'price_HNGtabCzD5qyfd'
-              : 'price_HNDBoPDI7yYRi9',
-          quantity: 1,
-        },
-      ] as any,
-      mode: 'subscription',
-      successUrl: window.location.href,
-      cancelUrl: window.location.href,
-      customerEmail: this.state.user?.email,
-      clientReferenceId: this.state.user?.uid,
-    } as any);
-    // If `redirectToCheckout` fails due to a browser or network
-    // error, display the localized error message to your customer
-    // using `error.message`.
-    if (result && result.error) {
-      console.error(result.error.message);
-    }
-  };
-
   onManage = async () => {
     const resp = await window.fetch(serverPath + '/manageSub', {
       method: 'POST',
@@ -1098,6 +1067,14 @@ export default class App extends React.Component<{}, AppState> {
             streams={this.state.multiStreamSelection}
             setMedia={this.setMedia}
             resetMultiSelect={this.resetMultiSelect}
+          />
+        )}
+        {this.state.isSubscribeModalOpen && (
+          <SubscribeModal
+            user={this.state.user}
+            closeSubscribe={() =>
+              this.setState({ isSubscribeModalOpen: false })
+            }
           />
         )}
         {this.state.error && (
@@ -1257,8 +1234,12 @@ export default class App extends React.Component<{}, AppState> {
                               value: '1024x576@60',
                             },
                             {
-                              text: '480p',
-                              value: '640x480@60',
+                              text: '486p',
+                              value: '864x486@60',
+                            },
+                            {
+                              text: '360p',
+                              value: '640x360@60',
                             },
                           ]}
                         ></Dropdown>
@@ -1319,8 +1300,6 @@ export default class App extends React.Component<{}, AppState> {
                         launchMultiSelect={this.launchMultiSelect}
                       />
                     )}
-                    {/* TODO user needs to login if they haven't already */}
-                    {/* TODO show features modal */}
                     {process.env.NODE_ENV === 'development' &&
                       !this.state.isSubscriber && (
                         <Popup
@@ -1332,7 +1311,9 @@ export default class App extends React.Component<{}, AppState> {
                               className="toolButton"
                               icon
                               labelPosition="left"
-                              onClick={this.onSubscribe}
+                              onClick={() =>
+                                this.setState({ isSubscribeModalOpen: true })
+                              }
                             >
                               <Icon name="plus" />
                               Subscribe
