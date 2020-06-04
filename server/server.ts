@@ -22,6 +22,7 @@ import { DigitalOcean } from './vm/digitalocean';
 import { VMManager } from './vm/base';
 import { getCustomerByEmail, createSelfServicePortal } from './utils/stripe';
 import { validateUserToken } from './utils/firebase';
+import path from 'path';
 
 const app = express();
 let server: any = null;
@@ -57,11 +58,11 @@ if (
   // new Scaleway(rooms, 0, true)
 }
 if (process.env.REDIS_URL && process.env.HETZNER_TOKEN) {
-  // new Hetzner(rooms, 0);
+  // vmManager = new Hetzner(rooms);
   vmManagerLarge = new Hetzner(rooms, 0, true);
 }
 if (process.env.REDIS_URL && process.env.DO_TOKEN) {
-  vmManager = new DigitalOcean(rooms);
+  vmManager = new DigitalOcean(rooms, 0);
   // new DigitalOcean(rooms, 0, true);
 }
 const vmManagers = { standard: vmManager!, large: vmManagerLarge! };
@@ -109,7 +110,6 @@ async function init() {
 app.use(bodyParser.json());
 app.use(compression());
 app.use(cors());
-app.use(express.static('build'));
 
 app.get('/ping', (req, res) => {
   res.json('pong');
@@ -292,6 +292,25 @@ app.post('/manageSub', async (req, res) => {
   return res.json(session);
 });
 
+app.get('/metadata', async (req, res) => {
+  const decoded = await validateUserToken(
+    req.query?.uid as string,
+    req.query?.token as string
+  );
+  if (!decoded) {
+    return res.status(400).json({ error: 'invalid user token' });
+  }
+  if (!decoded.email) {
+    return res.status(400).json({ error: 'no email found' });
+  }
+  const customer = await getCustomerByEmail(decoded.email);
+  if (!customer) {
+    return res.status(400).json({ error: 'customer not found' });
+  }
+  const isSubscriber = Boolean(customer.subscriptions?.data?.length);
+  return res.json({ isSubscriber });
+});
+
 app.get('/kv', async (req, res) => {
   if (req.query.key === process.env.KV_KEY) {
     return res.end(await redis.get(('kv:' + req.query.k) as string));
@@ -312,4 +331,10 @@ app.post('/kv', async (req, res) => {
   } else {
     return res.status(403).json({ error: 'Access Denied' });
   }
+});
+
+app.use(express.static('build'));
+// Send index.html for all other requests (SPA)
+app.use('/*', (req, res) => {
+  res.sendFile(path.resolve(__dirname + '/../build/index.html'));
 });
