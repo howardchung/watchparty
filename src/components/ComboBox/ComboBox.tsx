@@ -42,6 +42,7 @@ export class ComboBox extends React.Component<ComboBoxProps> {
           if (query === '' || (query && query.startsWith('http'))) {
             results = examples.map((option: any) => (
               <Menu.Item
+                key={option.url}
                 onClick={(e: any) => this.setMedia(e, { value: option.url })}
               >
                 {option.url}
@@ -50,7 +51,11 @@ export class ComboBox extends React.Component<ComboBoxProps> {
           } else {
             const data = await getYouTubeResults(query);
             results = data.map((result) => (
-              <YouTubeSearchResult {...result} setMedia={this.setMedia} />
+              <YouTubeSearchResult
+                key={result.url}
+                {...result}
+                setMedia={this.setMedia}
+              />
             ));
           }
           if (timestamp > this.state.lastResultTimestamp) {

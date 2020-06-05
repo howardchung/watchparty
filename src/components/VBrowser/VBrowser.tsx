@@ -68,6 +68,7 @@ export default class VBrowser extends React.Component<{
       }
       video.play();
     });
+    this.$client.on(EVENT.CONTROL.CLIPBOARD, this.onClipboardChanged);
 
     if (process.env.NODE_ENV === 'development') {
       this.$client.on('debug', (e, data) => console.log(e, data));
@@ -126,25 +127,26 @@ export default class VBrowser extends React.Component<{
     this.$client.sendMessage(EVENT.SCREEN.SET, { width, height, rate });
   };
 
-  // onClipboardChanged(clipboard: string) {
-  //   if (
-  //     navigator.clipboard &&
-  //     typeof navigator.clipboard.writeText === 'function'
-  //   ) {
-  //     navigator.clipboard.writeText(clipboard).catch(console.error);
-  //   }
-  // }
-
+  onClipboardChanged(clipboard: string) {
+    if (
+      navigator.clipboard &&
+      typeof navigator.clipboard.writeText === 'function'
+    ) {
+      // Received clipboard contents from vbrowser
+      navigator.clipboard.writeText(clipboard);
+    }
+  }
   onFocus = async () => {
-    // if (
-    //   this.hosting &&
-    //   navigator.clipboard &&
-    //   typeof navigator.clipboard.readText === 'function'
-    // ) {
-    //   const text = await navigator.clipboard.readText();
-    //   console.log(text);
-    //   // TODO send clipboard to remote
-    // }
+    if (
+      this.props.controlling &&
+      navigator.clipboard &&
+      typeof navigator.clipboard.readText === 'function'
+    ) {
+      const text = await navigator.clipboard.readText();
+      // console.log('[FOCUS]', text);
+      // send clipboard contents to vbrowser
+      this.$client.sendMessage(EVENT.CONTROL.CLIPBOARD, { text });
+    }
   };
 
   onBlur = () => {
