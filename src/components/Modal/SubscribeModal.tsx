@@ -104,7 +104,7 @@ export class SubscribeModal extends React.Component<{
             </Table>
             <div style={{ textAlign: 'right' }}>
               {/* if user isn't logged in, provide login prompt */}
-              {this.props.user ? (
+              {this.props.user && this.props.user.email ? (
                 <Button
                   icon
                   labelPosition="left"

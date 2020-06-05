@@ -196,7 +196,9 @@ export default class App extends React.Component<{}, AppState> {
       if (firstName) {
         this.updateName(null, { value: firstName });
       }
-      this.updatePicture(this.state.user.photoURL + '?height=128&width=128');
+      if (this.state.user.photoURL) {
+        this.updatePicture(this.state.user.photoURL + '?height=128&width=128');
+      }
     }
   };
 

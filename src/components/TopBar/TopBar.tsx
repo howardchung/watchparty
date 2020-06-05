@@ -3,6 +3,7 @@ import { serverPath, getColorHex } from '../../utils';
 import { Icon, Popup, Button, Dropdown } from 'semantic-ui-react';
 import * as firebase from 'firebase/app';
 import 'firebase/auth';
+import { LoginModal } from '../Modal/LoginModal';
 
 export class NewRoomButton extends React.Component<{ size?: string }> {
   createRoom = async () => {
@@ -43,6 +44,8 @@ export class NewRoomButton extends React.Component<{ size?: string }> {
 export class SignInButton extends React.Component<{
   user: firebase.User | null;
 }> {
+  public state = { isLoginOpen: false };
+
   facebookSignIn = async () => {
     const provider = new firebase.auth.FacebookAuthProvider();
     const user = await firebase.auth().signInWithPopup(provider);
@@ -59,14 +62,11 @@ export class SignInButton extends React.Component<{
     }
   };
 
-  emailSignIn = (email: string, password: string) => {
-    firebase.auth().createUserWithEmailAndPassword(email, password);
-  };
-
   signOut = () => {
     firebase.auth().signOut();
     window.location.reload();
   };
+
   render() {
     if (this.props.user) {
       return (
@@ -82,32 +82,44 @@ export class SignInButton extends React.Component<{
       );
     }
     return (
-      <Popup
-        basic
-        content="Sign in to automatically set your name and picture"
-        trigger={
-          <Dropdown
-            style={{ height: '36px' }}
-            icon="sign in"
-            labeled
-            className="icon"
-            button
-            text="Sign in"
-          >
-            <Dropdown.Menu>
-              <Dropdown.Item onClick={this.facebookSignIn}>
-                <Icon name="facebook" />
-                Facebook
-              </Dropdown.Item>
-              <Dropdown.Item onClick={this.googleSignIn}>
-                <Icon name="google" />
-                Google
-              </Dropdown.Item>
-              {/* <Dropdown.Item onClick={this.emailSignIn}>Email</Dropdown.Item> */}
-            </Dropdown.Menu>
-          </Dropdown>
-        }
-      />
+      <React.Fragment>
+        {this.state.isLoginOpen && (
+          <LoginModal
+            closeLogin={() => this.setState({ isLoginOpen: false })}
+          />
+        )}
+        <Popup
+          basic
+          content="Sign in to automatically set your name and picture"
+          trigger={
+            <Dropdown
+              style={{ height: '36px' }}
+              icon="sign in"
+              labeled
+              className="icon"
+              button
+              text="Sign in"
+            >
+              <Dropdown.Menu>
+                <Dropdown.Item onClick={this.facebookSignIn}>
+                  <Icon name="facebook" />
+                  Facebook
+                </Dropdown.Item>
+                <Dropdown.Item onClick={this.googleSignIn}>
+                  <Icon name="google" />
+                  Google
+                </Dropdown.Item>
+                <Dropdown.Item
+                  onClick={() => this.setState({ isLoginOpen: true })}
+                >
+                  <Icon name="mail" />
+                  Email
+                </Dropdown.Item>
+              </Dropdown.Menu>
+            </Dropdown>
+          }
+        />
+      </React.Fragment>
     );
   }
 }

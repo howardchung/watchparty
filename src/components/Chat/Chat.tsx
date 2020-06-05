@@ -85,7 +85,7 @@ export class Chat extends React.Component<ChatProps> {
         <React.Fragment>
           The VBrowser shut down automatically.
           <br />
-          You can subscribe for sessions up to 12 hours.
+          Subscribe for sessions up to 12 hours.
         </React.Fragment>
       );
     }
