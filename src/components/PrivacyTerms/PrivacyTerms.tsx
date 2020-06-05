@@ -15,13 +15,13 @@ Personal Information
 ----
 - You are not required to register to use the service, but you have the option to sign in with an email or authentication provider, which will be used to display your name and picture in the rooms you join.
 - If you provide this information, we may use it to contact you regarding your use of the service, or to link your account to a subscription.
-- We do not share personal information with third parties.
+- We do not sell personal information to third parties.
 - You have the right to request deletion of your user data, in accordance with various laws governing data protection.
-- Payment information is handled by third-party providers such as Stripe. We do not collect or access financial information directly.
+- Payment information is handled by providers such as Stripe. We do not collect or access financial information directly.
 
 Cookies
 ----
-- We use services such as Google Analytics to gauge usage of the service. These providers may set cookies or other information locally on your device.
+- We use services such as Google Analytics to measure usage. These services may set cookies or other information locally on your device.
 
 Virtual Browsers
 ----

@@ -116,8 +116,7 @@ export class SubscribeModal extends React.Component<{
                 </Button>
               ) : (
                 <div>
-                  You need to be signed in to subscribe!{' '}
-                  <SignInButton user={null} />
+                  Please sign in to subscribe: <SignInButton user={null} />
                 </div>
               )}
             </div>
