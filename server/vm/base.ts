@@ -38,8 +38,11 @@ export abstract class VMManager {
           (!room.vBrowser.provider ||
             room.vBrowser.provider === this.getRedisQueueKey())
         ) {
+          const maxTime = room.vBrowser.large
+            ? 12 * 60 * 60 * 1000
+            : 3 * 60 * 60 * 1000;
           const isTimedOut =
-            Number(new Date()) - room.vBrowser.assignTime > 6 * 60 * 60 * 1000;
+            Number(new Date()) - room.vBrowser.assignTime > maxTime;
           const isRoomEmpty = room.roster.length === 0;
           if (isTimedOut || isRoomEmpty) {
             console.log('[RELEASE] VM in room:', room.roomId);
