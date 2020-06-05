@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, Image, Header, Table, Button, Icon } from 'semantic-ui-react';
+import { Modal, Header, Table, Button, Icon } from 'semantic-ui-react';
 import { loadStripe } from '@stripe/stripe-js';
 import { SignInButton } from '../TopBar/TopBar';
 
