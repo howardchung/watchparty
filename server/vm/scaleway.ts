@@ -1,6 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
-import { StringDict } from '..';
 import { VMManager, VM } from './base';
 import { Room } from '../room';
 import { cloudInit, imageName } from './utils';

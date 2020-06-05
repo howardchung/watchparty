@@ -12,6 +12,7 @@ import Redis from 'ioredis';
 import https from 'https';
 import http from 'http';
 import socketIO from 'socket.io';
+import Stripe from 'stripe';
 import { searchYoutube } from './utils/youtube';
 import { Room } from './room';
 import { getRedisCountDay } from './utils/redis';
@@ -19,6 +20,9 @@ import { Scaleway } from './vm/scaleway';
 import { Hetzner } from './vm/hetzner';
 import { DigitalOcean } from './vm/digitalocean';
 import { VMManager } from './vm/base';
+import { getCustomerByEmail, createSelfServicePortal } from './utils/stripe';
+import { validateUserToken } from './utils/firebase';
+import path from 'path';
 
 const app = express();
 let server: any = null;
@@ -54,7 +58,7 @@ if (
   // new Scaleway(rooms, 0, true)
 }
 if (process.env.REDIS_URL && process.env.HETZNER_TOKEN) {
-  // new Hetzner(rooms, 0);
+  // vmManager = new Hetzner(rooms);
   vmManagerLarge = new Hetzner(rooms, 0, true);
 }
 if (process.env.REDIS_URL && process.env.DO_TOKEN) {
@@ -103,10 +107,9 @@ async function init() {
   server.listen(process.env.PORT || 8080);
 }
 
-app.use(cors());
 app.use(bodyParser.json());
 app.use(compression());
-app.use(express.static('build'));
+app.use(cors());
 
 app.get('/ping', (req, res) => {
   res.json('pong');
@@ -270,6 +273,44 @@ app.get('/settings', (req, res) => {
   return res.json({});
 });
 
+app.post('/manageSub', async (req, res) => {
+  const decoded = await validateUserToken(req.body?.uid, req.body?.token);
+  if (!decoded) {
+    return res.status(400).json({ error: 'invalid user token' });
+  }
+  if (!decoded.email) {
+    return res.status(400).json({ error: 'no email found' });
+  }
+  const customer = await getCustomerByEmail(decoded.email);
+  if (!customer) {
+    return res.status(400).json({ error: 'customer not found' });
+  }
+  const session = await createSelfServicePortal(
+    customer.id,
+    req.body?.return_url
+  );
+  return res.json(session);
+});
+
+app.get('/metadata', async (req, res) => {
+  const decoded = await validateUserToken(
+    req.query?.uid as string,
+    req.query?.token as string
+  );
+  if (!decoded) {
+    return res.status(400).json({ error: 'invalid user token' });
+  }
+  if (!decoded.email) {
+    return res.status(400).json({ error: 'no email found' });
+  }
+  const customer = await getCustomerByEmail(decoded.email);
+  if (!customer) {
+    return res.status(400).json({ error: 'customer not found' });
+  }
+  const isSubscriber = Boolean(customer.subscriptions?.data?.length);
+  return res.json({ isSubscriber });
+});
+
 app.get('/kv', async (req, res) => {
   if (req.query.key === process.env.KV_KEY) {
     return res.end(await redis.get(('kv:' + req.query.k) as string));
@@ -290,4 +331,10 @@ app.post('/kv', async (req, res) => {
   } else {
     return res.status(403).json({ error: 'Access Denied' });
   }
+});
+
+app.use(express.static('build'));
+// Send index.html for all other requests (SPA)
+app.use('/*', (req, res) => {
+  res.sendFile(path.resolve(__dirname + '/../build/index.html'));
 });

@@ -40,10 +40,8 @@ export class NewRoomButton extends React.Component<{ size?: string }> {
   }
 }
 
-export class TopBar extends React.Component<{
-  user?: any;
-  hideNewRoom?: boolean;
-  hideSignin?: boolean;
+export class SignInButton extends React.Component<{
+  user: firebase.User | null;
 }> {
   facebookSignIn = async () => {
     const provider = new firebase.auth.FacebookAuthProvider();
@@ -69,7 +67,56 @@ export class TopBar extends React.Component<{
     firebase.auth().signOut();
     window.location.reload();
   };
+  render() {
+    if (this.props.user) {
+      return (
+        <Button
+          style={{ height: '36px' }}
+          icon
+          labelPosition="left"
+          onClick={this.signOut}
+        >
+          <Icon name="sign out" />
+          Sign out
+        </Button>
+      );
+    }
+    return (
+      <Popup
+        basic
+        content="Sign in to automatically set your name and picture"
+        trigger={
+          <Dropdown
+            style={{ height: '36px' }}
+            icon="sign in"
+            labeled
+            className="icon"
+            button
+            text="Sign in"
+          >
+            <Dropdown.Menu>
+              <Dropdown.Item onClick={this.facebookSignIn}>
+                <Icon name="facebook" />
+                Facebook
+              </Dropdown.Item>
+              <Dropdown.Item onClick={this.googleSignIn}>
+                <Icon name="google" />
+                Google
+              </Dropdown.Item>
+              {/* <Dropdown.Item onClick={this.emailSignIn}>Email</Dropdown.Item> */}
+            </Dropdown.Menu>
+          </Dropdown>
+        }
+      />
+    );
+  }
+}
 
+export class TopBar extends React.Component<{
+  user?: any;
+  hideNewRoom?: boolean;
+  hideSignin?: boolean;
+}> {
   render() {
     return (
       <React.Fragment>
@@ -180,45 +227,7 @@ export class TopBar extends React.Component<{
             }}
           >
             {!this.props.hideNewRoom && <NewRoomButton />}
-            {!this.props.hideSignin && !this.props.user && (
-              <Popup
-                basic
-                content="Sign in to automatically set your name and picture"
-                trigger={
-                  <Dropdown
-                    style={{ height: '36px' }}
-                    icon="sign in"
-                    labeled
-                    className="icon"
-                    button
-                    text="Sign in"
-                  >
-                    <Dropdown.Menu>
-                      <Dropdown.Item onClick={this.facebookSignIn}>
-                        <Icon name="facebook" />
-                        Facebook
-                      </Dropdown.Item>
-                      <Dropdown.Item onClick={this.googleSignIn}>
-                        <Icon name="google" />
-                        Google
-                      </Dropdown.Item>
-                      {/* <Dropdown.Item onClick={this.emailSignIn}>Email</Dropdown.Item> */}
-                    </Dropdown.Menu>
-                  </Dropdown>
-                }
-              />
-            )}
-            {!this.props.hideSignin && this.props.user && (
-              <Button
-                style={{ height: '36px' }}
-                icon
-                labelPosition="left"
-                onClick={this.signOut}
-              >
-                <Icon name="sign out" />
-                Sign out
-              </Button>
-            )}
+            {!this.props.hideSignin && <SignInButton user={this.props.user} />}
             {/* <SettingsModal trigger={<Button fluid inverted color="green" size="medium" icon labelPosition="left" className="toolButton"><Icon name="setting" />Settings</Button>} /> */}
           </div>
         </div>

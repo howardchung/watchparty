@@ -46,6 +46,7 @@ import { SearchComponent } from '../SearchComponent/SearchComponent';
 import { Controls } from '../Controls/Controls';
 import firebase from 'firebase/app';
 import 'firebase/auth';
+import { SubscribeModal } from '../Modal/SubscribeModal';
 
 const firebaseConfig = process.env.REACT_APP_FIREBASE_CONFIG;
 if (firebaseConfig) {
@@ -95,9 +96,11 @@ interface AppState {
   vBrowserResolution: string;
   nonPlayableMedia: boolean;
   currentTab: string;
+  isSubscriber: boolean;
+  isSubscribeModalOpen: boolean;
 }
 
-export default class App extends React.Component<null, AppState> {
+export default class App extends React.Component<{}, AppState> {
   state: AppState = {
     state: 'starting',
     currentMedia: '',
@@ -132,6 +135,8 @@ export default class App extends React.Component<null, AppState> {
     vBrowserResolution: '1280x720@30',
     nonPlayableMedia: false,
     currentTab: 'chat',
+    isSubscriber: false,
+    isSubscribeModalOpen: false,
   };
   socket: any = null;
   watchPartyYTPlayer: any = null;
@@ -157,8 +162,15 @@ export default class App extends React.Component<null, AppState> {
     firebase.auth().onAuthStateChanged((user: firebase.User | null) => {
       if (user) {
         // console.log(user);
-        this.setState({ user }, () => {
+        this.setState({ user }, async () => {
           this.loadSignInData();
+          // Check if user is subscriber by sending uid and token
+          const token = await user.getIdToken();
+          const response = await window.fetch(
+            serverPath + `/metadata?uid=${user.uid}&token=${token}`
+          );
+          const data = await response.json();
+          this.setState({ isSubscriber: data.isSubscriber });
         });
       }
     });
@@ -1028,6 +1040,23 @@ export default class App extends React.Component<null, AppState> {
     this.setState({ loading: false });
   };
 
+  onManage = async () => {
+    const resp = await window.fetch(serverPath + '/manageSub', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        uid: this.state.user?.uid,
+        token: await this.state.user?.getIdToken(),
+        return_url: window.location.href,
+      }),
+    });
+    const session = await resp.json();
+    console.log(session);
+    window.location.assign(session.url);
+  };
+
   render() {
     const sharer = this.state.participants.find((p) => p.isScreenShare);
     const controller = this.state.participants.find((p) => p.isController);
@@ -1038,6 +1067,14 @@ export default class App extends React.Component<null, AppState> {
             streams={this.state.multiStreamSelection}
             setMedia={this.setMedia}
             resetMultiSelect={this.resetMultiSelect}
+          />
+        )}
+        {this.state.isSubscribeModalOpen && (
+          <SubscribeModal
+            user={this.state.user}
+            closeSubscribe={() =>
+              this.setState({ isSubscribeModalOpen: false })
+            }
           />
         )}
         {this.state.error && (
@@ -1197,8 +1234,12 @@ export default class App extends React.Component<null, AppState> {
                               value: '1024x576@60',
                             },
                             {
-                              text: '480p',
-                              value: '640x480@60',
+                              text: '486p',
+                              value: '864x486@60',
+                            },
+                            {
+                              text: '360p',
+                              value: '640x360@60',
                             },
                           ]}
                         ></Dropdown>
@@ -1259,6 +1300,46 @@ export default class App extends React.Component<null, AppState> {
                         launchMultiSelect={this.launchMultiSelect}
                       />
                     )}
+                    {process.env.NODE_ENV === 'development' &&
+                      !this.state.isSubscriber && (
+                        <Popup
+                          content="Subscribe to help support us and enable additional features!"
+                          trigger={
+                            <Button
+                              fluid
+                              color="orange"
+                              className="toolButton"
+                              icon
+                              labelPosition="left"
+                              onClick={() =>
+                                this.setState({ isSubscribeModalOpen: true })
+                              }
+                            >
+                              <Icon name="plus" />
+                              Subscribe
+                            </Button>
+                          }
+                        />
+                      )}
+                    {process.env.NODE_ENV === 'development' &&
+                      this.state.isSubscriber && (
+                        <Popup
+                          content="Manage your subscription"
+                          trigger={
+                            <Button
+                              fluid
+                              color="orange"
+                              className="toolButton"
+                              icon
+                              labelPosition="left"
+                              onClick={this.onManage}
+                            >
+                              <Icon name="wrench" />
+                              Manage
+                            </Button>
+                          }
+                        />
+                      )}
                   </div>
                   <Separator />
                   <div

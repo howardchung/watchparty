@@ -1,21 +1,13 @@
 import { Socket } from 'socket.io';
-import { User, ChatMessage, NumberDict, StringDict } from '.';
 import Redis from 'ioredis';
 import { redisCount } from './utils/redis';
 import { VMManager, AssignedVM } from './vm/base';
-import * as admin from 'firebase-admin';
+import { validateUserToken } from './utils/firebase';
+import { getCustomerByEmail } from './utils/stripe';
 
 let redis = (undefined as unknown) as Redis.Redis;
 if (process.env.REDIS_URL) {
   redis = new Redis(process.env.REDIS_URL);
-}
-
-if (process.env.FIREBASE_ADMIN_SDK_CONFIG) {
-  admin.initializeApp({
-    credential: admin.credential.cert(
-      JSON.parse(process.env.FIREBASE_ADMIN_SDK_CONFIG)
-    ),
-  });
 }
 
 export class Room {
@@ -190,25 +182,15 @@ export class Room {
             return;
           }
           let isLarge = false;
-          if (
-            process.env.FIREBASE_ADMIN_SDK_CONFIG &&
-            data &&
-            data.uid &&
-            data.token
-          ) {
-            // Validate the user token
-            const decoded = await admin.auth().verifyIdToken(data.token);
-            if (data.uid !== decoded.uid) {
-              console.log('user token invalid');
-              return;
-            }
-            console.log(decoded);
-            // TODO Check if user is subscriber, if so set isLarge
-            if (
-              process.env.NODE_ENV === 'development' &&
-              decoded.uid === '6wR1m86OjEYP7dSBLKpD9TH2Cgs2'
-            ) {
-              isLarge = true;
+          if (data && data.uid && data.token) {
+            const decoded = await validateUserToken(data.uid, data.token);
+            // Check if user is subscriber, if so set isLarge
+            if (decoded?.email) {
+              const customer = await getCustomerByEmail(decoded.email);
+              if (customer?.subscriptions?.data[0]) {
+                console.log('found active sub for ', customer?.email);
+                isLarge = true;
+              }
             }
           }
 
@@ -238,8 +220,11 @@ export class Room {
           io.of(roomId).emit('roster', this.roster);
         }
       );
-      socket.on('CMD:stopVBrowser', () => {
-        this.stopVBrowser();
+      socket.on('CMD:stopVBrowser', async () => {
+        if (!this.vBrowser) {
+          return;
+        }
+        await this.stopVBrowser();
         redisCount('vBrowserTerminateManual');
       });
       socket.on('CMD:changeController', (data: string) => {
