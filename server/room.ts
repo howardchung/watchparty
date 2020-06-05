@@ -25,6 +25,7 @@ export class Room {
   public creationTime: Date = new Date();
   private vmManagers: { standard: VMManager; large: VMManager } | undefined;
   public isRoomDirty = false; // Indicates an unattended room needs to be saved, e.g. we unassign a VM from an empty room
+  public isAssigningVM = false;
 
   constructor(
     io: SocketIO.Server,
@@ -91,7 +92,7 @@ export class Room {
         const chatMsg = {
           id: socket.id,
           cmd: 'play',
-          msg: this.tsMap[socket.id],
+          msg: this.tsMap[socket.id]?.toString(),
         };
         this.paused = false;
         this.addChatMessage(socket, chatMsg);
@@ -101,7 +102,7 @@ export class Room {
         const chatMsg = {
           id: socket.id,
           cmd: 'pause',
-          msg: this.tsMap[socket.id],
+          msg: this.tsMap[socket.id]?.toString(),
         };
         this.paused = true;
         this.addChatMessage(socket, chatMsg);
@@ -109,7 +110,7 @@ export class Room {
       socket.on('CMD:seek', (data: number) => {
         this.videoTS = data;
         socket.broadcast.emit('REC:seek', data);
-        const chatMsg = { id: socket.id, cmd: 'seek', msg: data };
+        const chatMsg = { id: socket.id, cmd: 'seek', msg: data.toString() };
         this.addChatMessage(socket, chatMsg);
       });
       socket.on('CMD:ts', (data: number) => {
@@ -177,10 +178,10 @@ export class Room {
       socket.on(
         'CMD:startVBrowser',
         async (data: { uid: string; token: any }) => {
-          if (this.vBrowser) {
-            // Maybe terminate the existing instance and spawn a new one
+          if (this.vBrowser || this.isAssigningVM) {
             return;
           }
+          this.isAssigningVM = true;
           let isLarge = false;
           if (data && data.uid && data.token) {
             const decoded = await validateUserToken(data.uid, data.token);
@@ -200,6 +201,11 @@ export class Room {
             ? this.vmManagers?.large
             : this.vmManagers?.standard;
           const assignment = await vmManager?.assignVM();
+          if (!this.isAssigningVM) {
+            // Maybe the user cancelled the request before assignment finished
+            return;
+          }
+          this.isAssigningVM = false;
           if (!assignment) {
             this.cmdHost(socket, '');
             this.vBrowser = undefined;
@@ -221,7 +227,7 @@ export class Room {
         }
       );
       socket.on('CMD:stopVBrowser', async () => {
-        if (!this.vBrowser) {
+        if (!this.vBrowser && !this.isAssigningVM) {
           return;
         }
         await this.stopVBrowser();
@@ -316,6 +322,7 @@ export class Room {
   };
 
   stopVBrowser = async () => {
+    this.isAssigningVM = false;
     const assignTime = this.vBrowser && this.vBrowser.assignTime;
     const id = this.vBrowser && this.vBrowser.id;
     const isLarge = this.vBrowser?.large;
@@ -354,7 +361,7 @@ export class Room {
     }
   };
 
-  addChatMessage = (socket: Socket | undefined, chatMsg: any) => {
+  addChatMessage = (socket: Socket | undefined, chatMsg: ChatMessageBase) => {
     const chatWithTime: ChatMessage = {
       ...chatMsg,
       timestamp: new Date().toISOString(),

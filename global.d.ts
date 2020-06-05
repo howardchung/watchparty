@@ -15,12 +15,16 @@ interface User {
   isController?: boolean;
 }
 
-interface ChatMessage {
-  timestamp: string;
-  videoTS: number;
+interface ChatMessageBase {
   id: string;
-  cmd: string;
+  cmd?: string;
   msg: string;
+  system?: boolean;
+}
+
+interface ChatMessage extends ChatMessageBase {
+  timestamp: string;
+  videoTS?: number;
 }
 
 interface SearchResult {
