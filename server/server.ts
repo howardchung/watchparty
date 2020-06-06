@@ -5,7 +5,6 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import compression from 'compression';
 import Moniker from 'moniker';
-import Youtube from 'youtube-api';
 import os from 'os';
 import cors from 'cors';
 import Redis from 'ioredis';
@@ -58,11 +57,11 @@ if (
   // new Scaleway(rooms, 0, true)
 }
 if (process.env.REDIS_URL && process.env.HETZNER_TOKEN) {
-  // vmManager = new Hetzner(rooms);
+  vmManager = new Hetzner(rooms);
   vmManagerLarge = new Hetzner(rooms, 0, true);
 }
 if (process.env.REDIS_URL && process.env.DO_TOKEN) {
-  vmManager = new DigitalOcean(rooms);
+  new DigitalOcean(rooms, 0);
   // new DigitalOcean(rooms, 0, true);
 }
 const vmManagers = { standard: vmManager!, large: vmManagerLarge! };
@@ -196,6 +195,12 @@ app.get('/stats', async (req, res) => {
     const vBrowserTerminateManual = await getRedisCountDay(
       'vBrowserTerminateManual'
     );
+    const recaptchaRejectsLowScore = await getRedisCountDay(
+      'recaptchaRejectsLowScore'
+    );
+    const recaptchaRejectsOther = await getRedisCountDay(
+      'recaptchaRejectsOther'
+    );
     const urlStarts = await getRedisCountDay('urlStarts');
     const screenShareStarts = await getRedisCountDay('screenShareStarts');
     const fileShareStarts = await getRedisCountDay('fileShareStarts');
@@ -216,6 +221,8 @@ app.get('/stats', async (req, res) => {
       vBrowserTerminateManual,
       vBrowserTerminateEmpty,
       vBrowserTerminateTimeout,
+      recaptchaRejectsLowScore,
+      recaptchaRejectsOther,
       vBrowserStartMS,
       vBrowserSessionMS,
       vBrowserVMLifetime,

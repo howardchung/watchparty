@@ -12,6 +12,7 @@ const stripePromise = loadStripe(
 export class SubscribeModal extends React.Component<{
   closeSubscribe: Function;
   user?: firebase.User;
+  isSubscriber: boolean;
 }> {
   onSubscribe = async () => {
     const stripe = await stripePromise;
@@ -39,6 +40,10 @@ export class SubscribeModal extends React.Component<{
     }
   };
   render() {
+    if (this.props.isSubscriber) {
+      this.props.closeSubscribe();
+      return null;
+    }
     const { closeSubscribe } = this.props;
     return (
       <Modal open={true} onClose={closeSubscribe as any}>

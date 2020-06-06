@@ -30,6 +30,7 @@ export class VBrowserModal extends React.Component<{
     return (
       <GoogleReCaptchaProvider
         reCaptchaKey={process.env.REACT_APP_RECAPTCHA_SITE_KEY as string}
+        useRecaptchaNet
       >
         <Modal open={true} onClose={closeModal as any}>
           <Modal.Header>Launch a VBrowser</Modal.Header>

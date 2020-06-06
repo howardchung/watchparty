@@ -1077,6 +1077,7 @@ export default class App extends React.Component<{}, AppState> {
         {this.state.isSubscribeModalOpen && (
           <SubscribeModal
             user={this.state.user}
+            isSubscriber={this.state.isSubscriber}
             closeSubscribe={() =>
               this.setState({ isSubscribeModalOpen: false })
             }
