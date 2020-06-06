@@ -198,28 +198,28 @@ export class Room {
 
           if (
             process.env.NODE_ENV === 'development' &&
-            process.env.RECAPTCHA_SECRET_KEY &&
-            !isLarge
+            process.env.RECAPTCHA_SECRET_KEY
           ) {
-            // If user isn't a subscriber, we require recaptcha validation
-            const validation = await axios({
-              url: `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${data.rcToken}`,
-              method: 'POST',
-            });
-            console.log(validation?.data);
-            const isLowScore = validation?.data?.score < 0.5;
-            if (
-              !validation ||
-              !validation.data ||
-              !validation.data.success ||
-              isLowScore
-            ) {
-              if (isLowScore) {
-                redisCount('recaptchaRejectsLowScore');
-              } else {
-                redisCount('recaptchaRejectsOther');
+            try {
+              // Validate the request isn't spam/automated
+              const validation = await axios({
+                url: `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${data.rcToken}`,
+                method: 'POST',
+              });
+              console.log(validation?.data);
+              const isLowScore = validation?.data?.score < 0.5;
+              const failed = validation?.data?.success === false;
+              if (failed || isLowScore) {
+                if (isLowScore) {
+                  redisCount('recaptchaRejectsLowScore');
+                } else {
+                  redisCount('recaptchaRejectsOther');
+                }
+                return;
               }
-              return;
+            } catch (e) {
+              // if Recaptcha is down or other network issues, allow continuing
+              console.warn(e);
             }
           }
 
