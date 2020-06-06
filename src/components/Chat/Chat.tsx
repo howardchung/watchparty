@@ -80,6 +80,14 @@ export class Chat extends React.Component<ChatProps> {
       return `started the video at ${formatTimestamp(msg)}`;
     } else if (cmd === 'pause') {
       return `paused the video at ${formatTimestamp(msg)}`;
+    } else if (cmd === 'vBrowserTimeout') {
+      return (
+        <React.Fragment>
+          The VBrowser shut down automatically.
+          <br />
+          Subscribe for sessions up to 12 hours.
+        </React.Fragment>
+      );
     }
     return cmd;
   };
@@ -107,7 +115,7 @@ export class Chat extends React.Component<ChatProps> {
             {this.props.chat.map((msg) => (
               <ChatMessage
                 key={msg.timestamp + msg.id}
-                {...msg}
+                message={msg}
                 pictureMap={this.props.pictureMap}
                 nameMap={this.props.nameMap}
                 formatMessage={this.formatMessage}
@@ -153,22 +161,29 @@ export class Chat extends React.Component<ChatProps> {
 }
 
 const ChatMessage = ({
-  id,
-  picture,
-  timestamp,
-  cmd,
-  msg,
+  message,
   nameMap,
   pictureMap,
   formatMessage,
-}: any) => {
+}: {
+  message: ChatMessage;
+  nameMap: StringDict;
+  pictureMap: StringDict;
+  formatMessage: (cmd: string, msg: string) => React.ReactNode;
+}) => {
+  const { id, timestamp, cmd, msg, system } = message;
   return (
     <Comment>
-      <Comment.Avatar
-        src={pictureMap[id] || getDefaultPicture(nameMap[id], getColorHex(id))}
-      />
+      {id ? (
+        <Comment.Avatar
+          src={
+            pictureMap[id] || getDefaultPicture(nameMap[id], getColorHex(id))
+          }
+        />
+      ) : null}
       <Comment.Content>
         <Comment.Author as="a" className="light">
+          {Boolean(system) && 'System'}
           {nameMap[id] || id}
         </Comment.Author>
         <Comment.Metadata className="dark">
