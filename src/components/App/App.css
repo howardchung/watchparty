@@ -104,11 +104,6 @@ body {
   height: calc(100vh - 62px);
 }
 
-.toolButton {
-  min-width: 135px;
-  height: 36px;
-}
-
 .videoChatContent {
   height: 110px;
   border-radius: 4px;
@@ -134,9 +129,4 @@ body {
   text-overflow: ellipsis;
   width: 100%;
   overflow: hidden;
-}
-
-.footerIcon {
-  color: white;
-  margin-right: 10px;
 }

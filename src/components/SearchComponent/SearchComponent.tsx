@@ -86,6 +86,7 @@ export class SearchComponent extends React.Component<SearchComponentProps> {
         <Dropdown
           key={this.state.resetDropdown}
           fluid
+          style={{ height: '36px' }}
           button
           icon={icon}
           className="icon"

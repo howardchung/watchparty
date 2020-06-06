@@ -12,6 +12,7 @@ const stripePromise = loadStripe(
 export class SubscribeModal extends React.Component<{
   closeSubscribe: Function;
   user?: firebase.User;
+  isSubscriber: boolean;
 }> {
   onSubscribe = async () => {
     const stripe = await stripePromise;
@@ -39,6 +40,10 @@ export class SubscribeModal extends React.Component<{
     }
   };
   render() {
+    if (this.props.isSubscriber) {
+      this.props.closeSubscribe();
+      return null;
+    }
     const { closeSubscribe } = this.props;
     return (
       <Modal open={true} onClose={closeSubscribe as any}>
@@ -51,7 +56,7 @@ export class SubscribeModal extends React.Component<{
               Please consider supporting us if you're enjoying WatchParty.
             </div>
             <Header>Features</Header>
-            <Table definition>
+            <Table definition unstackable striped>
               <Table.Header>
                 <Table.Row>
                   <Table.HeaderCell />
@@ -84,7 +89,7 @@ export class SubscribeModal extends React.Component<{
                   <Table.Cell>Fast</Table.Cell>
                 </Table.Row>
                 <Table.Row>
-                  <Table.Cell>VBrowser Session Timeout</Table.Cell>
+                  <Table.Cell>VBrowser Session Limit</Table.Cell>
                   <Table.Cell>3 hours</Table.Cell>
                   <Table.Cell>12 hours</Table.Cell>
                 </Table.Row>
@@ -104,11 +109,12 @@ export class SubscribeModal extends React.Component<{
             </Table>
             <div style={{ textAlign: 'right' }}>
               {/* if user isn't logged in, provide login prompt */}
-              {this.props.user ? (
+              {this.props.user && this.props.user.email ? (
                 <Button
                   icon
                   labelPosition="left"
                   color="blue"
+                  size="large"
                   onClick={this.onSubscribe}
                 >
                   <Icon name="cc stripe" />

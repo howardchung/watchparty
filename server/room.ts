@@ -1,5 +1,6 @@
 import { Socket } from 'socket.io';
 import Redis from 'ioredis';
+import axios from 'axios';
 import { redisCount } from './utils/redis';
 import { VMManager, AssignedVM } from './vm/base';
 import { validateUserToken } from './utils/firebase';
@@ -25,6 +26,7 @@ export class Room {
   public creationTime: Date = new Date();
   private vmManagers: { standard: VMManager; large: VMManager } | undefined;
   public isRoomDirty = false; // Indicates an unattended room needs to be saved, e.g. we unassign a VM from an empty room
+  public isAssigningVM = false;
 
   constructor(
     io: SocketIO.Server,
@@ -91,7 +93,7 @@ export class Room {
         const chatMsg = {
           id: socket.id,
           cmd: 'play',
-          msg: this.tsMap[socket.id],
+          msg: this.tsMap[socket.id]?.toString(),
         };
         this.paused = false;
         this.addChatMessage(socket, chatMsg);
@@ -101,7 +103,7 @@ export class Room {
         const chatMsg = {
           id: socket.id,
           cmd: 'pause',
-          msg: this.tsMap[socket.id],
+          msg: this.tsMap[socket.id]?.toString(),
         };
         this.paused = true;
         this.addChatMessage(socket, chatMsg);
@@ -109,7 +111,7 @@ export class Room {
       socket.on('CMD:seek', (data: number) => {
         this.videoTS = data;
         socket.broadcast.emit('REC:seek', data);
-        const chatMsg = { id: socket.id, cmd: 'seek', msg: data };
+        const chatMsg = { id: socket.id, cmd: 'seek', msg: data.toString() };
         this.addChatMessage(socket, chatMsg);
       });
       socket.on('CMD:ts', (data: number) => {
@@ -176,13 +178,13 @@ export class Room {
       });
       socket.on(
         'CMD:startVBrowser',
-        async (data: { uid: string; token: any }) => {
-          if (this.vBrowser) {
-            // Maybe terminate the existing instance and spawn a new one
+        async (data: { uid: string; token: string; rcToken: string }) => {
+          if (this.vBrowser || this.isAssigningVM) {
             return;
           }
+          this.isAssigningVM = true;
           let isLarge = false;
-          if (data && data.uid && data.token) {
+          if (process.env.STRIPE_SECRET_KEY && data && data.uid && data.token) {
             const decoded = await validateUserToken(data.uid, data.token);
             // Check if user is subscriber, if so set isLarge
             if (decoded?.email) {
@@ -194,12 +196,44 @@ export class Room {
             }
           }
 
+          if (
+            process.env.NODE_ENV === 'development' &&
+            process.env.RECAPTCHA_SECRET_KEY
+          ) {
+            try {
+              // Validate the request isn't spam/automated
+              const validation = await axios({
+                url: `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${data.rcToken}`,
+                method: 'POST',
+              });
+              console.log(validation?.data);
+              const isLowScore = validation?.data?.score < 0.5;
+              const failed = validation?.data?.success === false;
+              if (failed || isLowScore) {
+                if (isLowScore) {
+                  redisCount('recaptchaRejectsLowScore');
+                } else {
+                  redisCount('recaptchaRejectsOther');
+                }
+                return;
+              }
+            } catch (e) {
+              // if Recaptcha is down or other network issues, allow continuing
+              console.warn(e);
+            }
+          }
+
           redisCount('vBrowserStarts');
           this.cmdHost(socket, 'vbrowser://');
           const vmManager = isLarge
             ? this.vmManagers?.large
             : this.vmManagers?.standard;
           const assignment = await vmManager?.assignVM();
+          if (!this.isAssigningVM) {
+            // Maybe the user cancelled the request before assignment finished
+            return;
+          }
+          this.isAssigningVM = false;
           if (!assignment) {
             this.cmdHost(socket, '');
             this.vBrowser = undefined;
@@ -221,7 +255,7 @@ export class Room {
         }
       );
       socket.on('CMD:stopVBrowser', async () => {
-        if (!this.vBrowser) {
+        if (!this.vBrowser && !this.isAssigningVM) {
           return;
         }
         await this.stopVBrowser();
@@ -316,6 +350,7 @@ export class Room {
   };
 
   stopVBrowser = async () => {
+    this.isAssigningVM = false;
     const assignTime = this.vBrowser && this.vBrowser.assignTime;
     const id = this.vBrowser && this.vBrowser.id;
     const isLarge = this.vBrowser?.large;
@@ -354,7 +389,7 @@ export class Room {
     }
   };
 
-  addChatMessage = (socket: Socket | undefined, chatMsg: any) => {
+  addChatMessage = (socket: Socket | undefined, chatMsg: ChatMessageBase) => {
     const chatWithTime: ChatMessage = {
       ...chatMsg,
       timestamp: new Date().toISOString(),
