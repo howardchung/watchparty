@@ -1,5 +1,6 @@
 import { Socket } from 'socket.io';
 import Redis from 'ioredis';
+import axios from 'axios';
 import { redisCount } from './utils/redis';
 import { VMManager, AssignedVM } from './vm/base';
 import { validateUserToken } from './utils/firebase';
@@ -177,13 +178,13 @@ export class Room {
       });
       socket.on(
         'CMD:startVBrowser',
-        async (data: { uid: string; token: any }) => {
+        async (data: { uid: string; token: string; rcToken: string }) => {
           if (this.vBrowser || this.isAssigningVM) {
             return;
           }
           this.isAssigningVM = true;
           let isLarge = false;
-          if (data && data.uid && data.token) {
+          if (process.env.STRIPE_SECRET_KEY && data && data.uid && data.token) {
             const decoded = await validateUserToken(data.uid, data.token);
             // Check if user is subscriber, if so set isLarge
             if (decoded?.email) {
@@ -192,6 +193,33 @@ export class Room {
                 console.log('found active sub for ', customer?.email);
                 isLarge = true;
               }
+            }
+          }
+
+          if (
+            process.env.NODE_ENV === 'development' &&
+            process.env.RECAPTCHA_SECRET_KEY &&
+            !isLarge
+          ) {
+            // If user isn't a subscriber, we require recaptcha validation
+            const validation = await axios({
+              url: `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${data.rcToken}`,
+              method: 'POST',
+            });
+            console.log(validation?.data);
+            const isLowScore = validation?.data?.score < 0.5;
+            if (
+              !validation ||
+              !validation.data ||
+              !validation.data.success ||
+              isLowScore
+            ) {
+              if (isLowScore) {
+                redisCount('recaptchaRejectsLowScore');
+              } else {
+                redisCount('recaptchaRejectsOther');
+              }
+              return;
             }
           }
 

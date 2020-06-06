@@ -1,5 +1,4 @@
 import React from 'react';
-//@ts-ignore
 import { Button, Form, Header, Icon, Modal, TextArea } from 'semantic-ui-react';
 
 export const SettingsModal = ({ trigger }: any) => (

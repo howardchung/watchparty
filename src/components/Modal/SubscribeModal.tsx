@@ -51,7 +51,7 @@ export class SubscribeModal extends React.Component<{
               Please consider supporting us if you're enjoying WatchParty.
             </div>
             <Header>Features</Header>
-            <Table definition>
+            <Table definition unstackable striped>
               <Table.Header>
                 <Table.Row>
                   <Table.HeaderCell />
@@ -84,7 +84,7 @@ export class SubscribeModal extends React.Component<{
                   <Table.Cell>Fast</Table.Cell>
                 </Table.Row>
                 <Table.Row>
-                  <Table.Cell>VBrowser Session Timeout</Table.Cell>
+                  <Table.Cell>VBrowser Session Limit</Table.Cell>
                   <Table.Cell>3 hours</Table.Cell>
                   <Table.Cell>12 hours</Table.Cell>
                 </Table.Row>
@@ -109,6 +109,7 @@ export class SubscribeModal extends React.Component<{
                   icon
                   labelPosition="left"
                   color="blue"
+                  size="large"
                   onClick={this.onSubscribe}
                 >
                   <Icon name="cc stripe" />

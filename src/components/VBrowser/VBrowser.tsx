@@ -15,7 +15,6 @@ export default class VBrowser extends React.Component<{
   setResolution: Function;
   isAutoPlayable: boolean;
 }> {
-  //@ts-ignore
   // private observer = new ResizeObserver(this.onResize);
   private focused = false;
   private fullscreen = false;

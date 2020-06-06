@@ -47,6 +47,7 @@ import { Controls } from '../Controls/Controls';
 import firebase from 'firebase/app';
 import 'firebase/auth';
 import { SubscribeModal } from '../Modal/SubscribeModal';
+import { VBrowserModal } from '../Modal/VBrowserModal';
 
 const firebaseConfig = process.env.REACT_APP_FIREBASE_CONFIG;
 if (firebaseConfig) {
@@ -98,6 +99,7 @@ interface AppState {
   currentTab: string;
   isSubscriber: boolean;
   isSubscribeModalOpen: boolean;
+  isVBrowserModalOpen: boolean;
 }
 
 export default class App extends React.Component<{}, AppState> {
@@ -137,6 +139,7 @@ export default class App extends React.Component<{}, AppState> {
     currentTab: 'chat',
     isSubscriber: false,
     isSubscribeModalOpen: false,
+    isVBrowserModalOpen: false,
   };
   socket: any = null;
   watchPartyYTPlayer: any = null;
@@ -578,13 +581,13 @@ export default class App extends React.Component<{}, AppState> {
     }
   };
 
-  setupVBrowser = async () => {
+  setupVBrowser = async (rcToken?: string) => {
     // user.uid is the public user identifier
     // user.getIdToken() is the secret access token we can send to the server to prove identity
     const user = this.state.user;
     const uid = user?.uid;
     const token = await user?.getIdToken();
-    this.socket.emit('CMD:startVBrowser', { uid, token });
+    this.socket.emit('CMD:startVBrowser', { uid, token, rcToken });
   };
 
   stopVBrowser = async () => {
@@ -1079,6 +1082,14 @@ export default class App extends React.Component<{}, AppState> {
             }
           />
         )}
+        {this.state.isVBrowserModalOpen && (
+          <VBrowserModal
+            isSubscriber={this.state.isSubscriber}
+            closeModal={() => this.setState({ isVBrowserModalOpen: false })}
+            openSubscribe={() => this.setState({ isSubscribeModalOpen: true })}
+            startVBrowser={this.setupVBrowser}
+          />
+        )}
         {this.state.error && (
           <Modal inverted basic open>
             <Header as="h1" style={{ textAlign: 'center' }}>
@@ -1184,7 +1195,13 @@ export default class App extends React.Component<{}, AppState> {
                             icon
                             labelPosition="left"
                             color="green"
-                            onClick={this.setupVBrowser}
+                            onClick={() => {
+                              if (process.env.NODE_ENV !== 'development') {
+                                this.setupVBrowser();
+                              } else {
+                                this.setState({ isVBrowserModalOpen: true });
+                              }
+                            }}
                           >
                             <Icon name="desktop" />
                             VBrowser
@@ -1372,7 +1389,7 @@ export default class App extends React.Component<{}, AppState> {
                             <Dimmer active>
                               <Loader>
                                 {this.isVBrowser()
-                                  ? 'Launching virtual browser. You may see a black screen while the browser starts.'
+                                  ? 'Launching virtual browser. You may see a blank screen while the browser starts.'
                                   : ''}
                               </Loader>
                             </Dimmer>
