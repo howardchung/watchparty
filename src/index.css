@@ -6,3 +6,24 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+button.linkButton {
+  background: none !important;
+  border: none;
+  padding: 0 !important;
+  font-family: inherit;
+  /*input has OS specific font-family*/
+  color: #069;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.footerIcon {
+  color: white;
+  margin-right: 10px;
+}
+
+.toolButton {
+  min-width: 135px;
+  height: 36px;
+}
