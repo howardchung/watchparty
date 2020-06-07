@@ -42,7 +42,7 @@ export class NewRoomButton extends React.Component<{ size?: string }> {
 }
 
 export class SignInButton extends React.Component<{
-  user: firebase.User | null;
+  user: firebase.User | undefined;
 }> {
   public state = { isLoginOpen: false };
 
@@ -240,7 +240,6 @@ export class TopBar extends React.Component<{
           >
             {!this.props.hideNewRoom && <NewRoomButton />}
             {!this.props.hideSignin && <SignInButton user={this.props.user} />}
-            {/* <SettingsModal trigger={<Button fluid inverted color="green" size="medium" icon labelPosition="left" className="toolButton"><Icon name="setting" />Settings</Button>} /> */}
           </div>
         </div>
       </React.Fragment>

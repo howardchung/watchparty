@@ -79,7 +79,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 62vh;
+  /* Making this larger causes issues on mobile */
+  min-height: 48vh;
 }
 
 .fullScreenContainer:fullscreen > #playerContainer {

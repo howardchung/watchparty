@@ -3,4 +3,4 @@ export {
   getCurrentSettings,
   getDefaultSettings,
   validateSettingsString,
-} from './Settings';
+} from './LocalSettings';
