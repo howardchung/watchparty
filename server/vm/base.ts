@@ -95,11 +95,6 @@ export abstract class VMManager {
   };
 
   public assignVM = async (): Promise<AssignedVM> => {
-    return {
-      host: 'azure.howardchung.net:5000',
-      pass: 'admin',
-      id: 'local',
-    } as any;
     const assignStart = Number(new Date());
     let selected = null;
     while (!selected) {
