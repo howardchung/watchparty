@@ -176,7 +176,9 @@ export class Chat extends React.Component<ChatProps> {
             link
             style={{ opacity: 1 }}
           >
-            <span>😀</span>
+            <span role="img" aria-label="Emoji">
+              😀
+            </span>
           </Icon>
           {/* <Icon onClick={this.sendChatMsg} name="send" inverted circular link /> */}
         </Input>
