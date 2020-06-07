@@ -49,8 +49,8 @@ _This section is not added yet_
   - Currently supported: Nginx, S3 bucket, GitLab repo. Possibly Plex media servers in the future
   - For optimal performance, the server should support requests for 206 Partial Content and have CORS enabled.
 - `REACT_APP_STREAM_PATH`: Optional, URL of a PeerStream server for searching streams
-- `YOUTUBE_API_KEY`: Provide one to enable searching YouTube
-- `REDIS_URL`: Provide to allow persisting rooms to Redis so they survive server reboots
+- `YOUTUBE_API_KEY`: Optional, provide one to enable searching YouTube
+- `REDIS_URL`: Optional, provide to allow persisting rooms to Redis so they survive server reboots
 
 ## Tech
 
