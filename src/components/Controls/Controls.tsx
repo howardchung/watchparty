@@ -19,6 +19,8 @@ interface ControlsProps {
   setVolume: Function;
 }
 
+// TODO a lot of this state is currently tied to the per-second tsMap update, which is leading to some UI lag
+// Should probably have local state tracking CC/mute/time etc.
 export class Controls extends React.Component<ControlsProps> {
   state = {
     showTimestamp: false,

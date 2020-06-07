@@ -37,10 +37,7 @@ export const SettingsModal = ({ trigger }: any) => (
 );
 
 export function getDefaultSettings(): Settings {
-  return {
-    mediaPath: process.env.REACT_APP_MEDIA_PATH,
-    streamPath: process.env.REACT_APP_STREAM_PATH,
-  };
+  return {};
 }
 
 export function getCurrentSettings(): Settings {
