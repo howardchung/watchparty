@@ -1243,21 +1243,27 @@ export default class App extends React.Component<{}, AppState> {
                       />
                     )}
                     {this.isVBrowser() && (
-                      <Dropdown
-                        icon="keyboard"
-                        labeled
-                        className="icon"
-                        button
-                        value={controller && controller!.id}
-                        placeholder="No controller"
-                        onChange={this.changeController}
-                        selection
-                        disabled={!this.haveLock()}
-                        options={this.state.participants.map((p) => ({
-                          text: this.state.nameMap[p.id] || p.id,
-                          value: p.id,
-                        }))}
-                      ></Dropdown>
+                      <Popup
+                        content="Choose the person controlling the VBrowser"
+                        trigger={
+                          <Dropdown
+                            icon="keyboard"
+                            labeled
+                            className="icon"
+                            style={{ height: '36px' }}
+                            button
+                            value={controller && controller!.id}
+                            placeholder="No controller"
+                            onChange={this.changeController}
+                            selection
+                            disabled={!this.haveLock()}
+                            options={this.state.participants.map((p) => ({
+                              text: this.state.nameMap[p.id] || p.id,
+                              value: p.id,
+                            }))}
+                          ></Dropdown>
+                        }
+                      />
                     )}
                     {process.env.NODE_ENV === 'development' &&
                       this.isVBrowser() && (
@@ -1265,6 +1271,7 @@ export default class App extends React.Component<{}, AppState> {
                           icon="desktop"
                           labeled
                           className="icon"
+                          style={{ height: '36px' }}
                           button
                           disabled={!this.haveLock()}
                           value={this.state.vBrowserResolution}
