@@ -1,8 +1,9 @@
 import React from 'react';
-import { Button, Comment, Icon, Input, Segment } from 'semantic-ui-react';
+import { Button, Comment, Icon, Input } from 'semantic-ui-react';
 import { Socket } from 'socket.io';
 
 import { formatTimestamp, getColorHex, getDefaultPicture } from '../../utils';
+import { Separator } from '../App/App';
 
 interface ChatProps {
   chat: ChatMessage[];
@@ -29,6 +30,9 @@ export class Chat extends React.Component<ChatProps> {
       if (prevProps.scrollTimestamp === 0 || this.state.isNearBottom) {
         this.scrollToBottom();
       }
+    }
+    if (this.props.hide !== prevProps.hide) {
+      this.scrollToBottom();
     }
   }
 
@@ -94,16 +98,16 @@ export class Chat extends React.Component<ChatProps> {
 
   render() {
     return (
-      <Segment
+      <div
         className={this.props.className}
-        inverted
         style={{
           display: this.props.hide ? 'none' : 'flex',
           flexDirection: 'column',
-          flexGrow: '1',
+          flexGrow: 1,
           minHeight: 0,
           marginTop: 0,
           marginBottom: 0,
+          padding: '8px',
         }}
       >
         <div
@@ -138,6 +142,7 @@ export class Chat extends React.Component<ChatProps> {
             </Button>
           )}
         </div>
+        <Separator />
         <Input
           inverted
           fluid
@@ -155,7 +160,7 @@ export class Chat extends React.Component<ChatProps> {
           }
           placeholder="Enter a message..."
         />
-      </Segment>
+      </div>
     );
   }
 }

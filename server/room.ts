@@ -27,6 +27,7 @@ export class Room {
   private vmManagers: { standard: VMManager; large: VMManager } | undefined;
   public isRoomDirty = false; // Indicates an unattended room needs to be saved, e.g. we unassign a VM from an empty room
   public isAssigningVM = false;
+  public lock: string | undefined = ''; // The uid of the user who locked the room
 
   constructor(
     io: SocketIO.Server,
@@ -56,6 +57,7 @@ export class Room {
       socket.emit('REC:nameMap', this.nameMap);
       socket.emit('REC:pictureMap', this.pictureMap);
       socket.emit('REC:tsMap', this.tsMap);
+      socket.emit('REC:lock', this.lock);
       socket.emit('chatinit', this.chat);
       io.of(roomId).emit('roster', this.roster);
 
@@ -76,19 +78,38 @@ export class Room {
         this.pictureMap[socket.id] = data;
         io.of(roomId).emit('REC:pictureMap', this.pictureMap);
       });
+      socket.on('CMD:uid', async (data: { uid: string; token: string }) => {
+        const decoded = await validateUserToken(data.uid, data.token);
+        if (!decoded) {
+          return;
+        }
+        // set it on the matching user socket
+        let index = this.roster.findIndex((user) => user.id === socket.id);
+        if (index >= 0) {
+          this.roster[index].uid = decoded.uid;
+        }
+        console.log('[CMD:UID]', index, decoded.uid);
+        io.of(roomId).emit('roster', this.roster);
+      });
       socket.on('CMD:host', (data: string) => {
         if (data && data.length > 20000) {
           return;
         }
+        if (!this.validateLock(socket.id)) {
+          return;
+        }
         const sharer = this.roster.find((user) => user.isScreenShare);
-        if (sharer) {
-          // Can't update the video while someone is screensharing/filesharing
+        if (sharer || this.vBrowser) {
+          // Can't update the video while someone is screensharing/filesharing or vbrowser is running
           return;
         }
         redisCount('urlStarts');
         this.cmdHost(socket, data);
       });
       socket.on('CMD:play', () => {
+        if (!this.validateLock(socket.id)) {
+          return;
+        }
         socket.broadcast.emit('REC:play', this.video);
         const chatMsg = {
           id: socket.id,
@@ -99,6 +120,9 @@ export class Room {
         this.addChatMessage(socket, chatMsg);
       });
       socket.on('CMD:pause', () => {
+        if (!this.validateLock(socket.id)) {
+          return;
+        }
         socket.broadcast.emit('REC:pause');
         const chatMsg = {
           id: socket.id,
@@ -109,12 +133,21 @@ export class Room {
         this.addChatMessage(socket, chatMsg);
       });
       socket.on('CMD:seek', (data: number) => {
+        if (JSON.stringify(data).length > 100) {
+          return;
+        }
+        if (!this.validateLock(socket.id)) {
+          return;
+        }
         this.videoTS = data;
         socket.broadcast.emit('REC:seek', data);
         const chatMsg = { id: socket.id, cmd: 'seek', msg: data.toString() };
         this.addChatMessage(socket, chatMsg);
       });
       socket.on('CMD:ts', (data: number) => {
+        if (JSON.stringify(data).length > 100) {
+          return;
+        }
         if (data > this.videoTS) {
           this.videoTS = data;
         }
@@ -150,8 +183,12 @@ export class Room {
         io.of(roomId).emit('roster', this.roster);
       });
       socket.on('CMD:joinScreenShare', (data: { file: boolean }) => {
+        if (!this.validateLock(socket.id)) {
+          return;
+        }
         const sharer = this.roster.find((user) => user.isScreenShare);
         if (sharer) {
+          // Someone's already sharing
           return;
         }
         if (data && data.file) {
@@ -168,11 +205,11 @@ export class Room {
         io.of(roomId).emit('roster', this.roster);
       });
       socket.on('CMD:leaveScreenShare', () => {
-        // console.log('CMD:leaveScreenShare');
-        const match = this.roster.find((user) => user.id === socket.id);
-        if (match) {
-          match.isScreenShare = false;
+        const sharer = this.roster.find((user) => user.isScreenShare);
+        if (!sharer || sharer?.id !== socket.id) {
+          return;
         }
+        sharer.isScreenShare = false;
         this.cmdHost(socket, '');
         io.of(roomId).emit('roster', this.roster);
       });
@@ -180,6 +217,9 @@ export class Room {
         'CMD:startVBrowser',
         async (data: { uid: string; token: string; rcToken: string }) => {
           if (this.vBrowser || this.isAssigningVM) {
+            return;
+          }
+          if (!this.validateLock(socket.id)) {
             return;
           }
           this.isAssigningVM = true;
@@ -258,10 +298,16 @@ export class Room {
         if (!this.vBrowser && !this.isAssigningVM) {
           return;
         }
+        if (!this.validateLock(socket.id)) {
+          return;
+        }
         await this.stopVBrowser();
         redisCount('vBrowserTerminateManual');
       });
       socket.on('CMD:changeController', (data: string) => {
+        if (!this.validateLock(socket.id)) {
+          return;
+        }
         this.roster.forEach((user, i) => {
           if (user.id === data) {
             this.roster[i].isController = true;
@@ -271,6 +317,20 @@ export class Room {
         });
         io.of(roomId).emit('roster', this.roster);
       });
+      socket.on(
+        'CMD:lock',
+        async (data: { uid: string; token: string; locked: boolean }) => {
+          const decoded = await validateUserToken(data.uid, data.token);
+          if (!decoded) {
+            return;
+          }
+          if (!this.validateLock(socket.id)) {
+            return;
+          }
+          this.lock = data.locked ? decoded.uid : '';
+          io.of(roomId).emit('REC:lock', this.lock);
+        }
+      );
       socket.on('CMD:askHost', () => {
         socket.emit('REC:host', this.getHostState());
       });
@@ -314,6 +374,7 @@ export class Room {
       chat: this.chat,
       vBrowser: this.vBrowser,
       creationTime: this.creationTime,
+      lock: this.lock,
     });
   };
 
@@ -338,6 +399,9 @@ export class Room {
     }
     if (roomObj.creationTime) {
       this.creationTime = new Date(roomObj.creationTime);
+    }
+    if (roomObj.lock) {
+      this.lock = roomObj.lock;
     }
   };
 
@@ -398,5 +462,17 @@ export class Room {
     this.chat.push(chatWithTime);
     this.chat = this.chat.splice(-100);
     this.io.of(this.roomId).emit('REC:chat', chatWithTime);
+  };
+
+  validateLock = (socketId: string) => {
+    if (!this.lock) {
+      return true;
+    }
+    let index = this.roster.findIndex((user) => user.id === socketId);
+    const result = this.roster[index]?.uid === this.lock;
+    if (!result) {
+      console.log('[VALIDATELOCK] failed');
+    }
+    return result;
   };
 }

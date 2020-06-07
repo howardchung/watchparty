@@ -17,6 +17,7 @@ interface ControlsProps {
   currentTime: number;
   getVolume: Function;
   setVolume: Function;
+  disabled?: boolean;
 }
 
 // TODO a lot of this state is currently tied to the per-second tsMap update, which is leading to some UI lag
@@ -71,6 +72,7 @@ export class Controls extends React.Component<ControlsProps> {
           size="large"
           onClick={togglePlay}
           className="control action"
+          disabled={this.props.disabled}
           name={paused ? 'play' : 'pause'}
         />
         <Icon
@@ -84,7 +86,9 @@ export class Controls extends React.Component<ControlsProps> {
         <Progress
           size="tiny"
           color="blue"
-          onClick={duration < Infinity ? onSeek : undefined}
+          onClick={
+            duration < Infinity && !this.props.disabled ? onSeek : undefined
+          }
           onMouseOver={this.onMouseOver}
           onMouseOut={this.onMouseOut}
           onMouseMove={this.onMouseMove}

@@ -48,6 +48,7 @@ import firebase from 'firebase/app';
 import 'firebase/auth';
 import { SubscribeModal } from '../Modal/SubscribeModal';
 import { VBrowserModal } from '../Modal/VBrowserModal';
+import { SettingsTab } from '../Settings/SettingsTab';
 
 const firebaseConfig = process.env.REACT_APP_FIREBASE_CONFIG;
 if (firebaseConfig) {
@@ -100,6 +101,7 @@ interface AppState {
   isSubscriber: boolean;
   isSubscribeModalOpen: boolean;
   isVBrowserModalOpen: boolean;
+  roomLock: string;
 }
 
 export default class App extends React.Component<{}, AppState> {
@@ -140,6 +142,7 @@ export default class App extends React.Component<{}, AppState> {
     isSubscriber: false,
     isSubscribeModalOpen: false,
     isVBrowserModalOpen: false,
+    roomLock: '',
   };
   socket: any = null;
   watchPartyYTPlayer: any = null;
@@ -202,6 +205,7 @@ export default class App extends React.Component<{}, AppState> {
       if (this.state.user.photoURL) {
         this.updatePicture(this.state.user.photoURL + '?height=128&width=128');
       }
+      this.updateUid(this.state.user);
     }
   };
 
@@ -383,7 +387,11 @@ export default class App extends React.Component<{}, AppState> {
       );
     });
     socket.on('REC:chat', (data: ChatMessage) => {
-      if (document.visibilityState && document.visibilityState !== 'visible') {
+      if (
+        !getCurrentSettings().disableChatSound &&
+        document.visibilityState &&
+        document.visibilityState !== 'visible'
+      ) {
         new Audio('/clearly.mp3').play();
       }
       this.state.chat.push(data);
@@ -400,6 +408,9 @@ export default class App extends React.Component<{}, AppState> {
     });
     socket.on('REC:pictureMap', (data: StringDict) => {
       this.setState({ pictureMap: data });
+    });
+    socket.on('REC:lock', (data: string) => {
+      this.setState({ roomLock: data });
     });
     socket.on('roster', (data: User[]) => {
       this.setState(
@@ -484,7 +495,7 @@ export default class App extends React.Component<{}, AppState> {
   setupScreenShare = async () => {
     //@ts-ignore
     const stream = await navigator.mediaDevices.getDisplayMedia({
-      video: { cursor: 'never', width: 1280, logicalSurface: true },
+      video: { cursor: 'never', height: 720, logicalSurface: true },
       audio: true,
     });
     stream.getVideoTracks()[0].onended = this.stopScreenShare;
@@ -1008,6 +1019,12 @@ export default class App extends React.Component<{}, AppState> {
     this.socket.emit('CMD:picture', url);
   };
 
+  updateUid = async (user: firebase.User) => {
+    const uid = user.uid;
+    const token = await user.getIdToken();
+    this.socket.emit('CMD:uid', { uid, token });
+  };
+
   getMediaDisplayName = (input: string) => {
     if (!input) {
       return '';
@@ -1060,6 +1077,19 @@ export default class App extends React.Component<{}, AppState> {
     const session = await resp.json();
     console.log(session);
     window.location.assign(session.url);
+  };
+
+  setRoomLock = async (locked: boolean) => {
+    const uid = this.state.user?.uid;
+    const token = await this.state.user?.getIdToken();
+    this.socket.emit('CMD:lock', { uid, token, locked });
+  };
+
+  haveLock = () => {
+    if (!this.state.roomLock) {
+      return true;
+    }
+    return this.state.user?.uid === this.state.roomLock;
   };
 
   render() {
@@ -1150,6 +1180,7 @@ export default class App extends React.Component<{}, AppState> {
                     launchMultiSelect={this.launchMultiSelect}
                     streamPath={this.state.settings.streamPath}
                     mediaPath={this.state.settings.mediaPath}
+                    disabled={!this.haveLock()}
                   />
                   <Separator />
                   <div className="mobileStack" style={{ display: 'flex' }}>
@@ -1161,19 +1192,20 @@ export default class App extends React.Component<{}, AppState> {
                         labelPosition="left"
                         color="red"
                         onClick={this.stopScreenShare}
+                        disabled={sharer?.id !== this.socket?.id}
                       >
                         <Icon name="cancel" />
                         Stop Share
                       </Button>
                     )}
-                    {!this.screenShareStream && !this.isVBrowser() && (
+                    {!this.screenShareStream && !sharer && !this.isVBrowser() && (
                       <Popup
                         content={`Share a tab or an application. Make sure to check "Share audio" for best results.`}
                         trigger={
                           <Button
                             fluid
                             className="toolButton"
-                            disabled={sharer && this.socket?.id !== sharer?.id}
+                            disabled={!this.haveLock()}
                             icon
                             labelPosition="left"
                             color={'instagram'}
@@ -1185,14 +1217,14 @@ export default class App extends React.Component<{}, AppState> {
                         }
                       />
                     )}
-                    {!this.screenShareStream && !this.isVBrowser() && (
+                    {!this.screenShareStream && !sharer && !this.isVBrowser() && (
                       <Popup
                         content="Launch a shared virtual browser"
                         trigger={
                           <Button
                             fluid
                             className="toolButton"
-                            disabled={sharer && this.socket?.id !== sharer?.id}
+                            disabled={!this.haveLock()}
                             icon
                             labelPosition="left"
                             color="green"
@@ -1220,6 +1252,7 @@ export default class App extends React.Component<{}, AppState> {
                         placeholder="No controller"
                         onChange={this.changeController}
                         selection
+                        disabled={!this.haveLock()}
                         options={this.state.participants.map((p) => ({
                           text: this.state.nameMap[p.id] || p.id,
                           value: p.id,
@@ -1233,6 +1266,7 @@ export default class App extends React.Component<{}, AppState> {
                           labeled
                           className="icon"
                           button
+                          disabled={!this.haveLock()}
                           value={this.state.vBrowserResolution}
                           onChange={(e, data) =>
                             this.setState({
@@ -1271,20 +1305,21 @@ export default class App extends React.Component<{}, AppState> {
                         icon
                         labelPosition="left"
                         color="red"
+                        disabled={!this.haveLock()}
                         onClick={this.stopVBrowser}
                       >
                         <Icon name="cancel" />
                         Stop VBrowser
                       </Button>
                     )}
-                    {!this.screenShareStream && !this.isVBrowser() && (
+                    {!this.screenShareStream && !sharer && !this.isVBrowser() && (
                       <Popup
                         content="Stream your own video file"
                         trigger={
                           <Button
                             fluid
                             className="toolButton"
-                            disabled={sharer && this.socket?.id !== sharer?.id}
+                            disabled={!this.haveLock()}
                             icon
                             labelPosition="left"
                             onClick={this.setupFileShare}
@@ -1301,6 +1336,7 @@ export default class App extends React.Component<{}, AppState> {
                         type={'youtube'}
                         streamPath={this.state.settings.streamPath}
                         mediaPath={this.state.settings.mediaPath}
+                        disabled={!this.haveLock()}
                       />
                     )}
                     {Boolean(this.state.settings.mediaPath) && (
@@ -1309,6 +1345,7 @@ export default class App extends React.Component<{}, AppState> {
                         type={'media'}
                         streamPath={this.state.settings.streamPath}
                         mediaPath={this.state.settings.mediaPath}
+                        disabled={!this.haveLock()}
                       />
                     )}
                     {Boolean(this.state.settings.streamPath) && (
@@ -1318,6 +1355,7 @@ export default class App extends React.Component<{}, AppState> {
                         streamPath={this.state.settings.streamPath}
                         mediaPath={this.state.settings.mediaPath}
                         launchMultiSelect={this.launchMultiSelect}
+                        disabled={!this.haveLock()}
                       />
                     )}
                     {process.env.NODE_ENV === 'development' &&
@@ -1390,7 +1428,7 @@ export default class App extends React.Component<{}, AppState> {
                             <Dimmer active>
                               <Loader>
                                 {this.isVBrowser()
-                                  ? 'Launching virtual browser. You may see a blank screen while the browser starts.'
+                                  ? 'Launching virtual browser. This can take up to a minute.'
                                   : ''}
                               </Loader>
                             </Dimmer>
@@ -1473,6 +1511,7 @@ export default class App extends React.Component<{}, AppState> {
                             subtitled={this.isSubtitled()}
                             currentTime={this.getCurrentTime()}
                             duration={this.getDuration()}
+                            disabled={!this.haveLock()}
                           />
                         </div>
                       )}
@@ -1505,6 +1544,7 @@ export default class App extends React.Component<{}, AppState> {
                       subtitled={this.isSubtitled()}
                       currentTime={this.getCurrentTime()}
                       duration={this.getDuration()}
+                      disabled={!this.haveLock()}
                     />
                   )}
                   {Boolean(this.state.total) && (
@@ -1559,7 +1599,7 @@ export default class App extends React.Component<{}, AppState> {
                 {!this.state.fullScreen && (
                   <Menu
                     inverted
-                    widths={2}
+                    widths={3}
                     style={{ marginTop: '4px', marginBottom: '4px' }}
                   >
                     <Menu.Item
@@ -1568,6 +1608,7 @@ export default class App extends React.Component<{}, AppState> {
                       onClick={() => this.setState({ currentTab: 'chat' })}
                       as="a"
                     >
+                      {/* <Icon name="conversation" /> */}
                       Chat
                     </Menu.Item>
                     <Menu.Item
@@ -1576,7 +1617,17 @@ export default class App extends React.Component<{}, AppState> {
                       onClick={() => this.setState({ currentTab: 'people' })}
                       as="a"
                     >
+                      {/* <Icon name="group" /> */}
                       People ({this.state.participants.length})
+                    </Menu.Item>
+                    <Menu.Item
+                      name="settings"
+                      active={this.state.currentTab === 'settings'}
+                      onClick={() => this.setState({ currentTab: 'settings' })}
+                      as="a"
+                    >
+                      {/* <Icon name="setting" /> */}
+                      Settings
                     </Menu.Item>
                   </Menu>
                 )}
@@ -1600,6 +1651,12 @@ export default class App extends React.Component<{}, AppState> {
                     hide={this.state.currentTab !== 'people'}
                   />
                 )}
+                <SettingsTab
+                  hide={this.state.currentTab !== 'settings'}
+                  user={this.state.user}
+                  roomLock={this.state.roomLock}
+                  setRoomLock={this.setRoomLock}
+                />
               </Grid.Column>
             </Grid.Row>
           </Grid>
@@ -1609,4 +1666,4 @@ export default class App extends React.Component<{}, AppState> {
   }
 }
 
-const Separator = () => <div style={{ height: '4px', flexShrink: 0 }} />;
+export const Separator = () => <div style={{ height: '4px', flexShrink: 0 }} />;
