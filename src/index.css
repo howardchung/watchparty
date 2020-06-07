@@ -27,3 +27,15 @@ button.linkButton {
   min-width: 135px;
   height: 36px;
 }
+
+.smallText {
+  font-size: 12px;
+}
+
+.sectionHeader {
+  font-size: 14px;
+  text-transform: uppercase;
+  font-weight: bolder;
+  color: gray;
+  margin-top: 8px;
+}

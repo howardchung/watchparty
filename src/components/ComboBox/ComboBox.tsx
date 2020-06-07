@@ -11,6 +11,7 @@ interface ComboBoxProps {
   launchMultiSelect: Function;
   mediaPath: string | undefined;
   streamPath: string | undefined;
+  disabled?: boolean;
 }
 
 export class ComboBox extends React.Component<ComboBoxProps> {
@@ -82,6 +83,7 @@ export class ComboBox extends React.Component<ComboBoxProps> {
             inverted
             fluid
             focus
+            disabled={this.props.disabled}
             onChange={this.doSearch}
             onFocus={(e: any) => {
               e.persist();

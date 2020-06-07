@@ -13,6 +13,7 @@ interface User {
   isVideoChat?: boolean;
   isScreenShare?: boolean;
   isController?: boolean;
+  uid?: string;
 }
 
 interface ChatMessageBase {
@@ -39,6 +40,7 @@ interface SearchResult {
 interface Settings {
   mediaPath?: string;
   streamPath?: string;
+  disableChatSound?: boolean;
 }
 
 interface PlaylistVideo {

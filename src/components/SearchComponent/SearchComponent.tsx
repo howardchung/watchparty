@@ -18,6 +18,7 @@ interface SearchComponentProps {
   launchMultiSelect?: Function;
   mediaPath: string | undefined;
   streamPath: string | undefined;
+  disabled?: boolean;
 }
 
 export class SearchComponent extends React.Component<SearchComponentProps> {
@@ -91,6 +92,7 @@ export class SearchComponent extends React.Component<SearchComponentProps> {
           icon={icon}
           className="icon"
           labeled
+          disabled={this.props.disabled}
           search={(() => {}) as any}
           text={placeholder}
           onSearchChange={this.doSearch}
