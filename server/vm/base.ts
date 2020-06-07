@@ -48,14 +48,12 @@ export abstract class VMManager {
             console.log('[RELEASE] VM in room:', room.roomId);
             room.stopVBrowser();
             if (isTimedOut) {
-              if (process.env.NODE_ENV === 'development') {
-                room.addChatMessage(undefined, {
-                  id: '',
-                  system: true,
-                  cmd: 'vBrowserTimeout',
-                  msg: '',
-                });
-              }
+              room.addChatMessage(undefined, {
+                id: '',
+                system: true,
+                cmd: 'vBrowserTimeout',
+                msg: '',
+              });
               redisCount('vBrowserTerminateTimeout');
             } else if (isRoomEmpty) {
               redisCount('vBrowserTerminateEmpty');
@@ -97,6 +95,11 @@ export abstract class VMManager {
   };
 
   public assignVM = async (): Promise<AssignedVM> => {
+    return {
+      host: 'azure.howardchung.net:5000',
+      pass: 'admin',
+      id: 'local',
+    } as any;
     const assignStart = Number(new Date());
     let selected = null;
     while (!selected) {
