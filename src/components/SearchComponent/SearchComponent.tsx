@@ -108,15 +108,24 @@ export class SearchComponent extends React.Component<SearchComponentProps> {
               {this.state.results.map((result: SearchResult) => {
                 if (this.props.type === 'youtube') {
                   return (
-                    <YouTubeSearchResult {...result} setMedia={setMedia} />
+                    <YouTubeSearchResult
+                      key={result.url}
+                      {...result}
+                      setMedia={setMedia}
+                    />
                   );
                 } else if (this.props.type === 'media') {
                   return (
-                    <MediaPathSearchResult {...result} setMedia={setMedia} />
+                    <MediaPathSearchResult
+                      key={result.url}
+                      {...result}
+                      setMedia={setMedia}
+                    />
                   );
                 }
                 return (
                   <StreamPathSearchResult
+                    key={result.url}
                     {...result}
                     setMedia={setMedia}
                     launchMultiSelect={this.props.launchMultiSelect as Function}
