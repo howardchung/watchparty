@@ -1,6 +1,9 @@
 import React from 'react';
 import { Button, Comment, Icon, Input } from 'semantic-ui-react';
 import { Socket } from 'socket.io';
+import 'emoji-mart/css/emoji-mart.css';
+import { EmojiData, Picker } from 'emoji-mart';
+import onClickOutside from 'react-onclickoutside';
 
 import { formatTimestamp, getColorHex, getDefaultPicture } from '../../utils';
 import { Separator } from '../App/App';
@@ -17,7 +20,7 @@ interface ChatProps {
 }
 
 export class Chat extends React.Component<ChatProps> {
-  public state = { chatMsg: '', isNearBottom: true };
+  public state = { chatMsg: '', isNearBottom: true, isPickerOpen: false };
   messagesRef = React.createRef<HTMLDivElement>();
 
   componentDidMount() {
@@ -37,6 +40,7 @@ export class Chat extends React.Component<ChatProps> {
   }
 
   updateChatMsg = (e: any, data: { value: string }) => {
+    // console.log(e.target.selectionStart);
     this.setState({ chatMsg: data.value });
   };
 
@@ -96,6 +100,10 @@ export class Chat extends React.Component<ChatProps> {
     return cmd;
   };
 
+  addEmoji = (emoji: EmojiData) => {
+    this.setState({ chatMsg: this.state.chatMsg + (emoji as any).native });
+  };
+
   render() {
     return (
       <div
@@ -143,23 +151,35 @@ export class Chat extends React.Component<ChatProps> {
           )}
         </div>
         <Separator />
+        {this.state.isPickerOpen && (
+          <PickerMenu
+            addEmoji={this.addEmoji}
+            closeMenu={() => this.setState({ isPickerOpen: false })}
+          />
+        )}
         <Input
           inverted
           fluid
           onKeyPress={(e: any) => e.key === 'Enter' && this.sendChatMsg()}
           onChange={this.updateChatMsg}
           value={this.state.chatMsg}
-          icon={
-            <Icon
-              onClick={this.sendChatMsg}
-              name="send"
-              inverted
-              circular
-              link
-            />
-          }
+          icon
           placeholder="Enter a message..."
-        />
+        >
+          <input />
+          <Icon
+            // style={{ right: '40px' }}
+            onClick={() => this.setState({ isPickerOpen: true })}
+            name={'' as any}
+            inverted
+            circular
+            link
+            style={{ opacity: 1 }}
+          >
+            <span>😀</span>
+          </Icon>
+          {/* <Icon onClick={this.sendChatMsg} name="send" inverted circular link /> */}
+        </Input>
       </div>
     );
   }
@@ -202,3 +222,28 @@ const ChatMessage = ({
     </Comment>
   );
 };
+
+class PickerMenuInner extends React.Component<{
+  addEmoji: (emoji: EmojiData) => void;
+  closeMenu: Function;
+}> {
+  handleClickOutside = () => {
+    this.props.closeMenu();
+  };
+  render() {
+    return (
+      <div style={{ position: 'absolute', bottom: '60px' }}>
+        <Picker
+          set="google"
+          sheetSize={64}
+          theme="dark"
+          showPreview={false}
+          showSkinTones={false}
+          onSelect={this.props.addEmoji}
+        />
+      </div>
+    );
+  }
+}
+
+const PickerMenu = onClickOutside(PickerMenuInner);
