@@ -87,19 +87,25 @@ export class LoginModal extends React.Component<{
               <div>
                 Don't have an account?{' '}
                 <button
+                  type="button"
                   className="linkButton"
                   onClick={() => this.setState({ isCreateMode: true })}
                 >
                   Create one.
                 </button>{' '}
                 Forgot your password? Enter your email and{' '}
-                <button className="linkButton" onClick={this.resetPassword}>
+                <button
+                  type="button"
+                  className="linkButton"
+                  onClick={this.resetPassword}
+                >
                   reset it.
                 </button>
               </div>
             )}
             {this.state.isCreateMode ? (
               <Button
+                type="submit"
                 onClick={() =>
                   this.createAccount(this.state.email, this.state.password)
                 }
@@ -108,6 +114,7 @@ export class LoginModal extends React.Component<{
               </Button>
             ) : (
               <Button
+                type="submit"
                 onClick={() =>
                   this.emailSignIn(this.state.email, this.state.password)
                 }

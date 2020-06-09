@@ -229,7 +229,7 @@ export class Room {
             // Check if user is subscriber, if so set isLarge
             if (decoded?.email) {
               const customer = await getCustomerByEmail(decoded.email);
-              if (customer?.subscriptions?.data[0]) {
+              if (customer?.subscriptions?.data?.[0]?.status === 'active') {
                 console.log('found active sub for ', customer?.email);
                 isLarge = true;
               }
