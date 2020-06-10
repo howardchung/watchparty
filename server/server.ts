@@ -43,6 +43,7 @@ const names = Moniker.generator([
   Moniker.noun,
   Moniker.verb,
 ]);
+const launchTime = Number(new Date());
 
 const rooms = new Map<string, Room>();
 // Start the VM manager
@@ -154,6 +155,7 @@ app.get('/stats', async (req, res) => {
     });
     // Sort newest first
     roomData.sort((a, b) => b.creationTime - a.creationTime);
+    const uptime = Number(new Date()) - launchTime;
     const cpuUsage = os.loadavg();
     const redisUsage = (await redis.info())
       .split('\n')
@@ -208,6 +210,7 @@ app.get('/stats', async (req, res) => {
     const connectStarts = await getRedisCountDay('connectStarts');
 
     res.json({
+      uptime,
       roomCount: rooms.size,
       cpuUsage,
       redisUsage,
