@@ -61,6 +61,7 @@ declare global {
     YT: any;
     FB: any;
     fbAsyncInit: Function;
+    paypal: any;
   }
 }
 
