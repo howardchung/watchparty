@@ -322,6 +322,7 @@ export default class VBrowser extends React.Component<{
             bottom: 0,
             overflow: 'scroll',
             overscrollBehavior: 'contain',
+            scrollbarWidth: 'none',
           }}
           onClick={this.onClick}
           onContextMenu={this.onContextMenu}

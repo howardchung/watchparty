@@ -8,7 +8,7 @@ const region = 'nbg1';
 const gatewayHost = 'gateway3.watchparty.me';
 const sshKeys = [1570536];
 const networks = [91163];
-const imageId = 17253393;
+const imageId = 17747924;
 
 export class Hetzner extends VMManager {
   size = 'cpx11'; // cx11, cpx11, cpx21, cpx31, ccx11

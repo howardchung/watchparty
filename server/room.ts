@@ -295,7 +295,11 @@ export class Room {
         }
       );
       socket.on('CMD:stopVBrowser', async () => {
-        if (!this.vBrowser && !this.isAssigningVM) {
+        if (
+          !this.vBrowser &&
+          !this.isAssigningVM &&
+          this.video !== 'vbrowser://'
+        ) {
           return;
         }
         if (!this.validateLock(socket.id)) {
