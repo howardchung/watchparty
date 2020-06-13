@@ -45,7 +45,7 @@ export function getCurrentSettings(): Settings {
   try {
     let settings = validateSettingsString(setting);
     if (!settings) {
-      throw new Error('failed to parse settings, using defaults');
+      return {};
     }
     return settings;
   } catch (e) {
@@ -62,7 +62,10 @@ export function validateSettingsString(
 ): Settings | null {
   // Don't have a setting or invalid value
   let settingObject: Settings = JSON.parse(setting as any);
-  if (!setting || setting[0] !== '{') {
+  if (!setting) {
+    return {};
+  }
+  if (setting[0] !== '{') {
     throw new Error('failed to parse settings, using defaults');
   }
   return settingObject;
