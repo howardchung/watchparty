@@ -236,10 +236,7 @@ export class Room {
             }
           }
 
-          if (
-            process.env.NODE_ENV === 'development' &&
-            process.env.RECAPTCHA_SECRET_KEY
-          ) {
+          if (process.env.RECAPTCHA_SECRET_KEY) {
             try {
               // Validate the request isn't spam/automated
               const validation = await axios({
