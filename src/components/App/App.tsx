@@ -96,6 +96,7 @@ interface AppState {
   error: string;
   settings: Settings;
   vBrowserResolution: string;
+  isVBrowserLarge: boolean;
   nonPlayableMedia: boolean;
   currentTab: string;
   isSubscriber: boolean;
@@ -137,6 +138,7 @@ export default class App extends React.Component<{}, AppState> {
     error: '',
     settings: {},
     vBrowserResolution: '1280x720@30',
+    isVBrowserLarge: false,
     nonPlayableMedia: false,
     currentTab: 'chat',
     isSubscriber: false,
@@ -292,7 +294,7 @@ export default class App extends React.Component<{}, AppState> {
     socket.on('REC:seek', (data: any) => {
       this.doSeek(data);
     });
-    socket.on('REC:host', (data: any) => {
+    socket.on('REC:host', (data: HostState) => {
       let currentMedia = data.video || '';
       if (this.isScreenShare() && !currentMedia.startsWith('screenshare://')) {
         this.stopScreenShare();
@@ -317,6 +319,10 @@ export default class App extends React.Component<{}, AppState> {
           currentMediaPaused: data.paused,
           loading: Boolean(data.video),
           nonPlayableMedia: false,
+          isVBrowserLarge: data.isVBrowserLarge,
+          vBrowserResolution: data.isVBrowserLarge
+            ? '1920x1080@30'
+            : '1280x720@30',
         },
         () => {
           if (
@@ -1042,7 +1048,7 @@ export default class App extends React.Component<{}, AppState> {
       return this.state.nameMap[id] + "'s file";
     }
     if (input.startsWith('vbrowser://')) {
-      return 'Virtual Browser';
+      return 'Virtual Browser' + (this.state.isVBrowserLarge ? '+' : '');
     }
     if (input.includes('/stream?torrent=magnet')) {
       const search = new URL(input).search;
@@ -1265,46 +1271,46 @@ export default class App extends React.Component<{}, AppState> {
                         }
                       />
                     )}
-                    {process.env.NODE_ENV === 'development' &&
-                      this.isVBrowser() && (
-                        <Dropdown
-                          icon="desktop"
-                          labeled
-                          className="icon"
-                          style={{ height: '36px' }}
-                          button
-                          disabled={!this.haveLock()}
-                          value={this.state.vBrowserResolution}
-                          onChange={(e, data) =>
-                            this.setState({
-                              vBrowserResolution: data.value as string,
-                            })
-                          }
-                          selection
-                          options={[
-                            {
-                              text: '1080p',
-                              value: '1920x1080@30',
-                            },
-                            {
-                              text: '720p',
-                              value: '1280x720@30',
-                            },
-                            {
-                              text: '576p',
-                              value: '1024x576@60',
-                            },
-                            {
-                              text: '486p',
-                              value: '864x486@60',
-                            },
-                            {
-                              text: '360p',
-                              value: '640x360@60',
-                            },
-                          ]}
-                        ></Dropdown>
-                      )}
+                    {this.isVBrowser() && (
+                      <Dropdown
+                        icon="desktop"
+                        labeled
+                        className="icon"
+                        style={{ height: '36px' }}
+                        button
+                        disabled={!this.haveLock()}
+                        value={this.state.vBrowserResolution}
+                        onChange={(e, data) =>
+                          this.setState({
+                            vBrowserResolution: data.value as string,
+                          })
+                        }
+                        selection
+                        options={[
+                          {
+                            text: '1080p',
+                            value: '1920x1080@30',
+                            disabled: !this.state.isVBrowserLarge,
+                          },
+                          {
+                            text: '720p',
+                            value: '1280x720@30',
+                          },
+                          {
+                            text: '576p',
+                            value: '1024x576@60',
+                          },
+                          {
+                            text: '486p',
+                            value: '864x486@60',
+                          },
+                          {
+                            text: '360p',
+                            value: '640x360@60',
+                          },
+                        ]}
+                      ></Dropdown>
+                    )}
                     {this.isVBrowser() && (
                       <Button
                         fluid

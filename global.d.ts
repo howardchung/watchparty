@@ -50,3 +50,10 @@ interface PlaylistVideo {
   channel: string;
   duration: string;
 }
+
+interface HostState {
+  video: string;
+  videoTS: number;
+  paused: boolean;
+  isVBrowserLarge: boolean;
+}

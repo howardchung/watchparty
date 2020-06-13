@@ -65,7 +65,7 @@ export class Room {
         if (!data) {
           return;
         }
-        if (data && data.length > 100) {
+        if (data && data.length > 50) {
           return;
         }
         this.nameMap[socket.id] = data;
@@ -154,7 +154,7 @@ export class Room {
         this.tsMap[socket.id] = data;
       });
       socket.on('CMD:chat', (data: string) => {
-        if (data && data.length > 65536) {
+        if (data && data.length > 10000) {
           // TODO add some validation on client side too so we don't just drop long messages
           return;
         }
@@ -409,11 +409,12 @@ export class Room {
     }
   };
 
-  getHostState = () => {
+  getHostState = (): HostState => {
     return {
       video: this.video,
       videoTS: this.videoTS,
       paused: this.paused,
+      isVBrowserLarge: Boolean(this.vBrowser && this.vBrowser.large),
     };
   };
 
