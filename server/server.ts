@@ -11,7 +11,6 @@ import Redis from 'ioredis';
 import https from 'https';
 import http from 'http';
 import socketIO from 'socket.io';
-import Stripe from 'stripe';
 import { searchYoutube } from './utils/youtube';
 import { Room } from './room';
 import { getRedisCountDay } from './utils/redis';
