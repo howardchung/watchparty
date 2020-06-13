@@ -48,18 +48,12 @@ export class SignInButton extends React.Component<{
 
   facebookSignIn = async () => {
     const provider = new firebase.auth.FacebookAuthProvider();
-    const user = await firebase.auth().signInWithPopup(provider);
-    if (process.env.NODE_ENV === 'development') {
-      console.log(user);
-    }
+    await firebase.auth().signInWithPopup(provider);
   };
 
   googleSignIn = async () => {
     const provider = new firebase.auth.GoogleAuthProvider();
-    const user = await firebase.auth().signInWithPopup(provider);
-    if (process.env.NODE_ENV === 'development') {
-      console.log(user);
-    }
+    await firebase.auth().signInWithPopup(provider);
   };
 
   signOut = () => {

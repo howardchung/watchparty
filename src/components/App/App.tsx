@@ -1235,11 +1235,7 @@ export default class App extends React.Component<{}, AppState> {
                             labelPosition="left"
                             color="green"
                             onClick={() => {
-                              if (process.env.NODE_ENV !== 'development') {
-                                this.setupVBrowser();
-                              } else {
-                                this.setState({ isVBrowserModalOpen: true });
-                              }
+                              this.setState({ isVBrowserModalOpen: true });
                             }}
                           >
                             <Icon name="desktop" />
@@ -1371,46 +1367,44 @@ export default class App extends React.Component<{}, AppState> {
                         disabled={!this.haveLock()}
                       />
                     )}
-                    {process.env.NODE_ENV === 'development' &&
-                      !this.state.isSubscriber && (
-                        <Popup
-                          content="Subscribe to help support us and enable additional features!"
-                          trigger={
-                            <Button
-                              fluid
-                              color="orange"
-                              className="toolButton"
-                              icon
-                              labelPosition="left"
-                              onClick={() =>
-                                this.setState({ isSubscribeModalOpen: true })
-                              }
-                            >
-                              <Icon name="plus" />
-                              Subscribe
-                            </Button>
-                          }
-                        />
-                      )}
-                    {process.env.NODE_ENV === 'development' &&
-                      this.state.isSubscriber && (
-                        <Popup
-                          content="Manage your subscription"
-                          trigger={
-                            <Button
-                              fluid
-                              color="orange"
-                              className="toolButton"
-                              icon
-                              labelPosition="left"
-                              onClick={this.onManage}
-                            >
-                              <Icon name="wrench" />
-                              Manage
-                            </Button>
-                          }
-                        />
-                      )}
+                    {!this.state.isSubscriber && (
+                      <Popup
+                        content="Subscribe to help support us and enable additional features!"
+                        trigger={
+                          <Button
+                            fluid
+                            color="orange"
+                            className="toolButton"
+                            icon
+                            labelPosition="left"
+                            onClick={() =>
+                              this.setState({ isSubscribeModalOpen: true })
+                            }
+                          >
+                            <Icon name="plus" />
+                            Subscribe
+                          </Button>
+                        }
+                      />
+                    )}
+                    {this.state.isSubscriber && (
+                      <Popup
+                        content="Manage your subscription"
+                        trigger={
+                          <Button
+                            fluid
+                            color="orange"
+                            className="toolButton"
+                            icon
+                            labelPosition="left"
+                            onClick={this.onManage}
+                          >
+                            <Icon name="wrench" />
+                            Manage
+                          </Button>
+                        }
+                      />
+                    )}
                   </div>
                   <Separator />
                   <div

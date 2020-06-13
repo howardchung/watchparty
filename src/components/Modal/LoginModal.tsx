@@ -20,12 +20,8 @@ export class LoginModal extends React.Component<{
 
   emailSignIn = async (email: string, password: string) => {
     try {
-      const user = await firebase
-        .auth()
-        .signInWithEmailAndPassword(email, password);
-      if (process.env.NODE_ENV === 'development') {
-        console.log(user);
-      }
+      await firebase.auth().signInWithEmailAndPassword(email, password);
+
       this.props.closeLogin();
     } catch (e) {
       // handle exceptions
@@ -35,12 +31,7 @@ export class LoginModal extends React.Component<{
 
   createAccount = async (email: string, password: string) => {
     try {
-      const user = await firebase
-        .auth()
-        .createUserWithEmailAndPassword(email, password);
-      if (process.env.NODE_ENV === 'development') {
-        console.log(user);
-      }
+      await firebase.auth().createUserWithEmailAndPassword(email, password);
     } catch (e) {
       // handle exceptions
       this.setState({ error: e.message });

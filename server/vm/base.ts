@@ -48,14 +48,12 @@ export abstract class VMManager {
             console.log('[RELEASE] VM in room:', room.roomId);
             room.stopVBrowser();
             if (isTimedOut) {
-              if (process.env.NODE_ENV === 'development') {
-                room.addChatMessage(undefined, {
-                  id: '',
-                  system: true,
-                  cmd: 'vBrowserTimeout',
-                  msg: '',
-                });
-              }
+              room.addChatMessage(undefined, {
+                id: '',
+                system: true,
+                cmd: 'vBrowserTimeout',
+                msg: '',
+              });
               redisCount('vBrowserTerminateTimeout');
             } else if (isRoomEmpty) {
               redisCount('vBrowserTerminateEmpty');
