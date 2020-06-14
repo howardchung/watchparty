@@ -244,7 +244,7 @@ export class Room {
                 method: 'POST',
               });
               console.log(validation?.data);
-              const isLowScore = validation?.data?.score < 0.5;
+              const isLowScore = validation?.data?.score < 0.2;
               const failed = validation?.data?.success === false;
               if (failed || isLowScore) {
                 if (isLowScore) {
