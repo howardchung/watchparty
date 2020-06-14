@@ -12,7 +12,7 @@ const imageId = 17817850;
 
 export class Hetzner extends VMManager {
   size = 'cpx11'; // cx11, cpx11, cpx21, cpx31, ccx11
-  largeSize = 'cpx31';
+  largeSize = 'cpx21';
   redisQueueKey = 'availableListHetzner';
   redisStagingKey = 'stagingListHetzner';
   startVM = async (name: string) => {
