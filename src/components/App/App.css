@@ -135,3 +135,10 @@ body {
   width: 100%;
   overflow: hidden;
 }
+
+.ui.dropdown > .text {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  width: 100%;
+  overflow: hidden;
+}

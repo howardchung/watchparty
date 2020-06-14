@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { redisCount } from '../utils/redis';
 
 export abstract class VMManager {
-  public vmBufferSize = Number(process.env.VBROWSER_VM_BUFFER) || 0;
+  public vmBufferSize = 0;
   protected tag = process.env.VBROWSER_TAG || 'vbrowser';
   protected isLarge = false;
   private redis = new Redis(process.env.REDIS_URL);
@@ -19,6 +19,12 @@ export abstract class VMManager {
   ) {
     if (vmBufferSize !== undefined) {
       this.vmBufferSize = vmBufferSize;
+    } else {
+      if (large) {
+        this.vmBufferSize = Number(process.env.VBROWSER_VM_BUFFER_LARGE) || 0;
+      } else {
+        this.vmBufferSize = Number(process.env.VBROWSER_VM_BUFFER) || 0;
+      }
     }
     if (large) {
       this.tag += 'Large';
