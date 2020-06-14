@@ -8,11 +8,11 @@ const region = 'nbg1';
 const gatewayHost = 'gateway3.watchparty.me';
 const sshKeys = [1570536];
 const networks = [91163];
-const imageId = 17817850;
+const imageId = 17866471;
 
 export class Hetzner extends VMManager {
   size = 'cpx11'; // cx11, cpx11, cpx21, cpx31, ccx11
-  largeSize = 'cpx21';
+  largeSize = 'cpx31';
   redisQueueKey = 'availableListHetzner';
   redisStagingKey = 'stagingListHetzner';
   startVM = async (name: string) => {
