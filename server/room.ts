@@ -45,7 +45,9 @@ export class Room {
 
     setInterval(() => {
       // console.log(roomId, this.video, this.roster, this.tsMap, this.nameMap);
-      io.of(roomId).emit('REC:tsMap', this.tsMap);
+      if (this.video) {
+        io.of(roomId).emit('REC:tsMap', this.tsMap);
+      }
     }, 1000);
 
     io.of(roomId).on('connection', (socket: Socket) => {
