@@ -11,7 +11,7 @@ const sshConfig = {
   user: process.env.DOCKER_VM_HOST_SSH_USER || 'root',
   host: gatewayHost,
   key: process.env.DOCKER_VM_HOST_SSH_KEY_BASE64
-    ? new Buffer(process.env.DOCKER_VM_HOST_SSH_KEY_BASE64, 'base64')
+    ? Buffer.from(process.env.DOCKER_VM_HOST_SSH_KEY_BASE64, 'base64')
     : undefined,
 };
 
@@ -31,7 +31,9 @@ export class Docker extends VMManager {
         INDEX=$(($PORT - 5000))
         UDP_START=$((59000+$INDEX*100))
         UDP_END=$((59099+$INDEX*100))
-        docker run -d --rm --name=${password} -p $PORT:$PORT -p $UDP_START-$UDP_END:$UDP_START-$UDP_END/udp -v /etc/letsencrypt:/etc/letsencrypt -l vbrowser -l index=$INDEX --log-opt max-size=1g --shm-size=1g --cap-add="SYS_ADMIN" -e NEKO_KEY="/etc/letsencrypt/live/${gatewayHost}/privkey.pem" -e NEKO_CERT="/etc/letsencrypt/live/${gatewayHost}/fullchain.pem" -e DISPLAY=":$INDEX.0" -e NEKO_SCREEN="1280x720@30" -e NEKO_PASSWORD=${password} -e NEKO_PASSWORD_ADMIN=${password} -e NEKO_BIND=":$PORT" -e NEKO_EPR=":$UDP_START-$UDP_END" howardc93/vbrowser
+        docker run -d --rm --name=${password} --net=host -v /etc/letsencrypt:/etc/letsencrypt -l vbrowser -l index=$INDEX --log-opt max-size=1g --shm-size=1g --cap-add="SYS_ADMIN" -e NEKO_KEY="/etc/letsencrypt/live/${gatewayHost}/privkey.pem" -e NEKO_CERT="/etc/letsencrypt/live/${gatewayHost}/fullchain.pem" -e DISPLAY=":$INDEX.0" -e NEKO_SCREEN="1280x720@30" -e NEKO_PASSWORD=${password} -e NEKO_PASSWORD_ADMIN=${password} -e NEKO_BIND=":$PORT" -e NEKO_EPR=":$UDP_START-$UDP_END" howardc93/vbrowser
+        #docker run -d --rm --name=${password} -p $PORT:8080 -p $UDP_START-$UDP_END:$UDP_START-$UDP_END/udp -v /etc/letsencrypt:/etc/letsencrypt -l vbrowser -l index=$INDEX --log-opt max-size=1g --shm-size=1g --cap-add="SYS_ADMIN" -e NEKO_KEY="/etc/letsencrypt/live/${gatewayHost}/privkey.pem" -e NEKO_CERT="/etc/letsencrypt/live/${gatewayHost}/fullchain.pem" -e DISPLAY=":99.0" -e NEKO_SCREEN="1280x720@30" -e NEKO_PASSWORD=${password} -e NEKO_PASSWORD_ADMIN=${password} -e NEKO_EPR=":$UDP_START-$UDP_END" howardc93/vbrowser
+        #docker run -d --rm --name=${password} -p $PORT:$PORT -p $UDP_START-$UDP_END:$UDP_START-$UDP_END/udp -v /etc/letsencrypt:/etc/letsencrypt -l vbrowser -l index=$INDEX --log-opt max-size=1g --shm-size=1g --cap-add="SYS_ADMIN" -e NEKO_KEY="/etc/letsencrypt/live/${gatewayHost}/privkey.pem" -e NEKO_CERT="/etc/letsencrypt/live/${gatewayHost}/fullchain.pem" -e DISPLAY=":$INDEX.0" -e NEKO_SCREEN="1280x720@30" -e NEKO_PASSWORD=${password} -e NEKO_PASSWORD_ADMIN=${password} -e NEKO_BIND=":$PORT" -e NEKO_EPR=":$UDP_START-$UDP_END" howardc93/vbrowser
         `,
         sshConfig,
         (err: string, stdout: string) => {
@@ -78,12 +80,18 @@ export class Docker extends VMManager {
           if (err) {
             return reject(err);
           }
-          const data = JSON.parse(stdout)[0];
-          if (!data) {
-            return reject(new Error('no container with this ID found'));
+          let data = null;
+          try {
+            data = JSON.parse(stdout)[0];
+            if (!data) {
+              return reject(new Error('no container with this ID found'));
+            }
+          } catch {
+            console.error(stdout);
+            return reject('failed to parse json');
           }
           let server = this.mapServerObject(data);
-          resolve(server);
+          return resolve(server);
         }
       );
     });
@@ -101,7 +109,13 @@ export class Docker extends VMManager {
           if (!stdout) {
             return [];
           }
-          const data = JSON.parse(stdout);
+          let data = [];
+          try {
+            data = JSON.parse(stdout);
+          } catch (e) {
+            console.error(stdout);
+            return reject('failed to parse json');
+          }
           return resolve(data.map(this.mapServerObject));
         }
       );
