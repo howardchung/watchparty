@@ -36,6 +36,7 @@
     "socket.io": "^2.3.0",
     "socket.io-client": "^2.3.0",
     "srt-webvtt": "^1.0.1",
+    "ssh-exec": "^2.0.0",
     "stripe": "^8.56.0",
     "uuid": "^7.0.2",
     "xml2js": "^0.4.23",

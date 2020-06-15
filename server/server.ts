@@ -17,6 +17,7 @@ import { getRedisCountDay } from './utils/redis';
 import { Scaleway } from './vm/scaleway';
 import { Hetzner } from './vm/hetzner';
 import { DigitalOcean } from './vm/digitalocean';
+import { Docker } from './vm/docker';
 import { VMManager } from './vm/base';
 import { getCustomerByEmail, createSelfServicePortal } from './utils/stripe';
 import { validateUserToken } from './utils/firebase';
@@ -63,6 +64,9 @@ if (process.env.REDIS_URL && process.env.HETZNER_TOKEN) {
 if (process.env.REDIS_URL && process.env.DO_TOKEN) {
   // new DigitalOcean(rooms, 0);
   // new DigitalOcean(rooms, 0, true);
+}
+if (process.env.REDIS_URL && process.env.DOCKER_VM_HOST) {
+  vmManager = new Docker(rooms, undefined, false);
 }
 const vmManagers = { standard: vmManager!, large: vmManagerLarge! };
 init();

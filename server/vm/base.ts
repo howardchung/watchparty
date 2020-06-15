@@ -224,7 +224,7 @@ export abstract class VMManager {
         candidate = await this.getVM(id);
         ready = await this.checkVMReady(candidate.host);
       } catch (e) {
-        // console.log(e);
+        console.log(e);
       }
       const retryCount = await this.redis.incr(
         this.getRedisStagingKey() + ':' + id
@@ -261,7 +261,7 @@ export abstract class VMManager {
         method: 'GET',
         url,
       });
-      state = response4.data.slice(10);
+      state = 'ready';
     } catch (e) {
       // console.log(e);
       // console.log(e.response);

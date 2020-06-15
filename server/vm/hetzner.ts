@@ -41,9 +41,6 @@ export class Hetzner extends VMManager {
         location: region,
       },
     });
-    await axios.post(
-      `${process.env.SERVER_DOMAIN}/kv?k=${name}&v=${name}&key=${process.env.KV_KEY}`
-    );
     const id = response.data.server.id;
     return id;
   };
