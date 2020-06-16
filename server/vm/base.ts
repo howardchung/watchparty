@@ -84,7 +84,7 @@ export abstract class VMManager {
         }
       }
     };
-    setInterval(this.resizeVMGroupIncr, 15 * 1000);
+    setInterval(this.resizeVMGroupIncr, 10 * 1000);
     setInterval(this.resizeVMGroupDecr, 20 * 60 * 1000);
     setInterval(this.cleanupVMGroup, 3 * 60 * 1000);
     setInterval(renew, 30 * 1000);
@@ -254,23 +254,12 @@ export abstract class VMManager {
   };
 
   protected checkVMReady = async (host: string) => {
-    let state = '';
-    const url = 'https://' + host;
-    try {
-      const response4 = await axios({
-        method: 'GET',
-        url,
-      });
-      state = 'ready';
-    } catch (e) {
-      // console.log(e);
-      // console.log(e.response);
-      // The server currently 404s on requests with a query string, so just treat the 404 message as success
-      // The error code is not 404 maybe due to the gateway
-      state =
-        e.response && e.response.data === '404 page not found\n' ? 'ready' : '';
-    }
-    return state === 'ready';
+    const url = 'https://' + host + '/healthz';
+    const response4 = await axios({
+      method: 'GET',
+      url,
+    });
+    return true;
   };
 
   protected startVMWrapper = async () => {

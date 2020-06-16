@@ -22,7 +22,6 @@ export class Docker extends VMManager {
   redisStagingKey = 'stagingListDocker';
   startVM = async (name: string) => {
     return new Promise<string>(async (resolve, reject) => {
-      const password = uuidv4();
       sshExec(
         `
         #!/bin/bash
@@ -31,9 +30,10 @@ export class Docker extends VMManager {
         INDEX=$(($PORT - 5000))
         UDP_START=$((59000+$INDEX*100))
         UDP_END=$((59099+$INDEX*100))
-        docker run -d --rm --name=${password} --net=host -v /etc/letsencrypt:/etc/letsencrypt -l vbrowser -l index=$INDEX --log-opt max-size=1g --shm-size=1g --cap-add="SYS_ADMIN" -e NEKO_KEY="/etc/letsencrypt/live/${gatewayHost}/privkey.pem" -e NEKO_CERT="/etc/letsencrypt/live/${gatewayHost}/fullchain.pem" -e DISPLAY=":$INDEX.0" -e NEKO_SCREEN="1280x720@30" -e NEKO_PASSWORD=${password} -e NEKO_PASSWORD_ADMIN=${password} -e NEKO_BIND=":$PORT" -e NEKO_EPR=":$UDP_START-$UDP_END" howardc93/vbrowser
-        #docker run -d --rm --name=${password} -p $PORT:8080 -p $UDP_START-$UDP_END:$UDP_START-$UDP_END/udp -v /etc/letsencrypt:/etc/letsencrypt -l vbrowser -l index=$INDEX --log-opt max-size=1g --shm-size=1g --cap-add="SYS_ADMIN" -e NEKO_KEY="/etc/letsencrypt/live/${gatewayHost}/privkey.pem" -e NEKO_CERT="/etc/letsencrypt/live/${gatewayHost}/fullchain.pem" -e DISPLAY=":99.0" -e NEKO_SCREEN="1280x720@30" -e NEKO_PASSWORD=${password} -e NEKO_PASSWORD_ADMIN=${password} -e NEKO_EPR=":$UDP_START-$UDP_END" howardc93/vbrowser
-        #docker run -d --rm --name=${password} -p $PORT:$PORT -p $UDP_START-$UDP_END:$UDP_START-$UDP_END/udp -v /etc/letsencrypt:/etc/letsencrypt -l vbrowser -l index=$INDEX --log-opt max-size=1g --shm-size=1g --cap-add="SYS_ADMIN" -e NEKO_KEY="/etc/letsencrypt/live/${gatewayHost}/privkey.pem" -e NEKO_CERT="/etc/letsencrypt/live/${gatewayHost}/fullchain.pem" -e DISPLAY=":$INDEX.0" -e NEKO_SCREEN="1280x720@30" -e NEKO_PASSWORD=${password} -e NEKO_PASSWORD_ADMIN=${password} -e NEKO_BIND=":$PORT" -e NEKO_EPR=":$UDP_START-$UDP_END" howardc93/vbrowser
+        #docker pull ${imageName} > /dev/null
+        docker run -d --rm --name=${name} --net=host -v /etc/letsencrypt:/etc/letsencrypt -l vbrowser -l index=$INDEX --log-opt max-size=1g --shm-size=1g --cap-add="SYS_ADMIN" -e NEKO_KEY="/etc/letsencrypt/live/${gatewayHost}/privkey.pem" -e NEKO_CERT="/etc/letsencrypt/live/${gatewayHost}/fullchain.pem" -e DISPLAY=":$INDEX.0" -e NEKO_SCREEN="1280x720@30" -e NEKO_PASSWORD=${name} -e NEKO_PASSWORD_ADMIN=${name} -e NEKO_BIND=":$PORT" -e NEKO_EPR=":$UDP_START-$UDP_END" ${imageName}
+        #docker run -d --rm --name=${name} -p $PORT:8080 -p $UDP_START-$UDP_END:$UDP_START-$UDP_END/udp -v /etc/letsencrypt:/etc/letsencrypt -l vbrowser -l index=$INDEX --log-opt max-size=1g --shm-size=1g --cap-add="SYS_ADMIN" -e NEKO_KEY="/etc/letsencrypt/live/${gatewayHost}/privkey.pem" -e NEKO_CERT="/etc/letsencrypt/live/${gatewayHost}/fullchain.pem" -e DISPLAY=":99.0" -e NEKO_SCREEN="1280x720@30" -e NEKO_PASSWORD=${name} -e NEKO_PASSWORD_ADMIN=${name} -e NEKO_EPR=":$UDP_START-$UDP_END" ${imageName}
+        #docker run -d --rm --name=${name} -p $PORT:$PORT -p $UDP_START-$UDP_END:$UDP_START-$UDP_END/udp -v /etc/letsencrypt:/etc/letsencrypt -l vbrowser -l index=$INDEX --log-opt max-size=1g --shm-size=1g --cap-add="SYS_ADMIN" -e NEKO_KEY="/etc/letsencrypt/live/${gatewayHost}/privkey.pem" -e NEKO_CERT="/etc/letsencrypt/live/${gatewayHost}/fullchain.pem" -e DISPLAY=":$INDEX.0" -e NEKO_SCREEN="1280x720@30" -e NEKO_PASSWORD=${name} -e NEKO_PASSWORD_ADMIN=${name} -e NEKO_BIND=":$PORT" -e NEKO_EPR=":$UDP_START-$UDP_END" ${imageName}
         `,
         sshConfig,
         (err: string, stdout: string) => {
