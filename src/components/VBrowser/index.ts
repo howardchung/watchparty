@@ -36,8 +36,8 @@ export class NekoClient extends BaseClient implements EventEmitter<any> {
   }
 
   protected [EVENT.TRACK](event: RTCTrackEvent) {
-    const { streams } = event;
-    this.emit(EVENT.TRACK, streams[0]);
+    const { track, streams } = event;
+    this.emit(EVENT.TRACK, track, streams[0]);
   }
 
   protected [EVENT.DATA](data: any) {

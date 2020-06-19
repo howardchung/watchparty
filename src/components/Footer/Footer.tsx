@@ -10,5 +10,9 @@ export const Footer = () => (
     <Link style={{ color: 'white' }} to="/privacy">
       Privacy
     </Link>
+    {' · '}
+    <Link style={{ color: 'white' }} to="/faq">
+      FAQ
+    </Link>
   </div>
 );
