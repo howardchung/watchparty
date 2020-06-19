@@ -57,7 +57,7 @@ export default class VBrowser extends React.Component<{
       // Update our state with the resolution sent from server
       this.props.setResolution(`${this.width}x${this.height}@${this.rate}`);
     });
-    this.$client.on(EVENT.TRACK, (stream) => {
+    this.$client.on(EVENT.TRACK, (track: MediaStreamTrack, stream) => {
       // console.log(track, streams);
       const video = document.getElementById('leftVideo') as HTMLVideoElement;
       video.src = '';

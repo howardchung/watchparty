@@ -1,9 +1,11 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 
+const mdStyle = { color: 'white', margin: '50px', maxWidth: '800px' };
+
 export const Privacy = () => {
   return (
-    <div style={{ color: 'white', margin: '50px' }}>
+    <div style={mdStyle}>
       <ReactMarkdown>
         {`
 Privacy Policy
@@ -35,7 +37,7 @@ Virtual Browsers
 
 export const Terms = () => {
   return (
-    <div style={{ color: 'white', margin: '50px' }}>
+    <div style={mdStyle}>
       <ReactMarkdown>
         {`
 Terms of Service
@@ -45,6 +47,30 @@ By using this service you agree to the following terms:
 - Your use of the service may be terminated if you are found to be sharing illegal or infringing content
 - The service provides no guarantee of uptime or availability
 - You use the service at your own risk of encountering objectionable content, as we do not actively moderate rooms unless content is found to be illegal or infringing
+`}
+      </ReactMarkdown>
+    </div>
+  );
+};
+
+export const FAQ = () => {
+  return (
+    <div style={mdStyle}>
+      <ReactMarkdown>
+        {`
+FAQ
+====
+Does everyone in the room need to be a subscriber to get the benefits?
+----
+No, only the person who created the VBrowser needs to be.
+
+How do I access some sites that have a "not available" message in the VBrowser?
+----
+Some sites may block traffic that's detected as coming from certain geographic regions. You may need to install an extension like Hola VPN inside the virtual browser.
+
+Is there a limit to how many people can be in a room?
+----
+Currently there isn't a hard limit, although the service hasn't been tested with more than 15 people or so. Screensharing and filesharing rely on one person uploading to everyone else, so it may not work well with large room sizes.
 `}
       </ReactMarkdown>
     </div>

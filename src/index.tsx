@@ -7,7 +7,7 @@ import { BrowserRouter, Route } from 'react-router-dom';
 
 import App from './components/App';
 import { Home } from './components/Home';
-import { Privacy, Terms } from './components/PrivacyTerms/PrivacyTerms';
+import { Privacy, Terms, FAQ } from './components/PrivacyTerms/PrivacyTerms';
 import { TopBar } from './components/TopBar/TopBar';
 import { Footer } from './components/Footer/Footer';
 import * as serviceWorker from './serviceWorker';
@@ -33,6 +33,9 @@ ReactDOM.render(
       </Route>
       <Route path="/privacy">
         <Privacy />
+      </Route>
+      <Route path="/faq">
+        <FAQ />
       </Route>
       <Route
         path="*"
