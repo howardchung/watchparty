@@ -6,10 +6,11 @@ import { cloudInit, imageName } from './utils';
 //@ts-ignore
 import sshExec from 'ssh-exec';
 
-const gatewayHost = process.env.DOCKER_VM_HOST;
+const gatewayHost = process.env.DOCKER_VM_HOST || 'localhost';
 const sshConfig = {
   user: process.env.DOCKER_VM_HOST_SSH_USER || 'root',
   host: gatewayHost,
+  // Defaults to ~/.ssh/id_rsa
   key: process.env.DOCKER_VM_HOST_SSH_KEY_BASE64
     ? Buffer.from(process.env.DOCKER_VM_HOST_SSH_KEY_BASE64, 'base64')
     : undefined,
