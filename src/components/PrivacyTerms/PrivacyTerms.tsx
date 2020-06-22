@@ -60,13 +60,26 @@ export const FAQ = () => {
         {`
 FAQ
 ====
+What's a VBrowser?
+----
+A virtual browser (VBrowser) is a browser running in the cloud that a room's members can connect to. Everyone in the room sees the same thing, so it's a great way to watch videos or collaborate on tasks together.
+
+Why did my VBrowser session stop?
+----
+VBrowsers will terminate automatically if no one is in the room for a while.
+VBrowser sessions are also limited to a maximum of 3 hours for free users, and 12 hours for subscribers.
+
 Does everyone in the room need to be a subscriber to get the benefits?
 ----
 No, only the person who created the VBrowser needs to be.
 
-How do I access some sites that have a "not available" message in the VBrowser?
+How do I access sites that have a "not available" message in the VBrowser?
 ----
 Some sites may block traffic that's detected as coming from certain geographic regions. You may need to install an extension like Hola VPN inside the virtual browser.
+
+How come I'm not getting any audio when screensharing?
+----
+To share audio, you must be using Chrome, and check a small checkbox at the bottom-left of the share screen dialog.
 
 Is there a limit to how many people can be in a room?
 ----
