@@ -81,6 +81,9 @@ export class Room {
         io.of(roomId).emit('REC:pictureMap', this.pictureMap);
       });
       socket.on('CMD:uid', async (data: { uid: string; token: string }) => {
+        if (!data) {
+          return;
+        }
         const decoded = await validateUserToken(data.uid, data.token);
         if (!decoded) {
           return;
@@ -157,7 +160,6 @@ export class Room {
       });
       socket.on('CMD:chat', (data: string) => {
         if (data && data.length > 10000) {
-          // TODO add some validation on client side too so we don't just drop long messages
           return;
         }
         if (process.env.NODE_ENV === 'development' && data === '/clear') {
@@ -217,23 +219,31 @@ export class Room {
       });
       socket.on(
         'CMD:startVBrowser',
-        async (data: { uid: string; token: string; rcToken: string }) => {
+        async (data: {
+          uid: string;
+          token: string;
+          rcToken: string;
+          options: { size: string };
+        }) => {
           if (this.vBrowser || this.isAssigningVM) {
             return;
           }
           if (!this.validateLock(socket.id)) {
             return;
           }
+          if (!data) {
+            return;
+          }
           this.isAssigningVM = true;
           let isLarge = false;
           if (process.env.STRIPE_SECRET_KEY && data && data.uid && data.token) {
             const decoded = await validateUserToken(data.uid, data.token);
-            // Check if user is subscriber, if so set isLarge
+            // Check if user is subscriber, if so allow isLarge
             if (decoded?.email) {
               const customer = await getCustomerByEmail(decoded.email);
               if (customer?.subscriptions?.data?.[0]?.status === 'active') {
                 console.log('found active sub for ', customer?.email);
-                isLarge = true;
+                isLarge = data.options?.size === 'large';
               }
             }
           }
@@ -323,6 +333,9 @@ export class Room {
       socket.on(
         'CMD:lock',
         async (data: { uid: string; token: string; locked: boolean }) => {
+          if (!data) {
+            return;
+          }
           const decoded = await validateUserToken(data.uid, data.token);
           if (!decoded) {
             return;
@@ -338,6 +351,9 @@ export class Room {
         socket.emit('REC:host', this.getHostState());
       });
       socket.on('signal', (data: { to: string; msg: string }) => {
+        if (!data) {
+          return;
+        }
         io.of(roomId)
           .to(data.to)
           .emit('signal', { from: socket.id, msg: data.msg });
@@ -345,6 +361,9 @@ export class Room {
       socket.on(
         'signalSS',
         (data: { to: string; sharer: boolean; msg: string }) => {
+          if (!data) {
+            return;
+          }
           io.of(roomId).to(data.to).emit('signalSS', {
             from: socket.id,
             sharer: data.sharer,

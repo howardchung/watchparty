@@ -13,20 +13,23 @@ export class VBrowserModal extends React.Component<{
 }> {
   render() {
     const { closeModal, startVBrowser, openSubscribe } = this.props;
-    const LaunchButton = withGoogleReCaptcha(({ googleReCaptchaProps }) => (
-      <Button
-        size="large"
-        onClick={async () => {
-          const token = await (googleReCaptchaProps as any).executeRecaptcha(
-            'launchVBrowser'
-          );
-          startVBrowser(token);
-          closeModal();
-        }}
-      >
-        {this.props.isSubscriber ? 'Continue' : 'Continue with Free'}
-      </Button>
-    ));
+    const LaunchButton = withGoogleReCaptcha(
+      ({ googleReCaptchaProps, large }: any) => (
+        <Button
+          size="large"
+          color={large ? 'orange' : undefined}
+          onClick={async () => {
+            const token = await (googleReCaptchaProps as any).executeRecaptcha(
+              'launchVBrowser'
+            );
+            startVBrowser(token, { size: large ? 'large' : '' });
+            closeModal();
+          }}
+        >
+          {large ? 'Launch VBrowser+' : 'Continue with Free'}
+        </Button>
+      )
+    );
     return (
       <GoogleReCaptchaProvider
         reCaptchaKey={process.env.REACT_APP_RECAPTCHA_SITE_KEY as string}
@@ -59,6 +62,7 @@ export class VBrowserModal extends React.Component<{
                   </ul>
                 )}
               </div>
+              {this.props.isSubscriber && <LaunchButton large />}
               <LaunchButton />
               {!this.props.isSubscriber && (
                 <Button
