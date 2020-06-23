@@ -48,8 +48,15 @@ export class Chat extends React.Component<ChatProps> {
     if (!this.state.chatMsg) {
       return;
     }
+    if (this.chatTooLong()) {
+      return;
+    }
     this.setState({ chatMsg: '' });
     this.props.socket.emit('CMD:chat', this.state.chatMsg);
+  };
+
+  chatTooLong = () => {
+    return Boolean(this.state.chatMsg?.length > 10000);
   };
 
   onScroll = () => {
@@ -163,6 +170,7 @@ export class Chat extends React.Component<ChatProps> {
           onKeyPress={(e: any) => e.key === 'Enter' && this.sendChatMsg()}
           onChange={this.updateChatMsg}
           value={this.state.chatMsg}
+          error={this.chatTooLong()}
           icon
           placeholder="Enter a message..."
         >
