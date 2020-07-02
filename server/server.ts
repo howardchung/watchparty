@@ -154,7 +154,9 @@ app.get('/stats', async (req, res) => {
       if (obj.video?.startsWith('fileshare://') && obj.rosterLength) {
         currentFileShare += 1;
       }
-      roomData.push(obj);
+      if (obj.video) {
+        roomData.push(obj);
+      }
     });
     // Sort newest first
     roomData.sort((a, b) => b.creationTime - a.creationTime);
