@@ -95,6 +95,10 @@ export class Chat extends React.Component<ChatProps> {
       return `started the video at ${formatTimestamp(msg)}`;
     } else if (cmd === 'pause') {
       return `paused the video at ${formatTimestamp(msg)}`;
+    } else if (cmd === 'lock') {
+      return `locked the room`;
+    } else if (cmd === 'unlock') {
+      return 'unlocked the room';
     } else if (cmd === 'vBrowserTimeout') {
       return (
         <React.Fragment>

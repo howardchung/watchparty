@@ -33,7 +33,7 @@ export const Home: React.FC = () => {
           <Feature
             icon="desktop"
             title={`VBrowser`}
-            text="Launch a virtual browser in the cloud that all room members can view and control. A good alternative to screensharing for those with limited upload bandwidth."
+            text="Launch a virtual browser in the cloud that all room members can view and control. No need to worry about slow upload speeds!"
           />
           <Feature
             icon="file"
