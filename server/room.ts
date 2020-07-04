@@ -345,6 +345,12 @@ export class Room {
           }
           this.lock = data.locked ? decoded.uid : '';
           io.of(roomId).emit('REC:lock', this.lock);
+          const chatMsg = {
+            id: socket.id,
+            cmd: data.locked ? 'lock' : 'unlock',
+            msg: '',
+          };
+          this.addChatMessage(socket, chatMsg);
         }
       );
       socket.on('CMD:askHost', () => {
