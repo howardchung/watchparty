@@ -10,7 +10,7 @@ export const Home: React.FC = () => {
       <div className={styles.container}>
         <Hero
           heroText={'Watch videos in-sync with friends far away.'}
-          subText={'No registration required.'}
+          subText={'No registration or download required.'}
           action={
             <div style={{ marginTop: '8px', width: '160px' }}>
               <NewRoomButton />
