@@ -848,13 +848,14 @@ export default class App extends React.Component<{}, AppState> {
   };
 
   onSeek = (e: any, time: number) => {
-    let target = Math.max(time, 0);
+    let target = time;
     if (e) {
       const rect = e.target.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const max = rect.width;
       target = (x / max) * this.getDuration();
     }
+    target = Math.max(target, 0);
     this.doSeek(target);
     this.socket.emit('CMD:seek', target);
   };

@@ -123,6 +123,7 @@ app.get('/stats', async (req, res) => {
     const roomData: any[] = [];
     const now = Number(new Date());
     let currentUsers = 0;
+    let currentHttp = 0;
     let currentVBrowser = 0;
     let currentVBrowserLarge = 0;
     let currentScreenShare = 0;
@@ -147,6 +148,9 @@ app.get('/stats', async (req, res) => {
       }
       if (obj.vBrowser && obj.vBrowser.large) {
         currentVBrowserLarge += 1;
+      }
+      if (obj.video?.startsWith('http') && obj.rosterLength) {
+        currentHttp += 1;
       }
       if (obj.video?.startsWith('screenshare://') && obj.rosterLength) {
         currentScreenShare += 1;
@@ -242,6 +246,7 @@ app.get('/stats', async (req, res) => {
       currentUsers,
       currentVBrowser,
       currentVBrowserLarge,
+      currentHttp,
       currentScreenShare,
       currentFileShare,
       currentVideoChat,
