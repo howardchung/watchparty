@@ -260,7 +260,7 @@ export async function getYouTubeResults(
   return data;
 }
 
-export async function openFileSelector() {
+export async function openFileSelector(accept?: string) {
   return new Promise<FileList | null>((resolve) => {
     // Create an input element
     const inputElement = document.createElement('input');
@@ -270,7 +270,9 @@ export async function openFileSelector() {
 
     // Set accept to the file types you want the user to select.
     // Include both the file extension and the mime type
-    // inputElement.accept = accept;
+    if (accept) {
+      inputElement.accept = accept;
+    }
 
     // set onchange event to call callback when user has selected file
     inputElement.addEventListener('change', () => {

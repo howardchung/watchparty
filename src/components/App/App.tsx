@@ -639,7 +639,7 @@ export default class App extends React.Component<{}, AppState> {
   };
 
   setSubtitle = async () => {
-    const files = await openFileSelector();
+    const files = await openFileSelector('.srt');
     if (!files) {
       return;
     }
