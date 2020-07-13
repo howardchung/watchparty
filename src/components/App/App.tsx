@@ -33,6 +33,7 @@ import {
   isMobile,
   serverPath,
   testAutoplay,
+  openFileSelector,
 } from '../../utils';
 import { generateName } from '../../utils/generateName';
 import { Chat } from '../Chat';
@@ -67,6 +68,7 @@ declare global {
 interface AppState {
   state: 'init' | 'starting' | 'connected';
   currentMedia: string;
+  currentSubtitle: string;
   currentMediaPaused: boolean;
   participants: User[];
   rosterUpdateTS: Number;
@@ -110,6 +112,7 @@ export default class App extends React.Component<{}, AppState> {
     state: 'starting',
     currentMedia: '',
     currentMediaPaused: false,
+    currentSubtitle: '',
     participants: [],
     rosterUpdateTS: Number(new Date()),
     chat: [],
@@ -272,7 +275,9 @@ export default class App extends React.Component<{}, AppState> {
   };
 
   join = async (roomId: string) => {
-    const socket = io.connect(serverPath + roomId);
+    const socket = io.connect(serverPath + roomId, {
+      transports: ['websocket'],
+    });
     this.socket = socket;
     socket.on('connect', async () => {
       this.setState({ state: 'connected' });
@@ -293,6 +298,16 @@ export default class App extends React.Component<{}, AppState> {
     });
     socket.on('REC:seek', (data: any) => {
       this.doSeek(data);
+    });
+    socket.on('REC:subtitle', (data: string) => {
+      this.setState(
+        { currentSubtitle: serverPath + '/subtitle/' + data },
+        () => {
+          if (!this.isSubtitled()) {
+            this.toggleSubtitle();
+          }
+        }
+      );
     });
     socket.on('REC:host', (data: HostState) => {
       let currentMedia = data.video || '';
@@ -317,6 +332,9 @@ export default class App extends React.Component<{}, AppState> {
         {
           currentMedia,
           currentMediaPaused: data.paused,
+          currentSubtitle: Boolean(data.subtitle)
+            ? serverPath + '/subtitle/' + data.subtitle
+            : '',
           loading: Boolean(data.video),
           nonPlayableMedia: false,
           isVBrowserLarge: data.isVBrowserLarge,
@@ -360,6 +378,11 @@ export default class App extends React.Component<{}, AppState> {
             this.doSrc(data.video, data.videoTS);
             if (!data.paused) {
               this.doPlay();
+            }
+            if (data.subtitle) {
+              if (!this.isSubtitled()) {
+                this.toggleSubtitle();
+              }
             }
             // One time, when we're ready to play
             leftVideo?.addEventListener(
@@ -408,6 +431,7 @@ export default class App extends React.Component<{}, AppState> {
     });
     socket.on('REC:tsMap', (data: NumberDict) => {
       this.setState({ tsMap: data });
+      this.syncSubtitle();
     });
     socket.on('REC:nameMap', (data: StringDict) => {
       this.setState({ nameMap: data });
@@ -456,46 +480,32 @@ export default class App extends React.Component<{}, AppState> {
   };
 
   setupFileShare = async () => {
-    // Create an input element
-    const inputElement = document.createElement('input');
-
-    // Set its type to file
-    inputElement.type = 'file';
-
-    // Set accept to the file types you want the user to select.
-    // Include both the file extension and the mime type
-    // inputElement.accept = accept;
-
-    // set onchange event to call callback when user has selected file
-    inputElement.addEventListener('change', () => {
-      const file = inputElement.files![0];
-      const leftVideo = document.getElementById(
-        'leftVideo'
-      ) as HTMLMediaElement;
-      leftVideo.srcObject = null;
-      leftVideo.src = URL.createObjectURL(file);
-      leftVideo.play();
-      //@ts-ignore
-      const stream = leftVideo.captureStream();
-      // Can render video to a canvas to resize it, reduce size
-      stream.onaddtrack = () => {
-        console.log(stream, stream.getVideoTracks(), stream.getAudioTracks());
-        if (
-          !this.screenShareStream &&
-          stream.getVideoTracks().length &&
-          stream.getAudioTracks().length
-        ) {
-          stream.getVideoTracks()[0].onended = this.stopScreenShare;
-          this.screenShareStream = stream;
-          this.socket.emit('CMD:joinScreenShare', { file: true });
-          this.setState({ isScreenSharing: true, isScreenSharingFile: true });
-          stream.onaddtrack = undefined;
-        }
-      };
-    });
-
-    // dispatch a click event to open the file dialog
-    inputElement.dispatchEvent(new MouseEvent('click'));
+    const files = await openFileSelector();
+    if (!files) {
+      return;
+    }
+    const file = files[0];
+    const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
+    leftVideo.srcObject = null;
+    leftVideo.src = URL.createObjectURL(file);
+    leftVideo.play();
+    //@ts-ignore
+    const stream = leftVideo.captureStream();
+    // Can render video to a canvas to resize it, reduce size
+    stream.onaddtrack = () => {
+      console.log(stream, stream.getVideoTracks(), stream.getAudioTracks());
+      if (
+        !this.screenShareStream &&
+        stream.getVideoTracks().length &&
+        stream.getAudioTracks().length
+      ) {
+        stream.getVideoTracks()[0].onended = this.stopScreenShare;
+        this.screenShareStream = stream;
+        this.socket.emit('CMD:joinScreenShare', { file: true });
+        this.setState({ isScreenSharing: true, isScreenSharingFile: true });
+        stream.onaddtrack = undefined;
+      }
+    };
   };
 
   setupScreenShare = async () => {
@@ -626,6 +636,20 @@ export default class App extends React.Component<{}, AppState> {
   changeController = async (e: any, data: DropdownProps) => {
     // console.log(data);
     this.socket.emit('CMD:changeController', data.value);
+  };
+
+  setSubtitle = async () => {
+    const files = await openFileSelector();
+    if (!files) {
+      return;
+    }
+    const file = files[0];
+    const reader = new FileReader();
+    reader.addEventListener('load', (event) => {
+      const subData = event.target?.result;
+      this.socket.emit('CMD:subtitle', subData);
+    });
+    reader.readAsText(file);
   };
 
   sendSignalSS = async (to: string, data: any, sharer?: boolean) => {
@@ -952,7 +976,9 @@ export default class App extends React.Component<{}, AppState> {
     leftVideo.innerHTML = '';
     let subtitleSrc = '';
     const src = this.state.currentMedia;
-    if (src.includes('/stream?torrent=magnet')) {
+    if (this.state.currentSubtitle) {
+      subtitleSrc = this.state.currentSubtitle;
+    } else if (src.includes('/stream?torrent=magnet')) {
       subtitleSrc = src.replace('/stream', '/subtitles2');
     } else if (src.startsWith('http')) {
       const subtitlePath = src.slice(0, src.lastIndexOf('/') + 1);
@@ -972,6 +998,30 @@ export default class App extends React.Component<{}, AppState> {
       track.src = url;
       leftVideo.appendChild(track);
       leftVideo.textTracks[0].mode = 'showing';
+    }
+  };
+
+  syncSubtitle = () => {
+    const sharer = this.state.participants.find((p) => p.isScreenShare);
+    if (!sharer || sharer.id === this.socket.id) {
+      return;
+    }
+    // When sharing, our timestamp doesn't match the subtitles so adjust them
+    // For each cue, subtract the videoTS of the sharer, then add our own
+    const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
+    const track = leftVideo?.textTracks[0];
+    let offset = leftVideo.currentTime - this.state.tsMap[sharer.id];
+    if (track && offset) {
+      for (let i = 0; i < track.cues.length; i++) {
+        let cue = track.cues[i];
+        // console.log(cue.text, offset, (cue as any).origStart, (cue as any).origEnd);
+        if (!(cue as any).origStart) {
+          (cue as any).origStart = cue.startTime;
+          (cue as any).origEnd = cue.endTime;
+        }
+        cue.startTime = (cue as any).origStart + offset;
+        cue.endTime = (cue as any).origEnd + offset;
+      }
     }
   };
 
@@ -1366,6 +1416,25 @@ export default class App extends React.Component<{}, AppState> {
                         mediaPath={this.state.settings.mediaPath}
                         launchMultiSelect={this.launchMultiSelect}
                         disabled={!this.haveLock()}
+                      />
+                    )}
+                    {this.state.currentMedia && (
+                      <Popup
+                        content="Upload a .srt subtitle file for this video"
+                        trigger={
+                          <Button
+                            fluid
+                            color="violet"
+                            className="toolButton"
+                            icon
+                            labelPosition="left"
+                            onClick={this.setSubtitle}
+                            disabled={!this.haveLock()}
+                          >
+                            <Icon name="closed captioning" />
+                            Subtitle
+                          </Button>
+                        }
                       />
                     )}
                     {!this.state.isSubscriber && (
