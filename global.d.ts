@@ -54,6 +54,7 @@ interface PlaylistVideo {
 interface HostState {
   video: string;
   videoTS: number;
+  subtitle: string;
   paused: boolean;
   isVBrowserLarge: boolean;
 }

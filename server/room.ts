@@ -5,6 +5,8 @@ import { redisCount } from './utils/redis';
 import { VMManager, AssignedVM } from './vm/base';
 import { validateUserToken } from './utils/firebase';
 import { getCustomerByEmail } from './utils/stripe';
+import crypto from 'crypto';
+import { gzipSync } from 'zlib';
 
 let redis = (undefined as unknown) as Redis.Redis;
 if (process.env.REDIS_URL) {
@@ -14,6 +16,7 @@ if (process.env.REDIS_URL) {
 export class Room {
   public video = '';
   public videoTS = 0;
+  public subtitle = '';
   private paused = false;
   public roster: User[] = [];
   private chat: ChatMessage[] = [];
@@ -330,6 +333,27 @@ export class Room {
         });
         io.of(roomId).emit('roster', this.roster);
       });
+      socket.on('CMD:subtitle', async (data: string) => {
+        if (data && data.length > 1000000) {
+          return;
+        }
+        if (!this.validateLock(socket.id)) {
+          return;
+        }
+        if (!redis) {
+          return;
+        }
+        // calculate hash, gzip and save to redis
+        const hash = crypto
+          .createHash('sha256')
+          .update(data, 'utf8')
+          .digest()
+          .toString('hex');
+        const gzip = gzipSync(data);
+        await redis.setex('subtitle:' + hash, 3 * 60 * 60, gzip);
+        this.subtitle = hash;
+        io.of(roomId).emit('REC:subtitle', this.subtitle);
+      });
       socket.on(
         'CMD:lock',
         async (data: { uid: string; token: string; locked: boolean }) => {
@@ -437,6 +461,7 @@ export class Room {
     return {
       video: this.video,
       videoTS: this.videoTS,
+      subtitle: this.subtitle,
       paused: this.paused,
       isVBrowserLarge: Boolean(this.vBrowser && this.vBrowser.large),
     };
@@ -473,6 +498,7 @@ export class Room {
     this.video = data;
     this.videoTS = 0;
     this.paused = false;
+    this.subtitle = '';
     this.tsMap = {};
     this.io.of(this.roomId).emit('REC:tsMap', this.tsMap);
     this.io.of(this.roomId).emit('REC:host', this.getHostState());

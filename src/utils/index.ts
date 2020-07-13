@@ -259,3 +259,25 @@ export async function getYouTubeResults(
   const data = await response.json();
   return data;
 }
+
+export async function openFileSelector() {
+  return new Promise<FileList | null>((resolve) => {
+    // Create an input element
+    const inputElement = document.createElement('input');
+
+    // Set its type to file
+    inputElement.type = 'file';
+
+    // Set accept to the file types you want the user to select.
+    // Include both the file extension and the mime type
+    // inputElement.accept = accept;
+
+    // set onchange event to call callback when user has selected file
+    inputElement.addEventListener('change', () => {
+      resolve(inputElement.files);
+    });
+
+    // dispatch a click event to open the file dialog
+    inputElement.dispatchEvent(new MouseEvent('click'));
+  });
+}
