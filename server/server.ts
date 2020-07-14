@@ -32,7 +32,7 @@ if (process.env.HTTPS) {
 } else {
   server = new http.Server(app);
 }
-const io = socketIO(server, { origins: '*:*' });
+const io = socketIO(server, { origins: '*:*', transports: ['websocket'] });
 let redis = (undefined as unknown) as Redis.Redis;
 if (process.env.REDIS_URL) {
   redis = new Redis(process.env.REDIS_URL);
@@ -110,13 +110,24 @@ async function init() {
   server.listen(process.env.PORT || 8080);
 }
 
-app.use(bodyParser.json());
-app.use(compression());
 app.use(cors());
+app.use(bodyParser.json());
 
 app.get('/ping', (req, res) => {
   res.json('pong');
 });
+
+// Data's already compressed so go before the compression middleware
+app.get('/subtitle/:hash', async (req, res) => {
+  const gzipped = await redis.getBuffer('subtitle:' + req.params.hash);
+  if (!gzipped) {
+    return res.status(404).end('not found');
+  }
+  res.setHeader('Content-Encoding', 'gzip');
+  res.end(gzipped);
+});
+
+app.use(compression());
 
 app.get('/stats', async (req, res) => {
   if (req.query.key && req.query.key === process.env.STATS_KEY) {
