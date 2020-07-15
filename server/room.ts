@@ -67,35 +67,35 @@ export class Room {
       socket.emit('chatinit', this.chat);
       io.of(roomId).emit('roster', this.roster);
 
-      socket.on('CMD:name', (data) => this.changeUserName(data, socket));
-      socket.on('CMD:picture', (data) => this.changeUserPicture(data, socket));
-      socket.on('CMD:uid', (data) => this.assignUserID(data, socket));
-      socket.on('CMD:host', (data) => this.startHosting(data, socket));
+      socket.on('CMD:name', (data) => this.changeUserName(socket, data));
+      socket.on('CMD:picture', (data) => this.changeUserPicture(socket, data));
+      socket.on('CMD:uid', (data) => this.assignUserID(socket, data));
+      socket.on('CMD:host', (data) => this.startHosting(socket, data));
       socket.on('CMD:play', () => this.playVideo(socket));
       socket.on('CMD:pause', () => this.pauseVideo(socket));
-      socket.on('CMD:seek', (data) => this.seekVideo(data, socket));
-      socket.on('CMD:ts', (data) => this.setTimestamp(data, socket));
-      socket.on('CMD:chat', (data) => this.sendChatMessage(data, socket));
+      socket.on('CMD:seek', (data) => this.seekVideo(socket, data));
+      socket.on('CMD:ts', (data) => this.setTimestamp(socket, data));
+      socket.on('CMD:chat', (data) => this.sendChatMessage(socket, data));
       socket.on('CMD:joinVideo', () => this.joinVideo(socket));
       socket.on('CMD:leaveVideo', () => this.leaveVideo(socket));
       socket.on('CMD:joinScreenShare', (data) =>
-        this.joinScreenSharing(data, socket)
+        this.joinScreenSharing(socket, data)
       );
       socket.on('CMD:leaveScreenShare', () => this.leaveScreenSharing(socket));
       socket.on('CMD:startVBrowser', (data) =>
-        this.startVBrowser(data, socket)
+        this.startVBrowser(socket, data)
       );
       socket.on('CMD:stopVBrowser', () => this.leaveVBrowser(socket));
       socket.on('CMD:changeController', (data) =>
-        this.changeController(data, socket)
+        this.changeController(socket, data)
       );
-      socket.on('CMD:subtitle', (data) => this.addSubtitles(data, socket));
-      socket.on('CMD:lock', (data) => this.lockRoom(data, socket));
+      socket.on('CMD:subtitle', (data) => this.addSubtitles(socket, data));
+      socket.on('CMD:lock', (data) => this.lockRoom(socket, data));
       socket.on('CMD:askHost', () => {
         socket.emit('REC:host', this.getHostState());
       });
-      socket.on('signal', (data) => this.sendSignal(data, socket));
-      socket.on('signalSS', (data) => this.signalSS(data, socket));
+      socket.on('signal', (data) => this.sendSignal(socket, data));
+      socket.on('signalSS', (data) => this.signalSS(socket, data));
 
       socket.on('disconnect', () => this.disconnectUser(socket));
     });
@@ -216,7 +216,7 @@ export class Room {
     return result;
   };
 
-  private changeUserName = (data: string, socket: Socket) => {
+  private changeUserName = (socket: Socket, data: string) => {
     if (!data) {
       return;
     }
@@ -227,7 +227,7 @@ export class Room {
     this.io.of(this.roomId).emit('REC:nameMap', this.nameMap);
   };
 
-  private changeUserPicture = (data: string, socket: Socket) => {
+  private changeUserPicture = (socket: Socket, data: string) => {
     if (data && data.length > 10000) {
       return;
     }
@@ -236,8 +236,8 @@ export class Room {
   };
 
   private assignUserID = async (
-    data: { uid: string; token: string },
-    socket: Socket
+    socket: Socket,
+    data: { uid: string; token: string }
   ) => {
     if (!data) {
       return;
@@ -255,7 +255,7 @@ export class Room {
     this.io.of(this.roomId).emit('roster', this.roster);
   };
 
-  private startHosting = (data: string, socket: Socket) => {
+  private startHosting = (socket: Socket, data: string) => {
     if (data && data.length > 20000) {
       return;
     }
@@ -299,7 +299,7 @@ export class Room {
     this.addChatMessage(socket, chatMsg);
   };
 
-  private seekVideo = (data: number, socket: Socket) => {
+  private seekVideo = (socket: Socket, data: number) => {
     if (JSON.stringify(data).length > 100) {
       return;
     }
@@ -312,7 +312,7 @@ export class Room {
     this.addChatMessage(socket, chatMsg);
   };
 
-  private setTimestamp = (data: number, socket: Socket) => {
+  private setTimestamp = (socket: Socket, data: number) => {
     if (JSON.stringify(data).length > 100) {
       return;
     }
@@ -322,7 +322,7 @@ export class Room {
     this.tsMap[socket.id] = data;
   };
 
-  private sendChatMessage = (data: string, socket: Socket) => {
+  private sendChatMessage = (socket: Socket, data: string) => {
     if (data && data.length > 10000) {
       return;
     }
@@ -353,7 +353,7 @@ export class Room {
     this.io.of(this.roomId).emit('roster', this.roster);
   };
 
-  private joinScreenSharing = (data: { file: boolean }, socket: Socket) => {
+  private joinScreenSharing = (socket: Socket, data: { file: boolean }) => {
     if (!this.validateLock(socket.id)) {
       return;
     }
@@ -387,13 +387,13 @@ export class Room {
   };
 
   private startVBrowser = async (
+    socket: Socket,
     data: {
       uid: string;
       token: string;
       rcToken: string;
       options: { size: string };
-    },
-    socket: Socket
+    }
   ) => {
     if (this.vBrowser || this.isAssigningVM) {
       return;
@@ -484,7 +484,7 @@ export class Room {
     redisCount('vBrowserTerminateManual');
   };
 
-  private changeController = (data: string, socket: Socket) => {
+  private changeController = (socket: Socket, data: string) => {
     if (!this.validateLock(socket.id)) {
       return;
     }
@@ -498,7 +498,7 @@ export class Room {
     this.io.of(this.roomId).emit('roster', this.roster);
   };
 
-  private addSubtitles = async (data: string, socket: Socket) => {
+  private addSubtitles = async (socket: Socket, data: string) => {
     if (data && data.length > 1000000) {
       return;
     }
@@ -521,8 +521,8 @@ export class Room {
   };
 
   private lockRoom = async (
-    data: { uid: string; token: string; locked: boolean },
-    socket: Socket
+    socket: Socket,
+    data: { uid: string; token: string; locked: boolean }
   ) => {
     if (!data) {
       return;
@@ -544,7 +544,7 @@ export class Room {
     this.addChatMessage(socket, chatMsg);
   };
 
-  private sendSignal = (data: { to: string; msg: string }, socket: Socket) => {
+  private sendSignal = (socket: Socket, data: { to: string; msg: string }) => {
     if (!data) {
       return;
     }
@@ -555,8 +555,8 @@ export class Room {
   };
 
   private signalSS = (
-    data: { to: string; sharer: boolean; msg: string },
-    socket: Socket
+    socket: Socket,
+    data: { to: string; sharer: boolean; msg: string }
   ) => {
     if (!data) {
       return;
