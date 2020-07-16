@@ -5,6 +5,7 @@ import axios from 'axios';
 import Redis from 'ioredis';
 import { Socket } from 'socket.io';
 
+import Connection from './connection';
 import { validateUserToken } from './utils/firebase';
 import { redisCount } from './utils/redis';
 import { getCustomerByEmail } from './utils/stripe';
@@ -22,17 +23,18 @@ export class Room {
   private paused = false;
   public roster: User[] = [];
   private chat: ChatMessage[] = [];
-  private tsMap: NumberDict = {};
-  private nameMap: StringDict = {};
-  private pictureMap: StringDict = {};
+  public tsMap: NumberDict = {};
+  public nameMap: StringDict = {};
+  public pictureMap: StringDict = {};
   public vBrowser: AssignedVM | undefined = undefined;
-  private io: SocketIO.Server;
+  public io: SocketIO.Server;
   public roomId: string;
   public creationTime: Date = new Date();
   private vmManagers: { standard: VMManager; large: VMManager } | undefined;
   public isRoomDirty = false; // Indicates an unattended room needs to be saved, e.g. we unassign a VM from an empty room
   public isAssigningVM = false;
   public lock: string | undefined = ''; // The uid of the user who locked the room
+  public connections: Connection[];
 
   constructor(
     io: SocketIO.Server,
@@ -43,6 +45,7 @@ export class Room {
     this.roomId = roomId;
     this.io = io;
     this.vmManagers = vmManagers;
+    this.connections = [];
 
     if (roomData) {
       this.deserialize(roomData);
@@ -56,6 +59,7 @@ export class Room {
     }, 1000);
 
     io.of(roomId).on('connection', (socket: Socket) => {
+      this.connections.push(new Connection({ room: this, socket }));
       this.roster.push({ id: socket.id });
       redisCount('connectStarts');
 
@@ -67,17 +71,12 @@ export class Room {
       socket.emit('chatinit', this.chat);
       io.of(roomId).emit('roster', this.roster);
 
-      socket.on('CMD:name', (data) => this.changeUserName(socket, data));
-      socket.on('CMD:picture', (data) => this.changeUserPicture(socket, data));
-      socket.on('CMD:uid', (data) => this.assignUserID(socket, data));
       socket.on('CMD:host', (data) => this.startHosting(socket, data));
       socket.on('CMD:play', () => this.playVideo(socket));
       socket.on('CMD:pause', () => this.pauseVideo(socket));
       socket.on('CMD:seek', (data) => this.seekVideo(socket, data));
       socket.on('CMD:ts', (data) => this.setTimestamp(socket, data));
       socket.on('CMD:chat', (data) => this.sendChatMessage(socket, data));
-      socket.on('CMD:joinVideo', () => this.joinVideo(socket));
-      socket.on('CMD:leaveVideo', () => this.leaveVideo(socket));
       socket.on('CMD:joinScreenShare', (data) =>
         this.joinScreenSharing(socket, data)
       );
@@ -96,8 +95,6 @@ export class Room {
       });
       socket.on('signal', (data) => this.sendSignal(socket, data));
       socket.on('signalSS', (data) => this.signalSS(socket, data));
-
-      socket.on('disconnect', () => this.disconnectUser(socket));
     });
   }
 
@@ -216,45 +213,6 @@ export class Room {
     return result;
   };
 
-  private changeUserName = (socket: Socket, data: string) => {
-    if (!data) {
-      return;
-    }
-    if (data && data.length > 50) {
-      return;
-    }
-    this.nameMap[socket.id] = data;
-    this.io.of(this.roomId).emit('REC:nameMap', this.nameMap);
-  };
-
-  private changeUserPicture = (socket: Socket, data: string) => {
-    if (data && data.length > 10000) {
-      return;
-    }
-    this.pictureMap[socket.id] = data;
-    this.io.of(this.roomId).emit('REC:pictureMap', this.pictureMap);
-  };
-
-  private assignUserID = async (
-    socket: Socket,
-    data: { uid: string; token: string }
-  ) => {
-    if (!data) {
-      return;
-    }
-    const decoded = await validateUserToken(data.uid, data.token);
-    if (!decoded) {
-      return;
-    }
-    // set it on the matching user socket
-    let index = this.roster.findIndex((user) => user.id === socket.id);
-    if (index >= 0) {
-      this.roster[index].uid = decoded.uid;
-    }
-    console.log('[CMD:UID]', index, decoded.uid);
-    this.io.of(this.roomId).emit('roster', this.roster);
-  };
-
   private startHosting = (socket: Socket, data: string) => {
     if (data && data.length > 20000) {
       return;
@@ -334,23 +292,6 @@ export class Room {
     redisCount('chatMessages');
     const chatMsg = { id: socket.id, msg: data };
     this.addChatMessage(socket, chatMsg);
-  };
-
-  private joinVideo = (socket: Socket) => {
-    const match = this.roster.find((user) => user.id === socket.id);
-    if (match) {
-      match.isVideoChat = true;
-      redisCount('videoChatStarts');
-    }
-    this.io.of(this.roomId).emit('roster', this.roster);
-  };
-
-  private leaveVideo = (socket: Socket) => {
-    const match = this.roster.find((user) => user.id === socket.id);
-    if (match) {
-      match.isVideoChat = false;
-    }
-    this.io.of(this.roomId).emit('roster', this.roster);
   };
 
   private joinScreenSharing = (socket: Socket, data: { file: boolean }) => {
@@ -568,15 +509,11 @@ export class Room {
     });
   };
 
-  private disconnectUser = (socket: Socket) => {
-    let index = this.roster.findIndex((user) => user.id === socket.id);
-    const removed = this.roster.splice(index, 1)[0];
-    this.io.of(this.roomId).emit('roster', this.roster);
-    if (removed.isScreenShare) {
-      // Reset the room state since we lost the screen sharer
-      this.cmdHost(socket, '');
-    }
-    delete this.tsMap[socket.id];
-    // delete nameMap[socket.id];
+  /** Removes a disconnected connection from the rooms connections array */
+  public removeConnection = (socket: Socket) => {
+    const connectionIndex = this.connections.findIndex(
+      (connection) => connection.id === socket.id
+    );
+    this.connections.splice(connectionIndex, 1);
   };
 }

@@ -1,6 +1,7 @@
 import * as admin from 'firebase-admin';
 
 if (process.env.FIREBASE_ADMIN_SDK_CONFIG) {
+  console.log(process.env.FIREBASE_ADMIN_SDK_CONFIG);
   admin.initializeApp({
     credential: admin.credential.cert(
       JSON.parse(process.env.FIREBASE_ADMIN_SDK_CONFIG)
