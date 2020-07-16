@@ -38,6 +38,12 @@ After creating a **YouTube Data API V3** access, you can create an API key which
 
 After that restart your server to enable the YouTube API access on your server.
 
+### Firebase Config
+
+This project is using Firebase for authentication. To make sure this runs smoothly the app expects a firebase application config. Create a new firebase app (or reuse an old one) from [here](https://console.firebase.google.com/). After creating an application, click on the settings cog icon in the left menu next to "Project overview" and click on project settings. From there scroll down, create a web application and copy the firebase sdk configuration snippets JSON data.
+
+Next you have to stringify that - for that use `JSON.stringify(PASTE_CONFIG_HERE)` in your browser console and paste the result into the .env file.
+
 ### Virtual Browser Setup
 
 _This section is not added yet_
@@ -46,6 +52,7 @@ _This section is not added yet_
 
 - `YOUTUBE_API_KEY`: Optional, provide one to enable searching YouTube
 - `REDIS_URL`: Optional, provide to allow persisting rooms to Redis so they survive server reboots
+- `REACT_APP_FIREBASE_CONFIG`: Frontend environment variable for authentification via Google Firebase
 
 ## Tech
 
