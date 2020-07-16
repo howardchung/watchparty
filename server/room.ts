@@ -1,12 +1,14 @@
-import { Socket } from 'socket.io';
-import Redis from 'ioredis';
-import axios from 'axios';
-import { redisCount } from './utils/redis';
-import { VMManager, AssignedVM } from './vm/base';
-import { validateUserToken } from './utils/firebase';
-import { getCustomerByEmail } from './utils/stripe';
 import crypto from 'crypto';
 import { gzipSync } from 'zlib';
+
+import axios from 'axios';
+import Redis from 'ioredis';
+import { Socket } from 'socket.io';
+
+import { validateUserToken } from './utils/firebase';
+import { redisCount } from './utils/redis';
+import { getCustomerByEmail } from './utils/stripe';
+import { AssignedVM, VMManager } from './vm/base';
 
 let redis = (undefined as unknown) as Redis.Redis;
 if (process.env.REDIS_URL) {
@@ -54,7 +56,6 @@ export class Room {
     }, 1000);
 
     io.of(roomId).on('connection', (socket: Socket) => {
-      // console.log(socket.id);
       this.roster.push({ id: socket.id });
       redisCount('connectStarts');
 
@@ -66,353 +67,37 @@ export class Room {
       socket.emit('chatinit', this.chat);
       io.of(roomId).emit('roster', this.roster);
 
-      socket.on('CMD:name', (data: string) => {
-        if (!data) {
-          return;
-        }
-        if (data && data.length > 50) {
-          return;
-        }
-        this.nameMap[socket.id] = data;
-        io.of(roomId).emit('REC:nameMap', this.nameMap);
-      });
-      socket.on('CMD:picture', (data: string) => {
-        if (data && data.length > 10000) {
-          return;
-        }
-        this.pictureMap[socket.id] = data;
-        io.of(roomId).emit('REC:pictureMap', this.pictureMap);
-      });
-      socket.on('CMD:uid', async (data: { uid: string; token: string }) => {
-        if (!data) {
-          return;
-        }
-        const decoded = await validateUserToken(data.uid, data.token);
-        if (!decoded) {
-          return;
-        }
-        // set it on the matching user socket
-        let index = this.roster.findIndex((user) => user.id === socket.id);
-        if (index >= 0) {
-          this.roster[index].uid = decoded.uid;
-        }
-        console.log('[CMD:UID]', index, decoded.uid);
-        io.of(roomId).emit('roster', this.roster);
-      });
-      socket.on('CMD:host', (data: string) => {
-        if (data && data.length > 20000) {
-          return;
-        }
-        if (!this.validateLock(socket.id)) {
-          return;
-        }
-        const sharer = this.roster.find((user) => user.isScreenShare);
-        if (sharer || this.vBrowser) {
-          // Can't update the video while someone is screensharing/filesharing or vbrowser is running
-          return;
-        }
-        redisCount('urlStarts');
-        this.cmdHost(socket, data);
-      });
-      socket.on('CMD:play', () => {
-        if (!this.validateLock(socket.id)) {
-          return;
-        }
-        socket.broadcast.emit('REC:play', this.video);
-        const chatMsg = {
-          id: socket.id,
-          cmd: 'play',
-          msg: this.tsMap[socket.id]?.toString(),
-        };
-        this.paused = false;
-        this.addChatMessage(socket, chatMsg);
-      });
-      socket.on('CMD:pause', () => {
-        if (!this.validateLock(socket.id)) {
-          return;
-        }
-        socket.broadcast.emit('REC:pause');
-        const chatMsg = {
-          id: socket.id,
-          cmd: 'pause',
-          msg: this.tsMap[socket.id]?.toString(),
-        };
-        this.paused = true;
-        this.addChatMessage(socket, chatMsg);
-      });
-      socket.on('CMD:seek', (data: number) => {
-        if (JSON.stringify(data).length > 100) {
-          return;
-        }
-        if (!this.validateLock(socket.id)) {
-          return;
-        }
-        this.videoTS = data;
-        socket.broadcast.emit('REC:seek', data);
-        const chatMsg = { id: socket.id, cmd: 'seek', msg: data.toString() };
-        this.addChatMessage(socket, chatMsg);
-      });
-      socket.on('CMD:ts', (data: number) => {
-        if (JSON.stringify(data).length > 100) {
-          return;
-        }
-        if (data > this.videoTS) {
-          this.videoTS = data;
-        }
-        this.tsMap[socket.id] = data;
-      });
-      socket.on('CMD:chat', (data: string) => {
-        if (data && data.length > 10000) {
-          return;
-        }
-        if (process.env.NODE_ENV === 'development' && data === '/clear') {
-          this.chat.length = 0;
-          io.of(roomId).emit('chatinit', this.chat);
-          return;
-        }
-        redisCount('chatMessages');
-        const chatMsg = { id: socket.id, msg: data };
-        this.addChatMessage(socket, chatMsg);
-      });
-      socket.on('CMD:joinVideo', () => {
-        const match = this.roster.find((user) => user.id === socket.id);
-        if (match) {
-          match.isVideoChat = true;
-          redisCount('videoChatStarts');
-        }
-        io.of(roomId).emit('roster', this.roster);
-      });
-      socket.on('CMD:leaveVideo', () => {
-        const match = this.roster.find((user) => user.id === socket.id);
-        if (match) {
-          match.isVideoChat = false;
-        }
-        io.of(roomId).emit('roster', this.roster);
-      });
-      socket.on('CMD:joinScreenShare', (data: { file: boolean }) => {
-        if (!this.validateLock(socket.id)) {
-          return;
-        }
-        const sharer = this.roster.find((user) => user.isScreenShare);
-        if (sharer) {
-          // Someone's already sharing
-          return;
-        }
-        if (data && data.file) {
-          this.cmdHost(socket, 'fileshare://' + socket.id);
-          redisCount('fileShareStarts');
-        } else {
-          this.cmdHost(socket, 'screenshare://' + socket.id);
-          redisCount('screenShareStarts');
-        }
-        const match = this.roster.find((user) => user.id === socket.id);
-        if (match) {
-          match.isScreenShare = true;
-        }
-        io.of(roomId).emit('roster', this.roster);
-      });
-      socket.on('CMD:leaveScreenShare', () => {
-        const sharer = this.roster.find((user) => user.isScreenShare);
-        if (!sharer || sharer?.id !== socket.id) {
-          return;
-        }
-        sharer.isScreenShare = false;
-        this.cmdHost(socket, '');
-        io.of(roomId).emit('roster', this.roster);
-      });
-      socket.on(
-        'CMD:startVBrowser',
-        async (data: {
-          uid: string;
-          token: string;
-          rcToken: string;
-          options: { size: string };
-        }) => {
-          if (this.vBrowser || this.isAssigningVM) {
-            return;
-          }
-          if (!this.validateLock(socket.id)) {
-            return;
-          }
-          if (!data) {
-            return;
-          }
-          this.isAssigningVM = true;
-          let isLarge = false;
-          if (process.env.STRIPE_SECRET_KEY && data && data.uid && data.token) {
-            const decoded = await validateUserToken(data.uid, data.token);
-            // Check if user is subscriber, if so allow isLarge
-            if (decoded?.email) {
-              const customer = await getCustomerByEmail(decoded.email);
-              if (customer?.subscriptions?.data?.[0]?.status === 'active') {
-                console.log('found active sub for ', customer?.email);
-                isLarge = data.options?.size === 'large';
-              }
-            }
-          }
-
-          if (process.env.RECAPTCHA_SECRET_KEY) {
-            try {
-              // Validate the request isn't spam/automated
-              const validation = await axios({
-                url: `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${data.rcToken}`,
-                method: 'POST',
-              });
-              console.log(validation?.data);
-              const isLowScore = validation?.data?.score < 0.12;
-              const failed = validation?.data?.success === false;
-              if (failed || isLowScore) {
-                if (isLowScore) {
-                  redisCount('recaptchaRejectsLowScore');
-                } else {
-                  redisCount('recaptchaRejectsOther');
-                }
-                return;
-              }
-            } catch (e) {
-              // if Recaptcha is down or other network issues, allow continuing
-              console.warn(e);
-            }
-          }
-
-          redisCount('vBrowserStarts');
-          this.cmdHost(socket, 'vbrowser://');
-          const vmManager = isLarge
-            ? this.vmManagers?.large
-            : this.vmManagers?.standard;
-          const assignment = await vmManager?.assignVM();
-          if (!this.isAssigningVM) {
-            // Maybe the user cancelled the request before assignment finished
-            return;
-          }
-          this.isAssigningVM = false;
-          if (!assignment) {
-            this.cmdHost(socket, '');
-            this.vBrowser = undefined;
-            return;
-          }
-          this.vBrowser = assignment;
-          this.roster.forEach((user, i) => {
-            if (user.id === socket.id) {
-              this.roster[i].isController = true;
-            } else {
-              this.roster[i].isController = false;
-            }
-          });
-          this.cmdHost(
-            undefined,
-            'vbrowser://' + this.vBrowser.pass + '@' + this.vBrowser.host
-          );
-          io.of(roomId).emit('roster', this.roster);
-        }
+      socket.on('CMD:name', (data) => this.changeUserName(socket, data));
+      socket.on('CMD:picture', (data) => this.changeUserPicture(socket, data));
+      socket.on('CMD:uid', (data) => this.assignUserID(socket, data));
+      socket.on('CMD:host', (data) => this.startHosting(socket, data));
+      socket.on('CMD:play', () => this.playVideo(socket));
+      socket.on('CMD:pause', () => this.pauseVideo(socket));
+      socket.on('CMD:seek', (data) => this.seekVideo(socket, data));
+      socket.on('CMD:ts', (data) => this.setTimestamp(socket, data));
+      socket.on('CMD:chat', (data) => this.sendChatMessage(socket, data));
+      socket.on('CMD:joinVideo', () => this.joinVideo(socket));
+      socket.on('CMD:leaveVideo', () => this.leaveVideo(socket));
+      socket.on('CMD:joinScreenShare', (data) =>
+        this.joinScreenSharing(socket, data)
       );
-      socket.on('CMD:stopVBrowser', async () => {
-        if (
-          !this.vBrowser &&
-          !this.isAssigningVM &&
-          this.video !== 'vbrowser://'
-        ) {
-          return;
-        }
-        if (!this.validateLock(socket.id)) {
-          return;
-        }
-        await this.stopVBrowser();
-        redisCount('vBrowserTerminateManual');
-      });
-      socket.on('CMD:changeController', (data: string) => {
-        if (!this.validateLock(socket.id)) {
-          return;
-        }
-        this.roster.forEach((user, i) => {
-          if (user.id === data) {
-            this.roster[i].isController = true;
-          } else {
-            this.roster[i].isController = false;
-          }
-        });
-        io.of(roomId).emit('roster', this.roster);
-      });
-      socket.on('CMD:subtitle', async (data: string) => {
-        if (data && data.length > 1000000) {
-          return;
-        }
-        if (!this.validateLock(socket.id)) {
-          return;
-        }
-        if (!redis) {
-          return;
-        }
-        // calculate hash, gzip and save to redis
-        const hash = crypto
-          .createHash('sha256')
-          .update(data, 'utf8')
-          .digest()
-          .toString('hex');
-        const gzip = gzipSync(data);
-        await redis.setex('subtitle:' + hash, 3 * 60 * 60, gzip);
-        this.subtitle = hash;
-        io.of(roomId).emit('REC:subtitle', this.subtitle);
-      });
-      socket.on(
-        'CMD:lock',
-        async (data: { uid: string; token: string; locked: boolean }) => {
-          if (!data) {
-            return;
-          }
-          const decoded = await validateUserToken(data.uid, data.token);
-          if (!decoded) {
-            return;
-          }
-          if (!this.validateLock(socket.id)) {
-            return;
-          }
-          this.lock = data.locked ? decoded.uid : '';
-          io.of(roomId).emit('REC:lock', this.lock);
-          const chatMsg = {
-            id: socket.id,
-            cmd: data.locked ? 'lock' : 'unlock',
-            msg: '',
-          };
-          this.addChatMessage(socket, chatMsg);
-        }
+      socket.on('CMD:leaveScreenShare', () => this.leaveScreenSharing(socket));
+      socket.on('CMD:startVBrowser', (data) =>
+        this.startVBrowser(socket, data)
       );
+      socket.on('CMD:stopVBrowser', () => this.leaveVBrowser(socket));
+      socket.on('CMD:changeController', (data) =>
+        this.changeController(socket, data)
+      );
+      socket.on('CMD:subtitle', (data) => this.addSubtitles(socket, data));
+      socket.on('CMD:lock', (data) => this.lockRoom(socket, data));
       socket.on('CMD:askHost', () => {
         socket.emit('REC:host', this.getHostState());
       });
-      socket.on('signal', (data: { to: string; msg: string }) => {
-        if (!data) {
-          return;
-        }
-        io.of(roomId)
-          .to(data.to)
-          .emit('signal', { from: socket.id, msg: data.msg });
-      });
-      socket.on(
-        'signalSS',
-        (data: { to: string; sharer: boolean; msg: string }) => {
-          if (!data) {
-            return;
-          }
-          io.of(roomId).to(data.to).emit('signalSS', {
-            from: socket.id,
-            sharer: data.sharer,
-            msg: data.msg,
-          });
-        }
-      );
+      socket.on('signal', (data) => this.sendSignal(socket, data));
+      socket.on('signalSS', (data) => this.signalSS(socket, data));
 
-      socket.on('disconnect', () => {
-        let index = this.roster.findIndex((user) => user.id === socket.id);
-        const removed = this.roster.splice(index, 1)[0];
-        io.of(roomId).emit('roster', this.roster);
-        if (removed.isScreenShare) {
-          // Reset the room state since we lost the screen sharer
-          this.cmdHost(socket, '');
-        }
-        delete this.tsMap[socket.id];
-        // delete nameMap[socket.id];
-      });
+      socket.on('disconnect', () => this.disconnectUser(socket));
     });
   }
 
@@ -529,5 +214,369 @@ export class Room {
       console.log('[VALIDATELOCK] failed');
     }
     return result;
+  };
+
+  private changeUserName = (socket: Socket, data: string) => {
+    if (!data) {
+      return;
+    }
+    if (data && data.length > 50) {
+      return;
+    }
+    this.nameMap[socket.id] = data;
+    this.io.of(this.roomId).emit('REC:nameMap', this.nameMap);
+  };
+
+  private changeUserPicture = (socket: Socket, data: string) => {
+    if (data && data.length > 10000) {
+      return;
+    }
+    this.pictureMap[socket.id] = data;
+    this.io.of(this.roomId).emit('REC:pictureMap', this.pictureMap);
+  };
+
+  private assignUserID = async (
+    socket: Socket,
+    data: { uid: string; token: string }
+  ) => {
+    if (!data) {
+      return;
+    }
+    const decoded = await validateUserToken(data.uid, data.token);
+    if (!decoded) {
+      return;
+    }
+    // set it on the matching user socket
+    let index = this.roster.findIndex((user) => user.id === socket.id);
+    if (index >= 0) {
+      this.roster[index].uid = decoded.uid;
+    }
+    console.log('[CMD:UID]', index, decoded.uid);
+    this.io.of(this.roomId).emit('roster', this.roster);
+  };
+
+  private startHosting = (socket: Socket, data: string) => {
+    if (data && data.length > 20000) {
+      return;
+    }
+    if (!this.validateLock(socket.id)) {
+      return;
+    }
+    const sharer = this.roster.find((user) => user.isScreenShare);
+    if (sharer || this.vBrowser) {
+      // Can't update the video while someone is screensharing/filesharing or vbrowser is running
+      return;
+    }
+    redisCount('urlStarts');
+    this.cmdHost(socket, data);
+  };
+
+  private playVideo = (socket: Socket) => {
+    if (!this.validateLock(socket.id)) {
+      return;
+    }
+    socket.broadcast.emit('REC:play', this.video);
+    const chatMsg = {
+      id: socket.id,
+      cmd: 'play',
+      msg: this.tsMap[socket.id]?.toString(),
+    };
+    this.paused = false;
+    this.addChatMessage(socket, chatMsg);
+  };
+
+  private pauseVideo = (socket: Socket) => {
+    if (!this.validateLock(socket.id)) {
+      return;
+    }
+    socket.broadcast.emit('REC:pause');
+    const chatMsg = {
+      id: socket.id,
+      cmd: 'pause',
+      msg: this.tsMap[socket.id]?.toString(),
+    };
+    this.paused = true;
+    this.addChatMessage(socket, chatMsg);
+  };
+
+  private seekVideo = (socket: Socket, data: number) => {
+    if (JSON.stringify(data).length > 100) {
+      return;
+    }
+    if (!this.validateLock(socket.id)) {
+      return;
+    }
+    this.videoTS = data;
+    socket.broadcast.emit('REC:seek', data);
+    const chatMsg = { id: socket.id, cmd: 'seek', msg: data.toString() };
+    this.addChatMessage(socket, chatMsg);
+  };
+
+  private setTimestamp = (socket: Socket, data: number) => {
+    if (JSON.stringify(data).length > 100) {
+      return;
+    }
+    if (data > this.videoTS) {
+      this.videoTS = data;
+    }
+    this.tsMap[socket.id] = data;
+  };
+
+  private sendChatMessage = (socket: Socket, data: string) => {
+    if (data && data.length > 10000) {
+      return;
+    }
+    if (process.env.NODE_ENV === 'development' && data === '/clear') {
+      this.chat.length = 0;
+      this.io.of(this.roomId).emit('chatinit', this.chat);
+      return;
+    }
+    redisCount('chatMessages');
+    const chatMsg = { id: socket.id, msg: data };
+    this.addChatMessage(socket, chatMsg);
+  };
+
+  private joinVideo = (socket: Socket) => {
+    const match = this.roster.find((user) => user.id === socket.id);
+    if (match) {
+      match.isVideoChat = true;
+      redisCount('videoChatStarts');
+    }
+    this.io.of(this.roomId).emit('roster', this.roster);
+  };
+
+  private leaveVideo = (socket: Socket) => {
+    const match = this.roster.find((user) => user.id === socket.id);
+    if (match) {
+      match.isVideoChat = false;
+    }
+    this.io.of(this.roomId).emit('roster', this.roster);
+  };
+
+  private joinScreenSharing = (socket: Socket, data: { file: boolean }) => {
+    if (!this.validateLock(socket.id)) {
+      return;
+    }
+    const sharer = this.roster.find((user) => user.isScreenShare);
+    if (sharer) {
+      // Someone's already sharing
+      return;
+    }
+    if (data && data.file) {
+      this.cmdHost(socket, 'fileshare://' + socket.id);
+      redisCount('fileShareStarts');
+    } else {
+      this.cmdHost(socket, 'screenshare://' + socket.id);
+      redisCount('screenShareStarts');
+    }
+    const match = this.roster.find((user) => user.id === socket.id);
+    if (match) {
+      match.isScreenShare = true;
+    }
+    this.io.of(this.roomId).emit('roster', this.roster);
+  };
+
+  private leaveScreenSharing = (socket: Socket) => {
+    const sharer = this.roster.find((user) => user.isScreenShare);
+    if (!sharer || sharer?.id !== socket.id) {
+      return;
+    }
+    sharer.isScreenShare = false;
+    this.cmdHost(socket, '');
+    this.io.of(this.roomId).emit('roster', this.roster);
+  };
+
+  private startVBrowser = async (
+    socket: Socket,
+    data: {
+      uid: string;
+      token: string;
+      rcToken: string;
+      options: { size: string };
+    }
+  ) => {
+    if (this.vBrowser || this.isAssigningVM) {
+      return;
+    }
+    if (!this.validateLock(socket.id)) {
+      return;
+    }
+    if (!data) {
+      return;
+    }
+    this.isAssigningVM = true;
+    let isLarge = false;
+    if (process.env.STRIPE_SECRET_KEY && data && data.uid && data.token) {
+      const decoded = await validateUserToken(data.uid, data.token);
+      // Check if user is subscriber, if so allow isLarge
+      if (decoded?.email) {
+        const customer = await getCustomerByEmail(decoded.email);
+        if (customer?.subscriptions?.data?.[0]?.status === 'active') {
+          console.log('found active sub for ', customer?.email);
+          isLarge = data.options?.size === 'large';
+        }
+      }
+    }
+
+    if (process.env.RECAPTCHA_SECRET_KEY) {
+      try {
+        // Validate the request isn't spam/automated
+        const validation = await axios({
+          url: `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${data.rcToken}`,
+          method: 'POST',
+        });
+        console.log(validation?.data);
+        const isLowScore = validation?.data?.score < 0.12;
+        const failed = validation?.data?.success === false;
+        if (failed || isLowScore) {
+          if (isLowScore) {
+            redisCount('recaptchaRejectsLowScore');
+          } else {
+            redisCount('recaptchaRejectsOther');
+          }
+          return;
+        }
+      } catch (e) {
+        // if Recaptcha is down or other network issues, allow continuing
+        console.warn(e);
+      }
+    }
+
+    redisCount('vBrowserStarts');
+    this.cmdHost(socket, 'vbrowser://');
+    const vmManager = isLarge
+      ? this.vmManagers?.large
+      : this.vmManagers?.standard;
+    const assignment = await vmManager?.assignVM();
+    if (!this.isAssigningVM) {
+      // Maybe the user cancelled the request before assignment finished
+      return;
+    }
+    this.isAssigningVM = false;
+    if (!assignment) {
+      this.cmdHost(socket, '');
+      this.vBrowser = undefined;
+      return;
+    }
+    this.vBrowser = assignment;
+    this.roster.forEach((user, i) => {
+      if (user.id === socket.id) {
+        this.roster[i].isController = true;
+      } else {
+        this.roster[i].isController = false;
+      }
+    });
+    this.cmdHost(
+      undefined,
+      'vbrowser://' + this.vBrowser.pass + '@' + this.vBrowser.host
+    );
+    this.io.of(this.roomId).emit('roster', this.roster);
+  };
+
+  private leaveVBrowser = async (socket: Socket) => {
+    if (!this.vBrowser && !this.isAssigningVM && this.video !== 'vbrowser://') {
+      return;
+    }
+    if (!this.validateLock(socket.id)) {
+      return;
+    }
+    await this.stopVBrowser();
+    redisCount('vBrowserTerminateManual');
+  };
+
+  private changeController = (socket: Socket, data: string) => {
+    if (!this.validateLock(socket.id)) {
+      return;
+    }
+    this.roster.forEach((user, i) => {
+      if (user.id === data) {
+        this.roster[i].isController = true;
+      } else {
+        this.roster[i].isController = false;
+      }
+    });
+    this.io.of(this.roomId).emit('roster', this.roster);
+  };
+
+  private addSubtitles = async (socket: Socket, data: string) => {
+    if (data && data.length > 1000000) {
+      return;
+    }
+    if (!this.validateLock(socket.id)) {
+      return;
+    }
+    if (!redis) {
+      return;
+    }
+    // calculate hash, gzip and save to redis
+    const hash = crypto
+      .createHash('sha256')
+      .update(data, 'utf8')
+      .digest()
+      .toString('hex');
+    const gzip = gzipSync(data);
+    await redis.setex('subtitle:' + hash, 3 * 60 * 60, gzip);
+    this.subtitle = hash;
+    this.io.of(this.roomId).emit('REC:subtitle', this.subtitle);
+  };
+
+  private lockRoom = async (
+    socket: Socket,
+    data: { uid: string; token: string; locked: boolean }
+  ) => {
+    if (!data) {
+      return;
+    }
+    const decoded = await validateUserToken(data.uid, data.token);
+    if (!decoded) {
+      return;
+    }
+    if (!this.validateLock(socket.id)) {
+      return;
+    }
+    this.lock = data.locked ? decoded.uid : '';
+    this.io.of(this.roomId).emit('REC:lock', this.lock);
+    const chatMsg = {
+      id: socket.id,
+      cmd: data.locked ? 'lock' : 'unlock',
+      msg: '',
+    };
+    this.addChatMessage(socket, chatMsg);
+  };
+
+  private sendSignal = (socket: Socket, data: { to: string; msg: string }) => {
+    if (!data) {
+      return;
+    }
+    this.io
+      .of(this.roomId)
+      .to(data.to)
+      .emit('signal', { from: socket.id, msg: data.msg });
+  };
+
+  private signalSS = (
+    socket: Socket,
+    data: { to: string; sharer: boolean; msg: string }
+  ) => {
+    if (!data) {
+      return;
+    }
+    this.io.of(this.roomId).to(data.to).emit('signalSS', {
+      from: socket.id,
+      sharer: data.sharer,
+      msg: data.msg,
+    });
+  };
+
+  private disconnectUser = (socket: Socket) => {
+    let index = this.roster.findIndex((user) => user.id === socket.id);
+    const removed = this.roster.splice(index, 1)[0];
+    this.io.of(this.roomId).emit('roster', this.roster);
+    if (removed.isScreenShare) {
+      // Reset the room state since we lost the screen sharer
+      this.cmdHost(socket, '');
+    }
+    delete this.tsMap[socket.id];
+    // delete nameMap[socket.id];
   };
 }
