@@ -44,14 +44,18 @@ export class Hetzner extends VMManager {
     const id = response.data.server.id;
 
     // Poweron the server (usually not needed)
-    const response2 = await axios({
-      method: 'POST',
-      url: `https://api.hetzner.cloud/v1/servers/${id}/actions/poweron`,
-      headers: {
-        Authorization: 'Bearer ' + HETZNER_TOKEN,
-        'Content-Type': 'application/json',
-      },
-    });
+    try {
+      const response2 = await axios({
+        method: 'POST',
+        url: `https://api.hetzner.cloud/v1/servers/${id}/actions/poweron`,
+        headers: {
+          Authorization: 'Bearer ' + HETZNER_TOKEN,
+          'Content-Type': 'application/json',
+        },
+      });
+    } catch (e) {
+      console.error('failed to poweron');
+    }
     return id;
   };
 
