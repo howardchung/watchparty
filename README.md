@@ -1,6 +1,6 @@
 # WatchParty
 
-![screenshot](https://github.com/howardchung/watchparty/raw/master/public/screenshot4.png)
+![screenshot](https://github.com/howardchung/watchparty/raw/master/public/screenshot_full.png)
 
 An website for watching videos together.
 
