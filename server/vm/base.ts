@@ -140,7 +140,7 @@ export abstract class VMManager {
   };
 
   protected resizeVMGroupIncr = async () => {
-    const fixedSize = process.env.VM_POOL_FIXED_SIZE;
+    const fixedSize = Number(process.env.VM_POOL_FIXED_SIZE);
     const maxAvailable = this.vmBufferSize;
     const availableCount = await this.redis.llen(this.getRedisQueueKey());
     const stagingCount = await this.redis.llen(this.getRedisStagingKey());
