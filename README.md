@@ -1,5 +1,7 @@
 # WatchParty
 
+![screenshot](https://github.com/howardchung/watchparty/raw/master/public/screenshot4.png)
+
 An website for watching videos together.
 
 ## Description
@@ -7,30 +9,36 @@ An website for watching videos together.
 - Synchronizes the video being watched with the current room
 - Plays, pauses, and seeks are synced to all watchers
 - Supports:
-  - YouTube videos
-  - Screen sharing (Chrome tab or application)
+  - Screen sharing (full screen, browser tab or application)
+  - Launch a shared virtual browser in the cloud (similar to rabb.it)
   - Stream-your-own-file
   - Video files on the Internet (anything accessible via HTTP)
-  - Launch a shared virtual browser in the cloud (similar to rabb.it)
+  - YouTube videos
 - Create separate rooms for users on demand
 - Text chat
 - Video chat
 
 ## Quick Start
 
-1. Clone this repo via `git clone git@github.com:howardchung/watchparty.git`
-2. Install npm dependencies for the project via `npm install`
-3. Start the server via `npm run dev` (Notice: The default port for the server will be 8080 but can be changed by setting the REACT_APP_SERVER_HOST env variable to some other port)
-4. Start the react application in a separate shell via `npm run start`
-5. Duplicate the `.env.example` file
-6. Rename it to `.env`
-7. Add environment keys as described in the advanced setup below
+- Clone this repo via `git clone git@github.com:howardchung/watchparty.git`
+- Install npm dependencies for the project via `npm install`
+- Start the server via `npm run dev`
+  - Defaults to port 8080, customize with  `PORT` env var
+  - Run using self-signed HTTPS cert with `HTTPS=true`. This is needed for some WebRTC features (camera, etc.)
+- Start the React application in a separate shell via `npm run start`
+  - Point to server using `REACT_APP_SERVER_HOST` env var if you customized it above
+  - Run using self-signed HTTPS cert with `HTTPS=true`. This is needed for some WebRTC features (camera, etc.)
+- Duplicate the `.env.example` file
+- Rename it to `.env`
+- Add config for the features you want as described in the advanced setup
 
-## Advanced Setup
+## Advanced Setup (optional)
 
-### YouTube API (Optional for YouTube Search)
+All of these are optional and the application should work without them. Some functionality may be missing.
 
-This project is using the YouTube API which means you will need to setup an API key. You can get one from Google [here](https://console.developers.google.com).
+### YouTube API (video search)
+
+This project uses the YouTube API for video search, which requires an API key. You can get one from Google [here](https://console.developers.google.com).
 
 Without an API key you won't be able to search for videos via the searchbox.
 
@@ -38,21 +46,24 @@ After creating a **YouTube Data API V3** access, you can create an API key which
 
 After that restart your server to enable the YouTube API access on your server.
 
-### Firebase Config
+### Firebase Config (user authentication)
 
-This project is using Firebase for authentication. To make sure this runs smoothly the app expects a firebase application config. Create a new firebase app (or reuse an old one) from [here](https://console.firebase.google.com/). After creating an application, click on the settings cog icon in the left menu next to "Project overview" and click on project settings. From there scroll down, create a web application and copy the firebase sdk configuration snippets JSON data.
+This project uses Firebase for authentication. This is used for user login, account management, subscriptions, and handling some features like room locking/permanence.
 
-Next you have to stringify that - for that use `JSON.stringify(PASTE_CONFIG_HERE)` in your browser console and paste the result into the .env file.
+To set up, create a new Firebase app (or reuse an old one) from [here](https://console.firebase.google.com/). After creating an application, click on the settings cog icon in the left menu next to "Project overview" and click on project settings. From there, scroll down, create a web application and copy the Firebase SDK configuration snippet JSON data.
+
+Next, you have to stringify it: `JSON.stringify(PASTE_CONFIG_HERE)` in your browser console, then add it to `REACT_APP_FIREBASE_CONFIG` in your .env file.
+
+For server verification of accounts you'll also need `FIREBASE_ADMIN_SDK_CONFIG`, which you should do the same steps for.
 
 ### Virtual Browser Setup
 
-_This section is not added yet_
+This project supports creating virtual browsers using several cloud providers, or by spawning Docker containers on the development server. For local development, the Docker on local approach is preferred.
 
-## Environment Variables
-
-- `YOUTUBE_API_KEY`: Optional, provide one to enable searching YouTube
-- `REDIS_URL`: Optional, provide to allow persisting rooms to Redis so they survive server reboots
-- `REACT_APP_FIREBASE_CONFIG`: Frontend environment variable for authentification via Google Firebase
+- Install Docker: `curl -fsSL https://get.docker.com | sh`
+- Make sure you have an SSH key pair set up on the server (`id_rsa` in `~/.ssh` directory)
+- Add `DOCKER_VM_HOST=localhost` to your .env file (can substitute localhost for a public hostname)
+- Configure Redis by adding `REDIS_URL` to your .env file (Redis is required for virtual browser management)
 
 ## Tech
 
@@ -60,3 +71,4 @@ _This section is not added yet_
 - TypeScript
 - Node.js
 - Redis
+- Docker
