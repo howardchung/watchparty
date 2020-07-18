@@ -245,9 +245,9 @@ export abstract class VMManager {
           candidate?.host,
           retryCount
         );
-        if (retryCount > 60) {
-          await this.redis.del(this.getRedisStagingKey() + ':' + id);
+        if (retryCount > 300) {
           this.terminateVMWrapper(id);
+          await this.redis.del(this.getRedisStagingKey() + ':' + id);
         }
       }
     }
