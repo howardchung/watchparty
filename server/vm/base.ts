@@ -169,31 +169,37 @@ export abstract class VMManager {
 
   protected resizeVMGroupDecr = async () => {
     const fixedSize = this.isLarge
-      ? Number(process.end.VM_POOL_FIXED_SIZE_LARGE)
+      ? Number(process.env.VM_POOL_FIXED_SIZE_LARGE)
       : Number(process.env.VM_POOL_FIXED_SIZE);
     while (true) {
       let unlaunch = false;
       if (fixedSize) {
         const allVMs = await this.listVMs();
         unlaunch = allVMs.length > fixedSize;
+        console.log(
+          '[RESIZE-TERMINATE]',
+          'desired:',
+          fixedSize,
+          'allVMs:',
+          allVMs.length
+        );
       } else {
         const maxAvailable = this.vmBufferSize;
         const availableCount = await this.redis.llen(this.getRedisQueueKey());
         unlaunch = availableCount > maxAvailable;
+        console.log(
+          '[RESIZE-TERMINATE]',
+          'desired:',
+          maxAvailable,
+          'available:',
+          availableCount
+        );
       }
       if (unlaunch) {
         const id = await this.redis.lpop(this.getRedisQueueKey());
         if (!id) {
           break;
         }
-        // console.log(
-        //   '[RESIZE-TERMINATE]',
-        //   id,
-        //   'desired:',
-        //   maxAvailable,
-        //   'available:',
-        //   availableCount
-        // );
         await this.terminateVMWrapper(id);
       } else {
         break;
