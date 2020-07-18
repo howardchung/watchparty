@@ -140,12 +140,14 @@ export abstract class VMManager {
   };
 
   protected resizeVMGroupIncr = async () => {
-    const fixedSize = Number(process.env.VM_POOL_FIXED_SIZE);
+    const fixedSize = this.isLarge
+      ? Number(process.end.VM_POOL_FIXED_SIZE_LARGE)
+      : Number(process.env.VM_POOL_FIXED_SIZE);
     const maxAvailable = this.vmBufferSize;
     const availableCount = await this.redis.llen(this.getRedisQueueKey());
     const stagingCount = await this.redis.llen(this.getRedisStagingKey());
     let launch = false;
-    if (fixedSize && !this.isLarge) {
+    if (fixedSize) {
       const allVMs = await this.listVMs();
       launch = allVMs.length < fixedSize;
     } else {
@@ -166,15 +168,24 @@ export abstract class VMManager {
   };
 
   protected resizeVMGroupDecr = async () => {
-    const fixedSize = Number(process.env.VM_POOL_FIXED_SIZE);
-    if (fixedSize && !this.isLarge) {
-      return;
-    }
+    const fixedSize = this.isLarge
+      ? Number(process.end.VM_POOL_FIXED_SIZE_LARGE)
+      : Number(process.env.VM_POOL_FIXED_SIZE);
     while (true) {
-      const maxAvailable = this.vmBufferSize;
-      const availableCount = await this.redis.llen(this.getRedisQueueKey());
-      if (availableCount > maxAvailable) {
+      let unlaunch = false;
+      if (fixedSize) {
+        const allVMs = await this.listVMs();
+        unlaunch = allVMs.length > fixedSize;
+      } else {
+        const maxAvailable = this.vmBufferSize;
+        const availableCount = await this.redis.llen(this.getRedisQueueKey());
+        unlaunch = availableCount > maxAvailable;
+      }
+      if (unlaunch) {
         const id = await this.redis.lpop(this.getRedisQueueKey());
+        if (!id) {
+          break;
+        }
         console.log(
           '[RESIZE-TERMINATE]',
           id,
@@ -257,9 +268,9 @@ export abstract class VMManager {
           candidate?.host,
           retryCount
         );
-        if (retryCount > 300) {
-          this.terminateVMWrapper(id);
+        if (retryCount > 180) {
           await this.redis.del(this.getRedisStagingKey() + ':' + id);
+          this.terminateVMWrapper(id);
         }
       }
     }
