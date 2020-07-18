@@ -85,7 +85,7 @@ export abstract class VMManager {
       }
     };
     setInterval(this.resizeVMGroupIncr, 10 * 1000);
-    // setInterval(this.resizeVMGroupDecr, 20 * 60 * 1000);
+    setInterval(this.resizeVMGroupDecr, 20 * 60 * 1000);
     setInterval(this.cleanupVMGroup, 3 * 60 * 1000);
     setInterval(renew, 30 * 1000);
     setInterval(release, 5 * 60 * 1000);
@@ -145,7 +145,7 @@ export abstract class VMManager {
     const availableCount = await this.redis.llen(this.getRedisQueueKey());
     const stagingCount = await this.redis.llen(this.getRedisStagingKey());
     let launch = false;
-    if (fixedSize) {
+    if (fixedSize && !this.isLarge) {
       const allVMs = await this.listVMs();
       launch = allVMs.length < fixedSize;
     } else {
@@ -166,6 +166,10 @@ export abstract class VMManager {
   };
 
   protected resizeVMGroupDecr = async () => {
+    const fixedSize = Number(process.env.VM_POOL_FIXED_SIZE);
+    if (fixedSize && !this.isLarge) {
+      return;
+    }
     while (true) {
       const maxAvailable = this.vmBufferSize;
       const availableCount = await this.redis.llen(this.getRedisQueueKey());
