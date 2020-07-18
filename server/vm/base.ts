@@ -274,7 +274,7 @@ export abstract class VMManager {
           candidate?.host,
           retryCount
         );
-        if (retryCount > 180) {
+        if (retryCount > 300) {
           await this.redis.del(this.getRedisStagingKey() + ':' + id);
           this.terminateVMWrapper(id);
         }
@@ -284,11 +284,15 @@ export abstract class VMManager {
 
   protected checkVMReady = async (host: string) => {
     const url = 'https://' + host + '/healthz';
-    const response4 = await axios({
-      method: 'GET',
-      url,
-      timeout: 2000,
-    });
+    try {
+      const response4 = await axios({
+        method: 'GET',
+        url,
+        timeout: 2000,
+      });
+    } catch (e) {
+      return false;
+    }
     return true;
   };
 
