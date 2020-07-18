@@ -186,14 +186,14 @@ export abstract class VMManager {
         if (!id) {
           break;
         }
-        console.log(
-          '[RESIZE-TERMINATE]',
-          id,
-          'desired:',
-          maxAvailable,
-          'available:',
-          availableCount
-        );
+        // console.log(
+        //   '[RESIZE-TERMINATE]',
+        //   id,
+        //   'desired:',
+        //   maxAvailable,
+        //   'available:',
+        //   availableCount
+        // );
         await this.terminateVMWrapper(id);
       } else {
         break;
