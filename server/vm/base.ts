@@ -258,6 +258,7 @@ export abstract class VMManager {
     const response4 = await axios({
       method: 'GET',
       url,
+      timeout: 2000,
     });
     return true;
   };
