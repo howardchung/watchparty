@@ -127,8 +127,8 @@ export class Hetzner extends VMManager {
     id: server.id?.toString(),
     pass: server.name,
     // The gateway handles SSL termination and proxies to the private IP
-    host: `${gatewayHost}/?ip=${server.private_net[0]?.ip}`,
-    private_ip: server.private_net[0]?.ip,
+    host: `${gatewayHost}/?ip=${server.public_net?.ipv4?.ip}`,
+    private_ip: server.public_net?.ipv4?.ip,
     state: server.status,
     tags: Object.keys(server.labels),
     creation_date: server.created,
