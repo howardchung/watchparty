@@ -48,7 +48,7 @@ export abstract class VMManager {
         ) {
           const maxTime = room.vBrowser.large
             ? 12 * 60 * 60 * 1000
-            : 10 * 60 * 1000;
+            : 3 * 60 * 60 * 1000;
           const elapsed = Number(new Date()) - room.vBrowser.assignTime;
           const isTimedOut = elapsed > maxTime;
           const isAlmostTimedOut = elapsed > maxTime - releaseInterval;
@@ -115,9 +115,9 @@ export abstract class VMManager {
     let selected = null;
     while (!selected) {
       const currSize = await this.redis.llen(this.getRedisQueueKey());
-      if (currSize === 0) {
-        await this.startVMWrapper();
-      }
+      // if (currSize === 0) {
+      //   await this.startVMWrapper();
+      // }
       let resp = await this.redis2.brpop(this.getRedisQueueKey(), 0);
       const id = resp[1];
       console.log('[ASSIGN]', id);
@@ -284,7 +284,7 @@ export abstract class VMManager {
           candidate?.host,
           retryCount
         );
-        if (retryCount > 300) {
+        if (retryCount > 100) {
           await this.redis.del(this.getRedisStagingKey() + ':' + id);
           this.terminateVMWrapper(id);
         }
@@ -298,7 +298,7 @@ export abstract class VMManager {
       const response4 = await axios({
         method: 'GET',
         url,
-        timeout: 2000,
+        timeout: 1000,
       });
     } catch (e) {
       return false;
