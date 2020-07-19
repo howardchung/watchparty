@@ -677,6 +677,10 @@ export default class App extends React.Component<{}, AppState> {
     return this.state.currentMedia.startsWith('vbrowser://');
   };
 
+  isHttp = () => {
+    return this.state.currentMedia.startsWith('http');
+  };
+
   getVBrowserPass = () => {
     return this.state.currentMedia.replace('vbrowser://', '').split('@')[0];
   };
@@ -764,7 +768,7 @@ export default class App extends React.Component<{}, AppState> {
 
   jumpToLeader = () => {
     // Jump to the leader's position
-    const maxTS = Math.max(...Object.values(this.state.tsMap));
+    const maxTS = this.getLeaderTime();
     if (maxTS > 0) {
       console.log('jump to leader at ', maxTS);
       this.doSeek(maxTS);
@@ -1149,9 +1153,33 @@ export default class App extends React.Component<{}, AppState> {
     return this.state.user?.uid === this.state.roomLock;
   };
 
+  getLeaderTime = () => {
+    return Math.max(...Object.values(this.state.tsMap));
+  };
+
   render() {
     const sharer = this.state.participants.find((p) => p.isScreenShare);
     const controller = this.state.participants.find((p) => p.isController);
+    const controls = (
+      <Controls
+        key={this.state.controlsTimestamp}
+        togglePlay={this.togglePlay}
+        onSeek={this.onSeek}
+        fullScreen={this.fullScreen}
+        toggleMute={this.toggleMute}
+        toggleSubtitle={this.toggleSubtitle}
+        setVolume={this.setVolume}
+        getVolume={this.getVolume}
+        jumpToLeader={this.jumpToLeader}
+        paused={this.isPaused()}
+        muted={this.isMuted()}
+        subtitled={this.isSubtitled()}
+        currentTime={this.getCurrentTime()}
+        duration={this.getDuration()}
+        disabled={!this.haveLock()}
+        leaderTime={this.isHttp() ? this.getLeaderTime() : undefined}
+      />
+    );
     return (
       <React.Fragment>
         {this.state.multiStreamSelection && (
@@ -1572,25 +1600,7 @@ export default class App extends React.Component<{}, AppState> {
                         ></video>
                       )}
                       {this.state.fullScreen && this.state.currentMedia && (
-                        <div className="controlsContainer">
-                          <Controls
-                            key={this.state.controlsTimestamp}
-                            togglePlay={this.togglePlay}
-                            onSeek={this.onSeek}
-                            fullScreen={this.fullScreen}
-                            toggleMute={this.toggleMute}
-                            toggleSubtitle={this.toggleSubtitle}
-                            setVolume={this.setVolume}
-                            getVolume={this.getVolume}
-                            jumpToLeader={this.jumpToLeader}
-                            paused={this.isPaused()}
-                            muted={this.isMuted()}
-                            subtitled={this.isSubtitled()}
-                            currentTime={this.getCurrentTime()}
-                            duration={this.getDuration()}
-                            disabled={!this.haveLock()}
-                          />
-                        </div>
+                        <div className="controlsContainer">{controls}</div>
                       )}
                     </div>
                     {this.state.fullScreen && (
@@ -1605,25 +1615,7 @@ export default class App extends React.Component<{}, AppState> {
                       />
                     )}
                   </div>
-                  {this.state.currentMedia && (
-                    <Controls
-                      key={this.state.controlsTimestamp}
-                      togglePlay={this.togglePlay}
-                      onSeek={this.onSeek}
-                      fullScreen={this.fullScreen}
-                      toggleMute={this.toggleMute}
-                      toggleSubtitle={this.toggleSubtitle}
-                      setVolume={this.setVolume}
-                      getVolume={this.getVolume}
-                      jumpToLeader={this.jumpToLeader}
-                      paused={this.isPaused()}
-                      muted={this.isMuted()}
-                      subtitled={this.isSubtitled()}
-                      currentTime={this.getCurrentTime()}
-                      duration={this.getDuration()}
-                      disabled={!this.haveLock()}
-                    />
-                  )}
+                  {this.state.currentMedia && controls}
                   {Boolean(this.state.total) && (
                     <div>
                       <Progress

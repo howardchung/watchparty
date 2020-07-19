@@ -1,5 +1,5 @@
 import React from 'react';
-import { Icon, Progress, Label } from 'semantic-ui-react';
+import { Icon, Progress, Label, Popup } from 'semantic-ui-react';
 import { Slider } from 'react-semantic-ui-range';
 import { formatTimestamp } from '../../utils';
 
@@ -18,6 +18,7 @@ interface ControlsProps {
   getVolume: Function;
   setVolume: Function;
   disabled?: boolean;
+  leaderTime?: number;
 }
 
 // TODO a lot of this state is currently tied to the per-second tsMap update, which is leading to some UI lag
@@ -65,7 +66,9 @@ export class Controls extends React.Component<ControlsProps> {
       subtitled,
       currentTime,
       duration,
+      leaderTime,
     } = this.props;
+    const isBehind = leaderTime && leaderTime - currentTime > 5;
     return (
       <div className="controls">
         <Icon
@@ -75,12 +78,19 @@ export class Controls extends React.Component<ControlsProps> {
           disabled={this.props.disabled}
           name={paused ? 'play' : 'pause'}
         />
-        <Icon
-          size="large"
-          onClick={jumpToLeader}
-          className="control action"
-          name={'angle double right'}
-          title="Sync timestamp to leader"
+        <Popup
+          content={
+            (isBehind ? "We've detected that your stream is behind. " : '') +
+            'Click to sync to leader.'
+          }
+          trigger={
+            <Icon
+              size="large"
+              onClick={jumpToLeader}
+              className={`control action ${isBehind ? 'glowing' : ''}`}
+              name={'angle double right'}
+            />
+          }
         />
         <div className="control">{formatTimestamp(currentTime)}</div>
         <Progress
