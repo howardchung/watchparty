@@ -120,7 +120,8 @@ export abstract class VMManager {
     while (!selected) {
       const availableCount = await this.redis.llen(this.getRedisQueueKey());
       const stagingCount = await this.redis.llen(this.getRedisStagingKey());
-      if (availableCount + stagingCount === 0) {
+      const fixedSize = this.getFixedSize();
+      if (availableCount + stagingCount === 0 && !fixedSize) {
         await this.startVMWrapper();
       }
       let resp = await this.redis2.brpop(this.getRedisQueueKey(), 0);
@@ -285,7 +286,7 @@ export abstract class VMManager {
           candidate?.host,
           retryCount
         );
-        if (retryCount > 100) {
+        if (retryCount > 600) {
           await this.redis.del(this.getRedisStagingKey() + ':' + id);
           this.terminateVMWrapper(id);
         }
