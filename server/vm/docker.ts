@@ -123,6 +123,8 @@ export class Docker extends VMManager {
     });
   };
 
+  powerOn = async (id: string) => {};
+
   mapServerObject = (server: any): VM => ({
     id: server.Id,
     pass: server.Name?.slice(1),

@@ -152,6 +152,8 @@ export class DigitalOcean extends VMManager {
       );
   };
 
+  powerOn = async (id: string) => {};
+
   mapServerObject = (server: any): VM => {
     const ip = server.networks.v4.find(
       (network: any) => network.type === 'private'

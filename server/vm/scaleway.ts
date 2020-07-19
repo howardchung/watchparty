@@ -152,6 +152,9 @@ export class Scaleway extends VMManager {
         (server: VM) => server.tags.includes(this.tag) && server.private_ip
       );
   };
+
+  powerOn = async (id: string) => {};
+
   mapServerObject = (server: any): VM => ({
     id: server.id,
     pass: server.name,
