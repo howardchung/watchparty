@@ -151,6 +151,7 @@ app.get('/stats', async (req, res) => {
         vBrowser: room.vBrowser,
         vBrowserElapsed:
           room.vBrowser?.assignTime && now - room.vBrowser?.assignTime,
+        lock: room.lock,
       };
       currentUsers += obj.rosterLength;
       currentVideoChat += obj.videoChats;
@@ -228,6 +229,7 @@ app.get('/stats', async (req, res) => {
     const fileShareStarts = await getRedisCountDay('fileShareStarts');
     const videoChatStarts = await getRedisCountDay('videoChatStarts');
     const connectStarts = await getRedisCountDay('connectStarts');
+    const subUploads = await getRedisCountDay('subUploads');
 
     res.json({
       uptime,
@@ -238,7 +240,20 @@ app.get('/stats', async (req, res) => {
       stagingVBrowsers,
       availableVBrowsersLarge,
       stagingVBrowsersLarge,
+      currentUsers,
+      currentVBrowser,
+      currentVBrowserLarge,
+      currentHttp,
+      currentScreenShare,
+      currentFileShare,
+      currentVideoChat,
       chatMessages,
+      urlStarts,
+      screenShareStarts,
+      fileShareStarts,
+      subUploads,
+      videoChatStarts,
+      connectStarts,
       vBrowserStarts,
       vBrowserLaunches,
       vBrowserTerminateManual,
@@ -249,18 +264,6 @@ app.get('/stats', async (req, res) => {
       vBrowserStartMS,
       vBrowserSessionMS,
       vBrowserVMLifetime,
-      urlStarts,
-      screenShareStarts,
-      fileShareStarts,
-      videoChatStarts,
-      connectStarts,
-      currentUsers,
-      currentVBrowser,
-      currentVBrowserLarge,
-      currentHttp,
-      currentScreenShare,
-      currentFileShare,
-      currentVideoChat,
       rooms: roomData,
     });
   } else {

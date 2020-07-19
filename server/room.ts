@@ -518,6 +518,7 @@ export class Room {
     await redis.setex('subtitle:' + hash, 3 * 60 * 60, gzip);
     this.subtitle = hash;
     this.io.of(this.roomId).emit('REC:subtitle', this.subtitle);
+    redisCount('subUploads');
   };
 
   private lockRoom = async (
