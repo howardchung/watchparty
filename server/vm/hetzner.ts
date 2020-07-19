@@ -44,18 +44,18 @@ export class Hetzner extends VMManager {
     const id = response.data.server.id;
 
     // Poweron the server (usually not needed)
-    try {
-      const response2 = await axios({
-        method: 'POST',
-        url: `https://api.hetzner.cloud/v1/servers/${id}/actions/poweron`,
-        headers: {
-          Authorization: 'Bearer ' + HETZNER_TOKEN,
-          'Content-Type': 'application/json',
-        },
-      });
-    } catch (e) {
-      console.error('failed to poweron');
-    }
+    // try {
+    //   const response2 = await axios({
+    //     method: 'POST',
+    //     url: `https://api.hetzner.cloud/v1/servers/${id}/actions/poweron`,
+    //     headers: {
+    //       Authorization: 'Bearer ' + HETZNER_TOKEN,
+    //       'Content-Type': 'application/json',
+    //     },
+    //   });
+    // } catch (e) {
+    //   console.error('failed to poweron');
+    // }
     return id;
   };
 
@@ -141,8 +141,8 @@ export class Hetzner extends VMManager {
     id: server.id?.toString(),
     pass: server.name,
     // The gateway handles SSL termination and proxies to the private IP
-    host: `${gatewayHost}/?ip=${server.public_net?.ipv4?.ip}`,
-    private_ip: server.public_net?.ipv4?.ip,
+    host: `${gatewayHost}/?ip=${server.private_net[0]?.ip}`,
+    private_ip: server.private_net[0]?.ip,
     state: server.status,
     tags: Object.keys(server.labels),
     creation_date: server.created,
