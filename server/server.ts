@@ -151,7 +151,7 @@ app.get('/stats', async (req, res) => {
         vBrowser: room.vBrowser,
         vBrowserElapsed:
           room.vBrowser?.assignTime && now - room.vBrowser?.assignTime,
-        lock: room.lock,
+        lock: room.lock || undefined,
       };
       currentUsers += obj.rosterLength;
       currentVideoChat += obj.videoChats;
