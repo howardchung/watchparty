@@ -4,6 +4,8 @@ import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import { redisCount } from '../utils/redis';
 
+const releaseInterval = 5 * 60 * 1000;
+
 export abstract class VMManager {
   public vmBufferSize = 0;
   protected tag = process.env.VBROWSER_TAG || 'vbrowser';
@@ -33,7 +35,7 @@ export abstract class VMManager {
 
     const release = async () => {
       // Reset VMs in rooms that are:
-      // assigned more than 6 hours ago
+      // older than the session limit
       // assigned to a room with no users
       const roomArr = Array.from(rooms.values());
       for (let i = 0; i < roomArr.length; i++) {
@@ -46,9 +48,10 @@ export abstract class VMManager {
         ) {
           const maxTime = room.vBrowser.large
             ? 12 * 60 * 60 * 1000
-            : 3 * 60 * 60 * 1000;
-          const isTimedOut =
-            Number(new Date()) - room.vBrowser.assignTime > maxTime;
+            : 10 * 60 * 1000;
+          const elapsed = Number(new Date()) - room.vBrowser.assignTime;
+          const isTimedOut = elapsed > maxTime;
+          const isAlmostTimedOut = elapsed > maxTime - releaseInterval;
           const isRoomEmpty = room.roster.length === 0;
           if (isTimedOut || isRoomEmpty) {
             console.log('[RELEASE] VM in room:', room.roomId);
@@ -64,6 +67,13 @@ export abstract class VMManager {
             } else if (isRoomEmpty) {
               redisCount('vBrowserTerminateEmpty');
             }
+          } else if (isAlmostTimedOut) {
+            room.addChatMessage(undefined, {
+              id: '',
+              system: true,
+              cmd: 'vBrowserAlmostTimeout',
+              msg: '',
+            });
           }
         }
       }
@@ -88,7 +98,7 @@ export abstract class VMManager {
     setInterval(this.resizeVMGroupDecr, 20 * 60 * 1000);
     setInterval(this.cleanupVMGroup, 3 * 60 * 1000);
     setInterval(renew, 30 * 1000);
-    setInterval(release, 5 * 60 * 1000);
+    setInterval(release, releaseInterval);
     setTimeout(this.checkStaging, 100); // Add some delay to make sure the object is constructed first
   }
 

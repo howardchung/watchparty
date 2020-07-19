@@ -107,6 +107,14 @@ export class Chat extends React.Component<ChatProps> {
           Subscribe for sessions up to 12 hours.
         </React.Fragment>
       );
+    } else if (cmd === 'vBrowserAlmostTimeout') {
+      return (
+        <React.Fragment>
+          The VBrowser will shut down soon.
+          <br />
+          Subscribe for sessions up to 12 hours.
+        </React.Fragment>
+      );
     }
     return cmd;
   };
