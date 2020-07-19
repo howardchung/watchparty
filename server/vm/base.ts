@@ -13,6 +13,10 @@ export abstract class VMManager {
   private redis = new Redis(process.env.REDIS_URL);
   private redis2 = new Redis(process.env.REDIS_URL);
   private redis3 = new Redis(process.env.REDIS_URL);
+  private getFixedSize = () =>
+    this.isLarge
+      ? Number(process.env.VM_POOL_FIXED_SIZE_LARGE)
+      : Number(process.env.VM_POOL_FIXED_SIZE);
 
   constructor(
     rooms: Map<string, Room>,
@@ -115,9 +119,10 @@ export abstract class VMManager {
     let selected = null;
     while (!selected) {
       const currSize = await this.redis.llen(this.getRedisQueueKey());
-      // if (currSize === 0) {
-      //   await this.startVMWrapper();
-      // }
+      const fixedSize = this.getFixedSize();
+      if (currSize === 0 && !fixedSize) {
+        await this.startVMWrapper();
+      }
       let resp = await this.redis2.brpop(this.getRedisQueueKey(), 0);
       const id = resp[1];
       console.log('[ASSIGN]', id);
@@ -150,13 +155,11 @@ export abstract class VMManager {
   };
 
   protected resizeVMGroupIncr = async () => {
-    const fixedSize = this.isLarge
-      ? Number(process.env.VM_POOL_FIXED_SIZE_LARGE)
-      : Number(process.env.VM_POOL_FIXED_SIZE);
     const maxAvailable = this.vmBufferSize;
     const availableCount = await this.redis.llen(this.getRedisQueueKey());
     const stagingCount = await this.redis.llen(this.getRedisStagingKey());
     let launch = false;
+    const fixedSize = this.getFixedSize();
     if (fixedSize) {
       const allVMs = await this.listVMs();
       launch = allVMs.length < fixedSize;
@@ -178,11 +181,9 @@ export abstract class VMManager {
   };
 
   protected resizeVMGroupDecr = async () => {
-    const fixedSize = this.isLarge
-      ? Number(process.env.VM_POOL_FIXED_SIZE_LARGE)
-      : Number(process.env.VM_POOL_FIXED_SIZE);
     while (true) {
       let unlaunch = false;
+      const fixedSize = this.getFixedSize();
       if (fixedSize) {
         const allVMs = await this.listVMs();
         unlaunch = allVMs.length > fixedSize;
