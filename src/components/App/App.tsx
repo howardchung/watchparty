@@ -284,6 +284,9 @@ export default class App extends React.Component<{}, AppState> {
       // Load username from localstorage
       let userName = window.localStorage.getItem('watchparty-username');
       this.updateName(null, { value: userName || generateName() });
+      // if (!this.state.user) {
+      //   await firebase.auth().signInAnonymously();
+      // }
       this.loadSignInData();
     });
     socket.on('error', (err: any) => {

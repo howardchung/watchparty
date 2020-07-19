@@ -118,9 +118,9 @@ export abstract class VMManager {
     const assignStart = Number(new Date());
     let selected = null;
     while (!selected) {
-      const currSize = await this.redis.llen(this.getRedisQueueKey());
-      const fixedSize = this.getFixedSize();
-      if (currSize === 0 && !fixedSize) {
+      const availableCount = await this.redis.llen(this.getRedisQueueKey());
+      const stagingCount = await this.redis.llen(this.getRedisStagingKey());
+      if (availableCount + stagingCount === 0) {
         await this.startVMWrapper();
       }
       let resp = await this.redis2.brpop(this.getRedisQueueKey(), 0);
