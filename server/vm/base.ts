@@ -270,6 +270,9 @@ export abstract class VMManager {
       const retryCount = await this.redis.incr(
         this.getRedisStagingKey() + ':' + id
       );
+      if (retryCount % 20 === 0) {
+        this.powerOn(id);
+      }
       if (ready) {
         console.log('[CHECKSTAGING] ready:', id, candidate?.host, retryCount);
         // If it is, move it to available list
@@ -350,6 +353,7 @@ export abstract class VMManager {
   protected abstract terminateVM: (id: string) => Promise<void>;
   protected abstract getVM: (id: string) => Promise<VM>;
   protected abstract listVMs: (filter?: string) => Promise<VM[]>;
+  protected abstract powerOn: (id: string) => Promise<void>;
   protected abstract mapServerObject: (server: any) => VM;
 }
 
