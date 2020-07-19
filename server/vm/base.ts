@@ -150,6 +150,8 @@ export abstract class VMManager {
     await this.rebootVM(id);
     // Delete any locks
     await this.redis.del('vbrowser:' + id);
+    // We wait to give the VM time to shut down (if it's restarting)
+    await new Promise((resolve) => setTimeout(resolve, 3000));
     // Add the VM back to the pool
     await this.redis.lpush(this.getRedisStagingKey(), id);
   };
@@ -256,8 +258,6 @@ export abstract class VMManager {
         this.getRedisStagingKey(),
         0
       );
-      // We wait first before checking to give the VM time to shut down (if it's restarting)
-      await new Promise((resolve) => setTimeout(resolve, 2000));
       let ready = false;
       let candidate = undefined;
       try {
