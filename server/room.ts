@@ -1,5 +1,6 @@
 import crypto from 'crypto';
-import { gzipSync } from 'zlib';
+import zlib from 'zlib';
+import util from 'util';
 
 import axios from 'axios';
 import Redis from 'ioredis';
@@ -10,6 +11,8 @@ import { redisCount, redisCountDistinct } from './utils/redis';
 import { getCustomerByEmail } from './utils/stripe';
 import { AssignedVM, VMManager } from './vm/base';
 import { getStartOfDay } from './utils/time';
+
+const gzip = util.promisify(zlib.gzip);
 
 let redis = (undefined as unknown) as Redis.Redis;
 if (process.env.REDIS_URL) {
@@ -332,7 +335,7 @@ export class Room {
   };
 
   private seekVideo = (socket: Socket, data: number) => {
-    if (JSON.stringify(data).length > 100) {
+    if (String(data).length > 100) {
       return;
     }
     if (!this.validateLock(socket.id)) {
@@ -345,7 +348,7 @@ export class Room {
   };
 
   private setTimestamp = (socket: Socket, data: number) => {
-    if (JSON.stringify(data).length > 100) {
+    if (String(data).length > 100) {
       return;
     }
     if (data > this.videoTS) {
@@ -436,12 +439,11 @@ export class Room {
     if (!data) {
       return;
     }
-    const match = this.roster.find((user) => user.id === socket.id);
+    const clientId = this.clientIdMap[socket.id];
+    const uid = this.uidMap[socket.id];
     // Log the vbrowser creation by uid and clientid
     if (redis) {
       const expireTime = getStartOfDay() / 1000 + 86400;
-      const clientId = this.clientIdMap[socket.id];
-      const uid = this.uidMap[socket.id];
       if (clientId) {
         const clientCount = await redis.zincrby(
           'vBrowserClientIDs',
@@ -511,9 +513,7 @@ export class Room {
       return;
     }
     this.vBrowser = assignment;
-    if (match) {
-      this.vBrowser.controllerClient = this.clientIdMap[match.id];
-    }
+    this.vBrowser.controllerClient = clientId;
     this.cmdHost(
       undefined,
       'vbrowser://' + this.vBrowser.pass + '@' + this.vBrowser.host
@@ -532,13 +532,15 @@ export class Room {
   };
 
   private changeController = (socket: Socket, data: string) => {
+    if (data && data.length > 100) {
+      return;
+    }
     if (!this.validateLock(socket.id)) {
       return;
     }
-    const match = this.roster.find((user) => user.id === data);
-    if (match && this.vBrowser) {
-      this.vBrowser.controllerClient = this.clientIdMap[match?.id];
-      this.io.of(this.roomId).emit('REC:changeController', match.id);
+    if (this.vBrowser) {
+      this.vBrowser.controllerClient = this.clientIdMap[data];
+      this.io.of(this.roomId).emit('REC:changeController', data);
     }
   };
 
@@ -558,8 +560,9 @@ export class Room {
       .update(data, 'utf8')
       .digest()
       .toString('hex');
-    const gzip = gzipSync(data);
-    await redis.setex('subtitle:' + hash, 3 * 60 * 60, gzip);
+    const gzipData = (await gzip(data)) as Buffer;
+    // console.log(data.length, gzipData.length);
+    await redis.setex('subtitle:' + hash, 3 * 60 * 60, gzipData);
     this.subtitle = hash;
     this.io.of(this.roomId).emit('REC:subtitle', this.subtitle);
     redisCount('subUploads');
