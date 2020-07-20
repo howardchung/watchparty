@@ -5,6 +5,7 @@ if (process.env.FIREBASE_ADMIN_SDK_CONFIG) {
     credential: admin.credential.cert(
       JSON.parse(process.env.FIREBASE_ADMIN_SDK_CONFIG)
     ),
+    databaseURL: process.env.FIREBASE_DATABASE_URL,
   });
 }
 
@@ -17,4 +18,11 @@ export async function validateUserToken(uid: string, token: string) {
     return undefined;
   }
   return decoded;
+}
+
+export async function writeData(key: string, value: string) {
+  if (!process.env.FIREBASE_ADMIN_SDK_CONFIG) {
+    return;
+  }
+  await admin.database().ref(key).set(value);
 }
