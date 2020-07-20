@@ -12,7 +12,6 @@ interface User {
   id: string;
   isVideoChat?: boolean;
   isScreenShare?: boolean;
-  isController?: boolean;
   uid?: string;
   clientId?: string;
 }
@@ -58,4 +57,5 @@ interface HostState {
   subtitle: string;
   paused: boolean;
   isVBrowserLarge: boolean;
+  controller?: string;
 }

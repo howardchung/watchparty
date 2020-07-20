@@ -1,6 +1,7 @@
 //@ts-ignore
 import canAutoplay from 'can-autoplay';
 import { parseStringPromise } from 'xml2js';
+import { v4 as uuidv4 } from 'uuid';
 
 export function formatTimestamp(input: any) {
   if (
@@ -282,4 +283,14 @@ export async function openFileSelector(accept?: string) {
     // dispatch a click event to open the file dialog
     inputElement.dispatchEvent(new MouseEvent('click'));
   });
+}
+
+export function getAndSaveClientId() {
+  let clientId = window.localStorage.getItem('watchparty-clientid');
+  if (!clientId) {
+    // Generate a new clientID and save it
+    clientId = uuidv4();
+    window.localStorage.setItem('watchparty-clientid', clientId);
+  }
+  return clientId;
 }
