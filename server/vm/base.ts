@@ -270,9 +270,9 @@ export abstract class VMManager {
       const retryCount = await this.redis.incr(
         this.getRedisStagingKey() + ':' + id
       );
-      if (retryCount % 20 === 0) {
-        this.powerOn(id);
-      }
+      // if (retryCount % 20 === 0) {
+      //   this.powerOn(id);
+      // }
       if (ready) {
         console.log('[CHECKSTAGING] ready:', id, candidate?.host, retryCount);
         // If it is, move it to available list
