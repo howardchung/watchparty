@@ -9,6 +9,7 @@ import { validateUserToken } from './utils/firebase';
 import { redisCount, redisCountDistinct } from './utils/redis';
 import { getCustomerByEmail } from './utils/stripe';
 import { AssignedVM, VMManager } from './vm/base';
+import { getStartOfDay } from './utils/time';
 
 let redis = (undefined as unknown) as Redis.Redis;
 if (process.env.REDIS_URL) {
@@ -40,6 +41,7 @@ export class Room {
   public isRoomDirty = false; // Indicates an unattended room needs to be saved, e.g. we unassign a VM from an empty room
   public isAssigningVM = false;
   private clientIdMap: StringDict = {};
+  private uidMap: StringDict = {};
 
   constructor(
     io: SocketIO.Server,
@@ -245,10 +247,9 @@ export class Room {
     if (!this.lock) {
       return true;
     }
-    let index = this.roster.findIndex((user) => user.id === socketId);
-    const result = this.roster[index]?.uid === this.lock;
+    const result = this.uidMap[socketId] === this.lock;
     if (!result) {
-      console.log('[VALIDATELOCK] failed');
+      console.log('[VALIDATELOCK] failed', socketId);
     }
     return result;
   };
@@ -283,13 +284,7 @@ export class Room {
     if (!decoded) {
       return;
     }
-    // set it on the matching user socket
-    let index = this.roster.findIndex((user) => user.id === socket.id);
-    if (index >= 0) {
-      this.roster[index].uid = decoded.uid;
-    }
-    console.log('[CMD:UID]', index, decoded.uid);
-    this.io.of(this.roomId).emit('roster', this.roster);
+    this.uidMap[socket.id] = decoded.uid;
   };
 
   private startHosting = (socket: Socket, data: string) => {
@@ -442,6 +437,25 @@ export class Room {
       return;
     }
     const match = this.roster.find((user) => user.id === socket.id);
+    // Log the vbrowser creation by uid and clientid
+    if (redis) {
+      const expireTime = getStartOfDay() / 1000 + 86400;
+      const clientId = this.clientIdMap[socket.id];
+      const uid = this.uidMap[socket.id];
+      if (clientId) {
+        const clientCount = await redis.zincrby(
+          'vBrowserClientIDs',
+          1,
+          clientId
+        );
+        redis.expireat('vBrowserClientIDs', expireTime);
+      }
+      if (uid) {
+        const uidCount = await redis.zincrby('vBrowserUIDs', 1, uid);
+        redis.expireat('vBrowserUIDs', expireTime);
+      }
+      // TODO limit users based on these counts
+    }
     this.isAssigningVM = true;
     let isLarge = false;
     if (process.env.STRIPE_SECRET_KEY && data && data.uid && data.token) {
