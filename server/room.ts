@@ -133,10 +133,11 @@ export class Room {
     return JSON.stringify({
       video: this.video,
       videoTS: this.videoTS,
+      subtitle: this.subtitle,
       paused: this.paused,
+      chat: this.chat,
       nameMap: this.nameMap,
       pictureMap: this.pictureMap,
-      chat: this.chat,
       vBrowser: this.vBrowser,
       creationTime: this.creationTime,
       lock: this.lock,
@@ -150,6 +151,9 @@ export class Room {
     const roomObj = JSON.parse(roomData);
     this.video = roomObj.video;
     this.videoTS = roomObj.videoTS;
+    if (roomObj.subtitle) {
+      this.subtitle = roomObj.subtitle;
+    }
     if (roomObj.paused) {
       this.paused = roomObj.paused;
     }
