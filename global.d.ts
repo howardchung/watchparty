@@ -12,8 +12,6 @@ interface User {
   id: string;
   isVideoChat?: boolean;
   isScreenShare?: boolean;
-  uid?: string;
-  clientId?: string;
 }
 
 interface ChatMessageBase {
