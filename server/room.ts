@@ -6,7 +6,7 @@ import Redis from 'ioredis';
 import { Socket } from 'socket.io';
 
 import { validateUserToken } from './utils/firebase';
-import { redisCount } from './utils/redis';
+import { redisCount, redisCountDistinct } from './utils/redis';
 import { getCustomerByEmail } from './utils/stripe';
 import { AssignedVM, VMManager } from './vm/base';
 
@@ -16,23 +16,29 @@ if (process.env.REDIS_URL) {
 }
 
 export class Room {
+  // Serialized state
   public video = '';
   public videoTS = 0;
   public subtitle = '';
   private paused = false;
-  public roster: User[] = [];
   private chat: ChatMessage[] = [];
-  private tsMap: NumberDict = {};
   private nameMap: StringDict = {};
   private pictureMap: StringDict = {};
   public vBrowser: AssignedVM | undefined = undefined;
-  private io: SocketIO.Server;
-  public roomId: string;
   public creationTime: Date = new Date();
+  public lock: string | undefined = ''; // uid of the user who locked the room
+  private password = ''; // custom string required to join the room
+  public owner = ''; // uid of the owner (means a permanent room)
+  public vanity = ''; // custom string to use in the URL
+
+  // Non-serialized state
+  public roomId: string;
+  public roster: User[] = [];
+  private tsMap: NumberDict = {};
+  private io: SocketIO.Server;
   private vmManagers: { standard: VMManager; large: VMManager } | undefined;
   public isRoomDirty = false; // Indicates an unattended room needs to be saved, e.g. we unassign a VM from an empty room
   public isAssigningVM = false;
-  public lock: string | undefined = ''; // The uid of the user who locked the room
 
   constructor(
     io: SocketIO.Server,
@@ -55,9 +61,21 @@ export class Room {
       }
     }, 1000);
 
+    io.use((socket, next) => {
+      // Validate the connector has the room password
+      const password = socket.handshake.query?.password;
+      // console.log(this.roomId, password);
+      if (this.password && password !== this.password) {
+        next(new Error('not authorized'));
+      } else {
+        next();
+      }
+    });
     io.of(roomId).on('connection', (socket: Socket) => {
-      this.roster.push({ id: socket.id });
+      const clientId = socket.handshake.query?.clientId;
+      this.roster.push({ id: socket.id, clientId });
       redisCount('connectStarts');
+      redisCountDistinct('connectStartsDistinct', clientId);
 
       socket.emit('REC:host', this.getHostState());
       socket.emit('REC:nameMap', this.nameMap);
@@ -69,7 +87,7 @@ export class Room {
 
       socket.on('CMD:name', (data) => this.changeUserName(socket, data));
       socket.on('CMD:picture', (data) => this.changeUserPicture(socket, data));
-      socket.on('CMD:uid', (data) => this.assignUserID(socket, data));
+      socket.on('CMD:uid', (data) => this.changeUserID(socket, data));
       socket.on('CMD:host', (data) => this.startHosting(socket, data));
       socket.on('CMD:play', () => this.playVideo(socket));
       socket.on('CMD:pause', () => this.pauseVideo(socket));
@@ -94,6 +112,9 @@ export class Room {
       socket.on('CMD:askHost', () => {
         socket.emit('REC:host', this.getHostState());
       });
+      socket.on('CMD:setPassword', (data) => this.setPassword(socket, data));
+      socket.on('CMD:setOwner', (data) => this.setOwner(socket, data));
+      socket.on('CMD:setVanity', (data) => this.setVanity(socket, data));
       socket.on('signal', (data) => this.sendSignal(socket, data));
       socket.on('signalSS', (data) => this.signalSS(socket, data));
 
@@ -112,6 +133,9 @@ export class Room {
       vBrowser: this.vBrowser,
       creationTime: this.creationTime,
       lock: this.lock,
+      password: this.password,
+      owner: this.owner,
+      vanity: this.vanity,
     });
   };
 
@@ -139,6 +163,15 @@ export class Room {
     }
     if (roomObj.lock) {
       this.lock = roomObj.lock;
+    }
+    if (roomObj.password) {
+      this.password = roomObj.password;
+    }
+    if (roomObj.owner) {
+      this.owner = roomObj.owner;
+    }
+    if (roomObj.vanity) {
+      this.vanity = roomObj.vanity;
     }
   };
 
@@ -235,7 +268,7 @@ export class Room {
     this.io.of(this.roomId).emit('REC:pictureMap', this.pictureMap);
   };
 
-  private assignUserID = async (
+  private changeUserID = async (
     socket: Socket,
     data: { uid: string; token: string }
   ) => {
@@ -543,6 +576,31 @@ export class Room {
       msg: '',
     };
     this.addChatMessage(socket, chatMsg);
+  };
+
+  private setPassword = async (
+    socket: Socket,
+    data: { uid: string; token: string; password: string }
+  ) => {
+    // TODO make sure user is owner
+    // TODO limit password length
+    // this.password = data.password;
+  };
+
+  private setOwner = async (
+    socket: Socket,
+    data: { uid: string; token: string; undo: boolean }
+  ) => {
+    // TODO make sure user isn't claiming too many rooms
+  };
+
+  private setVanity = async (
+    socket: Socket,
+    data: { uid: string; token: string; undo: boolean }
+  ) => {
+    // TODO make sure user is owner
+    // TODO limit length
+    // TODO make sure this vanity is unique
   };
 
   private sendSignal = (socket: Socket, data: { to: string; msg: string }) => {

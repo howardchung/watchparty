@@ -14,6 +14,7 @@ interface User {
   isScreenShare?: boolean;
   isController?: boolean;
   uid?: string;
+  clientId?: string;
 }
 
 interface ChatMessageBase {

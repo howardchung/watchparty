@@ -50,6 +50,7 @@ import 'firebase/auth';
 import { SubscribeModal } from '../Modal/SubscribeModal';
 import { VBrowserModal } from '../Modal/VBrowserModal';
 import { SettingsTab } from '../Settings/SettingsTab';
+import { v4 } from 'uuid';
 
 const firebaseConfig = process.env.REACT_APP_FIREBASE_CONFIG;
 if (firebaseConfig) {
@@ -271,12 +272,33 @@ export default class App extends React.Component<{}, AppState> {
     if (query) {
       roomId = '/' + query;
     }
+    // TODO if a vanity name, resolve the url to a room id
     this.join(roomId);
   };
 
   join = async (roomId: string) => {
+    let clientId = window.localStorage.getItem('watchparty-clientid');
+    if (!clientId) {
+      // Generate a new clientID and save it
+      clientId = v4();
+      window.localStorage.setItem('watchparty-clientid', clientId);
+    }
+    let password = '';
+    try {
+      const savedPasswordsString = window.localStorage.getItem(
+        'watchparty-passwords'
+      );
+      const savedPasswords = JSON.parse(savedPasswordsString || '{}');
+      password = savedPasswords[roomId] || '';
+    } catch (e) {
+      console.warn('[ALERT] Could not parse saved passwords');
+    }
     const socket = io.connect(serverPath + roomId, {
       transports: ['websocket'],
+      query: {
+        clientId,
+        password,
+      },
     });
     this.socket = socket;
     socket.on('connect', async () => {
@@ -291,7 +313,13 @@ export default class App extends React.Component<{}, AppState> {
     });
     socket.on('error', (err: any) => {
       console.error(err);
-      this.setState({ error: "There's no room with this name." });
+      if (err === 'Invalid namespace') {
+        this.setState({ error: "There's no room with this name." });
+      } else if (err === 'not authorized') {
+        this.setState({ error: 'This room requires a password.' });
+      } else {
+        this.setState({ error: 'An error occurred.' });
+      }
     });
     socket.on('REC:play', () => {
       this.doPlay();
@@ -1215,6 +1243,7 @@ export default class App extends React.Component<{}, AppState> {
               {this.state.error}
             </Header>
             <div style={{ display: 'flex', justifyContent: 'center' }}>
+              {/* TODO add a password field if not authorized, when entered save to localstorage and reload */}
               <Button
                 primary
                 size="huge"
