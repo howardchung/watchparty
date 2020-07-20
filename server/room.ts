@@ -39,6 +39,7 @@ export class Room {
   private vmManagers: { standard: VMManager; large: VMManager } | undefined;
   public isRoomDirty = false; // Indicates an unattended room needs to be saved, e.g. we unassign a VM from an empty room
   public isAssigningVM = false;
+  private clientIdMap: StringDict = {};
 
   constructor(
     io: SocketIO.Server,
@@ -73,7 +74,8 @@ export class Room {
     });
     io.of(roomId).on('connection', (socket: Socket) => {
       const clientId = socket.handshake.query?.clientId;
-      this.roster.push({ id: socket.id, clientId });
+      this.roster.push({ id: socket.id });
+      this.clientIdMap[socket.id] = clientId;
       redisCount('connectStarts');
       redisCountDistinct('connectStartsDistinct', clientId);
 
@@ -176,12 +178,17 @@ export class Room {
   };
 
   getHostState = (): HostState => {
+    // Reverse lookup the clientid to the socket id
+    const match = this.roster.find(
+      (user) => this.clientIdMap[user.id] === this.vBrowser?.controllerClient
+    );
     return {
       video: this.video,
       videoTS: this.videoTS,
       subtitle: this.subtitle,
       paused: this.paused,
       isVBrowserLarge: Boolean(this.vBrowser && this.vBrowser.large),
+      controller: match?.id,
     };
   };
 
@@ -191,9 +198,6 @@ export class Room {
     const id = this.vBrowser && this.vBrowser.id;
     const isLarge = this.vBrowser?.large;
     this.vBrowser = undefined;
-    this.roster.forEach((user, i) => {
-      this.roster[i].isController = false;
-    });
     this.cmdHost(undefined, '');
     this.isRoomDirty = true;
     if (redis && assignTime) {
@@ -437,6 +441,7 @@ export class Room {
     if (!data) {
       return;
     }
+    const match = this.roster.find((user) => user.id === socket.id);
     this.isAssigningVM = true;
     let isLarge = false;
     if (process.env.STRIPE_SECRET_KEY && data && data.uid && data.token) {
@@ -492,18 +497,13 @@ export class Room {
       return;
     }
     this.vBrowser = assignment;
-    this.roster.forEach((user, i) => {
-      if (user.id === socket.id) {
-        this.roster[i].isController = true;
-      } else {
-        this.roster[i].isController = false;
-      }
-    });
+    if (match) {
+      this.vBrowser.controllerClient = this.clientIdMap[match.id];
+    }
     this.cmdHost(
       undefined,
       'vbrowser://' + this.vBrowser.pass + '@' + this.vBrowser.host
     );
-    this.io.of(this.roomId).emit('roster', this.roster);
   };
 
   private leaveVBrowser = async (socket: Socket) => {
@@ -521,14 +521,11 @@ export class Room {
     if (!this.validateLock(socket.id)) {
       return;
     }
-    this.roster.forEach((user, i) => {
-      if (user.id === data) {
-        this.roster[i].isController = true;
-      } else {
-        this.roster[i].isController = false;
-      }
-    });
-    this.io.of(this.roomId).emit('roster', this.roster);
+    const match = this.roster.find((user) => user.id === data);
+    if (match && this.vBrowser) {
+      this.vBrowser.controllerClient = this.clientIdMap[match?.id];
+      this.io.of(this.roomId).emit('REC:changeController', match.id);
+    }
   };
 
   private addSubtitles = async (socket: Socket, data: string) => {
