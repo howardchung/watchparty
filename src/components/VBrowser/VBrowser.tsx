@@ -308,20 +308,22 @@ export default class VBrowser extends React.Component<{
 
   render() {
     return (
-      <div ref={this._container} style={{ position: 'relative' }}>
+      <div
+        ref={this._container}
+        style={{ position: 'relative', width: '100%' }}
+      >
         <video ref={this._video} id="leftVideo" style={{ width: '100%' }} />
         <div
           ref={this._overlay}
           id={'leftOverlay'}
           tabIndex={0}
           style={{
-            width: '100%',
-            height: '100%',
+            width: document.getElementById('leftVideo')?.clientWidth,
+            height: document.getElementById('leftVideo')?.clientHeight,
             position: 'absolute',
             top: 0,
             bottom: 0,
-            overflow: 'scroll',
-            overscrollBehavior: 'contain',
+            // disable firefox scrollbars?
             scrollbarWidth: 'none',
           }}
           onClick={this.onClick}

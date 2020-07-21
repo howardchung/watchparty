@@ -1,8 +1,6 @@
 import './App.css';
 
-// import { v4 as uuidv4 } from 'uuid';
 import querystring from 'querystring';
-
 //@ts-ignore
 import magnet from 'magnet-uri';
 import React from 'react';
@@ -34,6 +32,7 @@ import {
   serverPath,
   testAutoplay,
   openFileSelector,
+  getAndSaveClientId,
 } from '../../utils';
 import { generateName } from '../../utils/generateName';
 import { Chat } from '../Chat';
@@ -85,7 +84,6 @@ interface AppState {
   watchOptions: SearchResult[];
   isScreenSharing: boolean;
   isScreenSharingFile: boolean;
-  isControlling: boolean;
   isVBrowser: boolean;
   user?: firebase.User;
   isYouTubeReady: boolean;
@@ -105,6 +103,7 @@ interface AppState {
   isSubscribeModalOpen: boolean;
   isVBrowserModalOpen: boolean;
   roomLock: string;
+  controller?: string;
 }
 
 export default class App extends React.Component<{}, AppState> {
@@ -128,7 +127,6 @@ export default class App extends React.Component<{}, AppState> {
     watchOptions: [],
     isScreenSharing: false,
     isScreenSharingFile: false,
-    isControlling: false,
     isVBrowser: false,
     user: undefined,
     isYouTubeReady: false,
@@ -148,6 +146,7 @@ export default class App extends React.Component<{}, AppState> {
     isSubscribeModalOpen: false,
     isVBrowserModalOpen: false,
     roomLock: '',
+    controller: '',
   };
   socket: any = null;
   watchPartyYTPlayer: any = null;
@@ -271,12 +270,27 @@ export default class App extends React.Component<{}, AppState> {
     if (query) {
       roomId = '/' + query;
     }
+    // TODO if a vanity name, resolve the url to a room id
     this.join(roomId);
   };
 
   join = async (roomId: string) => {
+    let password = '';
+    try {
+      const savedPasswordsString = window.localStorage.getItem(
+        'watchparty-passwords'
+      );
+      const savedPasswords = JSON.parse(savedPasswordsString || '{}');
+      password = savedPasswords[roomId] || '';
+    } catch (e) {
+      console.warn('[ALERT] Could not parse saved passwords');
+    }
     const socket = io.connect(serverPath + roomId, {
       transports: ['websocket'],
+      query: {
+        clientId: getAndSaveClientId(),
+        password,
+      },
     });
     this.socket = socket;
     socket.on('connect', async () => {
@@ -291,7 +305,13 @@ export default class App extends React.Component<{}, AppState> {
     });
     socket.on('error', (err: any) => {
       console.error(err);
-      this.setState({ error: "There's no room with this name." });
+      if (err === 'Invalid namespace') {
+        this.setState({ error: "There's no room with this name." });
+      } else if (err === 'not authorized') {
+        this.setState({ error: 'This room requires a password.' });
+      } else {
+        this.setState({ error: 'An error occurred.' });
+      }
     });
     socket.on('REC:play', () => {
       this.doPlay();
@@ -311,6 +331,9 @@ export default class App extends React.Component<{}, AppState> {
           }
         }
       );
+    });
+    socket.on('REC:changeController', (data: string) => {
+      this.setState({ controller: data });
     });
     socket.on('REC:host', (data: HostState) => {
       let currentMedia = data.video || '';
@@ -344,6 +367,7 @@ export default class App extends React.Component<{}, AppState> {
           vBrowserResolution: data.isVBrowserLarge
             ? '1920x1080@30'
             : '1280x720@30',
+          controller: data.controller,
         },
         () => {
           if (
@@ -450,7 +474,6 @@ export default class App extends React.Component<{}, AppState> {
         { participants: data, rosterUpdateTS: Number(new Date()) },
         () => {
           this.updateScreenShare();
-          this.updateVBrowser();
         }
       );
     });
@@ -622,18 +645,6 @@ export default class App extends React.Component<{}, AppState> {
 
   stopVBrowser = async () => {
     this.socket.emit('CMD:stopVBrowser');
-  };
-
-  updateVBrowser = async () => {
-    if (!this.isVBrowser()) {
-      return;
-    }
-    const controller = this.state.participants.find((p) => p.isController);
-    if (controller && controller.id === this.socket.id) {
-      this.setState({ isControlling: true });
-    } else {
-      this.setState({ isControlling: false });
-    }
   };
 
   changeController = async (e: any, data: DropdownProps) => {
@@ -1162,7 +1173,6 @@ export default class App extends React.Component<{}, AppState> {
 
   render() {
     const sharer = this.state.participants.find((p) => p.isScreenShare);
-    const controller = this.state.participants.find((p) => p.isController);
     const controls = (
       <Controls
         key={this.state.controlsTimestamp}
@@ -1215,6 +1225,7 @@ export default class App extends React.Component<{}, AppState> {
               {this.state.error}
             </Header>
             <div style={{ display: 'flex', justifyContent: 'center' }}>
+              {/* TODO add a password field if not authorized, when entered save to localstorage and reload */}
               <Button
                 primary
                 size="huge"
@@ -1336,7 +1347,7 @@ export default class App extends React.Component<{}, AppState> {
                             className="icon"
                             style={{ height: '36px' }}
                             button
-                            value={controller && controller!.id}
+                            value={this.state.controller}
                             placeholder="No controller"
                             onChange={this.changeController}
                             selection
@@ -1582,7 +1593,7 @@ export default class App extends React.Component<{}, AppState> {
                           username={this.socket.id}
                           password={this.getVBrowserPass()}
                           hostname={this.getVBrowserHost()}
-                          controlling={this.state.isControlling}
+                          controlling={this.state.controller === this.socket.id}
                           setLoadingFalse={this.setLoadingFalse}
                           resolution={this.state.vBrowserResolution}
                           isAutoPlayable={this.state.isAutoPlayable}

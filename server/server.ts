@@ -13,7 +13,7 @@ import http from 'http';
 import socketIO from 'socket.io';
 import { searchYoutube } from './utils/youtube';
 import { Room } from './room';
-import { getRedisCountDay } from './utils/redis';
+import { getRedisCountDay, getRedisCountDayDistinct } from './utils/redis';
 import { Scaleway } from './vm/scaleway';
 import { Hetzner } from './vm/hetzner';
 import { DigitalOcean } from './vm/digitalocean';
@@ -152,6 +152,8 @@ app.get('/stats', async (req, res) => {
         vBrowserElapsed:
           room.vBrowser?.assignTime && now - room.vBrowser?.assignTime,
         lock: room.lock || undefined,
+        owner: room.owner || undefined,
+        vanity: room.vanity || undefined,
       };
       currentUsers += obj.rosterLength;
       currentVideoChat += obj.videoChats;
@@ -229,7 +231,22 @@ app.get('/stats', async (req, res) => {
     const fileShareStarts = await getRedisCountDay('fileShareStarts');
     const videoChatStarts = await getRedisCountDay('videoChatStarts');
     const connectStarts = await getRedisCountDay('connectStarts');
+    const connectStartsDistinct = await getRedisCountDayDistinct(
+      'connectStartsDistinct'
+    );
     const subUploads = await getRedisCountDay('subUploads');
+    const vBrowserClientIDs = await redis.zrevrangebyscore(
+      'vBrowserClientIDs',
+      '+inf',
+      '0',
+      'WITHSCORES'
+    );
+    const vBrowserUIDs = await redis.zrevrangebyscore(
+      'vBrowserUIDs',
+      '+inf',
+      '0',
+      'WITHSCORES'
+    );
 
     res.json({
       uptime,
@@ -254,6 +271,7 @@ app.get('/stats', async (req, res) => {
       subUploads,
       videoChatStarts,
       connectStarts,
+      connectStartsDistinct,
       vBrowserStarts,
       vBrowserLaunches,
       vBrowserTerminateManual,
@@ -264,6 +282,8 @@ app.get('/stats', async (req, res) => {
       vBrowserStartMS,
       vBrowserSessionMS,
       vBrowserVMLifetime,
+      vBrowserClientIDs,
+      vBrowserUIDs,
       rooms: roomData,
     });
   } else {
