@@ -1,4 +1,5 @@
 import Redis from 'ioredis';
+import { getStartOfHour } from './time';
 
 let redis = (undefined as unknown) as Redis.Redis;
 if (process.env.REDIS_URL) {
@@ -63,19 +64,4 @@ export async function getRedisCountHourDistinct(prefix: string) {
   }
   // Get counts for previous full hour
   return await redis.pfcount(`${prefix}:${getStartOfHour() - 3600 * 1000}`);
-}
-
-function getStartOfDay() {
-  const now = Number(new Date());
-  return now - (now % 86400000);
-}
-
-function getStartOfHour() {
-  const now = Number(new Date());
-  return now - (now % 3600000);
-}
-
-function getStartOfMinute() {
-  const now = Number(new Date());
-  return now - (now % 60000);
 }

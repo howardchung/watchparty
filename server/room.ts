@@ -1,14 +1,18 @@
 import crypto from 'crypto';
-import { gzipSync } from 'zlib';
+import zlib from 'zlib';
+import util from 'util';
 
 import axios from 'axios';
 import Redis from 'ioredis';
 import { Socket } from 'socket.io';
 
 import { validateUserToken } from './utils/firebase';
-import { redisCount } from './utils/redis';
+import { redisCount, redisCountDistinct } from './utils/redis';
 import { getCustomerByEmail } from './utils/stripe';
 import { AssignedVM, VMManager } from './vm/base';
+import { getStartOfDay } from './utils/time';
+
+const gzip = util.promisify(zlib.gzip);
 
 let redis = (undefined as unknown) as Redis.Redis;
 if (process.env.REDIS_URL) {
@@ -16,23 +20,31 @@ if (process.env.REDIS_URL) {
 }
 
 export class Room {
+  // Serialized state
   public video = '';
   public videoTS = 0;
   public subtitle = '';
   private paused = false;
-  public roster: User[] = [];
   private chat: ChatMessage[] = [];
-  private tsMap: NumberDict = {};
   private nameMap: StringDict = {};
   private pictureMap: StringDict = {};
   public vBrowser: AssignedVM | undefined = undefined;
-  private io: SocketIO.Server;
-  public roomId: string;
   public creationTime: Date = new Date();
+  public lock: string | undefined = ''; // uid of the user who locked the room
+  private password = ''; // custom string required to join the room
+  public owner = ''; // uid of the owner (means a permanent room)
+  public vanity = ''; // custom string to use in the URL
+
+  // Non-serialized state
+  public roomId: string;
+  public roster: User[] = [];
+  private tsMap: NumberDict = {};
+  private io: SocketIO.Server;
   private vmManagers: { standard: VMManager; large: VMManager } | undefined;
   public isRoomDirty = false; // Indicates an unattended room needs to be saved, e.g. we unassign a VM from an empty room
   public isAssigningVM = false;
-  public lock: string | undefined = ''; // The uid of the user who locked the room
+  private clientIdMap: StringDict = {};
+  private uidMap: StringDict = {};
 
   constructor(
     io: SocketIO.Server,
@@ -55,9 +67,22 @@ export class Room {
       }
     }, 1000);
 
+    io.use((socket, next) => {
+      // Validate the connector has the room password
+      const password = socket.handshake.query?.password;
+      // console.log(this.roomId, password);
+      if (this.password && password !== this.password) {
+        next(new Error('not authorized'));
+      } else {
+        next();
+      }
+    });
     io.of(roomId).on('connection', (socket: Socket) => {
+      const clientId = socket.handshake.query?.clientId;
       this.roster.push({ id: socket.id });
+      this.clientIdMap[socket.id] = clientId;
       redisCount('connectStarts');
+      redisCountDistinct('connectStartsDistinct', clientId);
 
       socket.emit('REC:host', this.getHostState());
       socket.emit('REC:nameMap', this.nameMap);
@@ -69,7 +94,7 @@ export class Room {
 
       socket.on('CMD:name', (data) => this.changeUserName(socket, data));
       socket.on('CMD:picture', (data) => this.changeUserPicture(socket, data));
-      socket.on('CMD:uid', (data) => this.assignUserID(socket, data));
+      socket.on('CMD:uid', (data) => this.changeUserID(socket, data));
       socket.on('CMD:host', (data) => this.startHosting(socket, data));
       socket.on('CMD:play', () => this.playVideo(socket));
       socket.on('CMD:pause', () => this.pauseVideo(socket));
@@ -94,6 +119,9 @@ export class Room {
       socket.on('CMD:askHost', () => {
         socket.emit('REC:host', this.getHostState());
       });
+      socket.on('CMD:setPassword', (data) => this.setPassword(socket, data));
+      socket.on('CMD:setOwner', (data) => this.setOwner(socket, data));
+      socket.on('CMD:setVanity', (data) => this.setVanity(socket, data));
       socket.on('signal', (data) => this.sendSignal(socket, data));
       socket.on('signalSS', (data) => this.signalSS(socket, data));
 
@@ -105,13 +133,17 @@ export class Room {
     return JSON.stringify({
       video: this.video,
       videoTS: this.videoTS,
+      subtitle: this.subtitle,
       paused: this.paused,
+      chat: this.chat,
       nameMap: this.nameMap,
       pictureMap: this.pictureMap,
-      chat: this.chat,
       vBrowser: this.vBrowser,
       creationTime: this.creationTime,
       lock: this.lock,
+      password: this.password,
+      owner: this.owner,
+      vanity: this.vanity,
     });
   };
 
@@ -119,6 +151,9 @@ export class Room {
     const roomObj = JSON.parse(roomData);
     this.video = roomObj.video;
     this.videoTS = roomObj.videoTS;
+    if (roomObj.subtitle) {
+      this.subtitle = roomObj.subtitle;
+    }
     if (roomObj.paused) {
       this.paused = roomObj.paused;
     }
@@ -140,15 +175,29 @@ export class Room {
     if (roomObj.lock) {
       this.lock = roomObj.lock;
     }
+    if (roomObj.password) {
+      this.password = roomObj.password;
+    }
+    if (roomObj.owner) {
+      this.owner = roomObj.owner;
+    }
+    if (roomObj.vanity) {
+      this.vanity = roomObj.vanity;
+    }
   };
 
   getHostState = (): HostState => {
+    // Reverse lookup the clientid to the socket id
+    const match = this.roster.find(
+      (user) => this.clientIdMap[user.id] === this.vBrowser?.controllerClient
+    );
     return {
       video: this.video,
       videoTS: this.videoTS,
       subtitle: this.subtitle,
       paused: this.paused,
       isVBrowserLarge: Boolean(this.vBrowser && this.vBrowser.large),
+      controller: match?.id,
     };
   };
 
@@ -158,9 +207,6 @@ export class Room {
     const id = this.vBrowser && this.vBrowser.id;
     const isLarge = this.vBrowser?.large;
     this.vBrowser = undefined;
-    this.roster.forEach((user, i) => {
-      this.roster[i].isController = false;
-    });
     this.cmdHost(undefined, '');
     this.isRoomDirty = true;
     if (redis && assignTime) {
@@ -208,10 +254,9 @@ export class Room {
     if (!this.lock) {
       return true;
     }
-    let index = this.roster.findIndex((user) => user.id === socketId);
-    const result = this.roster[index]?.uid === this.lock;
+    const result = this.uidMap[socketId] === this.lock;
     if (!result) {
-      console.log('[VALIDATELOCK] failed');
+      console.log('[VALIDATELOCK] failed', socketId);
     }
     return result;
   };
@@ -235,7 +280,7 @@ export class Room {
     this.io.of(this.roomId).emit('REC:pictureMap', this.pictureMap);
   };
 
-  private assignUserID = async (
+  private changeUserID = async (
     socket: Socket,
     data: { uid: string; token: string }
   ) => {
@@ -246,13 +291,7 @@ export class Room {
     if (!decoded) {
       return;
     }
-    // set it on the matching user socket
-    let index = this.roster.findIndex((user) => user.id === socket.id);
-    if (index >= 0) {
-      this.roster[index].uid = decoded.uid;
-    }
-    console.log('[CMD:UID]', index, decoded.uid);
-    this.io.of(this.roomId).emit('roster', this.roster);
+    this.uidMap[socket.id] = decoded.uid;
   };
 
   private startHosting = (socket: Socket, data: string) => {
@@ -300,7 +339,7 @@ export class Room {
   };
 
   private seekVideo = (socket: Socket, data: number) => {
-    if (JSON.stringify(data).length > 100) {
+    if (String(data).length > 100) {
       return;
     }
     if (!this.validateLock(socket.id)) {
@@ -313,7 +352,7 @@ export class Room {
   };
 
   private setTimestamp = (socket: Socket, data: number) => {
-    if (JSON.stringify(data).length > 100) {
+    if (String(data).length > 100) {
       return;
     }
     if (data > this.videoTS) {
@@ -404,6 +443,25 @@ export class Room {
     if (!data) {
       return;
     }
+    const clientId = this.clientIdMap[socket.id];
+    const uid = this.uidMap[socket.id];
+    // Log the vbrowser creation by uid and clientid
+    if (redis) {
+      const expireTime = getStartOfDay() / 1000 + 86400;
+      if (clientId) {
+        const clientCount = await redis.zincrby(
+          'vBrowserClientIDs',
+          1,
+          clientId
+        );
+        redis.expireat('vBrowserClientIDs', expireTime);
+      }
+      if (uid) {
+        const uidCount = await redis.zincrby('vBrowserUIDs', 1, uid);
+        redis.expireat('vBrowserUIDs', expireTime);
+      }
+      // TODO limit users based on these counts
+    }
     this.isAssigningVM = true;
     let isLarge = false;
     if (process.env.STRIPE_SECRET_KEY && data && data.uid && data.token) {
@@ -459,18 +517,11 @@ export class Room {
       return;
     }
     this.vBrowser = assignment;
-    this.roster.forEach((user, i) => {
-      if (user.id === socket.id) {
-        this.roster[i].isController = true;
-      } else {
-        this.roster[i].isController = false;
-      }
-    });
+    this.vBrowser.controllerClient = clientId;
     this.cmdHost(
       undefined,
       'vbrowser://' + this.vBrowser.pass + '@' + this.vBrowser.host
     );
-    this.io.of(this.roomId).emit('roster', this.roster);
   };
 
   private leaveVBrowser = async (socket: Socket) => {
@@ -485,17 +536,16 @@ export class Room {
   };
 
   private changeController = (socket: Socket, data: string) => {
+    if (data && data.length > 100) {
+      return;
+    }
     if (!this.validateLock(socket.id)) {
       return;
     }
-    this.roster.forEach((user, i) => {
-      if (user.id === data) {
-        this.roster[i].isController = true;
-      } else {
-        this.roster[i].isController = false;
-      }
-    });
-    this.io.of(this.roomId).emit('roster', this.roster);
+    if (this.vBrowser) {
+      this.vBrowser.controllerClient = this.clientIdMap[data];
+      this.io.of(this.roomId).emit('REC:changeController', data);
+    }
   };
 
   private addSubtitles = async (socket: Socket, data: string) => {
@@ -514,8 +564,9 @@ export class Room {
       .update(data, 'utf8')
       .digest()
       .toString('hex');
-    const gzip = gzipSync(data);
-    await redis.setex('subtitle:' + hash, 3 * 60 * 60, gzip);
+    const gzipData = (await gzip(data)) as Buffer;
+    // console.log(data.length, gzipData.length);
+    await redis.setex('subtitle:' + hash, 3 * 60 * 60, gzipData);
     this.subtitle = hash;
     this.io.of(this.roomId).emit('REC:subtitle', this.subtitle);
     redisCount('subUploads');
@@ -543,6 +594,31 @@ export class Room {
       msg: '',
     };
     this.addChatMessage(socket, chatMsg);
+  };
+
+  private setPassword = async (
+    socket: Socket,
+    data: { uid: string; token: string; password: string }
+  ) => {
+    // TODO make sure user is owner
+    // TODO limit password length
+    // this.password = data.password;
+  };
+
+  private setOwner = async (
+    socket: Socket,
+    data: { uid: string; token: string; undo: boolean }
+  ) => {
+    // TODO make sure user isn't claiming too many rooms
+  };
+
+  private setVanity = async (
+    socket: Socket,
+    data: { uid: string; token: string; undo: boolean }
+  ) => {
+    // TODO make sure user is owner
+    // TODO limit length
+    // TODO make sure this vanity is unique
   };
 
   private sendSignal = (socket: Socket, data: { to: string; msg: string }) => {

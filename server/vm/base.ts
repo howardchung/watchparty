@@ -372,4 +372,5 @@ export interface VM {
 
 export interface AssignedVM extends VM {
   assignTime: number;
+  controllerClient?: string;
 }
