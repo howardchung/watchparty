@@ -100,12 +100,15 @@ export class Docker extends VMManager {
 
   listVMs = async (filter?: string) => {
     return new Promise<VM[]>((resolve, reject) => {
+      // TODO this errors if there aren't any running containers
       sshExec(
         `docker inspect $(docker ps --filter label=vbrowser --quiet --no-trunc)`,
         sshConfig,
         (err: string, stdout: string) => {
           if (err) {
-            return reject(err);
+            // return reject(err);
+            console.log('[NON-CRITICAL]', err);
+            return [];
           }
           if (!stdout) {
             return [];
