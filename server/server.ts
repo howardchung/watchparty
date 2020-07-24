@@ -241,14 +241,22 @@ app.get('/stats', async (req, res) => {
       'vBrowserClientIDs',
       '+inf',
       '0',
-      'WITHSCORES'
+      'WITHSCORES',
+      'LIMIT',
+      0,
+      20
     );
     const vBrowserUIDs = await redis.zrevrangebyscore(
       'vBrowserUIDs',
       '+inf',
       '0',
-      'WITHSCORES'
+      'WITHSCORES',
+      'LIMIT',
+      0,
+      20
     );
+    const vBrowserClientIDsCard = await redis.zcard('vBrowserClientIDs');
+    const vBrowserUIDsCard = await redis.zcard('vBrowserUIDs');
 
     res.json({
       uptime,
@@ -284,6 +292,8 @@ app.get('/stats', async (req, res) => {
       vBrowserStartMS,
       vBrowserSessionMS,
       vBrowserVMLifetime,
+      vBrowserClientIDsCard,
+      vBrowserUIDsCard,
       vBrowserClientIDs,
       vBrowserUIDs,
       rooms: roomData,
