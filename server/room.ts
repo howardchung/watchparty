@@ -5,6 +5,7 @@ import util from 'util';
 import axios from 'axios';
 import Redis from 'ioredis';
 import { Socket } from 'socket.io';
+import { Client } from 'pg';
 
 import { validateUserToken } from './utils/firebase';
 import { redisCount, redisCountDistinct } from './utils/redis';
@@ -18,6 +19,14 @@ let redis = (undefined as unknown) as Redis.Redis;
 if (process.env.REDIS_URL) {
   redis = new Redis(process.env.REDIS_URL);
 }
+let postgres = (undefined as unknown) as Client;
+if (process.env.DATABASE_URL) {
+  postgres = new Client({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false },
+  });
+  postgres.connect();
+}
 
 export class Room {
   // Serialized state
@@ -30,10 +39,10 @@ export class Room {
   private pictureMap: StringDict = {};
   public vBrowser: AssignedVM | undefined = undefined;
   public creationTime: Date = new Date();
-  public lock: string | undefined = ''; // uid of the user who locked the room
-  private password = ''; // custom string required to join the room
-  public owner = ''; // uid of the owner (means a permanent room)
-  public vanity = ''; // custom string to use in the URL
+  public lock: string | undefined = undefined; // uid of the user who locked the room
+  private password: string | undefined = undefined; // custom string required to join the room
+  public owner: string | undefined = undefined; // uid of the owner (means a permanent room)
+  public vanity: string | undefined = undefined; // custom string to use in the URL
 
   // Non-serialized state
   public roomId: string;
@@ -41,7 +50,6 @@ export class Room {
   private tsMap: NumberDict = {};
   private io: SocketIO.Server;
   private vmManagers: { standard: VMManager; large: VMManager } | undefined;
-  public isRoomDirty = false; // Indicates an unattended room needs to be saved, e.g. we unassign a VM from an empty room
   public isAssigningVM = false;
   private clientIdMap: StringDict = {};
   private uidMap: StringDict = {};
@@ -186,6 +194,46 @@ export class Room {
     }
   };
 
+  saveToRedis = async () => {
+    try {
+      const roomString = this.serialize();
+      const key = this.roomId;
+      const permanent = Boolean(this.owner);
+      if (permanent) {
+        await redis.set(key, roomString);
+        await redis.persist(key);
+      } else {
+        await redis.setex(key, 24 * 60 * 60, roomString);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  saveToPostgres = async () => {
+    try {
+      // Only keep the rows for which we have a postgres column
+      const roomObj = {
+        roomId: this.roomId,
+        creationTime: this.creationTime,
+        password: this.password,
+        owner: this.owner,
+        vanity: this.vanity,
+      };
+      const columns = Object.keys(roomObj);
+      const values = Object.values(roomObj);
+      const query = `INSERT INTO room(${columns.join(',')})
+    VALUES (${values.map((_, i) => '$' + (i + 1)).join(',')})
+    ON CONFLICT(roomId) DO UPDATE SET ${columns
+      .map((c) => c + '=' + 'EXCLUDED.' + c)
+      .join(',')}`;
+      // console.log(columns, values, query);
+      await postgres.query(query, values);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   getHostState = (): HostState => {
     // Reverse lookup the clientid to the socket id
     const match = this.roster.find(
@@ -208,7 +256,7 @@ export class Room {
     const isLarge = this.vBrowser?.large;
     this.vBrowser = undefined;
     this.cmdHost(undefined, '');
-    this.isRoomDirty = true;
+    this.saveToRedis();
     if (redis && assignTime) {
       await redis.lpush('vBrowserSessionMS', Number(new Date()) - assignTime);
       await redis.ltrim('vBrowserSessionMS', 0, 24);
@@ -610,6 +658,7 @@ export class Room {
     data: { uid: string; token: string; undo: boolean }
   ) => {
     // TODO make sure user isn't claiming too many rooms
+    // TODO delete from postgres if undoing
   };
 
   private setVanity = async (
