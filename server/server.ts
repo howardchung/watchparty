@@ -77,8 +77,8 @@ async function saveRooms() {
     const roomArr = Array.from(rooms.values());
     for (let i = 0; i < roomArr.length; i++) {
       if (roomArr[i].roster.length) {
-        roomArr[i].saveToRedis();
-        // roomArr[i].saveToPostgres();
+        await roomArr[i].saveToRedis();
+        // await roomArr[i].saveToPostgres();
       }
     }
     // console.timeEnd('roomSave');
