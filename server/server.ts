@@ -71,16 +71,14 @@ if (process.env.REDIS_URL && process.env.DOCKER_VM_HOST) {
 const vmManagers = { standard: vmManager!, large: vmManagerLarge! };
 init();
 
-async function saveRoomsToRedis() {
+async function saveRooms() {
   while (true) {
     // console.time('roomSave');
     const roomArr = Array.from(rooms.values());
     for (let i = 0; i < roomArr.length; i++) {
-      if (roomArr[i].roster.length || roomArr[i].isRoomDirty) {
-        const roomData = roomArr[i].serialize();
-        const key = roomArr[i].roomId;
-        await redis.setex(key, 24 * 60 * 60, roomData);
-        roomArr[i].isRoomDirty = false;
+      if (roomArr[i].roster.length) {
+        roomArr[i].saveToRedis();
+        // roomArr[i].saveToPostgres();
       }
     }
     // console.timeEnd('roomSave');
@@ -88,7 +86,7 @@ async function saveRoomsToRedis() {
   }
 }
 async function init() {
-  if (process.env.REDIS_URL) {
+  if (redis) {
     // Load rooms from Redis
     console.log('loading rooms from redis');
     const keys = await redis.keys('/*');
@@ -96,11 +94,15 @@ async function init() {
     for (let i = 0; i < keys.length; i++) {
       const key = keys[i];
       const roomData = await redis.get(key);
-      console.log(key, roomData?.length);
-      rooms.set(key, new Room(io, vmManagers, key, roomData));
+      // console.log(key, roomData);
+      try {
+        rooms.set(key, new Room(io, vmManagers, key, roomData));
+      } catch (e) {
+        console.error(e);
+      }
     }
-    // Start saving rooms to Redis
-    saveRoomsToRedis();
+    // Start saving rooms
+    saveRooms();
   }
 
   if (!rooms.has('/default')) {
