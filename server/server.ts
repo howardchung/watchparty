@@ -22,6 +22,7 @@ import { VMManager } from './vm/base';
 import { getCustomerByEmail, createSelfServicePortal } from './utils/stripe';
 import { validateUserToken } from './utils/firebase';
 import path from 'path';
+import { Client } from 'pg';
 
 const app = express();
 let server: any = null;
@@ -36,6 +37,14 @@ const io = socketIO(server, { origins: '*:*', transports: ['websocket'] });
 let redis = (undefined as unknown) as Redis.Redis;
 if (process.env.REDIS_URL) {
   redis = new Redis(process.env.REDIS_URL);
+}
+let postgres = (undefined as unknown) as Client;
+if (process.env.DATABASE_URL) {
+  postgres = new Client({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false },
+  });
+  postgres.connect();
 }
 
 const names = Moniker.generator([
@@ -99,6 +108,20 @@ async function init() {
         rooms.set(key, new Room(io, vmManagers, key, roomData));
       } catch (e) {
         console.error(e);
+      }
+    }
+    // load the roomState from postgres to fill any rooms that were lost in redis
+    const postgresRooms = (await postgres.query('SELECT * from room')).rows;
+    console.log(
+      util.format('found %s rooms in postgres', postgresRooms.length)
+    );
+    for (let i = 0; i < postgresRooms.length; i++) {
+      const key = postgresRooms[i].roomId;
+      if (!rooms.has(key)) {
+        rooms.set(
+          key,
+          new Room(io, vmManagers, key, JSON.stringify(postgresRooms[i]))
+        );
       }
     }
     // Start saving rooms
@@ -377,6 +400,19 @@ app.get('/metadata', async (req, res) => {
     customer.subscriptions?.data?.[0]?.status === 'active'
   );
   return res.json({ isSubscriber });
+});
+
+app.get('/resolveRoom/:vanity', async (req, res) => {
+  const vanity = req.params.vanity;
+  const result = await postgres.query(
+    `SELECT roomId as "roomId", vanity from room WHERE vanity = $1`,
+    [vanity]
+  );
+  if (!result.rows.length) {
+    return res.status(404).end();
+  }
+  // console.log(vanity, result.rows);
+  return res.json(result.rows[0]);
 });
 
 app.get('/kv', async (req, res) => {
