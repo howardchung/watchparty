@@ -23,7 +23,7 @@ An website for watching videos together.
 - Clone this repo via `git clone git@github.com:howardchung/watchparty.git`
 - Install npm dependencies for the project via `npm install`
 - Start the server via `npm run dev`
-  - Defaults to port 8080, customize with  `PORT` env var
+  - Defaults to port 8080, customize with `PORT` env var
   - Run using self-signed HTTPS cert with `HTTPS=true`. This is needed for some WebRTC features (camera, etc.)
 - Start the React application in a separate shell via `npm run start`
   - Point to server using `REACT_APP_SERVER_HOST` env var if you customized it above

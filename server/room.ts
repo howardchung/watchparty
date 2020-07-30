@@ -40,7 +40,7 @@ export class Room {
   public vBrowser: AssignedVM | undefined = undefined;
   public creationTime: Date = new Date();
   public lock: string | undefined = undefined; // uid of the user who locked the room
-  private password: string | undefined = undefined; // custom string required to join the room
+  public password: string | undefined = undefined; // custom string required to join the room
   public owner: string | undefined = undefined; // uid of the owner (means a permanent room)
   public vanity: string | undefined = undefined; // custom string to use in the URL
 
@@ -78,7 +78,7 @@ export class Room {
     io.use((socket, next) => {
       // Validate the connector has the room password
       const password = socket.handshake.query?.password;
-      // console.log(this.roomId, password);
+      // console.log(this.roomId, this.password, password);
       if (this.password && password !== this.password) {
         next(new Error('not authorized'));
       } else {
@@ -127,9 +127,7 @@ export class Room {
       socket.on('CMD:askHost', () => {
         socket.emit('REC:host', this.getHostState());
       });
-      socket.on('CMD:setPassword', (data) => this.setPassword(socket, data));
-      socket.on('CMD:setOwner', (data) => this.setOwner(socket, data));
-      socket.on('CMD:setVanity', (data) => this.setVanity(socket, data));
+      socket.on('CMD:setRoomState', (data) => this.setRoomState(socket, data));
       socket.on('signal', (data) => this.sendSignal(socket, data));
       socket.on('signalSS', (data) => this.signalSS(socket, data));
 
@@ -340,6 +338,9 @@ export class Room {
       return;
     }
     this.uidMap[socket.id] = decoded.uid;
+    if (decoded.uid === this.owner) {
+      socket.emit('REC:getRoomState', this.getRoomState());
+    }
   };
 
   private startHosting = (socket: Socket, data: string) => {
@@ -644,30 +645,84 @@ export class Room {
     this.addChatMessage(socket, chatMsg);
   };
 
-  private setPassword = async (
-    socket: Socket,
-    data: { uid: string; token: string; password: string }
-  ) => {
-    // TODO make sure user is owner
-    // TODO limit password length
-    // this.password = data.password;
+  private getRoomState = () => {
+    return {
+      password: this.password,
+      vanity: this.vanity,
+      owner: this.owner,
+    };
   };
 
-  private setOwner = async (
+  private setRoomState = async (
     socket: Socket,
-    data: { uid: string; token: string; undo: boolean }
+    data: {
+      uid: string;
+      token: string;
+      password: string;
+      owner: string;
+      vanity: string;
+    }
   ) => {
-    // TODO make sure user isn't claiming too many rooms
-    // TODO delete from postgres if undoing
-  };
-
-  private setVanity = async (
-    socket: Socket,
-    data: { uid: string; token: string; undo: boolean }
-  ) => {
-    // TODO make sure user is owner
-    // TODO limit length
-    // TODO make sure this vanity is unique
+    const decoded = await validateUserToken(
+      data?.uid as string,
+      data?.token as string
+    );
+    // TODO better error messages
+    if (!decoded) {
+      return;
+    }
+    if (this.owner && this.owner !== decoded?.uid) {
+      return;
+    }
+    const { password, owner, vanity } = data;
+    if (password) {
+      if (password.length > 100) {
+        return;
+      }
+    }
+    if (owner) {
+      // validate room count
+      const roomCount = (
+        await postgres.query('SELECT count(1) from room where owner = $1', [
+          owner,
+        ])
+      ).rows[0].count;
+      const customer = await getCustomerByEmail(decoded.email as string);
+      const isSubscriber = Boolean(
+        customer?.subscriptions?.data?.[0]?.status === 'active'
+      );
+      const limit = isSubscriber ? 5 : 1;
+      // console.log(roomCount, limit, isSubscriber);
+      if (roomCount >= limit) {
+        return;
+      }
+    }
+    if (vanity) {
+      if (vanity.length > 100) {
+        return;
+      }
+      const existing = await postgres.query(
+        'SELECT roomId from room where vanity = $1',
+        [vanity]
+      );
+      if (existing.rows.length) {
+        return;
+      }
+    }
+    console.log(owner, vanity, password);
+    if (owner) {
+      this.owner = owner;
+      this.vanity = vanity;
+      this.password = password;
+      await this.saveToRedis();
+      await this.saveToPostgres();
+    } else {
+      this.password = undefined;
+      this.owner = undefined;
+      this.vanity = undefined;
+      await postgres.query('DELETE from room where owner = $1', [this.owner]);
+    }
+    socket.emit('REC:getRoomState', this.getRoomState());
   };
 
   private sendSignal = (socket: Socket, data: { to: string; msg: string }) => {
