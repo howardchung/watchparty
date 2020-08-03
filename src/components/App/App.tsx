@@ -11,7 +11,6 @@ import {
   Dropdown,
   DropdownProps,
   Grid,
-  Header,
   Icon,
   Input,
   Loader,

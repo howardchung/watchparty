@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { Modal, Header, Input, Button, Icon } from 'semantic-ui-react';
+import { Modal, Header, Input, Icon } from 'semantic-ui-react';
 
 export const PasswordModal = ({
   savedPasswords,
