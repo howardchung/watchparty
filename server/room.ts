@@ -127,6 +127,7 @@ export class Room {
       socket.on('CMD:askHost', () => {
         socket.emit('REC:host', this.getHostState());
       });
+      socket.on('CMD:getRoomState', (data) => this.getRoomState(socket, data));
       socket.on('CMD:setRoomState', (data) => this.setRoomState(socket, data));
       socket.on('signal', (data) => this.sendSignal(socket, data));
       socket.on('signalSS', (data) => this.signalSS(socket, data));
@@ -338,9 +339,6 @@ export class Room {
       return;
     }
     this.uidMap[socket.id] = decoded.uid;
-    if (decoded.uid === this.owner) {
-      socket.emit('REC:getRoomState', this.getRoomState());
-    }
   };
 
   private startHosting = (socket: Socket, data: string) => {
@@ -645,12 +643,26 @@ export class Room {
     this.addChatMessage(socket, chatMsg);
   };
 
-  private getRoomState = () => {
-    return {
-      password: this.password,
-      vanity: this.vanity,
+  private getRoomState = async (
+    socket: Socket,
+    data: {
+      uid: string;
+      token: string;
+    }
+  ) => {
+    let isOwner = false;
+    if (data.uid && data.token) {
+      const decoded = await validateUserToken(
+        data?.uid as string,
+        data?.token as string
+      );
+      isOwner = Boolean(decoded && this.owner === decoded?.uid);
+    }
+    socket.emit('REC:getRoomState', {
+      password: isOwner ? this.password : undefined,
+      vanity: isOwner ? this.vanity : undefined,
       owner: this.owner,
-    };
+    });
   };
 
   private setRoomState = async (
@@ -674,6 +686,10 @@ export class Room {
     if (this.owner && this.owner !== decoded?.uid) {
       return;
     }
+    const customer = await getCustomerByEmail(decoded.email as string);
+    const isSubscriber = Boolean(
+      customer?.subscriptions?.data?.[0]?.status === 'active'
+    );
     const { password, owner, vanity } = data;
     if (password) {
       if (password.length > 100) {
@@ -687,11 +703,7 @@ export class Room {
           owner,
         ])
       ).rows[0].count;
-      const customer = await getCustomerByEmail(decoded.email as string);
-      const isSubscriber = Boolean(
-        customer?.subscriptions?.data?.[0]?.status === 'active'
-      );
-      const limit = isSubscriber ? 5 : 1;
+      const limit = isSubscriber ? 10 : 1;
       // console.log(roomCount, limit, isSubscriber);
       if (roomCount >= limit) {
         return;
@@ -701,9 +713,13 @@ export class Room {
       if (vanity.length > 100) {
         return;
       }
+      if (!isSubscriber) {
+        // user must be sub to set vanity
+        return;
+      }
       const existing = await postgres.query(
         'SELECT roomId from room where vanity = $1',
-        [vanity]
+        [vanity.toLowerCase()]
       );
       if (existing.rows.length) {
         return;
@@ -712,17 +728,21 @@ export class Room {
     console.log(owner, vanity, password);
     if (owner) {
       this.owner = owner;
-      this.vanity = vanity;
+      this.vanity = vanity.toLowerCase();
       this.password = password;
       await this.saveToRedis();
       await this.saveToPostgres();
     } else {
-      this.password = undefined;
       this.owner = undefined;
       this.vanity = undefined;
+      this.password = undefined;
       await postgres.query('DELETE from room where owner = $1', [this.owner]);
     }
-    socket.emit('REC:getRoomState', this.getRoomState());
+    socket.emit('REC:getRoomState', {
+      password: this.password,
+      vanity: this.vanity,
+      owner: this.owner,
+    });
   };
 
   private sendSignal = (socket: Socket, data: { to: string; msg: string }) => {

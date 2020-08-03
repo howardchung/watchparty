@@ -406,12 +406,10 @@ app.get('/resolveRoom/:vanity', async (req, res) => {
   const vanity = req.params.vanity;
   const result = await postgres.query(
     `SELECT roomId as "roomId", vanity from room WHERE vanity = $1`,
-    [vanity]
+    [vanity?.toLowerCase() ?? '']
   );
-  if (!result.rows.length) {
-    return res.status(404).end();
-  }
   // console.log(vanity, result.rows);
+  // We also use this for checking name availability, so just return empty response if it doesn't exist (http 200)
   return res.json(result.rows[0]);
 });
 

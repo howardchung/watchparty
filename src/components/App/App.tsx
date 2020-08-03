@@ -1,6 +1,7 @@
 import './App.css';
 
 import querystring from 'querystring';
+import axios from 'axios';
 //@ts-ignore
 import magnet from 'magnet-uri';
 import React from 'react';
@@ -49,6 +50,8 @@ import 'firebase/auth';
 import { SubscribeModal } from '../Modal/SubscribeModal';
 import { VBrowserModal } from '../Modal/VBrowserModal';
 import { SettingsTab } from '../Settings/SettingsTab';
+import { ErrorModal } from '../Modal/ErrorModal';
+import { PasswordModal } from '../Modal/PasswordModal';
 
 const firebaseConfig = process.env.REACT_APP_FIREBASE_CONFIG;
 if (firebaseConfig) {
@@ -62,6 +65,10 @@ declare global {
     FB: any;
     fbAsyncInit: Function;
   }
+}
+
+interface AppProps {
+  vanity?: string;
 }
 
 interface AppState {
@@ -94,6 +101,7 @@ interface AppState {
   connections: number;
   multiStreamSelection?: any[];
   error: string;
+  isErrorAuth: boolean;
   settings: Settings;
   vBrowserResolution: string;
   isVBrowserLarge: boolean;
@@ -104,9 +112,14 @@ interface AppState {
   isVBrowserModalOpen: boolean;
   roomLock: string;
   controller?: string;
+  savedPasswords: StringDict;
+  roomId: string;
+  owner?: string;
+  password?: string;
+  vanity?: string;
 }
 
-export default class App extends React.Component<{}, AppState> {
+export default class App extends React.Component<AppProps, AppState> {
   state: AppState = {
     state: 'starting',
     currentMedia: '',
@@ -137,16 +150,24 @@ export default class App extends React.Component<{}, AppState> {
     connections: 0,
     multiStreamSelection: undefined,
     error: '',
+    isErrorAuth: false,
     settings: {},
     vBrowserResolution: '1280x720@30',
     isVBrowserLarge: false,
     nonPlayableMedia: false,
-    currentTab: 'chat',
+    currentTab:
+      (querystring.parse(window.location.search.substring(1)).tab as string) ||
+      'chat',
     isSubscriber: false,
     isSubscribeModalOpen: false,
     isVBrowserModalOpen: false,
     roomLock: '',
     controller: '',
+    roomId: '',
+    savedPasswords: {},
+    owner: undefined,
+    password: undefined,
+    vanity: undefined,
   };
   socket: any = null;
   watchPartyYTPlayer: any = null;
@@ -157,9 +178,6 @@ export default class App extends React.Component<{}, AppState> {
   progressUpdater?: number;
 
   async componentDidMount() {
-    const canAutoplay = await testAutoplay();
-    this.setState({ isAutoPlayable: canAutoplay });
-
     document.onfullscreenchange = () => {
       this.setState({ fullScreen: Boolean(document.fullscreenElement) });
     };
@@ -198,7 +216,7 @@ export default class App extends React.Component<{}, AppState> {
   };
 
   loadSignInData = () => {
-    if (this.state.user) {
+    if (this.state.user && this.socket) {
       // NOTE: firebase auth doesn't provide the actual first name data that individual providers (G/FB) do
       // It's accessible at the time the user logs in but not afterward
       // If we want accurate surname/given name we'll need to save that somewhere
@@ -263,14 +281,31 @@ export default class App extends React.Component<{}, AppState> {
     };
   };
 
-  init = () => {
+  init = async () => {
     // Load room ID from url
     let roomId = '/default';
     let query = window.location.hash.substring(1);
     if (query) {
       roomId = '/' + query;
     }
-    // TODO if a vanity name, resolve the url to a room id
+    // if a vanity name, resolve the url to a room id
+    if (this.props.vanity) {
+      try {
+        const response = await axios.get(
+          serverPath + '/resolveRoom/' + this.props.vanity
+        );
+        if (response.data.roomId) {
+          roomId = response.data.roomId;
+        } else {
+          throw new Error('failed to resolve room name');
+        }
+      } catch (e) {
+        console.error(e);
+        this.setState({ error: "There's no room with this name." });
+        return;
+      }
+    }
+    this.setState({ roomId });
     this.join(roomId);
   };
 
@@ -281,6 +316,7 @@ export default class App extends React.Component<{}, AppState> {
         'watchparty-passwords'
       );
       const savedPasswords = JSON.parse(savedPasswordsString || '{}');
+      this.setState({ savedPasswords });
       password = savedPasswords[roomId] || '';
     } catch (e) {
       console.warn('[ALERT] Could not parse saved passwords');
@@ -294,6 +330,8 @@ export default class App extends React.Component<{}, AppState> {
     });
     this.socket = socket;
     socket.on('connect', async () => {
+      const canAutoplay = await testAutoplay();
+      this.setState({ isAutoPlayable: canAutoplay });
       this.setState({ state: 'connected' });
       // Load username from localstorage
       let userName = window.localStorage.getItem('watchparty-username');
@@ -308,7 +346,7 @@ export default class App extends React.Component<{}, AppState> {
       if (err === 'Invalid namespace') {
         this.setState({ error: "There's no room with this name." });
       } else if (err === 'not authorized') {
-        this.setState({ error: 'This room requires a password.' });
+        this.setState({ isErrorAuth: true });
       } else {
         this.setState({ error: 'An error occurred.' });
       }
@@ -468,6 +506,13 @@ export default class App extends React.Component<{}, AppState> {
     });
     socket.on('REC:lock', (data: string) => {
       this.setState({ roomLock: data });
+    });
+    socket.on('REC:getRoomState', (data: any) => {
+      this.setState({
+        vanity: data.vanity,
+        owner: data.owner,
+        password: data.password,
+      });
     });
     socket.on('roster', (data: User[]) => {
       this.setState(
@@ -1219,27 +1264,12 @@ export default class App extends React.Component<{}, AppState> {
             startVBrowser={this.setupVBrowser}
           />
         )}
-        {this.state.error && (
-          <Modal inverted basic open>
-            <Header as="h1" style={{ textAlign: 'center' }}>
-              {this.state.error}
-            </Header>
-            <div style={{ display: 'flex', justifyContent: 'center' }}>
-              {/* TODO add a password field if not authorized, when entered save to localstorage and reload */}
-              <Button
-                primary
-                size="huge"
-                onClick={() => {
-                  window.location.href = '/';
-                }}
-                icon
-                labelPosition="left"
-              >
-                <Icon name="home" />
-                Go to home page
-              </Button>
-            </div>
-          </Modal>
+        {this.state.error && <ErrorModal error={this.state.error} />}
+        {this.state.isErrorAuth && (
+          <PasswordModal
+            savedPasswords={this.state.savedPasswords}
+            roomId={this.state.roomId}
+          />
         )}
         {!this.state.error && !this.state.isAutoPlayable && (
           <Modal inverted basic open>
@@ -1739,6 +1769,11 @@ export default class App extends React.Component<{}, AppState> {
                   user={this.state.user}
                   roomLock={this.state.roomLock}
                   setRoomLock={this.setRoomLock}
+                  socket={this.socket}
+                  isSubscriber={this.state.isSubscriber}
+                  owner={this.state.owner}
+                  vanity={this.state.vanity}
+                  password={this.state.password}
                 />
               </Grid.Column>
             </Grid.Row>
