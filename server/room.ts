@@ -681,9 +681,11 @@ export class Room {
     );
     // TODO better error messages
     if (!decoded) {
+      socket.emit('errorMessage', 'Failed to authenticate user');
       return;
     }
     if (this.owner && this.owner !== decoded?.uid) {
+      socket.emit('errorMessage', 'User is not the owner');
       return;
     }
     const customer = await getCustomerByEmail(decoded.email as string);
@@ -693,6 +695,7 @@ export class Room {
     const { password, owner, vanity } = data;
     if (password) {
       if (password.length > 100) {
+        socket.emit('errorMessage', 'Password too long');
         return;
       }
     }
@@ -706,29 +709,36 @@ export class Room {
       const limit = isSubscriber ? 10 : 1;
       // console.log(roomCount, limit, isSubscriber);
       if (roomCount >= limit) {
+        socket.emit('errorMessage', 'Room limit exceeded');
         return;
       }
     }
     if (vanity) {
       if (vanity.length > 100) {
+        socket.emit('errorMessage', 'Custom URL too long');
         return;
       }
       if (!isSubscriber) {
         // user must be sub to set vanity
+        socket.emit(
+          'errorMessage',
+          'User must be subscriber to use this feature'
+        );
         return;
       }
       const existing = await postgres.query(
-        'SELECT roomId from room where vanity = $1',
-        [vanity.toLowerCase()]
+        'SELECT roomId from room where vanity = $1 AND roomId != $2',
+        [vanity?.toLowerCase() ?? '', this.roomId]
       );
       if (existing.rows.length) {
+        socket.emit('errorMessage', 'Custom URL already exists');
         return;
       }
     }
-    console.log(owner, vanity, password);
+    // console.log(owner, vanity, password);
     if (owner) {
       this.owner = owner;
-      this.vanity = vanity.toLowerCase();
+      this.vanity = vanity?.toLowerCase();
       this.password = password;
       await this.saveToRedis();
       await this.saveToPostgres();
@@ -736,13 +746,14 @@ export class Room {
       this.owner = undefined;
       this.vanity = undefined;
       this.password = undefined;
-      await postgres.query('DELETE from room where owner = $1', [this.owner]);
+      await postgres.query('DELETE from room where roomId = $1', [this.roomId]);
     }
     socket.emit('REC:getRoomState', {
       password: this.password,
       vanity: this.vanity,
       owner: this.owner,
     });
+    socket.emit('successMessage', 'Saved admin settings');
   };
 
   private sendSignal = (socket: Socket, data: { to: string; msg: string }) => {

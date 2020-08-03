@@ -116,6 +116,8 @@ interface AppState {
   owner?: string;
   password?: string;
   vanity?: string;
+  errorMessage: string;
+  successMessage: string;
 }
 
 export default class App extends React.Component<AppProps, AppState> {
@@ -167,6 +169,8 @@ export default class App extends React.Component<AppProps, AppState> {
     owner: undefined,
     password: undefined,
     vanity: undefined,
+    errorMessage: '',
+    successMessage: '',
   };
   socket: any = null;
   watchPartyYTPlayer: any = null;
@@ -349,6 +353,18 @@ export default class App extends React.Component<AppProps, AppState> {
       } else {
         this.setState({ error: 'An error occurred.' });
       }
+    });
+    socket.on('errorMessage', (err: string) => {
+      this.setState({ errorMessage: err });
+      setTimeout(() => {
+        this.setState({ errorMessage: '' });
+      }, 3000);
+    });
+    socket.on('successMessage', (success: string) => {
+      this.setState({ successMessage: success });
+      setTimeout(() => {
+        this.setState({ successMessage: '' });
+      }, 3000);
     });
     socket.on('REC:play', () => {
       this.doPlay();
@@ -545,7 +561,9 @@ export default class App extends React.Component<AppProps, AppState> {
       }
     });
     window.setInterval(() => {
-      this.socket.emit('CMD:ts', this.getCurrentTime());
+      if (this.state.currentMedia) {
+        this.socket.emit('CMD:ts', this.getCurrentTime());
+      }
     }, 1000);
   };
 
@@ -1269,6 +1287,16 @@ export default class App extends React.Component<AppProps, AppState> {
             savedPasswords={this.state.savedPasswords}
             roomId={this.state.roomId}
           />
+        )}
+        {this.state.errorMessage && (
+          <Message floating negative>
+            {this.state.errorMessage}
+          </Message>
+        )}
+        {this.state.errorMessage && (
+          <Message floating positive>
+            {this.state.successMessage}
+          </Message>
         )}
         {!this.state.error && !this.state.isAutoPlayable && (
           <Modal inverted basic open>
