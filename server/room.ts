@@ -40,9 +40,6 @@ export class Room {
   public vBrowser: AssignedVM | undefined = undefined;
   public creationTime: Date = new Date();
   public lock: string | undefined = undefined; // uid of the user who locked the room
-  public password: string | undefined = undefined; // custom string required to join the room
-  public owner: string | undefined = undefined; // uid of the owner (means a permanent room)
-  public vanity: string | undefined = undefined; // custom string to use in the URL
 
   // Non-serialized state
   public roomId: string;
@@ -75,15 +72,23 @@ export class Room {
       }
     }, 1000);
 
-    io.use((socket, next) => {
+    io.of(roomId).use(async (socket, next) => {
       // Validate the connector has the room password
       const password = socket.handshake.query?.password;
       // console.log(this.roomId, this.password, password);
-      if (this.password && password !== this.password) {
-        next(new Error('not authorized'));
-      } else {
-        next();
+      if (postgres) {
+        const result = await postgres.query(
+          `SELECT password FROM room where roomId = $1`,
+          [this.roomId]
+        );
+        const roomPassword = result.rows[0]?.password;
+        console.log(this.roomId, roomPassword);
+        if (roomPassword && password !== roomPassword) {
+          next(new Error('not authorized'));
+          return;
+        }
       }
+      next();
     });
     io.of(roomId).on('connection', (socket: Socket) => {
       const clientId = socket.handshake.query?.clientId;
@@ -148,9 +153,6 @@ export class Room {
       vBrowser: this.vBrowser,
       creationTime: this.creationTime,
       lock: this.lock,
-      password: this.password,
-      owner: this.owner,
-      vanity: this.vanity,
     });
   };
 
@@ -182,52 +184,27 @@ export class Room {
     if (roomObj.lock) {
       this.lock = roomObj.lock;
     }
-    if (roomObj.password) {
-      this.password = roomObj.password;
-    }
-    if (roomObj.owner) {
-      this.owner = roomObj.owner;
-    }
-    if (roomObj.vanity) {
-      this.vanity = roomObj.vanity;
-    }
   };
 
   saveToRedis = async () => {
     try {
       const roomString = this.serialize();
       const key = this.roomId;
-      const permanent = Boolean(this.owner);
+      let permanent = false;
+      if (postgres) {
+        const result = await postgres.query(
+          `SELECT owner FROM room where roomId = $1`,
+          [this.roomId]
+        );
+        const owner = result.rows[0]?.owner;
+        permanent = Boolean(owner);
+      }
       if (permanent) {
         await redis.set(key, roomString);
         await redis.persist(key);
       } else {
         await redis.setex(key, 24 * 60 * 60, roomString);
       }
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  saveToPostgres = async () => {
-    try {
-      // Only keep the rows for which we have a postgres column
-      const roomObj = {
-        roomId: this.roomId,
-        creationTime: this.creationTime,
-        password: this.password,
-        owner: this.owner,
-        vanity: this.vanity,
-      };
-      const columns = Object.keys(roomObj);
-      const values = Object.values(roomObj);
-      const query = `INSERT INTO room(${columns.join(',')})
-    VALUES (${values.map((_, i) => '$' + (i + 1)).join(',')})
-    ON CONFLICT(roomId) DO UPDATE SET ${columns
-      .map((c) => c + '=' + 'EXCLUDED.' + c)
-      .join(',')}`;
-      // console.log(columns, values, query);
-      await postgres.query(query, values);
     } catch (e) {
       console.error(e);
     }
@@ -643,25 +620,19 @@ export class Room {
     this.addChatMessage(socket, chatMsg);
   };
 
-  private getRoomState = async (
-    socket: Socket,
-    data: {
-      uid: string;
-      token: string;
+  private getRoomState = async (socket: Socket) => {
+    if (!postgres) {
+      return;
     }
-  ) => {
-    let isOwner = false;
-    if (data.uid && data.token) {
-      const decoded = await validateUserToken(
-        data?.uid as string,
-        data?.token as string
-      );
-      isOwner = Boolean(decoded && this.owner === decoded?.uid);
-    }
+    const result = await postgres.query(
+      `SELECT password, vanity, owner FROM room where roomId = $1`,
+      [this.roomId]
+    );
+    const first = result.rows[0];
     socket.emit('REC:getRoomState', {
-      password: isOwner ? this.password : undefined,
-      vanity: isOwner ? this.vanity : undefined,
-      owner: this.owner,
+      password: first?.password,
+      vanity: first?.vanity,
+      owner: first?.owner,
     });
   };
 
@@ -679,13 +650,21 @@ export class Room {
       data?.uid as string,
       data?.token as string
     );
-    // TODO better error messages
     if (!decoded) {
       socket.emit('errorMessage', 'Failed to authenticate user');
       return;
     }
-    if (this.owner && this.owner !== decoded?.uid) {
+    const result = await postgres.query(
+      `SELECT owner FROM room where roomId = $1`,
+      [this.roomId]
+    );
+    const first = result.rows[0];
+    if (first?.owner && first?.owner !== decoded?.uid) {
       socket.emit('errorMessage', 'User is not the owner');
+      return;
+    }
+    if (!postgres) {
+      socket.emit('errorMessage', 'Database is not available');
       return;
     }
     const customer = await getCustomerByEmail(decoded.email as string);
@@ -737,21 +716,30 @@ export class Room {
     }
     // console.log(owner, vanity, password);
     if (owner) {
-      this.owner = owner;
-      this.vanity = vanity?.toLowerCase();
-      this.password = password;
-      await this.saveToRedis();
-      await this.saveToPostgres();
+      // Only keep the rows for which we have a postgres column
+      const roomObj = {
+        roomId: this.roomId,
+        creationTime: this.creationTime,
+        password: password,
+        owner: owner,
+        vanity: vanity,
+      };
+      const columns = Object.keys(roomObj);
+      const values = Object.values(roomObj);
+      const query = `INSERT INTO room(${columns.join(',')})
+    VALUES (${values.map((_, i) => '$' + (i + 1)).join(',')})
+    ON CONFLICT(roomId) DO UPDATE SET ${columns
+      .map((c) => c + '=' + 'EXCLUDED.' + c)
+      .join(',')}`;
+      // console.log(columns, values, query);
+      await postgres.query(query, values);
     } else {
-      this.owner = undefined;
-      this.vanity = undefined;
-      this.password = undefined;
       await postgres.query('DELETE from room where roomId = $1', [this.roomId]);
     }
     socket.emit('REC:getRoomState', {
-      password: this.password,
-      vanity: this.vanity,
-      owner: this.owner,
+      password: password,
+      vanity: vanity,
+      owner: owner,
     });
     socket.emit('successMessage', 'Saved admin settings');
   };

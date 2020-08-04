@@ -15,17 +15,7 @@ import { Socket } from 'socket.io';
 import axios from 'axios';
 import { serverPath } from '../../utils';
 
-export const SettingsTab = ({
-  hide,
-  user,
-  roomLock,
-  setRoomLock,
-  socket,
-  isSubscriber,
-  owner,
-  password,
-  vanity,
-}: {
+interface SettingsTabProps {
   hide: boolean;
   user: firebase.User | undefined;
   roomLock: string;
@@ -35,21 +25,36 @@ export const SettingsTab = ({
   owner?: string;
   vanity?: string;
   password?: string;
-}) => {
+}
+
+export const SettingsTab = ({
+  hide,
+  user,
+  roomLock,
+  setRoomLock,
+  socket,
+  isSubscriber,
+}: SettingsTabProps) => {
   const [updateTS, setUpdateTS] = useState(0);
-  const [newVanity, setNewVanity] = useState(vanity);
-  const [newPassword, setNewPassword] = useState(password);
+  const [vanity, setVanity] = useState<string | undefined>(undefined);
+  const [password, setPassword] = useState<string | undefined>(undefined);
+  const [owner, setOwner] = useState<string | undefined>(undefined);
+  const [validVanity, setValidVanity] = useState(true);
+  const [validVanityLoading, setValidVanityLoading] = useState(false);
   useEffect(() => {
-    (async () => {
-      if (socket) {
-        const token = user ? await user?.getIdToken() : undefined;
-        socket.emit('CMD:getRoomState', {
-          uid: user?.uid,
-          token,
-        });
-      }
-    })();
-  }, [socket, user]);
+    if (socket) {
+      socket.emit('CMD:getRoomState');
+      const handleRoomState = (data: any) => {
+        setOwner(data.owner);
+        setVanity(data.vanity);
+        setPassword(data.password);
+      };
+      socket.on('REC:getRoomState', handleRoomState);
+      return function cleanup() {
+        socket.off('REC:getRoomState', handleRoomState);
+      };
+    }
+  }, [socket]);
   const setRoomState = useCallback(
     async (data: any) => {
       const token = await user?.getIdToken();
@@ -61,8 +66,6 @@ export const SettingsTab = ({
     },
     [socket, user]
   );
-  const [validVanity, setValidVanity] = useState(true);
-  const [validVanityLoading, setValidVanityLoading] = useState(false);
   const checkValidVanity = useCallback(
     async (input: string) => {
       setValidVanityLoading(true);
@@ -121,8 +124,8 @@ export const SettingsTab = ({
           description="Users must know this password in order to join the room."
           content={
             <Input
-              defaultValue={password}
-              onChange={(e) => setNewPassword(e.target.value)}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               fluid
             />
           }
@@ -140,38 +143,41 @@ export const SettingsTab = ({
           content={
             <React.Fragment>
               <Input
-                defaultValue={vanity}
+                value={vanity}
                 disabled={!isSubscriber}
                 onChange={(e) => {
                   checkValidVanity(e.target.value);
-                  setNewVanity(e.target.value);
+                  setVanity(e.target.value);
                 }}
-                label={`${window.location.origin}/r/`}
+                label={<Label>{`${window.location.origin}/r/`}</Label>}
                 loading={validVanityLoading}
                 fluid
                 size="mini"
                 icon
-              >
-                <input />
-                {validVanity ? (
+                action={
+                  <Button
+                    size="mini"
+                    icon="copy"
+                    color="orange"
+                    title="Copy link to clipboard"
+                    onClick={() => {
+                      navigator.clipboard.writeText(getVanityURL());
+                    }}
+                  ></Button>
+                }
+              ></Input>
+              {validVanity ? (
+                <React.Fragment>
                   <Icon name="checkmark" color="green" />
-                ) : (
+                  This name is available.
+                </React.Fragment>
+              ) : (
+                <React.Fragment>
                   <Icon name="close" color="red" />
-                )}
-              </Input>
+                  This name is not available.
+                </React.Fragment>
+              )}
               <p />
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                <Button
-                  size="mini"
-                  icon="copy"
-                  onClick={() => {
-                    navigator.clipboard.writeText(getVanityURL());
-                  }}
-                />
-                <Label color="orange">
-                  {vanity ? getVanityURL() : window.location.href}
-                </Label>
-              </div>
             </React.Fragment>
           }
         />
@@ -180,18 +186,19 @@ export const SettingsTab = ({
       {owner && owner === user?.uid && (
         <Button
           primary
-          disabled={
-            (vanity === newVanity && password === newPassword) || !validVanity
-          }
+          disabled={!validVanity}
+          labelPosition="left"
+          icon
           fluid
           onClick={() =>
             setRoomState({
-              vanity: newVanity,
-              password: newPassword,
+              vanity: vanity,
+              password: password,
               owner: owner,
             })
           }
         >
+          <Icon name="save" />
           Save Admin Settings
         </Button>
       )}

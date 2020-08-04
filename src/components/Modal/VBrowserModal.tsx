@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, Button, Icon } from 'semantic-ui-react';
+import { Modal, Button, Icon, Table } from 'semantic-ui-react';
 import {
   GoogleReCaptchaProvider,
   withGoogleReCaptcha,
@@ -38,44 +38,59 @@ export class VBrowserModal extends React.Component<{
         <Modal open={true} onClose={closeModal as any}>
           <Modal.Header>Launch a VBrowser</Modal.Header>
           <Modal.Content image>
-            {/* <Image wrapped size='medium' src='https://react.semantic-ui.com/images/avatar/large/rachel.png' /> */}
             <Modal.Description>
               <div>
                 You're about to launch a virtual browser to share in this room.
-                {this.props.isSubscriber ? (
-                  <ul>
-                    <li>
-                      Thanks for subscribing! Your session will be in 1080p and
-                      last up to 12 hours.
-                    </li>
-                  </ul>
-                ) : (
-                  <ul>
-                    <li>
-                      Free virtual browsing sessions are limited to 3 hours at
-                      720p resolution.
-                    </li>
-                    <li>
-                      Please consider subscribing, which gets you higher
-                      resolutions and longer sessions!
-                    </li>
-                  </ul>
-                )}
               </div>
-              {this.props.isSubscriber && <LaunchButton large />}
-              <LaunchButton />
-              {!this.props.isSubscriber && (
-                <Button
-                  icon
-                  labelPosition="left"
-                  size="large"
-                  color="orange"
-                  onClick={openSubscribe as any}
-                >
-                  <Icon name="plus" />
-                  Subscribe
-                </Button>
-              )}
+              <Table definition unstackable striped>
+                <Table.Header>
+                  <Table.Row>
+                    <Table.HeaderCell />
+                    <Table.HeaderCell>WatchParty Free</Table.HeaderCell>
+                    <Table.HeaderCell>WatchParty Plus</Table.HeaderCell>
+                  </Table.Row>
+                </Table.Header>
+
+                <Table.Body>
+                  <Table.Row>
+                    <Table.Cell>VBrowser Resolution</Table.Cell>
+                    <Table.Cell>720p</Table.Cell>
+                    <Table.Cell>1080p</Table.Cell>
+                  </Table.Row>
+                  <Table.Row>
+                    <Table.Cell>VBrowser CPU/RAM</Table.Cell>
+                    <Table.Cell>Standard</Table.Cell>
+                    <Table.Cell>Extra</Table.Cell>
+                  </Table.Row>
+                  <Table.Row>
+                    <Table.Cell>VBrowser Session Length</Table.Cell>
+                    <Table.Cell>3 hours</Table.Cell>
+                    <Table.Cell>12 hours</Table.Cell>
+                  </Table.Row>
+                  <Table.Row>
+                    <Table.Cell></Table.Cell>
+                    <Table.Cell>
+                      <LaunchButton />
+                    </Table.Cell>
+                    <Table.Cell>
+                      {!this.props.isSubscriber ? (
+                        <Button
+                          icon
+                          labelPosition="left"
+                          size="large"
+                          color="orange"
+                          onClick={openSubscribe as any}
+                        >
+                          <Icon name="plus" />
+                          Subscribe
+                        </Button>
+                      ) : (
+                        <LaunchButton large />
+                      )}
+                    </Table.Cell>
+                  </Table.Row>
+                </Table.Body>
+              </Table>
             </Modal.Description>
           </Modal.Content>
         </Modal>

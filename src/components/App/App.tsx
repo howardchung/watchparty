@@ -113,9 +113,6 @@ interface AppState {
   controller?: string;
   savedPasswords: StringDict;
   roomId: string;
-  owner?: string;
-  password?: string;
-  vanity?: string;
   errorMessage: string;
   successMessage: string;
 }
@@ -166,9 +163,6 @@ export default class App extends React.Component<AppProps, AppState> {
     controller: '',
     roomId: '',
     savedPasswords: {},
-    owner: undefined,
-    password: undefined,
-    vanity: undefined,
     errorMessage: '',
     successMessage: '',
   };
@@ -190,18 +184,11 @@ export default class App extends React.Component<AppProps, AppState> {
       window.fetch(serverPath + '/ping');
     }, 10 * 60 * 1000);
 
-    firebase.auth().onAuthStateChanged((user: firebase.User | null) => {
+    firebase.auth().onAuthStateChanged(async (user: firebase.User | null) => {
       if (user) {
         // console.log(user);
         this.setState({ user }, async () => {
           this.loadSignInData();
-          // Check if user is subscriber by sending uid and token
-          const token = await user.getIdToken();
-          const response = await window.fetch(
-            serverPath + `/metadata?uid=${user.uid}&token=${token}`
-          );
-          const data = await response.json();
-          this.setState({ isSubscriber: data.isSubscriber });
         });
       }
     });
@@ -218,19 +205,26 @@ export default class App extends React.Component<AppProps, AppState> {
     this.setState({ settings });
   };
 
-  loadSignInData = () => {
-    if (this.state.user && this.socket) {
+  loadSignInData = async () => {
+    const user = this.state.user;
+    if (user && this.socket) {
       // NOTE: firebase auth doesn't provide the actual first name data that individual providers (G/FB) do
       // It's accessible at the time the user logs in but not afterward
       // If we want accurate surname/given name we'll need to save that somewhere
-      const firstName = this.state.user.displayName?.split(' ')[0];
+      const firstName = user.displayName?.split(' ')[0];
       if (firstName) {
         this.updateName(null, { value: firstName });
       }
-      if (this.state.user.photoURL) {
-        this.updatePicture(this.state.user.photoURL + '?height=128&width=128');
+      if (user.photoURL) {
+        this.updatePicture(user.photoURL + '?height=128&width=128');
       }
-      this.updateUid(this.state.user);
+      this.updateUid(user);
+      const token = await user.getIdToken();
+      const response = await window.fetch(
+        serverPath + `/metadata?uid=${user.uid}&token=${token}`
+      );
+      const data = await response.json();
+      this.setState({ isSubscriber: data.isSubscriber });
     }
   };
 
@@ -521,13 +515,6 @@ export default class App extends React.Component<AppProps, AppState> {
     });
     socket.on('REC:lock', (data: string) => {
       this.setState({ roomLock: data });
-    });
-    socket.on('REC:getRoomState', (data: any) => {
-      this.setState({
-        vanity: data.vanity,
-        owner: data.owner,
-        password: data.password,
-      });
     });
     socket.on('roster', (data: User[]) => {
       this.setState(
@@ -1798,9 +1785,6 @@ export default class App extends React.Component<AppProps, AppState> {
                   setRoomLock={this.setRoomLock}
                   socket={this.socket}
                   isSubscriber={this.state.isSubscriber}
-                  owner={this.state.owner}
-                  vanity={this.state.vanity}
-                  password={this.state.password}
                 />
               </Grid.Column>
             </Grid.Row>
