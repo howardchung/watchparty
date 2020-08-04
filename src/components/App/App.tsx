@@ -1276,14 +1276,20 @@ export default class App extends React.Component<AppProps, AppState> {
           />
         )}
         {this.state.errorMessage && (
-          <Message floating negative>
-            {this.state.errorMessage}
-          </Message>
+          <Message
+            negative
+            header="Error"
+            content={this.state.errorMessage}
+            style={{ position: 'fixed', bottom: '10px', right: '10px' }}
+          ></Message>
         )}
-        {this.state.errorMessage && (
-          <Message floating positive>
-            {this.state.successMessage}
-          </Message>
+        {this.state.successMessage && (
+          <Message
+            positive
+            header="Success"
+            content={this.state.successMessage}
+            style={{ position: 'fixed', bottom: '10px', right: '10px' }}
+          ></Message>
         )}
         {!this.state.error && !this.state.isAutoPlayable && (
           <Modal inverted basic open>
