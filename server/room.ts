@@ -132,7 +132,7 @@ export class Room {
       socket.on('CMD:askHost', () => {
         socket.emit('REC:host', this.getHostState());
       });
-      socket.on('CMD:getRoomState', (data) => this.getRoomState(socket, data));
+      socket.on('CMD:getRoomState', (data) => this.getRoomState(socket));
       socket.on('CMD:setRoomState', (data) => this.setRoomState(socket, data));
       socket.on('signal', (data) => this.sendSignal(socket, data));
       socket.on('signalSS', (data) => this.signalSS(socket, data));
