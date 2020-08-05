@@ -4,6 +4,7 @@ import { Icon, Popup, Button, Dropdown } from 'semantic-ui-react';
 import * as firebase from 'firebase/app';
 import 'firebase/auth';
 import { LoginModal } from '../Modal/LoginModal';
+import axios from 'axios';
 
 export class NewRoomButton extends React.Component<{ size?: string }> {
   createRoom = async () => {
@@ -118,10 +119,55 @@ export class SignInButton extends React.Component<{
   }
 }
 
+export class ListRoomsButton extends React.Component<{
+  user: firebase.User | undefined;
+}> {
+  public state = { rooms: [] };
+  async componentDidMount() {
+    if (this.props.user) {
+      const token = await this.props.user.getIdToken();
+      const response = await axios.get(
+        serverPath + `/listRooms?uid=${this.props.user?.uid}&token=${token}`
+      );
+      this.setState({ rooms: response.data });
+    }
+  }
+  render() {
+    return (
+      <Dropdown
+        style={{ height: '36px' }}
+        icon="group"
+        labeled
+        className="icon"
+        button
+        text="My Rooms"
+      >
+        <Dropdown.Menu>
+          {this.state.rooms.map((room: any) => {
+            return (
+              <Dropdown.Item
+                link
+                href={
+                  room.vanity
+                    ? '/r/' + room.vanity
+                    : '/' + room.roomId.replace('/', '#')
+                }
+              >
+                {room.vanity ? `/r/${room.vanity}` : room.roomId}
+              </Dropdown.Item>
+            );
+          })}
+        </Dropdown.Menu>
+      </Dropdown>
+    );
+  }
+}
+
 export class TopBar extends React.Component<{
   user?: any;
   hideNewRoom?: boolean;
   hideSignin?: boolean;
+  hideMyRooms?: boolean;
 }> {
   render() {
     return (
@@ -233,6 +279,9 @@ export class TopBar extends React.Component<{
             }}
           >
             {!this.props.hideNewRoom && <NewRoomButton />}
+            {!this.props.hideMyRooms && this.props.user && (
+              <ListRoomsButton user={this.props.user} />
+            )}
             {!this.props.hideSignin && <SignInButton user={this.props.user} />}
           </div>
         </div>

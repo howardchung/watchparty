@@ -82,7 +82,6 @@ export class Room {
           [this.roomId]
         );
         const roomPassword = result.rows[0]?.password;
-        console.log(this.roomId, roomPassword);
         if (roomPassword && password !== roomPassword) {
           next(new Error('not authorized'));
           return;
@@ -646,6 +645,10 @@ export class Room {
       vanity: string;
     }
   ) => {
+    if (!postgres) {
+      socket.emit('errorMessage', 'Database is not available');
+      return;
+    }
     const decoded = await validateUserToken(
       data?.uid as string,
       data?.token as string
@@ -661,10 +664,6 @@ export class Room {
     const first = result.rows[0];
     if (first?.owner && first?.owner !== decoded?.uid) {
       socket.emit('errorMessage', 'User is not the owner');
-      return;
-    }
-    if (!postgres) {
-      socket.emit('errorMessage', 'Database is not available');
       return;
     }
     const customer = await getCustomerByEmail(decoded.email as string);
@@ -706,7 +705,7 @@ export class Room {
         return;
       }
       const existing = await postgres.query(
-        'SELECT roomId from room where vanity = $1 AND roomId != $2',
+        'SELECT roomId from room where LOWER(vanity) = $1 AND roomId != $2',
         [vanity?.toLowerCase() ?? '', this.roomId]
       );
       if (existing.rows.length) {
