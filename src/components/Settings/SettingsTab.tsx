@@ -22,9 +22,7 @@ interface SettingsTabProps {
   setRoomLock: Function;
   socket: Socket;
   isSubscriber: boolean;
-  owner?: string;
-  vanity?: string;
-  password?: string;
+  roomId: string;
 }
 
 export const SettingsTab = ({
@@ -34,6 +32,7 @@ export const SettingsTab = ({
   setRoomLock,
   socket,
   isSubscriber,
+  roomId,
 }: SettingsTabProps) => {
   const [updateTS, setUpdateTS] = useState(0);
   const [vanity, setVanity] = useState<string | undefined>(undefined);
@@ -41,6 +40,7 @@ export const SettingsTab = ({
   const [owner, setOwner] = useState<string | undefined>(undefined);
   const [validVanity, setValidVanity] = useState(true);
   const [validVanityLoading, setValidVanityLoading] = useState(false);
+  const [roomLink, setRoomLink] = useState<string>('');
   useEffect(() => {
     if (socket) {
       socket.emit('CMD:getRoomState');
@@ -48,6 +48,7 @@ export const SettingsTab = ({
         setOwner(data.owner);
         setVanity(data.vanity);
         setPassword(data.password);
+        setRoomLink(getRoomLink(data.vanity));
       };
       socket.on('REC:getRoomState', handleRoomState);
       return function cleanup() {
@@ -68,6 +69,10 @@ export const SettingsTab = ({
   );
   const checkValidVanity = useCallback(
     async (input: string) => {
+      if (!input) {
+        setValidVanity(true);
+        return;
+      }
       setValidVanityLoading(true);
       const response = await axios.get(serverPath + '/resolveRoom/' + input);
       const data = response.data;
@@ -82,7 +87,12 @@ export const SettingsTab = ({
     },
     [setValidVanity, vanity]
   );
-  const getVanityURL = () => `${window.location.origin}/r/${vanity}`;
+  const getRoomLink = (vanity: string) => {
+    if (vanity) {
+      return `${window.location.origin}/r/${vanity}`;
+    }
+    return `${window.location.origin}${roomId.replace('/', '#')}`;
+  };
   const lockDisabled =
     !Boolean(user) || Boolean(roomLock && roomLock !== user?.uid);
 
@@ -155,28 +165,27 @@ export const SettingsTab = ({
                 size="mini"
                 icon
                 action={
-                  <Button
-                    size="mini"
-                    icon="copy"
-                    color="orange"
-                    title="Copy link to clipboard"
-                    onClick={() => {
-                      navigator.clipboard.writeText(getVanityURL());
-                    }}
-                  ></Button>
+                  validVanity ? (
+                    <Icon name="checkmark" color="green" />
+                  ) : (
+                    <Icon name="close" color="red" />
+                  )
                 }
               ></Input>
-              {validVanity ? (
-                <React.Fragment>
-                  <Icon name="checkmark" color="green" />
-                  This name is available.
-                </React.Fragment>
-              ) : (
-                <React.Fragment>
-                  <Icon name="close" color="red" />
-                  This name is not available.
-                </React.Fragment>
-              )}
+              <Button
+                size="mini"
+                fluid
+                icon
+                labelPosition="left"
+                color="orange"
+                title="Copy link to clipboard"
+                onClick={() => {
+                  navigator.clipboard.writeText(roomLink);
+                }}
+              >
+                <Icon name="copy" />
+                {roomLink}
+              </Button>
               <p />
             </React.Fragment>
           }
