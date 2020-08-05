@@ -123,7 +123,12 @@ export class ListRoomsButton extends React.Component<{
   user: firebase.User | undefined;
 }> {
   public state = { rooms: [] };
-  async componentDidMount() {
+
+  componentDidMount() {
+    this.refreshRooms();
+  }
+
+  refreshRooms = async () => {
     if (this.props.user) {
       const token = await this.props.user.getIdToken();
       const response = await axios.get(
@@ -131,7 +136,8 @@ export class ListRoomsButton extends React.Component<{
       );
       this.setState({ rooms: response.data });
     }
-  }
+  };
+
   render() {
     return (
       <Dropdown
@@ -141,8 +147,12 @@ export class ListRoomsButton extends React.Component<{
         className="icon"
         button
         text="My Rooms"
+        onClick={this.refreshRooms}
       >
         <Dropdown.Menu>
+          {this.state.rooms.length === 0 && (
+            <Dropdown.Item disabled>You have no permanent rooms.</Dropdown.Item>
+          )}
           {this.state.rooms.map((room: any) => {
             return (
               <Dropdown.Item
@@ -153,7 +163,9 @@ export class ListRoomsButton extends React.Component<{
                     : '/' + room.roomId.replace('/', '#')
                 }
               >
-                {room.vanity ? `/r/${room.vanity}` : room.roomId}
+                {room.vanity
+                  ? `/r/${room.vanity}`
+                  : room.roomId.replace('/', '#')}
               </Dropdown.Item>
             );
           })}

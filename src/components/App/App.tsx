@@ -1791,6 +1791,7 @@ export default class App extends React.Component<AppProps, AppState> {
                   setRoomLock={this.setRoomLock}
                   socket={this.socket}
                   isSubscriber={this.state.isSubscriber}
+                  roomId={this.state.roomId}
                 />
               </Grid.Column>
             </Grid.Row>
