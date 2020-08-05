@@ -61,7 +61,7 @@ export const SettingsTab = ({
         socket.off('REC:getRoomState', handleRoomState);
       };
     }
-  }, [socket]);
+  }, [socket, roomId]);
   const setRoomState = useCallback(
     async (data: any) => {
       const token = await user?.getIdToken();
