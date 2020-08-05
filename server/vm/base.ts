@@ -3,6 +3,7 @@ import Redis from 'ioredis';
 import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import { redisCount } from '../utils/redis';
+import { getStartOfDay } from '../utils/time';
 
 const releaseInterval = 5 * 60 * 1000;
 
@@ -95,13 +96,31 @@ export abstract class VMManager {
           console.log('[RENEW] VM in room:', room.roomId, room.vBrowser.id);
           // Renew the lock on the VM
           await this.redis.expire('vbrowser:' + room.vBrowser.id, 300);
+
+          const expireTime = getStartOfDay() / 1000 + 86400;
+          if (room.vBrowser.creatorClientID) {
+            await this.redis.zincrby(
+              'vBrowserClientIDMinutes',
+              1,
+              room.vBrowser.creatorClientID
+            );
+            await this.redis.expireat('vBrowserClientIDMinutes', expireTime);
+          }
+          if (room.vBrowser.creatorUID) {
+            await this.redis.zincrby(
+              'vBrowserUIDMinutes',
+              1,
+              room.vBrowser.creatorUID
+            );
+            await this.redis.expireat('vBrowserUIDMinutes', expireTime);
+          }
         }
       }
     };
     setInterval(this.resizeVMGroupIncr, 10 * 1000);
     setInterval(this.resizeVMGroupDecr, 20 * 60 * 1000);
     setInterval(this.cleanupVMGroup, 3 * 60 * 1000);
-    setInterval(renew, 30 * 1000);
+    setInterval(renew, 60 * 1000);
     setInterval(release, releaseInterval);
     setTimeout(this.checkStaging, 100); // Add some delay to make sure the object is constructed first
   }
@@ -373,4 +392,6 @@ export interface VM {
 export interface AssignedVM extends VM {
   assignTime: number;
   controllerClient?: string;
+  creatorUID?: string;
+  creatorClientID?: string;
 }

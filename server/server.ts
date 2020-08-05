@@ -276,6 +276,24 @@ app.get('/stats', async (req, res) => {
       0,
       20
     );
+    const vBrowserClientIDMinutes = await redis.zrevrangebyscore(
+      'vBrowserClientIDMinutes',
+      '+inf',
+      '0',
+      'WITHSCORES',
+      'LIMIT',
+      0,
+      20
+    );
+    const vBrowserUIDMinutes = await redis.zrevrangebyscore(
+      'vBrowserUIDMinutes',
+      '+inf',
+      '0',
+      'WITHSCORES',
+      'LIMIT',
+      0,
+      20
+    );
     const vBrowserClientIDsCard = await redis.zcard('vBrowserClientIDs');
     const vBrowserUIDsCard = await redis.zcard('vBrowserUIDs');
 
@@ -313,10 +331,12 @@ app.get('/stats', async (req, res) => {
       vBrowserStartMS,
       vBrowserSessionMS,
       vBrowserVMLifetime,
-      vBrowserClientIDsCard,
-      vBrowserUIDsCard,
       vBrowserClientIDs,
+      vBrowserClientIDsCard,
+      vBrowserClientIDMinutes,
       vBrowserUIDs,
+      vBrowserUIDsCard,
+      vBrowserUIDMinutes,
       rooms: roomData,
     });
   } else {

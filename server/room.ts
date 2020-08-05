@@ -478,10 +478,18 @@ export class Room {
           clientId
         );
         redis.expireat('vBrowserClientIDs', expireTime);
+        const clientMinutes = await redis.zincrby(
+          'vBrowserClientIDMinutes',
+          1,
+          clientId
+        );
+        redis.expireat('vBrowserClientIDMinutes', expireTime);
       }
       if (uid) {
         const uidCount = await redis.zincrby('vBrowserUIDs', 1, uid);
         redis.expireat('vBrowserUIDs', expireTime);
+        const uidMinutes = await redis.zincrby('vBrowserUIDMinutes', 1, uid);
+        redis.expireat('vBrowserUIDMinutes', expireTime);
       }
       // TODO limit users based on these counts
     }
@@ -541,6 +549,8 @@ export class Room {
     }
     this.vBrowser = assignment;
     this.vBrowser.controllerClient = clientId;
+    this.vBrowser.creatorUID = uid;
+    this.vBrowser.creatorClientID = clientId;
     this.cmdHost(
       undefined,
       'vbrowser://' + this.vBrowser.pass + '@' + this.vBrowser.host
