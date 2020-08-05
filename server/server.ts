@@ -403,12 +403,27 @@ app.get('/metadata', async (req, res) => {
 app.get('/resolveRoom/:vanity', async (req, res) => {
   const vanity = req.params.vanity;
   const result = await postgres.query(
-    `SELECT roomId as "roomId", vanity from room WHERE vanity = $1`,
+    `SELECT roomId as "roomId", vanity from room WHERE LOWER(vanity) = $1`,
     [vanity?.toLowerCase() ?? '']
   );
   // console.log(vanity, result.rows);
   // We also use this for checking name availability, so just return empty response if it doesn't exist (http 200)
   return res.json(result.rows[0]);
+});
+
+app.get('/listRooms', async (req, res) => {
+  const decoded = await validateUserToken(
+    req.query?.uid as string,
+    req.query?.token as string
+  );
+  if (!decoded) {
+    return res.status(400).json({ error: 'invalid user token' });
+  }
+  const result = await postgres.query(
+    `SELECT roomId as "roomId", vanity from room WHERE owner = $1`,
+    [decoded.uid]
+  );
+  return res.json(result.rows);
 });
 
 app.get('/kv', async (req, res) => {
