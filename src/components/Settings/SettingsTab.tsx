@@ -50,6 +50,12 @@ export const SettingsTab = ({
         setPassword(data.password);
         setRoomLink(getRoomLink(data.vanity));
       };
+      const getRoomLink = (vanity: string) => {
+        if (vanity) {
+          return `${window.location.origin}/r/${vanity}`;
+        }
+        return `${window.location.origin}${roomId.replace('/', '#')}`;
+      };
       socket.on('REC:getRoomState', handleRoomState);
       return function cleanup() {
         socket.off('REC:getRoomState', handleRoomState);
@@ -87,12 +93,6 @@ export const SettingsTab = ({
     },
     [setValidVanity, vanity]
   );
-  const getRoomLink = (vanity: string) => {
-    if (vanity) {
-      return `${window.location.origin}/r/${vanity}`;
-    }
-    return `${window.location.origin}${roomId.replace('/', '#')}`;
-  };
   const lockDisabled =
     !Boolean(user) || Boolean(roomLock && roomLock !== user?.uid);
 
