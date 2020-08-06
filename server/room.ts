@@ -706,14 +706,6 @@ export class Room {
         socket.emit('errorMessage', 'Custom URL too long');
         return;
       }
-      if (!isSubscriber) {
-        // user must be sub to set vanity
-        socket.emit(
-          'errorMessage',
-          'User must be subscriber to use this feature'
-        );
-        return;
-      }
       const existing = await postgres.query(
         'SELECT roomId from room where LOWER(vanity) = $1 AND roomId != $2',
         [vanity?.toLowerCase() ?? '', this.roomId]
@@ -726,30 +718,35 @@ export class Room {
     // console.log(owner, vanity, password);
     if (owner) {
       // Only keep the rows for which we have a postgres column
-      const roomObj = {
+      const roomObj: any = {
         roomId: this.roomId,
         creationTime: this.creationTime,
         password: password,
         owner: owner,
-        vanity: vanity,
       };
+      if (isSubscriber) {
+        // user must be sub to set vanity
+        roomObj.vanity = vanity;
+      }
       const columns = Object.keys(roomObj);
       const values = Object.values(roomObj);
       const query = `INSERT INTO room(${columns.join(',')})
     VALUES (${values.map((_, i) => '$' + (i + 1)).join(',')})
     ON CONFLICT(roomId) DO UPDATE SET ${columns
       .map((c) => c + '=' + 'EXCLUDED.' + c)
-      .join(',')}`;
+      .join(',')} RETURNING *`;
       // console.log(columns, values, query);
-      await postgres.query(query, values);
+      const result = await postgres.query(query, values);
+      const row = result.rows[0];
+      socket.emit('REC:getRoomState', {
+        password: row?.password,
+        vanity: row?.vanity,
+        owner: row?.owner,
+      });
     } else {
       await postgres.query('DELETE from room where roomId = $1', [this.roomId]);
+      socket.emit('REC:getRoomState', {});
     }
-    socket.emit('REC:getRoomState', {
-      password: password,
-      vanity: vanity,
-      owner: owner,
-    });
     socket.emit('successMessage', 'Saved admin settings');
   };
 
