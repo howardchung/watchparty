@@ -690,9 +690,10 @@ export class Room {
     if (owner) {
       // validate room count
       const roomCount = (
-        await postgres.query('SELECT count(1) from room where owner = $1', [
-          owner,
-        ])
+        await postgres.query(
+          'SELECT count(1) from room where owner = $1 AND roomId != $2',
+          [owner, this.roomId]
+        )
       ).rows[0].count;
       const limit = isSubscriber ? 10 : 1;
       // console.log(roomCount, limit, isSubscriber);
