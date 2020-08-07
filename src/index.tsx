@@ -16,31 +16,43 @@ ReactDOM.render(
   <React.StrictMode>
     <BrowserRouter>
       <Route
-        path="*"
-        render={(props) =>
-          props.location?.hash ? null : <TopBar hideNewRoom hideSignin />
-        }
-      />
-      <Route
         path="/"
         exact
         render={(props) => {
-          return props.location?.hash ? <App /> : <Home />;
+          if (props.location?.hash) {
+            return <App />;
+          }
+          return (
+            <React.Fragment>
+              <TopBar hideNewRoom hideSignin />
+              <Home />
+              <Footer />
+            </React.Fragment>
+          );
+        }}
+      />
+      <Route
+        path="/r/:vanity"
+        exact
+        render={(props) => {
+          return <App vanity={props.match.params.vanity} />;
         }}
       />
       <Route path="/terms">
+        <TopBar hideNewRoom hideSignin />
         <Terms />
+        <Footer />
       </Route>
       <Route path="/privacy">
+        <TopBar hideNewRoom hideSignin />
         <Privacy />
+        <Footer />
       </Route>
       <Route path="/faq">
+        <TopBar hideNewRoom hideSignin />
         <FAQ />
+        <Footer />
       </Route>
-      <Route
-        path="*"
-        render={(props) => (props.location?.hash ? null : <Footer />)}
-      />
     </BrowserRouter>
   </React.StrictMode>,
   document.getElementById('root')

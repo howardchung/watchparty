@@ -7,4 +7,5 @@ CREATE TABLE room(
   PRIMARY KEY (roomId)
 );
 
-CREATE UNIQUE INDEX on room(vanity) WHERE vanity IS NOT NULL;
+CREATE UNIQUE INDEX on room (LOWER(vanity)) WHERE vanity IS NOT NULL;
+CREATE INDEX on room(owner) WHERE owner IS NOT NULL;
