@@ -22,6 +22,7 @@ import { VMManager } from './vm/base';
 import { getCustomerByEmail, createSelfServicePortal } from './utils/stripe';
 import { validateUserToken } from './utils/firebase';
 import path from 'path';
+import { Client } from 'pg';
 
 const app = express();
 let server: any = null;
@@ -36,6 +37,14 @@ const io = socketIO(server, { origins: '*:*', transports: ['websocket'] });
 let redis = (undefined as unknown) as Redis.Redis;
 if (process.env.REDIS_URL) {
   redis = new Redis(process.env.REDIS_URL);
+}
+let postgres = (undefined as unknown) as Client;
+if (process.env.DATABASE_URL) {
+  postgres = new Client({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false },
+  });
+  postgres.connect();
 }
 
 const names = Moniker.generator([
@@ -101,6 +110,20 @@ async function init() {
         console.error(e);
       }
     }
+    // load the roomState from postgres to fill any rooms that were lost in redis
+    const postgresRooms = (await postgres.query('SELECT * from room')).rows;
+    console.log(
+      util.format('found %s rooms in postgres', postgresRooms.length)
+    );
+    for (let i = 0; i < postgresRooms.length; i++) {
+      const key = postgresRooms[i].roomId;
+      if (!rooms.has(key)) {
+        rooms.set(
+          key,
+          new Room(io, vmManagers, key, JSON.stringify(postgresRooms[i]))
+        );
+      }
+    }
     // Start saving rooms
     saveRooms();
   }
@@ -154,8 +177,6 @@ app.get('/stats', async (req, res) => {
         vBrowserElapsed:
           room.vBrowser?.assignTime && now - room.vBrowser?.assignTime,
         lock: room.lock || undefined,
-        owner: room.owner || undefined,
-        vanity: room.vanity || undefined,
       };
       currentUsers += obj.rosterLength;
       currentVideoChat += obj.videoChats;
@@ -255,6 +276,24 @@ app.get('/stats', async (req, res) => {
       0,
       20
     );
+    const vBrowserClientIDMinutes = await redis.zrevrangebyscore(
+      'vBrowserClientIDMinutes',
+      '+inf',
+      '0',
+      'WITHSCORES',
+      'LIMIT',
+      0,
+      20
+    );
+    const vBrowserUIDMinutes = await redis.zrevrangebyscore(
+      'vBrowserUIDMinutes',
+      '+inf',
+      '0',
+      'WITHSCORES',
+      'LIMIT',
+      0,
+      20
+    );
     const vBrowserClientIDsCard = await redis.zcard('vBrowserClientIDs');
     const vBrowserUIDsCard = await redis.zcard('vBrowserUIDs');
 
@@ -292,10 +331,12 @@ app.get('/stats', async (req, res) => {
       vBrowserStartMS,
       vBrowserSessionMS,
       vBrowserVMLifetime,
-      vBrowserClientIDsCard,
-      vBrowserUIDsCard,
       vBrowserClientIDs,
+      vBrowserClientIDsCard,
+      vBrowserClientIDMinutes,
       vBrowserUIDs,
+      vBrowserUIDsCard,
+      vBrowserUIDMinutes,
       rooms: roomData,
     });
   } else {
@@ -377,6 +418,32 @@ app.get('/metadata', async (req, res) => {
     customer.subscriptions?.data?.[0]?.status === 'active'
   );
   return res.json({ isSubscriber });
+});
+
+app.get('/resolveRoom/:vanity', async (req, res) => {
+  const vanity = req.params.vanity;
+  const result = await postgres.query(
+    `SELECT roomId as "roomId", vanity from room WHERE LOWER(vanity) = $1`,
+    [vanity?.toLowerCase() ?? '']
+  );
+  // console.log(vanity, result.rows);
+  // We also use this for checking name availability, so just return empty response if it doesn't exist (http 200)
+  return res.json(result.rows[0]);
+});
+
+app.get('/listRooms', async (req, res) => {
+  const decoded = await validateUserToken(
+    req.query?.uid as string,
+    req.query?.token as string
+  );
+  if (!decoded) {
+    return res.status(400).json({ error: 'invalid user token' });
+  }
+  const result = await postgres.query(
+    `SELECT roomId as "roomId", vanity from room WHERE owner = $1`,
+    [decoded.uid]
+  );
+  return res.json(result.rows);
 });
 
 app.get('/kv', async (req, res) => {
