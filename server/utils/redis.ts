@@ -1,9 +1,10 @@
+import config from '../config';
 import Redis from 'ioredis';
 import { getStartOfHour } from './time';
 
 let redis = (undefined as unknown) as Redis.Redis;
-if (process.env.REDIS_URL) {
-  redis = new Redis(process.env.REDIS_URL);
+if (config.REDIS_URL) {
+  redis = new Redis(config.REDIS_URL);
 }
 
 export async function redisCount(prefix: string) {

@@ -1,9 +1,10 @@
+import config from '../config';
 import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import { VMManager, VM } from './base';
 import { cloudInit, imageName } from './utils';
 
-const HETZNER_TOKEN = process.env.HETZNER_TOKEN;
+const HETZNER_TOKEN = config.HETZNER_TOKEN;
 const region = 'nbg1';
 const gatewayHost = 'gateway3.watchparty.me';
 const sshKeys = [1570536];

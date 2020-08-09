@@ -1,11 +1,12 @@
+import config from '../config';
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
 import { VMManager, VM } from './base';
 import { Room } from '../room';
 import { cloudInit, imageName } from './utils';
 
-const SCW_SECRET_KEY = process.env.SCW_SECRET_KEY;
-const SCW_ORGANIZATION_ID = process.env.SCW_ORGANIZATION_ID;
+const SCW_SECRET_KEY = config.SCW_SECRET_KEY;
+const SCW_ORGANIZATION_ID = config.SCW_ORGANIZATION_ID;
 const region = 'nl-ams-1';
 const gatewayHost = 'gateway2.watchparty.me';
 const imageId = '1e72e882-f000-4c6e-b538-974af74c2a6a';

@@ -1,3 +1,4 @@
+import config from '../config';
 import { Room } from '../room';
 import Redis from 'ioredis';
 import axios from 'axios';
@@ -9,15 +10,15 @@ const releaseInterval = 5 * 60 * 1000;
 
 export abstract class VMManager {
   public vmBufferSize = 0;
-  protected tag = process.env.VBROWSER_TAG || 'vbrowser';
+  protected tag = config.VBROWSER_TAG || 'vbrowser';
   protected isLarge = false;
-  private redis = new Redis(process.env.REDIS_URL);
-  private redis2 = new Redis(process.env.REDIS_URL);
-  private redis3 = new Redis(process.env.REDIS_URL);
+  private redis = new Redis(config.REDIS_URL);
+  private redis2 = new Redis(config.REDIS_URL);
+  private redis3 = new Redis(config.REDIS_URL);
   private getFixedSize = () =>
     this.isLarge
-      ? Number(process.env.VM_POOL_FIXED_SIZE_LARGE)
-      : Number(process.env.VM_POOL_FIXED_SIZE);
+      ? Number(config.VM_POOL_FIXED_SIZE_LARGE)
+      : Number(config.VM_POOL_FIXED_SIZE);
 
   constructor(
     rooms: Map<string, Room>,
@@ -28,9 +29,9 @@ export abstract class VMManager {
       this.vmBufferSize = vmBufferSize;
     } else {
       if (large) {
-        this.vmBufferSize = Number(process.env.VBROWSER_VM_BUFFER_LARGE) || 0;
+        this.vmBufferSize = Number(config.VBROWSER_VM_BUFFER_LARGE) || 0;
       } else {
-        this.vmBufferSize = Number(process.env.VBROWSER_VM_BUFFER) || 0;
+        this.vmBufferSize = Number(config.VBROWSER_VM_BUFFER) || 0;
       }
     }
     if (large) {

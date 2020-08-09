@@ -1,16 +1,17 @@
+import config from '../config';
 import * as admin from 'firebase-admin';
 
-if (process.env.FIREBASE_ADMIN_SDK_CONFIG) {
+if (config.FIREBASE_ADMIN_SDK_CONFIG) {
   admin.initializeApp({
     credential: admin.credential.cert(
-      JSON.parse(process.env.FIREBASE_ADMIN_SDK_CONFIG)
+      JSON.parse(config.FIREBASE_ADMIN_SDK_CONFIG)
     ),
-    databaseURL: process.env.FIREBASE_DATABASE_URL,
+    databaseURL: config.FIREBASE_DATABASE_URL,
   });
 }
 
 export async function validateUserToken(uid: string, token: string) {
-  if (!process.env.FIREBASE_ADMIN_SDK_CONFIG) {
+  if (!config.FIREBASE_ADMIN_SDK_CONFIG) {
     return undefined;
   }
   const decoded = await admin.auth().verifyIdToken(token);
@@ -21,7 +22,7 @@ export async function validateUserToken(uid: string, token: string) {
 }
 
 export async function writeData(key: string, value: string) {
-  if (!process.env.FIREBASE_ADMIN_SDK_CONFIG) {
+  if (!config.FIREBASE_ADMIN_SDK_CONFIG) {
     return;
   }
   await admin.database().ref(key).set(value);
