@@ -17,7 +17,7 @@ const defaults = {
   HETZNER_TOKEN: '', // Optional, for Hetzner VMs
   SCW_SECRET_KEY: '', // Optional, for Scaleway VMs
   SCW_ORGANIZATION_ID: '', // Optional, for Scaleway VMs
-  DOCKER_VM_HOST: 'localhost', // Optional, for Docker VMs
+  DOCKER_VM_HOST: '', // Optional, for Docker VMs
   DOCKER_VM_HOST_SSH_USER: '', // Optional, username for Docker host
   DOCKER_VM_HOST_SSH_KEY_BASE64: '', // Optional, private SSH key for Docker host
   RECAPTCHA_SECRET_KEY: '', // Optional, Recaptcha for VBrowser creation
