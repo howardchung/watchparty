@@ -73,6 +73,17 @@ export const SettingsTab = ({
     },
     [socket, user]
   );
+  const setRoomOwner = useCallback(
+    async (data: any) => {
+      const token = await user?.getIdToken();
+      socket.emit('CMD:setRoomOwner', {
+        uid: user?.uid,
+        token,
+        ...data,
+      });
+    },
+    [socket, user]
+  );
   const checkValidVanity = useCallback(
     async (input: string) => {
       if (!input) {
@@ -119,9 +130,7 @@ export const SettingsTab = ({
           description="Standard rooms are deleted after one day of inactivity. Permanent rooms aren't deleted and can have passwords/custom URLs. Free users can only have one permanent room at a time."
           checked={Boolean(owner)}
           disabled={Boolean(owner && owner !== user?.uid)}
-          onChange={(e, data) =>
-            setRoomState({ owner: data.checked ? user?.uid : undefined })
-          }
+          onChange={(e, data) => setRoomOwner({ undo: !data.checked })}
         />
       }
       {owner && owner === user?.uid && (
@@ -203,7 +212,6 @@ export const SettingsTab = ({
             setRoomState({
               vanity: vanity,
               password: password,
-              owner: owner,
             })
           }
         >
