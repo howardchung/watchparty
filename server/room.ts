@@ -133,6 +133,7 @@ export class Room {
       });
       socket.on('CMD:getRoomState', (data) => this.getRoomState(socket));
       socket.on('CMD:setRoomState', (data) => this.setRoomState(socket, data));
+      socket.on('CMD:setRoomOwner', (data) => this.setRoomOwner(socket, data));
       socket.on('signal', (data) => this.sendSignal(socket, data));
       socket.on('signalSS', (data) => this.signalSS(socket, data));
 
@@ -629,6 +630,70 @@ export class Room {
     this.addChatMessage(socket, chatMsg);
   };
 
+  private setRoomOwner = async (
+    socket: Socket,
+    data: {
+      uid: string;
+      token: string;
+      undo: boolean;
+    }
+  ) => {
+    if (!postgres) {
+      socket.emit('errorMessage', 'Database is not available');
+      return;
+    }
+    const decoded = await validateUserToken(
+      data?.uid as string,
+      data?.token as string
+    );
+    if (!decoded) {
+      socket.emit('errorMessage', 'Failed to authenticate user');
+      return;
+    }
+    const customer = await getCustomerByEmail(decoded.email as string);
+    const isSubscriber = Boolean(
+      customer?.subscriptions?.data?.[0]?.status === 'active'
+    );
+    const owner = decoded.uid;
+    if (data.undo) {
+      await postgres.query('DELETE from room where roomId = $1', [this.roomId]);
+      socket.emit('REC:getRoomState', {});
+    } else {
+      // validate room count
+      const roomCount = (
+        await postgres.query(
+          'SELECT count(1) from room where owner = $1 AND roomId != $2',
+          [owner, this.roomId]
+        )
+      ).rows[0].count;
+      const limit = isSubscriber ? 10 : 1;
+      // console.log(roomCount, limit, isSubscriber);
+      if (roomCount >= limit) {
+        socket.emit('errorMessage', 'Room limit exceeded');
+        return;
+      }
+      // Only keep the rows for which we have a postgres column
+      const roomObj: any = {
+        roomId: this.roomId,
+        creationTime: this.creationTime,
+        owner: owner,
+      };
+      const columns = Object.keys(roomObj);
+      const values = Object.values(roomObj);
+      const query = `INSERT INTO room(${columns.join(',')})
+    VALUES (${values.map((_, i) => '$' + (i + 1)).join(',')})
+    RETURNING *`;
+      // console.log(columns, values, query);
+      const result = await postgres.query(query, values);
+      const row = result.rows[0];
+      socket.emit('REC:getRoomState', {
+        password: row?.password,
+        vanity: row?.vanity,
+        owner: row?.owner,
+      });
+    }
+  };
+
   private getRoomState = async (socket: Socket) => {
     if (!postgres) {
       return;
@@ -651,7 +716,6 @@ export class Room {
       uid: string;
       token: string;
       password: string;
-      owner: string;
       vanity: string;
     }
   ) => {
@@ -667,38 +731,14 @@ export class Room {
       socket.emit('errorMessage', 'Failed to authenticate user');
       return;
     }
-    const result = await postgres.query(
-      `SELECT owner FROM room where roomId = $1`,
-      [this.roomId]
-    );
-    const first = result.rows[0];
-    if (first?.owner && first?.owner !== decoded?.uid) {
-      socket.emit('errorMessage', 'User is not the owner');
-      return;
-    }
     const customer = await getCustomerByEmail(decoded.email as string);
     const isSubscriber = Boolean(
       customer?.subscriptions?.data?.[0]?.status === 'active'
     );
-    const { password, owner, vanity } = data;
+    const { password, vanity } = data;
     if (password) {
       if (password.length > 100) {
         socket.emit('errorMessage', 'Password too long');
-        return;
-      }
-    }
-    if (owner) {
-      // validate room count
-      const roomCount = (
-        await postgres.query(
-          'SELECT count(1) from room where owner = $1 AND roomId != $2',
-          [owner, this.roomId]
-        )
-      ).rows[0].count;
-      const limit = isSubscriber ? 10 : 1;
-      // console.log(roomCount, limit, isSubscriber);
-      if (roomCount >= limit) {
-        socket.emit('errorMessage', 'Room limit exceeded');
         return;
       }
     }
@@ -707,48 +747,37 @@ export class Room {
         socket.emit('errorMessage', 'Custom URL too long');
         return;
       }
-      const existing = await postgres.query(
-        'SELECT roomId from room where LOWER(vanity) = $1 AND roomId != $2',
-        [vanity?.toLowerCase() ?? '', this.roomId]
-      );
-      if (existing.rows.length) {
-        socket.emit('errorMessage', 'Custom URL already exists');
-        return;
-      }
     }
     // console.log(owner, vanity, password);
-    if (owner) {
-      // Only keep the rows for which we have a postgres column
-      const roomObj: any = {
-        roomId: this.roomId,
-        creationTime: this.creationTime,
-        password: password,
-        owner: owner,
-      };
-      if (isSubscriber) {
-        // user must be sub to set vanity
-        roomObj.vanity = vanity;
-      }
-      const columns = Object.keys(roomObj);
-      const values = Object.values(roomObj);
-      const query = `INSERT INTO room(${columns.join(',')})
-    VALUES (${values.map((_, i) => '$' + (i + 1)).join(',')})
-    ON CONFLICT(roomId) DO UPDATE SET ${columns
-      .map((c) => c + '=' + 'EXCLUDED.' + c)
-      .join(',')} RETURNING *`;
-      // console.log(columns, values, query);
-      const result = await postgres.query(query, values);
+    const roomObj: any = {
+      roomId: this.roomId,
+      password: password,
+    };
+    if (isSubscriber) {
+      // user must be sub to set vanity
+      roomObj.vanity = vanity;
+    }
+    try {
+      const query = `UPDATE room
+        SET ${Object.keys(roomObj).map((k, i) => `${k} = $${i + 1}`)}
+        WHERE roomId = $${Object.keys(roomObj).length + 1}
+        AND owner = $${Object.keys(roomObj).length + 2}
+        RETURNING *`;
+      const result = await postgres.query(query, [
+        ...Object.values(roomObj),
+        this.roomId,
+        decoded.uid,
+      ]);
       const row = result.rows[0];
       socket.emit('REC:getRoomState', {
         password: row?.password,
         vanity: row?.vanity,
         owner: row?.owner,
       });
-    } else {
-      await postgres.query('DELETE from room where roomId = $1', [this.roomId]);
-      socket.emit('REC:getRoomState', {});
+      socket.emit('successMessage', 'Saved admin settings');
+    } catch (e) {
+      console.error(e);
     }
-    socket.emit('successMessage', 'Saved admin settings');
   };
 
   private sendSignal = (socket: Socket, data: { to: string; msg: string }) => {

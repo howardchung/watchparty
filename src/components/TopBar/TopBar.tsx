@@ -162,6 +162,7 @@ export class ListRoomsButton extends React.Component<{
                     ? '/r/' + room.vanity
                     : '/' + room.roomId.replace('/', '#')
                 }
+                onClick={() => window.location.reload()}
               >
                 {room.vanity
                   ? `/r/${room.vanity}`
