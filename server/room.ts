@@ -1,3 +1,4 @@
+import config from './config';
 import crypto from 'crypto';
 import zlib from 'zlib';
 import util from 'util';
@@ -16,13 +17,13 @@ import { getStartOfDay } from './utils/time';
 const gzip = util.promisify(zlib.gzip);
 
 let redis = (undefined as unknown) as Redis.Redis;
-if (process.env.REDIS_URL) {
-  redis = new Redis(process.env.REDIS_URL);
+if (config.REDIS_URL) {
+  redis = new Redis(config.REDIS_URL);
 }
 let postgres = (undefined as unknown) as Client;
-if (process.env.DATABASE_URL) {
+if (config.DATABASE_URL) {
   postgres = new Client({
-    connectionString: process.env.DATABASE_URL,
+    connectionString: config.DATABASE_URL,
     ssl: { rejectUnauthorized: false },
   });
   postgres.connect();
@@ -389,7 +390,7 @@ export class Room {
     if (data && data.length > 10000) {
       return;
     }
-    if (process.env.NODE_ENV === 'development' && data === '/clear') {
+    if (config.NODE_ENV === 'development' && data === '/clear') {
       this.chat.length = 0;
       this.io.of(this.roomId).emit('chatinit', this.chat);
       return;
@@ -496,7 +497,7 @@ export class Room {
     }
     this.isAssigningVM = true;
     let isLarge = false;
-    if (process.env.STRIPE_SECRET_KEY && data && data.uid && data.token) {
+    if (config.STRIPE_SECRET_KEY && data && data.uid && data.token) {
       const decoded = await validateUserToken(data.uid, data.token);
       // Check if user is subscriber, if so allow isLarge
       if (decoded?.email) {
@@ -508,11 +509,11 @@ export class Room {
       }
     }
 
-    if (process.env.RECAPTCHA_SECRET_KEY) {
+    if (config.RECAPTCHA_SECRET_KEY) {
       try {
         // Validate the request isn't spam/automated
         const validation = await axios({
-          url: `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${data.rcToken}`,
+          url: `https://www.google.com/recaptcha/api/siteverify?secret=${config.RECAPTCHA_SECRET_KEY}&response=${data.rcToken}`,
           method: 'POST',
         });
         console.log(validation?.data);

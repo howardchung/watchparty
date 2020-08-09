@@ -1,18 +1,19 @@
 // This assumes an installation of Docker exists at the Docker VM host
 // and that host is configured to accept our SSH key
+import config from '../config';
 import { v4 as uuidv4 } from 'uuid';
 import { VMManager, VM } from './base';
 import { cloudInit, imageName } from './utils';
 //@ts-ignore
 import sshExec from 'ssh-exec';
 
-const gatewayHost = process.env.DOCKER_VM_HOST || 'localhost';
+const gatewayHost = config.DOCKER_VM_HOST || 'localhost';
 const sshConfig = {
-  user: process.env.DOCKER_VM_HOST_SSH_USER || 'root',
+  user: config.DOCKER_VM_HOST_SSH_USER || 'root',
   host: gatewayHost,
   // Defaults to ~/.ssh/id_rsa
-  key: process.env.DOCKER_VM_HOST_SSH_KEY_BASE64
-    ? Buffer.from(process.env.DOCKER_VM_HOST_SSH_KEY_BASE64, 'base64')
+  key: config.DOCKER_VM_HOST_SSH_KEY_BASE64
+    ? Buffer.from(config.DOCKER_VM_HOST_SSH_KEY_BASE64, 'base64')
     : undefined,
 };
 

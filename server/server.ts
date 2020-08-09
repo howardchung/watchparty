@@ -1,4 +1,4 @@
-require('dotenv').config();
+import config from './config';
 import fs from 'fs';
 import util from 'util';
 import express from 'express';
@@ -26,22 +26,22 @@ import { Client } from 'pg';
 
 const app = express();
 let server: any = null;
-if (process.env.HTTPS) {
-  const key = fs.readFileSync(process.env.SSL_KEY_FILE as string);
-  const cert = fs.readFileSync(process.env.SSL_CRT_FILE as string);
+if (config.HTTPS) {
+  const key = fs.readFileSync(config.SSL_KEY_FILE as string);
+  const cert = fs.readFileSync(config.SSL_CRT_FILE as string);
   server = https.createServer({ key: key, cert: cert }, app);
 } else {
   server = new http.Server(app);
 }
 const io = socketIO(server, { origins: '*:*', transports: ['websocket'] });
 let redis = (undefined as unknown) as Redis.Redis;
-if (process.env.REDIS_URL) {
-  redis = new Redis(process.env.REDIS_URL);
+if (config.REDIS_URL) {
+  redis = new Redis(config.REDIS_URL);
 }
 let postgres = (undefined as unknown) as Client;
-if (process.env.DATABASE_URL) {
+if (config.DATABASE_URL) {
   postgres = new Client({
-    connectionString: process.env.DATABASE_URL,
+    connectionString: config.DATABASE_URL,
     ssl: { rejectUnauthorized: false },
   });
   postgres.connect();
@@ -58,23 +58,19 @@ const rooms = new Map<string, Room>();
 // Start the VM manager
 let vmManager: VMManager;
 let vmManagerLarge: VMManager;
-if (
-  process.env.REDIS_URL &&
-  process.env.SCW_SECRET_KEY &&
-  process.env.SCW_ORGANIZATION
-) {
+if (config.REDIS_URL && config.SCW_SECRET_KEY && config.SCW_ORGANIZATION_ID) {
   // new Scaleway(rooms, 0);
   // new Scaleway(rooms, 0, true)
 }
-if (process.env.REDIS_URL && process.env.HETZNER_TOKEN) {
+if (config.REDIS_URL && config.HETZNER_TOKEN) {
   vmManager = new Hetzner(rooms);
   vmManagerLarge = new Hetzner(rooms, undefined, true);
 }
-if (process.env.REDIS_URL && process.env.DO_TOKEN) {
+if (config.REDIS_URL && config.DO_TOKEN) {
   // new DigitalOcean(rooms, 0);
   // new DigitalOcean(rooms, 0, true);
 }
-if (process.env.REDIS_URL && process.env.DOCKER_VM_HOST) {
+if (config.REDIS_URL && config.DOCKER_VM_HOST) {
   vmManager = new Docker(rooms, undefined, false);
 }
 const vmManagers = { standard: vmManager!, large: vmManagerLarge! };
@@ -132,7 +128,7 @@ async function init() {
     rooms.set('/default', new Room(io, vmManagers, '/default'));
   }
 
-  server.listen(process.env.PORT || 8080);
+  server.listen(config.PORT);
 }
 
 app.use(cors());
@@ -155,7 +151,7 @@ app.get('/subtitle/:hash', async (req, res) => {
 app.use(compression());
 
 app.get('/stats', async (req, res) => {
-  if (req.query.key && req.query.key === process.env.STATS_KEY) {
+  if (req.query.key && req.query.key === config.STATS_KEY) {
     const roomData: any[] = [];
     const now = Number(new Date());
     let currentUsers = 0;
@@ -371,10 +367,10 @@ app.post('/createRoom', (req, res) => {
 });
 
 app.get('/settings', (req, res) => {
-  if (req.hostname === process.env.CUSTOM_SETTINGS_HOSTNAME) {
+  if (req.hostname === config.CUSTOM_SETTINGS_HOSTNAME) {
     return res.json({
-      mediaPath: process.env.MEDIA_PATH,
-      streamPath: process.env.STREAM_PATH,
+      mediaPath: config.MEDIA_PATH,
+      streamPath: config.STREAM_PATH,
     });
   }
   return res.json({});
@@ -447,7 +443,7 @@ app.get('/listRooms', async (req, res) => {
 });
 
 app.get('/kv', async (req, res) => {
-  if (req.query.key === process.env.KV_KEY) {
+  if (req.query.key === config.KV_KEY) {
     return res.end(await redis.get(('kv:' + req.query.k) as string));
   } else {
     return res.status(403).json({ error: 'Access Denied' });
@@ -455,7 +451,7 @@ app.get('/kv', async (req, res) => {
 });
 
 app.post('/kv', async (req, res) => {
-  if (req.query.key === process.env.KV_KEY) {
+  if (req.query.key === config.KV_KEY) {
     return res.end(
       await redis.setex(
         'kv:' + req.query.k,

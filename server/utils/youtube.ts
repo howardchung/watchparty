@@ -1,3 +1,4 @@
+import config from '../config';
 import Youtube from 'youtube-api';
 import {
   PlaylistVideo,
@@ -12,10 +13,10 @@ import {
   YOUTUBE_VIDEO_ID_REGEX,
 } from './regex';
 
-if (process.env.YOUTUBE_API_KEY) {
+if (config.YOUTUBE_API_KEY) {
   Youtube.authenticate({
     type: 'key',
-    key: process.env.YOUTUBE_API_KEY,
+    key: config.YOUTUBE_API_KEY,
   });
 }
 

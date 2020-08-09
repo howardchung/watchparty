@@ -1,9 +1,10 @@
+import config from '../config';
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
 import { VMManager, VM } from './base';
 import { cloudInit, imageName } from './utils';
 
-const DO_TOKEN = process.env.DO_TOKEN;
+const DO_TOKEN = config.DO_TOKEN;
 const region = 'sfo2';
 const gatewayHost = 'gateway4.watchparty.me';
 const imageId = 64531018;
