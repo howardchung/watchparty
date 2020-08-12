@@ -157,12 +157,12 @@ export class ListRoomsButton extends React.Component<{
             return (
               <Dropdown.Item
                 link
-                href={
-                  room.vanity
+                onClick={() => {
+                  window.location.href = room.vanity
                     ? '/r/' + room.vanity
-                    : '/' + room.roomId.replace('/', '#')
-                }
-                onClick={() => window.location.reload()}
+                    : '/' + room.roomId.replace('/', '#');
+                  window.location.reload();
+                }}
               >
                 {room.vanity
                   ? `/r/${room.vanity}`
