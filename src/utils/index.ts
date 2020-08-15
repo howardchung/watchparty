@@ -13,11 +13,14 @@ export function formatTimestamp(input: any) {
   ) {
     return '';
   }
-  let minutes = Math.floor(Number(input) / 60);
+  let hours = Math.floor(Number(input) / 3600);
+  let minutes = (Math.floor(Number(input) / 60) % 60)
+    .toString()
+    .padStart(2, '0');
   let seconds = Math.floor(Number(input) % 60)
     .toString()
     .padStart(2, '0');
-  return `${minutes}:${seconds}`;
+  return `${hours}:${minutes}:${seconds}`;
 }
 
 export function formatSpeed(input: number) {
