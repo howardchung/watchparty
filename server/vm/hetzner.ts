@@ -5,7 +5,8 @@ import { VMManager, VM } from './base';
 import { cloudInit, imageName } from './utils';
 
 const HETZNER_TOKEN = config.HETZNER_TOKEN;
-const region = 'nbg1';
+// const region = 'nbg1';
+const region = 'hel1';
 const gatewayHost = 'gateway3.watchparty.me';
 const sshKeys = [1570536];
 const networks = [91163];
