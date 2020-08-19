@@ -122,7 +122,7 @@ export class SignInButton extends React.Component<{
 export class ListRoomsButton extends React.Component<{
   user: firebase.User | undefined;
 }> {
-  public state = { rooms: [] };
+  public state = { rooms: [] as PermanentRoom[] };
 
   componentDidMount() {
     this.refreshRooms();
@@ -135,6 +135,20 @@ export class ListRoomsButton extends React.Component<{
         serverPath + `/listRooms?uid=${this.props.user?.uid}&token=${token}`
       );
       this.setState({ rooms: response.data });
+    }
+  };
+
+  deleteRoom = async (roomId: string) => {
+    if (this.props.user) {
+      const token = await this.props.user.getIdToken();
+      const response = await axios.delete(
+        serverPath +
+          `/deleteRoom?uid=${this.props.user?.uid}&token=${token}&roomId=${roomId}`
+      );
+      this.setState({
+        rooms: this.state.rooms.filter((room) => room.roomId !== roomId),
+      });
+      this.refreshRooms();
     }
   };
 
@@ -157,16 +171,37 @@ export class ListRoomsButton extends React.Component<{
             return (
               <Dropdown.Item
                 link
-                onClick={() => {
-                  window.location.href = room.vanity
+                href={
+                  room.vanity
                     ? '/r/' + room.vanity
-                    : '/' + room.roomId.replace('/', '#');
-                  window.location.reload();
+                    : '/' + room.roomId.replace('/', '#')
+                }
+                onClick={() => {
+                  if (!room.vanity) {
+                    setTimeout(() => window.location.reload(), 100);
+                  }
                 }}
               >
-                {room.vanity
-                  ? `/r/${room.vanity}`
-                  : room.roomId.replace('/', '#')}
+                <div style={{ display: 'flex' }}>
+                  {room.vanity
+                    ? `/r/${room.vanity}`
+                    : room.roomId.replace('/', '#')}
+                  <div style={{ marginLeft: 'auto', paddingLeft: '20px' }}>
+                    <Popup
+                      content="Delete room"
+                      trigger={
+                        <Icon
+                          onClick={(e: React.MouseEvent) => {
+                            e.stopPropagation();
+                            this.deleteRoom(room.roomId);
+                          }}
+                          name="x"
+                          color="red"
+                        />
+                      }
+                    />
+                  </div>
+                </div>
               </Dropdown.Item>
             );
           })}
