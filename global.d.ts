@@ -57,3 +57,8 @@ interface HostState {
   isVBrowserLarge: boolean;
   controller?: string;
 }
+
+interface PermanentRoom {
+  roomId: string;
+  vanity: string;
+}
