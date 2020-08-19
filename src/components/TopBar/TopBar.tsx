@@ -141,7 +141,7 @@ export class ListRoomsButton extends React.Component<{
   deleteRoom = async (roomId: string) => {
     if (this.props.user) {
       const token = await this.props.user.getIdToken();
-      const response = await axios.delete(
+      await axios.delete(
         serverPath +
           `/deleteRoom?uid=${this.props.user?.uid}&token=${token}&roomId=${roomId}`
       );
