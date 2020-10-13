@@ -314,6 +314,7 @@ export abstract class VMManager {
           this.terminateVMWrapper(id);
         }
       }
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     }
   };
 
