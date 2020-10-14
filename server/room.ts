@@ -236,7 +236,7 @@ export class Room {
     this.saveToRedis();
     if (redis && assignTime) {
       await redis.lpush('vBrowserSessionMS', Number(new Date()) - assignTime);
-      await redis.ltrim('vBrowserSessionMS', 0, 24);
+      await redis.ltrim('vBrowserSessionMS', 0, 49);
     }
     if (id) {
       try {

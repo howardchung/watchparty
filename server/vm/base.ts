@@ -158,7 +158,7 @@ export abstract class VMManager {
     const assignEnd = Number(new Date());
     const assignElapsed = assignEnd - assignStart;
     await this.redis.lpush('vBrowserStartMS', assignElapsed);
-    await this.redis.ltrim('vBrowserStartMS', 0, 24);
+    await this.redis.ltrim('vBrowserStartMS', 0, 49);
     console.log('[ASSIGN]', selected.id, assignElapsed + 'ms');
     const retVal = { ...selected, assignTime: Number(new Date()) };
     return retVal;
@@ -350,7 +350,7 @@ export abstract class VMManager {
     await this.terminateVM(id);
     if (lifetime) {
       await this.redis.lpush('vBrowserVMLifetime', lifetime);
-      await this.redis.ltrim('vBrowserVMLifetime', 0, 24);
+      await this.redis.ltrim('vBrowserVMLifetime', 0, 49);
     }
   };
 
