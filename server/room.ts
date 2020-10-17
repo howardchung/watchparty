@@ -77,10 +77,6 @@ export class Room {
     }, 1000);
 
     io.of(roomId).use(async (socket, next) => {
-      if (this.roomCapacity && this.roster.length >= this.roomCapacity) {
-        next(new Error('room full'));
-        return;
-      }
       // Validate the connector has the room password
       const password = socket.handshake.query?.password;
       // console.log(this.roomId, this.password, password);
@@ -94,6 +90,10 @@ export class Room {
           next(new Error('not authorized'));
           return;
         }
+      }
+      if (this.roomCapacity && this.roster.length >= this.roomCapacity) {
+        next(new Error('room full'));
+        return;
       }
       next();
     });
