@@ -5,10 +5,10 @@ import util from 'util';
 
 import axios from 'axios';
 import Redis from 'ioredis';
-import { Socket } from 'socket.io';
+import { Namespace, Socket } from 'socket.io';
 import { Client } from 'pg';
 
-import { validateUserToken } from './utils/firebase';
+import { getUserEmail, validateUserToken } from './utils/firebase';
 import { redisCount, redisCountDistinct } from './utils/redis';
 import { getCustomerByEmail } from './utils/stripe';
 import { AssignedVM, VMManager } from './vm/base';
@@ -41,6 +41,7 @@ export class Room {
   public vBrowser: AssignedVM | undefined = undefined;
   public creationTime: Date = new Date();
   public lock: string | undefined = undefined; // uid of the user who locked the room
+  private roomCapacity: number = 0;
 
   // Non-serialized state
   public roomId: string;
@@ -65,6 +66,8 @@ export class Room {
     if (roomData) {
       this.deserialize(roomData);
     }
+    // check if room has a currently subscribed owner and set room capacity
+    this.checkSub();
 
     setInterval(() => {
       // console.log(roomId, this.video, this.roster, this.tsMap, this.nameMap);
@@ -74,6 +77,10 @@ export class Room {
     }, 1000);
 
     io.of(roomId).use(async (socket, next) => {
+      if (this.roomCapacity && this.roster.length >= this.roomCapacity) {
+        next(new Error('room full'));
+        return;
+      }
       // Validate the connector has the room password
       const password = socket.handshake.query?.password;
       // console.log(this.roomId, this.password, password);
@@ -103,6 +110,7 @@ export class Room {
       socket.emit('REC:tsMap', this.tsMap);
       socket.emit('REC:lock', this.lock);
       socket.emit('chatinit', this.chat);
+      socket.emit('REC:roomCapacity', this.roomCapacity);
       io.of(roomId).emit('roster', this.roster);
 
       socket.on('CMD:name', (data) => this.changeUserName(socket, data));
@@ -134,13 +142,38 @@ export class Room {
       });
       socket.on('CMD:getRoomState', (data) => this.getRoomState(socket));
       socket.on('CMD:setRoomState', (data) => this.setRoomState(socket, data));
-      socket.on('CMD:setRoomOwner', (data) => this.setRoomOwner(socket, data));
+      socket.on('CMD:setRoomOwner', (data) =>
+        this.setRoomOwner(socket, io.of(roomId), data)
+      );
       socket.on('signal', (data) => this.sendSignal(socket, data));
       socket.on('signalSS', (data) => this.signalSS(socket, data));
 
       socket.on('disconnect', () => this.disconnectUser(socket));
     });
   }
+
+  setRoomCapacity = (isOwnerSub: boolean) => {
+    this.roomCapacity = isOwnerSub
+      ? config.ROOM_CAPACITY_SUB
+      : config.ROOM_CAPACITY;
+  };
+
+  checkSub = async () => {
+    let isSubscriber = false;
+    const result = await postgres.query(
+      `SELECT owner FROM room where roomId = $1`,
+      [this.roomId]
+    );
+    const first = result.rows[0];
+    if (first?.owner) {
+      const email = await getUserEmail(first.owner);
+      const customer = await getCustomerByEmail(email as string);
+      isSubscriber = Boolean(
+        customer?.subscriptions?.data?.[0]?.status === 'active'
+      );
+    }
+    this.setRoomCapacity(isSubscriber);
+  };
 
   serialize = () => {
     return JSON.stringify({
@@ -633,6 +666,7 @@ export class Room {
 
   private setRoomOwner = async (
     socket: Socket,
+    nsp: Namespace,
     data: {
       uid: string;
       token: string;
@@ -659,6 +693,7 @@ export class Room {
     if (data.undo) {
       await postgres.query('DELETE from room where roomId = $1', [this.roomId]);
       socket.emit('REC:getRoomState', {});
+      this.setRoomCapacity(false);
     } else {
       // validate room count
       const roomCount = (
@@ -692,7 +727,9 @@ export class Room {
         vanity: row?.vanity,
         owner: row?.owner,
       });
+      this.setRoomCapacity(isSubscriber);
     }
+    nsp.emit('REC:roomCapacity', this.roomCapacity);
   };
 
   private getRoomState = async (socket: Socket) => {

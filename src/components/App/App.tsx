@@ -115,6 +115,7 @@ interface AppState {
   roomId: string;
   errorMessage: string;
   successMessage: string;
+  roomCapacity: number;
 }
 
 export default class App extends React.Component<AppProps, AppState> {
@@ -165,6 +166,7 @@ export default class App extends React.Component<AppProps, AppState> {
     savedPasswords: {},
     errorMessage: '',
     successMessage: '',
+    roomCapacity: 0,
   };
   socket: any = null;
   watchPartyYTPlayer: any = null;
@@ -344,6 +346,8 @@ export default class App extends React.Component<AppProps, AppState> {
         this.setState({ error: "There's no room with this name." });
       } else if (err === 'not authorized') {
         this.setState({ isErrorAuth: true });
+      } else if (err === 'room full') {
+        this.setState({ error: 'This room is full.' });
       } else {
         this.setState({ error: 'An error occurred.' });
       }
@@ -523,6 +527,9 @@ export default class App extends React.Component<AppProps, AppState> {
           this.updateScreenShare();
         }
       );
+    });
+    socket.on('REC:roomCapacity', (data: number) => {
+      this.setState({ roomCapacity: data });
     });
     socket.on('chatinit', (data: any) => {
       this.setState({ chat: data, scrollTimestamp: Number(new Date()) });
@@ -1751,7 +1758,11 @@ export default class App extends React.Component<AppProps, AppState> {
                       as="a"
                     >
                       {/* <Icon name="group" /> */}
-                      People ({this.state.participants.length})
+                      {`People (${this.state.participants.length}${
+                        this.state.roomCapacity
+                          ? `/${this.state.roomCapacity})`
+                          : ')'
+                      }`}
                     </Menu.Item>
                     <Menu.Item
                       name="settings"
