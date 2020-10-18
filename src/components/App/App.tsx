@@ -1763,6 +1763,21 @@ export default class App extends React.Component<AppProps, AppState> {
                           ? `/${this.state.roomCapacity})`
                           : ')'
                       }`}
+                      {this.state.roomCapacity &&
+                        this.state.roomCapacity <=
+                          this.state.participants.length && (
+                          <Popup
+                            content="This room is full. Permanent rooms of subscribers have a greater room capacity."
+                            trigger={
+                              <Icon
+                                size="small"
+                                name={'warning'}
+                                color="red"
+                                style={{ marginLeft: 5 }}
+                              />
+                            }
+                          />
+                        )}
                     </Menu.Item>
                     <Menu.Item
                       name="settings"
