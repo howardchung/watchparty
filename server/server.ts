@@ -293,6 +293,10 @@ app.get('/stats', async (req, res) => {
     const vBrowserClientIDsCard = await redis.zcard('vBrowserClientIDs');
     const vBrowserUIDsCard = await redis.zcard('vBrowserUIDs');
 
+    if (availableVBrowsers.length === 0) {
+      res.status(500);
+    }
+
     res.json({
       uptime,
       roomCount: rooms.size,
