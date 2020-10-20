@@ -184,8 +184,8 @@ export abstract class VMManager {
     let launch = false;
     const fixedSize = this.getFixedSize();
     if (fixedSize) {
-      const allVMs = await this.listVMs();
-      launch = allVMs.length < fixedSize;
+      const listVMs = await this.listVMs();
+      launch = listVMs.length + stagingCount < fixedSize;
     } else {
       launch = availableCount + stagingCount < maxAvailable;
     }
