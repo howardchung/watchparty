@@ -251,8 +251,8 @@ export abstract class VMManager {
     for (let i = 0; i < allVMs.length; i++) {
       const server = allVMs[i];
       if (!dontDelete.has(server.id)) {
-        console.log('[CLEANUP] terminating:', server.id);
-        this.terminateVMWrapper(server.id);
+        // this.terminateVMWrapper(server.id);
+        this.resetVM(server.id);
       }
     }
   };
@@ -271,7 +271,7 @@ export abstract class VMManager {
         candidate = await this.getVM(id);
         ready = await this.checkVMReady(candidate.host);
       } catch (e) {
-        console.log(e);
+        console.log('[CHECKSTAGING-ERROR]', id, e?.response?.statusCode);
       }
       const retryCount = await this.redis.incr(
         this.getRedisStagingKey() + ':' + id
@@ -298,7 +298,7 @@ export abstract class VMManager {
         if (retryCount > 600) {
           console.log('[CHECKSTAGING] giving up:', id);
           await this.redis.del(this.getRedisStagingKey() + ':' + id);
-          // this.rebootVM(id);
+          // this.resetVM(id);
           this.terminateVMWrapper(id);
         }
       }
