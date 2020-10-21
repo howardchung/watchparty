@@ -230,7 +230,7 @@ export abstract class VMManager {
   protected cleanupVMGroup = async () => {
     // Clean up hanging VMs
     // It's possible we created a VM but lost track of it in redis
-    // Take the list of VMs from API, subtract VMs that have a lock in redis or are in the available pool, delete the rest
+    // Take the list of VMs from API, subtract VMs that have a lock in redis or are in the available or staging pool, delete the rest
     const allVMs = await this.listVMs();
     // TODO locks could collide if multiple cloud providers use the same IDs
     const usedKeys = (await this.redis.keys('vbrowser:*')).map((key) =>
@@ -298,7 +298,8 @@ export abstract class VMManager {
         if (retryCount > 600) {
           console.log('[CHECKSTAGING] giving up:', id);
           await this.redis.del(this.getRedisStagingKey() + ':' + id);
-          this.rebootVM(id);
+          // this.rebootVM(id);
+          this.terminateVMWrapper(id);
         }
       }
       await new Promise((resolve) => setTimeout(resolve, 1000));
