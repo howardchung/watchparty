@@ -210,24 +210,10 @@ export abstract class VMManager {
       if (fixedSize) {
         const allVMs = await this.listVMs();
         unlaunch = allVMs.length > fixedSize;
-        console.log(
-          '[RESIZE-TERMINATE]',
-          'desired:',
-          fixedSize,
-          'allVMs:',
-          allVMs.length
-        );
       } else {
         const maxAvailable = this.vmBufferSize;
         const availableCount = await this.redis.llen(this.getRedisQueueKey());
         unlaunch = availableCount > maxAvailable;
-        console.log(
-          '[RESIZE-TERMINATE]',
-          'desired:',
-          maxAvailable,
-          'available:',
-          availableCount
-        );
       }
       if (unlaunch) {
         const id = await this.redis.lpop(this.getRedisQueueKey());
@@ -342,6 +328,7 @@ export abstract class VMManager {
   };
 
   protected terminateVMWrapper = async (id: string) => {
+    console.log('[TERMINATE]', id);
     // Remove from lists, if it exists
     await this.redis.lrem(this.getRedisQueueKey(), 1, id);
     await this.redis.lrem(this.getRedisStagingKey(), 1, id);
