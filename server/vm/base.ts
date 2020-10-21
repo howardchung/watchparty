@@ -271,7 +271,7 @@ export abstract class VMManager {
         candidate = await this.getVM(id);
         ready = await this.checkVMReady(candidate.host);
       } catch (e) {
-        console.log('[CHECKSTAGING-ERROR]', id, e?.response?.statusCode);
+        console.log('[CHECKSTAGING-ERROR]', id, e?.response?.status);
       }
       const retryCount = await this.redis.incr(
         this.getRedisStagingKey() + ':' + id
