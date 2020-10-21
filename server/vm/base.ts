@@ -296,8 +296,9 @@ export abstract class VMManager {
           retryCount
         );
         if (retryCount > 600) {
+          console.log('[CHECKSTAGING] giving up:', id);
           await this.redis.del(this.getRedisStagingKey() + ':' + id);
-          this.terminateVMWrapper(id);
+          this.rebootVM(id);
         }
       }
       await new Promise((resolve) => setTimeout(resolve, 1000));
