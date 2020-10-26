@@ -143,14 +143,29 @@ export class Room {
   }
 
   serialize = () => {
+    // Get the set of IDs with messages in chat
+    // Only serialize roster and picture ID for those people, to save space
+    const chatIDs = new Set(this.chat.map((msg) => msg.id));
+    const abbrNameMap: StringDict = {};
+    Object.keys(this.nameMap).forEach((id) => {
+      if (chatIDs.has(id)) {
+        abbrNameMap[id] = this.nameMap[id];
+      }
+    });
+    const abbrPictureMap: StringDict = {};
+    Object.keys(this.pictureMap).forEach((id) => {
+      if (chatIDs.has(id)) {
+        abbrPictureMap[id] = this.pictureMap[id];
+      }
+    });
     return JSON.stringify({
       video: this.video,
       videoTS: this.videoTS,
       subtitle: this.subtitle,
       paused: this.paused,
       chat: this.chat,
-      nameMap: this.nameMap,
-      pictureMap: this.pictureMap,
+      nameMap: abbrNameMap,
+      pictureMap: abbrPictureMap,
       vBrowser: this.vBrowser,
       creationTime: this.creationTime,
       lock: this.lock,
