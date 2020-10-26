@@ -292,6 +292,8 @@ app.get('/stats', async (req, res) => {
     );
     const vBrowserClientIDsCard = await redis.zcard('vBrowserClientIDs');
     const vBrowserUIDsCard = await redis.zcard('vBrowserUIDs');
+    const numPermaRooms = (await postgres.query('SELECT count(1) from room'))
+      .rows[0].count;
 
     if (availableVBrowsers.length === 0) {
       res.status(500);
@@ -337,6 +339,7 @@ app.get('/stats', async (req, res) => {
       vBrowserUIDs,
       vBrowserUIDsCard,
       vBrowserUIDMinutes,
+      numPermaRooms,
       rooms: roomData,
     });
   } else {
