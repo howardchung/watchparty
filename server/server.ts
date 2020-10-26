@@ -81,10 +81,10 @@ async function saveRooms() {
     // console.time('roomSave');
     const roomArr = Array.from(rooms.values());
     for (let i = 0; i < roomArr.length; i++) {
-      if (roomArr[i].roster.length) {
-        await roomArr[i].saveToRedis();
-        // await roomArr[i].saveToPostgres();
-      }
+      // if (roomArr[i].roster.length) {
+      await roomArr[i].saveToRedis();
+      // await roomArr[i].saveToPostgres();
+      // }
     }
     // console.timeEnd('roomSave');
     await new Promise((resolve) => setTimeout(resolve, 1000));
