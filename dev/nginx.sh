@@ -31,4 +31,4 @@ http {
 /etc/init.d/nginx reload
 
 # Update /etc/cron.d/certbot with renew hook
-# 0 */12 * * * root test -x /usr/bin/certbot && perl -e 'sleep int(rand(3600))' && certbot -q renew --post-hook "/etc/init.d/nginx reload"
+# 0 */12 * * * root test -x /usr/bin/certbot && perl -e 'sleep int(rand(3600))' && certbot -q renew --post-hook "service nginx restart"
