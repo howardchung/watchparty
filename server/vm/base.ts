@@ -216,15 +216,18 @@ export abstract class VMManager {
     }
     if (unlaunch) {
       const now = Date.now();
-      let sortedVMs = allVMs.sort((a, b) =>
-        a.creation_date?.localeCompare(b.creation_date)
+      let sortedVMs = allVMs.sort(
+        (a, b) => -a.creation_date?.localeCompare(b.creation_date)
       );
       sortedVMs = sortedVMs.filter(
         (vm) => now - Number(new Date(vm.creation_date)) > 3600 * 1000
       );
       const id = sortedVMs[0]?.id;
-      await this.redis.lrem(this.getRedisQueueKey(), 1, id);
-      await this.terminateVMWrapper(id);
+      if (id) {
+        console.log('[RESIZE-UNLAUNCH]', id);
+        await this.redis.lrem(this.getRedisQueueKey(), 1, id);
+        await this.terminateVMWrapper(id);
+      }
     }
   };
 
