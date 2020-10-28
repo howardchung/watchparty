@@ -119,7 +119,7 @@ export abstract class VMManager {
       }
     };
     setInterval(this.resizeVMGroupIncr, 10 * 1000);
-    setInterval(this.resizeVMGroupDecr, 20 * 60 * 1000);
+    setInterval(this.resizeVMGroupDecr, 2 * 60 * 1000);
     setInterval(this.cleanupVMGroup, 3 * 60 * 1000);
     setInterval(renew, 60 * 1000);
     setInterval(release, releaseInterval);
@@ -204,26 +204,27 @@ export abstract class VMManager {
   };
 
   protected resizeVMGroupDecr = async () => {
-    while (true) {
-      let unlaunch = false;
-      const fixedSize = this.getFixedSize();
-      if (fixedSize) {
-        const allVMs = await this.listVMs();
-        unlaunch = allVMs.length > fixedSize;
-      } else {
-        const maxAvailable = this.vmBufferSize;
-        const availableCount = await this.redis.llen(this.getRedisQueueKey());
-        unlaunch = availableCount > maxAvailable;
-      }
-      if (unlaunch) {
-        const id = await this.redis.lpop(this.getRedisQueueKey());
-        if (!id) {
-          break;
-        }
-        await this.terminateVMWrapper(id);
-      } else {
-        break;
-      }
+    let unlaunch = false;
+    const fixedSize = this.getFixedSize();
+    const allVMs = await this.listVMs();
+    if (fixedSize) {
+      unlaunch = allVMs.length > fixedSize;
+    } else {
+      const maxAvailable = this.vmBufferSize;
+      const availableCount = await this.redis.llen(this.getRedisQueueKey());
+      unlaunch = availableCount > maxAvailable;
+    }
+    if (unlaunch) {
+      const now = Date.now();
+      let sortedVMs = allVMs.sort((a, b) =>
+        a.creation_date?.localeCompare(b.creation_date)
+      );
+      sortedVMs = sortedVMs.filter(
+        (vm) => now - Number(new Date(vm.creation_date)) > 3600 * 1000
+      );
+      const id = sortedVMs[0]?.id;
+      await this.redis.lrem(this.getRedisQueueKey(), 1, id);
+      await this.terminateVMWrapper(id);
     }
   };
 
