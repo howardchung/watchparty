@@ -220,7 +220,7 @@ export abstract class VMManager {
         (a, b) => -a.creation_date?.localeCompare(b.creation_date)
       );
       sortedVMs = sortedVMs.filter(
-        (vm) => now - Number(new Date(vm.creation_date)) > 30 * 60 * 1000
+        (vm) => now - Number(new Date(vm.creation_date)) > 45 * 60 * 1000
       );
       const id = sortedVMs[0]?.id;
       if (id) {
