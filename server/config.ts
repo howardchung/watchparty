@@ -1,8 +1,8 @@
 require('dotenv').config();
 
 const defaults = {
-  REDIS_URL: 'localhost:6379', // Optional, for room persistence and VM queueing
-  DATABASE_URL: 'localhost:5432', // Optional, for permanent rooms
+  REDIS_URL: '', // Optional, for room persistence and VM queueing (localhost:6379 for a local install)
+  DATABASE_URL: '', // Optional, for permanent rooms (localhost:5432 for a local install)
   YOUTUBE_API_KEY: '', // Optional, provide one to enable searching YouTube
   NODE_ENV: '', // Usually, you should let process.env.NODE_ENV override this
   FIREBASE_ADMIN_SDK_CONFIG: '', // Optional, for features requiring sign-in/authentication

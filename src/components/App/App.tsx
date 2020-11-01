@@ -184,14 +184,16 @@ export default class App extends React.Component<AppProps, AppState> {
       window.fetch(serverPath + '/ping');
     }, 10 * 60 * 1000);
 
-    firebase.auth().onAuthStateChanged(async (user: firebase.User | null) => {
-      if (user) {
-        // console.log(user);
-        this.setState({ user }, async () => {
-          this.loadSignInData();
-        });
-      }
-    });
+    if (firebaseConfig) {
+      firebase.auth().onAuthStateChanged(async (user: firebase.User | null) => {
+        if (user) {
+          // console.log(user);
+          this.setState({ user }, async () => {
+            this.loadSignInData();
+          });
+        }
+      });
+    }
     this.loadSettings();
     this.loadYouTube();
     this.init();
@@ -333,7 +335,7 @@ export default class App extends React.Component<AppProps, AppState> {
       // Load username from localstorage
       let userName = window.localStorage.getItem('watchparty-username');
       this.updateName(null, { value: userName || generateName() });
-      // if (!this.state.user) {
+      // if (!this.state.user && firebaseConfig) {
       //   await firebase.auth().signInAnonymously();
       // }
       this.loadSignInData();
