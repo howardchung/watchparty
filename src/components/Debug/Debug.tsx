@@ -9,14 +9,14 @@ import {
   Legend,
 } from 'recharts';
 
+const timeSeriesUrl =
+  process.env.REACT_APP_SERVER_HOST + `/timeSeries${window.location.search}`;
+
 const Debug = () => {
   const [data, setData] = useState([]);
   useEffect(
     (async () => {
-      const response = await fetch(
-        process.env.REACT_APP_SERVER_HOST +
-          `/timeSeries${window.location.search}`
-      );
+      const response = await fetch(timeSeriesUrl);
       const json = await response.json();
       console.log(json);
       setData(json);
