@@ -1,7 +1,7 @@
 import './index.css';
 import 'semantic-ui-css/semantic.min.css';
 
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import ReactDOM from 'react-dom';
 import { BrowserRouter, Route } from 'react-router-dom';
 
@@ -11,6 +11,8 @@ import { Privacy, Terms, FAQ } from './components/PrivacyTerms/PrivacyTerms';
 import { TopBar } from './components/TopBar/TopBar';
 import { Footer } from './components/Footer/Footer';
 import * as serviceWorker from './serviceWorker';
+
+const Debug = lazy(() => import('./components/Debug/Debug'));
 
 ReactDOM.render(
   <React.StrictMode>
@@ -51,6 +53,13 @@ ReactDOM.render(
       <Route path="/faq">
         <TopBar hideNewRoom hideSignin />
         <FAQ />
+        <Footer />
+      </Route>
+      <Route path="/debug">
+        <TopBar hideNewRoom hideSignin />
+        <Suspense fallback={null}>
+          <Debug />
+        </Suspense>
         <Footer />
       </Route>
     </BrowserRouter>

@@ -340,8 +340,8 @@ setInterval(async () => {
         stats.vBrowserStartMS.length,
     })
   );
-  await redis.ltrim('timeSeries', 0, 200);
-}, 10 * 60 * 1000);
+  await redis.ltrim('timeSeries', 0, 250);
+}, 5 * 60 * 1000);
 
 async function getStats() {
   const roomData: any[] = [];
