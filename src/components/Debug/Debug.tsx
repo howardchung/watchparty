@@ -8,9 +8,9 @@ import {
   Tooltip,
   Legend,
 } from 'recharts';
+import { serverPath } from '../../utils';
 
-const timeSeriesUrl =
-  process.env.REACT_APP_SERVER_HOST + `/timeSeries${window.location.search}`;
+const timeSeriesUrl = serverPath + `/timeSeries${window.location.search}`;
 
 const Debug = () => {
   const [data, setData] = useState([]);
