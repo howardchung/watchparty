@@ -18,7 +18,7 @@ const Debug = () => {
     (async () => {
       const response = await fetch(timeSeriesUrl);
       const json = await response.json();
-      console.log(json);
+      json.reverse();
       setData(json);
       return undefined;
     }) as any,
@@ -29,7 +29,7 @@ const Debug = () => {
     <>
       {keys.map((key) => (
         <LineChart
-          width={1400}
+          width={1300}
           height={400}
           data={data}
           margin={{
