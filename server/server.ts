@@ -82,8 +82,12 @@ async function saveRooms() {
     const roomArr = Array.from(rooms.values());
     for (let i = 0; i < roomArr.length; i++) {
       if (roomArr[i].roster.length) {
-        await roomArr[i].saveToRedis();
-        // await roomArr[i].saveToPostgres();
+        if (redis) {
+          await roomArr[i].saveToRedis();
+        }
+        if (postgres) {
+          // await roomArr[i].saveToPostgres();
+        }
       }
     }
     // console.timeEnd('roomSave');
@@ -106,6 +110,8 @@ async function init() {
         console.error(e);
       }
     }
+  }
+  if (postgres) {
     // load the roomState from postgres to fill any rooms that were lost in redis
     const postgresRooms = (await postgres.query('SELECT * from room')).rows;
     console.log(
@@ -120,9 +126,9 @@ async function init() {
         );
       }
     }
-    // Start saving rooms
-    saveRooms();
   }
+  // Start saving rooms
+  saveRooms();
 
   if (!rooms.has('/default')) {
     rooms.set('/default', new Room(io, vmManagers, '/default'));
