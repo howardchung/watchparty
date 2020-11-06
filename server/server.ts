@@ -251,7 +251,8 @@ app.get('/metadata', async (req, res) => {
   const isSubscriber = Boolean(
     customer.subscriptions?.data?.[0]?.status === 'active'
   );
-  return res.json({ isSubscriber });
+  const isCustomer = Boolean(customer);
+  return res.json({ isSubscriber, isCustomer });
 });
 
 app.get('/resolveRoom/:vanity', async (req, res) => {
@@ -346,7 +347,7 @@ setInterval(async () => {
         stats.vBrowserStartMS.length,
     })
   );
-  await redis.ltrim('timeSeries', 0, 250);
+  await redis.ltrim('timeSeries', 0, 300);
 }, 5 * 60 * 1000);
 
 async function getStats() {

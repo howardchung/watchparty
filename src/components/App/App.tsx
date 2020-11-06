@@ -107,6 +107,7 @@ interface AppState {
   nonPlayableMedia: boolean;
   currentTab: string;
   isSubscriber: boolean;
+  isCustomer: boolean;
   isSubscribeModalOpen: boolean;
   isVBrowserModalOpen: boolean;
   roomLock: string;
@@ -157,6 +158,7 @@ export default class App extends React.Component<AppProps, AppState> {
       (querystring.parse(window.location.search.substring(1)).tab as string) ||
       'chat',
     isSubscriber: false,
+    isCustomer: false,
     isSubscribeModalOpen: false,
     isVBrowserModalOpen: false,
     roomLock: '',
@@ -226,7 +228,10 @@ export default class App extends React.Component<AppProps, AppState> {
         serverPath + `/metadata?uid=${user.uid}&token=${token}`
       );
       const data = await response.json();
-      this.setState({ isSubscriber: data.isSubscriber });
+      this.setState({
+        isSubscriber: data.isSubscriber,
+        isCustomer: data.isCustomer,
+      });
     }
   };
 
@@ -1551,7 +1556,7 @@ export default class App extends React.Component<AppProps, AppState> {
                         }
                       />
                     )}
-                    {this.state.isSubscriber && (
+                    {this.state.isCustomer && (
                       <Popup
                         content="Manage your subscription"
                         trigger={
