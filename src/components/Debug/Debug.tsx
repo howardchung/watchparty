@@ -29,11 +29,12 @@ const Debug = () => {
     <>
       {keys.map((key) => (
         <LineChart
-          width={1300}
+          width={1400}
           height={400}
           data={data}
           margin={{
             top: 5,
+            left: 20,
             bottom: 5,
           }}
         >
