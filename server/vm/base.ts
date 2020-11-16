@@ -263,50 +263,54 @@ export abstract class VMManager {
 
   protected checkStaging = async () => {
     while (true) {
-      // Loop through staging list and check if VM is ready
-      const id = await this.redis3.brpoplpush(
-        this.getRedisStagingKey(),
-        this.getRedisStagingKey(),
-        0
-      );
-      let ready = false;
-      let candidate = undefined;
       try {
-        candidate = await this.getVM(id);
-        ready = await this.checkVMReady(candidate.host);
-      } catch (e) {
-        console.log('[CHECKSTAGING-ERROR]', id, e?.response?.status);
-      }
-      const retryCount = await this.redis.incr(
-        this.getRedisStagingKey() + ':' + id
-      );
-      if (retryCount % 20 === 0) {
-        this.powerOn(id);
-      }
-      if (ready) {
-        console.log('[CHECKSTAGING] ready:', id, candidate?.host, retryCount);
-        // If it is, move it to available list
-        await this.redis
-          .multi()
-          .lrem(this.getRedisStagingKey(), 1, id)
-          .lpush(this.getRedisQueueKey(), id)
-          .del(this.getRedisStagingKey() + ':' + id)
-          .exec();
-      } else {
-        console.log(
-          '[CHECKSTAGING] not ready:',
-          id,
-          candidate?.host,
-          retryCount
+        // Loop through staging list and check if VM is ready
+        const id = await this.redis3.brpoplpush(
+          this.getRedisStagingKey(),
+          this.getRedisStagingKey(),
+          0
         );
-        if (retryCount > 600) {
-          console.log('[CHECKSTAGING] giving up:', id);
-          await this.redis.del(this.getRedisStagingKey() + ':' + id);
-          // this.resetVM(id);
-          this.terminateVMWrapper(id);
+        let ready = false;
+        let candidate = undefined;
+        try {
+          candidate = await this.getVM(id);
+          ready = await this.checkVMReady(candidate.host);
+        } catch (e) {
+          console.log('[CHECKSTAGING-ERROR]', id, e?.response?.status);
         }
+        const retryCount = await this.redis.incr(
+          this.getRedisStagingKey() + ':' + id
+        );
+        if (retryCount % 20 === 0) {
+          this.powerOn(id);
+        }
+        if (ready) {
+          console.log('[CHECKSTAGING] ready:', id, candidate?.host, retryCount);
+          // If it is, move it to available list
+          await this.redis
+            .multi()
+            .lrem(this.getRedisStagingKey(), 1, id)
+            .lpush(this.getRedisQueueKey(), id)
+            .del(this.getRedisStagingKey() + ':' + id)
+            .exec();
+        } else {
+          console.log(
+            '[CHECKSTAGING] not ready:',
+            id,
+            candidate?.host,
+            retryCount
+          );
+          if (retryCount > 600) {
+            console.log('[CHECKSTAGING] giving up:', id);
+            await this.redis.del(this.getRedisStagingKey() + ':' + id);
+            // this.resetVM(id);
+            this.terminateVMWrapper(id);
+          }
+        }
+      } catch (e) {
+        console.error('[CHECKSTAGING-CRASH]', e);
       }
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 500));
     }
   };
 
