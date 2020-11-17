@@ -1085,9 +1085,12 @@ export default class App extends React.Component<AppProps, AppState> {
     const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
     const track = leftVideo?.textTracks[0];
     let offset = leftVideo.currentTime - this.state.tsMap[sharer.id];
-    if (track && offset) {
+    if (track && track.cues && offset) {
       for (let i = 0; i < track.cues.length; i++) {
-        let cue = track.cues[i];
+        let cue = track?.cues?.[i];
+        if (!cue) {
+          continue;
+        }
         // console.log(cue.text, offset, (cue as any).origStart, (cue as any).origEnd);
         if (!(cue as any).origStart) {
           (cue as any).origStart = cue.startTime;
