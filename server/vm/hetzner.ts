@@ -91,7 +91,7 @@ export class Hetzner extends VMManager {
   };
 
   getVM = async (id: string) => {
-    const response = await axios({
+    const response: any = await axios({
       method: 'GET',
       url: `https://api.hetzner.cloud/v1/servers/${id}`,
       headers: {
@@ -106,23 +106,31 @@ export class Hetzner extends VMManager {
   };
 
   listVMs = async (filter?: string) => {
-    const response = await axios({
-      method: 'GET',
-      url: `https://api.hetzner.cloud/v1/servers`,
-      headers: {
-        Authorization: 'Bearer ' + HETZNER_TOKEN,
-      },
-      params: {
-        // TODO paginate if this is too large
-        per_page: 50,
-        label_selector: filter,
-      },
-    });
-    return response.data.servers
-      .map(this.mapServerObject)
-      .filter(
-        (server: VM) => server.tags.includes(this.tag) && server.private_ip
-      );
+    // TODO expand pages as needed based on server count
+    const responses: any[] = await Promise.all(
+      [1, 2, 3].map((page) =>
+        axios({
+          method: 'GET',
+          url: `https://api.hetzner.cloud/v1/servers`,
+          headers: {
+            Authorization: 'Bearer ' + HETZNER_TOKEN,
+          },
+          params: {
+            page,
+            per_page: 50,
+            label_selector: filter,
+          },
+        })
+      )
+    );
+    const responsesMapped: any = responses.map((response) =>
+      response.data.servers
+        .map(this.mapServerObject)
+        .filter(
+          (server: VM) => server.tags.includes(this.tag) && server.private_ip
+        )
+    );
+    return responsesMapped.flat();
   };
 
   powerOn = async (id: string) => {
