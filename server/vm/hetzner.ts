@@ -149,7 +149,7 @@ export class Hetzner extends VMManager {
     }
   };
 
-  attachNetwork = async (id: string) => {
+  attachToNetwork = async (id: string) => {
     // Attach server to network (usually not needed)
     try {
       const response2 = await axios({
