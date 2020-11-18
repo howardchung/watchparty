@@ -562,6 +562,10 @@ export class Room {
     if (!assignment) {
       this.cmdHost(socket, '');
       this.vBrowser = undefined;
+      socket.emit(
+        'errorMessage',
+        'Failed to assign VBrowser. Please try again later.'
+      );
       return;
     }
     this.vBrowser = assignment;

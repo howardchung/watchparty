@@ -134,7 +134,7 @@ export abstract class VMManager {
     return this.redisStagingKey + (this.isLarge ? 'Large' : '');
   };
 
-  public assignVM = async (): Promise<AssignedVM> => {
+  public assignVM = async (): Promise<AssignedVM | undefined> => {
     const assignStart = Number(new Date());
     let selected = null;
     while (!selected) {
@@ -144,7 +144,10 @@ export abstract class VMManager {
       if (availableCount + stagingCount === 0 && !fixedSize) {
         await this.startVMWrapper();
       }
-      let resp = await this.redis2.brpop(this.getRedisQueueKey(), 0);
+      let resp = await this.redis2.brpop(this.getRedisQueueKey(), 300);
+      if (!resp) {
+        return undefined;
+      }
       const id = resp[1];
       console.log('[ASSIGN]', id);
       const lock = await this.redis.set('vbrowser:' + id, '1', 'NX', 'EX', 300);
