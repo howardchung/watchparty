@@ -398,39 +398,39 @@ async function getStats() {
   roomData.sort((a, b) => b.creationTime - a.creationTime);
   const uptime = Number(new Date()) - launchTime;
   const cpuUsage = os.loadavg();
-  const redisUsage = (await redis.info())
+  const redisUsage = (await redis?.info())
     .split('\n')
     .find((line) => line.startsWith('used_memory:'))
     ?.split(':')[1]
     .trim();
-  const availableVBrowsers = await redis.lrange(
+  const availableVBrowsers = await redis?.lrange(
     vmManager?.getRedisQueueKey() || 'availableList',
     0,
     -1
   );
-  const stagingVBrowsers = await redis.lrange(
+  const stagingVBrowsers = await redis?.lrange(
     vmManager?.getRedisStagingKey() || 'stagingList',
     0,
     -1
   );
-  const availableVBrowsersLarge = await redis.lrange(
+  const availableVBrowsersLarge = await redis?.lrange(
     vmManagerLarge?.getRedisQueueKey() || 'availableList',
     0,
     -1
   );
-  const stagingVBrowsersLarge = await redis.lrange(
+  const stagingVBrowsersLarge = await redis?.lrange(
     vmManagerLarge?.getRedisStagingKey() || 'stagingList',
     0,
     -1
   );
-  const numPermaRooms = (await postgres.query('SELECT count(1) from room'))
+  const numPermaRooms = (await postgres?.query('SELECT count(1) from room'))
     .rows[0].count;
   const chatMessages = await getRedisCountDay('chatMessages');
   const vBrowserStarts = await getRedisCountDay('vBrowserStarts');
   const vBrowserLaunches = await getRedisCountDay('vBrowserLaunches');
-  const vBrowserStartMS = await redis.lrange('vBrowserStartMS', 0, -1);
-  const vBrowserSessionMS = await redis.lrange('vBrowserSessionMS', 0, -1);
-  const vBrowserVMLifetime = await redis.lrange('vBrowserVMLifetime', 0, -1);
+  const vBrowserStartMS = await redis?.lrange('vBrowserStartMS', 0, -1);
+  const vBrowserSessionMS = await redis?.lrange('vBrowserSessionMS', 0, -1);
+  const vBrowserVMLifetime = await redis?.lrange('vBrowserVMLifetime', 0, -1);
   const vBrowserTerminateTimeout = await getRedisCountDay(
     'vBrowserTerminateTimeout'
   );
@@ -453,7 +453,7 @@ async function getStats() {
     'connectStartsDistinct'
   );
   const subUploads = await getRedisCountDay('subUploads');
-  const vBrowserClientIDs = await redis.zrevrangebyscore(
+  const vBrowserClientIDs = await redis?.zrevrangebyscore(
     'vBrowserClientIDs',
     '+inf',
     '0',
@@ -462,7 +462,7 @@ async function getStats() {
     0,
     20
   );
-  const vBrowserUIDs = await redis.zrevrangebyscore(
+  const vBrowserUIDs = await redis?.zrevrangebyscore(
     'vBrowserUIDs',
     '+inf',
     '0',
@@ -471,7 +471,7 @@ async function getStats() {
     0,
     20
   );
-  const vBrowserClientIDMinutes = await redis.zrevrangebyscore(
+  const vBrowserClientIDMinutes = await redis?.zrevrangebyscore(
     'vBrowserClientIDMinutes',
     '+inf',
     '0',
@@ -480,7 +480,7 @@ async function getStats() {
     0,
     20
   );
-  const vBrowserUIDMinutes = await redis.zrevrangebyscore(
+  const vBrowserUIDMinutes = await redis?.zrevrangebyscore(
     'vBrowserUIDMinutes',
     '+inf',
     '0',
@@ -489,8 +489,8 @@ async function getStats() {
     0,
     20
   );
-  const vBrowserClientIDsCard = await redis.zcard('vBrowserClientIDs');
-  const vBrowserUIDsCard = await redis.zcard('vBrowserUIDs');
+  const vBrowserClientIDsCard = await redis?.zcard('vBrowserClientIDs');
+  const vBrowserUIDsCard = await redis?.zcard('vBrowserUIDs');
 
   return {
     uptime,

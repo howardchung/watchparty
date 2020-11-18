@@ -156,6 +156,8 @@ export class Scaleway extends VMManager {
 
   powerOn = async (id: string) => {};
 
+  attachToNetwork = async (id: string) => {};
+
   mapServerObject = (server: any): VM => ({
     id: server.id,
     pass: server.name,

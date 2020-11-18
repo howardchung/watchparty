@@ -149,6 +149,25 @@ export class Hetzner extends VMManager {
     }
   };
 
+  attachNetwork = async (id: string) => {
+    // Attach server to network (usually not needed)
+    try {
+      const response2 = await axios({
+        method: 'POST',
+        url: `https://api.hetzner.cloud/v1/servers/${id}/actions/attach_to_network`,
+        headers: {
+          Authorization: 'Bearer ' + HETZNER_TOKEN,
+          'Content-Type': 'application/json',
+        },
+        data: {
+          network: networks[0],
+        },
+      });
+    } catch (e) {
+      console.error('failed to attach to network');
+    }
+  };
+
   mapServerObject = (server: any): VM => ({
     id: server.id?.toString(),
     pass: server.name,
