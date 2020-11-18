@@ -283,6 +283,7 @@ export abstract class VMManager {
         );
         if (retryCount % 20 === 0) {
           this.powerOn(id);
+          this.attachToNetwork(id);
         }
         if (ready) {
           console.log('[CHECKSTAGING] ready:', id, candidate?.host, retryCount);
@@ -372,6 +373,7 @@ export abstract class VMManager {
   protected abstract getVM: (id: string) => Promise<VM>;
   protected abstract listVMs: (filter?: string) => Promise<VM[]>;
   protected abstract powerOn: (id: string) => Promise<void>;
+  protected abstract attachToNetwork: (id: string) => Promise<void>;
   protected abstract mapServerObject: (server: any) => VM;
 }
 
