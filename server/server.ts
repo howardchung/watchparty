@@ -34,11 +34,11 @@ if (config.HTTPS) {
   server = new http.Server(app);
 }
 const io = socketIO(server, { origins: '*:*', transports: ['websocket'] });
-let redis = (undefined as unknown) as Redis.Redis;
+let redis: Redis.Redis | undefined = undefined;
 if (config.REDIS_URL) {
   redis = new Redis(config.REDIS_URL);
 }
-let postgres = (undefined as unknown) as Client;
+let postgres: Client | undefined = undefined;
 if (config.DATABASE_URL) {
   postgres = new Client({
     connectionString: config.DATABASE_URL,
@@ -146,7 +146,7 @@ app.get('/ping', (req, res) => {
 
 // Data's already compressed so go before the compression middleware
 app.get('/subtitle/:hash', async (req, res) => {
-  const gzipped = await redis.getBuffer('subtitle:' + req.params.hash);
+  const gzipped = await redis?.getBuffer('subtitle:' + req.params.hash);
   if (!gzipped) {
     return res.status(404).end('not found');
   }
@@ -159,7 +159,7 @@ app.use(compression());
 app.get('/stats', async (req, res) => {
   if (req.query.key && req.query.key === config.STATS_KEY) {
     const stats = await getStats();
-    if (stats.availableVBrowsers.length === 0) {
+    if (stats.availableVBrowsers?.length === 0) {
       res.status(500);
     }
     res.json(stats);
@@ -169,7 +169,7 @@ app.get('/stats', async (req, res) => {
 });
 
 app.get('/timeSeries', async (req, res) => {
-  if (req.query.key && req.query.key === config.STATS_KEY) {
+  if (req.query.key && req.query.key === config.STATS_KEY && redis) {
     const timeSeriesData = await redis.lrange('timeSeries', 0, -1);
     const timeSeries = timeSeriesData.map((entry) => JSON.parse(entry));
     res.json(timeSeries);
@@ -257,13 +257,13 @@ app.get('/metadata', async (req, res) => {
 
 app.get('/resolveRoom/:vanity', async (req, res) => {
   const vanity = req.params.vanity;
-  const result = await postgres.query(
+  const result = await postgres?.query(
     `SELECT roomId as "roomId", vanity from room WHERE LOWER(vanity) = $1`,
     [vanity?.toLowerCase() ?? '']
   );
   // console.log(vanity, result.rows);
   // We also use this for checking name availability, so just return empty response if it doesn't exist (http 200)
-  return res.json(result.rows[0]);
+  return res.json(result?.rows[0]);
 });
 
 app.get('/listRooms', async (req, res) => {
@@ -274,11 +274,11 @@ app.get('/listRooms', async (req, res) => {
   if (!decoded) {
     return res.status(400).json({ error: 'invalid user token' });
   }
-  const result = await postgres.query<PermanentRoom>(
+  const result = await postgres?.query<PermanentRoom>(
     `SELECT roomId as "roomId", vanity from room WHERE owner = $1`,
     [decoded.uid]
   );
-  return res.json(result.rows);
+  return res.json(result?.rows);
 });
 
 app.delete('/deleteRoom', async (req, res) => {
@@ -289,15 +289,15 @@ app.delete('/deleteRoom', async (req, res) => {
   if (!decoded) {
     return res.status(400).json({ error: 'invalid user token' });
   }
-  const result = await postgres.query(
+  const result = await postgres?.query(
     `DELETE from room WHERE owner = $1 and roomId = $2`,
     [decoded.uid, req.query.roomId]
   );
-  return res.json(result.rows);
+  return res.json(result?.rows);
 });
 
 app.get('/kv', async (req, res) => {
-  if (req.query.key === config.KV_KEY) {
+  if (req.query.key === config.KV_KEY && redis) {
     return res.end(await redis.get(('kv:' + req.query.k) as string));
   } else {
     return res.status(403).json({ error: 'Access Denied' });
@@ -305,7 +305,7 @@ app.get('/kv', async (req, res) => {
 });
 
 app.post('/kv', async (req, res) => {
-  if (req.query.key === config.KV_KEY) {
+  if (req.query.key === config.KV_KEY && redis) {
     return res.end(
       await redis.setex(
         'kv:' + req.query.k,
@@ -325,29 +325,32 @@ app.use('/*', (req, res) => {
 });
 
 setInterval(async () => {
-  const stats = await getStats();
-  await redis.lpush(
-    'timeSeries',
-    JSON.stringify({
-      time: new Date(),
-      availableVBrowsers: stats.availableVBrowsers.length,
-      availableVBrowsersLarge: stats.availableVBrowsersLarge.length,
-      currentUsers: stats.currentUsers,
-      currentVBrowser: stats.currentVBrowser,
-      currentVBrowserLarge: stats.currentVBrowserLarge,
-      currentHttp: stats.currentHttp,
-      currentScreenShare: stats.currentScreenShare,
-      currentFileShare: stats.currentFileShare,
-      currentVideoChat: stats.currentVideoChat,
-      chatMessages: stats.chatMessages,
-      roomCount: stats.roomCount,
-      redisUsage: stats.redisUsage,
-      avgStartMS:
-        stats.vBrowserStartMS.reduce((a, b) => Number(a) + Number(b), 0) /
-        stats.vBrowserStartMS.length,
-    })
-  );
-  await redis.ltrim('timeSeries', 0, 300);
+  if (redis) {
+    const stats = await getStats();
+    await redis.lpush(
+      'timeSeries',
+      JSON.stringify({
+        time: new Date(),
+        availableVBrowsers: stats.availableVBrowsers?.length,
+        availableVBrowsersLarge: stats.availableVBrowsersLarge?.length,
+        currentUsers: stats.currentUsers,
+        currentVBrowser: stats.currentVBrowser,
+        currentVBrowserLarge: stats.currentVBrowserLarge,
+        currentHttp: stats.currentHttp,
+        currentScreenShare: stats.currentScreenShare,
+        currentFileShare: stats.currentFileShare,
+        currentVideoChat: stats.currentVideoChat,
+        chatMessages: stats.chatMessages,
+        roomCount: stats.roomCount,
+        redisUsage: stats.redisUsage,
+        avgStartMS:
+          stats.vBrowserStartMS &&
+          stats.vBrowserStartMS.reduce((a, b) => Number(a) + Number(b), 0) /
+            stats.vBrowserStartMS.length,
+      })
+    );
+    await redis.ltrim('timeSeries', 0, 300);
+  }
 }, 5 * 60 * 1000);
 
 async function getStats() {
@@ -399,7 +402,7 @@ async function getStats() {
   const uptime = Number(new Date()) - launchTime;
   const cpuUsage = os.loadavg();
   const redisUsage = (await redis?.info())
-    .split('\n')
+    ?.split('\n')
     .find((line) => line.startsWith('used_memory:'))
     ?.split(':')[1]
     .trim();
@@ -424,7 +427,7 @@ async function getStats() {
     -1
   );
   const numPermaRooms = (await postgres?.query('SELECT count(1) from room'))
-    .rows[0].count;
+    ?.rows[0].count;
   const chatMessages = await getRedisCountDay('chatMessages');
   const vBrowserStarts = await getRedisCountDay('vBrowserStarts');
   const vBrowserLaunches = await getRedisCountDay('vBrowserLaunches');
