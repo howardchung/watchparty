@@ -16,11 +16,11 @@ import { getStartOfDay } from './utils/time';
 
 const gzip = util.promisify(zlib.gzip);
 
-let redis = (undefined as unknown) as Redis.Redis;
+let redis: Redis.Redis | undefined = undefined;
 if (config.REDIS_URL) {
   redis = new Redis(config.REDIS_URL);
 }
-let postgres = (undefined as unknown) as Client;
+let postgres: Client | undefined = undefined;
 if (config.DATABASE_URL) {
   postgres = new Client({
     connectionString: config.DATABASE_URL,
@@ -216,10 +216,10 @@ export class Room {
         permanent = Boolean(owner);
       }
       if (permanent) {
-        await redis.set(key, roomString);
-        await redis.persist(key);
+        await redis?.set(key, roomString);
+        await redis?.persist(key);
       } else {
-        await redis.setex(key, 24 * 60 * 60, roomString);
+        await redis?.setex(key, 24 * 60 * 60, roomString);
       }
     } catch (e) {
       console.error(e);
