@@ -5,8 +5,7 @@ import { VMManager, VM } from './base';
 import { cloudInit, imageName } from './utils';
 
 const HETZNER_TOKEN = config.HETZNER_TOKEN;
-// const region = 'nbg1';
-const region = 'hel1';
+const region = ['nbg1', 'fsn1', 'hel1'];
 const gatewayHost = 'gateway3.watchparty.me';
 const sshKeys = [1570536];
 const networks = [91163];
@@ -40,7 +39,7 @@ export class Hetzner extends VMManager {
           [this.tag]: '1',
           originalName: name,
         },
-        location: region,
+        location: region[Math.floor(Math.random() * region.length)],
       },
     });
     const id = response.data.server.id;
