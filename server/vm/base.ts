@@ -222,11 +222,16 @@ export abstract class VMManager {
       let sortedVMs = allVMs.sort(
         (a, b) => -a.creation_date?.localeCompare(b.creation_date)
       );
-      sortedVMs = sortedVMs.filter(
-        (vm) => now - Number(new Date(vm.creation_date)) > 45 * 60 * 1000
-      );
-      const id = sortedVMs[0]?.id;
-      if (id) {
+      let first = null;
+      let lock = null;
+      // Acquire lock on the first VM possible
+      while (sortedVMs.length && !lock) {
+        first = sortedVMs.shift();
+        const id = first?.id;
+        lock = await this.redis.set('vbrowser:' + id, '1', 'NX', 'EX', 300);
+      }
+      if (first && lock && now - Number(first.creation_date) > 45 * 60 * 1000) {
+        const id = first?.id;
         console.log('[RESIZE-UNLAUNCH]', id);
         await this.redis.lrem(this.getRedisQueueKey(), 1, id);
         await this.terminateVMWrapper(id);
