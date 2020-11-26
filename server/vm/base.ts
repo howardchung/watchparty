@@ -239,7 +239,6 @@ export abstract class VMManager {
       if (first && lock) {
         const id = first?.id;
         console.log('[RESIZE-UNLAUNCH]', id);
-        await this.redis.lrem(this.getRedisQueueKey(), 1, id);
         await this.terminateVMWrapper(id);
       }
     }
@@ -364,6 +363,8 @@ export abstract class VMManager {
       await this.redis.lpush('vBrowserVMLifetime', lifetime);
       await this.redis.ltrim('vBrowserVMLifetime', 0, 49);
     }
+    // Delete any locks
+    await this.redis.del('vbrowser:' + id);
   };
 
   protected terminateVMMetrics = async (id: string) => {
