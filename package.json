@@ -23,6 +23,7 @@
     "magnet-uri": "^5.2.4",
     "moniker": "^0.1.2",
     "pg": "^8.3.0",
+    "pm2": "^4.5.0",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-google-recaptcha-v3": "^1.5.2",
