@@ -119,7 +119,7 @@ export abstract class VMManager {
       }
     };
     setInterval(this.resizeVMGroupIncr, 3 * 1000);
-    setInterval(this.resizeVMGroupDecr, 3 * 60 * 1000);
+    setInterval(this.resizeVMGroupDecr, 2 * 60 * 1000);
     setInterval(this.cleanupVMGroup, 3 * 60 * 1000);
     setInterval(renew, 60 * 1000);
     setInterval(release, releaseInterval);
@@ -229,14 +229,14 @@ export abstract class VMManager {
         return;
       }
       let first = null;
-      let lock = null;
-      // Acquire lock on the first VM possible
-      while (sortedVMs.length && !lock) {
+      let rem = 0;
+      // Remove the first available VM
+      while (sortedVMs.length && !rem) {
         first = sortedVMs.shift();
         const id = first?.id;
-        lock = await this.redis.set('vbrowser:' + id, '1', 'NX', 'EX', 300);
+        rem = id ? await this.redis.lrem(this.getRedisQueueKey(), 1, id) : 0;
       }
-      if (first && lock) {
+      if (first && rem) {
         const id = first?.id;
         console.log('[RESIZE-UNLAUNCH]', id);
         await this.terminateVMWrapper(id);
