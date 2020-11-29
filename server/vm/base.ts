@@ -119,7 +119,7 @@ export abstract class VMManager {
       }
     };
     setInterval(this.resizeVMGroupIncr, 3 * 1000);
-    setInterval(this.resizeVMGroupDecr, 2 * 60 * 1000);
+    setInterval(this.resizeVMGroupDecr, 5 * 60 * 1000);
     setInterval(this.cleanupVMGroup, 3 * 60 * 1000);
     setInterval(renew, 60 * 1000);
     setInterval(release, releaseInterval);
@@ -219,15 +219,11 @@ export abstract class VMManager {
     }
     if (unlaunch) {
       const now = Date.now();
-      let sortedVMs = allVMs.sort(
-        (a, b) => -a.creation_date?.localeCompare(b.creation_date)
-      );
-      if (
-        sortedVMs[0] &&
-        now - Number(new Date(sortedVMs[0].creation_date)) < 45 * 60 * 1000
-      ) {
-        return;
-      }
+      let sortedVMs = allVMs
+        .sort((a, b) => -a.creation_date?.localeCompare(b.creation_date))
+        .filter(
+          (vm) => now - Number(new Date(vm.creation_date)) > 45 * 60 * 1000
+        );
       let first = null;
       let rem = 0;
       // Remove the first available VM
