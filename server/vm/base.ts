@@ -222,7 +222,9 @@ export abstract class VMManager {
       let sortedVMs = allVMs
         .sort((a, b) => -a.creation_date?.localeCompare(b.creation_date))
         .filter(
-          (vm) => now - Number(new Date(vm.creation_date)) > 45 * 60 * 1000
+          (vm) =>
+            now - Number(new Date(vm.creation_date)) > 45 * 60 * 1000 &&
+            now - Number(new Date(vm.creation_date)) < 3 * 24 * 60 * 60 * 1000
         );
       let first = null;
       let rem = 0;
@@ -303,6 +305,8 @@ export abstract class VMManager {
             .lpush(this.getRedisQueueKey(), id)
             .del(this.getRedisStagingKey() + ':' + id)
             .exec();
+          await this.redis.lpush('vBrowserStageRetries', retryCount);
+          await this.redis.ltrim('vBrowserStageRetries', 0, 49);
         } else {
           console.log(
             '[CHECKSTAGING] not ready:',
