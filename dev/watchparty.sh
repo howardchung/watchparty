@@ -23,7 +23,7 @@ sudo docker run --log-opt max-size=1g -d --name postgres --restart=always -e POS
 curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
 sudo apt-get install -y nodejs
 
-# Set up certbot
+# Set up certbot or Cloudflare HTTPS
 
 # Build watchparty
 npm run build
