@@ -8,7 +8,7 @@ import Redis from 'ioredis';
 import { Socket } from 'socket.io';
 import { Client } from 'pg';
 
-import { getUserEmail, validateUserToken } from './utils/firebase';
+import { validateUserToken } from './utils/firebase';
 import { redisCount, redisCountDistinct } from './utils/redis';
 import { getCustomerByEmail } from './utils/stripe';
 import { AssignedVM, VMManager } from './vm/base';
