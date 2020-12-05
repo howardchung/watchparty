@@ -115,7 +115,6 @@ interface AppState {
   roomId: string;
   errorMessage: string;
   successMessage: string;
-  roomCapacity: number;
 }
 
 export default class App extends React.Component<AppProps, AppState> {
@@ -166,7 +165,6 @@ export default class App extends React.Component<AppProps, AppState> {
     savedPasswords: {},
     errorMessage: '',
     successMessage: '',
-    roomCapacity: 0,
   };
   socket: any = null;
   watchPartyYTPlayer: any = null;
@@ -527,9 +525,6 @@ export default class App extends React.Component<AppProps, AppState> {
           this.updateScreenShare();
         }
       );
-    });
-    socket.on('REC:roomCapacity', (data: number) => {
-      this.setState({ roomCapacity: data });
     });
     socket.on('chatinit', (data: any) => {
       this.setState({ chat: data, scrollTimestamp: Number(new Date()) });
@@ -1758,26 +1753,7 @@ export default class App extends React.Component<AppProps, AppState> {
                       as="a"
                     >
                       {/* <Icon name="group" /> */}
-                      {`People (${this.state.participants.length}${
-                        this.state.roomCapacity
-                          ? `/${this.state.roomCapacity})`
-                          : ')'
-                      }`}
-                      {this.state.roomCapacity &&
-                        this.state.roomCapacity <=
-                          this.state.participants.length && (
-                          <Popup
-                            content="This room is full. Permanent rooms of subscribers have a greater room capacity."
-                            trigger={
-                              <Icon
-                                size="small"
-                                name={'warning'}
-                                color="red"
-                                style={{ marginLeft: 5 }}
-                              />
-                            }
-                          />
-                        )}
+                      People ({this.state.participants.length})
                     </Menu.Item>
                     <Menu.Item
                       name="settings"

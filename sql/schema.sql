@@ -4,6 +4,7 @@ CREATE TABLE room(
   password text,
   owner text,
   vanity text,
+  isSubRoom boolean,
   PRIMARY KEY (roomId)
 );
 
