@@ -24,7 +24,6 @@ let postgres = (undefined as unknown) as Client;
 if (config.DATABASE_URL) {
   postgres = new Client({
     connectionString: config.DATABASE_URL,
-    ssl: { rejectUnauthorized: false },
   });
   postgres.connect();
 }
@@ -742,7 +741,6 @@ export class Room {
       return;
     }
     const customer = await getCustomerByEmail(decoded.email as string);
-    console.log(customer?.subscriptions?.data?.[0]?.status);
     const isSubscriber = Boolean(
       customer?.subscriptions?.data?.[0]?.status === 'active'
     );
