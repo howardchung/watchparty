@@ -661,7 +661,7 @@ export class Room {
     }
     const customer = await getCustomerByEmail(decoded.email as string);
     const isSubscriber = Boolean(
-      customer?.subscriptions?.data?.[0]?.status === 'trialing'
+      customer?.subscriptions?.data?.[0]?.status === 'active'
     );
     const owner = decoded.uid;
     if (data.undo) {
@@ -744,7 +744,7 @@ export class Room {
     const customer = await getCustomerByEmail(decoded.email as string);
     console.log(customer?.subscriptions?.data?.[0]?.status);
     const isSubscriber = Boolean(
-      customer?.subscriptions?.data?.[0]?.status === 'trialing'
+      customer?.subscriptions?.data?.[0]?.status === 'active'
     );
     const { password, vanity } = data;
     if (password) {

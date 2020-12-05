@@ -128,7 +128,7 @@ export const SettingsTab = ({
           icon={'clock'}
           name={`Make Room Permanent`}
           description="Standard rooms are deleted after one day of inactivity. Permanent rooms aren't deleted and can have passwords/custom URLs.
-          Free users can only have one permanent room at a time. Permanent rooms of subscribers have a greater room capacity."
+          Permanent rooms of subscribers have a greater room capacity. Free users can only have one permanent room at a time."
           checked={Boolean(owner)}
           disabled={Boolean(owner && owner !== user?.uid)}
           onChange={(e, data) => setRoomOwner({ undo: !data.checked })}
