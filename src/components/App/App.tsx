@@ -111,6 +111,7 @@ interface AppState {
   isSubscribeModalOpen: boolean;
   isVBrowserModalOpen: boolean;
   roomLock: string;
+  isChatEnabled: boolean;
   controller?: string;
   savedPasswords: StringDict;
   roomId: string;
@@ -162,6 +163,7 @@ export default class App extends React.Component<AppProps, AppState> {
     isSubscribeModalOpen: false,
     isVBrowserModalOpen: false,
     roomLock: '',
+    isChatEnabled: false,
     controller: '',
     roomId: '',
     savedPasswords: {},
@@ -522,6 +524,9 @@ export default class App extends React.Component<AppProps, AppState> {
     });
     socket.on('REC:lock', (data: string) => {
       this.setState({ roomLock: data });
+    });
+    socket.on('REC:isChatEnabled', (data: boolean) => {
+      this.setState({ isChatEnabled: data });
     });
     socket.on('roster', (data: User[]) => {
       this.setState(
@@ -1219,6 +1224,12 @@ export default class App extends React.Component<AppProps, AppState> {
     this.socket.emit('CMD:lock', { uid, token, locked });
   };
 
+  toggleChat = async (toggleChat: boolean) => {
+    const uid = this.state.user?.uid;
+    const token = await this.state.user?.getIdToken();
+    this.socket.emit('CMD:toggleChat', { uid, token, toggleChat });
+  };
+
   haveLock = () => {
     if (!this.state.roomLock) {
       return true;
@@ -1582,7 +1593,11 @@ export default class App extends React.Component<AppProps, AppState> {
                   <div
                     id="fullScreenContainer"
                     className={
-                      this.state.fullScreen ? 'fullScreenContainer' : ''
+                      this.state.fullScreen
+                        ? `fullScreenContainer ${
+                            !this.state.isChatEnabled ? 'noChat' : ''
+                          }`
+                        : ''
                     }
                     style={{ flexGrow: 1 }}
                   >
@@ -1677,7 +1692,7 @@ export default class App extends React.Component<AppProps, AppState> {
                         <div className="controlsContainer">{controls}</div>
                       )}
                     </div>
-                    {this.state.fullScreen && (
+                    {this.state.fullScreen && this.state.isChatEnabled && (
                       <Chat
                         className="fullScreenChat"
                         chat={this.state.chat}
@@ -1686,6 +1701,7 @@ export default class App extends React.Component<AppProps, AppState> {
                         socket={this.socket}
                         scrollTimestamp={this.state.scrollTimestamp}
                         getMediaDisplayName={this.getMediaDisplayName}
+                        isChatEnabled={this.state.isChatEnabled}
                       />
                     )}
                   </div>
@@ -1782,6 +1798,7 @@ export default class App extends React.Component<AppProps, AppState> {
                   scrollTimestamp={this.state.scrollTimestamp}
                   getMediaDisplayName={this.getMediaDisplayName}
                   hide={this.state.currentTab !== 'chat'}
+                  isChatEnabled={this.state.isChatEnabled}
                 />
                 {this.state.state === 'connected' && (
                   <VideoChat
@@ -1799,6 +1816,8 @@ export default class App extends React.Component<AppProps, AppState> {
                   user={this.state.user}
                   roomLock={this.state.roomLock}
                   setRoomLock={this.setRoomLock}
+                  toggleChat={this.toggleChat}
+                  isChatEnabled={this.state.isChatEnabled}
                   socket={this.socket}
                   isSubscriber={this.state.isSubscriber}
                   roomId={this.state.roomId}

@@ -20,6 +20,8 @@ interface SettingsTabProps {
   user: firebase.User | undefined;
   roomLock: string;
   setRoomLock: Function;
+  toggleChat: Function;
+  isChatEnabled: boolean;
   socket: Socket;
   isSubscriber: boolean;
   roomId: string;
@@ -30,6 +32,8 @@ export const SettingsTab = ({
   user,
   roomLock,
   setRoomLock,
+  toggleChat,
+  isChatEnabled,
   socket,
   isSubscriber,
   roomId,
@@ -107,6 +111,11 @@ export const SettingsTab = ({
   const lockDisabled =
     !Boolean(user) || Boolean(roomLock && roomLock !== user?.uid);
 
+  const chatToggleDisabled =
+    !Boolean(user) ||
+    Boolean(!roomLock) ||
+    Boolean(roomLock && roomLock !== user?.uid);
+
   return (
     <div style={{ display: hide ? 'none' : 'block', color: 'white' }}>
       <div className="sectionHeader">Room Settings</div>
@@ -122,6 +131,14 @@ export const SettingsTab = ({
         checked={Boolean(roomLock)}
         disabled={lockDisabled}
         onChange={(e, data) => setRoomLock(data.checked)}
+      />
+      <SettingRow
+        icon={'i cursor'}
+        name={`Disable Chat`}
+        description="Turn off the chat."
+        checked={Boolean(!isChatEnabled)}
+        disabled={chatToggleDisabled}
+        onChange={(e, data) => toggleChat(!data.checked)}
       />
       {
         <SettingRow

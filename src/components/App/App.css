@@ -91,6 +91,10 @@ body {
   width: 80vw;
 }
 
+.fullScreenContainer.noChat:fullscreen > #playerContainer {
+  width: 100vw;
+}
+
 .fullScreenChat.fullScreenChat.fullScreenChat {
   width: 20vw;
 }

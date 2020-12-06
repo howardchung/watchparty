@@ -17,6 +17,7 @@ interface ChatProps {
   className?: string;
   getMediaDisplayName: Function;
   hide?: boolean;
+  isChatEnabled: boolean;
 }
 
 export class Chat extends React.Component<ChatProps> {
@@ -124,6 +125,19 @@ export class Chat extends React.Component<ChatProps> {
   };
 
   render() {
+    if (!this.props.isChatEnabled) {
+      return (
+        <div
+          style={{
+            margin: 'auto',
+            color: '#808080',
+            display: this.props.hide ? 'none' : 'flex',
+          }}
+        >
+          The chat was disabled by the host.
+        </div>
+      );
+    }
     return (
       <div
         className={this.props.className}

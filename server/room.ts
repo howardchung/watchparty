@@ -24,7 +24,6 @@ let postgres: Client | undefined = undefined;
 if (config.DATABASE_URL) {
   postgres = new Client({
     connectionString: config.DATABASE_URL,
-    ssl: { rejectUnauthorized: false },
   });
   postgres.connect();
 }
@@ -41,6 +40,7 @@ export class Room {
   public vBrowser: AssignedVM | undefined = undefined;
   public creationTime: Date = new Date();
   public lock: string | undefined = undefined; // uid of the user who locked the room
+  public isChatEnabled: boolean = true;
 
   // Non-serialized state
   public roomId: string;
@@ -102,6 +102,7 @@ export class Room {
       socket.emit('REC:pictureMap', this.pictureMap);
       socket.emit('REC:tsMap', this.tsMap);
       socket.emit('REC:lock', this.lock);
+      socket.emit('REC:isChatEnabled', this.isChatEnabled);
       socket.emit('chatinit', this.chat);
       io.of(roomId).emit('roster', this.roster);
 
@@ -129,6 +130,7 @@ export class Room {
       );
       socket.on('CMD:subtitle', (data) => this.addSubtitles(socket, data));
       socket.on('CMD:lock', (data) => this.lockRoom(socket, data));
+      socket.on('CMD:toggleChat', (data) => this.toggleChat(socket, data));
       socket.on('CMD:askHost', () => {
         socket.emit('REC:host', this.getHostState());
       });
@@ -280,6 +282,10 @@ export class Room {
   };
 
   addChatMessage = (socket: Socket | undefined, chatMsg: ChatMessageBase) => {
+    console.log(this.isChatEnabled);
+    if (!this.isChatEnabled) {
+      return;
+    }
     const chatWithTime: ChatMessage = {
       ...chatMsg,
       timestamp: new Date().toISOString(),
@@ -641,6 +647,10 @@ export class Room {
       return;
     }
     this.lock = data.locked ? decoded.uid : '';
+    if (!this.isChatEnabled && !data.locked) {
+      this.isChatEnabled = true;
+      this.io.of(this.roomId).emit('REC:isChatEnabled', this.isChatEnabled);
+    }
     this.io.of(this.roomId).emit('REC:lock', this.lock);
     const chatMsg = {
       id: socket.id,
@@ -648,6 +658,24 @@ export class Room {
       msg: '',
     };
     this.addChatMessage(socket, chatMsg);
+  };
+
+  private toggleChat = async (
+    socket: Socket,
+    data: { uid: string; token: string; toggleChat: boolean }
+  ) => {
+    if (!data) {
+      return;
+    }
+    const decoded = await validateUserToken(data.uid, data.token);
+    if (!decoded) {
+      return;
+    }
+    if (!this.validateLock(socket.id)) {
+      return;
+    }
+    this.isChatEnabled = data.toggleChat;
+    this.io.of(this.roomId).emit('REC:isChatEnabled', this.isChatEnabled);
   };
 
   private setRoomOwner = async (
