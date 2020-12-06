@@ -24,6 +24,7 @@ let postgres: Client | undefined = undefined;
 if (config.DATABASE_URL) {
   postgres = new Client({
     connectionString: config.DATABASE_URL,
+    ssl: { rejectUnauthorized: false },
   });
   postgres.connect();
 }
@@ -282,7 +283,6 @@ export class Room {
   };
 
   addChatMessage = (socket: Socket | undefined, chatMsg: ChatMessageBase) => {
-    console.log(this.isChatEnabled);
     if (!this.isChatEnabled) {
       return;
     }
