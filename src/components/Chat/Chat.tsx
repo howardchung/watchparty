@@ -17,6 +17,7 @@ interface ChatProps {
   className?: string;
   getMediaDisplayName: Function;
   hide?: boolean;
+  isChatEnabled?: boolean;
 }
 
 export class Chat extends React.Component<ChatProps> {
@@ -176,32 +177,40 @@ export class Chat extends React.Component<ChatProps> {
             closeMenu={() => this.setState({ isPickerOpen: false })}
           />
         )}
-        <Input
-          inverted
-          fluid
-          onKeyPress={(e: any) => e.key === 'Enter' && this.sendChatMsg()}
-          onChange={this.updateChatMsg}
-          value={this.state.chatMsg}
-          error={this.chatTooLong()}
-          icon
-          placeholder="Enter a message..."
-        >
-          <input />
-          <Icon
-            // style={{ right: '40px' }}
-            onClick={() => this.setState({ isPickerOpen: true })}
-            name={'' as any}
+        {
+          <Input
             inverted
-            circular
-            link
-            style={{ opacity: 1 }}
+            fluid
+            onKeyPress={(e: any) => e.key === 'Enter' && this.sendChatMsg()}
+            onChange={this.updateChatMsg}
+            value={this.state.chatMsg}
+            error={this.chatTooLong()}
+            icon
+            disabled={!this.props.isChatEnabled}
+            placeholder={
+              this.props.isChatEnabled
+                ? 'Enter a message...'
+                : 'The chat was disabled by the host.'
+            }
           >
-            <span role="img" aria-label="Emoji">
-              😀
-            </span>
-          </Icon>
-          {/* <Icon onClick={this.sendChatMsg} name="send" inverted circular link /> */}
-        </Input>
+            <input />
+            <Icon
+              // style={{ right: '40px' }}
+              onClick={() => this.setState({ isPickerOpen: true })}
+              name={'' as any}
+              inverted
+              circular
+              link
+              disabled={!this.props.isChatEnabled}
+              style={{ opacity: 1 }}
+            >
+              <span role="img" aria-label="Emoji">
+                😀
+              </span>
+            </Icon>
+            {/* <Icon onClick={this.sendChatMsg} name="send" inverted circular link /> */}
+          </Input>
+        }
       </div>
     );
   }
