@@ -116,7 +116,7 @@ interface AppState {
   roomId: string;
   errorMessage: string;
   successMessage: string;
-  isChatEnabled: boolean;
+  isChatDisabled: boolean;
 }
 
 export default class App extends React.Component<AppProps, AppState> {
@@ -168,7 +168,7 @@ export default class App extends React.Component<AppProps, AppState> {
     savedPasswords: {},
     errorMessage: '',
     successMessage: '',
-    isChatEnabled: true,
+    isChatDisabled: false,
   };
   socket: any = null;
   watchPartyYTPlayer: any = null;
@@ -525,8 +525,8 @@ export default class App extends React.Component<AppProps, AppState> {
     socket.on('REC:lock', (data: string) => {
       this.setState({ roomLock: data });
     });
-    socket.on('REC:isChatEnabled', (data: boolean) => {
-      this.setState({ isChatEnabled: data });
+    socket.on('REC:isChatDisabled', (data: boolean) => {
+      this.setState({ isChatDisabled: data });
     });
     socket.on('roster', (data: User[]) => {
       this.setState(
@@ -1691,7 +1691,7 @@ export default class App extends React.Component<AppProps, AppState> {
                         socket={this.socket}
                         scrollTimestamp={this.state.scrollTimestamp}
                         getMediaDisplayName={this.getMediaDisplayName}
-                        isChatEnabled={this.state.isChatEnabled}
+                        isChatDisabled={this.state.isChatDisabled}
                       />
                     )}
                   </div>
@@ -1788,7 +1788,7 @@ export default class App extends React.Component<AppProps, AppState> {
                   scrollTimestamp={this.state.scrollTimestamp}
                   getMediaDisplayName={this.getMediaDisplayName}
                   hide={this.state.currentTab !== 'chat'}
-                  isChatEnabled={this.state.isChatEnabled}
+                  isChatDisabled={this.state.isChatDisabled}
                 />
                 {this.state.state === 'connected' && (
                   <VideoChat

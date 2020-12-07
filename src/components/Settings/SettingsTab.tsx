@@ -37,7 +37,7 @@ export const SettingsTab = ({
   const [updateTS, setUpdateTS] = useState(0);
   const [vanity, setVanity] = useState<string | undefined>(undefined);
   const [password, setPassword] = useState<string | undefined>(undefined);
-  const [isChatEnabled, setIsChatEnabled] = useState(true);
+  const [isChatDisabled, setisChatDisabled] = useState(true);
   const [owner, setOwner] = useState<string | undefined>(undefined);
   const [validVanity, setValidVanity] = useState(true);
   const [validVanityLoading, setValidVanityLoading] = useState(false);
@@ -50,7 +50,7 @@ export const SettingsTab = ({
         setVanity(data.vanity);
         setPassword(data.password);
         setRoomLink(getRoomLink(data.vanity));
-        setIsChatEnabled(data.isChatEnabled);
+        setisChatDisabled(data.isChatDisabled);
       };
       const getRoomLink = (vanity: string) => {
         if (vanity) {
@@ -158,9 +158,9 @@ export const SettingsTab = ({
           icon={'i cursor'}
           name={`Disable Chat`}
           description="Turn off the chat."
-          checked={Boolean(!isChatEnabled)}
+          checked={Boolean(isChatDisabled)}
           disabled={false}
-          onChange={(e, data) => setIsChatEnabled(Boolean(!data.checked))}
+          onChange={(e, data) => setisChatDisabled(Boolean(data.checked))}
         />
       )}
       {owner && owner === user?.uid && (
@@ -224,7 +224,7 @@ export const SettingsTab = ({
             setRoomState({
               vanity: vanity,
               password: password,
-              isChatEnabled: isChatEnabled,
+              isChatDisabled: isChatDisabled,
             })
           }
         >
