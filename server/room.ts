@@ -691,7 +691,7 @@ export class Room {
       // validate room count
       const roomCount = (
         await postgres.query(
-          `SELECT count(1) from room where owner = $1 AND roomId != $2`,
+          'SELECT count(1) from room where owner = $1 AND roomId != $2',
           [owner, this.roomId]
         )
       ).rows[0].count;
@@ -728,7 +728,7 @@ export class Room {
       return;
     }
     const result = await postgres.query(
-      'SELECT password, vanity, owner, is_chat_disabled FROM room where roomId = $1',
+      `SELECT password, vanity, owner, is_chat_disabled FROM room where roomId = $1`,
       [this.roomId]
     );
     const first = result.rows[0];
