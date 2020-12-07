@@ -728,7 +728,7 @@ export class Room {
       return;
     }
     const result = await postgres.query(
-      `SELECT password, vanity, owner, ischatdisabled FROM room where roomId = $1`,
+      `SELECT password, vanity, owner, "isChatDisabled" FROM room where roomId = $1`,
       [this.roomId]
     );
     const first = result.rows[0];
@@ -736,7 +736,7 @@ export class Room {
       password: first?.password,
       vanity: first?.vanity,
       owner: first?.owner,
-      isChatDisabled: first?.ischatdisabled,
+      isChatDisabled: first?.isChatDisabled,
     });
   };
 
@@ -805,9 +805,9 @@ export class Room {
         password: row?.password,
         vanity: row?.vanity,
         owner: row?.owner,
-        isChatDisabled: row?.ischatdisabled,
+        isChatDisabled: row?.isChatDisabled,
       });
-      this.isChatDisabled = row?.ischatdisabled;
+      this.isChatDisabled = row?.isChatDisabled;
       this.io.of(this.roomId).emit('REC:isChatDisabled', this.isChatDisabled);
 
       socket.emit('successMessage', 'Saved admin settings');
