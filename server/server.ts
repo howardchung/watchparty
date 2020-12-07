@@ -118,7 +118,7 @@ async function init() {
       util.format('found %s rooms in postgres', postgresRooms.length)
     );
     for (let i = 0; i < postgresRooms.length; i++) {
-      const key = postgresRooms[i].roomId;
+      const key = postgresRooms[i].roomid;
       if (!rooms.has(key)) {
         rooms.set(
           key,

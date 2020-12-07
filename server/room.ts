@@ -171,7 +171,7 @@ export class Room {
       vBrowser: this.vBrowser,
       creationTime: this.creationTime,
       lock: this.lock,
-      isChatDisabled: this.isChatDisabled,
+      is_chat_disabled: this.isChatDisabled,
     });
   };
 
@@ -203,8 +203,8 @@ export class Room {
     if (roomObj.lock) {
       this.lock = roomObj.lock;
     }
-    if (roomObj.isChatDisabled) {
-      this.isChatDisabled = roomObj.isChatDisabled;
+    if (roomObj.is_chat_disabled) {
+      this.isChatDisabled = roomObj.is_chat_disabled;
     }
   };
 
@@ -728,7 +728,7 @@ export class Room {
       return;
     }
     const result = await postgres.query(
-      `SELECT password, vanity, owner, "isChatDisabled" FROM room where roomId = $1`,
+      'SELECT password, vanity, owner, is_chat_disabled FROM room where roomId = $1',
       [this.roomId]
     );
     const first = result.rows[0];
@@ -736,7 +736,7 @@ export class Room {
       password: first?.password,
       vanity: first?.vanity,
       owner: first?.owner,
-      isChatDisabled: first?.isChatDisabled,
+      isChatDisabled: first?.is_chat_disabled,
     });
   };
 
@@ -783,7 +783,7 @@ export class Room {
     const roomObj: any = {
       roomId: this.roomId,
       password: password,
-      isChatDisabled: isChatDisabled,
+      is_chat_disabled: isChatDisabled,
     };
     if (isSubscriber) {
       // user must be sub to set vanity
@@ -805,9 +805,9 @@ export class Room {
         password: row?.password,
         vanity: row?.vanity,
         owner: row?.owner,
-        isChatDisabled: row?.isChatDisabled,
+        isChatDisabled: row?.is_chat_disabled,
       });
-      this.isChatDisabled = row?.isChatDisabled;
+      this.isChatDisabled = row?.is_chat_disabled;
       this.io.of(this.roomId).emit('REC:isChatDisabled', this.isChatDisabled);
 
       socket.emit('successMessage', 'Saved admin settings');
