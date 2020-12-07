@@ -4,7 +4,7 @@ CREATE TABLE room(
   password text,
   owner text,
   vanity text,
-  is_chat_enabled boolean DEFAULT true,
+  isChatDisabled boolean,
   PRIMARY KEY (roomId)
 );
 

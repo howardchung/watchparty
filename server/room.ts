@@ -41,7 +41,7 @@ export class Room {
   public vBrowser: AssignedVM | undefined = undefined;
   public creationTime: Date = new Date();
   public lock: string | undefined = undefined; // uid of the user who locked the room
-  private isChatEnabled: boolean = true;
+  public isChatDisabled: boolean = false;
 
   // Non-serialized state
   public roomId: string;
@@ -104,7 +104,7 @@ export class Room {
       socket.emit('REC:tsMap', this.tsMap);
       socket.emit('REC:lock', this.lock);
       socket.emit('chatinit', this.chat);
-      socket.emit('REC:isChatEnabled', this.isChatEnabled);
+      socket.emit('REC:isChatDisabled', this.isChatDisabled);
       io.of(roomId).emit('roster', this.roster);
 
       socket.on('CMD:name', (data) => this.changeUserName(socket, data));
@@ -171,6 +171,7 @@ export class Room {
       vBrowser: this.vBrowser,
       creationTime: this.creationTime,
       lock: this.lock,
+      isChatDisabled: this.isChatDisabled,
     });
   };
 
@@ -202,8 +203,8 @@ export class Room {
     if (roomObj.lock) {
       this.lock = roomObj.lock;
     }
-    if (roomObj.is_chat_enabled != undefined) {
-      this.isChatEnabled = roomObj.is_chat_enabled;
+    if (roomObj.isChatDisabled) {
+      this.isChatDisabled = roomObj.isChatDisabled;
     }
   };
 
@@ -285,7 +286,7 @@ export class Room {
   };
 
   addChatMessage = (socket: Socket | undefined, chatMsg: ChatMessageBase) => {
-    if (!this.isChatEnabled && !chatMsg.cmd) {
+    if (this.isChatDisabled && !chatMsg.cmd) {
       return;
     }
     const chatWithTime: ChatMessage = {
@@ -727,7 +728,7 @@ export class Room {
       return;
     }
     const result = await postgres.query(
-      `SELECT password, vanity, owner, is_chat_enabled FROM room where roomId = $1`,
+      `SELECT password, vanity, owner, ischatdisabled FROM room where roomId = $1`,
       [this.roomId]
     );
     const first = result.rows[0];
@@ -735,7 +736,7 @@ export class Room {
       password: first?.password,
       vanity: first?.vanity,
       owner: first?.owner,
-      isChatEnabled: first?.is_chat_enabled,
+      isChatDisabled: first?.ischatdisabled,
     });
   };
 
@@ -746,7 +747,7 @@ export class Room {
       token: string;
       password: string;
       vanity: string;
-      isChatEnabled: boolean;
+      isChatDisabled: boolean;
     }
   ) => {
     if (!postgres) {
@@ -765,7 +766,7 @@ export class Room {
     const isSubscriber = Boolean(
       customer?.subscriptions?.data?.[0]?.status === 'active'
     );
-    const { password, vanity, isChatEnabled } = data;
+    const { password, vanity, isChatDisabled } = data;
     if (password) {
       if (password.length > 100) {
         socket.emit('errorMessage', 'Password too long');
@@ -782,7 +783,7 @@ export class Room {
     const roomObj: any = {
       roomId: this.roomId,
       password: password,
-      is_chat_enabled: isChatEnabled,
+      isChatDisabled: isChatDisabled,
     };
     if (isSubscriber) {
       // user must be sub to set vanity
@@ -804,10 +805,10 @@ export class Room {
         password: row?.password,
         vanity: row?.vanity,
         owner: row?.owner,
-        isChatEnabled: row?.is_chat_enabled,
+        isChatDisabled: row?.ischatdisabled,
       });
-      this.isChatEnabled = row?.is_chat_enabled;
-      this.io.of(this.roomId).emit('REC:isChatEnabled', this.isChatEnabled);
+      this.isChatDisabled = row?.ischatdisabled;
+      this.io.of(this.roomId).emit('REC:isChatDisabled', this.isChatDisabled);
 
       socket.emit('successMessage', 'Saved admin settings');
     } catch (e) {
