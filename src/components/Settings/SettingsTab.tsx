@@ -157,7 +157,7 @@ export const SettingsTab = ({
         <SettingRow
           icon={'i cursor'}
           name={`Disable Chat`}
-          description="Turn off the chat."
+          description="Prevent users from sending messages in chat."
           checked={Boolean(isChatDisabled)}
           disabled={false}
           onChange={(e, data) => setisChatDisabled(Boolean(data.checked))}
