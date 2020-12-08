@@ -42,7 +42,6 @@ let postgres: Client | undefined = undefined;
 if (config.DATABASE_URL) {
   postgres = new Client({
     connectionString: config.DATABASE_URL,
-    ssl: { rejectUnauthorized: false },
   });
   postgres.connect();
 }
@@ -258,7 +257,7 @@ app.get('/metadata', async (req, res) => {
 app.get('/resolveRoom/:vanity', async (req, res) => {
   const vanity = req.params.vanity;
   const result = await postgres?.query(
-    `SELECT roomId as "roomId", vanity from room WHERE LOWER(vanity) = $1`,
+    `SELECT "roomId", vanity from room WHERE LOWER(vanity) = $1`,
     [vanity?.toLowerCase() ?? '']
   );
   // console.log(vanity, result.rows);
@@ -275,7 +274,7 @@ app.get('/listRooms', async (req, res) => {
     return res.status(400).json({ error: 'invalid user token' });
   }
   const result = await postgres?.query<PermanentRoom>(
-    `SELECT roomId as "roomId", vanity from room WHERE owner = $1`,
+    `SELECT "roomId", vanity from room WHERE owner = $1`,
     [decoded.uid]
   );
   return res.json(result?.rows);
@@ -290,7 +289,7 @@ app.delete('/deleteRoom', async (req, res) => {
     return res.status(400).json({ error: 'invalid user token' });
   }
   const result = await postgres?.query(
-    `DELETE from room WHERE owner = $1 and roomId = $2`,
+    `DELETE from room WHERE owner = $1 and "roomId" = $2`,
     [decoded.uid, req.query.roomId]
   );
   return res.json(result?.rows);
