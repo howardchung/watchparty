@@ -188,7 +188,7 @@ export class Chat extends React.Component<ChatProps> {
           disabled={this.props.isChatDisabled}
           placeholder={
             this.props.isChatDisabled
-              ? 'The chat was disabled by the host.'
+              ? 'The chat was disabled by the room owner.'
               : 'Enter a message...'
           }
         >
