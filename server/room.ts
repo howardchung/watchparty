@@ -80,7 +80,7 @@ export class Room {
       // console.log(this.roomId, this.password, password);
       if (postgres) {
         const result = await postgres.query(
-          `SELECT password FROM room where roomId = $1`,
+          `SELECT password FROM room where "roomId" = $1`,
           [this.roomId]
         );
         const roomPassword = result.rows[0]?.password;
@@ -171,7 +171,7 @@ export class Room {
       vBrowser: this.vBrowser,
       creationTime: this.creationTime,
       lock: this.lock,
-      is_chat_disabled: this.isChatDisabled,
+      isChatDisabled: this.isChatDisabled,
     });
   };
 
@@ -203,8 +203,8 @@ export class Room {
     if (roomObj.lock) {
       this.lock = roomObj.lock;
     }
-    if (roomObj.is_chat_disabled) {
-      this.isChatDisabled = roomObj.is_chat_disabled;
+    if (roomObj.isChatDisabled) {
+      this.isChatDisabled = roomObj.isChatDisabled;
     }
   };
 
@@ -215,7 +215,7 @@ export class Room {
       let permanent = false;
       if (postgres) {
         const result = await postgres.query(
-          `SELECT owner FROM room where roomId = $1`,
+          `SELECT owner FROM room where "roomId" = $1`,
           [this.roomId]
         );
         const owner = result.rows[0]?.owner;
@@ -685,13 +685,15 @@ export class Room {
     );
     const owner = decoded.uid;
     if (data.undo) {
-      await postgres.query('DELETE from room where roomId = $1', [this.roomId]);
+      await postgres.query('DELETE from room where "roomId" = $1', [
+        this.roomId,
+      ]);
       socket.emit('REC:getRoomState', {});
     } else {
       // validate room count
       const roomCount = (
         await postgres.query(
-          'SELECT count(1) from room where owner = $1 AND roomId != $2',
+          'SELECT count(1) from room where owner = $1 AND "roomId" != $2',
           [owner, this.roomId]
         )
       ).rows[0].count;
@@ -709,7 +711,7 @@ export class Room {
       };
       const columns = Object.keys(roomObj);
       const values = Object.values(roomObj);
-      const query = `INSERT INTO room(${columns.join(',')})
+      const query = `INSERT INTO room(${columns.map((c) => `"${c}"`).join(',')})
     VALUES (${values.map((_, i) => '$' + (i + 1)).join(',')})
     RETURNING *`;
       // console.log(columns, values, query);
@@ -728,7 +730,7 @@ export class Room {
       return;
     }
     const result = await postgres.query(
-      `SELECT password, vanity, owner, is_chat_disabled FROM room where roomId = $1`,
+      `SELECT password, vanity, owner, "isChatDisabled" FROM room where "roomId" = $1`,
       [this.roomId]
     );
     const first = result.rows[0];
@@ -736,7 +738,7 @@ export class Room {
       password: first?.password,
       vanity: first?.vanity,
       owner: first?.owner,
-      isChatDisabled: first?.is_chat_disabled,
+      isChatDisabled: first?.isChatDisabled,
     });
   };
 
@@ -783,7 +785,7 @@ export class Room {
     const roomObj: any = {
       roomId: this.roomId,
       password: password,
-      is_chat_disabled: isChatDisabled,
+      isChatDisabled: isChatDisabled,
     };
     if (isSubscriber) {
       // user must be sub to set vanity
@@ -791,8 +793,8 @@ export class Room {
     }
     try {
       const query = `UPDATE room
-        SET ${Object.keys(roomObj).map((k, i) => `${k} = $${i + 1}`)}
-        WHERE roomId = $${Object.keys(roomObj).length + 1}
+        SET ${Object.keys(roomObj).map((k, i) => `"${k}" = $${i + 1}`)}
+        WHERE "roomId" = $${Object.keys(roomObj).length + 1}
         AND owner = $${Object.keys(roomObj).length + 2}
         RETURNING *`;
       const result = await postgres.query(query, [
@@ -805,9 +807,9 @@ export class Room {
         password: row?.password,
         vanity: row?.vanity,
         owner: row?.owner,
-        isChatDisabled: row?.is_chat_disabled,
+        isChatDisabled: row?.isChatDisabled,
       });
-      this.isChatDisabled = row?.is_chat_disabled;
+      this.isChatDisabled = row?.isChatDisabled;
       this.io.of(this.roomId).emit('REC:isChatDisabled', this.isChatDisabled);
 
       socket.emit('successMessage', 'Saved admin settings');
