@@ -42,6 +42,7 @@ let postgres: Client | undefined = undefined;
 if (config.DATABASE_URL) {
   postgres = new Client({
     connectionString: config.DATABASE_URL,
+    ssl: { rejectUnauthorized: false },
   });
   postgres.connect();
 }
