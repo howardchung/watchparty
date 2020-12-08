@@ -1,11 +1,11 @@
 CREATE TABLE room(
-  roomId text,
-  creationTime timestamp with time zone,
+  "roomId" text,
+  "creationTime" timestamp with time zone,
   password text,
   owner text,
   vanity text,
-  is_chat_disabled boolean,
-  PRIMARY KEY (roomId)
+  "isChatDisabled" boolean,
+  PRIMARY KEY ("roomId")
 );
 
 CREATE UNIQUE INDEX on room (LOWER(vanity)) WHERE vanity IS NOT NULL;
