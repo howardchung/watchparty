@@ -37,7 +37,7 @@ export const SettingsTab = ({
   const [updateTS, setUpdateTS] = useState(0);
   const [vanity, setVanity] = useState<string | undefined>(undefined);
   const [password, setPassword] = useState<string | undefined>(undefined);
-  const [isChatDisabled, setisChatDisabled] = useState(true);
+  const [isChatDisabled, setIsChatDisabled] = useState(false);
   const [owner, setOwner] = useState<string | undefined>(undefined);
   const [validVanity, setValidVanity] = useState(true);
   const [validVanityLoading, setValidVanityLoading] = useState(false);
@@ -50,7 +50,7 @@ export const SettingsTab = ({
         setVanity(data.vanity);
         setPassword(data.password);
         setRoomLink(getRoomLink(data.vanity));
-        setisChatDisabled(data.isChatDisabled);
+        setIsChatDisabled(data.isChatDisabled);
       };
       const getRoomLink = (vanity: string) => {
         if (vanity) {
