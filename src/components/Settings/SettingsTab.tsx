@@ -160,7 +160,7 @@ export const SettingsTab = ({
           description="Prevent users from sending messages in chat."
           checked={Boolean(isChatDisabled)}
           disabled={false}
-          onChange={(e, data) => setisChatDisabled(Boolean(data.checked))}
+          onChange={(e, data) => setIsChatDisabled(Boolean(data.checked))}
         />
       )}
       {owner && owner === user?.uid && (
