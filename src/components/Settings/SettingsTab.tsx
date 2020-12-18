@@ -37,6 +37,7 @@ export const SettingsTab = ({
   const [updateTS, setUpdateTS] = useState(0);
   const [vanity, setVanity] = useState<string | undefined>(undefined);
   const [password, setPassword] = useState<string | undefined>(undefined);
+  const [isChatDisabled, setIsChatDisabled] = useState(false);
   const [owner, setOwner] = useState<string | undefined>(undefined);
   const [validVanity, setValidVanity] = useState(true);
   const [validVanityLoading, setValidVanityLoading] = useState(false);
@@ -49,6 +50,7 @@ export const SettingsTab = ({
         setVanity(data.vanity);
         setPassword(data.password);
         setRoomLink(getRoomLink(data.vanity));
+        setIsChatDisabled(data.isChatDisabled);
       };
       const getRoomLink = (vanity: string) => {
         if (vanity) {
@@ -153,6 +155,16 @@ export const SettingsTab = ({
       )}
       {owner && owner === user?.uid && (
         <SettingRow
+          icon={'i cursor'}
+          name={`Disable Chat`}
+          description="Prevent users from sending messages in chat."
+          checked={Boolean(isChatDisabled)}
+          disabled={false}
+          onChange={(e, data) => setIsChatDisabled(Boolean(data.checked))}
+        />
+      )}
+      {owner && owner === user?.uid && (
+        <SettingRow
           icon={'linkify'}
           name={`Set Custom Room URL`}
           description="Set a custom URL for this room. Inappropriate names may be revoked."
@@ -212,6 +224,7 @@ export const SettingsTab = ({
             setRoomState({
               vanity: vanity,
               password: password,
+              isChatDisabled: isChatDisabled,
             })
           }
         >
