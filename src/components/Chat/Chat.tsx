@@ -17,6 +17,7 @@ interface ChatProps {
   className?: string;
   getMediaDisplayName: Function;
   hide?: boolean;
+  isChatDisabled?: boolean;
 }
 
 export class Chat extends React.Component<ChatProps> {
@@ -184,7 +185,12 @@ export class Chat extends React.Component<ChatProps> {
           value={this.state.chatMsg}
           error={this.chatTooLong()}
           icon
-          placeholder="Enter a message..."
+          disabled={this.props.isChatDisabled}
+          placeholder={
+            this.props.isChatDisabled
+              ? 'The chat was disabled by the room owner.'
+              : 'Enter a message...'
+          }
         >
           <input />
           <Icon
@@ -194,6 +200,7 @@ export class Chat extends React.Component<ChatProps> {
             inverted
             circular
             link
+            disabled={this.props.isChatDisabled}
             style={{ opacity: 1 }}
           >
             <span role="img" aria-label="Emoji">
