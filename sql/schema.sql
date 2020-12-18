@@ -5,6 +5,7 @@ CREATE TABLE room(
   owner text,
   vanity text,
   "isChatDisabled" boolean,
+  "isSubRoom" boolean,
   PRIMARY KEY ("roomId")
 );
 
