@@ -318,10 +318,12 @@ app.post('/kv', async (req, res) => {
   }
 });
 
-app.use(express.static('build'));
+app.use(express.static(config.BUILD_DIRECTORY));
 // Send index.html for all other requests (SPA)
 app.use('/*', (req, res) => {
-  res.sendFile(path.resolve(__dirname + '/../build/index.html'));
+  res.sendFile(
+    path.resolve(__dirname + `/../${config.BUILD_DIRECTORY}/index.html`)
+  );
 });
 
 setInterval(async () => {
