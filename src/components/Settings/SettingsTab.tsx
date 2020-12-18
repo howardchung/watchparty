@@ -108,6 +108,8 @@ export const SettingsTab = ({
   );
   const lockDisabled =
     !Boolean(user) || Boolean(roomLock && roomLock !== user?.uid);
+  const permanentDisabled =
+    !Boolean(user) || Boolean(owner && owner !== user?.uid);
 
   return (
     <div style={{ display: hide ? 'none' : 'block', color: 'white' }}>
@@ -131,7 +133,7 @@ export const SettingsTab = ({
           name={`Make Room Permanent`}
           description="Standard rooms are deleted after one day of inactivity. Permanent rooms aren't deleted and can have passwords/custom URLs. Free users can only have one permanent room at a time."
           checked={Boolean(owner)}
-          disabled={Boolean(owner && owner !== user?.uid)}
+          disabled={permanentDisabled}
           onChange={(e, data) => setRoomOwner({ undo: !data.checked })}
         />
       }
