@@ -25,6 +25,7 @@ const defaults = {
   SSL_KEY_FILE: '', // Optional, Filename of SSL key
   SSL_CRT_FILE: '', // Optional, Filename of SSL cert
   PORT: 8080, // Port to use for server
+  HOST: '0.0.0.0', // Host interface to bind server to
   STATS_KEY: '', // Secret string to validate viewing stats
   CUSTOM_SETTINGS_HOSTNAME: '', // Hostname to send different config settings to client
   MEDIA_PATH: '', // Path of server where media files might be found (GitLab/S3/nginx)
