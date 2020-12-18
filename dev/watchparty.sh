@@ -38,5 +38,6 @@ REDIS_URL=localhost:6379
 npm install -g pm2
 
 # PM2 start
+pm2 start buildServer/server.js
 
 # Run on startup
