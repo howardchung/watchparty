@@ -134,7 +134,7 @@ async function init() {
     rooms.set('/default', new Room(io, vmManagers, '/default'));
   }
 
-  server.listen(config.PORT);
+  server.listen(config.PORT, config.HOST);
 }
 
 app.use(cors());
