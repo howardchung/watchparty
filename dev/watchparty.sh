@@ -17,7 +17,7 @@ curl -sSL https://get.docker.com/ | sh
 # Start Redis
 sudo docker run --log-opt max-size=1g -d --name redis --restart=always --net=host redis
 # Start Postgres
-sudo docker run --log-opt max-size=1g -d --name postgres --restart=always -e POSTGRES_PASSWORD=password --net=host postgres
+sudo docker run --log-opt max-size=1g -d --name postgres --restart=always -e POSTGRES_PASSWORD=password --net=host -v ./sql/:/docker-entrypoint-initdb.d/ postgres
 
 # Install NodeJS
 curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
@@ -30,7 +30,7 @@ npm run build
 
 # Set .env config
 echo '
-DATABASE_URL=localhost:5432
+DATABASE_URL=postgresql://postgres@localhost:5432/postgres?sslmode=disable
 REDIS_URL=localhost:6379
 ' > .env
 
@@ -38,6 +38,8 @@ REDIS_URL=localhost:6379
 npm install -g pm2
 
 # PM2 start
-pm2 start buildServer/server.js
+npm run pm2
 
 # Run on startup
+./node_modules/pm2/bin/pm2 startup
+./node_modules/pm2/bin/pm2 save
