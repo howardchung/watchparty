@@ -278,7 +278,7 @@ app.get('/listRooms', async (req, res) => {
     `SELECT "roomId", vanity from room WHERE owner = $1`,
     [decoded.uid]
   );
-  return res.json(result?.rows);
+  return res.json(result?.rows ?? []);
 });
 
 app.delete('/deleteRoom', async (req, res) => {

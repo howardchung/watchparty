@@ -12,6 +12,7 @@ const defaults = {
   VBROWSER_VM_BUFFER: 0, // Extra VMs to create
   VM_POOL_FIXED_SIZE_LARGE: 0, // If using a fixed VM pool, number of large VMs to create
   VM_POOL_FIXED_SIZE: 0, // If using a fixed VM pool, number of VMs to create
+  VM_POOL_MIN_SIZE: 0, // Minimum number of VM instances to keep in the pool
   VBROWSER_TAG: '', // Optional, tag to put on VBrowser VM instances
   DO_TOKEN: '', // Optional, for DigitalOcean VMs
   HETZNER_TOKEN: '', // Optional, for Hetzner VMs
