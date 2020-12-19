@@ -220,7 +220,7 @@ export abstract class VMManager {
     if (unlaunch) {
       const now = Date.now();
       let sortedVMs = allVMs
-        .sort((a, b) => -a.creation_date?.localeCompare(b.creation_date))
+        .sort((a, b) => a.creation_date?.localeCompare(b.creation_date))
         .slice(0, -config.VM_POOL_MIN_SIZE)
         .filter(
           (vm) => now - Number(new Date(vm.creation_date)) > 45 * 60 * 1000
