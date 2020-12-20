@@ -226,7 +226,7 @@ export abstract class VMManager {
       // Sort newest first
       let sortedVMs = allVMs
         .sort((a, b) => -a.creation_date?.localeCompare(b.creation_date))
-        .slice(0, -this.getMinSize())
+        .slice(0, -this.getMinSize() || undefined)
         .filter(
           (vm) => now - Number(new Date(vm.creation_date)) > 45 * 60 * 1000
         );
