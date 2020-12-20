@@ -19,6 +19,10 @@ export abstract class VMManager {
     this.isLarge
       ? Number(config.VM_POOL_FIXED_SIZE_LARGE)
       : Number(config.VM_POOL_FIXED_SIZE);
+  private getMinSize = () =>
+    this.isLarge
+      ? Number(config.VM_POOL_MIN_SIZE_LARGE)
+      : Number(config.VM_POOL_MIN_SIZE);
 
   constructor(
     rooms: Map<string, Room>,
@@ -222,7 +226,7 @@ export abstract class VMManager {
       // Sort newest first
       let sortedVMs = allVMs
         .sort((a, b) => -a.creation_date?.localeCompare(b.creation_date))
-        .slice(0, -config.VM_POOL_MIN_SIZE)
+        .slice(0, -this.getMinSize())
         .filter(
           (vm) => now - Number(new Date(vm.creation_date)) > 45 * 60 * 1000
         );
