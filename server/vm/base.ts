@@ -271,6 +271,7 @@ export abstract class VMManager {
       const server = allVMs[i];
       if (!dontDelete.has(server.id)) {
         // this.terminateVMWrapper(server.id);
+        console.log('[CLEANUP]', server.id);
         this.resetVM(server.id);
       }
     }
