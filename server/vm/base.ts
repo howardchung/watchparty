@@ -148,13 +148,13 @@ export abstract class VMManager {
       if (availableCount + stagingCount === 0 && !fixedSize) {
         await this.startVMWrapper();
       }
-      let resp = await this.redis2.brpop(this.getRedisQueueKey(), 300);
+      let resp = await this.redis2.blpop(this.getRedisQueueKey(), 180);
       if (!resp) {
         return undefined;
       }
       const id = resp[1];
       console.log('[ASSIGN]', id);
-      const lock = await this.redis.set('vbrowser:' + id, '1', 'NX', 'EX', 300);
+      const lock = await this.redis.set('vbrowser:' + id, '1', 'NX', 'EX', 180);
       if (!lock) {
         console.log('failed to acquire lock on VM:', id);
         continue;
@@ -181,7 +181,7 @@ export abstract class VMManager {
     // We wait to give the VM time to shut down (if it's restarting)
     await new Promise((resolve) => setTimeout(resolve, 3000));
     // Add the VM back to the pool
-    await this.redis.lpush(this.getRedisStagingKey(), id);
+    await this.redis.rpush(this.getRedisStagingKey(), id);
   };
 
   protected resizeVMGroupIncr = async () => {
@@ -306,7 +306,7 @@ export abstract class VMManager {
           await this.redis
             .multi()
             .lrem(this.getRedisStagingKey(), 1, id)
-            .lpush(this.getRedisQueueKey(), id)
+            .rpush(this.getRedisQueueKey(), id)
             .del(this.getRedisStagingKey() + ':' + id)
             .exec();
           await this.redis.lpush('vBrowserStageRetries', retryCount);
@@ -350,7 +350,7 @@ export abstract class VMManager {
     // generate credentials and boot a VM
     const password = uuidv4();
     const id = await this.startVM(password);
-    await this.redis.lpush(this.getRedisStagingKey(), id);
+    await this.redis.rpush(this.getRedisStagingKey(), id);
     redisCount('vBrowserLaunches');
     return id;
   };
