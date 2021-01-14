@@ -115,6 +115,7 @@ export class Hetzner extends VMManager {
             Authorization: 'Bearer ' + HETZNER_TOKEN,
           },
           params: {
+            sort: 'id:asc',
             page,
             per_page: 50,
             label_selector: filter,
@@ -144,7 +145,7 @@ export class Hetzner extends VMManager {
         },
       });
     } catch (e) {
-      console.error('failed to poweron');
+      console.warn('failed to poweron');
     }
   };
 
@@ -163,7 +164,7 @@ export class Hetzner extends VMManager {
         },
       });
     } catch (e) {
-      console.error('failed to attach to network');
+      console.warn('failed to attach to network');
     }
   };
 

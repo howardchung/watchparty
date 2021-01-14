@@ -107,7 +107,7 @@ async function init() {
       try {
         rooms.set(key, new Room(io, vmManagers, key, roomData));
       } catch (e) {
-        console.error(e);
+        console.warn(e);
       }
     }
   }

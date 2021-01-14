@@ -89,7 +89,7 @@ export class Docker extends VMManager {
               return reject(new Error('no container with this ID found'));
             }
           } catch {
-            console.error(stdout);
+            console.warn(stdout);
             return reject('failed to parse json');
           }
           let server = this.mapServerObject(data);
@@ -118,7 +118,7 @@ export class Docker extends VMManager {
           try {
             data = JSON.parse(stdout);
           } catch (e) {
-            console.error(stdout);
+            console.warn(stdout);
             return reject('failed to parse json');
           }
           return resolve(data.map(this.mapServerObject));

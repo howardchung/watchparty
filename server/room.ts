@@ -228,7 +228,7 @@ export class Room {
         await redis?.setex(key, 24 * 60 * 60, roomString);
       }
     } catch (e) {
-      console.error(e);
+      console.warn(e);
     }
   };
 
@@ -266,7 +266,7 @@ export class Room {
           : this.vmManagers?.standard;
         await vmManager?.resetVM(id);
       } catch (e) {
-        console.error(e);
+        console.warn(e);
       }
     }
   };
@@ -814,7 +814,7 @@ export class Room {
 
       socket.emit('successMessage', 'Saved admin settings');
     } catch (e) {
-      console.error(e);
+      console.warn(e);
     }
   };
 
