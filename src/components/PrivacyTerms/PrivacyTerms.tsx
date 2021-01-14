@@ -10,7 +10,7 @@ export const Privacy = () => {
         {`
 Privacy Policy
 ====
-- Rooms are temporary and expire after one day of inactivity.
+- Rooms are temporary and expire after one day of inactivity. Users have the option of making a room permanent, which can be undone at any time.
 - We do not keep logs of the content that users watch.
 
 Personal Information
@@ -87,7 +87,7 @@ Some sites may block traffic that's detected as coming from certain geographic r
 
 How come I'm not getting any audio when screensharing?
 ----
-To share audio, you must be using Chrome, and check a small checkbox at the bottom-left of the share screen dialog.
+To share audio, you must be using Chrome or Edge, sharing a tab (not application), and check a small checkbox at the bottom-left of the share screen dialog.
 
 Is there a limit to how many people can be in a room?
 ----
