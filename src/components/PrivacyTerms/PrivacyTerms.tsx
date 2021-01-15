@@ -91,7 +91,7 @@ To share audio, you must be using Chrome or Edge, sharing a tab (not application
 
 Is there a limit to how many people can be in a room?
 ----
-Regular rooms created by free users have a capacity of 20 people, whereas permanent rooms of subscribers have a limit of 100 people.
+Regular rooms created by free users have a capacity of 20 people, whereas permanent rooms of subscribers have a capacity of 100 people.
 `}
       </ReactMarkdown>
     </div>
