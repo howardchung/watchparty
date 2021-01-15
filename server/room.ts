@@ -13,6 +13,7 @@ import { redisCount, redisCountDistinct } from './utils/redis';
 import { getCustomerByEmail } from './utils/stripe';
 import { AssignedVM, VMManager } from './vm/base';
 import { getStartOfDay } from './utils/time';
+import { assignVM } from './vm/utils';
 
 const gzip = util.promisify(zlib.gzip);
 
@@ -52,6 +53,7 @@ export class Room {
   public isAssigningVM = false;
   private clientIdMap: StringDict = {};
   private uidMap: StringDict = {};
+  private roomRedis: Redis.Redis | undefined = undefined;
 
   constructor(
     io: SocketIO.Server,
@@ -125,7 +127,7 @@ export class Room {
       socket.on('CMD:startVBrowser', (data) =>
         this.startVBrowser(socket, data)
       );
-      socket.on('CMD:stopVBrowser', () => this.leaveVBrowser(socket));
+      socket.on('CMD:stopVBrowser', () => this.stopVBrowser(socket));
       socket.on('CMD:changeController', (data) =>
         this.changeController(socket, data)
       );
@@ -247,8 +249,10 @@ export class Room {
     };
   };
 
-  stopVBrowser = async () => {
+  stopVBrowserInternal = async () => {
     this.isAssigningVM = false;
+    this.roomRedis?.disconnect();
+    this.roomRedis = undefined;
     const assignTime = this.vBrowser && this.vBrowser.assignTime;
     const id = this.vBrowser && this.vBrowser.id;
     const isLarge = this.vBrowser?.large;
@@ -562,7 +566,14 @@ export class Room {
     const vmManager = isLarge
       ? this.vmManagers?.large
       : this.vmManagers?.standard;
-    const assignment = await vmManager?.assignVM();
+    if (!vmManager) {
+      console.warn('no VMManager configured');
+      return;
+    }
+    this.roomRedis = new Redis(config.REDIS_URL);
+    const assignment = await assignVM(this.roomRedis, vmManager);
+    this.roomRedis?.disconnect();
+    this.roomRedis = undefined;
     if (!this.isAssigningVM) {
       // Maybe the user cancelled the request before assignment finished
       return;
@@ -587,14 +598,14 @@ export class Room {
     );
   };
 
-  private leaveVBrowser = async (socket: Socket) => {
+  private stopVBrowser = async (socket: Socket) => {
     if (!this.vBrowser && !this.isAssigningVM && this.video !== 'vbrowser://') {
       return;
     }
     if (!this.validateLock(socket.id)) {
       return;
     }
-    await this.stopVBrowser();
+    await this.stopVBrowserInternal();
     redisCount('vBrowserTerminateManual');
   };
 

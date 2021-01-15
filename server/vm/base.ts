@@ -65,7 +65,7 @@ export abstract class VMManager {
           const isRoomEmpty = room.roster.length === 0;
           if (isTimedOut || isRoomEmpty) {
             console.log('[RELEASE] VM in room:', room.roomId);
-            room.stopVBrowser();
+            room.stopVBrowserInternal();
             if (isTimedOut) {
               room.addChatMessage(undefined, {
                 id: '',
@@ -136,39 +136,6 @@ export abstract class VMManager {
 
   public getRedisStagingKey = () => {
     return 'stagingList' + this.id + (this.isLarge ? 'Large' : '');
-  };
-
-  public assignVM = async (): Promise<AssignedVM | undefined> => {
-    const assignStart = Number(new Date());
-    let selected = null;
-    while (!selected) {
-      const availableCount = await this.redis.llen(this.getRedisQueueKey());
-      const stagingCount = await this.redis.llen(this.getRedisStagingKey());
-      const fixedSize = this.getFixedSize();
-      if (availableCount + stagingCount === 0 && !fixedSize) {
-        await this.startVMWrapper();
-      }
-      let resp = await this.redis2.blpop(this.getRedisQueueKey(), 180);
-      if (!resp) {
-        return undefined;
-      }
-      const id = resp[1];
-      console.log('[ASSIGN]', id);
-      const lock = await this.redis.set('vbrowser:' + id, '1', 'NX', 'EX', 180);
-      if (!lock) {
-        console.log('failed to acquire lock on VM:', id);
-        continue;
-      }
-      let candidate = await this.getVM(id);
-      selected = candidate;
-    }
-    const assignEnd = Number(new Date());
-    const assignElapsed = assignEnd - assignStart;
-    await this.redis.lpush('vBrowserStartMS', assignElapsed);
-    await this.redis.ltrim('vBrowserStartMS', 0, 99);
-    console.log('[ASSIGN]', selected.id, assignElapsed + 'ms');
-    const retVal = { ...selected, assignTime: Number(new Date()) };
-    return retVal;
   };
 
   public resetVM = async (id: string): Promise<void> => {
@@ -393,7 +360,7 @@ export abstract class VMManager {
   protected abstract startVM: (name: string) => Promise<string>;
   protected abstract rebootVM: (id: string) => Promise<void>;
   protected abstract terminateVM: (id: string) => Promise<void>;
-  protected abstract getVM: (id: string) => Promise<VM>;
+  public abstract getVM: (id: string) => Promise<VM>;
   protected abstract listVMs: (filter?: string) => Promise<VM[]>;
   protected abstract powerOn: (id: string) => Promise<void>;
   protected abstract attachToNetwork: (id: string) => Promise<void>;
