@@ -5,18 +5,16 @@ import { VMManager, VM } from './base';
 import { cloudInit, imageName } from './utils';
 
 const HETZNER_TOKEN = config.HETZNER_TOKEN;
-// const region = 'nbg1';
-const region = 'hel1';
+const region = ['nbg1', 'fsn1', 'hel1'];
 const gatewayHost = 'gateway3.watchparty.me';
 const sshKeys = [1570536];
 const networks = [91163];
-const imageId = 18088931;
+const imageId = 26142182;
 
 export class Hetzner extends VMManager {
   size = 'cpx11'; // cx11, cpx11, cpx21, cpx31, ccx11
   largeSize = 'cpx31';
-  redisQueueKey = 'availableListHetzner';
-  redisStagingKey = 'stagingListHetzner';
+  id = 'Hetzner';
   startVM = async (name: string) => {
     const response = await axios({
       method: 'POST',
@@ -40,7 +38,7 @@ export class Hetzner extends VMManager {
           [this.tag]: '1',
           originalName: name,
         },
-        location: region,
+        location: region[Math.floor(Math.random() * region.length)],
       },
     });
     const id = response.data.server.id;
@@ -91,7 +89,7 @@ export class Hetzner extends VMManager {
   };
 
   getVM = async (id: string) => {
-    const response = await axios({
+    const response: any = await axios({
       method: 'GET',
       url: `https://api.hetzner.cloud/v1/servers/${id}`,
       headers: {
@@ -106,23 +104,32 @@ export class Hetzner extends VMManager {
   };
 
   listVMs = async (filter?: string) => {
-    const response = await axios({
-      method: 'GET',
-      url: `https://api.hetzner.cloud/v1/servers`,
-      headers: {
-        Authorization: 'Bearer ' + HETZNER_TOKEN,
-      },
-      params: {
-        // TODO paginate if this is too large
-        per_page: 50,
-        label_selector: filter,
-      },
-    });
-    return response.data.servers
-      .map(this.mapServerObject)
-      .filter(
-        (server: VM) => server.tags.includes(this.tag) && server.private_ip
-      );
+    // TODO expand pages as needed based on server count
+    const responses: any[] = await Promise.all(
+      [1, 2, 3].map((page) =>
+        axios({
+          method: 'GET',
+          url: `https://api.hetzner.cloud/v1/servers`,
+          headers: {
+            Authorization: 'Bearer ' + HETZNER_TOKEN,
+          },
+          params: {
+            sort: 'id:asc',
+            page,
+            per_page: 50,
+            label_selector: filter,
+          },
+        })
+      )
+    );
+    const responsesMapped: any = responses.map((response) =>
+      response.data.servers
+        .map(this.mapServerObject)
+        .filter(
+          (server: VM) => server.tags.includes(this.tag) && server.private_ip
+        )
+    );
+    return responsesMapped.flat();
   };
 
   powerOn = async (id: string) => {
@@ -137,7 +144,26 @@ export class Hetzner extends VMManager {
         },
       });
     } catch (e) {
-      console.error('failed to poweron');
+      console.warn('failed to poweron');
+    }
+  };
+
+  attachToNetwork = async (id: string) => {
+    // Attach server to network (usually not needed)
+    try {
+      const response2 = await axios({
+        method: 'POST',
+        url: `https://api.hetzner.cloud/v1/servers/${id}/actions/attach_to_network`,
+        headers: {
+          Authorization: 'Bearer ' + HETZNER_TOKEN,
+          'Content-Type': 'application/json',
+        },
+        data: {
+          network: networks[0],
+        },
+      });
+    } catch (e) {
+      console.warn('failed to attach to network');
     }
   };
 

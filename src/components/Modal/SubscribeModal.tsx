@@ -5,9 +5,9 @@ import { SignInButton } from '../TopBar/TopBar';
 
 // Make sure to call `loadStripe` outside of a component’s render to avoid
 // recreating the `Stripe` object on every render.
-const stripePromise = loadStripe(
-  process.env.REACT_APP_STRIPE_PUBLIC_KEY as string
-);
+const stripePromise = process.env.REACT_APP_STRIPE_PUBLIC_KEY
+  ? loadStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY as string)
+  : null;
 
 export class SubscribeModal extends React.Component<{
   closeSubscribe: Function;
@@ -15,6 +15,10 @@ export class SubscribeModal extends React.Component<{
   isSubscriber: boolean;
 }> {
   onSubscribe = async () => {
+    if (!stripePromise) {
+      console.warn('Stripe integration is not configured, cannot subscribe');
+      return;
+    }
     const stripe = await stripePromise;
     const result = await stripe?.redirectToCheckout({
       lineItems: [

@@ -34,11 +34,11 @@ if (config.HTTPS) {
   server = new http.Server(app);
 }
 const io = socketIO(server, { origins: '*:*', transports: ['websocket'] });
-let redis = (undefined as unknown) as Redis.Redis;
+let redis: Redis.Redis | undefined = undefined;
 if (config.REDIS_URL) {
   redis = new Redis(config.REDIS_URL);
 }
-let postgres = (undefined as unknown) as Client;
+let postgres: Client | undefined = undefined;
 if (config.DATABASE_URL) {
   postgres = new Client({
     connectionString: config.DATABASE_URL,
@@ -56,24 +56,43 @@ const launchTime = Number(new Date());
 
 const rooms = new Map<string, Room>();
 // Start the VM manager
-let vmManager: VMManager;
-let vmManagerLarge: VMManager;
-if (config.REDIS_URL && config.SCW_SECRET_KEY && config.SCW_ORGANIZATION_ID) {
-  // new Scaleway(rooms, 0);
-  // new Scaleway(rooms, 0, true)
+let vmManager: VMManager | null = null;
+let vmManagerLarge: VMManager | null = null;
+if (
+  config.REDIS_URL &&
+  config.SCW_SECRET_KEY &&
+  config.SCW_ORGANIZATION_ID &&
+  config.VM_MANAGER_ID === 'Scaleway'
+) {
+  vmManager = new Scaleway();
+  vmManagerLarge = new Scaleway(true);
+} else if (
+  config.REDIS_URL &&
+  config.HETZNER_TOKEN &&
+  config.VM_MANAGER_ID === 'Hetzner'
+) {
+  vmManager = new Hetzner();
+  vmManagerLarge = new Hetzner(true);
+} else if (
+  config.REDIS_URL &&
+  config.DO_TOKEN &&
+  config.VM_MANAGER_ID === 'DO'
+) {
+  vmManager = new DigitalOcean();
+  vmManagerLarge = new DigitalOcean(true);
+} else if (
+  config.REDIS_URL &&
+  config.DOCKER_VM_HOST &&
+  config.VM_MANAGER_ID === 'Docker'
+) {
+  vmManager = new Docker();
+  vmManagerLarge = new Docker(true);
 }
-if (config.REDIS_URL && config.HETZNER_TOKEN) {
-  vmManager = new Hetzner(rooms);
-  vmManagerLarge = new Hetzner(rooms, undefined, true);
-}
-if (config.REDIS_URL && config.DO_TOKEN) {
-  // new DigitalOcean(rooms, 0);
-  // new DigitalOcean(rooms, 0, true);
-}
-if (config.REDIS_URL && config.DOCKER_VM_HOST) {
-  vmManager = new Docker(rooms, undefined, false);
-}
-const vmManagers = { standard: vmManager!, large: vmManagerLarge! };
+vmManager?.runBackgroundJobs();
+vmManagerLarge?.runBackgroundJobs();
+vmManager?.runReleaseRenew(rooms);
+vmManagerLarge?.runReleaseRenew(rooms);
+const vmManagers = { standard: vmManager, large: vmManagerLarge };
 init();
 
 async function saveRooms() {
@@ -82,8 +101,12 @@ async function saveRooms() {
     const roomArr = Array.from(rooms.values());
     for (let i = 0; i < roomArr.length; i++) {
       if (roomArr[i].roster.length) {
-        await roomArr[i].saveToRedis();
-        // await roomArr[i].saveToPostgres();
+        if (redis) {
+          await roomArr[i].saveToRedis();
+        }
+        if (postgres) {
+          // await roomArr[i].saveToPostgres();
+        }
       }
     }
     // console.timeEnd('roomSave');
@@ -103,9 +126,11 @@ async function init() {
       try {
         rooms.set(key, new Room(io, vmManagers, key, roomData));
       } catch (e) {
-        console.error(e);
+        console.warn(e);
       }
     }
+  }
+  if (postgres) {
     // load the roomState from postgres to fill any rooms that were lost in redis
     const postgresRooms = (await postgres.query('SELECT * from room')).rows;
     console.log(
@@ -120,15 +145,15 @@ async function init() {
         );
       }
     }
-    // Start saving rooms
-    saveRooms();
   }
+  // Start saving rooms
+  saveRooms();
 
   if (!rooms.has('/default')) {
     rooms.set('/default', new Room(io, vmManagers, '/default'));
   }
 
-  server.listen(config.PORT);
+  server.listen(config.PORT, config.HOST);
 }
 
 app.use(cors());
@@ -140,7 +165,7 @@ app.get('/ping', (req, res) => {
 
 // Data's already compressed so go before the compression middleware
 app.get('/subtitle/:hash', async (req, res) => {
-  const gzipped = await redis.getBuffer('subtitle:' + req.params.hash);
+  const gzipped = await redis?.getBuffer('subtitle:' + req.params.hash);
   if (!gzipped) {
     return res.status(404).end('not found');
   }
@@ -152,189 +177,21 @@ app.use(compression());
 
 app.get('/stats', async (req, res) => {
   if (req.query.key && req.query.key === config.STATS_KEY) {
-    const roomData: any[] = [];
-    const now = Number(new Date());
-    let currentUsers = 0;
-    let currentHttp = 0;
-    let currentVBrowser = 0;
-    let currentVBrowserLarge = 0;
-    let currentScreenShare = 0;
-    let currentFileShare = 0;
-    let currentVideoChat = 0;
-    rooms.forEach((room) => {
-      const obj = {
-        creationTime: room.creationTime,
-        roomId: room.roomId,
-        video: room.video,
-        videoTS: room.videoTS,
-        rosterLength: room.roster.length,
-        videoChats: room.roster.filter((p) => p.isVideoChat).length,
-        vBrowser: room.vBrowser,
-        vBrowserElapsed:
-          room.vBrowser?.assignTime && now - room.vBrowser?.assignTime,
-        lock: room.lock || undefined,
-      };
-      currentUsers += obj.rosterLength;
-      currentVideoChat += obj.videoChats;
-      if (obj.vBrowser) {
-        currentVBrowser += 1;
-      }
-      if (obj.vBrowser && obj.vBrowser.large) {
-        currentVBrowserLarge += 1;
-      }
-      if (obj.video?.startsWith('http') && obj.rosterLength) {
-        currentHttp += 1;
-      }
-      if (obj.video?.startsWith('screenshare://') && obj.rosterLength) {
-        currentScreenShare += 1;
-      }
-      if (obj.video?.startsWith('fileshare://') && obj.rosterLength) {
-        currentFileShare += 1;
-      }
-      if (obj.video) {
-        roomData.push(obj);
-      }
-    });
-    // Sort newest first
-    roomData.sort((a, b) => b.creationTime - a.creationTime);
-    const uptime = Number(new Date()) - launchTime;
-    const cpuUsage = os.loadavg();
-    const redisUsage = (await redis.info())
-      .split('\n')
-      .find((line) => line.startsWith('used_memory:'))
-      ?.split(':')[1]
-      .trim();
-    const availableVBrowsers = await redis.lrange(
-      vmManager?.getRedisQueueKey() || 'availableList',
-      0,
-      -1
-    );
-    const stagingVBrowsers = await redis.lrange(
-      vmManager?.getRedisStagingKey() || 'stagingList',
-      0,
-      -1
-    );
-    const availableVBrowsersLarge = await redis.lrange(
-      vmManagerLarge?.getRedisQueueKey() || 'availableList',
-      0,
-      -1
-    );
-    const stagingVBrowsersLarge = await redis.lrange(
-      vmManagerLarge?.getRedisStagingKey() || 'stagingList',
-      0,
-      -1
-    );
-    const chatMessages = await getRedisCountDay('chatMessages');
-    const vBrowserStarts = await getRedisCountDay('vBrowserStarts');
-    const vBrowserLaunches = await getRedisCountDay('vBrowserLaunches');
-    const vBrowserStartMS = await redis.lrange('vBrowserStartMS', 0, -1);
-    const vBrowserSessionMS = await redis.lrange('vBrowserSessionMS', 0, -1);
-    const vBrowserVMLifetime = await redis.lrange('vBrowserVMLifetime', 0, -1);
-    const vBrowserTerminateTimeout = await getRedisCountDay(
-      'vBrowserTerminateTimeout'
-    );
-    const vBrowserTerminateEmpty = await getRedisCountDay(
-      'vBrowserTerminateEmpty'
-    );
-    const vBrowserTerminateManual = await getRedisCountDay(
-      'vBrowserTerminateManual'
-    );
-    const recaptchaRejectsLowScore = await getRedisCountDay(
-      'recaptchaRejectsLowScore'
-    );
-    const recaptchaRejectsOther = await getRedisCountDay(
-      'recaptchaRejectsOther'
-    );
-    const urlStarts = await getRedisCountDay('urlStarts');
-    const screenShareStarts = await getRedisCountDay('screenShareStarts');
-    const fileShareStarts = await getRedisCountDay('fileShareStarts');
-    const videoChatStarts = await getRedisCountDay('videoChatStarts');
-    const connectStarts = await getRedisCountDay('connectStarts');
-    const connectStartsDistinct = await getRedisCountDayDistinct(
-      'connectStartsDistinct'
-    );
-    const subUploads = await getRedisCountDay('subUploads');
-    const vBrowserClientIDs = await redis.zrevrangebyscore(
-      'vBrowserClientIDs',
-      '+inf',
-      '0',
-      'WITHSCORES',
-      'LIMIT',
-      0,
-      20
-    );
-    const vBrowserUIDs = await redis.zrevrangebyscore(
-      'vBrowserUIDs',
-      '+inf',
-      '0',
-      'WITHSCORES',
-      'LIMIT',
-      0,
-      20
-    );
-    const vBrowserClientIDMinutes = await redis.zrevrangebyscore(
-      'vBrowserClientIDMinutes',
-      '+inf',
-      '0',
-      'WITHSCORES',
-      'LIMIT',
-      0,
-      20
-    );
-    const vBrowserUIDMinutes = await redis.zrevrangebyscore(
-      'vBrowserUIDMinutes',
-      '+inf',
-      '0',
-      'WITHSCORES',
-      'LIMIT',
-      0,
-      20
-    );
-    const vBrowserClientIDsCard = await redis.zcard('vBrowserClientIDs');
-    const vBrowserUIDsCard = await redis.zcard('vBrowserUIDs');
+    const stats = await getStats();
+    if (stats.availableVBrowsers?.length === 0) {
+      res.status(500);
+    }
+    res.json(stats);
+  } else {
+    return res.status(403).json({ error: 'Access Denied' });
+  }
+});
 
-    res.json({
-      uptime,
-      roomCount: rooms.size,
-      cpuUsage,
-      redisUsage,
-      availableVBrowsers,
-      stagingVBrowsers,
-      availableVBrowsersLarge,
-      stagingVBrowsersLarge,
-      currentUsers,
-      currentVBrowser,
-      currentVBrowserLarge,
-      currentHttp,
-      currentScreenShare,
-      currentFileShare,
-      currentVideoChat,
-      chatMessages,
-      urlStarts,
-      screenShareStarts,
-      fileShareStarts,
-      subUploads,
-      videoChatStarts,
-      connectStarts,
-      connectStartsDistinct,
-      vBrowserStarts,
-      vBrowserLaunches,
-      vBrowserTerminateManual,
-      vBrowserTerminateEmpty,
-      vBrowserTerminateTimeout,
-      recaptchaRejectsLowScore,
-      recaptchaRejectsOther,
-      vBrowserStartMS,
-      vBrowserSessionMS,
-      vBrowserVMLifetime,
-      vBrowserClientIDs,
-      vBrowserClientIDsCard,
-      vBrowserClientIDMinutes,
-      vBrowserUIDs,
-      vBrowserUIDsCard,
-      vBrowserUIDMinutes,
-      rooms: roomData,
-    });
+app.get('/timeSeries', async (req, res) => {
+  if (req.query.key && req.query.key === config.STATS_KEY && redis) {
+    const timeSeriesData = await redis.lrange('timeSeries', 0, -1);
+    const timeSeries = timeSeriesData.map((entry) => JSON.parse(entry));
+    res.json(timeSeries);
   } else {
     return res.status(403).json({ error: 'Access Denied' });
   }
@@ -413,18 +270,19 @@ app.get('/metadata', async (req, res) => {
   const isSubscriber = Boolean(
     customer.subscriptions?.data?.[0]?.status === 'active'
   );
-  return res.json({ isSubscriber });
+  const isCustomer = Boolean(customer);
+  return res.json({ isSubscriber, isCustomer });
 });
 
 app.get('/resolveRoom/:vanity', async (req, res) => {
   const vanity = req.params.vanity;
-  const result = await postgres.query(
-    `SELECT roomId as "roomId", vanity from room WHERE LOWER(vanity) = $1`,
+  const result = await postgres?.query(
+    `SELECT "roomId", vanity from room WHERE LOWER(vanity) = $1`,
     [vanity?.toLowerCase() ?? '']
   );
   // console.log(vanity, result.rows);
   // We also use this for checking name availability, so just return empty response if it doesn't exist (http 200)
-  return res.json(result.rows[0]);
+  return res.json(result?.rows[0]);
 });
 
 app.get('/listRooms', async (req, res) => {
@@ -435,11 +293,11 @@ app.get('/listRooms', async (req, res) => {
   if (!decoded) {
     return res.status(400).json({ error: 'invalid user token' });
   }
-  const result = await postgres.query<PermanentRoom>(
-    `SELECT roomId as "roomId", vanity from room WHERE owner = $1`,
+  const result = await postgres?.query<PermanentRoom>(
+    `SELECT "roomId", vanity from room WHERE owner = $1`,
     [decoded.uid]
   );
-  return res.json(result.rows);
+  return res.json(result?.rows ?? []);
 });
 
 app.delete('/deleteRoom', async (req, res) => {
@@ -450,15 +308,15 @@ app.delete('/deleteRoom', async (req, res) => {
   if (!decoded) {
     return res.status(400).json({ error: 'invalid user token' });
   }
-  const result = await postgres.query(
-    `DELETE from room WHERE owner = $1 and roomId = $2`,
+  const result = await postgres?.query(
+    `DELETE from room WHERE owner = $1 and "roomId" = $2`,
     [decoded.uid, req.query.roomId]
   );
-  return res.json(result.rows);
+  return res.json(result?.rows);
 });
 
 app.get('/kv', async (req, res) => {
-  if (req.query.key === config.KV_KEY) {
+  if (req.query.key === config.KV_KEY && redis) {
     return res.end(await redis.get(('kv:' + req.query.k) as string));
   } else {
     return res.status(403).json({ error: 'Access Denied' });
@@ -466,7 +324,7 @@ app.get('/kv', async (req, res) => {
 });
 
 app.post('/kv', async (req, res) => {
-  if (req.query.key === config.KV_KEY) {
+  if (req.query.key === config.KV_KEY && redis) {
     return res.end(
       await redis.setex(
         'kv:' + req.query.k,
@@ -479,8 +337,232 @@ app.post('/kv', async (req, res) => {
   }
 });
 
-app.use(express.static('build'));
+app.use(express.static(config.BUILD_DIRECTORY));
 // Send index.html for all other requests (SPA)
 app.use('/*', (req, res) => {
-  res.sendFile(path.resolve(__dirname + '/../build/index.html'));
+  res.sendFile(
+    path.resolve(__dirname + `/../${config.BUILD_DIRECTORY}/index.html`)
+  );
 });
+
+setInterval(async () => {
+  if (redis) {
+    const stats = await getStats();
+    await redis.lpush(
+      'timeSeries',
+      JSON.stringify({
+        time: new Date(),
+        availableVBrowsers: stats.availableVBrowsers?.length,
+        availableVBrowsersLarge: stats.availableVBrowsersLarge?.length,
+        currentUsers: stats.currentUsers,
+        currentVBrowser: stats.currentVBrowser,
+        currentVBrowserLarge: stats.currentVBrowserLarge,
+        currentHttp: stats.currentHttp,
+        currentScreenShare: stats.currentScreenShare,
+        currentFileShare: stats.currentFileShare,
+        currentVideoChat: stats.currentVideoChat,
+        chatMessages: stats.chatMessages,
+        roomCount: stats.roomCount,
+        redisUsage: stats.redisUsage,
+        avgStartMS:
+          stats.vBrowserStartMS &&
+          stats.vBrowserStartMS.reduce((a, b) => Number(a) + Number(b), 0) /
+            stats.vBrowserStartMS.length,
+      })
+    );
+    await redis.ltrim('timeSeries', 0, 300);
+  }
+}, 5 * 60 * 1000);
+
+async function getStats() {
+  const roomData: any[] = [];
+  const now = Number(new Date());
+  let currentUsers = 0;
+  let currentHttp = 0;
+  let currentVBrowser = 0;
+  let currentVBrowserLarge = 0;
+  let currentScreenShare = 0;
+  let currentFileShare = 0;
+  let currentVideoChat = 0;
+  rooms.forEach((room) => {
+    const obj = {
+      creationTime: room.creationTime,
+      roomId: room.roomId,
+      video: room.video,
+      videoTS: room.videoTS,
+      rosterLength: room.roster.length,
+      videoChats: room.roster.filter((p) => p.isVideoChat).length,
+      vBrowser: room.vBrowser,
+      vBrowserElapsed:
+        room.vBrowser?.assignTime && now - room.vBrowser?.assignTime,
+      lock: room.lock || undefined,
+    };
+    currentUsers += obj.rosterLength;
+    currentVideoChat += obj.videoChats;
+    if (obj.vBrowser) {
+      currentVBrowser += 1;
+    }
+    if (obj.vBrowser && obj.vBrowser.large) {
+      currentVBrowserLarge += 1;
+    }
+    if (obj.video?.startsWith('http') && obj.rosterLength) {
+      currentHttp += 1;
+    }
+    if (obj.video?.startsWith('screenshare://') && obj.rosterLength) {
+      currentScreenShare += 1;
+    }
+    if (obj.video?.startsWith('fileshare://') && obj.rosterLength) {
+      currentFileShare += 1;
+    }
+    if (obj.video) {
+      roomData.push(obj);
+    }
+  });
+  // Sort newest first
+  roomData.sort((a, b) => b.creationTime - a.creationTime);
+  const uptime = Number(new Date()) - launchTime;
+  const cpuUsage = os.loadavg();
+  const redisUsage = (await redis?.info())
+    ?.split('\n')
+    .find((line) => line.startsWith('used_memory:'))
+    ?.split(':')[1]
+    .trim();
+  const availableVBrowsers = await redis?.lrange(
+    vmManager?.getRedisQueueKey() || 'availableList',
+    0,
+    -1
+  );
+  const stagingVBrowsers = await redis?.lrange(
+    vmManager?.getRedisStagingKey() || 'stagingList',
+    0,
+    -1
+  );
+  const availableVBrowsersLarge = await redis?.lrange(
+    vmManagerLarge?.getRedisQueueKey() || 'availableList',
+    0,
+    -1
+  );
+  const stagingVBrowsersLarge = await redis?.lrange(
+    vmManagerLarge?.getRedisStagingKey() || 'stagingList',
+    0,
+    -1
+  );
+  const numPermaRooms = (await postgres?.query('SELECT count(1) from room'))
+    ?.rows[0].count;
+  const chatMessages = await getRedisCountDay('chatMessages');
+  const vBrowserStarts = await getRedisCountDay('vBrowserStarts');
+  const vBrowserLaunches = await getRedisCountDay('vBrowserLaunches');
+  const vBrowserStartMS = await redis?.lrange('vBrowserStartMS', 0, -1);
+  const vBrowserStageRetries = await redis?.lrange(
+    'vBrowserStageRetries',
+    0,
+    -1
+  );
+  const vBrowserSessionMS = await redis?.lrange('vBrowserSessionMS', 0, -1);
+  const vBrowserVMLifetime = await redis?.lrange('vBrowserVMLifetime', 0, -1);
+  const vBrowserTerminateTimeout = await getRedisCountDay(
+    'vBrowserTerminateTimeout'
+  );
+  const vBrowserTerminateEmpty = await getRedisCountDay(
+    'vBrowserTerminateEmpty'
+  );
+  const vBrowserTerminateManual = await getRedisCountDay(
+    'vBrowserTerminateManual'
+  );
+  const recaptchaRejectsLowScore = await getRedisCountDay(
+    'recaptchaRejectsLowScore'
+  );
+  const recaptchaRejectsOther = await getRedisCountDay('recaptchaRejectsOther');
+  const urlStarts = await getRedisCountDay('urlStarts');
+  const screenShareStarts = await getRedisCountDay('screenShareStarts');
+  const fileShareStarts = await getRedisCountDay('fileShareStarts');
+  const videoChatStarts = await getRedisCountDay('videoChatStarts');
+  const connectStarts = await getRedisCountDay('connectStarts');
+  const connectStartsDistinct = await getRedisCountDayDistinct(
+    'connectStartsDistinct'
+  );
+  const subUploads = await getRedisCountDay('subUploads');
+  const vBrowserClientIDs = await redis?.zrevrangebyscore(
+    'vBrowserClientIDs',
+    '+inf',
+    '0',
+    'WITHSCORES',
+    'LIMIT',
+    0,
+    20
+  );
+  const vBrowserUIDs = await redis?.zrevrangebyscore(
+    'vBrowserUIDs',
+    '+inf',
+    '0',
+    'WITHSCORES',
+    'LIMIT',
+    0,
+    20
+  );
+  const vBrowserClientIDMinutes = await redis?.zrevrangebyscore(
+    'vBrowserClientIDMinutes',
+    '+inf',
+    '0',
+    'WITHSCORES',
+    'LIMIT',
+    0,
+    20
+  );
+  const vBrowserUIDMinutes = await redis?.zrevrangebyscore(
+    'vBrowserUIDMinutes',
+    '+inf',
+    '0',
+    'WITHSCORES',
+    'LIMIT',
+    0,
+    20
+  );
+  const vBrowserClientIDsCard = await redis?.zcard('vBrowserClientIDs');
+  const vBrowserUIDsCard = await redis?.zcard('vBrowserUIDs');
+
+  return {
+    uptime,
+    roomCount: rooms.size,
+    cpuUsage,
+    redisUsage,
+    availableVBrowsers,
+    stagingVBrowsers,
+    availableVBrowsersLarge,
+    stagingVBrowsersLarge,
+    currentUsers,
+    currentVBrowser,
+    currentVBrowserLarge,
+    currentHttp,
+    currentScreenShare,
+    currentFileShare,
+    currentVideoChat,
+    chatMessages,
+    urlStarts,
+    screenShareStarts,
+    fileShareStarts,
+    subUploads,
+    videoChatStarts,
+    connectStarts,
+    connectStartsDistinct,
+    vBrowserStarts,
+    vBrowserLaunches,
+    vBrowserTerminateManual,
+    vBrowserTerminateEmpty,
+    vBrowserTerminateTimeout,
+    recaptchaRejectsLowScore,
+    recaptchaRejectsOther,
+    vBrowserStartMS,
+    vBrowserStageRetries,
+    vBrowserSessionMS,
+    vBrowserVMLifetime,
+    vBrowserClientIDs,
+    vBrowserClientIDsCard,
+    vBrowserClientIDMinutes,
+    vBrowserUIDs,
+    vBrowserUIDsCard,
+    vBrowserUIDMinutes,
+    numPermaRooms,
+    rooms: roomData,
+  };
+}

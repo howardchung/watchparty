@@ -37,6 +37,7 @@ export const SettingsTab = ({
   const [updateTS, setUpdateTS] = useState(0);
   const [vanity, setVanity] = useState<string | undefined>(undefined);
   const [password, setPassword] = useState<string | undefined>(undefined);
+  const [isChatDisabled, setIsChatDisabled] = useState(false);
   const [owner, setOwner] = useState<string | undefined>(undefined);
   const [validVanity, setValidVanity] = useState(true);
   const [validVanityLoading, setValidVanityLoading] = useState(false);
@@ -49,6 +50,7 @@ export const SettingsTab = ({
         setVanity(data.vanity);
         setPassword(data.password);
         setRoomLink(getRoomLink(data.vanity));
+        setIsChatDisabled(data.isChatDisabled);
       };
       const getRoomLink = (vanity: string) => {
         if (vanity) {
@@ -106,6 +108,8 @@ export const SettingsTab = ({
   );
   const lockDisabled =
     !Boolean(user) || Boolean(roomLock && roomLock !== user?.uid);
+  const permanentDisabled =
+    !Boolean(user) || Boolean(owner && owner !== user?.uid);
 
   return (
     <div style={{ display: hide ? 'none' : 'block', color: 'white' }}>
@@ -130,7 +134,7 @@ export const SettingsTab = ({
           description="Standard rooms are deleted after one day of inactivity. Permanent rooms aren't deleted and can have passwords/custom URLs.
           Permanent rooms of subscribers have a greater room capacity. Free users can only have one permanent room at a time."
           checked={Boolean(owner)}
-          disabled={Boolean(owner && owner !== user?.uid)}
+          disabled={permanentDisabled}
           onChange={(e, data) => setRoomOwner({ undo: !data.checked })}
         />
       }
@@ -150,6 +154,16 @@ export const SettingsTab = ({
             />
           }
           disabled={false}
+        />
+      )}
+      {owner && owner === user?.uid && (
+        <SettingRow
+          icon={'i cursor'}
+          name={`Disable Chat`}
+          description="Prevent users from sending messages in chat."
+          checked={Boolean(isChatDisabled)}
+          disabled={false}
+          onChange={(e, data) => setIsChatDisabled(Boolean(data.checked))}
         />
       )}
       {owner && owner === user?.uid && (
@@ -213,6 +227,7 @@ export const SettingsTab = ({
             setRoomState({
               vanity: vanity,
               password: password,
+              isChatDisabled: isChatDisabled,
             })
           }
         >

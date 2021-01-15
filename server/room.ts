@@ -13,14 +13,15 @@ import { redisCount, redisCountDistinct } from './utils/redis';
 import { getCustomerByEmail } from './utils/stripe';
 import { AssignedVM, VMManager } from './vm/base';
 import { getStartOfDay } from './utils/time';
+import { assignVM } from './vm/utils';
 
 const gzip = util.promisify(zlib.gzip);
 
-let redis = (undefined as unknown) as Redis.Redis;
+let redis: Redis.Redis | undefined = undefined;
 if (config.REDIS_URL) {
   redis = new Redis(config.REDIS_URL);
 }
-let postgres = (undefined as unknown) as Client;
+let postgres: Client | undefined = undefined;
 if (config.DATABASE_URL) {
   postgres = new Client({
     connectionString: config.DATABASE_URL,
@@ -41,20 +42,22 @@ export class Room {
   public vBrowser: AssignedVM | undefined = undefined;
   public creationTime: Date = new Date();
   public lock: string | undefined = undefined; // uid of the user who locked the room
+  public isChatDisabled: boolean = false;
 
   // Non-serialized state
   public roomId: string;
   public roster: User[] = [];
   private tsMap: NumberDict = {};
   private io: SocketIO.Server;
-  private vmManagers: { standard: VMManager; large: VMManager } | undefined;
+  private vmManagers: { standard: VMManager | null; large: VMManager | null };
   public isAssigningVM = false;
   private clientIdMap: StringDict = {};
   private uidMap: StringDict = {};
+  private roomRedis: Redis.Redis | undefined = undefined;
 
   constructor(
     io: SocketIO.Server,
-    vmManagers: { standard: VMManager; large: VMManager },
+    vmManagers: { standard: VMManager | null; large: VMManager | null },
     roomId: string,
     roomData?: string | null | undefined
   ) {
@@ -111,6 +114,7 @@ export class Room {
       socket.emit('REC:tsMap', this.tsMap);
       socket.emit('REC:lock', this.lock);
       socket.emit('chatinit', this.chat);
+      socket.emit('REC:isChatDisabled', this.isChatDisabled);
       io.of(roomId).emit('roster', this.roster);
 
       socket.on('CMD:name', (data) => this.changeUserName(socket, data));
@@ -131,7 +135,7 @@ export class Room {
       socket.on('CMD:startVBrowser', (data) =>
         this.startVBrowser(socket, data)
       );
-      socket.on('CMD:stopVBrowser', () => this.leaveVBrowser(socket));
+      socket.on('CMD:stopVBrowser', () => this.stopVBrowser(socket));
       socket.on('CMD:changeController', (data) =>
         this.changeController(socket, data)
       );
@@ -151,17 +155,33 @@ export class Room {
   }
 
   serialize = () => {
+    // Get the set of IDs with messages in chat
+    // Only serialize roster and picture ID for those people, to save space
+    const chatIDs = new Set(this.chat.map((msg) => msg.id));
+    const abbrNameMap: StringDict = {};
+    Object.keys(this.nameMap).forEach((id) => {
+      if (chatIDs.has(id)) {
+        abbrNameMap[id] = this.nameMap[id];
+      }
+    });
+    const abbrPictureMap: StringDict = {};
+    Object.keys(this.pictureMap).forEach((id) => {
+      if (chatIDs.has(id)) {
+        abbrPictureMap[id] = this.pictureMap[id];
+      }
+    });
     return JSON.stringify({
       video: this.video,
       videoTS: this.videoTS,
       subtitle: this.subtitle,
       paused: this.paused,
       chat: this.chat,
-      nameMap: this.nameMap,
-      pictureMap: this.pictureMap,
+      nameMap: abbrNameMap,
+      pictureMap: abbrPictureMap,
       vBrowser: this.vBrowser,
       creationTime: this.creationTime,
       lock: this.lock,
+      isChatDisabled: this.isChatDisabled,
     });
   };
 
@@ -193,6 +213,9 @@ export class Room {
     if (roomObj.lock) {
       this.lock = roomObj.lock;
     }
+    if (roomObj.isChatDisabled) {
+      this.isChatDisabled = roomObj.isChatDisabled;
+    }
   };
 
   saveToRedis = async () => {
@@ -202,20 +225,20 @@ export class Room {
       let permanent = false;
       if (postgres) {
         const result = await postgres.query(
-          `SELECT owner FROM room where roomId = $1`,
+          `SELECT owner FROM room where "roomId" = $1`,
           [this.roomId]
         );
         const owner = result.rows[0]?.owner;
         permanent = Boolean(owner);
       }
       if (permanent) {
-        await redis.set(key, roomString);
-        await redis.persist(key);
+        await redis?.set(key, roomString);
+        await redis?.persist(key);
       } else {
-        await redis.setex(key, 24 * 60 * 60, roomString);
+        await redis?.setex(key, 24 * 60 * 60, roomString);
       }
     } catch (e) {
-      console.error(e);
+      console.warn(e);
     }
   };
 
@@ -234,8 +257,10 @@ export class Room {
     };
   };
 
-  stopVBrowser = async () => {
+  stopVBrowserInternal = async () => {
     this.isAssigningVM = false;
+    this.roomRedis?.disconnect();
+    this.roomRedis = undefined;
     const assignTime = this.vBrowser && this.vBrowser.assignTime;
     const id = this.vBrowser && this.vBrowser.id;
     const isLarge = this.vBrowser?.large;
@@ -253,7 +278,7 @@ export class Room {
           : this.vmManagers?.standard;
         await vmManager?.resetVM(id);
       } catch (e) {
-        console.error(e);
+        console.warn(e);
       }
     }
   };
@@ -273,6 +298,9 @@ export class Room {
   };
 
   addChatMessage = (socket: Socket | undefined, chatMsg: ChatMessageBase) => {
+    if (this.isChatDisabled && !chatMsg.cmd) {
+      return;
+    }
     const chatWithTime: ChatMessage = {
       ...chatMsg,
       timestamp: new Date().toISOString(),
@@ -546,7 +574,14 @@ export class Room {
     const vmManager = isLarge
       ? this.vmManagers?.large
       : this.vmManagers?.standard;
-    const assignment = await vmManager?.assignVM();
+    if (!vmManager) {
+      console.warn('no VMManager configured');
+      return;
+    }
+    this.roomRedis = new Redis(config.REDIS_URL);
+    const assignment = await assignVM(this.roomRedis, vmManager);
+    this.roomRedis?.disconnect();
+    this.roomRedis = undefined;
     if (!this.isAssigningVM) {
       // Maybe the user cancelled the request before assignment finished
       return;
@@ -555,6 +590,10 @@ export class Room {
     if (!assignment) {
       this.cmdHost(socket, '');
       this.vBrowser = undefined;
+      socket.emit(
+        'errorMessage',
+        'Failed to assign VBrowser. Please try again later.'
+      );
       return;
     }
     this.vBrowser = assignment;
@@ -567,14 +606,14 @@ export class Room {
     );
   };
 
-  private leaveVBrowser = async (socket: Socket) => {
+  private stopVBrowser = async (socket: Socket) => {
     if (!this.vBrowser && !this.isAssigningVM && this.video !== 'vbrowser://') {
       return;
     }
     if (!this.validateLock(socket.id)) {
       return;
     }
-    await this.stopVBrowser();
+    await this.stopVBrowserInternal();
     redisCount('vBrowserTerminateManual');
   };
 
@@ -665,13 +704,15 @@ export class Room {
     );
     const owner = decoded.uid;
     if (data.undo) {
-      await postgres.query('DELETE from room where roomId = $1', [this.roomId]);
+      await postgres.query('DELETE from room where "roomId" = $1', [
+        this.roomId,
+      ]);
       socket.emit('REC:getRoomState', {});
     } else {
       // validate room count
       const roomCount = (
         await postgres.query(
-          'SELECT count(1) from room where owner = $1 AND roomId != $2',
+          'SELECT count(1) from room where owner = $1 AND "roomId" != $2',
           [owner, this.roomId]
         )
       ).rows[0].count;
@@ -690,7 +731,7 @@ export class Room {
       };
       const columns = Object.keys(roomObj);
       const values = Object.values(roomObj);
-      const query = `INSERT INTO room(${columns.join(',')})
+      const query = `INSERT INTO room(${columns.map((c) => `"${c}"`).join(',')})
     VALUES (${values.map((_, i) => '$' + (i + 1)).join(',')})
     RETURNING *`;
       // console.log(columns, values, query);
@@ -709,7 +750,7 @@ export class Room {
       return;
     }
     const result = await postgres.query(
-      `SELECT password, vanity, owner FROM room where roomId = $1`,
+      `SELECT password, vanity, owner, "isChatDisabled" FROM room where "roomId" = $1`,
       [this.roomId]
     );
     const first = result.rows[0];
@@ -717,6 +758,7 @@ export class Room {
       password: first?.password,
       vanity: first?.vanity,
       owner: first?.owner,
+      isChatDisabled: first?.isChatDisabled,
     });
   };
 
@@ -727,6 +769,7 @@ export class Room {
       token: string;
       password: string;
       vanity: string;
+      isChatDisabled: boolean;
     }
   ) => {
     if (!postgres) {
@@ -745,7 +788,7 @@ export class Room {
     const isSubscriber = Boolean(
       customer?.subscriptions?.data?.[0]?.status === 'active'
     );
-    const { password, vanity } = data;
+    const { password, vanity, isChatDisabled } = data;
     if (password) {
       if (password.length > 100) {
         socket.emit('errorMessage', 'Password too long');
@@ -762,6 +805,7 @@ export class Room {
     const roomObj: any = {
       roomId: this.roomId,
       password: password,
+      isChatDisabled: isChatDisabled,
     };
     if (isSubscriber) {
       // user must be sub to set vanity
@@ -769,8 +813,8 @@ export class Room {
     }
     try {
       const query = `UPDATE room
-        SET ${Object.keys(roomObj).map((k, i) => `${k} = $${i + 1}`)}
-        WHERE roomId = $${Object.keys(roomObj).length + 1}
+        SET ${Object.keys(roomObj).map((k, i) => `"${k}" = $${i + 1}`)}
+        WHERE "roomId" = $${Object.keys(roomObj).length + 1}
         AND owner = $${Object.keys(roomObj).length + 2}
         RETURNING *`;
       const result = await postgres.query(query, [
@@ -783,10 +827,14 @@ export class Room {
         password: row?.password,
         vanity: row?.vanity,
         owner: row?.owner,
+        isChatDisabled: row?.isChatDisabled,
       });
+      this.isChatDisabled = row?.isChatDisabled;
+      this.io.of(this.roomId).emit('REC:isChatDisabled', this.isChatDisabled);
+
       socket.emit('successMessage', 'Saved admin settings');
     } catch (e) {
-      console.error(e);
+      console.warn(e);
     }
   };
 

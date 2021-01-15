@@ -107,6 +107,7 @@ interface AppState {
   nonPlayableMedia: boolean;
   currentTab: string;
   isSubscriber: boolean;
+  isCustomer: boolean;
   isSubscribeModalOpen: boolean;
   isVBrowserModalOpen: boolean;
   roomLock: string;
@@ -115,6 +116,7 @@ interface AppState {
   roomId: string;
   errorMessage: string;
   successMessage: string;
+  isChatDisabled: boolean;
 }
 
 export default class App extends React.Component<AppProps, AppState> {
@@ -157,6 +159,7 @@ export default class App extends React.Component<AppProps, AppState> {
       (querystring.parse(window.location.search.substring(1)).tab as string) ||
       'chat',
     isSubscriber: false,
+    isCustomer: false,
     isSubscribeModalOpen: false,
     isVBrowserModalOpen: false,
     roomLock: '',
@@ -165,6 +168,7 @@ export default class App extends React.Component<AppProps, AppState> {
     savedPasswords: {},
     errorMessage: '',
     successMessage: '',
+    isChatDisabled: false,
   };
   socket: any = null;
   watchPartyYTPlayer: any = null;
@@ -184,14 +188,16 @@ export default class App extends React.Component<AppProps, AppState> {
       window.fetch(serverPath + '/ping');
     }, 10 * 60 * 1000);
 
-    firebase.auth().onAuthStateChanged(async (user: firebase.User | null) => {
-      if (user) {
-        // console.log(user);
-        this.setState({ user }, async () => {
-          this.loadSignInData();
-        });
-      }
-    });
+    if (firebaseConfig) {
+      firebase.auth().onAuthStateChanged(async (user: firebase.User | null) => {
+        if (user) {
+          // console.log(user);
+          this.setState({ user }, async () => {
+            this.loadSignInData();
+          });
+        }
+      });
+    }
     this.loadSettings();
     this.loadYouTube();
     this.init();
@@ -224,7 +230,10 @@ export default class App extends React.Component<AppProps, AppState> {
         serverPath + `/metadata?uid=${user.uid}&token=${token}`
       );
       const data = await response.json();
-      this.setState({ isSubscriber: data.isSubscriber });
+      this.setState({
+        isSubscriber: data.isSubscriber,
+        isCustomer: data.isCustomer,
+      });
     }
   };
 
@@ -333,7 +342,7 @@ export default class App extends React.Component<AppProps, AppState> {
       // Load username from localstorage
       let userName = window.localStorage.getItem('watchparty-username');
       this.updateName(null, { value: userName || generateName() });
-      // if (!this.state.user) {
+      // if (!this.state.user && firebaseConfig) {
       //   await firebase.auth().signInAnonymously();
       // }
       this.loadSignInData();
@@ -517,6 +526,9 @@ export default class App extends React.Component<AppProps, AppState> {
     });
     socket.on('REC:lock', (data: string) => {
       this.setState({ roomLock: data });
+    });
+    socket.on('REC:isChatDisabled', (data: boolean) => {
+      this.setState({ isChatDisabled: data });
     });
     socket.on('roster', (data: User[]) => {
       this.setState(
@@ -1080,9 +1092,12 @@ export default class App extends React.Component<AppProps, AppState> {
     const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
     const track = leftVideo?.textTracks[0];
     let offset = leftVideo.currentTime - this.state.tsMap[sharer.id];
-    if (track && offset) {
+    if (track && track.cues && offset) {
       for (let i = 0; i < track.cues.length; i++) {
-        let cue = track.cues[i];
+        let cue = track?.cues?.[i];
+        if (!cue) {
+          continue;
+        }
         // console.log(cue.text, offset, (cue as any).origStart, (cue as any).origEnd);
         if (!(cue as any).origStart) {
           (cue as any).origStart = cue.startTime;
@@ -1429,7 +1444,7 @@ export default class App extends React.Component<AppProps, AppState> {
                         selection
                         options={[
                           {
-                            text: '1080p',
+                            text: '1080p (WatchParty Plus)',
                             value: '1920x1080@30',
                             disabled: !this.state.isVBrowserLarge,
                           },
@@ -1551,7 +1566,7 @@ export default class App extends React.Component<AppProps, AppState> {
                         }
                       />
                     )}
-                    {this.state.isSubscriber && (
+                    {this.state.isCustomer && (
                       <Popup
                         content="Manage your subscription"
                         trigger={
@@ -1678,6 +1693,7 @@ export default class App extends React.Component<AppProps, AppState> {
                         socket={this.socket}
                         scrollTimestamp={this.state.scrollTimestamp}
                         getMediaDisplayName={this.getMediaDisplayName}
+                        isChatDisabled={this.state.isChatDisabled}
                       />
                     )}
                   </div>
@@ -1774,6 +1790,7 @@ export default class App extends React.Component<AppProps, AppState> {
                   scrollTimestamp={this.state.scrollTimestamp}
                   getMediaDisplayName={this.getMediaDisplayName}
                   hide={this.state.currentTab !== 'chat'}
+                  isChatDisabled={this.state.isChatDisabled}
                 />
                 {this.state.state === 'connected' && (
                   <VideoChat

@@ -22,7 +22,8 @@
     "ioredis": "^4.16.1",
     "magnet-uri": "^5.2.4",
     "moniker": "^0.1.2",
-    "pg": "^8.3.0",
+    "pg": "^8.5.1",
+    "pm2": "^4.5.0",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-google-recaptcha-v3": "^1.5.2",
@@ -31,6 +32,7 @@
     "react-router-dom": "^5.2.0",
     "react-scripts": "3.4.1",
     "react-semantic-ui-range": "^0.7.0",
+    "recharts": "^1.8.5",
     "s3-client": "^4.4.2",
     "semantic-ui-css": "^2.4.1",
     "semantic-ui-react": "^0.88.2",
@@ -49,8 +51,10 @@
     "buildServer": "tsc --project server/tsconfig.json --outDir buildServer",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "dev": "ts-node-dev --respawn --transpileOnly --project server/tsconfig.json server/server.ts",
+    "dev": "ts-node-dev --respawn --transpile-only --project server/tsconfig.json server/server.ts",
     "server": "node buildServer/server.js",
+    "pm2": "pm2 start buildServer/server.js",
+    "deploy": "git pull origin master && npm install && npm run build && rsync -a -v --delete-after ./build/ ./buildUI && pm2 reload all",
     "prettier": "prettier --write ."
   },
   "husky": {
@@ -92,12 +96,13 @@
     "@types/react-dom": "^16.9.6",
     "@types/react-onclickoutside": "^6.7.3",
     "@types/react-router-dom": "^5.1.5",
+    "@types/recharts": "^1.8.16",
     "@types/socket.io": "^2.1.4",
     "@types/uuid": "^7.0.3",
     "husky": "^4.2.5",
     "lint-staged": "^10.2.4",
     "prettier": "2.0.5",
-    "ts-node-dev": "^1.0.0-pre.44",
-    "typescript": "^3.8.3"
+    "ts-node-dev": "^1.0.0",
+    "typescript": "^4.0.5"
   }
 }
