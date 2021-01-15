@@ -14,8 +14,7 @@ const imageId = 26142182;
 export class Hetzner extends VMManager {
   size = 'cpx11'; // cx11, cpx11, cpx21, cpx31, ccx11
   largeSize = 'cpx31';
-  redisQueueKey = 'availableListHetzner';
-  redisStagingKey = 'stagingListHetzner';
+  id = 'Hetzner';
   startVM = async (name: string) => {
     const response = await axios({
       method: 'POST',

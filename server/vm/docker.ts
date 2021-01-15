@@ -20,8 +20,7 @@ const sshConfig = {
 export class Docker extends VMManager {
   size = '';
   largeSize = '';
-  redisQueueKey = 'availableListDocker';
-  redisStagingKey = 'stagingListDocker';
+  id = 'Docker';
   startVM = async (name: string) => {
     return new Promise<string>(async (resolve, reject) => {
       sshExec(
