@@ -52,35 +52,40 @@ export const assignVM = async (
   redis: Redis.Redis,
   vmManager: VMManager
 ): Promise<AssignedVM | undefined> => {
-  const assignStart = Number(new Date());
-  let selected = null;
-  while (!selected) {
-    // This code spawns a VM if none is available in the pool
-    // const availableCount = await redis.llen(this.getRedisQueueKey());
-    // const stagingCount = await redis.llen(this.getRedisStagingKey());
-    // const fixedSize = this.getFixedSize();
-    // if (availableCount + stagingCount === 0 && !fixedSize) {
-    //   await this.startVMWrapper();
-    // }
-    let resp = await redis.blpop(vmManager.getRedisQueueKey(), 180);
-    if (!resp) {
-      return undefined;
+  try {
+    const assignStart = Number(new Date());
+    let selected = null;
+    while (!selected) {
+      // This code spawns a VM if none is available in the pool
+      // const availableCount = await redis.llen(this.getRedisQueueKey());
+      // const stagingCount = await redis.llen(this.getRedisStagingKey());
+      // const fixedSize = this.getFixedSize();
+      // if (availableCount + stagingCount === 0 && !fixedSize) {
+      //   await this.startVMWrapper();
+      // }
+      let resp = await redis.blpop(vmManager.getRedisQueueKey(), 180);
+      if (!resp) {
+        return undefined;
+      }
+      const id = resp[1];
+      console.log('[ASSIGN]', id);
+      const lock = await redis.set('vbrowser:' + id, '1', 'NX', 'EX', 180);
+      if (!lock) {
+        console.log('failed to acquire lock on VM:', id);
+        continue;
+      }
+      let candidate = await vmManager.getVM(id);
+      selected = candidate;
     }
-    const id = resp[1];
-    console.log('[ASSIGN]', id);
-    const lock = await redis.set('vbrowser:' + id, '1', 'NX', 'EX', 180);
-    if (!lock) {
-      console.log('failed to acquire lock on VM:', id);
-      continue;
-    }
-    let candidate = await vmManager.getVM(id);
-    selected = candidate;
+    const assignEnd = Number(new Date());
+    const assignElapsed = assignEnd - assignStart;
+    await redis.lpush('vBrowserStartMS', assignElapsed);
+    await redis.ltrim('vBrowserStartMS', 0, 99);
+    console.log('[ASSIGN]', selected.id, assignElapsed + 'ms');
+    const retVal = { ...selected, assignTime: Number(new Date()) };
+    return retVal;
+  } catch (e) {
+    console.warn(e);
+    return undefined;
   }
-  const assignEnd = Number(new Date());
-  const assignElapsed = assignEnd - assignStart;
-  await redis.lpush('vBrowserStartMS', assignElapsed);
-  await redis.ltrim('vBrowserStartMS', 0, 99);
-  console.log('[ASSIGN]', selected.id, assignElapsed + 'ms');
-  const retVal = { ...selected, assignTime: Number(new Date()) };
-  return retVal;
 };
