@@ -91,7 +91,7 @@ To share audio, you must be using Chrome or Edge, sharing a tab (not application
 
 Is there a limit to how many people can be in a room?
 ----
-Currently there isn't a hard limit, although the service hasn't been tested with more than 15 people or so. Screensharing and filesharing rely on one person uploading to everyone else, so it may not work well with large room sizes.
+Regular rooms created by free users have a capacity of 20 people, whereas permanent rooms of subscribers have a limit of 100 people.
 `}
       </ReactMarkdown>
     </div>
