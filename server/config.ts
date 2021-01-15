@@ -1,8 +1,8 @@
 require('dotenv').config();
 
 const defaults = {
-  REDIS_URL: 'localhost:6379', // Optional, for room persistence and VM queueing
-  DATABASE_URL: 'localhost:5432', // Optional, for permanent rooms
+  REDIS_URL: '', // Optional, for room persistence and VM queueing (localhost:6379 for a local install)
+  DATABASE_URL: '', // Optional, for permanent rooms (localhost:5432 for a local install)
   YOUTUBE_API_KEY: '', // Optional, provide one to enable searching YouTube
   NODE_ENV: '', // Usually, you should let process.env.NODE_ENV override this
   FIREBASE_ADMIN_SDK_CONFIG: '', // Optional, for features requiring sign-in/authentication
@@ -12,6 +12,8 @@ const defaults = {
   VBROWSER_VM_BUFFER: 0, // Extra VMs to create
   VM_POOL_FIXED_SIZE_LARGE: 0, // If using a fixed VM pool, number of large VMs to create
   VM_POOL_FIXED_SIZE: 0, // If using a fixed VM pool, number of VMs to create
+  VM_POOL_MIN_SIZE: 0, // Minimum number of VM instances to keep in the pool
+  VM_POOL_MIN_SIZE_LARGE: 0, // Minimum number of large VM instances to keep in the pool
   VBROWSER_TAG: '', // Optional, tag to put on VBrowser VM instances
   DO_TOKEN: '', // Optional, for DigitalOcean VMs
   HETZNER_TOKEN: '', // Optional, for Hetzner VMs
@@ -25,6 +27,7 @@ const defaults = {
   SSL_KEY_FILE: '', // Optional, Filename of SSL key
   SSL_CRT_FILE: '', // Optional, Filename of SSL cert
   PORT: 8080, // Port to use for server
+  HOST: '0.0.0.0', // Host interface to bind server to
   STATS_KEY: '', // Secret string to validate viewing stats
   CUSTOM_SETTINGS_HOSTNAME: '', // Hostname to send different config settings to client
   MEDIA_PATH: '', // Path of server where media files might be found (GitLab/S3/nginx)
@@ -32,6 +35,8 @@ const defaults = {
   KV_KEY: '', // Secret string to validate use of KV endpoint (unused)
   ROOM_CAPACITY: 20, // Maximum capacity of a standard room. Set to 0 for unlimited.
   ROOM_CAPACITY_SUB: 100, // Maximum capacity of a sub room. Set to 0 for unlimited.
+  BUILD_DIRECTORY: 'build', // Name of the directory where the built React UI is served from
+  VM_MANAGER_ID: 'Docker', // ID value of the VM Manager implementation to use (see vm directory)
 };
 
 export default {

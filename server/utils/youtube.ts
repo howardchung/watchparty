@@ -54,7 +54,7 @@ export const searchYoutube = (query: string): Promise<PlaylistVideo[]> => {
           const response = data.items.map(mapYoutubeSearchResult);
           resolve(response);
         } else {
-          console.error(data);
+          console.warn(data);
           reject();
         }
       }
@@ -85,8 +85,7 @@ export const fetchYoutubeVideo = (id: string): Promise<PlaylistVideo> => {
           const video = data.items[0];
           resolve(mapYoutubeListResult(video));
         } else {
-          console.error(err);
-          console.log(err);
+          console.warn(err);
           reject('unknown youtube api error');
         }
       }

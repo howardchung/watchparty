@@ -20,8 +20,7 @@ const sshConfig = {
 export class Docker extends VMManager {
   size = '';
   largeSize = '';
-  redisQueueKey = 'availableListDocker';
-  redisStagingKey = 'stagingListDocker';
+  id = 'Docker';
   startVM = async (name: string) => {
     return new Promise<string>(async (resolve, reject) => {
       sshExec(
@@ -89,7 +88,7 @@ export class Docker extends VMManager {
               return reject(new Error('no container with this ID found'));
             }
           } catch {
-            console.error(stdout);
+            console.warn(stdout);
             return reject('failed to parse json');
           }
           let server = this.mapServerObject(data);
@@ -118,7 +117,7 @@ export class Docker extends VMManager {
           try {
             data = JSON.parse(stdout);
           } catch (e) {
-            console.error(stdout);
+            console.warn(stdout);
             return reject('failed to parse json');
           }
           return resolve(data.map(this.mapServerObject));
@@ -128,6 +127,8 @@ export class Docker extends VMManager {
   };
 
   powerOn = async (id: string) => {};
+
+  attachToNetwork = async (id: string) => {};
 
   mapServerObject = (server: any): VM => ({
     id: server.Id,

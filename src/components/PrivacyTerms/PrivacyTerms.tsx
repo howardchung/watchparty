@@ -10,7 +10,7 @@ export const Privacy = () => {
         {`
 Privacy Policy
 ====
-- Rooms are temporary and expire after one day of inactivity.
+- Rooms are temporary and expire after one day of inactivity. Users have the option of making a room permanent, which can be undone at any time.
 - We do not keep logs of the content that users watch.
 
 Personal Information
@@ -29,6 +29,10 @@ Virtual Browsers
 ----
 - Virtual machines are recycled after each session ends and any data on them is destroyed.
 - Your commands are encrypted while in-transit to the virtual machine.
+
+YouTube
+----
+- The service provides the ability to search and play YouTube videos. Google/YouTube may use data provided to the search service in accordance with the [Google Privacy Policy](https://policies.google.com/privacy).
 `}
       </ReactMarkdown>
     </div>
@@ -47,6 +51,10 @@ By using this service you agree to the following terms:
 - Your use of the service may be terminated if you are found to be sharing illegal or infringing content
 - The service provides no guarantee of uptime or availability
 - You use the service at your own risk of encountering objectionable content, as we do not actively moderate rooms unless content is found to be illegal or infringing
+
+YouTube
+----
+The service provides the ability to search and play YouTube videos. By using the YouTube search you agree to the [YouTube Terms of Service](https://www.youtube.com/t/terms).
 `}
       </ReactMarkdown>
     </div>
@@ -79,7 +87,7 @@ Some sites may block traffic that's detected as coming from certain geographic r
 
 How come I'm not getting any audio when screensharing?
 ----
-To share audio, you must be using Chrome, and check a small checkbox at the bottom-left of the share screen dialog.
+To share audio, you must be using Chrome or Edge, sharing a tab (not application), and check a small checkbox at the bottom-left of the share screen dialog.
 
 Is there a limit to how many people can be in a room?
 ----

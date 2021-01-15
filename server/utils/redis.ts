@@ -2,7 +2,7 @@ import config from '../config';
 import Redis from 'ioredis';
 import { getStartOfHour } from './time';
 
-let redis = (undefined as unknown) as Redis.Redis;
+let redis: Redis.Redis | undefined = undefined;
 if (config.REDIS_URL) {
   redis = new Redis(config.REDIS_URL);
 }
