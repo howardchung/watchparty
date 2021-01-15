@@ -64,30 +64,32 @@ if (
   config.SCW_ORGANIZATION_ID &&
   config.VM_MANAGER_ID === 'Scaleway'
 ) {
-  vmManager = new Scaleway(rooms, 0);
-  vmManagerLarge = new Scaleway(rooms, 0, true);
+  vmManager = new Scaleway();
+  vmManagerLarge = new Scaleway(true);
 } else if (
   config.REDIS_URL &&
   config.HETZNER_TOKEN &&
   config.VM_MANAGER_ID === 'Hetzner'
 ) {
-  vmManager = new Hetzner(rooms);
-  vmManagerLarge = new Hetzner(rooms, undefined, true);
+  vmManager = new Hetzner();
+  vmManagerLarge = new Hetzner(true);
 } else if (
   config.REDIS_URL &&
   config.DO_TOKEN &&
   config.VM_MANAGER_ID === 'DO'
 ) {
-  vmManager = new DigitalOcean(rooms, 0);
-  vmManagerLarge = new DigitalOcean(rooms, 0, true);
+  vmManager = new DigitalOcean();
+  vmManagerLarge = new DigitalOcean(true);
 } else if (
   config.REDIS_URL &&
   config.DOCKER_VM_HOST &&
   config.VM_MANAGER_ID === 'Docker'
 ) {
-  vmManager = new Docker(rooms, undefined, false);
-  vmManagerLarge = new Docker(rooms, undefined, true);
+  vmManager = new Docker();
+  vmManagerLarge = new Docker(true);
 }
+vmManager?.runBackgroundJobs(rooms);
+vmManagerLarge?.runBackgroundJobs(rooms);
 const vmManagers = { standard: vmManager, large: vmManagerLarge };
 init();
 
