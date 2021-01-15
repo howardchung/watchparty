@@ -353,6 +353,8 @@ export default class App extends React.Component<AppProps, AppState> {
         this.setState({ error: "There's no room with this name." });
       } else if (err === 'not authorized') {
         this.setState({ isErrorAuth: true });
+      } else if (err === 'room full') {
+        this.setState({ error: 'This room is full.' });
       } else {
         this.setState({ error: 'An error occurred.' });
       }

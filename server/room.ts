@@ -82,12 +82,20 @@ export class Room {
       // console.log(this.roomId, this.password, password);
       if (postgres) {
         const result = await postgres.query(
-          `SELECT password FROM room where "roomId" = $1`,
+          `SELECT password, "isSubRoom" FROM room where "roomId" = $1`,
           [this.roomId]
         );
         const roomPassword = result.rows[0]?.password;
         if (roomPassword && password !== roomPassword) {
           next(new Error('not authorized'));
+          return;
+        }
+        const isSubRoom = result.rows[0]?.isSubRoom;
+        const roomCapacity = isSubRoom
+          ? config.ROOM_CAPACITY_SUB
+          : config.ROOM_CAPACITY;
+        if (roomCapacity && this.roster.length >= roomCapacity) {
+          next(new Error('room full'));
           return;
         }
       }
@@ -719,6 +727,7 @@ export class Room {
         roomId: this.roomId,
         creationTime: this.creationTime,
         owner: owner,
+        isSubRoom: isSubscriber,
       };
       const columns = Object.keys(roomObj);
       const values = Object.values(roomObj);
