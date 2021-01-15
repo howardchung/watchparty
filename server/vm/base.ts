@@ -266,7 +266,11 @@ export abstract class VMManager {
       -1
     );
     const dontDelete = new Set([...usedKeys, ...availableKeys, ...stagingKeys]);
-    // console.log(allVMs, dontDelete);
+    console.log(
+      '[CLEANUP] found %s VMs, dontDelete %s',
+      allVMs.length,
+      dontDelete.size
+    );
     for (let i = 0; i < allVMs.length; i++) {
       const server = allVMs[i];
       if (!dontDelete.has(server.id)) {
