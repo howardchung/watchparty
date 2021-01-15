@@ -48,14 +48,14 @@ export class Room {
   public roster: User[] = [];
   private tsMap: NumberDict = {};
   private io: SocketIO.Server;
-  private vmManagers: { standard: VMManager; large: VMManager } | undefined;
+  private vmManagers: { standard: VMManager | null; large: VMManager | null };
   public isAssigningVM = false;
   private clientIdMap: StringDict = {};
   private uidMap: StringDict = {};
 
   constructor(
     io: SocketIO.Server,
-    vmManagers: { standard: VMManager; large: VMManager },
+    vmManagers: { standard: VMManager | null; large: VMManager | null },
     roomId: string,
     roomData?: string | null | undefined
   ) {

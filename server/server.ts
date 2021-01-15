@@ -56,24 +56,39 @@ const launchTime = Number(new Date());
 
 const rooms = new Map<string, Room>();
 // Start the VM manager
-let vmManager: VMManager;
-let vmManagerLarge: VMManager;
-if (config.REDIS_URL && config.SCW_SECRET_KEY && config.SCW_ORGANIZATION_ID) {
-  // new Scaleway(rooms, 0);
-  // new Scaleway(rooms, 0, true)
-}
-if (config.REDIS_URL && config.HETZNER_TOKEN) {
+let vmManager: VMManager | null = null;
+let vmManagerLarge: VMManager | null = null;
+if (
+  config.REDIS_URL &&
+  config.SCW_SECRET_KEY &&
+  config.SCW_ORGANIZATION_ID &&
+  config.VM_MANAGER_ID === 'Scaleway'
+) {
+  vmManager = new Scaleway(rooms, 0);
+  vmManagerLarge = new Scaleway(rooms, 0, true);
+} else if (
+  config.REDIS_URL &&
+  config.HETZNER_TOKEN &&
+  config.VM_MANAGER_ID === 'Hetzner'
+) {
   vmManager = new Hetzner(rooms);
   vmManagerLarge = new Hetzner(rooms, undefined, true);
-}
-if (config.REDIS_URL && config.DO_TOKEN) {
-  // new DigitalOcean(rooms, 0);
-  // new DigitalOcean(rooms, 0, true);
-}
-if (config.REDIS_URL && config.DOCKER_VM_HOST) {
+} else if (
+  config.REDIS_URL &&
+  config.DO_TOKEN &&
+  config.VM_MANAGER_ID === 'DO'
+) {
+  vmManager = new DigitalOcean(rooms, 0);
+  vmManagerLarge = new DigitalOcean(rooms, 0, true);
+} else if (
+  config.REDIS_URL &&
+  config.DOCKER_VM_HOST &&
+  config.VM_MANAGER_ID === 'Docker'
+) {
   vmManager = new Docker(rooms, undefined, false);
+  vmManagerLarge = new Docker(rooms, undefined, true);
 }
-const vmManagers = { standard: vmManager!, large: vmManagerLarge! };
+const vmManagers = { standard: vmManager, large: vmManagerLarge };
 init();
 
 async function saveRooms() {

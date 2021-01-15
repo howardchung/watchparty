@@ -34,6 +34,7 @@ const defaults = {
   STREAM_PATH: '', // Path of server that supports additional video streams
   KV_KEY: '', // Secret string to validate use of KV endpoint (unused)
   BUILD_DIRECTORY: 'build', // Name of the directory where the built React UI is served from
+  VM_MANAGER_ID: 'Docker', // ID value of the VM Manager implementation to use (see vm directory)
 };
 
 export default {
