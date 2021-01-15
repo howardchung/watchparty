@@ -82,7 +82,7 @@ export class Room {
       // console.log(this.roomId, this.password, password);
       if (postgres) {
         const result = await postgres.query(
-          `SELECT password, isSubRoom FROM room where roomId = $1`,
+          `SELECT password, "isSubRoom" FROM room where "roomId" = $1`,
           [this.roomId]
         );
         const roomPassword = result.rows[0]?.password;
@@ -90,7 +90,7 @@ export class Room {
           next(new Error('not authorized'));
           return;
         }
-        const isSubRoom = result.rows[0]?.issubroom;
+        const isSubRoom = result.rows[0]?.isSubRoom;
         const roomCapacity = isSubRoom
           ? config.ROOM_CAPACITY_SUB
           : config.ROOM_CAPACITY;
