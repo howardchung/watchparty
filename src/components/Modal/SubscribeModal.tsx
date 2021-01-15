@@ -103,6 +103,11 @@ export class SubscribeModal extends React.Component<{
                   <Table.Cell>10</Table.Cell>
                 </Table.Row>
                 <Table.Row>
+                  <Table.Cell>Max Room Capacity</Table.Cell>
+                  <Table.Cell>20</Table.Cell>
+                  <Table.Cell>100</Table.Cell>
+                </Table.Row>
+                <Table.Row>
                   <Table.Cell>Custom Room URLs</Table.Cell>
                   <Table.Cell></Table.Cell>
                   <Table.Cell>
