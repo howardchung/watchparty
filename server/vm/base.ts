@@ -131,11 +131,11 @@ export abstract class VMManager {
   }
 
   public getRedisQueueKey = () => {
-    return this.redisQueueKey + (this.isLarge ? 'Large' : '');
+    return 'availableList' + this.id + (this.isLarge ? 'Large' : '');
   };
 
   public getRedisStagingKey = () => {
-    return this.redisStagingKey + (this.isLarge ? 'Large' : '');
+    return 'stagingList' + this.id + (this.isLarge ? 'Large' : '');
   };
 
   public assignVM = async (): Promise<AssignedVM | undefined> => {
@@ -387,8 +387,7 @@ export abstract class VMManager {
     return 0;
   };
 
-  protected abstract redisQueueKey: string;
-  protected abstract redisStagingKey: string;
+  protected abstract id: string;
   protected abstract size: string;
   protected abstract largeSize: string;
   protected abstract startVM: (name: string) => Promise<string>;
