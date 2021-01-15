@@ -88,8 +88,10 @@ if (
   vmManager = new Docker();
   vmManagerLarge = new Docker(true);
 }
-vmManager?.runBackgroundJobs(rooms);
-vmManagerLarge?.runBackgroundJobs(rooms);
+vmManager?.runBackgroundJobs();
+vmManagerLarge?.runBackgroundJobs();
+vmManager?.runReleaseRenew(rooms);
+vmManagerLarge?.runReleaseRenew(rooms);
 const vmManagers = { standard: vmManager, large: vmManagerLarge };
 init();
 
