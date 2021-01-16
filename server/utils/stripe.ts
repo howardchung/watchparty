@@ -24,3 +24,19 @@ export async function createSelfServicePortal(
     return_url: returnUrl,
   });
 }
+
+export async function getAllCustomers() {
+  const result = [];
+  for await (const customer of stripe.customers.list({ limit: 100 })) {
+    result.push(customer);
+  }
+  return result;
+}
+
+export async function getAllSubscriptions() {
+  const result = [];
+  for await (const sub of stripe.subscriptions.list({ limit: 100 })) {
+    result.push(sub);
+  }
+  return result;
+}
