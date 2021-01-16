@@ -33,6 +33,8 @@ const defaults = {
   MEDIA_PATH: '', // Path of server where media files might be found (GitLab/S3/nginx)
   STREAM_PATH: '', // Path of server that supports additional video streams
   KV_KEY: '', // Secret string to validate use of KV endpoint (unused)
+  ROOM_CAPACITY: 0, // Maximum capacity of a standard room. Set to 0 for unlimited.
+  ROOM_CAPACITY_SUB: 0, // Maximum capacity of a sub room. Set to 0 for unlimited.
   BUILD_DIRECTORY: 'build', // Name of the directory where the built React UI is served from
   VM_MANAGER_ID: 'Docker', // ID value of the VM Manager implementation to use (see vm directory)
 };
