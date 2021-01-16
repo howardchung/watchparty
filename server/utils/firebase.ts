@@ -34,3 +34,11 @@ export async function getUserByEmail(email: string) {
   }
   return await admin.auth().getUserByEmail(email);
 }
+
+export async function getUserEmail(uid: string) {
+  if (!config.FIREBASE_ADMIN_SDK_CONFIG) {
+    return undefined;
+  }
+  const user = await admin.auth().getUser(uid);
+  return user.email;
+}
