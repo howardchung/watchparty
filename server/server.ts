@@ -118,9 +118,9 @@ async function syncSubscribers() {
   });
 
   const uidMap = new Map();
-  for (let i = 0; i < subs.length; i += 10) {
+  for (let i = 0; i < subs.length; i += 50) {
     // Batch customers and fetch firebase data
-    const batch = subs.slice(i, i + 100);
+    const batch = subs.slice(i, i + 50);
     const fbUsers = await Promise.all(
       batch
         .map((sub) =>
