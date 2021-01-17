@@ -98,7 +98,6 @@ vmManagerLarge?.runBackgroundJobs();
 vmManager?.runReleaseRenew(rooms);
 vmManagerLarge?.runReleaseRenew(rooms);
 const vmManagers = { standard: vmManager, large: vmManagerLarge };
-syncSubscribers();
 init();
 
 async function syncSubscribers() {
@@ -144,7 +143,7 @@ async function syncSubscribers() {
   }));
 
   // Upsert to DB
-  // console.log(result);
+  console.log(result);
   await postgres?.query('BEGIN TRANSACTION');
   await postgres?.query('DELETE FROM subscriber');
   for (let i = 0; i < result.length; i++) {
@@ -221,6 +220,7 @@ async function init() {
   }
 
   server.listen(config.PORT, config.HOST);
+  syncSubscribers();
 }
 
 app.use(cors());
