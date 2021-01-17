@@ -8,8 +8,10 @@ const defaults = {
   FIREBASE_ADMIN_SDK_CONFIG: '', // Optional, for features requiring sign-in/authentication
   FIREBASE_DATABASE_URL: '', // Optional (unused)
   STRIPE_SECRET_KEY: '', // Optional, for subscriptions
-  VBROWSER_VM_BUFFER_LARGE: 0, // Extra large VMs to create
-  VBROWSER_VM_BUFFER: 0, // Extra VMs to create
+  VBROWSER_VM_BUFFER_LARGE: 0, // Number of large VMs to keep available
+  VBROWSER_VM_BUFFER: 0, // Number of VMs to keep available
+  VBROWSER_VM_BUFFER_LARGE_FLEX: 0, // Flexibility in size of large VM buffer
+  VBROWSER_VM_BUFFER_FLEX: 0, // Flexibility in size of VM buffer
   VM_POOL_FIXED_SIZE_LARGE: 0, // If using a fixed VM pool, number of large VMs to create
   VM_POOL_FIXED_SIZE: 0, // If using a fixed VM pool, number of VMs to create
   VM_POOL_MIN_SIZE: 0, // Minimum number of VM instances to keep in the pool
