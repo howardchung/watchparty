@@ -144,8 +144,13 @@ async function syncSubscribers() {
 
   // Upsert to DB
   console.log(result);
-  await postgres?.query('BEGIN TRANSACTION');
-  await postgres?.query('DELETE FROM subscriber');
+  const postgres2 = new Client({
+    connectionString: config.DATABASE_URL,
+    ssl: { rejectUnauthorized: false },
+  });
+  postgres2.connect();
+  await postgres2?.query('BEGIN TRANSACTION');
+  await postgres2?.query('DELETE FROM subscriber');
   for (let i = 0; i < result.length; i++) {
     const row = result[i];
     const columns = Object.keys(row);
@@ -155,9 +160,9 @@ async function syncSubscribers() {
       .join(',')})
     VALUES (${values.map((_, i) => '$' + (i + 1)).join(',')})
     RETURNING *`;
-    await postgres?.query(query, values);
+    await postgres2?.query(query, values);
   }
-  await postgres?.query('COMMIT');
+  await postgres2?.query('COMMIT');
   console.timeEnd('syncSubscribers');
 }
 
