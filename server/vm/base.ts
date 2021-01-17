@@ -89,13 +89,16 @@ export abstract class VMManager {
   public runBackgroundJobs = () => {
     const backgroundRedis = new Redis(config.REDIS_URL);
     let vmBufferSize = 0;
+    let vmBufferFlex = 0;
     if (this.isLarge) {
       vmBufferSize = Number(config.VBROWSER_VM_BUFFER_LARGE) || 0;
+      vmBufferFlex = Number(config.VBROWSER_VM_BUFFER_LARGE_FLEX) || 0;
     } else {
       vmBufferSize = Number(config.VBROWSER_VM_BUFFER) || 0;
+      vmBufferFlex = Number(config.VBROWSER_VM_BUFFER_FLEX) || 0;
     }
+    const vmBufferMax = vmBufferSize + vmBufferFlex;
     const resizeVMGroupIncr = async () => {
-      const maxAvailable = vmBufferSize;
       const availableCount = await this.redis.llen(this.getRedisQueueKey());
       const stagingCount = await this.redis.llen(this.getRedisStagingKey());
       let launch = false;
@@ -104,13 +107,13 @@ export abstract class VMManager {
         const listVMs = await this.listVMs();
         launch = listVMs.length + stagingCount < fixedSize;
       } else {
-        launch = availableCount + stagingCount < maxAvailable;
+        launch = availableCount + stagingCount < vmBufferSize;
       }
       if (launch) {
         console.log(
           '[RESIZE-LAUNCH]',
           'desired:',
-          maxAvailable,
+          vmBufferSize,
           'available:',
           availableCount,
           'staging:',
@@ -127,9 +130,8 @@ export abstract class VMManager {
       if (fixedSize) {
         unlaunch = allVMs.length > fixedSize;
       } else {
-        const maxAvailable = vmBufferSize;
         const availableCount = await this.redis.llen(this.getRedisQueueKey());
-        unlaunch = availableCount > maxAvailable;
+        unlaunch = availableCount > vmBufferMax;
       }
       if (unlaunch) {
         const now = Date.now();
