@@ -250,7 +250,10 @@ app.use(compression());
 app.get('/stats', async (req, res) => {
   if (req.query.key && req.query.key === config.STATS_KEY) {
     const stats = await getStats();
-    if (stats.availableVBrowsers?.length === 0) {
+    if (
+      stats.availableVBrowsers?.length === 0 ||
+      stats.availableVBrowsersLarge?.length === 0
+    ) {
       res.status(500);
     }
     res.json(stats);
