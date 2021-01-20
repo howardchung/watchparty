@@ -23,7 +23,7 @@ import {
   getCustomerByEmail,
   createSelfServicePortal,
   getAllCustomers,
-  getAllSubscriptions,
+  getAllActiveSubscriptions,
 } from './utils/stripe';
 import { getUserByEmail, validateUserToken } from './utils/firebase';
 import path from 'path';
@@ -107,7 +107,7 @@ async function syncSubscribers() {
   console.time('syncSubscribers');
   // Fetch subs, customers from stripe
   const [subs, customers] = await Promise.all([
-    getAllSubscriptions(),
+    getAllActiveSubscriptions(),
     getAllCustomers(),
   ]);
 
