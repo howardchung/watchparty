@@ -8,7 +8,7 @@ const HETZNER_TOKEN = config.HETZNER_TOKEN;
 const region = ['nbg1', 'fsn1', 'hel1'];
 const gatewayHost = 'gateway3.watchparty.me';
 const sshKeys = [1570536];
-const networks = [91163];
+const networks = [91163, 1007910, 1007911];
 const imageId = 26142182;
 
 export class Hetzner extends VMManager {
@@ -29,7 +29,7 @@ export class Hetzner extends VMManager {
         start_after_create: true,
         image: imageId,
         ssh_keys: sshKeys,
-        networks,
+        networks: networks[Math.floor(Math.random() * networks.length)],
         user_data: cloudInit(
           imageName,
           this.isLarge ? '1920x1080@30' : undefined
