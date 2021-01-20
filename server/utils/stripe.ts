@@ -33,9 +33,12 @@ export async function getAllCustomers() {
   return result;
 }
 
-export async function getAllSubscriptions() {
+export async function getAllActiveSubscriptions() {
   const result = [];
-  for await (const sub of stripe.subscriptions.list({ limit: 100 })) {
+  for await (const sub of stripe.subscriptions.list({
+    limit: 100,
+    status: 'active',
+  })) {
     result.push(sub);
   }
   return result;
