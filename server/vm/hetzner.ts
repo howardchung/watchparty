@@ -29,7 +29,7 @@ export class Hetzner extends VMManager {
         start_after_create: true,
         image: imageId,
         ssh_keys: sshKeys,
-        networks: networks[Math.floor(Math.random() * networks.length)],
+        networks: [networks[Math.floor(Math.random() * networks.length)]],
         user_data: cloudInit(
           imageName,
           this.isLarge ? '1920x1080@30' : undefined

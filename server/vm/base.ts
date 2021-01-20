@@ -52,11 +52,20 @@ export abstract class VMManager {
 
   protected startVMWrapper = async () => {
     // generate credentials and boot a VM
-    const password = uuidv4();
-    const id = await this.startVM(password);
-    await this.redis.rpush(this.getRedisStagingKey(), id);
-    redisCount('vBrowserLaunches');
-    return id;
+    try {
+      const password = uuidv4();
+      const id = await this.startVM(password);
+      await this.redis.rpush(this.getRedisStagingKey(), id);
+      redisCount('vBrowserLaunches');
+      return id;
+    } catch (e) {
+      console.log(
+        e.response?.status,
+        JSON.stringify(e.response?.data),
+        e.config?.url,
+        e.config?.data
+      );
+    }
   };
 
   protected terminateVMWrapper = async (id: string) => {
