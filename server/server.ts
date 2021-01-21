@@ -13,7 +13,11 @@ import http from 'http';
 import socketIO from 'socket.io';
 import { searchYoutube } from './utils/youtube';
 import { Room } from './room';
-import { getRedisCountDay, getRedisCountDayDistinct } from './utils/redis';
+import {
+  getRedisCountDay,
+  getRedisCountDayDistinct,
+  redisCount,
+} from './utils/redis';
 import { Scaleway } from './vm/scaleway';
 import { Hetzner } from './vm/hetzner';
 import { DigitalOcean } from './vm/digitalocean';
@@ -275,6 +279,7 @@ app.get('/timeSeries', async (req, res) => {
 app.get('/youtube', async (req, res) => {
   if (typeof req.query.q === 'string') {
     try {
+      await redisCount('youtubeSearch');
       const items = await searchYoutube(req.query.q);
       res.json(items);
     } catch {
@@ -557,6 +562,7 @@ async function getStats() {
     'connectStartsDistinct'
   );
   const subUploads = await getRedisCountDay('subUploads');
+  const youtubeSearch = await getRedisCountDay('youtubeSearch');
   const vBrowserClientIDs = await redis?.zrevrangebyscore(
     'vBrowserClientIDs',
     '+inf',
@@ -617,6 +623,7 @@ async function getStats() {
     screenShareStarts,
     fileShareStarts,
     subUploads,
+    youtubeSearch,
     videoChatStarts,
     connectStarts,
     connectStartsDistinct,
