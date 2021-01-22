@@ -532,6 +532,7 @@ async function getStats() {
   const chatMessages = await getRedisCountDay('chatMessages');
   const vBrowserStarts = await getRedisCountDay('vBrowserStarts');
   const vBrowserLaunches = await getRedisCountDay('vBrowserLaunches');
+  const vBrowserFails = await getRedisCountDay('vBrowserFails');
   const vBrowserStartMS = await redis?.lrange('vBrowserStartMS', 0, -1);
   const vBrowserStageRetries = await redis?.lrange(
     'vBrowserStageRetries',
@@ -629,6 +630,7 @@ async function getStats() {
     connectStartsDistinct,
     vBrowserStarts,
     vBrowserLaunches,
+    vBrowserFails,
     vBrowserTerminateManual,
     vBrowserTerminateEmpty,
     vBrowserTerminateTimeout,

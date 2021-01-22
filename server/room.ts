@@ -594,6 +594,7 @@ export class Room {
         'errorMessage',
         'Failed to assign VBrowser. Please try again later.'
       );
+      redisCount('vBrowserFails');
       return;
     }
     this.vBrowser = assignment;
