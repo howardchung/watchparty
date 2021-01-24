@@ -149,7 +149,9 @@ export abstract class VMManager {
           .sort((a, b) => -a.creation_date?.localeCompare(b.creation_date))
           .slice(0, -this.getMinSize() || undefined)
           .filter(
-            (vm) => now - Number(new Date(vm.creation_date)) > 105 * 60 * 1000
+            (vm) =>
+              now - Number(new Date(vm.creation_date)) >
+              config.VM_MIN_UPTIME_MINUTES * 60 * 1000
           );
         let first = null;
         let rem = 0;

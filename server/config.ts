@@ -39,6 +39,7 @@ const defaults = {
   ROOM_CAPACITY_SUB: 0, // Maximum capacity of a sub room. Set to 0 for unlimited.
   BUILD_DIRECTORY: 'build', // Name of the directory where the built React UI is served from
   VM_MANAGER_ID: 'Docker', // ID value of the VM Manager implementation to use (see vm directory)
+  VM_MIN_UPTIME_MINUTES: 45, // Number of minutes VMs must exist for before being eligible for termination
 };
 
 export default {
