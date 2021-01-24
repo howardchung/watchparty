@@ -502,6 +502,7 @@ async function getStats() {
   roomData.sort((a, b) => b.creationTime - a.creationTime);
   const uptime = Number(new Date()) - launchTime;
   const cpuUsage = os.loadavg();
+  const memUsage = process.memoryUsage().rss;
   const redisUsage = (await redis?.info())
     ?.split('\n')
     .find((line) => line.startsWith('used_memory:'))
@@ -607,6 +608,7 @@ async function getStats() {
     uptime,
     roomCount: rooms.size,
     cpuUsage,
+    memUsage,
     redisUsage,
     availableVBrowsers,
     stagingVBrowsers,
