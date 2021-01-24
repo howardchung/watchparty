@@ -454,6 +454,22 @@ setInterval(async () => {
   }
 }, 5 * 60 * 1000);
 
+setInterval(() => {
+  // Clean up rooms that are no longer in Redis (expired) and empty
+  // Frees up some JS memory space when process is long-running
+  if (!redis) {
+    return;
+  }
+  rooms.forEach(async (room, key) => {
+    if (room.roster.length === 0) {
+      const inRedis = await redis?.get(room.roomId);
+      if (!inRedis) {
+        rooms.delete(key);
+      }
+    }
+  });
+}, 5 * 60 * 1000);
+
 async function getStats() {
   const roomData: any[] = [];
   const now = Number(new Date());
