@@ -1416,6 +1416,7 @@ export default class App extends React.Component<AppProps, AppState> {
                             button
                             value={this.state.controller}
                             placeholder="No controller"
+                            clearable
                             onChange={this.changeController}
                             selection
                             disabled={!this.haveLock()}
