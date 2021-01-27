@@ -550,6 +550,7 @@ async function getStats() {
   const vBrowserStarts = await getRedisCountDay('vBrowserStarts');
   const vBrowserLaunches = await getRedisCountDay('vBrowserLaunches');
   const vBrowserFails = await getRedisCountDay('vBrowserFails');
+  const vBrowserStagingFails = await getRedisCountDay('vBrowserStagingFails');
   const vBrowserStartMS = await redis?.lrange('vBrowserStartMS', 0, -1);
   const vBrowserStageRetries = await redis?.lrange(
     'vBrowserStageRetries',
@@ -649,6 +650,7 @@ async function getStats() {
     vBrowserStarts,
     vBrowserLaunches,
     vBrowserFails,
+    vBrowserStagingFails,
     vBrowserTerminateManual,
     vBrowserTerminateEmpty,
     vBrowserTerminateTimeout,
