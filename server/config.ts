@@ -12,6 +12,8 @@ const defaults = {
   VBROWSER_VM_BUFFER: 0, // Number of VMs to keep available
   VBROWSER_VM_BUFFER_LARGE_FLEX: 0, // Flexibility in size of large VM buffer
   VBROWSER_VM_BUFFER_FLEX: 0, // Flexibility in size of VM buffer
+  VM_POOL_LIMIT: 0, //
+  VM_POOL_LIMIT_LARGE: 0, //
   VM_POOL_FIXED_SIZE_LARGE: 0, // If using a fixed VM pool, number of large VMs to create
   VM_POOL_FIXED_SIZE: 0, // If using a fixed VM pool, number of VMs to create
   VM_POOL_MIN_SIZE: 0, // Minimum number of VM instances to keep in the pool
