@@ -106,7 +106,7 @@ export class Hetzner extends VMManager {
   listVMs = async (filter?: string) => {
     // TODO expand pages as needed based on server count
     const responses: any[] = await Promise.all(
-      [1, 2, 3].map((page) =>
+      [1, 2, 3, 4].map((page) =>
         axios({
           method: 'GET',
           url: `https://api.hetzner.cloud/v1/servers`,
@@ -125,9 +125,7 @@ export class Hetzner extends VMManager {
     const responsesMapped: any = responses.map((response) =>
       response.data.servers
         .map(this.mapServerObject)
-        .filter(
-          (server: VM) => server.tags.includes(this.tag) && server.private_ip
-        )
+        .filter((server: VM) => server.tags.includes(this.tag))
     );
     return responsesMapped.flat();
   };
