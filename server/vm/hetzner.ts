@@ -105,8 +105,9 @@ export class Hetzner extends VMManager {
 
   listVMs = async (filter?: string) => {
     // TODO expand pages as needed based on server count
+    const pages = this.isLarge ? [1] : [1, 2, 3, 4];
     const responses: any[] = await Promise.all(
-      [1, 2, 3, 4].map((page) =>
+      pages.map((page) =>
         axios({
           method: 'GET',
           url: `https://api.hetzner.cloud/v1/servers`,

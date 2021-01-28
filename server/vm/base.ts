@@ -243,13 +243,15 @@ export abstract class VMManager {
             await this.redis.lpush('vBrowserStageRetries', retryCount);
             await this.redis.ltrim('vBrowserStageRetries', 0, 49);
           } else {
-            console.log(
-              '[CHECKSTAGING] not ready:',
-              id,
-              candidate?.host,
-              retryCount
-            );
-            if (retryCount > 600) {
+            if (retryCount % 10 === 0) {
+              console.log(
+                '[CHECKSTAGING] not ready:',
+                id,
+                candidate?.host,
+                retryCount
+              );
+            }
+            if (retryCount > 100) {
               console.log('[CHECKSTAGING] giving up:', id);
               await this.redis.del(this.getRedisStagingKey() + ':' + id);
               redisCount('vBrowserStagingFails');
