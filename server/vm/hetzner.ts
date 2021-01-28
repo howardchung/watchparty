@@ -123,7 +123,7 @@ export class Hetzner extends VMManager {
         })
       )
     );
-    const responsesMapped: any = responses.map((response) =>
+    const responsesMapped = responses.map((response) =>
       response.data.servers
         .map(this.mapServerObject)
         .filter((server: VM) => server.tags.includes(this.tag))
