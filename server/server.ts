@@ -477,9 +477,12 @@ async function getStats() {
   let currentHttp = 0;
   let currentVBrowser = 0;
   let currentVBrowserLarge = 0;
+  let currentVBrowserWaiting = 0;
   let currentScreenShare = 0;
   let currentFileShare = 0;
   let currentVideoChat = 0;
+  let vBrowserClientCounts: NumberDict = {};
+  let roomSizeCounts: NumberDict = {};
   rooms.forEach((room) => {
     const obj = {
       creationTime: room.creationTime,
@@ -501,6 +504,9 @@ async function getStats() {
     if (obj.vBrowser && obj.vBrowser.large) {
       currentVBrowserLarge += 1;
     }
+    if (obj.video === 'vbrowser://') {
+      currentVBrowserWaiting += 1;
+    }
     if (obj.video?.startsWith('http') && obj.rosterLength) {
       currentHttp += 1;
     }
@@ -510,10 +516,27 @@ async function getStats() {
     if (obj.video?.startsWith('fileshare://') && obj.rosterLength) {
       currentFileShare += 1;
     }
+    if (obj.rosterLength > 0) {
+      if (!roomSizeCounts[obj.rosterLength]) {
+        roomSizeCounts[obj.rosterLength] += 1;
+      }
+      roomSizeCounts[obj.rosterLength] += 1;
+    }
+    if (obj.vBrowser && obj.vBrowser.creatorClientID) {
+      if (!vBrowserClientCounts[obj.vBrowser.creatorClientID]) {
+        vBrowserClientCounts[obj.vBrowser.creatorClientID] = 0;
+      }
+      vBrowserClientCounts[obj.vBrowser.creatorClientID] += 1;
+    }
     if (obj.video) {
       roomData.push(obj);
     }
   });
+
+  vBrowserClientCounts = Object.fromEntries(
+    Object.entries(vBrowserClientCounts).filter(([key, val]) => val > 1)
+  );
+
   // Sort newest first
   roomData.sort((a, b) => b.creationTime - a.creationTime);
   const uptime = Number(new Date()) - launchTime;
@@ -634,6 +657,7 @@ async function getStats() {
     currentUsers,
     currentVBrowser,
     currentVBrowserLarge,
+    currentVBrowserWaiting,
     currentHttp,
     currentScreenShare,
     currentFileShare,
@@ -667,6 +691,8 @@ async function getStats() {
     vBrowserUIDsCard,
     vBrowserUIDMinutes,
     numPermaRooms,
+    vBrowserClientCounts,
+    roomSizeCounts,
     rooms: roomData,
   };
 }
