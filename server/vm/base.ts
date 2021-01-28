@@ -259,7 +259,7 @@ export abstract class VMManager {
         } catch (e) {
           console.warn('[CHECKSTAGING-CRASH]', e);
         }
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        await new Promise((resolve) => setTimeout(resolve, 2000));
       }
     };
 
