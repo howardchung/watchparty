@@ -13,6 +13,7 @@ export abstract class VMManager {
   protected tag = config.VBROWSER_TAG || 'vbrowser';
   protected isLarge = false;
   private redis = new Redis(config.REDIS_URL);
+  private currentSize = 0;
 
   constructor(large?: boolean) {
     if (large) {
@@ -29,6 +30,9 @@ export abstract class VMManager {
     this.isLarge
       ? Number(config.VM_POOL_LIMIT_LARGE)
       : Number(config.VM_POOL_LIMIT);
+  protected getCurrentSize = () => {
+    return this.currentSize;
+  };
 
   public getRedisQueueKey = () => {
     return 'availableList' + this.id + (this.isLarge ? 'Large' : '');
@@ -111,11 +115,10 @@ export abstract class VMManager {
     const resizeVMGroupIncr = async () => {
       const availableCount = await this.redis.llen(this.getRedisQueueKey());
       const stagingCount = await this.redis.llen(this.getRedisStagingKey());
-      const allVMs = await this.listVMs();
       let launch = false;
       launch =
         availableCount + stagingCount < vmBufferSize &&
-        allVMs.length < (this.getLimitSize() || Infinity);
+        this.getCurrentSize() < (this.getLimitSize() || Infinity);
       if (launch) {
         console.log(
           '[RESIZE-LAUNCH]',
@@ -160,6 +163,11 @@ export abstract class VMManager {
           await this.terminateVMWrapper(id);
         }
       }
+    };
+
+    const updateSize = async () => {
+      const allVMs = await this.listVMs();
+      this.currentSize = allVMs.length;
     };
 
     const cleanupVMGroup = async () => {
@@ -280,6 +288,8 @@ export abstract class VMManager {
     };
     setInterval(resizeVMGroupIncr, 10 * 1000);
     setInterval(resizeVMGroupDecr, 5 * 60 * 1000);
+    updateSize();
+    setInterval(updateSize, 60 * 1000);
     setInterval(cleanupVMGroup, 3 * 60 * 1000);
     setTimeout(checkStaging, 100); // Add some delay to make sure the object is constructed first
   };
