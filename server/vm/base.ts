@@ -261,7 +261,11 @@ export abstract class VMManager {
             }
             if (retryCount > 100) {
               console.log('[CHECKSTAGING] giving up:', id);
-              await this.redis.del(this.getRedisStagingKey() + ':' + id);
+              await this.redis
+                .multi()
+                .lrem(this.getRedisStagingKey(), 1, id)
+                .del(this.getRedisStagingKey() + ':' + id)
+                .exec();
               redisCount('vBrowserStagingFails');
               await this.resetVM(id);
             }
@@ -269,7 +273,7 @@ export abstract class VMManager {
         } catch (e) {
           console.warn('[CHECKSTAGING-CRASH]', e);
         }
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       }
     };
 
