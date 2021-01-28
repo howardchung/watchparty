@@ -5,6 +5,7 @@ import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import { redisCount } from '../utils/redis';
 import { getStartOfDay } from '../utils/time';
+import { allowedNodeEnvironmentFlags } from 'process';
 
 const releaseInterval = 5 * 60 * 1000;
 
@@ -20,14 +21,14 @@ export abstract class VMManager {
     }
   }
 
-  protected getFixedSize = () =>
-    this.isLarge
-      ? Number(config.VM_POOL_FIXED_SIZE_LARGE)
-      : Number(config.VM_POOL_FIXED_SIZE);
   protected getMinSize = () =>
     this.isLarge
       ? Number(config.VM_POOL_MIN_SIZE_LARGE)
       : Number(config.VM_POOL_MIN_SIZE);
+  protected getLimitSize = () =>
+    this.isLarge
+      ? Number(config.VM_POOL_LIMIT_LARGE)
+      : Number(config.VM_POOL_LIMIT);
 
   public getRedisQueueKey = () => {
     return 'availableList' + this.id + (this.isLarge ? 'Large' : '');
@@ -110,14 +111,11 @@ export abstract class VMManager {
     const resizeVMGroupIncr = async () => {
       const availableCount = await this.redis.llen(this.getRedisQueueKey());
       const stagingCount = await this.redis.llen(this.getRedisStagingKey());
+      const allVMs = await this.listVMs();
       let launch = false;
-      const fixedSize = this.getFixedSize();
-      if (fixedSize) {
-        const listVMs = await this.listVMs();
-        launch = listVMs.length + stagingCount < fixedSize;
-      } else {
-        launch = availableCount + stagingCount < vmBufferSize;
-      }
+      launch =
+        availableCount + stagingCount < vmBufferSize &&
+        allVMs.length < (this.getLimitSize() || Infinity);
       if (launch) {
         console.log(
           '[RESIZE-LAUNCH]',
@@ -134,15 +132,10 @@ export abstract class VMManager {
 
     const resizeVMGroupDecr = async () => {
       let unlaunch = false;
-      const fixedSize = this.getFixedSize();
-      const allVMs = await this.listVMs();
-      if (fixedSize) {
-        unlaunch = allVMs.length > fixedSize;
-      } else {
-        const availableCount = await this.redis.llen(this.getRedisQueueKey());
-        unlaunch = availableCount > vmBufferMax;
-      }
+      const availableCount = await this.redis.llen(this.getRedisQueueKey());
+      unlaunch = availableCount > vmBufferMax;
       if (unlaunch) {
+        const allVMs = await this.listVMs();
         const now = Date.now();
         // Sort newest first
         let sortedVMs = allVMs
@@ -261,7 +254,6 @@ export abstract class VMManager {
               await this.redis.del(this.getRedisStagingKey() + ':' + id);
               redisCount('vBrowserStagingFails');
               await this.resetVM(id);
-              // await this.terminateVMWrapper(id);
             }
           }
         } catch (e) {

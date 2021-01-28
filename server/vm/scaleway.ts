@@ -148,9 +148,7 @@ export class Scaleway extends VMManager {
     });
     return response.data.servers
       .map(this.mapServerObject)
-      .filter(
-        (server: VM) => server.tags.includes(this.tag) && server.private_ip
-      );
+      .filter((server: VM) => server.tags.includes(this.tag));
   };
 
   powerOn = async (id: string) => {};
