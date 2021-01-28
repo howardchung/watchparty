@@ -63,13 +63,13 @@ export const assignVM = async (
       // if (availableCount + stagingCount === 0 && !fixedSize) {
       //   await this.startVMWrapper();
       // }
-      let resp = await redis.blpop(vmManager.getRedisQueueKey(), 180);
+      let resp = await redis.blpop(vmManager.getRedisQueueKey(), 90);
       if (!resp) {
         return undefined;
       }
       const id = resp[1];
       console.log('[ASSIGN]', id);
-      const lock = await redis.set('vbrowser:' + id, '1', 'NX', 'EX', 180);
+      const lock = await redis.set('vbrowser:' + id, '1', 'NX', 'EX', 90);
       if (!lock) {
         console.log('failed to acquire lock on VM:', id);
         continue;
