@@ -518,7 +518,7 @@ async function getStats() {
     }
     if (obj.rosterLength > 0) {
       if (!roomSizeCounts[obj.rosterLength]) {
-        roomSizeCounts[obj.rosterLength] += 1;
+        roomSizeCounts[obj.rosterLength] = 0;
       }
       roomSizeCounts[obj.rosterLength] += 1;
     }
