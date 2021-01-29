@@ -552,8 +552,8 @@ export class Room {
           url: `https://www.google.com/recaptcha/api/siteverify?secret=${config.RECAPTCHA_SECRET_KEY}&response=${data.rcToken}`,
           method: 'POST',
         });
-        console.log(validation?.data);
-        const isLowScore = validation?.data?.score < 0.12;
+        // console.log(validation?.data);
+        const isLowScore = validation?.data?.score < 0.2;
         const failed = validation?.data?.success === false;
         if (failed || isLowScore) {
           if (isLowScore) {
