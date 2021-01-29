@@ -18,11 +18,6 @@ import {
   getRedisCountDayDistinct,
   redisCount,
 } from './utils/redis';
-import { Scaleway } from './vm/scaleway';
-import { Hetzner } from './vm/hetzner';
-import { DigitalOcean } from './vm/digitalocean';
-import { Docker } from './vm/docker';
-import { VMManager } from './vm/base';
 import {
   getCustomerByEmail,
   createSelfServicePortal,
@@ -33,6 +28,7 @@ import { getUserByEmail, validateUserToken } from './utils/firebase';
 import path from 'path';
 import { Client } from 'pg';
 import { getStartOfDay } from './utils/time';
+import { createVMManagers } from './vm/utils';
 
 const releaseInterval = 5 * 60 * 1000;
 const app = express();
@@ -66,42 +62,11 @@ const names = Moniker.generator([
 const launchTime = Number(new Date());
 
 const rooms = new Map<string, Room>();
-// Start the VM manager
-let vmManager: VMManager | null = null;
-let vmManagerLarge: VMManager | null = null;
-if (
-  config.REDIS_URL &&
-  config.SCW_SECRET_KEY &&
-  config.SCW_ORGANIZATION_ID &&
-  config.VM_MANAGER_ID === 'Scaleway'
-) {
-  vmManager = new Scaleway();
-  vmManagerLarge = new Scaleway(true);
-} else if (
-  config.REDIS_URL &&
-  config.HETZNER_TOKEN &&
-  config.VM_MANAGER_ID === 'Hetzner'
-) {
-  vmManager = new Hetzner();
-  vmManagerLarge = new Hetzner(true);
-} else if (
-  config.REDIS_URL &&
-  config.DO_TOKEN &&
-  config.VM_MANAGER_ID === 'DO'
-) {
-  vmManager = new DigitalOcean();
-  vmManagerLarge = new DigitalOcean(true);
-} else if (
-  config.REDIS_URL &&
-  config.DOCKER_VM_HOST &&
-  config.VM_MANAGER_ID === 'Docker'
-) {
-  vmManager = new Docker();
-  vmManagerLarge = new Docker(true);
+
+const vmManagers = createVMManagers();
+if (process.env.NODE_ENV === 'development') {
+  require('./vmBackground');
 }
-vmManager?.runBackgroundJobs();
-vmManagerLarge?.runBackgroundJobs();
-const vmManagers = { standard: vmManager, large: vmManagerLarge };
 init();
 
 async function syncSubscribers() {
@@ -525,6 +490,8 @@ async function getStats() {
   let currentVideoChat = 0;
   let vBrowserClientCounts: NumberDict = {};
   let roomSizeCounts: NumberDict = {};
+  const vmManager = vmManagers.standard;
+  const vmManagerLarge = vmManagers.large;
   rooms.forEach((room) => {
     const obj = {
       creationTime: room.creationTime,

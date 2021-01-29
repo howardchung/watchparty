@@ -1,11 +1,8 @@
 import config from '../config';
-import { Room } from '../room';
 import Redis from 'ioredis';
 import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import { redisCount } from '../utils/redis';
-import { getStartOfDay } from '../utils/time';
-import { allowedNodeEnvironmentFlags } from 'process';
 
 const incrInterval = 5 * 1000;
 const decrInterval = 3 * 60 * 1000;
