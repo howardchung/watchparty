@@ -440,7 +440,7 @@ async function renew() {
   for (let i = 0; i < roomArr.length; i++) {
     const room = roomArr[i];
     if (room.vBrowser && room.vBrowser.id) {
-      console.log('[RENEW] VM in room:', room.roomId, room.vBrowser.id);
+      // console.log('[RENEW] VM in room:', room.roomId, room.vBrowser.id);
       // Renew the lock on the VM
       await redis?.expire('vbrowser:' + room.vBrowser.id, 300);
 

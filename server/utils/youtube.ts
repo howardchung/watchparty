@@ -49,7 +49,6 @@ export const searchYoutube = (query: string): Promise<PlaylistVideo[]> => {
     Youtube.search.list(
       { part: 'snippet', type: 'video', maxResults: 25, q: query },
       (err: any, data: any) => {
-        console.log(err);
         if (data && data.items) {
           const response = data.items.map(mapYoutubeSearchResult);
           resolve(response);
