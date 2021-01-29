@@ -32,7 +32,9 @@ import {
 import { getUserByEmail, validateUserToken } from './utils/firebase';
 import path from 'path';
 import { Client } from 'pg';
+import { getStartOfDay } from './utils/time';
 
+const releaseInterval = 5 * 60 * 1000;
 const app = express();
 let server: any = null;
 if (config.HTTPS) {
@@ -99,8 +101,6 @@ if (
 }
 vmManager?.runBackgroundJobs();
 vmManagerLarge?.runBackgroundJobs();
-vmManager?.runReleaseRenew(rooms);
-vmManagerLarge?.runReleaseRenew(rooms);
 const vmManagers = { standard: vmManager, large: vmManagerLarge };
 init();
 
@@ -230,6 +230,11 @@ async function init() {
 
   server.listen(config.PORT, config.HOST);
   syncSubscribers();
+  // Following functions iterate over in-memory rooms
+  setInterval(renew, 60 * 1000);
+  setInterval(release, releaseInterval);
+  setInterval(cleanupRooms, 5 * 60 * 1000);
+  setInterval(statsTimeSeries, 5 * 60 * 1000);
 }
 
 app.use(cors());
@@ -425,36 +430,73 @@ app.use('/*', (req, res) => {
   );
 });
 
-setInterval(async () => {
-  if (redis) {
-    const stats = await getStats();
-    await redis.lpush(
-      'timeSeries',
-      JSON.stringify({
-        time: new Date(),
-        availableVBrowsers: stats.availableVBrowsers?.length,
-        availableVBrowsersLarge: stats.availableVBrowsersLarge?.length,
-        currentUsers: stats.currentUsers,
-        currentVBrowser: stats.currentVBrowser,
-        currentVBrowserLarge: stats.currentVBrowserLarge,
-        currentHttp: stats.currentHttp,
-        currentScreenShare: stats.currentScreenShare,
-        currentFileShare: stats.currentFileShare,
-        currentVideoChat: stats.currentVideoChat,
-        chatMessages: stats.chatMessages,
-        roomCount: stats.roomCount,
-        redisUsage: stats.redisUsage,
-        avgStartMS:
-          stats.vBrowserStartMS &&
-          stats.vBrowserStartMS.reduce((a, b) => Number(a) + Number(b), 0) /
-            stats.vBrowserStartMS.length,
-      })
-    );
-    await redis.ltrim('timeSeries', 0, 300);
+function release() {
+  // Reset VMs in rooms that are:
+  // older than the session limit
+  // assigned to a room with no users
+  const roomArr = Array.from(rooms.values());
+  for (let i = 0; i < roomArr.length; i++) {
+    const room = roomArr[i];
+    if (room.vBrowser && room.vBrowser.assignTime) {
+      const maxTime = room.vBrowser.large
+        ? 12 * 60 * 60 * 1000
+        : 3 * 60 * 60 * 1000;
+      const elapsed = Number(new Date()) - room.vBrowser.assignTime;
+      const isTimedOut = elapsed > maxTime;
+      const isAlmostTimedOut = elapsed > maxTime - releaseInterval;
+      const isRoomEmpty = room.roster.length === 0;
+      if (isTimedOut || isRoomEmpty) {
+        console.log('[RELEASE] VM in room:', room.roomId);
+        room.stopVBrowserInternal();
+        if (isTimedOut) {
+          room.addChatMessage(undefined, {
+            id: '',
+            system: true,
+            cmd: 'vBrowserTimeout',
+            msg: '',
+          });
+          redisCount('vBrowserTerminateTimeout');
+        } else if (isRoomEmpty) {
+          redisCount('vBrowserTerminateEmpty');
+        }
+      } else if (isAlmostTimedOut) {
+        room.addChatMessage(undefined, {
+          id: '',
+          system: true,
+          cmd: 'vBrowserAlmostTimeout',
+          msg: '',
+        });
+      }
+    }
   }
-}, 5 * 60 * 1000);
+}
+async function renew() {
+  const roomArr = Array.from(rooms.values());
+  for (let i = 0; i < roomArr.length; i++) {
+    const room = roomArr[i];
+    if (room.vBrowser && room.vBrowser.id) {
+      console.log('[RENEW] VM in room:', room.roomId, room.vBrowser.id);
+      // Renew the lock on the VM
+      await redis?.expire('vbrowser:' + room.vBrowser.id, 300);
 
-setInterval(() => {
+      const expireTime = getStartOfDay() / 1000 + 86400;
+      if (room.vBrowser.creatorClientID) {
+        await redis?.zincrby(
+          'vBrowserClientIDMinutes',
+          1,
+          room.vBrowser.creatorClientID
+        );
+        await redis?.expireat('vBrowserClientIDMinutes', expireTime);
+      }
+      if (room.vBrowser.creatorUID) {
+        await redis?.zincrby('vBrowserUIDMinutes', 1, room.vBrowser.creatorUID);
+        await redis?.expireat('vBrowserUIDMinutes', expireTime);
+      }
+    }
+  }
+}
+
+function cleanupRooms() {
   // Clean up rooms that are no longer in Redis (expired) and empty
   // Frees up some JS memory space when process is long-running
   if (!redis) {
@@ -468,7 +510,7 @@ setInterval(() => {
       }
     }
   });
-}, 5 * 60 * 1000);
+}
 
 async function getStats() {
   const roomData: any[] = [];
@@ -695,4 +737,33 @@ async function getStats() {
     roomSizeCounts,
     rooms: roomData,
   };
+}
+
+async function statsTimeSeries() {
+  if (redis) {
+    const stats = await getStats();
+    await redis.lpush(
+      'timeSeries',
+      JSON.stringify({
+        time: new Date(),
+        availableVBrowsers: stats.availableVBrowsers?.length,
+        availableVBrowsersLarge: stats.availableVBrowsersLarge?.length,
+        currentUsers: stats.currentUsers,
+        currentVBrowser: stats.currentVBrowser,
+        currentVBrowserLarge: stats.currentVBrowserLarge,
+        currentHttp: stats.currentHttp,
+        currentScreenShare: stats.currentScreenShare,
+        currentFileShare: stats.currentFileShare,
+        currentVideoChat: stats.currentVideoChat,
+        chatMessages: stats.chatMessages,
+        roomCount: stats.roomCount,
+        redisUsage: stats.redisUsage,
+        avgStartMS:
+          stats.vBrowserStartMS &&
+          stats.vBrowserStartMS.reduce((a, b) => Number(a) + Number(b), 0) /
+            stats.vBrowserStartMS.length,
+      })
+    );
+    await redis.ltrim('timeSeries', 0, 300);
+  }
 }
