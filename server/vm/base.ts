@@ -7,7 +7,10 @@ import { redisCount } from '../utils/redis';
 import { getStartOfDay } from '../utils/time';
 import { allowedNodeEnvironmentFlags } from 'process';
 
-const releaseInterval = 5 * 60 * 1000;
+const incrInterval = 5 * 1000;
+const decrInterval = 3 * 60 * 1000;
+const cleanupInterval = 4 * 60 * 1000;
+const updateSizeInterval = 60 * 1000;
 
 export abstract class VMManager {
   protected tag = config.VBROWSER_TAG || 'vbrowser';
@@ -290,96 +293,12 @@ export abstract class VMManager {
       }
       return true;
     };
-    setInterval(resizeVMGroupIncr, 10 * 1000);
-    setInterval(resizeVMGroupDecr, 5 * 60 * 1000);
+    setInterval(resizeVMGroupIncr, incrInterval);
+    setInterval(resizeVMGroupDecr, decrInterval);
     updateSize();
-    setInterval(updateSize, 60 * 1000);
-    setInterval(cleanupVMGroup, 3 * 60 * 1000);
+    setInterval(updateSize, updateSizeInterval);
+    setInterval(cleanupVMGroup, cleanupInterval);
     setTimeout(checkStaging, 100); // Add some delay to make sure the object is constructed first
-  };
-
-  public runReleaseRenew = (rooms: Map<string, Room>) => {
-    const release = async () => {
-      // Reset VMs in rooms that are:
-      // older than the session limit
-      // assigned to a room with no users
-      const roomArr = Array.from(rooms.values());
-      for (let i = 0; i < roomArr.length; i++) {
-        const room = roomArr[i];
-        if (
-          room.vBrowser &&
-          room.vBrowser.assignTime &&
-          (!room.vBrowser.provider ||
-            room.vBrowser.provider === this.getRedisQueueKey())
-        ) {
-          const maxTime = room.vBrowser.large
-            ? 12 * 60 * 60 * 1000
-            : 3 * 60 * 60 * 1000;
-          const elapsed = Number(new Date()) - room.vBrowser.assignTime;
-          const isTimedOut = elapsed > maxTime;
-          const isAlmostTimedOut = elapsed > maxTime - releaseInterval;
-          const isRoomEmpty = room.roster.length === 0;
-          if (isTimedOut || isRoomEmpty) {
-            console.log('[RELEASE] VM in room:', room.roomId);
-            room.stopVBrowserInternal();
-            if (isTimedOut) {
-              room.addChatMessage(undefined, {
-                id: '',
-                system: true,
-                cmd: 'vBrowserTimeout',
-                msg: '',
-              });
-              redisCount('vBrowserTerminateTimeout');
-            } else if (isRoomEmpty) {
-              redisCount('vBrowserTerminateEmpty');
-            }
-          } else if (isAlmostTimedOut) {
-            room.addChatMessage(undefined, {
-              id: '',
-              system: true,
-              cmd: 'vBrowserAlmostTimeout',
-              msg: '',
-            });
-          }
-        }
-      }
-    };
-    const renew = async () => {
-      const roomArr = Array.from(rooms.values());
-      for (let i = 0; i < roomArr.length; i++) {
-        const room = roomArr[i];
-        if (
-          room.vBrowser &&
-          room.vBrowser.id &&
-          (!room.vBrowser.provider ||
-            room.vBrowser.provider === this.getRedisQueueKey())
-        ) {
-          console.log('[RENEW] VM in room:', room.roomId, room.vBrowser.id);
-          // Renew the lock on the VM
-          await this.redis.expire('vbrowser:' + room.vBrowser.id, 300);
-
-          const expireTime = getStartOfDay() / 1000 + 86400;
-          if (room.vBrowser.creatorClientID) {
-            await this.redis.zincrby(
-              'vBrowserClientIDMinutes',
-              1,
-              room.vBrowser.creatorClientID
-            );
-            await this.redis.expireat('vBrowserClientIDMinutes', expireTime);
-          }
-          if (room.vBrowser.creatorUID) {
-            await this.redis.zincrby(
-              'vBrowserUIDMinutes',
-              1,
-              room.vBrowser.creatorUID
-            );
-            await this.redis.expireat('vBrowserUIDMinutes', expireTime);
-          }
-        }
-      }
-    };
-    setInterval(renew, 60 * 1000);
-    setInterval(release, releaseInterval);
   };
 
   protected abstract id: string;
