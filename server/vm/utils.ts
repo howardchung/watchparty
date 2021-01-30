@@ -74,7 +74,13 @@ export const assignVM = async (
       }
       const id = resp[1];
       console.log('[ASSIGN]', id);
-      const lock = await redis.set('vbrowser:' + id, '1', 'NX', 'EX', 90);
+      const lock = await redis.set(
+        'lock:' + vmManager.id + ':' + id,
+        '1',
+        'NX',
+        'EX',
+        90
+      );
       if (!lock) {
         console.log('failed to acquire lock on VM:', id);
         continue;
