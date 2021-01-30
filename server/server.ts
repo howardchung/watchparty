@@ -318,9 +318,9 @@ app.get('/metadata', async (req, res) => {
     return res.status(400).json({ error: 'customer not found' });
   }
   const isSubscriber = Boolean(
-    customer.subscriptions?.data?.[0]?.status === 'active'
+    customer.subscriptions?.data?.find((sub) => sub?.status === 'active')
   );
-  const isCustomer = Boolean(customer);
+  const isCustomer = Boolean(customer.subscriptions?.data?.length);
   return res.json({ isSubscriber, isCustomer });
 });
 

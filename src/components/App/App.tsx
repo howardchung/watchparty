@@ -51,6 +51,7 @@ import { VBrowserModal } from '../Modal/VBrowserModal';
 import { SettingsTab } from '../Settings/SettingsTab';
 import { ErrorModal } from '../Modal/ErrorModal';
 import { PasswordModal } from '../Modal/PasswordModal';
+import { SubscribeButton } from '../SubscribeButton/SubscribeButton';
 
 const firebaseConfig = process.env.REACT_APP_FIREBASE_CONFIG;
 if (firebaseConfig) {
@@ -1259,6 +1260,14 @@ export default class App extends React.Component<AppProps, AppState> {
         leaderTime={this.isHttp() ? this.getLeaderTime() : undefined}
       />
     );
+    const subscribeButton = (
+      <SubscribeButton
+        isSubscriber={this.state.isSubscriber}
+        isCustomer={this.state.isCustomer}
+        openManage={this.onManage}
+        openSubscribeModal={() => this.setState({ isSubscribeModalOpen: true })}
+      />
+    );
     return (
       <React.Fragment>
         {this.state.multiStreamSelection && (
@@ -1280,8 +1289,8 @@ export default class App extends React.Component<AppProps, AppState> {
         {this.state.isVBrowserModalOpen && (
           <VBrowserModal
             isSubscriber={this.state.isSubscriber}
+            subscribeButton={subscribeButton}
             closeModal={() => this.setState({ isVBrowserModalOpen: false })}
-            openSubscribe={() => this.setState({ isSubscribeModalOpen: true })}
             startVBrowser={this.setupVBrowser}
           />
         )}
@@ -1547,44 +1556,7 @@ export default class App extends React.Component<AppProps, AppState> {
                         }
                       />
                     )}
-                    {!this.state.isSubscriber && (
-                      <Popup
-                        content="Subscribe to help support us and enable additional features!"
-                        trigger={
-                          <Button
-                            fluid
-                            color="orange"
-                            className="toolButton"
-                            icon
-                            labelPosition="left"
-                            onClick={() =>
-                              this.setState({ isSubscribeModalOpen: true })
-                            }
-                          >
-                            <Icon name="plus" />
-                            Subscribe
-                          </Button>
-                        }
-                      />
-                    )}
-                    {this.state.isCustomer && (
-                      <Popup
-                        content="Manage your subscription"
-                        trigger={
-                          <Button
-                            fluid
-                            color="orange"
-                            className="toolButton"
-                            icon
-                            labelPosition="left"
-                            onClick={this.onManage}
-                          >
-                            <Icon name="wrench" />
-                            Manage
-                          </Button>
-                        }
-                      />
-                    )}
+                    {subscribeButton}
                   </div>
                   <Separator />
                   <div
