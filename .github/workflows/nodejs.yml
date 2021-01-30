@@ -28,15 +28,3 @@ jobs:
         env:
           CI: true
           RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
-      - name: Push to remote
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "watchparty+github-actions[bot]@users.noreply.github.com"
-
-          rm .gitignore
-          git add --all
-          git remote add release https://howardchung:$RELEASE_TOKEN@github.com/howardchung/watchparty-release.git
-          git commit --quiet -m "Built from ${{ github.sha }}" 
-          git push release master -f
-        env:
-          RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
