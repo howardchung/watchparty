@@ -167,7 +167,7 @@ export class DigitalOcean extends VMManager {
       state: server.status,
       tags: server.tags,
       creation_date: server.created_at,
-      provider: this.getRedisQueueKey(),
+      provider: this.id,
       large: this.isLarge,
     };
   };

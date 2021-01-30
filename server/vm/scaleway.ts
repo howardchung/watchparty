@@ -164,7 +164,7 @@ export class Scaleway extends VMManager {
     state: server.state,
     tags: server.tags,
     creation_date: server.creation_date,
-    provider: this.getRedisQueueKey(),
+    provider: this.id,
     large: this.isLarge,
   });
 }

@@ -138,7 +138,7 @@ export class Docker extends VMManager {
     state: server.State?.Status,
     tags: server.Config?.Labels,
     creation_date: server.State?.StartedAt,
-    provider: this.getRedisQueueKey(),
+    provider: this.id,
     large: this.isLarge,
   });
 }
