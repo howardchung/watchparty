@@ -34,7 +34,7 @@ jobs:
           git config --global user.email "watchparty+github-actions[bot]@users.noreply.github.com"
 
           rm .gitignore
-          git add --all > /dev/null
+          git add --all &> /dev/null
           git remote add release https://howardchung:$RELEASE_TOKEN@github.com/howardchung/watchparty-release
           git commit -m "Built from ${{ github.head_ref }}.${{ github.sha }}"
           git push release master -f
