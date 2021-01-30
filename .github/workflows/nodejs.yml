@@ -27,3 +27,11 @@ jobs:
       - run: npm run build --if-present
         env:
           CI: true
+      - name: Push to remote
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "watchparty+github-actions[bot]@users.noreply.github.com"
+
+          git remote add origin https://github.com/howardchung/watchparty-release
+          git commit -m "Built from ${{ github.head_ref }}.${{ github.sha }}"
+          git push origin release -f
