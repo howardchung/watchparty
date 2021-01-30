@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, Button, Icon, Table } from 'semantic-ui-react';
+import { Modal, Button, Table } from 'semantic-ui-react';
 import {
   GoogleReCaptchaProvider,
   withGoogleReCaptcha,
@@ -12,12 +12,7 @@ export class VBrowserModal extends React.Component<{
   subscribeButton: JSX.Element;
 }> {
   render() {
-    const {
-      closeModal,
-      startVBrowser,
-      isSubscriber,
-      subscribeButton,
-    } = this.props;
+    const { closeModal, startVBrowser } = this.props;
     const LaunchButton = withGoogleReCaptcha(
       ({ googleReCaptchaProps, large }: any) => (
         <Button
