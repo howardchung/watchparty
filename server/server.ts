@@ -315,7 +315,7 @@ app.get('/metadata', async (req, res) => {
   }
   const customer = await getCustomerByEmail(decoded.email);
   if (!customer) {
-    return res.status(400).json({ error: 'customer not found' });
+    return res.json({ isSubscriber: false, isCustomer: false });
   }
   const isSubscriber = Boolean(
     customer.subscriptions?.data?.find((sub) => sub?.status === 'active')
