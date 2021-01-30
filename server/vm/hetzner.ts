@@ -176,7 +176,7 @@ export class Hetzner extends VMManager {
     tags: Object.keys(server.labels),
     creation_date: server.created,
     originalName: server.labels.originalName,
-    provider: this.getRedisQueueKey(),
+    provider: this.id,
     large: this.isLarge,
   });
 }
