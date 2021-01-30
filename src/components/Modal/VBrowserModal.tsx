@@ -7,12 +7,17 @@ import {
 
 export class VBrowserModal extends React.Component<{
   closeModal: Function;
-  openSubscribe: Function;
   startVBrowser: Function;
-  isSubscriber: boolean;
+  isSubscriber: Boolean;
+  subscribeButton: JSX.Element;
 }> {
   render() {
-    const { closeModal, startVBrowser, openSubscribe } = this.props;
+    const {
+      closeModal,
+      startVBrowser,
+      isSubscriber,
+      subscribeButton,
+    } = this.props;
     const LaunchButton = withGoogleReCaptcha(
       ({ googleReCaptchaProps, large }: any) => (
         <Button
@@ -73,19 +78,10 @@ export class VBrowserModal extends React.Component<{
                       <LaunchButton />
                     </Table.Cell>
                     <Table.Cell>
-                      {!this.props.isSubscriber ? (
-                        <Button
-                          icon
-                          labelPosition="left"
-                          size="large"
-                          color="orange"
-                          onClick={openSubscribe as any}
-                        >
-                          <Icon name="plus" />
-                          Subscribe
-                        </Button>
-                      ) : (
+                      {this.props.isSubscriber ? (
                         <LaunchButton large />
+                      ) : (
+                        this.props.subscribeButton
                       )}
                     </Table.Cell>
                   </Table.Row>
