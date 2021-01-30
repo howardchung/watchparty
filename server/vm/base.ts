@@ -48,7 +48,7 @@ export abstract class VMManager {
     // Otherwise terminating them is simpler but more expensive since they're billed for an hour
     await this.rebootVM(id);
     // Delete any locks
-    await this.redis.del('vbrowser:' + id);
+    await this.redis.del('lock:' + this.id + ':' + id);
     // We wait to give the VM time to shut down (if it's restarting)
     await new Promise((resolve) => setTimeout(resolve, 3000));
     // Add the VM back to the pool
@@ -86,7 +86,7 @@ export abstract class VMManager {
       await this.redis.ltrim('vBrowserVMLifetime', 0, 49);
     }
     // Delete any locks
-    await this.redis.del('vbrowser:' + id);
+    await this.redis.del('lock:' + this.id + ':' + id);
   };
 
   protected terminateVMMetrics = async (id: string) => {
@@ -175,9 +175,8 @@ export abstract class VMManager {
       // It's possible we created a VM but lost track of it in redis
       // Take the list of VMs from API, subtract VMs that have a lock in redis or are in the available or staging pool, delete the rest
       const allVMs = await this.listVMs();
-      // TODO locks could collide if multiple cloud providers use the same IDs
-      const usedKeys = (await this.redis.keys('vbrowser:*')).map((key) =>
-        key.slice('vbrowser:'.length)
+      const usedKeys = (await this.redis.keys(`lock:${this.id}:*`)).map((key) =>
+        key.slice(`lock:${this.id}:*`.length)
       );
       const availableKeys = await this.redis.lrange(
         this.getRedisQueueKey(),
@@ -298,7 +297,7 @@ export abstract class VMManager {
     setTimeout(checkStaging, 100); // Add some delay to make sure the object is constructed first
   };
 
-  protected abstract id: string;
+  public abstract id: string;
   protected abstract size: string;
   protected abstract largeSize: string;
   protected abstract startVM: (name: string) => Promise<string>;
