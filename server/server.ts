@@ -441,13 +441,17 @@ async function renew() {
     const room = roomArr[i];
     if (room.vBrowser && room.vBrowser.id) {
       // console.log('[RENEW] VM in room:', room.roomId, room.vBrowser.id);
+      // TODO: remove this after rolling out new lock: prefix, this is just to set the new locks initially
+      await redis?.set(
+        'lock:' + room.vBrowser.provider + ':' + room.vBrowser.id,
+        '1',
+        'NX'
+      );
       // Renew the lock on the VM
-
       await redis?.expire(
         'lock:' + room.vBrowser.provider + ':' + room.vBrowser.id,
         300
       );
-      await redis?.expire('vbrowser:' + room.vBrowser.id, 300);
 
       const expireTime = getStartOfDay() / 1000 + 86400;
       if (room.vBrowser.creatorClientID) {
