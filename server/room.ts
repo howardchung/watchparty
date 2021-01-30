@@ -408,7 +408,7 @@ export class Room {
     }
     this.videoTS = data;
     socket.broadcast.emit('REC:seek', data);
-    const chatMsg = { id: socket.id, cmd: 'seek', msg: data.toString() };
+    const chatMsg = { id: socket.id, cmd: 'seek', msg: data?.toString() };
     this.addChatMessage(socket, chatMsg);
   };
 
