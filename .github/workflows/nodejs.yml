@@ -36,5 +36,5 @@ jobs:
           rm .gitignore
           git add --all
           git remote add release https://howardchung:$RELEASE_TOKEN@github.com/howardchung/watchparty-release.git
-          git commit -m --quiet "Built from ${{ github.head_ref }}.${{ github.sha }}" 
+          git commit --quiet -m "Built from ${{ github.sha }}" 
           git push release master -f
