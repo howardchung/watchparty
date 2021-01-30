@@ -27,13 +27,14 @@ jobs:
       - run: npm run build --if-present
         env:
           CI: true
+          RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
       - name: Push to remote
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "watchparty+github-actions[bot]@users.noreply.github.com"
 
           rm .gitignore
-          git add --all
+          git add --all > /dev/null
           git remote add release https://howardchung:$RELEASE_TOKEN@github.com/howardchung/watchparty-release
           git commit -m "Built from ${{ github.head_ref }}.${{ github.sha }}"
           git push release master -f
