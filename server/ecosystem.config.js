@@ -5,6 +5,14 @@ module.exports = {
       script: './buildServer/server.js',
     },
     {
+      name: 'shard1',
+      script: './buildServer/server.js',
+      env: {
+        SHARD: 1,
+        PORT: 3001,
+      },
+    },
+    {
       name: 'vmBackground',
       script: './buildServer/vmBackground.js',
     },

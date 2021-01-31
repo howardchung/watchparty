@@ -7,6 +7,7 @@ certbot certonly --standalone -n --email howardzchung@gmail.com --agree-tos -d $
 #certbot certonly --dns-cloudflare --dns-cloudflare-credentials ~/cloudflare.ini -d *.watchparty.me --preferred-challenges dns-01
 
 apt install -y nginx
+apt install -y bind9
 
 echo 'events {}
 http {
@@ -17,7 +18,7 @@ http {
     ssl_certificate_key /etc/letsencrypt/live/HOSTNAME_PLACEHOLDER.watchparty.me/privkey.pem;
 
     location / {
-        resolver 8.8.8.8;
+        resolver 127.0.0.1;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header Host $host;
         proxy_pass http://$arg_ip;
