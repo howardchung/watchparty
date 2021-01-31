@@ -8,6 +8,7 @@ if (config.REDIS_URL) {
   redis = new Redis(config.REDIS_URL);
 }
 
+statsTimeSeries();
 setInterval(statsTimeSeries, 5 * 60 * 1000);
 
 async function statsTimeSeries() {
@@ -16,7 +17,7 @@ async function statsTimeSeries() {
       .map((app) => app.env?.PORT)
       .filter(Boolean)
       // TODO remove this filter when sharding deployed
-      .filter((port) => port === 80)
+      .filter((port) => port === config.PORT)
       .map((port) =>
         axios({
           url: `http://localhost:${port}/stats?key=${config.STATS_KEY}`,
@@ -64,13 +65,13 @@ function combine(a: any, b: any) {
   Object.keys(b).forEach((key) => {
     if (key.startsWith('current')) {
       if (typeof b[key] === 'number') {
-        result[key] = result[key] + b[key];
+        result[key] = (result[key] || 0) + b[key];
       } else if (typeof b[key] === 'string') {
-        result[key] = result[key] + b[key];
+        result[key] = (result[key] || '') + b[key];
       } else if (Array.isArray(b[key])) {
-        result[key] = [...result[key], ...b[key]];
+        result[key] = [...(result[key] || []), ...b[key]];
       } else if (typeof b[key] === 'object') {
-        result[key] = combine(result[key], b[key]);
+        result[key] = combine(result[key] || {}, b[key]);
       }
     } else {
       result[key] = a[key] || b[key];
