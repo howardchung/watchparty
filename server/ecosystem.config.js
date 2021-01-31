@@ -13,8 +13,8 @@ module.exports = {
       },
     },
     {
-      name: 'vmBackground',
-      script: './buildServer/vmBackground.js',
+      name: 'vmWorker',
+      script: './buildServer/vmWorker.js',
     },
     {
       name: 'syncSubs',
