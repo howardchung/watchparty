@@ -1,8 +1,20 @@
+import config from './config';
+import Redis from 'ioredis';
+import axios from 'axios';
+
+let redis: Redis.Redis | undefined = undefined;
+if (config.REDIS_URL) {
+  redis = new Redis(config.REDIS_URL);
+}
+
 setInterval(statsTimeSeries, 5 * 60 * 1000);
 
 async function statsTimeSeries() {
   if (redis) {
-    const stats = await getStats();
+    const response = await axios({
+      url: `http://localhost:${config.PORT}/stats`,
+    });
+    const stats = response.data;
     await redis.lpush(
       'timeSeries',
       JSON.stringify({
@@ -21,8 +33,10 @@ async function statsTimeSeries() {
         redisUsage: stats.redisUsage,
         avgStartMS:
           stats.vBrowserStartMS &&
-          stats.vBrowserStartMS.reduce((a, b) => Number(a) + Number(b), 0) /
-            stats.vBrowserStartMS.length,
+          stats.vBrowserStartMS.reduce(
+            (a: string, b: string) => Number(a) + Number(b),
+            0
+          ) / stats.vBrowserStartMS.length,
       })
     );
     await redis.ltrim('timeSeries', 0, 300);
