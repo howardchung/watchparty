@@ -15,6 +15,7 @@ async function statsTimeSeries() {
     const shardReqs = ecosystem.apps
       .map((app) => app.env?.PORT)
       .filter(Boolean)
+      // TODO remove this filter when sharding deployed
       .filter((port) => port === 80)
       .map((port) =>
         axios({
