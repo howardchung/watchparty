@@ -519,9 +519,6 @@ export default class App extends React.Component<AppProps, AppState> {
     socket.on('REC:lock', (data: string) => {
       this.setState({ roomLock: data });
     });
-    socket.on('REC:isChatDisabled', (data: boolean) => {
-      this.setState({ isChatDisabled: data });
-    });
     socket.on('roster', (data: User[]) => {
       this.setState(
         { participants: data, rosterUpdateTS: Number(new Date()) },
@@ -1297,7 +1294,12 @@ export default class App extends React.Component<AppProps, AppState> {
             negative
             header="Error"
             content={this.state.errorMessage}
-            style={{ position: 'fixed', bottom: '10px', right: '10px' }}
+            style={{
+              position: 'fixed',
+              bottom: '10px',
+              right: '10px',
+              zIndex: 1000,
+            }}
           ></Message>
         )}
         {this.state.successMessage && (
@@ -1305,7 +1307,12 @@ export default class App extends React.Component<AppProps, AppState> {
             positive
             header="Success"
             content={this.state.successMessage}
-            style={{ position: 'fixed', bottom: '10px', right: '10px' }}
+            style={{
+              position: 'fixed',
+              bottom: '10px',
+              right: '10px',
+              zIndex: 1000,
+            }}
           ></Message>
         )}
         {!this.state.error && !this.state.isAutoPlayable && (
@@ -1775,6 +1782,9 @@ export default class App extends React.Component<AppProps, AppState> {
                   socket={this.socket}
                   isSubscriber={this.state.isSubscriber}
                   roomId={this.state.roomId}
+                  setChatDisabled={(val) =>
+                    this.setState({ isChatDisabled: val })
+                  }
                 />
               </Grid.Column>
             </Grid.Row>
