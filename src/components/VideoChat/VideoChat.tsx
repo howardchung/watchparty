@@ -60,10 +60,26 @@ export class VideoChat extends React.Component<VideoChatProps> {
 
   setupWebRTC = async () => {
     // Set up our own video
-    const stream = await navigator.mediaDevices.getUserMedia({
-      audio: true,
-      video: true,
-    });
+    // Create default stream
+    let black = ({ width = 640, height = 480 } = {}) => {
+      let canvas: any = Object.assign(document.createElement('canvas'), {
+        width,
+        height,
+      });
+      canvas.getContext('2d')?.fillRect(0, 0, width, height);
+      let stream = canvas.captureStream();
+      return Object.assign(stream.getVideoTracks()[0], { enabled: false });
+    };
+    let stream = new MediaStream([black()]);
+
+    try {
+      stream = await navigator?.mediaDevices?.getUserMedia({
+        audio: true,
+        video: true,
+      });
+    } catch (e) {
+      console.warn(e);
+    }
     this.ourStream = stream;
     // alert server we've joined video chat
     this.socket.emit('CMD:joinVideo');
@@ -83,20 +99,20 @@ export class VideoChat extends React.Component<VideoChatProps> {
   };
 
   toggleVideoWebRTC = () => {
-    if (this.ourStream) {
+    if (this.ourStream && this.ourStream.getVideoTracks()[0]) {
       this.ourStream.getVideoTracks()[0].enabled = !this.ourStream.getVideoTracks()[0]
-        .enabled;
+        ?.enabled;
     }
   };
 
   getVideoWebRTC = () => {
-    return this.ourStream && this.ourStream.getVideoTracks()[0].enabled;
+    return this.ourStream && this.ourStream.getVideoTracks()[0]?.enabled;
   };
 
   toggleAudioWebRTC = () => {
-    if (this.ourStream) {
+    if (this.ourStream && this.ourStream.getAudioTracks()[0]) {
       this.ourStream.getAudioTracks()[0].enabled = !this.ourStream.getAudioTracks()[0]
-        .enabled;
+        ?.enabled;
     }
   };
 
