@@ -4,7 +4,6 @@ module.exports = {
       name: 'server',
       script: './buildServer/server.js',
       env: {
-        SHARD: 0,
         PORT: 80,
       },
     },

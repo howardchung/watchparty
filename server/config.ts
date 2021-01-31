@@ -40,7 +40,7 @@ const defaults = {
   BUILD_DIRECTORY: 'build', // Name of the directory where the built React UI is served from
   VM_MANAGER_ID: 'Docker', // ID value of the VM Manager implementation to use (see vm directory)
   VM_MIN_UPTIME_MINUTES: 45, // Number of minutes VMs must exist for before being eligible for termination
-  SHARD: 0, // Shard ID of the web server (configure in ecosystem.config.js)
+  SHARD: undefined, // Shard ID of the web server (configure in ecosystem.config.js)
 };
 
 export default {
