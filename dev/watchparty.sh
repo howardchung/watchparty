@@ -5,6 +5,46 @@ ufw allow ssh
 # Enable ufw
 ufw enable
 
+# Install nginx/bind9
+apt install -y nginx
+apt install -y bind9
+
+echo 'events {}
+http {
+  upstream roundrobin {
+    server 127.0.0.1:3001;
+    server 127.0.0.1:3002;
+    server 127.0.0.1:3003;
+  }
+
+  upstream 1 {
+    server 127.0.0.1:3001;
+  }
+
+  upstream 2 {
+    server 127.0.0.1:3002;
+  }
+
+  upstream 3 {
+    server 127.0.0.1:3003;
+  }
+
+  map $http_x_server_select $pool {
+     default "roundrobin";
+     1 "1";
+     2 "2";
+     3 "3";
+  }
+
+  server {
+    listen 3000;
+    location / {
+      proxy_pass http://$pool;
+    }
+  }
+}' > /etc/nginx/nginx.conf
+/etc/init.d/nginx reload
+
 # Install git
 apt update
 apt install -y git

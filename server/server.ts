@@ -74,7 +74,9 @@ async function init() {
   if (redis) {
     // Load rooms from Redis
     console.log('loading rooms from redis');
-    const keys = await redis.keys('/*');
+    const keys = await redis.keys(
+      config.SHARD ? `/${config.SHARD}-[a-z]*` : '/[a-z]*'
+    );
     console.log(util.format('found %s rooms in redis', keys.length));
     for (let i = 0; i < keys.length; i++) {
       const key = keys[i];
@@ -176,16 +178,18 @@ app.get('/youtube', async (req, res) => {
 });
 
 app.post('/createRoom', (req, res) => {
-  let name = names.choose();
+  const genName = () =>
+    '/' + (config.SHARD ? `${config.SHARD}-` : '') + names.choose();
+  let name = genName();
   // Keep retrying until no collision
   while (rooms.has(name)) {
-    name = names.choose();
+    name = genName();
   }
   console.log('createRoom: ', name);
-  const newRoom = new Room(io, vmManagers, '/' + name);
+  const newRoom = new Room(io, vmManagers, name);
   newRoom.video = req.body?.video || '';
-  rooms.set('/' + name, newRoom);
-  res.json({ name });
+  rooms.set(name, newRoom);
+  res.json({ name: name.slice(1) });
 });
 
 app.get('/settings', (req, res) => {
