@@ -92,7 +92,13 @@ async function init() {
   }
   if (postgres) {
     // load the roomState from postgres to fill any rooms that were lost in redis
-    const postgresRooms = (await postgres.query('SELECT * from room')).rows;
+    const postgresRooms = (
+      await postgres.query(
+        `SELECT * from room where "roomId" SIMILAR TO '${
+          config.SHARD ? `/${config.SHARD}-[a-z]%` : '/[a-z]%'
+        }'`
+      )
+    ).rows;
     console.log(
       util.format('found %s rooms in postgres', postgresRooms.length)
     );
