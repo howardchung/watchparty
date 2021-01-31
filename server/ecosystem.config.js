@@ -13,6 +13,14 @@ module.exports = {
       },
     },
     {
+      name: 'shard2',
+      script: './buildServer/server.js',
+      env: {
+        SHARD: 2,
+        PORT: 3002,
+      },
+    },
+    {
       name: 'vmWorker',
       script: './buildServer/vmWorker.js',
     },
@@ -21,8 +29,8 @@ module.exports = {
       script: './buildServer/syncSubs.js',
     },
     {
-      name: 'stats',
-      script: './buildServer/stats.js',
+      name: 'timeSeries',
+      script: './buildServer/timeSeries.js',
     },
   ],
 };

@@ -2,6 +2,7 @@
 ufw allow http
 ufw allow https
 ufw allow ssh
+ufw allow 3000
 # Enable ufw
 ufw enable
 
@@ -14,7 +15,6 @@ http {
   upstream roundrobin {
     server 127.0.0.1:3001;
     server 127.0.0.1:3002;
-    server 127.0.0.1:3003;
   }
 
   upstream 1 {
@@ -25,21 +25,23 @@ http {
     server 127.0.0.1:3002;
   }
 
-  upstream 3 {
-    server 127.0.0.1:3003;
-  }
-
-  map $http_x_server_select $pool {
+  map $arg_shard $pool {
      default "roundrobin";
      1 "1";
      2 "2";
-     3 "3";
   }
 
   server {
     listen 3000;
     location / {
       proxy_pass http://$pool;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header Host $host;
+
+      # enable WebSockets
+      proxy_http_version 1.1;
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection "upgrade";
     }
   }
 }' > /etc/nginx/nginx.conf
