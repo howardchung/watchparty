@@ -13,16 +13,20 @@ setInterval(statsTimeSeries, 5 * 60 * 1000);
 
 async function statsTimeSeries() {
   if (redis) {
-    const shardReqs = ecosystem.apps
-      .map((app) => app.env?.PORT)
-      .filter(Boolean)
-      // TODO remove this filter when sharding deployed
-      .filter((port) => port === config.PORT)
-      .map((port) =>
-        axios({
-          url: `http://localhost:${port}/stats?key=${config.STATS_KEY}`,
-        })
-      );
+    const ports =
+      process.env.NODE_ENV === 'development'
+        ? [8080]
+        : ecosystem.apps
+            .map((app) => app.env?.PORT)
+            .filter(Boolean)
+            // TODO remove this filter when sharding deployed
+            .filter((port) => port === config.PORT);
+    const shardReqs = ports.map((port) =>
+      axios({
+        url: `http://localhost:${port}/stats?key=${config.STATS_KEY}`,
+        validateStatus: () => true,
+      })
+    );
 
     const shardData = await Promise.all(shardReqs);
 
@@ -31,6 +35,8 @@ async function statsTimeSeries() {
       const data = shard.data;
       stats = combine(stats, data);
     });
+
+    console.log(stats);
 
     await redis.lpush(
       'timeSeries',
