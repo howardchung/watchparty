@@ -111,6 +111,7 @@ body {
 
 .fullHeightColumn.fullHeightColumn.fullHeightColumn {
   height: calc(100vh - 62px);
+  transition: width ease-out 0.5s;
 }
 
 .fullHeightColumnFullscreen.fullHeightColumnFullscreen.fullHeightColumnFullscreen {
