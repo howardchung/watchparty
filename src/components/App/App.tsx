@@ -111,6 +111,7 @@ interface AppState {
   errorMessage: string;
   successMessage: string;
   isChatDisabled: boolean;
+  showRightBar: boolean;
 }
 
 export default class App extends React.Component<AppProps, AppState> {
@@ -162,6 +163,7 @@ export default class App extends React.Component<AppProps, AppState> {
     errorMessage: '',
     successMessage: '',
     isChatDisabled: false,
+    showRightBar: true,
   };
   socket: any = null;
   watchPartyYTPlayer: any = null;
@@ -1258,15 +1260,17 @@ export default class App extends React.Component<AppProps, AppState> {
         openSubscribeModal={() => this.setState({ isSubscribeModalOpen: true })}
       />
     );
+    const displayRightContent =
+      this.state.showRightBar || this.state.fullScreen;
     const rightBar = (
       <Grid.Column
-        width={4}
+        width={displayRightContent ? 4 : 1}
         style={{ display: 'flex', flexDirection: 'column' }}
-        className={
+        className={`${
           this.state.fullScreen
             ? 'fullHeightColumnFullscreen'
             : 'fullHeightColumn'
-        }
+        }`}
       >
         <Input
           inverted
@@ -1274,6 +1278,7 @@ export default class App extends React.Component<AppProps, AppState> {
           label={'My name is:'}
           value={this.state.myName}
           onChange={this.updateName}
+          style={{ visibility: displayRightContent ? '' : 'hidden' }}
           icon={
             <Icon
               onClick={() => this.updateName(null, { value: generateName() })}
@@ -1284,12 +1289,15 @@ export default class App extends React.Component<AppProps, AppState> {
             />
           }
         />
-        {/* <Divider inverted horizontal></Divider> */}
         {
           <Menu
             inverted
             widths={3}
-            style={{ marginTop: '4px', marginBottom: '4px' }}
+            style={{
+              marginTop: '4px',
+              marginBottom: '4px',
+              visibility: displayRightContent ? '' : 'hidden',
+            }}
           >
             <Menu.Item
               name="chat"
@@ -1327,7 +1335,7 @@ export default class App extends React.Component<AppProps, AppState> {
           socket={this.socket}
           scrollTimestamp={this.state.scrollTimestamp}
           getMediaDisplayName={this.getMediaDisplayName}
-          hide={this.state.currentTab !== 'chat'}
+          hide={this.state.currentTab !== 'chat' || !displayRightContent}
           isChatDisabled={this.state.isChatDisabled}
         />
         {this.state.state === 'connected' && (
@@ -1338,11 +1346,11 @@ export default class App extends React.Component<AppProps, AppState> {
             pictureMap={this.state.pictureMap}
             tsMap={this.state.tsMap}
             rosterUpdateTS={this.state.rosterUpdateTS}
-            hide={this.state.currentTab !== 'people'}
+            hide={this.state.currentTab !== 'people' || !displayRightContent}
           />
         )}
         <SettingsTab
-          hide={this.state.currentTab !== 'settings'}
+          hide={this.state.currentTab !== 'settings' || !displayRightContent}
           user={this.props.user}
           roomLock={this.state.roomLock}
           setRoomLock={this.setRoomLock}
@@ -1435,7 +1443,10 @@ export default class App extends React.Component<AppProps, AppState> {
         {
           <Grid stackable celled="internally">
             <Grid.Row>
-              <Grid.Column width={12} className="fullHeightColumn">
+              <Grid.Column
+                width={this.state.showRightBar ? 12 : 15}
+                className="fullHeightColumn"
+              >
                 <div
                   style={{
                     display: 'flex',
@@ -1781,6 +1792,20 @@ export default class App extends React.Component<AppProps, AppState> {
                     </div>
                   )}
                 </div>
+                <Button
+                  style={{
+                    position: 'absolute',
+                    top: '50%',
+                    right: 'calc(0% - 18px)',
+                    zIndex: 900,
+                  }}
+                  circular
+                  size="tiny"
+                  icon={this.state.showRightBar ? 'angle right' : 'angle left'}
+                  onClick={() =>
+                    this.setState({ showRightBar: !this.state.showRightBar })
+                  }
+                />
               </Grid.Column>
               {rightBar}
             </Grid.Row>
