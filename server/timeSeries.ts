@@ -20,7 +20,7 @@ async function statsTimeSeries() {
             .map((app) => app.env?.PORT)
             .filter(Boolean)
             // TODO remove this filter when sharding deployed
-            .filter((port) => port === config.PORT);
+            .filter((port) => Number(port) === Number(config.PORT));
     const shardReqs = ports.map((port) =>
       axios({
         url: `http://localhost:${port}/stats?key=${config.STATS_KEY}`,
