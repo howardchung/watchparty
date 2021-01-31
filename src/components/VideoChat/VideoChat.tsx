@@ -183,6 +183,11 @@ export class VideoChat extends React.Component<VideoChatProps> {
 
   render() {
     const { participants, pictureMap, nameMap, tsMap, socket } = this.props;
+    const videoChatContentStyle = {
+      height: participants.length < 3 ? 220 : 110,
+      borderRadius: '4px',
+      objectFit: 'contain',
+    };
     return (
       <div
         style={{
@@ -197,6 +202,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
             style={{
               display: 'flex',
               flexWrap: 'wrap',
+              marginTop: '8px',
             }}
           >
             <Button
@@ -257,7 +263,14 @@ export class VideoChat extends React.Component<VideoChatProps> {
             </Button>
           </div>
         )}
-        <div style={{ display: 'flex', flexWrap: 'wrap' }}>
+        <div
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            justifyContent: 'center',
+            marginTop: '8px',
+          }}
+        >
           {participants.map((p) => {
             return (
               <div key={p.id}>
@@ -273,14 +286,14 @@ export class VideoChat extends React.Component<VideoChatProps> {
                         ref={(el) => {
                           this.videoRefs[p.id] = el;
                         }}
-                        className="videoChatContent"
+                        style={videoChatContentStyle as any}
                         autoPlay
                         muted={p.id === socket.id}
                         data-id={p.id}
                       />
                     ) : (
                       <img
-                        className="videoChatContent"
+                        style={videoChatContentStyle as any}
                         // broken image: https://ui-avatars.com/api/?name=haidee&background=B03060&size=256&color=ffffff
                         src={
                           pictureMap[p.id] ||
