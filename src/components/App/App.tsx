@@ -328,11 +328,17 @@ export default class App extends React.Component<AppProps, AppState> {
     } catch (e) {
       console.warn('[ALERT] Could not parse saved passwords');
     }
+    let shard = undefined;
+    if (/^\d/.test(roomId)) {
+      // Rooms assigned to shards start with a number
+      shard = /^\d+/.exec(roomId)?.[0];
+    }
     const socket = io.connect(serverPath + roomId, {
       transports: ['websocket'],
       query: {
         clientId: getAndSaveClientId(),
         password,
+        shard,
       },
     });
     this.socket = socket;
