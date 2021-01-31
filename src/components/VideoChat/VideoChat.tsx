@@ -91,10 +91,10 @@ export class VideoChat extends React.Component<VideoChatProps> {
         track.stop();
       });
     this.ourStream = undefined;
-    Object.values(this.videoPCs).forEach((pc) => {
-      pc.close();
+    Object.keys(this.videoPCs).forEach((key) => {
+      this.videoPCs[key].close();
+      delete this.videoPCs[key];
     });
-    this.videoPCs = {};
     this.socket.emit('CMD:leaveVideo');
   };
 
@@ -125,14 +125,19 @@ export class VideoChat extends React.Component<VideoChatProps> {
   };
 
   updateWebRTC = () => {
-    // TODO teardown connections to people who leave
     if (!this.ourStream) {
       // We haven't started video chat, exit
       return;
     }
     this.props.participants.forEach((user) => {
       const id = user.id;
+      if (!user.isVideoChat && this.videoPCs[id]) {
+        // User isn't in video chat but we have a connection, close it
+        this.videoPCs[id].close();
+        delete this.videoPCs[id];
+      }
       if (!user.isVideoChat || this.videoPCs[id]) {
+        // User isn't in video chat, or we already have a connection to them
         return;
       }
       if (id === this.socket.id) {
