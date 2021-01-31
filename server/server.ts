@@ -64,11 +64,6 @@ const launchTime = Number(new Date());
 const rooms = new Map<string, Room>();
 
 const vmManagers = createVMManagers();
-if (process.env.NODE_ENV === 'development') {
-  require('./vmWorker');
-  require('./syncSubs');
-  require('./timeSeries');
-}
 init();
 
 async function init() {
@@ -123,6 +118,11 @@ async function init() {
   setInterval(release, releaseInterval);
   setInterval(cleanupRooms, 5 * 60 * 1000);
   saveRooms();
+  if (process.env.NODE_ENV === 'development') {
+    require('./vmWorker');
+    require('./syncSubs');
+    require('./timeSeries');
+  }
 }
 
 app.use(cors());
