@@ -20,5 +20,9 @@ module.exports = {
       name: 'syncSubs',
       script: './buildServer/syncSubs.js',
     },
+    {
+      name: 'stats',
+      script: './buildServer/stats.js',
+    },
   ],
 };
