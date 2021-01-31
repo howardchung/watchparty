@@ -65,8 +65,9 @@ const rooms = new Map<string, Room>();
 
 const vmManagers = createVMManagers();
 if (process.env.NODE_ENV === 'development') {
-  require('./vmBackground');
+  require('./vmWorker');
   require('./syncSubs');
+  require('./timeSeries');
 }
 init();
 
