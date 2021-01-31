@@ -424,8 +424,8 @@ function cleanupRooms() {
 }
 
 async function getStats() {
-  const roomData: any[] = [];
   const now = Number(new Date());
+  const currentRoomData: any[] = [];
   let currentUsers = 0;
   let currentHttp = 0;
   let currentVBrowser = 0;
@@ -434,8 +434,9 @@ async function getStats() {
   let currentScreenShare = 0;
   let currentFileShare = 0;
   let currentVideoChat = 0;
-  let vBrowserClientCounts: NumberDict = {};
-  let roomSizeCounts: NumberDict = {};
+  let currentRoomSizeCounts: NumberDict = {};
+  let currentVBrowserClientCounts: NumberDict = {};
+  let currentRoomCount = rooms.size;
   const vmManager = vmManagers.standard;
   const vmManagerLarge = vmManagers.large;
   rooms.forEach((room) => {
@@ -472,28 +473,28 @@ async function getStats() {
       currentFileShare += 1;
     }
     if (obj.rosterLength > 0) {
-      if (!roomSizeCounts[obj.rosterLength]) {
-        roomSizeCounts[obj.rosterLength] = 0;
+      if (!currentRoomSizeCounts[obj.rosterLength]) {
+        currentRoomSizeCounts[obj.rosterLength] = 0;
       }
-      roomSizeCounts[obj.rosterLength] += 1;
+      currentRoomSizeCounts[obj.rosterLength] += 1;
     }
     if (obj.vBrowser && obj.vBrowser.creatorClientID) {
-      if (!vBrowserClientCounts[obj.vBrowser.creatorClientID]) {
-        vBrowserClientCounts[obj.vBrowser.creatorClientID] = 0;
+      if (!currentVBrowserClientCounts[obj.vBrowser.creatorClientID]) {
+        currentVBrowserClientCounts[obj.vBrowser.creatorClientID] = 0;
       }
-      vBrowserClientCounts[obj.vBrowser.creatorClientID] += 1;
+      currentVBrowserClientCounts[obj.vBrowser.creatorClientID] += 1;
     }
     if (obj.video) {
-      roomData.push(obj);
+      currentRoomData.push(obj);
     }
   });
 
-  vBrowserClientCounts = Object.fromEntries(
-    Object.entries(vBrowserClientCounts).filter(([key, val]) => val > 1)
+  currentVBrowserClientCounts = Object.fromEntries(
+    Object.entries(currentVBrowserClientCounts).filter(([key, val]) => val > 1)
   );
 
   // Sort newest first
-  roomData.sort((a, b) => b.creationTime - a.creationTime);
+  currentRoomData.sort((a, b) => b.creationTime - a.creationTime);
   const uptime = Number(new Date()) - launchTime;
   const cpuUsage = os.loadavg();
   const memUsage = process.memoryUsage().rss;
@@ -601,12 +602,11 @@ async function getStats() {
 
   return {
     uptime,
-    roomCount: rooms.size,
     cpuUsage,
     memUsage,
     redisUsage,
-    numPermaRooms,
-    roomSizeCounts,
+    currentRoomCount,
+    currentRoomSizeCounts,
     currentUsers,
     currentVBrowser,
     currentVBrowserLarge,
@@ -615,6 +615,8 @@ async function getStats() {
     currentScreenShare,
     currentFileShare,
     currentVideoChat,
+    currentVBrowserClientCounts,
+    numPermaRooms,
     chatMessages,
     urlStarts,
     screenShareStarts,
@@ -637,7 +639,6 @@ async function getStats() {
     stagingVBrowsers,
     availableVBrowsersLarge,
     stagingVBrowsersLarge,
-    vBrowserClientCounts,
     vBrowserStartMS,
     vBrowserStageRetries,
     vBrowserSessionMS,
@@ -648,6 +649,6 @@ async function getStats() {
     vBrowserUIDs,
     vBrowserUIDsCard,
     vBrowserUIDMinutes,
-    rooms: roomData,
+    currentRoomData,
   };
 }
