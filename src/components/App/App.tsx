@@ -1222,6 +1222,8 @@ export default class App extends React.Component<AppProps, AppState> {
     return this.props.user?.uid === this.state.roomLock;
   };
 
+  setChatDisabled = (val: boolean) => this.setState({ isChatDisabled: val });
+
   getLeaderTime = () => {
     return Math.max(...Object.values(this.state.tsMap));
   };
@@ -1782,9 +1784,7 @@ export default class App extends React.Component<AppProps, AppState> {
                   socket={this.socket}
                   isSubscriber={this.state.isSubscriber}
                   roomId={this.state.roomId}
-                  setChatDisabled={(val) =>
-                    this.setState({ isChatDisabled: val })
-                  }
+                  setChatDisabled={this.setChatDisabled}
                 />
               </Grid.Column>
             </Grid.Row>
