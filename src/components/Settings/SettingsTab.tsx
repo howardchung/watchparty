@@ -44,13 +44,13 @@ export const SettingsTab = ({
   const [validVanity, setValidVanity] = useState(true);
   const [validVanityLoading, setValidVanityLoading] = useState(false);
   const [roomLink, setRoomLink] = useState<string>('');
-  const getRoomLink = (vanity: string) => {
-    if (vanity) {
-      return `${window.location.origin}/r/${vanity}`;
-    }
-    return `${window.location.origin}${roomId.replace('/', '#')}`;
-  };
   useEffect(() => {
+    const getRoomLink = (vanity: string) => {
+      if (vanity) {
+        return `${window.location.origin}/r/${vanity}`;
+      }
+      return `${window.location.origin}${roomId.replace('/', '#')}`;
+    };
     if (socket) {
       socket.emit('CMD:getRoomState');
       const handleRoomState = (data: any) => {
@@ -67,7 +67,7 @@ export const SettingsTab = ({
         socket.off('REC:getRoomState', handleRoomState);
       };
     }
-  }, [socket, roomId]);
+  }, [socket, roomId, setChatDisabled]);
   const setRoomState = useCallback(
     async (data: any) => {
       const token = await user?.getIdToken();
