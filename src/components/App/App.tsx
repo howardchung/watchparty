@@ -44,19 +44,12 @@ import { MultiStreamModal } from '../Modal/MultiStreamModal';
 import { ComboBox } from '../ComboBox/ComboBox';
 import { SearchComponent } from '../SearchComponent/SearchComponent';
 import { Controls } from '../Controls/Controls';
-import firebase from 'firebase/app';
-import 'firebase/auth';
 import { SubscribeModal } from '../Modal/SubscribeModal';
 import { VBrowserModal } from '../Modal/VBrowserModal';
 import { SettingsTab } from '../Settings/SettingsTab';
 import { ErrorModal } from '../Modal/ErrorModal';
 import { PasswordModal } from '../Modal/PasswordModal';
 import { SubscribeButton } from '../SubscribeButton/SubscribeButton';
-
-const firebaseConfig = process.env.REACT_APP_FIREBASE_CONFIG;
-if (firebaseConfig) {
-  firebase.initializeApp(JSON.parse(firebaseConfig));
-}
 
 declare global {
   interface Window {
@@ -69,6 +62,7 @@ declare global {
 
 interface AppProps {
   vanity?: string;
+  user?: firebase.User;
 }
 
 interface AppState {
@@ -92,7 +86,6 @@ interface AppState {
   isScreenSharing: boolean;
   isScreenSharingFile: boolean;
   isVBrowser: boolean;
-  user?: firebase.User;
   isYouTubeReady: boolean;
   isAutoPlayable: boolean;
   downloaded: number;
@@ -142,7 +135,6 @@ export default class App extends React.Component<AppProps, AppState> {
     isScreenSharing: false,
     isScreenSharingFile: false,
     isVBrowser: false,
-    user: undefined,
     isYouTubeReady: false,
     isAutoPlayable: true,
     downloaded: 0,
@@ -189,19 +181,15 @@ export default class App extends React.Component<AppProps, AppState> {
       window.fetch(serverPath + '/ping');
     }, 10 * 60 * 1000);
 
-    if (firebaseConfig) {
-      firebase.auth().onAuthStateChanged(async (user: firebase.User | null) => {
-        if (user) {
-          // console.log(user);
-          this.setState({ user }, async () => {
-            this.loadSignInData();
-          });
-        }
-      });
-    }
     this.loadSettings();
     this.loadYouTube();
     this.init();
+  }
+
+  componentDidUpdate(prevProps: AppProps) {
+    if (this.props.user && !prevProps.user) {
+      this.loadSignInData();
+    }
   }
 
   loadSettings = async () => {
@@ -213,7 +201,7 @@ export default class App extends React.Component<AppProps, AppState> {
   };
 
   loadSignInData = async () => {
-    const user = this.state.user;
+    const user = this.props.user;
     if (user && this.socket) {
       // NOTE: firebase auth doesn't provide the actual first name data that individual providers (G/FB) do
       // It's accessible at the time the user logs in but not afterward
@@ -349,9 +337,6 @@ export default class App extends React.Component<AppProps, AppState> {
       // Load username from localstorage
       let userName = window.localStorage.getItem('watchparty-username');
       this.updateName(null, { value: userName || generateName() });
-      // if (!this.state.user && firebaseConfig) {
-      //   await firebase.auth().signInAnonymously();
-      // }
       this.loadSignInData();
     });
     socket.on('error', (err: any) => {
@@ -707,7 +692,7 @@ export default class App extends React.Component<AppProps, AppState> {
   setupVBrowser = async (rcToken: string, options: { size: string }) => {
     // user.uid is the public user identifier
     // user.getIdToken() is the secret access token we can send to the server to prove identity
-    const user = this.state.user;
+    const user = this.props.user;
     const uid = user?.uid;
     const token = await user?.getIdToken();
     this.socket.emit('CMD:startVBrowser', { options, uid, token, rcToken });
@@ -1217,8 +1202,8 @@ export default class App extends React.Component<AppProps, AppState> {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        uid: this.state.user?.uid,
-        token: await this.state.user?.getIdToken(),
+        uid: this.props.user?.uid,
+        token: await this.props.user?.getIdToken(),
         return_url: window.location.href,
       }),
     });
@@ -1228,8 +1213,8 @@ export default class App extends React.Component<AppProps, AppState> {
   };
 
   setRoomLock = async (locked: boolean) => {
-    const uid = this.state.user?.uid;
-    const token = await this.state.user?.getIdToken();
+    const uid = this.props.user?.uid;
+    const token = await this.props.user?.getIdToken();
     this.socket.emit('CMD:lock', { uid, token, locked });
   };
 
@@ -1237,7 +1222,7 @@ export default class App extends React.Component<AppProps, AppState> {
     if (!this.state.roomLock) {
       return true;
     }
-    return this.state.user?.uid === this.state.roomLock;
+    return this.props.user?.uid === this.state.roomLock;
   };
 
   getLeaderTime = () => {
@@ -1285,7 +1270,7 @@ export default class App extends React.Component<AppProps, AppState> {
         )}
         {this.state.isSubscribeModalOpen && (
           <SubscribeModal
-            user={this.state.user}
+            user={this.props.user}
             isSubscriber={this.state.isSubscriber}
             closeSubscribe={() =>
               this.setState({ isSubscribeModalOpen: false })
@@ -1342,7 +1327,7 @@ export default class App extends React.Component<AppProps, AppState> {
             </div>
           </Modal>
         )}
-        <TopBar user={this.state.user} />
+        <TopBar user={this.props.user} />
         {
           <Grid stackable celled="internally">
             <Grid.Row>
@@ -1784,7 +1769,7 @@ export default class App extends React.Component<AppProps, AppState> {
                 )}
                 <SettingsTab
                   hide={this.state.currentTab !== 'settings'}
-                  user={this.state.user}
+                  user={this.props.user}
                   roomLock={this.state.roomLock}
                   setRoomLock={this.setRoomLock}
                   socket={this.socket}
