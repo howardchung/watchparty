@@ -27,4 +27,3 @@ jobs:
       - run: npm run build --if-present
         env:
           CI: true
-          RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}

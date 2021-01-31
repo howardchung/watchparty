@@ -8,5 +8,9 @@ module.exports = {
       name: 'vmBackground',
       script: './buildServer/vmBackground.js',
     },
+    {
+      name: 'syncSubs',
+      script: './buildServer/syncSubs.js',
+    },
   ],
 };
