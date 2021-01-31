@@ -18,7 +18,7 @@ async function statsTimeSeries() {
       .filter((port) => port === 80)
       .map((port) =>
         axios({
-          url: `http://localhost:${port}/stats`,
+          url: `http://localhost:${port}/stats?key=${config.STATS_KEY}`,
         })
       );
 
