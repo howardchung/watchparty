@@ -66,93 +66,10 @@ const rooms = new Map<string, Room>();
 const vmManagers = createVMManagers();
 if (process.env.NODE_ENV === 'development') {
   require('./vmBackground');
+  require('./syncSubs');
 }
 init();
 
-async function syncSubscribers() {
-  if (!config.STRIPE_SECRET_KEY || !config.FIREBASE_ADMIN_SDK_CONFIG) {
-    return;
-  }
-  console.time('syncSubscribers');
-  // Fetch subs, customers from stripe
-  const [subs, customers] = await Promise.all([
-    getAllActiveSubscriptions(),
-    getAllCustomers(),
-  ]);
-
-  const emailMap = new Map();
-  customers.forEach((cust) => {
-    emailMap.set(cust.id, cust.email);
-  });
-
-  const uidMap = new Map();
-  for (let i = 0; i < subs.length; i += 50) {
-    // Batch customers and fetch firebase data
-    const batch = subs.slice(i, i + 50);
-    const fbUsers = await Promise.all(
-      batch
-        .map((sub) =>
-          emailMap.get(sub.customer)
-            ? getUserByEmail(emailMap.get(sub.customer))
-            : null
-        )
-        .filter(Boolean)
-    );
-    fbUsers.forEach((user) => {
-      uidMap.set(user?.email, user?.uid);
-    });
-  }
-
-  // Create sub objects
-  const result = subs.map((sub) => ({
-    customerId: sub.customer,
-    email: emailMap.get(sub.customer),
-    status: sub.status,
-    uid: uidMap.get(emailMap.get(sub.customer)),
-  }));
-
-  // Upsert to DB
-  console.log(result);
-  const postgres2 = new Client({
-    connectionString: config.DATABASE_URL,
-    ssl: { rejectUnauthorized: false },
-  });
-  postgres2.connect();
-  await postgres2?.query('BEGIN TRANSACTION');
-  await postgres2?.query('DELETE FROM subscriber');
-  for (let i = 0; i < result.length; i++) {
-    const row = result[i];
-    const columns = Object.keys(row);
-    const values = Object.values(row);
-    const query = `INSERT INTO subscriber(${columns
-      .map((c) => `"${c}"`)
-      .join(',')})
-    VALUES (${values.map((_, i) => '$' + (i + 1)).join(',')})
-    RETURNING *`;
-    await postgres2?.query(query, values);
-  }
-  await postgres2?.query('COMMIT');
-  console.timeEnd('syncSubscribers');
-}
-
-async function saveRooms() {
-  while (true) {
-    // console.time('roomSave');
-    const roomArr = Array.from(rooms.values());
-    for (let i = 0; i < roomArr.length; i++) {
-      if (roomArr[i].roster.length) {
-        if (redis) {
-          await roomArr[i].saveToRedis();
-        }
-        if (postgres) {
-          // await roomArr[i].saveToPostgres();
-        }
-      }
-    }
-    // console.timeEnd('roomSave');
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-  }
-}
 async function init() {
   if (redis) {
     // Load rooms from Redis
@@ -186,20 +103,18 @@ async function init() {
       }
     }
   }
-  // Start saving rooms
-  saveRooms();
 
   if (!rooms.has('/default')) {
     rooms.set('/default', new Room(io, vmManagers, '/default'));
   }
 
   server.listen(config.PORT, config.HOST);
-  syncSubscribers();
   // Following functions iterate over in-memory rooms
   setInterval(renew, 60 * 1000);
   setInterval(release, releaseInterval);
   setInterval(cleanupRooms, 5 * 60 * 1000);
   setInterval(statsTimeSeries, 5 * 60 * 1000);
+  saveRooms();
 }
 
 app.use(cors());
@@ -394,6 +309,25 @@ app.use('/*', (req, res) => {
     path.resolve(__dirname + `/../${config.BUILD_DIRECTORY}/index.html`)
   );
 });
+
+async function saveRooms() {
+  while (true) {
+    // console.time('roomSave');
+    const roomArr = Array.from(rooms.values());
+    for (let i = 0; i < roomArr.length; i++) {
+      if (roomArr[i].roster.length) {
+        if (redis) {
+          await roomArr[i].saveToRedis();
+        }
+        if (postgres) {
+          // await roomArr[i].saveToPostgres();
+        }
+      }
+    }
+    // console.timeEnd('roomSave');
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  }
+}
 
 function release() {
   // Reset VMs in rooms that are:
