@@ -23,6 +23,7 @@ interface SettingsTabProps {
   socket: Socket;
   isSubscriber: boolean;
   roomId: string;
+  setChatDisabled: (val: boolean) => void;
 }
 
 export const SettingsTab = ({
@@ -33,6 +34,7 @@ export const SettingsTab = ({
   socket,
   isSubscriber,
   roomId,
+  setChatDisabled,
 }: SettingsTabProps) => {
   const [updateTS, setUpdateTS] = useState(0);
   const [vanity, setVanity] = useState<string | undefined>(undefined);
@@ -42,6 +44,12 @@ export const SettingsTab = ({
   const [validVanity, setValidVanity] = useState(true);
   const [validVanityLoading, setValidVanityLoading] = useState(false);
   const [roomLink, setRoomLink] = useState<string>('');
+  const getRoomLink = (vanity: string) => {
+    if (vanity) {
+      return `${window.location.origin}/r/${vanity}`;
+    }
+    return `${window.location.origin}${roomId.replace('/', '#')}`;
+  };
   useEffect(() => {
     if (socket) {
       socket.emit('CMD:getRoomState');
@@ -51,12 +59,8 @@ export const SettingsTab = ({
         setPassword(data.password);
         setRoomLink(getRoomLink(data.vanity));
         setIsChatDisabled(data.isChatDisabled);
-      };
-      const getRoomLink = (vanity: string) => {
-        if (vanity) {
-          return `${window.location.origin}/r/${vanity}`;
-        }
-        return `${window.location.origin}${roomId.replace('/', '#')}`;
+        window.history.replaceState('', '', getRoomLink(data.vanity));
+        setChatDisabled(data.isChatDisabled);
       };
       socket.on('REC:getRoomState', handleRoomState);
       return function cleanup() {

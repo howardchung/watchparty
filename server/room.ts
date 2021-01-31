@@ -824,15 +824,12 @@ export class Room {
         decoded.uid,
       ]);
       const row = result.rows[0];
-      socket.emit('REC:getRoomState', {
+      this.io.of(this.roomId).emit('REC:getRoomState', {
         password: row?.password,
         vanity: row?.vanity,
         owner: row?.owner,
         isChatDisabled: row?.isChatDisabled,
       });
-      this.isChatDisabled = row?.isChatDisabled;
-      this.io.of(this.roomId).emit('REC:isChatDisabled', this.isChatDisabled);
-
       socket.emit('successMessage', 'Saved admin settings');
     } catch (e) {
       console.warn(e);
