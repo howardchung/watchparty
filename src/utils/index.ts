@@ -206,8 +206,10 @@ export const iceServers = () => [
 
 export const serverPath =
   process.env.REACT_APP_SERVER_HOST ||
-  `${window.location.protocol}//${window.location.hostname}${
-    process.env.NODE_ENV === 'production' ? '' : ':8080'
+  `${window.location.protocol}//${
+    process.env.NODE_ENV === 'production'
+      ? window.location.host
+      : `${window.location.hostname}:8080`
   }`;
 
 export async function getMediaPathResults(
