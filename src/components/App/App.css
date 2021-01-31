@@ -113,12 +113,6 @@ body {
   height: calc(100vh - 62px);
 }
 
-.videoChatContent {
-  height: 110px;
-  border-radius: 4px;
-  object-fit: contain;
-}
-
 .ui.labeled.icon.button > .icon.loading,
 .ui.labeled.icon.buttons > .button > .icon.loading {
   background-color: initial;
