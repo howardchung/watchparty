@@ -86,7 +86,7 @@
     "@types/compression": "^1.7.0",
     "@types/cors": "^2.8.6",
     "@types/emoji-mart": "^3.0.2",
-    "@types/express": "^4.17.6",
+    "@types/express": "^4.17.11",
     "@types/firebase": "^3.2.1",
     "@types/ioredis": "^4.16.2",
     "@types/jest": "^25.2.1",
