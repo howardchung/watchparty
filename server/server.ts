@@ -329,7 +329,6 @@ async function saveRooms() {
       if (roomArr[i].roster.length) {
         if (redis) {
           await roomArr[i].saveToRedis(isPermanent);
-          await new Promise((resolve) => setTimeout(resolve, 1));
         }
         if (postgres) {
           // await roomArr[i].saveToPostgres();
@@ -337,6 +336,7 @@ async function saveRooms() {
       }
     }
     // console.timeEnd('roomSave');
+    await new Promise((resolve) => setTimeout(resolve, 1000));
   }
 }
 
