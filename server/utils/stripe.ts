@@ -2,7 +2,7 @@ import config from '../config';
 import Stripe from 'stripe';
 
 const stripe = new Stripe(config.STRIPE_SECRET_KEY as string, {
-  apiVersion: '2020-03-02',
+  apiVersion: '2020-08-27',
 });
 
 export async function getCustomerByEmail(email: string) {
