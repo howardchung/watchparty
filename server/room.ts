@@ -218,19 +218,10 @@ export class Room {
     }
   };
 
-  saveToRedis = async () => {
+  saveToRedis = async (permanent: boolean) => {
     try {
       const roomString = this.serialize();
       const key = this.roomId;
-      let permanent = false;
-      if (postgres) {
-        const result = await postgres.query(
-          `SELECT owner FROM room where "roomId" = $1`,
-          [this.roomId]
-        );
-        const owner = result.rows[0]?.owner;
-        permanent = Boolean(owner);
-      }
       if (permanent) {
         await redis?.set(key, roomString);
         await redis?.persist(key);

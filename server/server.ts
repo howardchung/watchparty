@@ -60,7 +60,7 @@ const names = Moniker.generator([
   Moniker.verb,
 ]);
 const launchTime = Number(new Date());
-
+let permanentRooms: PermanentRoom[] = [];
 const rooms = new Map<string, Room>();
 
 const vmManagers = createVMManagers();
@@ -87,24 +87,22 @@ async function init() {
   }
   if (postgres) {
     // load the roomState from postgres to fill any rooms that were lost in redis
-    const postgresRooms = (
-      await postgres.query(
-        `SELECT * from room where "roomId" SIMILAR TO '${
-          config.SHARD ? `/${config.SHARD}-[a-z]%` : '/[a-z]%'
-        }'`
-      )
-    ).rows;
-    console.log(
-      util.format('found %s rooms in postgres', postgresRooms.length)
+    await cachePermanentRooms();
+    const missingRooms = permanentRooms.filter(
+      (room) => !rooms.has(room.roomId)
     );
-    for (let i = 0; i < postgresRooms.length; i++) {
-      const key = postgresRooms[i].roomId;
-      if (!rooms.has(key)) {
-        rooms.set(
-          key,
-          new Room(io, vmManagers, key, JSON.stringify(postgresRooms[i]))
-        );
-      }
+    console.log(
+      util.format(
+        'found %s rooms in postgres missing from redis',
+        missingRooms.length
+      )
+    );
+    for (let i = 0; i < missingRooms.length; i++) {
+      const key = missingRooms[i].roomId;
+      rooms.set(
+        key,
+        new Room(io, vmManagers, key, JSON.stringify(missingRooms[i]))
+      );
     }
   }
 
@@ -117,6 +115,7 @@ async function init() {
   setInterval(renew, 60 * 1000);
   setInterval(release, releaseInterval);
   setInterval(cleanupRooms, 5 * 60 * 1000);
+  setInterval(cachePermanentRooms, 60 * 1000);
   saveRooms();
   if (process.env.NODE_ENV === 'development') {
     require('./vmWorker');
@@ -321,13 +320,15 @@ app.use('/*', (req, res) => {
 });
 
 async function saveRooms() {
+  const permanentSet = new Set(permanentRooms.map((room) => room.roomId));
   while (true) {
     // console.time('roomSave');
     const roomArr = Array.from(rooms.values());
     for (let i = 0; i < roomArr.length; i++) {
       if (roomArr[i].roster.length) {
         if (redis) {
-          await roomArr[i].saveToRedis();
+          const isPermanent = permanentSet.has(roomArr[i].roomId);
+          await roomArr[i].saveToRedis(isPermanent);
         }
         if (postgres) {
           // await roomArr[i].saveToPostgres();
@@ -428,6 +429,19 @@ function cleanupRooms() {
       }
     }
   });
+}
+
+async function cachePermanentRooms() {
+  if (!postgres) {
+    return;
+  }
+  permanentRooms = (
+    await postgres.query<PermanentRoom>(
+      `SELECT * from room where "roomId" SIMILAR TO '${
+        config.SHARD ? `/${config.SHARD}-[a-z]%` : '/[a-z]%'
+      }'`
+    )
+  ).rows;
 }
 
 async function getStats() {
