@@ -11,8 +11,9 @@ export async function getCustomerByEmail(email: string) {
   }
   const customer = await stripe.customers.list({
     email,
-    expand: ['subscriptions'],
+    expand: ['data.subscriptions'],
   });
+  console.log(customer?.data[0]);
   return customer?.data[0];
 }
 
