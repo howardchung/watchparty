@@ -54,7 +54,7 @@
     "dev": "ts-node-dev --respawn --transpile-only --project server/tsconfig.json server/server.ts",
     "server": "node buildServer/server.js",
     "pm2": "pm2 start buildServer/server.js",
-    "deploy": "git pull origin master && npm install && npm run build && rsync -a -v --delete-after ./build/ ./buildUI && pm2 reload buildServer/ecosystem.config.js",
+    "deploy": "git checkout release && git pull origin release && pm2 reload buildServer/ecosystem.config.js",
     "prettier": "prettier --write ."
   },
   "husky": {
