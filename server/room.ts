@@ -218,14 +218,16 @@ export class Room {
     }
   };
 
-  saveToRedis = async (permanent: boolean) => {
+  saveToRedis = async (permanent: boolean | null) => {
     try {
       const roomString = this.serialize();
       const key = this.roomId;
-      if (permanent) {
+      if (permanent === null) {
+        await redis?.set(key, roomString);
+      } else if (permanent === true) {
         await redis?.set(key, roomString);
         await redis?.persist(key);
-      } else {
+      } else if (permanent === false) {
         await redis?.setex(key, 24 * 60 * 60, roomString);
       }
     } catch (e) {
@@ -257,9 +259,9 @@ export class Room {
     const isLarge = this.vBrowser?.large;
     this.vBrowser = undefined;
     this.cmdHost(undefined, '');
-    // Force a non-permanent save if the room is empty to record the vbrowser change
+    // Force a save if the room is empty to record the vbrowser change
     if (!this.roster.length) {
-      this.saveToRedis(false);
+      this.saveToRedis(null);
     }
     if (redis && assignTime) {
       await redis.lpush('vBrowserSessionMS', Number(new Date()) - assignTime);
@@ -824,6 +826,11 @@ export class Room {
         owner: row?.owner,
         isChatDisabled: row?.isChatDisabled,
       });
+      if (row?.owner) {
+        this.saveToRedis(true);
+      } else {
+        this.saveToRedis(false);
+      }
       socket.emit('successMessage', 'Saved admin settings');
     } catch (e) {
       console.warn(e);
