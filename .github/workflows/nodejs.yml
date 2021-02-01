@@ -27,3 +27,12 @@ jobs:
       - run: npm run build --if-present
         env:
           CI: true
+      - name: Push to remote	
+        run: |	
+          git config --global user.name "github-actions[bot]"	
+          git config --global user.email "watchparty+github-actions[bot]@users.noreply.github.com"	
+          rm .gitignore	
+          git checkout -b release
+          git add --all
+          git commit --quiet -m "Built from ${{ github.sha }}" 	
+          git push origin release -f
