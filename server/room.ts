@@ -260,9 +260,7 @@ export class Room {
     this.vBrowser = undefined;
     this.cmdHost(undefined, '');
     // Force a save if the room is empty to record the vbrowser change
-    if (!this.roster.length) {
-      this.saveToRedis(null);
-    }
+    this.saveToRedis(null);
     if (redis && assignTime) {
       await redis.lpush('vBrowserSessionMS', Number(new Date()) - assignTime);
       await redis.ltrim('vBrowserSessionMS', 0, 49);
