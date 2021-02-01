@@ -165,27 +165,33 @@ export default class App extends React.Component<AppProps, AppState> {
     isChatDisabled: false,
     showRightBar: true,
   };
-  socket: any = null;
+  socket: SocketIO.Socket = null as any;
   watchPartyYTPlayer: any = null;
   ytDebounce = true;
   screenShareStream?: MediaStream;
   screenHostPC: PCDict = {};
   screenSharePC?: RTCPeerConnection;
   progressUpdater?: number;
+  heartbeat: number | undefined = undefined;
 
   async componentDidMount() {
-    document.onfullscreenchange = () => {
-      this.setState({ fullScreen: Boolean(document.fullscreenElement) });
-    };
+    document.onfullscreenchange = this.onFullScreenChange;
+    document.onkeydown = this.onKeydown;
 
     // Send heartbeat to the server
-    window.setInterval(() => {
+    this.heartbeat = window.setInterval(() => {
       window.fetch(serverPath + '/ping');
     }, 10 * 60 * 1000);
 
     this.loadSettings();
     this.loadYouTube();
     this.init();
+  }
+
+  componentWillUnmount() {
+    document.removeEventListener('fullscreenchange', this.onFullScreenChange);
+    document.removeEventListener('keydown', this.onKeydown);
+    window.clearInterval(this.heartbeat);
   }
 
   componentDidUpdate(prevProps: AppProps) {
@@ -956,22 +962,28 @@ export default class App extends React.Component<AppProps, AppState> {
     this.socket.emit('CMD:seek', target);
   };
 
-  onVideoKeydown = (e: any) => {
-    if (e.key === ' ') {
-      e.preventDefault();
-      this.togglePlay();
-    } else if (e.key === 'ArrowRight') {
-      this.onSeek(null, this.getCurrentTime() + 10);
-    } else if (e.key === 'ArrowLeft') {
-      this.onSeek(null, this.getCurrentTime() - 10);
-    } else if (e.key === 'c') {
-      this.toggleSubtitle();
-    } else if (e.key === 't') {
-      this.fullScreen(false);
-    } else if (e.key === 'f') {
-      this.fullScreen(true);
-    } else if (e.key === 'm') {
-      this.toggleMute();
+  onFullScreenChange = () => {
+    this.setState({ fullScreen: Boolean(document.fullscreenElement) });
+  };
+
+  onKeydown = (e: any) => {
+    if (!document.activeElement || document.activeElement.tagName === 'BODY') {
+      if (e.key === ' ') {
+        e.preventDefault();
+        this.togglePlay();
+      } else if (e.key === 'ArrowRight') {
+        this.onSeek(null, this.getCurrentTime() + 10);
+      } else if (e.key === 'ArrowLeft') {
+        this.onSeek(null, this.getCurrentTime() - 10);
+      } else if (e.key === 'c') {
+        this.toggleSubtitle();
+      } else if (e.key === 't') {
+        this.fullScreen(false);
+      } else if (e.key === 'f') {
+        this.fullScreen(true);
+      } else if (e.key === 'm') {
+        this.toggleMute();
+      }
     }
   };
 
@@ -1672,11 +1684,7 @@ export default class App extends React.Component<AppProps, AppState> {
                     }
                     style={{ flexGrow: 1 }}
                   >
-                    <div
-                      id="playerContainer"
-                      tabIndex={1}
-                      onKeyDown={this.onVideoKeydown}
-                    >
+                    <div id="playerContainer">
                       {(this.state.loading ||
                         !this.state.currentMedia ||
                         this.state.nonPlayableMedia) && (
