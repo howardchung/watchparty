@@ -3,6 +3,12 @@ import config from './config';
 import { getUserByEmail } from './utils/firebase';
 import { getAllActiveSubscriptions, getAllCustomers } from './utils/stripe';
 
+const postgres2 = new Client({
+  connectionString: config.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
+});
+postgres2.connect();
+
 setInterval(syncSubscribers, 60 * 1000);
 
 async function syncSubscribers() {
@@ -49,11 +55,6 @@ async function syncSubscribers() {
 
   // Upsert to DB
   console.log(result);
-  const postgres2 = new Client({
-    connectionString: config.DATABASE_URL,
-    ssl: { rejectUnauthorized: false },
-  });
-  postgres2.connect();
   await postgres2?.query('BEGIN TRANSACTION');
   await postgres2?.query('DELETE FROM subscriber');
   for (let i = 0; i < result.length; i++) {
