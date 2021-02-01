@@ -14,15 +14,15 @@ const timeSeriesUrl = serverPath + `/timeSeries${window.location.search}`;
 
 const Debug = () => {
   const [data, setData] = useState([]);
+  // eslint-disable-next-line
   useEffect(
     (async () => {
       const response = await fetch(timeSeriesUrl);
       const json = await response.json();
       json.reverse();
       setData(json);
-      return undefined;
     }) as any,
-    []
+    [setData]
   );
   const keys = Object.keys(data[0] ?? {});
   return (
