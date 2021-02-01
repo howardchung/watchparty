@@ -29,6 +29,7 @@ import path from 'path';
 import { Client } from 'pg';
 import { getStartOfDay } from './utils/time';
 import { createVMManagers } from './vm/utils';
+import { fork } from 'child_process';
 
 const releaseInterval = 5 * 60 * 1000;
 const app = express();
@@ -319,25 +320,13 @@ app.use('/*', (req, res) => {
   );
 });
 
+const forked = fork(__dirname + '/saveToRedis');
 async function saveRooms() {
-  const permanentSet = new Set(permanentRooms.map((room) => room.roomId));
-  while (true) {
-    // console.time('roomSave');
-    const roomArr = Array.from(rooms.values());
-    for (let i = 0; i < roomArr.length; i++) {
-      const isPermanent = permanentSet.has(roomArr[i].roomId);
-      if (roomArr[i].roster.length) {
-        if (redis) {
-          await roomArr[i].saveToRedis(isPermanent);
-        }
-        if (postgres) {
-          // await roomArr[i].saveToPostgres();
-        }
-      }
-    }
-    // console.timeEnd('roomSave');
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-  }
+  setInterval(() => {
+    const permanentSet = new Set(permanentRooms.map((room) => room.roomId));
+    console.log(rooms, permanentSet);
+    forked.send({ rooms, permanentSet });
+  }, 1000);
 }
 
 function release() {
