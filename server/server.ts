@@ -325,9 +325,9 @@ async function saveRooms() {
     // console.time('roomSave');
     const roomArr = Array.from(rooms.values());
     for (let i = 0; i < roomArr.length; i++) {
-      if (roomArr[i].roster.length) {
+      const isPermanent = permanentSet.has(roomArr[i].roomId);
+      if (roomArr[i].roster.length || isPermanent) {
         if (redis) {
-          const isPermanent = permanentSet.has(roomArr[i].roomId);
           await roomArr[i].saveToRedis(isPermanent);
         }
         if (postgres) {
