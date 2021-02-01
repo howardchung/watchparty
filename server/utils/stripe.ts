@@ -13,7 +13,6 @@ export async function getCustomerByEmail(email: string) {
     email,
     expand: ['data.subscriptions'],
   });
-  console.log(customer?.data[0]);
   return customer?.data[0];
 }
 
