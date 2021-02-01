@@ -257,8 +257,10 @@ export class Room {
     const isLarge = this.vBrowser?.large;
     this.vBrowser = undefined;
     this.cmdHost(undefined, '');
-    // Force a non-permanent save here to record the vbrowser change
-    this.saveToRedis(false);
+    // Force a non-permanent save if the room is empty to record the vbrowser change
+    if (!this.roster.length) {
+      this.saveToRedis(false);
+    }
     if (redis && assignTime) {
       await redis.lpush('vBrowserSessionMS', Number(new Date()) - assignTime);
       await redis.ltrim('vBrowserSessionMS', 0, 49);
