@@ -1808,7 +1808,7 @@ export default class App extends React.Component<AppProps, AppState> {
                     zIndex: 900,
                   }}
                   circular
-                  size="tiny"
+                  size="mini"
                   icon={this.state.showRightBar ? 'angle right' : 'angle left'}
                   onClick={() =>
                     this.setState({ showRightBar: !this.state.showRightBar })
