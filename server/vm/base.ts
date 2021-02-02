@@ -138,7 +138,7 @@ export abstract class VMManager {
       const availableCount = await this.redis.llen(this.getRedisQueueKey());
       unlaunch = availableCount > vmBufferMax;
       if (unlaunch) {
-        const allVMs = await this.listVMs();
+        const allVMs = await this.listVMs(this.tag);
         const now = Date.now();
         // Sort newest first
         let sortedVMs = allVMs
@@ -166,7 +166,7 @@ export abstract class VMManager {
     };
 
     const updateSize = async () => {
-      const allVMs = await this.listVMs();
+      const allVMs = await this.listVMs(this.tag);
       this.currentSize = allVMs.length;
     };
 
@@ -174,7 +174,7 @@ export abstract class VMManager {
       // Clean up hanging VMs
       // It's possible we created a VM but lost track of it in redis
       // Take the list of VMs from API, subtract VMs that have a lock in redis or are in the available or staging pool, delete the rest
-      const allVMs = await this.listVMs();
+      const allVMs = await this.listVMs(this.tag);
       const usedKeys = (await this.redis.keys(`lock:${this.id}:*`)).map((key) =>
         key.slice(`lock:${this.id}:`.length)
       );

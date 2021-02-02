@@ -162,7 +162,7 @@ export class Hetzner extends VMManager {
         },
       });
     } catch (e) {
-      console.log('faled to attach to network');
+      console.log('failed to attach to network');
     }
   };
 
