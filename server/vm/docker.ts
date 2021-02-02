@@ -102,12 +102,11 @@ export class Docker extends VMManager {
     return new Promise<VM[]>((resolve, reject) => {
       // TODO this errors if there aren't any running containers
       sshExec(
-        `docker inspect $(docker ps --filter label=${filter} --quiet --no-trunc)`,
+        `docker inspect $(docker ps --filter label=${filter} --quiet --no-trunc) || true`,
         sshConfig,
         (err: string, stdout: string) => {
+          // Swallow exceptions and return empty array
           if (err) {
-            // return reject(err);
-            console.log('[NON-CRITICAL]', err);
             return [];
           }
           if (!stdout) {
