@@ -60,5 +60,10 @@ interface HostState {
 
 interface PermanentRoom {
   roomId: string;
+  creationTime: string;
+  password: string;
+  owner: string;
   vanity: string;
+  isChatDisabled: boolean;
+  isSubRoom: boolean;
 }
