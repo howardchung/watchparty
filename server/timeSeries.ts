@@ -21,6 +21,7 @@ async function statsTimeSeries() {
             .filter(Boolean)
             // TODO remove this filter when sharding deployed
             .filter((port) => Number(port) === Number(config.PORT));
+
     const shardReqs = ports.map((port) =>
       axios({
         url: `http://localhost:${port}/stats?key=${config.STATS_KEY}`,
@@ -28,13 +29,16 @@ async function statsTimeSeries() {
       })
     );
 
-    const shardData = await Promise.all(shardReqs);
-
     let stats: any = {};
-    shardData.forEach((shard) => {
-      const data = shard.data;
-      stats = combine(stats, data);
-    });
+    try {
+      const shardData = await Promise.all(shardReqs);
+      shardData.forEach((shard) => {
+        const data = shard.data;
+        stats = combine(stats, data);
+      });
+    } catch (e) {
+      console.warn(`[TIMESERIES] %s when collecting stats`, e.code);
+    }
 
     console.log(stats);
 
