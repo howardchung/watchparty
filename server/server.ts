@@ -73,10 +73,11 @@ async function init() {
     const keys = await redis.keys(
       config.SHARD ? `/${config.SHARD}-[a-z]*` : '/[a-z]*'
     );
-    console.log(util.format('found %s rooms in redis', keys.length));
+    const data = await redis?.mget(keys);
+    console.log('found %s rooms in redis', keys.length);
     for (let i = 0; i < keys.length; i++) {
       const key = keys[i];
-      const roomData = await redis.get(key);
+      const roomData = data[i];
       // console.log(key, roomData);
       try {
         rooms.set(key, new Room(io, vmManagers, key, roomData));
@@ -84,28 +85,22 @@ async function init() {
         console.warn(e);
       }
     }
-  }
-  if (postgres) {
-    // load the roomState from postgres to fill any rooms that were lost in redis
-    await cachePermanentRooms();
-    const missingRooms = permanentRooms.filter(
-      (room) => !rooms.has(room.roomId)
-    );
-    console.log(
-      util.format(
-        'found %s rooms in postgres missing from redis',
-        missingRooms.length
-      )
-    );
-    for (let i = 0; i < missingRooms.length; i++) {
-      const key = missingRooms[i].roomId;
-      rooms.set(
-        key,
-        new Room(io, vmManagers, key, JSON.stringify(missingRooms[i]))
-      );
+    if (postgres) {
+      await cachePermanentRooms();
+      const keySet = new Set(keys);
+      console.log('found %s rooms in postgres', permanentRooms.length);
+      for (let i = 0; i < permanentRooms.length; i++) {
+        const key = permanentRooms[i].roomId;
+        const data = JSON.stringify(permanentRooms[i]);
+        if (!keySet.has(key)) {
+          console.log('detected room %s in postgres but not redis', key);
+          const missingRoom = new Room(io, vmManagers, key, data);
+          missingRoom.saveToRedis(true);
+          rooms.set(key, missingRoom);
+        }
+      }
     }
   }
-
   if (!rooms.has('/default')) {
     rooms.set('/default', new Room(io, vmManagers, '/default'));
   }
@@ -415,10 +410,11 @@ function cleanupRooms() {
   if (!redis) {
     return;
   }
+  const permanentSet = new Set(permanentRooms.map((room) => room.roomId));
   rooms.forEach(async (room, key) => {
     if (room.roster.length === 0) {
       const inRedis = await redis?.get(room.roomId);
-      if (!inRedis) {
+      if (!inRedis && !permanentSet.has(room.roomId)) {
         rooms.delete(key);
       }
     }
