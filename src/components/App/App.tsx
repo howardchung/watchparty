@@ -694,7 +694,7 @@ export default class App extends React.Component<AppProps, AppState> {
     }
   };
 
-  setupVBrowser = async (rcToken: string, options: { size: string }) => {
+  startVBrowser = async (rcToken: string, options: { size: string }) => {
     // user.uid is the public user identifier
     // user.getIdToken() is the secret access token we can send to the server to prove identity
     const user = this.props.user;
@@ -1396,7 +1396,8 @@ export default class App extends React.Component<AppProps, AppState> {
             isSubscriber={this.state.isSubscriber}
             subscribeButton={subscribeButton}
             closeModal={() => this.setState({ isVBrowserModalOpen: false })}
-            startVBrowser={this.setupVBrowser}
+            startVBrowser={this.startVBrowser}
+            user={this.props.user}
           />
         )}
         {this.state.error && <ErrorModal error={this.state.error} />}

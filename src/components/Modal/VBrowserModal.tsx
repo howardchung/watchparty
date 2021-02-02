@@ -4,12 +4,14 @@ import {
   GoogleReCaptchaProvider,
   withGoogleReCaptcha,
 } from 'react-google-recaptcha-v3';
+import { SignInButton } from '../TopBar/TopBar';
 
 export class VBrowserModal extends React.Component<{
   closeModal: Function;
   startVBrowser: Function;
   isSubscriber: Boolean;
   subscribeButton: JSX.Element;
+  user?: firebase.User;
 }> {
   render() {
     const { closeModal, startVBrowser } = this.props;
@@ -19,10 +21,10 @@ export class VBrowserModal extends React.Component<{
           size="large"
           color={large ? 'orange' : undefined}
           onClick={async () => {
-            const token = await (googleReCaptchaProps as any).executeRecaptcha(
+            const rcToken = await (googleReCaptchaProps as any).executeRecaptcha(
               'launchVBrowser'
             );
-            startVBrowser(token, { size: large ? 'large' : '' });
+            startVBrowser(rcToken, { size: large ? 'large' : '' });
             closeModal();
           }}
         >
@@ -70,7 +72,11 @@ export class VBrowserModal extends React.Component<{
                   <Table.Row>
                     <Table.Cell></Table.Cell>
                     <Table.Cell>
-                      <LaunchButton />
+                      {this.props.user ? (
+                        <LaunchButton />
+                      ) : (
+                        <SignInButton fluid user={this.props.user} />
+                      )}
                     </Table.Cell>
                     <Table.Cell>
                       {this.props.isSubscriber ? (
