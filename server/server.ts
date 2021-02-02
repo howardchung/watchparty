@@ -415,6 +415,7 @@ function cleanupRooms() {
     if (room.roster.length === 0) {
       const inRedis = await redis?.get(room.roomId);
       if (!inRedis && !permanentSet.has(room.roomId)) {
+        room.destroy();
         rooms.delete(key);
       }
     }
