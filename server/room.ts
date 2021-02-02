@@ -54,6 +54,7 @@ export class Room {
   private clientIdMap: StringDict = {};
   private uidMap: StringDict = {};
   private roomRedis: Redis.Redis | undefined = undefined;
+  private tsInterval: NodeJS.Timeout | undefined = undefined;
 
   constructor(
     io: SocketIO.Server,
@@ -69,7 +70,7 @@ export class Room {
       this.deserialize(roomData);
     }
 
-    setInterval(() => {
+    this.tsInterval = setInterval(() => {
       // console.log(roomId, this.video, this.roster, this.tsMap, this.nameMap);
       if (this.video) {
         io.of(roomId).emit('REC:tsMap', this.tsMap);
@@ -154,7 +155,7 @@ export class Room {
     });
   }
 
-  serialize = () => {
+  public serialize = () => {
     // Get the set of IDs with messages in chat
     // Only serialize roster and picture ID for those people, to save space
     const chatIDs = new Set(this.chat.map((msg) => msg.id));
@@ -185,7 +186,7 @@ export class Room {
     });
   };
 
-  deserialize = (roomData: string) => {
+  private deserialize = (roomData: string) => {
     const roomObj = JSON.parse(roomData);
     this.video = roomObj.video;
     this.videoTS = roomObj.videoTS;
@@ -218,7 +219,7 @@ export class Room {
     }
   };
 
-  saveToRedis = async (permanent: boolean | null) => {
+  public saveToRedis = async (permanent: boolean | null) => {
     try {
       const roomString = this.serialize();
       const key = this.roomId;
@@ -235,7 +236,13 @@ export class Room {
     }
   };
 
-  getHostState = (): HostState => {
+  public destroy = () => {
+    if (this.tsInterval) {
+      clearInterval(this.tsInterval);
+    }
+  };
+
+  private getHostState = (): HostState => {
     // Reverse lookup the clientid to the socket id
     const match = this.roster.find(
       (user) => this.clientIdMap[user.id] === this.vBrowser?.controllerClient
@@ -250,7 +257,7 @@ export class Room {
     };
   };
 
-  stopVBrowserInternal = async () => {
+  public stopVBrowserInternal = async () => {
     this.isAssigningVM = false;
     this.roomRedis?.disconnect();
     this.roomRedis = undefined;
@@ -277,7 +284,7 @@ export class Room {
     }
   };
 
-  cmdHost = (socket: Socket | undefined, data: string) => {
+  private cmdHost = (socket: Socket | undefined, data: string) => {
     this.video = data;
     this.videoTS = 0;
     this.paused = false;
@@ -291,7 +298,10 @@ export class Room {
     }
   };
 
-  addChatMessage = (socket: Socket | undefined, chatMsg: ChatMessageBase) => {
+  public addChatMessage = (
+    socket: Socket | undefined,
+    chatMsg: ChatMessageBase
+  ) => {
     if (this.isChatDisabled && !chatMsg.cmd) {
       return;
     }
@@ -305,7 +315,7 @@ export class Room {
     this.io.of(this.roomId).emit('REC:chat', chatWithTime);
   };
 
-  validateLock = (socketId: string) => {
+  private validateLock = (socketId: string) => {
     if (!this.lock) {
       return true;
     }
