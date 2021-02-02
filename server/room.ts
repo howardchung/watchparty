@@ -493,9 +493,16 @@ export class Room {
       return;
     }
     if (!this.validateLock(socket.id)) {
+      socket.emit('errorMessage', 'Room is locked.');
+      return;
+    }
+    const decoded = await validateUserToken(data.uid, data.token);
+    if (!decoded) {
+      socket.emit('errorMessage', 'Invalid user token.');
       return;
     }
     if (!data) {
+      socket.emit('errorMessage', 'Invalid input.');
       return;
     }
     const clientId = this.clientIdMap[socket.id];
@@ -555,6 +562,7 @@ export class Room {
           } else {
             redisCount('recaptchaRejectsOther');
           }
+          socket.emit('errorMessage', 'Invalid ReCAPTCHA.');
           return;
         }
       } catch (e) {
@@ -569,7 +577,10 @@ export class Room {
       ? this.vmManagers?.large
       : this.vmManagers?.standard;
     if (!vmManager) {
-      console.warn('no VMManager configured');
+      socket.emit(
+        'errorMessage',
+        'Server is not configured properly for VBrowsers.'
+      );
       return;
     }
     this.roomRedis = new Redis(config.REDIS_URL);

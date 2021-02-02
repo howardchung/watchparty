@@ -43,6 +43,7 @@ export class NewRoomButton extends React.Component<{ size?: string }> {
 
 export class SignInButton extends React.Component<{
   user: firebase.User | undefined;
+  fluid?: boolean;
 }> {
   public state = { isLoginOpen: false };
 
@@ -69,6 +70,7 @@ export class SignInButton extends React.Component<{
           icon
           labelPosition="left"
           onClick={this.signOut}
+          fluid={this.props.fluid}
         >
           <Icon name="sign out" />
           Sign out
@@ -84,7 +86,7 @@ export class SignInButton extends React.Component<{
         )}
         <Popup
           basic
-          content="Sign in to automatically set your name and picture"
+          content="Sign in to set your name and picture, subscribe, or launch VBrowsers"
           trigger={
             <Dropdown
               style={{ height: '36px' }}
@@ -93,6 +95,7 @@ export class SignInButton extends React.Component<{
               className="icon"
               button
               text="Sign in"
+              fluid={this.props.fluid}
             >
               <Dropdown.Menu>
                 <Dropdown.Item onClick={this.facebookSignIn}>
