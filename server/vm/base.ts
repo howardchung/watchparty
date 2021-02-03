@@ -215,6 +215,7 @@ export abstract class VMManager {
     };
 
     const checkStaging = async () => {
+      const checkStagingInterval = 250;
       while (true) {
         try {
           // Loop through staging list and check if VM is ready
@@ -261,7 +262,7 @@ export abstract class VMManager {
             if (retryCount % 5 === 0) {
               console.log('[CHECKSTAGING] not ready:', id, host, retryCount);
             }
-            if (retryCount > 100) {
+            if (retryCount > 100 * (1000 / checkStagingInterval)) {
               console.log('[CHECKSTAGING] giving up:', id);
               await this.redis
                 .multi()
@@ -275,7 +276,9 @@ export abstract class VMManager {
         } catch (e) {
           console.warn('[CHECKSTAGING-ERROR]', e);
         }
-        await new Promise((resolve) => setTimeout(resolve, 250));
+        await new Promise((resolve) =>
+          setTimeout(resolve, checkStagingInterval)
+        );
       }
     };
 

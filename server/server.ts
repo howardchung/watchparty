@@ -73,7 +73,7 @@ async function init() {
     const keys = await redis.keys(
       config.SHARD ? `/${config.SHARD}-[a-z]*` : '/[a-z]*'
     );
-    const data = await redis?.mget(keys);
+    const data = keys.length ? await redis?.mget(keys) : [];
     console.log('found %s rooms in redis', keys.length);
     for (let i = 0; i < keys.length; i++) {
       const key = keys[i];
