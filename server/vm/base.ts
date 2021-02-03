@@ -42,6 +42,10 @@ export abstract class VMManager {
     return 'stagingList' + this.id + (this.isLarge ? 'Large' : '');
   };
 
+  public getRedisHostCacheKey = () => {
+    return 'hostCache' + this.id + (this.isLarge ? 'Large' : '');
+  };
+
   public resetVM = async (id: string): Promise<void> => {
     console.log('[RESET]', id);
     // We can attempt to reuse the instance which is more efficient if users tend to use them for a short time
@@ -49,6 +53,7 @@ export abstract class VMManager {
     await this.rebootVM(id);
     // Delete any locks
     await this.redis.del('lock:' + this.id + ':' + id);
+    await this.redis.del(this.getRedisHostCacheKey() + ':' + id);
     // We wait to give the VM time to shut down (if it's restarting)
     await new Promise((resolve) => setTimeout(resolve, 3000));
     // Add the VM back to the pool
@@ -218,28 +223,31 @@ export abstract class VMManager {
             this.getRedisStagingKey(),
             0
           );
-          let ready = false;
-          let candidate = undefined;
-          try {
-            candidate = await this.getVM(id);
-            ready = await checkVMReady(candidate.host);
-          } catch (e) {
-            console.log('[CHECKSTAGING-ERROR]', id, e?.response?.status);
-          }
           const retryCount = await this.redis.incr(
             this.getRedisStagingKey() + ':' + id
           );
+          let ready = false;
+          let host = await this.redis.get(
+            this.getRedisHostCacheKey() + ':' + id
+          );
+          if (!host) {
+            host = (await this.getVM(id))?.host;
+            if (host) {
+              console.log('[CHECKSTAGING] caching host %s for id %s', host, id);
+              await this.redis.setex(
+                this.getRedisHostCacheKey() + ':' + id,
+                60,
+                host
+              );
+            }
+          }
+          ready = await checkVMReady(host);
           if (retryCount % 20 === 0) {
             this.powerOn(id);
             this.attachToNetwork(id);
           }
           if (ready) {
-            console.log(
-              '[CHECKSTAGING] ready:',
-              id,
-              candidate?.host,
-              retryCount
-            );
+            console.log('[CHECKSTAGING] ready:', id, host, retryCount);
             // If it is, move it to available list
             await this.redis
               .multi()
@@ -251,12 +259,7 @@ export abstract class VMManager {
             await this.redis.ltrim('vBrowserStageRetries', 0, 49);
           } else {
             if (retryCount % 5 === 0) {
-              console.log(
-                '[CHECKSTAGING] not ready:',
-                id,
-                candidate?.host,
-                retryCount
-              );
+              console.log('[CHECKSTAGING] not ready:', id, host, retryCount);
             }
             if (retryCount > 100) {
               console.log('[CHECKSTAGING] giving up:', id);
@@ -270,9 +273,9 @@ export abstract class VMManager {
             }
           }
         } catch (e) {
-          console.warn('[CHECKSTAGING-CRASH]', e);
+          console.warn('[CHECKSTAGING-ERROR]', e);
         }
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 250));
       }
     };
 
