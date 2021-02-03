@@ -35,7 +35,7 @@ export class Hetzner extends VMManager {
           this.isLarge ? '1920x1080@30' : undefined
         ),
         labels: {
-          [this.tag]: '1',
+          [this.getTag()]: '1',
           originalName: name,
         },
         location: region[Math.floor(Math.random() * region.length)],
@@ -126,7 +126,7 @@ export class Hetzner extends VMManager {
     const responsesMapped = responses.map((response) =>
       response.data.servers
         .map(this.mapServerObject)
-        .filter((server: VM) => server.tags.includes(this.tag))
+        .filter((server: VM) => server.tags.includes(this.getTag()))
     );
     return responsesMapped.flat();
   };

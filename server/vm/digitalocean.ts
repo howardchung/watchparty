@@ -33,7 +33,7 @@ export class DigitalOcean extends VMManager {
           imageName,
           this.isLarge ? '1920x1080@30' : undefined
         ),
-        tags: [this.tag],
+        tags: [this.getTag()],
       },
     });
     const id = response.data.droplet.id;
@@ -147,7 +147,7 @@ export class DigitalOcean extends VMManager {
     });
     return response.data.droplets
       .map(this.mapServerObject)
-      .filter((server: VM) => server.tags.includes(this.tag));
+      .filter((server: VM) => server.tags.includes(this.getTag()));
   };
 
   powerOn = async (id: string) => {};
