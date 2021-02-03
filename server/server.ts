@@ -240,7 +240,10 @@ app.get('/metadata', async (req, res) => {
     customer.subscriptions?.data?.find((sub) => sub?.status === 'active')
   );
   const isCustomer = Boolean(customer.subscriptions?.data?.length);
-  return res.json({ isSubscriber, isCustomer });
+  const isVMPoolFull = vmManagers?.standard
+    ? Boolean(await redis?.get(vmManagers.standard.getRedisVMPoolFullKey()))
+    : false;
+  return res.json({ isSubscriber, isCustomer, isVMPoolFull });
 });
 
 app.get('/resolveRoom/:vanity', async (req, res) => {

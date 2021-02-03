@@ -10,14 +10,12 @@ const cleanupInterval = 4 * 60 * 1000;
 const updateSizeInterval = 60 * 1000;
 
 export abstract class VMManager {
-  protected tag = config.VBROWSER_TAG || 'vbrowser';
   protected isLarge = false;
   private redis = new Redis(config.REDIS_URL);
   private currentSize = 0;
 
   constructor(large?: boolean) {
     if (large) {
-      this.tag += 'Large';
       this.isLarge = true;
     }
   }
@@ -44,6 +42,14 @@ export abstract class VMManager {
 
   public getRedisHostCacheKey = () => {
     return 'hostCache' + this.id + (this.isLarge ? 'Large' : '');
+  };
+
+  public getRedisVMPoolFullKey = () => {
+    return 'vmPoolFull' + this.id + (this.isLarge ? 'Large' : '');
+  };
+
+  public getTag = () => {
+    return (config.VBROWSER_TAG || 'vbrowser') + (this.isLarge ? 'Large' : '');
   };
 
   public resetVM = async (id: string): Promise<void> => {
@@ -143,7 +149,7 @@ export abstract class VMManager {
       const availableCount = await this.redis.llen(this.getRedisQueueKey());
       unlaunch = availableCount > vmBufferMax;
       if (unlaunch) {
-        const allVMs = await this.listVMs(this.tag);
+        const allVMs = await this.listVMs(this.getTag());
         const now = Date.now();
         // Sort newest first
         let sortedVMs = allVMs
@@ -171,15 +177,24 @@ export abstract class VMManager {
     };
 
     const updateSize = async () => {
-      const allVMs = await this.listVMs(this.tag);
+      const allVMs = await this.listVMs(this.getTag());
       this.currentSize = allVMs.length;
+      if (config.VM_POOL_LIMIT && this.currentSize >= config.VM_POOL_LIMIT) {
+        await this.redis.setex(
+          this.getRedisVMPoolFullKey(),
+          2 * 60,
+          this.currentSize
+        );
+      } else {
+        await this.redis.del(this.getRedisVMPoolFullKey() + this.id);
+      }
     };
 
     const cleanupVMGroup = async () => {
       // Clean up hanging VMs
       // It's possible we created a VM but lost track of it in redis
       // Take the list of VMs from API, subtract VMs that have a lock in redis or are in the available or staging pool, delete the rest
-      const allVMs = await this.listVMs(this.tag);
+      const allVMs = await this.listVMs(this.getTag());
       const usedKeys = (await this.redis.keys(`lock:${this.id}:*`)).map((key) =>
         key.slice(`lock:${this.id}:`.length)
       );

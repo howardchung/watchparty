@@ -33,7 +33,7 @@ export class Scaleway extends VMManager {
         image: imageId,
         volumes: {},
         organization: SCW_ORGANIZATION_ID,
-        tags: [this.tag],
+        tags: [this.getTag()],
       },
     });
     // console.log(response.data);
@@ -92,7 +92,7 @@ export class Scaleway extends VMManager {
       },
       data: {
         name: password,
-        tags: [this.tag],
+        tags: [this.getTag()],
       },
     });
     // Reboot the VM (also destroys the Docker container since it has --rm flag)
@@ -148,7 +148,7 @@ export class Scaleway extends VMManager {
     });
     return response.data.servers
       .map(this.mapServerObject)
-      .filter((server: VM) => server.tags.includes(this.tag));
+      .filter((server: VM) => server.tags.includes(this.getTag()));
   };
 
   powerOn = async (id: string) => {};
