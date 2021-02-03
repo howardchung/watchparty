@@ -20,7 +20,6 @@ import {
   Menu,
 } from 'semantic-ui-react';
 import io from 'socket.io-client';
-//@ts-ignore
 import VTTConverter from 'srt-webvtt';
 import {
   formatSpeed,
@@ -705,7 +704,7 @@ export default class App extends React.Component<AppProps, AppState> {
     this.socket.emit('CMD:stopVBrowser');
   };
 
-  changeController = async (e: any, data: DropdownProps) => {
+  changeController = async (_e: any, data: DropdownProps) => {
     // console.log(data);
     this.socket.emit('CMD:changeController', data.value);
   };
@@ -1138,7 +1137,7 @@ export default class App extends React.Component<AppProps, AppState> {
     }
   };
 
-  setMedia = (e: any, data: DropdownProps) => {
+  setMedia = (_e: any, data: DropdownProps) => {
     this.socket.emit('CMD:host', data.value);
   };
 
@@ -1150,7 +1149,7 @@ export default class App extends React.Component<AppProps, AppState> {
     this.setState({ multiStreamSelection: undefined });
   };
 
-  updateName = (e: any, data: { value: string }) => {
+  updateName = (_e: any, data: { value: string }) => {
     this.setState({ myName: data.value });
     this.socket.emit('CMD:name', data.value);
     window.localStorage.setItem('watchparty-username', data.value);
@@ -1564,7 +1563,7 @@ export default class App extends React.Component<AppProps, AppState> {
                         button
                         disabled={!this.haveLock()}
                         value={this.state.vBrowserResolution}
-                        onChange={(e, data) =>
+                        onChange={(_e, data) =>
                           this.setState({
                             vBrowserResolution: data.value as string,
                           })

@@ -128,7 +128,7 @@ export const SettingsTab = ({
         description="Only the person who locked the room can control the video."
         checked={Boolean(roomLock)}
         disabled={lockDisabled}
-        onChange={(e, data) => setRoomLock(data.checked)}
+        onChange={(_e, data) => setRoomLock(data.checked)}
       />
       {
         <SettingRow
@@ -138,7 +138,7 @@ export const SettingsTab = ({
           Permanent rooms of subscribers have a greater room capacity. Free users can only have one permanent room at a time."
           checked={Boolean(owner)}
           disabled={permanentDisabled}
-          onChange={(e, data) => setRoomOwner({ undo: !data.checked })}
+          onChange={(_e, data) => setRoomOwner({ undo: !data.checked })}
         />
       }
       {owner && owner === user?.uid && (
@@ -166,7 +166,7 @@ export const SettingsTab = ({
           description="Prevent users from sending messages in chat."
           checked={Boolean(isChatDisabled)}
           disabled={false}
-          onChange={(e, data) => setIsChatDisabled(Boolean(data.checked))}
+          onChange={(_e, data) => setIsChatDisabled(Boolean(data.checked))}
         />
       )}
       {owner && owner === user?.uid && (
@@ -247,7 +247,7 @@ export const SettingsTab = ({
         description="Don't play a sound when a chat message is sent while you're on another tab"
         checked={Boolean(getCurrentSettings().disableChatSound)}
         disabled={false}
-        onChange={(e, data) => {
+        onChange={(_e, data) => {
           updateSettings(
             JSON.stringify({
               ...getCurrentSettings(),
@@ -268,7 +268,6 @@ const SettingRow = ({
   checked,
   disabled,
   onChange,
-  updateTS,
   content,
   subOnly,
 }: {
