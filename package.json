@@ -100,7 +100,7 @@
     "@types/recharts": "^1.8.16",
     "@types/socket.io": "^2.1.4",
     "@types/socket.io-client": "^1.4.35",
-    "@types/uuid": "^7.0.3",
+    "@types/uuid": "^8.3.0",
     "husky": "^4.2.5",
     "lint-staged": "^10.2.4",
     "prettier": "2.0.5",
