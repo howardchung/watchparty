@@ -39,7 +39,7 @@ export class Chat extends React.Component<ChatProps> {
     }
   }
 
-  updateChatMsg = (e: any, data: { value: string }) => {
+  updateChatMsg = (_e: any, data: { value: string }) => {
     // console.log(e.target.selectionStart);
     this.setState({ chatMsg: data.value });
   };

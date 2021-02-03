@@ -46,7 +46,7 @@ export class Hetzner extends VMManager {
   };
 
   terminateVM = async (id: string) => {
-    const response = await axios({
+    await axios({
       method: 'DELETE',
       url: `https://api.hetzner.cloud/v1/servers/${id}`,
       headers: {
@@ -62,7 +62,7 @@ export class Hetzner extends VMManager {
     const password = uuidv4();
 
     // Update the VM's name
-    const response = await axios({
+    await axios({
       method: 'PUT',
       url: `https://api.hetzner.cloud/v1/servers/${id}`,
       headers: {
@@ -75,7 +75,7 @@ export class Hetzner extends VMManager {
     });
 
     // Rebuild the VM
-    const response2 = await axios({
+    await axios({
       method: 'POST',
       url: `https://api.hetzner.cloud/v1/servers/${id}/actions/rebuild`,
       headers: {
@@ -134,7 +134,7 @@ export class Hetzner extends VMManager {
   powerOn = async (id: string) => {
     // Poweron the server (usually not needed)
     try {
-      const response2 = await axios({
+      await axios({
         method: 'POST',
         url: `https://api.hetzner.cloud/v1/servers/${id}/actions/poweron`,
         headers: {
@@ -150,7 +150,7 @@ export class Hetzner extends VMManager {
   attachToNetwork = async (id: string) => {
     // Attach server to network (usually not needed)
     try {
-      const response2 = await axios({
+      await axios({
         method: 'POST',
         url: `https://api.hetzner.cloud/v1/servers/${id}/actions/attach_to_network`,
         headers: {

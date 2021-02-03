@@ -2,7 +2,6 @@ import config from '../config';
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
 import { VMManager, VM } from './base';
-import { Room } from '../room';
 import { cloudInit, imageName } from './utils';
 
 const SCW_SECRET_KEY = config.SCW_SECRET_KEY;
@@ -151,9 +150,9 @@ export class Scaleway extends VMManager {
       .filter((server: VM) => server.tags.includes(this.getTag()));
   };
 
-  powerOn = async (id: string) => {};
+  powerOn = async (_id: string) => {};
 
-  attachToNetwork = async (id: string) => {};
+  attachToNetwork = async (_id: string) => {};
 
   mapServerObject = (server: any): VM => ({
     id: server.id,

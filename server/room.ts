@@ -145,7 +145,7 @@ export class Room {
       socket.on('CMD:askHost', () => {
         socket.emit('REC:host', this.getHostState());
       });
-      socket.on('CMD:getRoomState', (data) => this.getRoomState(socket));
+      socket.on('CMD:getRoomState', () => this.getRoomState(socket));
       socket.on('CMD:setRoomState', (data) => this.setRoomState(socket, data));
       socket.on('CMD:setRoomOwner', (data) => this.setRoomOwner(socket, data));
       socket.on('signal', (data) => this.sendSignal(socket, data));
@@ -533,12 +533,14 @@ export class Room {
           clientId
         );
         redis.expireat('vBrowserClientIDMinutes', expireTime);
+        console.log(clientId, clientCount, clientMinutes);
       }
       if (uid) {
         const uidCount = await redis.zincrby('vBrowserUIDs', 1, uid);
         redis.expireat('vBrowserUIDs', expireTime);
         const uidMinutes = await redis.zincrby('vBrowserUIDMinutes', 1, uid);
         redis.expireat('vBrowserUIDMinutes', expireTime);
+        console.log(uid, uidCount, uidMinutes);
       }
       // TODO limit users based on these counts
     }

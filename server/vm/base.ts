@@ -300,7 +300,7 @@ export abstract class VMManager {
     const checkVMReady = async (host: string) => {
       const url = 'https://' + host + '/healthz';
       try {
-        const response4 = await axios({
+        await axios({
           method: 'GET',
           url,
           timeout: 1000,

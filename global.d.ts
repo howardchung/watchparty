@@ -2,6 +2,7 @@ declare module 'youtube-api';
 declare module 'moniker';
 declare module 'react-semantic-ui-range';
 declare module 'xml2js';
+declare module 'srt-webvtt';
 
 type StringDict = { [key: string]: string };
 type NumberDict = { [key: string]: number };

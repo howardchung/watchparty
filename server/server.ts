@@ -1,6 +1,5 @@
 import config from './config';
 import fs from 'fs';
-import util from 'util';
 import express from 'express';
 import bodyParser from 'body-parser';
 import compression from 'compression';
@@ -18,13 +17,8 @@ import {
   getRedisCountDayDistinct,
   redisCount,
 } from './utils/redis';
-import {
-  getCustomerByEmail,
-  createSelfServicePortal,
-  getAllCustomers,
-  getAllActiveSubscriptions,
-} from './utils/stripe';
-import { getUserByEmail, validateUserToken } from './utils/firebase';
+import { getCustomerByEmail, createSelfServicePortal } from './utils/stripe';
+import { validateUserToken } from './utils/firebase';
 import path from 'path';
 import { Client } from 'pg';
 import { getStartOfDay } from './utils/time';
@@ -122,7 +116,7 @@ async function init() {
 app.use(cors());
 app.use(bodyParser.json());
 
-app.get('/ping', (req, res) => {
+app.get('/ping', (_req, res) => {
   res.json('pong');
 });
 
@@ -311,7 +305,7 @@ app.post('/kv', async (req, res) => {
 
 app.use(express.static(config.BUILD_DIRECTORY));
 // Send index.html for all other requests (SPA)
-app.use('/*', (req, res) => {
+app.use('/*', (_req, res) => {
   res.sendFile(
     path.resolve(__dirname + `/../${config.BUILD_DIRECTORY}/index.html`)
   );
@@ -505,7 +499,7 @@ async function getStats() {
   });
 
   currentVBrowserClientCounts = Object.fromEntries(
-    Object.entries(currentVBrowserClientCounts).filter(([key, val]) => val > 1)
+    Object.entries(currentVBrowserClientCounts).filter(([, val]) => val > 1)
   );
 
   // Sort newest first
