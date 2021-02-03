@@ -143,6 +143,7 @@ export class Controls extends React.Component<ControlsProps> {
           size="large"
           onClick={() => fullScreen(false)}
           className="control action"
+          style={{ transform: 'rotate(90deg)' }}
           name="window maximize outline"
           title="Theater Mode"
         />
