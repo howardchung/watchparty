@@ -1,6 +1,5 @@
 import React from 'react';
 import { Button, Icon } from 'semantic-ui-react';
-import { Socket } from 'socket.io';
 
 import {
   formatTimestamp,
@@ -10,7 +9,7 @@ import {
 } from '../../utils';
 
 interface VideoChatProps {
-  socket: Socket;
+  socket: SocketIOClient.Socket;
   participants: User[];
   pictureMap: StringDict;
   nameMap: StringDict;
