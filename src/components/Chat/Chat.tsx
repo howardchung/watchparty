@@ -1,6 +1,5 @@
 import React from 'react';
 import { Button, Comment, Icon, Input } from 'semantic-ui-react';
-import { Socket } from 'socket.io';
 import 'emoji-mart/css/emoji-mart.css';
 import { EmojiData, Picker } from 'emoji-mart';
 import onClickOutside from 'react-onclickoutside';
@@ -12,7 +11,7 @@ interface ChatProps {
   chat: ChatMessage[];
   nameMap: StringDict;
   pictureMap: StringDict;
-  socket: Socket;
+  socket: SocketIOClient.Socket;
   scrollTimestamp: number;
   className?: string;
   getMediaDisplayName: Function;
