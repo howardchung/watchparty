@@ -11,7 +11,6 @@ import {
 } from 'semantic-ui-react';
 // import { SignInButton } from '../TopBar/TopBar';
 import { getCurrentSettings, updateSettings } from './LocalSettings';
-import { Socket } from 'socket.io';
 import axios from 'axios';
 import { serverPath } from '../../utils';
 
@@ -20,7 +19,7 @@ interface SettingsTabProps {
   user: firebase.User | undefined;
   roomLock: string;
   setRoomLock: Function;
-  socket: Socket;
+  socket: SocketIOClient.Socket;
   isSubscriber: boolean;
   roomId: string;
   setChatDisabled: (val: boolean) => void;

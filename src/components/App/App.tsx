@@ -2,7 +2,6 @@ import './App.css';
 
 import querystring from 'querystring';
 import axios from 'axios';
-//@ts-ignore
 import magnet from 'magnet-uri';
 import React from 'react';
 import {
@@ -20,7 +19,6 @@ import {
   Progress,
   Menu,
 } from 'semantic-ui-react';
-//@ts-ignore
 import io from 'socket.io-client';
 //@ts-ignore
 import VTTConverter from 'srt-webvtt';
@@ -165,7 +163,7 @@ export default class App extends React.Component<AppProps, AppState> {
     isChatDisabled: false,
     showRightBar: true,
   };
-  socket: SocketIO.Socket = null as any;
+  socket: SocketIOClient.Socket = null as any;
   watchPartyYTPlayer: any = null;
   ytDebounce = true;
   screenShareStream?: MediaStream;
@@ -1190,7 +1188,8 @@ export default class App extends React.Component<AppProps, AppState> {
     }
     if (input.includes('/stream?torrent=magnet')) {
       const search = new URL(input).search;
-      const magnetUrl = querystring.parse(search.substring(1)).torrent;
+      const magnetUrl = querystring.parse(search.substring(1))
+        .torrent as string;
       const magnetParsed = magnet.decode(magnetUrl);
       return magnetParsed.name;
     }
