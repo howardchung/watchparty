@@ -76,6 +76,8 @@ async function init() {
     const data = await redis?.mget(keys);
     console.log('found %s rooms in redis', keys.length);
     for (let i = 0; i < keys.length; i++) {
+      // TODO temporarily set 1 hour ttl on all redis rooms to clear out any hit by no KEEPTTL issue
+      await redis.expire(keys[i], 60 * 60);
       const key = keys[i];
       const roomData = data[i];
       // console.log(key, roomData);
