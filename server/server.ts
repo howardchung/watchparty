@@ -99,14 +99,6 @@ async function init() {
           rooms.set(key, missingRoom);
         }
       }
-      // TODO temporarily set ttl on non-permanent redis rooms to clear out any hit by no KEEPTTL issue
-      const permanentSet = new Set(permanentRooms.map((room) => room.roomId));
-      const difference = new Set(
-        [...keySet].filter((x) => !permanentSet.has(x))
-      );
-      difference.forEach((key) => {
-        redis?.expire(key, 24 * 60 * 60);
-      });
     }
   }
   if (!rooms.has('/default')) {
