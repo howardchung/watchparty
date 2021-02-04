@@ -25,6 +25,7 @@ import { getStartOfDay } from './utils/time';
 import { createVMManagers } from './vm/utils';
 
 const releaseInterval = 5 * 60 * 1000;
+const releaseBatches = 5;
 const app = express();
 let server: any = null;
 if (config.HTTPS) {
@@ -102,7 +103,7 @@ async function init() {
   server.listen(config.PORT, config.HOST);
   // Following functions iterate over in-memory rooms
   setInterval(renew, 60 * 1000);
-  setInterval(release, releaseInterval);
+  setInterval(release, releaseInterval / releaseBatches);
   setInterval(cleanupRooms, 5 * 60 * 1000);
   setInterval(cachePermanentRooms, 60 * 1000);
   saveRooms();
@@ -332,12 +333,16 @@ async function saveRooms() {
   }
 }
 
+let currBatch = 0;
 function release() {
   // Reset VMs in rooms that are:
   // older than the session limit
   // assigned to a room with no users
   const roomArr = Array.from(rooms.values());
   for (let i = 0; i < roomArr.length; i++) {
+    if (i % currBatch !== 0) {
+      continue;
+    }
     const room = roomArr[i];
     if (room.vBrowser && room.vBrowser.assignTime) {
       const maxTime = room.vBrowser.large
@@ -348,7 +353,7 @@ function release() {
       const isAlmostTimedOut = elapsed > maxTime - releaseInterval;
       const isRoomEmpty = room.roster.length === 0;
       if (isTimedOut || isRoomEmpty) {
-        console.log('[RELEASE] VM in room:', room.roomId);
+        console.log('[RELEASE][%s] VM in room:', currBatch, room.roomId);
         room.stopVBrowserInternal();
         if (isTimedOut) {
           room.addChatMessage(undefined, {
@@ -371,7 +376,9 @@ function release() {
       }
     }
   }
+  currBatch = (currBatch + 1) % releaseBatches;
 }
+
 async function renew() {
   const roomArr = Array.from(rooms.values());
   for (let i = 0; i < roomArr.length; i++) {
