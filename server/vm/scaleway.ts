@@ -120,7 +120,7 @@ export class Scaleway extends VMManager {
     });
     let server = this.mapServerObject(response.data.server);
     if (!server.private_ip) {
-      throw new Error('vm not ready');
+      return null;
     }
     return server;
   };

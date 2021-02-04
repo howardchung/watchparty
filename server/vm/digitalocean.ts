@@ -125,7 +125,7 @@ export class DigitalOcean extends VMManager {
     });
     let server = this.mapServerObject(response.data.droplet);
     if (!server.private_ip) {
-      throw new Error('vm not ready');
+      return null;
     }
     return server;
   };
@@ -150,9 +150,9 @@ export class DigitalOcean extends VMManager {
       .filter((server: VM) => server.tags.includes(this.getTag()));
   };
 
-  powerOn = async (id: string) => {};
+  powerOn = async (_id: string) => {};
 
-  attachToNetwork = async (id: string) => {};
+  attachToNetwork = async (_id: string) => {};
 
   mapServerObject = (server: any): VM => {
     const ip = server.networks.v4.find(
