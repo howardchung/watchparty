@@ -251,7 +251,8 @@ export abstract class VMManager {
           );
           if (!host) {
             try {
-              host = (await this.getVM(id))?.host ?? null;
+              const vm = await this.getVM(id);
+              host = vm?.host ?? null;
             } catch (e) {
               if (e.response.status === 404) {
                 await this.redis.lrem(this.getRedisQueueKey(), 1, id);
@@ -281,8 +282,14 @@ export abstract class VMManager {
             await this.redis.ltrim('vBrowserStageRetries', 0, 49);
           } else {
             if (retryCount % (25 * (1000 / checkStagingInterval)) === 0) {
+              const vm = await this.getVM(id);
+              console.log(
+                '[CHECKSTAGING] attempt to poweron and attach to network'
+              );
               this.powerOn(id);
-              this.attachToNetwork(id);
+              if (!vm?.private_ip) {
+                this.attachToNetwork(id);
+              }
             }
             if (retryCount % 5 === 0) {
               console.log('[CHECKSTAGING] not ready:', id, host, retryCount);
