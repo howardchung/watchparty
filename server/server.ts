@@ -23,6 +23,7 @@ import path from 'path';
 import { Client } from 'pg';
 import { getStartOfDay } from './utils/time';
 import { createVMManagers } from './vm/utils';
+import { hashString } from './utils/string';
 
 const releaseInterval = 5 * 60 * 1000;
 const releaseBatches = 5;
@@ -338,11 +339,11 @@ function release() {
   // Reset VMs in rooms that are:
   // older than the session limit
   // assigned to a room with no users
-  const roomArr = Array.from(rooms.values());
+  const roomArr = Array.from(rooms.values()).filter((room) => {
+    return hashString(room.roomId) % releaseBatches === currBatch;
+  });
+  console.log('[RELEASE][%s] %s rooms in batch', currBatch, roomArr.length);
   for (let i = 0; i < roomArr.length; i++) {
-    if (i % currBatch !== 0) {
-      continue;
-    }
     const room = roomArr[i];
     if (room.vBrowser && room.vBrowser.assignTime) {
       const maxTime = room.vBrowser.large
