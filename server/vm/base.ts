@@ -11,7 +11,7 @@ const updateSizeInterval = 60 * 1000;
 
 export abstract class VMManager {
   protected isLarge = false;
-  private redis = new Redis(config.REDIS_URL);
+  protected redis = new Redis(config.REDIS_URL);
   private currentSize = 0;
 
   constructor(large?: boolean) {
@@ -103,8 +103,11 @@ export abstract class VMManager {
   protected terminateVMMetrics = async (id: string) => {
     try {
       const vm = await this.getVM(id);
-      const lifetime = Number(new Date()) - Number(new Date(vm.creation_date));
-      return lifetime;
+      if (vm) {
+        const lifetime =
+          Number(new Date()) - Number(new Date(vm.creation_date));
+        return lifetime;
+      }
     } catch (e) {
       console.warn(e);
     }
@@ -247,7 +250,14 @@ export abstract class VMManager {
             this.getRedisHostCacheKey() + ':' + id
           );
           if (!host) {
-            host = (await this.getVM(id))?.host;
+            try {
+              host = (await this.getVM(id))?.host ?? null;
+            } catch (e) {
+              if (e.response.status === 404) {
+                await this.redis.lrem(this.getRedisQueueKey(), 1, id);
+                await this.redis.lrem(this.getRedisStagingKey(), 1, id);
+              }
+            }
             if (host) {
               console.log('[CHECKSTAGING] caching host %s for id %s', host, id);
               await this.redis.setex(
@@ -257,11 +267,7 @@ export abstract class VMManager {
               );
             }
           }
-          ready = await checkVMReady(host);
-          if (retryCount % 20 === 0) {
-            this.powerOn(id);
-            this.attachToNetwork(id);
-          }
+          ready = await checkVMReady(host ?? '');
           if (ready) {
             console.log('[CHECKSTAGING] ready:', id, host, retryCount);
             // If it is, move it to available list
@@ -274,6 +280,10 @@ export abstract class VMManager {
             await this.redis.lpush('vBrowserStageRetries', retryCount);
             await this.redis.ltrim('vBrowserStageRetries', 0, 49);
           } else {
+            if (retryCount % (25 * (1000 / checkStagingInterval)) === 0) {
+              this.powerOn(id);
+              this.attachToNetwork(id);
+            }
             if (retryCount % 5 === 0) {
               console.log('[CHECKSTAGING] not ready:', id, host, retryCount);
             }
@@ -324,7 +334,7 @@ export abstract class VMManager {
   protected abstract startVM: (name: string) => Promise<string>;
   protected abstract rebootVM: (id: string) => Promise<void>;
   protected abstract terminateVM: (id: string) => Promise<void>;
-  public abstract getVM: (id: string) => Promise<VM>;
+  public abstract getVM: (id: string) => Promise<VM | null>;
   protected abstract listVMs: (filter?: string) => Promise<VM[]>;
   protected abstract powerOn: (id: string) => Promise<void>;
   protected abstract attachToNetwork: (id: string) => Promise<void>;

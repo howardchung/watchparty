@@ -96,9 +96,9 @@ export class Hetzner extends VMManager {
         Authorization: 'Bearer ' + HETZNER_TOKEN,
       },
     });
-    let server = this.mapServerObject(response.data.server);
+    const server = this.mapServerObject(response.data.server);
     if (!server.private_ip) {
-      throw new Error('vm not ready');
+      return null;
     }
     return server;
   };
@@ -158,7 +158,7 @@ export class Hetzner extends VMManager {
           'Content-Type': 'application/json',
         },
         data: {
-          network: networks[0],
+          network: networks.slice(-1)[0],
         },
       });
     } catch (e) {
