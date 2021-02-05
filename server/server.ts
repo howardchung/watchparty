@@ -377,16 +377,11 @@ async function release() {
   for (let i = 0; i < roomArr.length; i++) {
     const room = roomArr[i];
     if (room.vBrowser && room.vBrowser.assignTime) {
-      // TODO TTL-based check, but requires new longer lived locks first
-      // const ttl = await redis?.ttl('lock:' + room.vBrowser.provider + room.vBrowser.id);
-      // const isTimedOut = ttl && ttl < releaseInterval;
-      // const isAlmostTimedOut = ttl && ttl < releaseInterval * 2;
-      const maxTime = room.vBrowser.large
-        ? config.VBROWSER_SESSION_SECONDS_LARGE * 1000
-        : config.VBROWSER_SESSION_SECONDS * 1000;
-      const elapsed = Number(new Date()) - room.vBrowser.assignTime;
-      const isTimedOut = elapsed > maxTime;
-      const isAlmostTimedOut = elapsed > maxTime - releaseInterval;
+      const ttl = await redis?.ttl(
+        'lock:' + room.vBrowser.provider + room.vBrowser.id
+      );
+      const isTimedOut = ttl && ttl < releaseInterval;
+      const isAlmostTimedOut = ttl && ttl < releaseInterval * 2;
       const isRoomEmpty = room.roster.length === 0;
       if (isTimedOut || isRoomEmpty) {
         console.log('[RELEASE][%s] VM in room:', currBatch, room.roomId);
@@ -420,14 +415,6 @@ async function minuteMetrics() {
   for (let i = 0; i < roomArr.length; i++) {
     const room = roomArr[i];
     if (room.vBrowser && room.vBrowser.id) {
-      // TODO temporarily write long-lived locks so we can switch to TTL expiry
-      await redis?.expire(
-        'lock:' + room.vBrowser.provider + ':' + room.vBrowser.id,
-        room.vBrowser.large
-          ? config.VBROWSER_SESSION_SECONDS_LARGE
-          : config.VBROWSER_SESSION_SECONDS
-      );
-
       const expireTime = getStartOfDay() / 1000 + 86400;
       if (room.vBrowser.creatorClientID) {
         await redis?.zincrby(
