@@ -6,7 +6,7 @@ import util from 'util';
 import axios from 'axios';
 import Redis from 'ioredis';
 import { Socket } from 'socket.io';
-import { Client } from 'pg';
+import { Client, QueryResult } from 'pg';
 
 import { validateUserToken } from './utils/firebase';
 import { redisCount, redisCountDistinct } from './utils/redis';
@@ -14,6 +14,7 @@ import { getCustomerByEmail } from './utils/stripe';
 import { AssignedVM, VMManager } from './vm/base';
 import { getStartOfDay } from './utils/time';
 import { assignVM } from './vm/utils';
+import { insertObject, updateObject } from './utils/postgres';
 
 const gzip = util.promisify(zlib.gzip);
 
@@ -768,20 +769,13 @@ export class Room {
         owner: owner,
         isSubRoom: isSubscriber,
       };
-      const columns = Object.keys(roomObj);
-      const values = Object.values(roomObj);
-      let query = `INSERT INTO room(${columns.map((c) => `"${c}"`).join(',')})
-        VALUES (${values.map((_, i) => '$' + (i + 1)).join(',')})
-        RETURNING *`;
+      let result: QueryResult | null = null;
       if (config.ENABLE_POSTGRES_SAVING) {
-        query = `UPDATE room SET ${columns
-          .map((c, i) => `"${c}" = ${i + 1}`)
-          .join(',')}
-        RETURNING *`;
+        result = await updateObject(postgres, 'room', roomObj);
+      } else {
+        result = await insertObject(postgres, 'room', roomObj);
       }
-      // console.log(columns, values, query);
-      const result = await postgres.query(query, values);
-      const row = result.rows[0];
+      const row = result?.rows?.[0];
       socket.emit('REC:getRoomState', {
         password: row?.password,
         vanity: row?.vanity,

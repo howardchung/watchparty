@@ -1,6 +1,7 @@
 import { Client } from 'pg';
 import config from './config';
 import { getUserByEmail } from './utils/firebase';
+import { insertObject } from './utils/postgres';
 import { getAllActiveSubscriptions, getAllCustomers } from './utils/stripe';
 
 const postgres2 = new Client({
@@ -59,14 +60,7 @@ async function syncSubscribers() {
   await postgres2?.query('DELETE FROM subscriber');
   for (let i = 0; i < result.length; i++) {
     const row = result[i];
-    const columns = Object.keys(row);
-    const values = Object.values(row);
-    const query = `INSERT INTO subscriber(${columns
-      .map((c) => `"${c}"`)
-      .join(',')})
-    VALUES (${values.map((_, i) => '$' + (i + 1)).join(',')})
-    RETURNING *`;
-    await postgres2?.query(query, values);
+    await insertObject(postgres2, 'subscriber', row);
   }
   await postgres2?.query('COMMIT');
   console.log('%s subscribers', result.length);
