@@ -107,20 +107,20 @@ async function init() {
         }
       }
       console.timeEnd('[LOADMISSINGROOMSPOSTGRES]');
-      // TODO temporarily give all non-permanent rooms without ttl a 1 day timeout (repair)
-      console.time('[TTLREPAIR]');
-      const permanentSet = new Set(permanentRooms.map((room) => room.roomId));
-      for (let i = 0; i < keys.length; i++) {
-        const ttl = await redis.ttl(keys[i]);
-        if (ttl === -1 && !permanentSet.has(keys[i])) {
-          console.log(
-            '[TTLREPAIR] setting ttl on non-permanent room %s',
-            keys[i]
-          );
-          await redis.expire(keys[i], 24 * 60 * 60);
-        }
-      }
-      console.timeEnd('[TTLREPAIR]');
+      // temporarily give all non-permanent rooms without ttl a 1 day timeout (repair)
+      // console.time('[TTLREPAIR]');
+      // const permanentSet = new Set(permanentRooms.map((room) => room.roomId));
+      // for (let i = 0; i < keys.length; i++) {
+      //   const ttl = await redis.ttl(keys[i]);
+      //   if (ttl === -1 && !permanentSet.has(keys[i])) {
+      //     console.log(
+      //       '[TTLREPAIR] setting ttl on non-permanent room %s',
+      //       keys[i]
+      //     );
+      //     await redis.expire(keys[i], 24 * 60 * 60);
+      //   }
+      // }
+      // console.timeEnd('[TTLREPAIR]');
     }
   }
   if (!rooms.has('/default')) {

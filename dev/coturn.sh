@@ -11,5 +11,4 @@ docker run -d --network=host --name=coturn instrumentisto/coturn \
   --no-tlsv1 --no-tlsv1_1 \
   --realm=watchparty \
 docker exec -it coturn 'sh -c turnadmin --add -u username -p password -r watchparty'
-# TODO use turnadmin to create username and password
 
