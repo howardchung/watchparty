@@ -98,6 +98,7 @@ export abstract class VMManager {
     }
     // Delete any locks
     await this.redis.del('lock:' + this.id + ':' + id);
+    await this.redis.del(this.getRedisHostCacheKey() + ':' + id);
   };
 
   protected terminateVMMetrics = async (id: string) => {
