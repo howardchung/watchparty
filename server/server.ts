@@ -80,7 +80,6 @@ async function init() {
     );
     const data = keys.length ? await redis?.mget(keys) : [];
     console.log('found %s rooms in redis', keys.length);
-    console.timeEnd('[LOADROOMSREDIS]');
     for (let i = 0; i < keys.length; i++) {
       const key = keys[i];
       const roomData = data[i];
@@ -91,11 +90,11 @@ async function init() {
         console.warn(e);
       }
     }
+    console.timeEnd('[LOADROOMSREDIS]');
     if (postgres) {
-      console.time('[LOADROOMSPOSTGRES]');
+      console.time('[LOADMISSINGROOMSPOSTGRES]');
       const permanentRooms = await getPermanentRooms();
       console.log('found %s rooms in postgres', permanentRooms.length);
-      console.timeEnd('[LOADROOMSPOSTGRES]');
       const keySet = new Set(keys);
       for (let i = 0; i < permanentRooms.length; i++) {
         const key = permanentRooms[i].roomId;
@@ -107,6 +106,7 @@ async function init() {
           rooms.set(key, missingRoom);
         }
       }
+      console.timeEnd('[LOADMISSINGROOMSPOSTGRES]');
       // TODO temporarily give all non-permanent rooms without ttl a 1 day timeout (repair)
       console.time('[TTLREPAIR]');
       const permanentSet = new Set(permanentRooms.map((room) => room.roomId));
