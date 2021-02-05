@@ -41,6 +41,7 @@ const defaults = {
   VM_MANAGER_ID: 'Docker', // ID value of the VM Manager implementation to use (see vm directory)
   VM_MIN_UPTIME_MINUTES: 0, // Number of minutes of the hour VMs must exist for before being eligible for termination
   SHARD: undefined, // Shard ID of the web server (configure in ecosystem.config.js)
+  ENABLE_POSTGRES_SAVING: false, // Experimental incomplete feature to use postgres as the primary room data store
 };
 
 export default {

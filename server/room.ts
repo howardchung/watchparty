@@ -234,6 +234,12 @@ export class Room {
       } else if (permanent === false) {
         await redis?.setex(key, 24 * 60 * 60, roomString);
       }
+      if (config.ENABLE_POSTGRES_SAVING) {
+        await postgres?.query(
+          `UPDATE room SET (lastUpdateTime, data) VALUES ($1, $2)`,
+          [new Date(), roomString]
+        );
+      }
     } catch (e) {
       console.warn(e);
     }
@@ -757,9 +763,15 @@ export class Room {
       };
       const columns = Object.keys(roomObj);
       const values = Object.values(roomObj);
-      const query = `INSERT INTO room(${columns.map((c) => `"${c}"`).join(',')})
-    VALUES (${values.map((_, i) => '$' + (i + 1)).join(',')})
-    RETURNING *`;
+      let query = `INSERT INTO room(${columns.map((c) => `"${c}"`).join(',')})
+        VALUES (${values.map((_, i) => '$' + (i + 1)).join(',')})
+        RETURNING *`;
+      if (config.ENABLE_POSTGRES_SAVING) {
+        query = `UPDATE room SET ${columns
+          .map((c, i) => `"${c}" = ${i + 1}`)
+          .join(',')}
+        RETURNING *`;
+      }
       // console.log(columns, values, query);
       const result = await postgres.query(query, values);
       const row = result.rows[0];

@@ -35,5 +35,9 @@ module.exports = {
       name: 'timeSeries',
       script: './buildServer/timeSeries.js',
     },
+    // {
+    //   name: 'cleanup',
+    //   script: './buildServer/cleanup.js',
+    // },
   ],
 };

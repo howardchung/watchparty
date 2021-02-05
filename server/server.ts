@@ -61,7 +61,18 @@ const vmManagers = createVMManagers();
 init();
 
 async function init() {
-  if (redis) {
+  if (config.ENABLE_POSTGRES_SAVING && postgres) {
+    console.time('[LOADROOMSPOSTGRES]');
+    const permanentRooms = await getPermanentRooms();
+    console.log('found %s rooms in postgres', permanentRooms.length);
+    console.timeEnd('[LOADROOMSPOSTGRES]');
+    for (let i = 0; i < permanentRooms.length; i++) {
+      const key = permanentRooms[i].roomId;
+      const data = permanentRooms[i].data;
+      const room = new Room(io, vmManagers, key, data);
+      rooms.set(key, room);
+    }
+  } else if (redis) {
     // Load rooms from Redis
     console.time('[LOADROOMSREDIS]');
     const keys = await redis.keys(
@@ -187,7 +198,7 @@ app.get('/youtube', async (req, res) => {
   }
 });
 
-app.post('/createRoom', (req, res) => {
+app.post('/createRoom', async (req, res) => {
   const genName = () =>
     '/' + (config.SHARD ? `${config.SHARD}-` : '') + names.choose();
   let name = genName();
@@ -200,6 +211,17 @@ app.post('/createRoom', (req, res) => {
   newRoom.video = req.body?.video || '';
   rooms.set(name, newRoom);
   newRoom.saveToRedis(false);
+  if (config.ENABLE_POSTGRES_SAVING) {
+    const roomObj: any = {
+      roomId: newRoom.roomId,
+      creationTime: newRoom.creationTime,
+    };
+    const columns = Object.keys(roomObj);
+    const values = Object.values(roomObj);
+    const query = `INSERT INTO room(${columns.map((c) => `"${c}"`).join(',')})
+    VALUES (${values.map((_, i) => '$' + (i + 1)).join(',')})`;
+    await postgres?.query(query, values);
+  }
   res.json({ name: name.slice(1) });
 });
 

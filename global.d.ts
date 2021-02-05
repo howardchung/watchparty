@@ -67,4 +67,6 @@ interface PermanentRoom {
   vanity: string;
   isChatDisabled: boolean;
   isSubRoom: boolean;
+  lastUpdateTime: string;
+  data: any;
 }
