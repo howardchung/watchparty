@@ -240,6 +240,10 @@ export class Room {
     if (this.tsInterval) {
       clearInterval(this.tsInterval);
     }
+    if (this.roomRedis) {
+      this.roomRedis?.disconnect();
+      this.roomRedis = undefined;
+    }
   };
 
   private getHostState = (): HostState => {
