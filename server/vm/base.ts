@@ -256,6 +256,10 @@ export abstract class VMManager {
               const vm = await this.getVM(id);
               host = vm?.host ?? null;
             } catch (e) {
+              console.log(
+                '%s rate limit remaining',
+                e.response.headers['X-Rate-Limit-Remaining']
+              );
               if (e.response.status === 404) {
                 await this.redis.lrem(this.getRedisQueueKey(), 1, id);
                 await this.redis.lrem(this.getRedisStagingKey(), 1, id);
