@@ -13,6 +13,7 @@ setInterval(statsTimeSeries, 5 * 60 * 1000);
 
 async function statsTimeSeries() {
   if (redis) {
+    console.time('timeSeries');
     const ports =
       process.env.NODE_ENV === 'development'
         ? [8080]
@@ -40,8 +41,6 @@ async function statsTimeSeries() {
       console.warn(`[TIMESERIES] %s when collecting stats`, e.code);
     }
 
-    console.log(stats);
-
     await redis.lpush(
       'timeSeries',
       JSON.stringify({
@@ -67,6 +66,7 @@ async function statsTimeSeries() {
       })
     );
     await redis.ltrim('timeSeries', 0, 288);
+    console.timeEnd('timeSeries');
   }
 }
 
