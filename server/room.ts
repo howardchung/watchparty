@@ -207,6 +207,7 @@ export class Room {
     }
     if (roomObj.vBrowser) {
       this.vBrowser = roomObj.vBrowser;
+      // TODO create the vmManager based on the provider so we can switch clouds if needed
     }
     if (roomObj.creationTime) {
       this.creationTime = new Date(roomObj.creationTime);
