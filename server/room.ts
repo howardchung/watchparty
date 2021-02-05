@@ -220,6 +220,18 @@ export class Room {
   };
 
   public saveToRedis = async (permanent: boolean | null) => {
+    if (config.ENABLE_POSTGRES_SAVING && postgres) {
+      try {
+        const roomString = this.serialize();
+        await postgres?.query(
+          `UPDATE room SET (lastUpdateTime, data) VALUES ($1, $2)`,
+          [new Date(), roomString]
+        );
+      } catch (e) {
+        console.warn(e);
+      }
+      return;
+    }
     if (!redis) {
       return;
     }
@@ -233,12 +245,6 @@ export class Room {
         await redis?.persist(key);
       } else if (permanent === false) {
         await redis?.setex(key, 24 * 60 * 60, roomString);
-      }
-      if (config.ENABLE_POSTGRES_SAVING) {
-        await postgres?.query(
-          `UPDATE room SET (lastUpdateTime, data) VALUES ($1, $2)`,
-          [new Date(), roomString]
-        );
       }
     } catch (e) {
       console.warn(e);
