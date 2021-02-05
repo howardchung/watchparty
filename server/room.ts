@@ -14,7 +14,7 @@ import { getCustomerByEmail } from './utils/stripe';
 import { AssignedVM, VMManager } from './vm/base';
 import { getStartOfDay } from './utils/time';
 import { assignVM } from './vm/utils';
-import { insertObject, updateObject } from './utils/postgres';
+import { updateObject, upsertObject } from './utils/postgres';
 
 const gzip = util.promisify(zlib.gzip);
 
@@ -232,7 +232,6 @@ export class Room {
       } catch (e) {
         console.warn(e);
       }
-      return;
     }
     if (!redis) {
       return;
@@ -785,13 +784,9 @@ export class Room {
         isSubRoom: isSubscriber,
       };
       let result: QueryResult | null = null;
-      if (config.ENABLE_POSTGRES_SAVING) {
-        result = await updateObject(postgres, 'room', roomObj, {
-          roomId: this.roomId,
-        });
-      } else {
-        result = await insertObject(postgres, 'room', roomObj);
-      }
+      result = await upsertObject(postgres, 'room', roomObj, {
+        roomId: this.roomId,
+      });
       const row = result?.rows?.[0];
       // console.log(result, row);
       socket.emit('REC:getRoomState', {

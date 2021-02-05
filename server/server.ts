@@ -62,7 +62,7 @@ const vmManagers = createVMManagers();
 init();
 
 async function init() {
-  if (config.ENABLE_POSTGRES_SAVING && postgres) {
+  if (config.ENABLE_POSTGRES_READING && postgres) {
     console.time('[LOADROOMSPOSTGRES]');
     const permanentRooms = await getPermanentRooms();
     console.log('found %s rooms in postgres', permanentRooms.length);
@@ -458,7 +458,7 @@ async function getPermanentRooms() {
     await postgres.query<PermanentRoom>(
       `SELECT * from room where "roomId" SIMILAR TO '${
         config.SHARD ? `/${config.SHARD}-[a-z]%` : '/[a-z]%'
-      }'`
+      }' AND owner IS NOT NULL`
     )
   ).rows;
 }
