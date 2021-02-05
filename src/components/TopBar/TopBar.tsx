@@ -1,5 +1,5 @@
 import React from 'react';
-import { serverPath, getColorHex } from '../../utils';
+import { serverPath, getColorForStringHex, colorMappings } from '../../utils';
 import { Icon, Popup, Button, Dropdown } from 'semantic-ui-react';
 import * as firebase from 'firebase/app';
 import 'firebase/auth';
@@ -238,7 +238,7 @@ export class TopBar extends React.Component<{
                 marginRight: '10px',
                 borderRadius: '50%',
                 position: 'relative',
-                backgroundColor: '#' + getColorHex('blue8'),
+                backgroundColor: '#' + colorMappings.blue,
               }}
             >
               <Icon
