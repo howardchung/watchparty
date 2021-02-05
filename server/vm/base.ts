@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { redisCount } from '../utils/redis';
 
 const incrInterval = 5 * 1000;
-const decrInterval = 3 * 60 * 1000;
+const decrInterval = 2 * 60 * 1000;
 const cleanupInterval = 4 * 60 * 1000;
 const updateSizeInterval = 60 * 1000;
 
@@ -154,13 +154,15 @@ export abstract class VMManager {
       if (unlaunch) {
         const allVMs = await this.listVMs(this.getTag());
         const now = Date.now();
-        // Sort newest first
         let sortedVMs = allVMs
+          // Sort newest first (decreasing alphabetically)
           .sort((a, b) => -a.creation_date?.localeCompare(b.creation_date))
+          // Remove the minimum number of VMs to keep
           .slice(0, -this.getMinSize() || undefined)
+          // Consider only VMs that have been up for most of an hour
           .filter(
             (vm) =>
-              now - Number(new Date(vm.creation_date)) >
+              (now - Number(new Date(vm.creation_date))) % (60 * 60 * 1000) >
               config.VM_MIN_UPTIME_MINUTES * 60 * 1000
           );
         let first = null;
