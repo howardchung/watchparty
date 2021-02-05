@@ -1,5 +1,5 @@
 import React from 'react';
-import { serverPath, getColorForStringHex, colorMappings } from '../../utils';
+import { serverPath, colorMappings } from '../../utils';
 import { Icon, Popup, Button, Dropdown } from 'semantic-ui-react';
 import * as firebase from 'firebase/app';
 import 'firebase/auth';
