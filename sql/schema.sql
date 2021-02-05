@@ -6,6 +6,8 @@ CREATE TABLE room(
   vanity text,
   "isChatDisabled" boolean,
   "isSubRoom" boolean,
+  data jsonb,
+  "lastUpdateTime" timestamp with time zone,
   PRIMARY KEY ("roomId")
 );
 
