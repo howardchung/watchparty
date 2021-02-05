@@ -69,7 +69,9 @@ async function init() {
     console.timeEnd('[LOADROOMSPOSTGRES]');
     for (let i = 0; i < permanentRooms.length; i++) {
       const key = permanentRooms[i].roomId;
-      const data = permanentRooms[i].data;
+      const data = permanentRooms[i].data
+        ? JSON.stringify(permanentRooms[i].data)
+        : undefined;
       const room = new Room(io, vmManagers, key, data);
       rooms.set(key, room);
     }

@@ -226,8 +226,8 @@ export class Room {
       try {
         const roomString = this.serialize();
         await postgres?.query(
-          `UPDATE room SET (lastUpdateTime, data) VALUES ($1, $2)`,
-          [new Date(), roomString]
+          `UPDATE room SET "lastUpdateTime" = $1, data = $2 WHERE "roomId" = $3`,
+          [new Date(), roomString, this.roomId]
         );
       } catch (e) {
         console.warn(e);
@@ -743,9 +743,24 @@ export class Room {
     );
     const owner = decoded.uid;
     if (data.undo) {
-      await postgres.query('DELETE from room where "roomId" = $1', [
-        this.roomId,
-      ]);
+      if (config.ENABLE_POSTGRES_SAVING) {
+        await updateObject(
+          postgres,
+          'room',
+          {
+            password: null,
+            owner: null,
+            vanity: null,
+            isChatDisabled: null,
+            isSubRoom: null,
+          },
+          { roomId: this.roomId }
+        );
+      } else {
+        await postgres.query('DELETE from room where "roomId" = $1', [
+          this.roomId,
+        ]);
+      }
       socket.emit('REC:getRoomState', {});
       this.saveToRedis(false);
     } else {
@@ -771,11 +786,14 @@ export class Room {
       };
       let result: QueryResult | null = null;
       if (config.ENABLE_POSTGRES_SAVING) {
-        result = await updateObject(postgres, 'room', roomObj);
+        result = await updateObject(postgres, 'room', roomObj, {
+          roomId: this.roomId,
+        });
       } else {
         result = await insertObject(postgres, 'room', roomObj);
       }
       const row = result?.rows?.[0];
+      // console.log(result, row);
       socket.emit('REC:getRoomState', {
         password: row?.password,
         vanity: row?.vanity,
