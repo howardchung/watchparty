@@ -42,8 +42,24 @@ export function hashString(input: string) {
   return hash;
 }
 
+export const colorMappings: StringDict = {
+  red: 'B03060',
+  orange: 'FE9A76',
+  yellow: 'FFD700',
+  olive: '32CD32',
+  green: '016936',
+  teal: '008080',
+  blue: '0E6EB8',
+  violet: 'EE82EE',
+  purple: 'B413EC',
+  pink: 'FF1493',
+  brown: 'A52A2A',
+  grey: 'A0A0A0',
+  black: '000000',
+};
+
 let colorCache = {} as NumberDict;
-export function getColor(id: string) {
+export function getColorForString(id: string) {
   let colors = [
     'red',
     'orange',
@@ -65,23 +81,8 @@ export function getColor(id: string) {
   return colors[colorCache[id]];
 }
 
-export function getColorHex(id: string) {
-  let mappings: StringDict = {
-    red: 'B03060',
-    orange: 'FE9A76',
-    yellow: 'FFD700',
-    olive: '32CD32',
-    green: '016936',
-    teal: '008080',
-    blue: '0E6EB8',
-    violet: 'EE82EE',
-    purple: 'B413EC',
-    pink: 'FF1493',
-    brown: 'A52A2A',
-    grey: 'A0A0A0',
-    black: '000000',
-  };
-  return mappings[getColor(id)];
+export function getColorForStringHex(id: string) {
+  return colorMappings[getColorForString(id)];
 }
 
 export const getFbPhoto = (fbId: string) =>

@@ -3,7 +3,7 @@ import { Button, Icon } from 'semantic-ui-react';
 
 import {
   formatTimestamp,
-  getColorHex,
+  getColorForStringHex,
   getDefaultPicture,
   iceServers,
 } from '../../utils';
@@ -296,7 +296,10 @@ export class VideoChat extends React.Component<VideoChatProps> {
                         // broken image: https://ui-avatars.com/api/?name=haidee&background=B03060&size=256&color=ffffff
                         src={
                           pictureMap[p.id] ||
-                          getDefaultPicture(nameMap[p.id], getColorHex(p.id))
+                          getDefaultPicture(
+                            nameMap[p.id],
+                            getColorForStringHex(p.id)
+                          )
                         }
                         alt=""
                       />

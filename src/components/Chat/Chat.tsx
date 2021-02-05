@@ -4,7 +4,11 @@ import 'emoji-mart/css/emoji-mart.css';
 import { EmojiData, Picker } from 'emoji-mart';
 import onClickOutside from 'react-onclickoutside';
 
-import { formatTimestamp, getColorHex, getDefaultPicture } from '../../utils';
+import {
+  formatTimestamp,
+  getColorForStringHex,
+  getDefaultPicture,
+} from '../../utils';
 import { Separator } from '../App/App';
 
 interface ChatProps {
@@ -230,7 +234,8 @@ const ChatMessage = ({
       {id ? (
         <Comment.Avatar
           src={
-            pictureMap[id] || getDefaultPicture(nameMap[id], getColorHex(id))
+            pictureMap[id] ||
+            getDefaultPicture(nameMap[id], getColorForStringHex(id))
           }
         />
       ) : null}
