@@ -36,12 +36,22 @@ export async function insertObject(
   return result;
 }
 
-async function upsertObject(
+export async function upsertObject(
   postgres: Client,
   table: string,
   object: any,
   conflict: any
-): Promise<null> {
-  // TODO implement
-  return null;
+): Promise<QueryResult<any>> {
+  const columns = Object.keys(object);
+  const values = Object.values(object);
+  let query = `INSERT INTO ${table} (${columns.map((c) => `"${c}"`).join(',')})
+    VALUES (${values.map((_, i) => '$' + (i + 1)).join(',')})
+    ON CONFLICT ("${Object.keys(conflict)[0]}")
+    DO UPDATE SET ${Object.keys(object)
+      .map((c) => `"${c}" = EXCLUDED."${c}"`)
+      .join(',')}
+    RETURNING *`;
+  // console.log(query);
+  const result = await postgres.query(query, values);
+  return result;
 }
