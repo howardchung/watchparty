@@ -1,7 +1,4 @@
 #!/bin/bash
-# Stores Docker commands for booting external servers
-
-# PeerStream (not Dockerized yet)
 
 # coturn
 docker run -d --network=host instrumentisto/coturn \
