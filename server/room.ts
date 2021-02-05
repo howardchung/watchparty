@@ -220,6 +220,9 @@ export class Room {
   };
 
   public saveToRedis = async (permanent: boolean | null) => {
+    if (!redis) {
+      return;
+    }
     try {
       const roomString = this.serialize();
       const key = this.roomId;
@@ -730,6 +733,7 @@ export class Room {
         this.roomId,
       ]);
       socket.emit('REC:getRoomState', {});
+      this.saveToRedis(false);
     } else {
       // validate room count
       const roomCount = (
@@ -764,6 +768,7 @@ export class Room {
         vanity: row?.vanity,
         owner: row?.owner,
       });
+      this.saveToRedis(true);
     }
   };
 
@@ -851,11 +856,6 @@ export class Room {
         owner: row?.owner,
         isChatDisabled: row?.isChatDisabled,
       });
-      if (row?.owner) {
-        this.saveToRedis(true);
-      } else {
-        this.saveToRedis(false);
-      }
       socket.emit('successMessage', 'Saved admin settings');
     } catch (e) {
       console.warn(e);
