@@ -180,6 +180,8 @@ export default class App extends React.Component<AppProps, AppState> {
       window.fetch(serverPath + '/ping');
     }, 10 * 60 * 1000);
 
+    const canAutoplay = await testAutoplay();
+    this.setState({ isAutoPlayable: canAutoplay });
     this.loadSettings();
     this.loadYouTube();
     this.init();
@@ -336,8 +338,6 @@ export default class App extends React.Component<AppProps, AppState> {
     });
     this.socket = socket;
     socket.on('connect', async () => {
-      const canAutoplay = await testAutoplay();
-      this.setState({ isAutoPlayable: canAutoplay });
       this.setState({ state: 'connected' });
       // Load username from localstorage
       let userName = window.localStorage.getItem('watchparty-username');
@@ -1431,25 +1431,6 @@ export default class App extends React.Component<AppProps, AppState> {
             }}
           ></Message>
         )}
-        {!this.state.error && !this.state.isAutoPlayable && (
-          <Modal inverted basic open>
-            <div style={{ display: 'flex', justifyContent: 'center' }}>
-              <Button
-                primary
-                size="huge"
-                onClick={() => {
-                  this.setState({ isAutoPlayable: true });
-                  this.setMute(false);
-                }}
-                icon
-                labelPosition="left"
-              >
-                <Icon name="sign-in" />
-                Join Party
-              </Button>
-            </div>
-          </Modal>
-        )}
         <TopBar user={this.props.user} />
         {
           <Grid stackable celled="internally">
@@ -1684,6 +1665,23 @@ export default class App extends React.Component<AppProps, AppState> {
                     style={{ flexGrow: 1 }}
                   >
                     <div id="playerContainer">
+                      {!this.state.isAutoPlayable && (
+                        <Dimmer active>
+                          <Button
+                            primary
+                            size="medium"
+                            onClick={() => {
+                              this.setState({ isAutoPlayable: true });
+                              this.setMute(false);
+                            }}
+                            icon
+                            labelPosition="left"
+                          >
+                            <Icon name="volume up" />
+                            Click to unmute
+                          </Button>
+                        </Dimmer>
+                      )}
                       {(this.state.loading ||
                         !this.state.currentMedia ||
                         this.state.nonPlayableMedia) && (
