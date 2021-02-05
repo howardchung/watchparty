@@ -862,6 +862,7 @@ export class Room {
         decoded.uid,
       ]);
       const row = result.rows[0];
+      this.isChatDisabled = Boolean(row?.isChatDisabled);
       this.io.of(this.roomId).emit('REC:getRoomState', {
         password: row?.password,
         vanity: row?.vanity,
