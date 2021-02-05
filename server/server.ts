@@ -69,6 +69,7 @@ async function init() {
     );
     const data = keys.length ? await redis?.mget(keys) : [];
     console.log('found %s rooms in redis', keys.length);
+    console.timeEnd('[LOADROOMSREDIS]');
     for (let i = 0; i < keys.length; i++) {
       const key = keys[i];
       const roomData = data[i];
@@ -79,12 +80,12 @@ async function init() {
         console.warn(e);
       }
     }
-    console.timeEnd('[LOADROOMSREDIS]');
     if (postgres) {
       console.time('[LOADROOMSPOSTGRES]');
       const permanentRooms = await getPermanentRooms();
-      const keySet = new Set(keys);
       console.log('found %s rooms in postgres', permanentRooms.length);
+      console.timeEnd('[LOADROOMSPOSTGRES]');
+      const keySet = new Set(keys);
       for (let i = 0; i < permanentRooms.length; i++) {
         const key = permanentRooms[i].roomId;
         const data = JSON.stringify(permanentRooms[i]);
@@ -95,7 +96,20 @@ async function init() {
           rooms.set(key, missingRoom);
         }
       }
-      console.timeEnd('[LOADROOMSPOSTGRES]');
+      // TODO temporarily give all non-permanent rooms without ttl a 1 day timeout (repair)
+      console.time('[TTLREPAIR]');
+      const permanentSet = new Set(permanentRooms.map((room) => room.roomId));
+      for (let i = 0; i < keys.length; i++) {
+        const ttl = await redis.ttl(keys[i]);
+        if (ttl === -1 && !permanentSet.has(keys[i])) {
+          console.log(
+            '[TTLREPAIR] setting ttl on non-permanent room %s',
+            keys[i]
+          );
+          await redis.expire(keys[i], 24 * 60 * 60);
+        }
+      }
+      console.timeEnd('[TTLREPAIR]');
     }
   }
   if (!rooms.has('/default')) {
@@ -185,6 +199,7 @@ app.post('/createRoom', (req, res) => {
   const newRoom = new Room(io, vmManagers, name);
   newRoom.video = req.body?.video || '';
   rooms.set(name, newRoom);
+  newRoom.saveToRedis(false);
   res.json({ name: name.slice(1) });
 });
 

@@ -22,6 +22,8 @@ interface ControlsProps {
 }
 
 // TODO a lot of this state is currently tied to the per-second tsMap update, which is leading to some UI lag
+// e.g. cc, mute, timestamp
+// play/pause seems to work better since it triggers a server emit
 // Should probably have local state tracking CC/mute/time etc.
 export class Controls extends React.Component<ControlsProps> {
   state = {
