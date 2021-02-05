@@ -43,7 +43,6 @@ export class Room {
   public vBrowser: AssignedVM | undefined = undefined;
   public creationTime: Date = new Date();
   public lock: string | undefined = undefined; // uid of the user who locked the room
-  public isChatDisabled: boolean = false;
 
   // Non-serialized state
   public roomId: string;
@@ -56,6 +55,7 @@ export class Room {
   private uidMap: StringDict = {};
   private roomRedis: Redis.Redis | undefined = undefined;
   private tsInterval: NodeJS.Timeout | undefined = undefined;
+  public isChatDisabled: boolean | undefined = undefined;
 
   constructor(
     io: SocketIO.Server,
@@ -116,7 +116,7 @@ export class Room {
       socket.emit('REC:tsMap', this.tsMap);
       socket.emit('REC:lock', this.lock);
       socket.emit('chatinit', this.chat);
-      socket.emit('REC:isChatDisabled', this.isChatDisabled);
+      this.getRoomState(socket);
       io.of(roomId).emit('roster', this.roster);
 
       socket.on('CMD:name', (data) => this.changeUserName(socket, data));
@@ -183,7 +183,6 @@ export class Room {
       vBrowser: this.vBrowser,
       creationTime: this.creationTime,
       lock: this.lock,
-      isChatDisabled: this.isChatDisabled,
     });
   };
 
@@ -215,9 +214,6 @@ export class Room {
     }
     if (roomObj.lock) {
       this.lock = roomObj.lock;
-    }
-    if (roomObj.isChatDisabled) {
-      this.isChatDisabled = roomObj.isChatDisabled;
     }
   };
 
@@ -807,6 +803,9 @@ export class Room {
       [this.roomId]
     );
     const first = result.rows[0];
+    if (this.isChatDisabled === undefined) {
+      this.isChatDisabled = Boolean(first?.isChatDisabled);
+    }
     socket.emit('REC:getRoomState', {
       password: first?.password,
       vanity: first?.vanity,
