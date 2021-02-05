@@ -79,7 +79,7 @@ export const assignVM = async (
         '1',
         'NX',
         'EX',
-        90
+        vmManager.getLockTimeSeconds()
       );
       if (!lock) {
         console.log('failed to acquire lock on VM:', id);

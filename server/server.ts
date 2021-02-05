@@ -129,7 +129,7 @@ async function init() {
 
   server.listen(config.PORT, config.HOST);
   // Following functions iterate over in-memory rooms
-  setInterval(renew, 60 * 1000);
+  setInterval(minuteMetrics, 60 * 1000);
   setInterval(release, releaseInterval / releaseBatches);
   setInterval(cleanupRooms, 5 * 60 * 1000);
   saveRooms();
@@ -366,7 +366,7 @@ async function saveRooms() {
 }
 
 let currBatch = 0;
-function release() {
+async function release() {
   // Reset VMs in rooms that are:
   // older than the session limit
   // assigned to a room with no users
@@ -377,9 +377,13 @@ function release() {
   for (let i = 0; i < roomArr.length; i++) {
     const room = roomArr[i];
     if (room.vBrowser && room.vBrowser.assignTime) {
+      // TODO TTL-based check, but requires new longer lived locks first
+      // const ttl = await redis?.ttl('lock:' + room.vBrowser.provider + room.vBrowser.id);
+      // const isTimedOut = ttl && ttl < releaseInterval;
+      // const isAlmostTimedOut = ttl && ttl < releaseInterval * 2;
       const maxTime = room.vBrowser.large
-        ? 12 * 60 * 60 * 1000
-        : 3 * 60 * 60 * 1000;
+        ? config.VBROWSER_SESSION_SECONDS_LARGE * 1000
+        : config.VBROWSER_SESSION_SECONDS * 1000;
       const elapsed = Number(new Date()) - room.vBrowser.assignTime;
       const isTimedOut = elapsed > maxTime;
       const isAlmostTimedOut = elapsed > maxTime - releaseInterval;
@@ -411,16 +415,17 @@ function release() {
   currBatch = (currBatch + 1) % releaseBatches;
 }
 
-async function renew() {
+async function minuteMetrics() {
   const roomArr = Array.from(rooms.values());
   for (let i = 0; i < roomArr.length; i++) {
     const room = roomArr[i];
     if (room.vBrowser && room.vBrowser.id) {
-      // console.log('[RENEW] VM in room:', room.roomId, room.vBrowser.id);
-      // Renew the lock on the VM
+      // TODO temporarily write long-lived locks so we can switch to TTL expiry
       await redis?.expire(
         'lock:' + room.vBrowser.provider + ':' + room.vBrowser.id,
-        300
+        room.vBrowser.large
+          ? config.VBROWSER_SESSION_SECONDS_LARGE
+          : config.VBROWSER_SESSION_SECONDS
       );
 
       const expireTime = getStartOfDay() / 1000 + 86400;

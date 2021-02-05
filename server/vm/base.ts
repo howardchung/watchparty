@@ -52,6 +52,12 @@ export abstract class VMManager {
     return (config.VBROWSER_TAG || 'vbrowser') + (this.isLarge ? 'Large' : '');
   };
 
+  public getLockTimeSeconds = () => {
+    return this.isLarge
+      ? config.VBROWSER_SESSION_SECONDS_LARGE
+      : config.VBROWSER_SESSION_SECONDS;
+  };
+
   public resetVM = async (id: string): Promise<void> => {
     console.log('[RESET]', id);
     // We can attempt to reuse the instance which is more efficient if users tend to use them for a short time
