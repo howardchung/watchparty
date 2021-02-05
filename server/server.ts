@@ -24,6 +24,7 @@ import { Client } from 'pg';
 import { getStartOfDay } from './utils/time';
 import { createVMManagers } from './vm/utils';
 import { hashString } from './utils/string';
+import { insertObject } from './utils/postgres';
 
 const releaseInterval = 5 * 60 * 1000;
 const releaseBatches = 5;
@@ -211,16 +212,12 @@ app.post('/createRoom', async (req, res) => {
   newRoom.video = req.body?.video || '';
   rooms.set(name, newRoom);
   newRoom.saveToRedis(false);
-  if (config.ENABLE_POSTGRES_SAVING) {
+  if (config.ENABLE_POSTGRES_SAVING && postgres) {
     const roomObj: any = {
       roomId: newRoom.roomId,
       creationTime: newRoom.creationTime,
     };
-    const columns = Object.keys(roomObj);
-    const values = Object.values(roomObj);
-    const query = `INSERT INTO room(${columns.map((c) => `"${c}"`).join(',')})
-    VALUES (${values.map((_, i) => '$' + (i + 1)).join(',')})`;
-    await postgres?.query(query, values);
+    await insertObject(postgres, 'room', roomObj);
   }
   res.json({ name: name.slice(1) });
 });
