@@ -1,4 +1,4 @@
-import { AssignedVM, VMManager } from './base';
+import { AssignedVM, VMManager, VMManagers } from './base';
 import Redis from 'ioredis';
 import config from '../config';
 import { Scaleway } from './scaleway';
@@ -101,9 +101,13 @@ export const assignVM = async (
   }
 };
 
-export function createVMManagers(vmManagerId: string) {
+export function createVMManagers(
+  vmManagerId: string,
+  vmManagerIdUS?: string
+): VMManagers {
   let vmManager: VMManager | null = null;
   let vmManagerLarge: VMManager | null = null;
+  let vmManagerUS: VMManager | null = null;
   if (
     config.REDIS_URL &&
     config.SCW_SECRET_KEY &&
@@ -130,5 +134,14 @@ export function createVMManagers(vmManagerId: string) {
     vmManager = new Docker();
     vmManagerLarge = new Docker(true);
   }
-  return { standard: vmManager, large: vmManagerLarge };
+  if (config.REDIS_URL && config.DO_TOKEN && vmManagerIdUS === 'DO') {
+    vmManagerUS = new DigitalOcean();
+  } else if (
+    config.REDIS_URL &&
+    config.DOCKER_VM_HOST &&
+    vmManagerIdUS === 'Docker'
+  ) {
+    vmManagerUS = new Docker();
+  }
+  return { standard: vmManager, large: vmManagerLarge, US: vmManagerUS };
 }

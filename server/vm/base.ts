@@ -385,3 +385,9 @@ export interface AssignedVM extends VM {
   creatorUID?: string;
   creatorClientID?: string;
 }
+
+export interface VMManagers {
+  standard: VMManager | null;
+  large: VMManager | null;
+  US: VMManager | null;
+}
