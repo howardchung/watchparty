@@ -6,8 +6,6 @@ export class PermanentRoomModal extends React.Component<{
 }> {
   render() {
     const { closeModal } = this.props;
-    //         Standard rooms are deleted after one day of inactivity. Permanent rooms aren't deleted and can have passwords/custom URLs.
-    // Permanent rooms of subscribers have a greater room capacity. Free users can only have one permanent room at a time.
     return (
       <Modal open={true} onClose={closeModal as any} closeIcon>
         <Modal.Header>Permanent Rooms</Modal.Header>
