@@ -18,6 +18,7 @@ export class NewRoomButton extends React.Component<{ size?: string }> {
     const data = await response.json();
     const { name } = data;
     window.location.href = '/#' + name;
+    window.location.reload();
   };
   render() {
     return (
