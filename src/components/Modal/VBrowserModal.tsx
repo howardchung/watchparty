@@ -1,10 +1,11 @@
 import React from 'react';
-import { Modal, Button, Table } from 'semantic-ui-react';
+import { Modal, Button, Table, Message } from 'semantic-ui-react';
 import {
   GoogleReCaptchaProvider,
   withGoogleReCaptcha,
 } from 'react-google-recaptcha-v3';
 import { SignInButton } from '../TopBar/TopBar';
+import { serverPath } from '../../utils';
 
 export class VBrowserModal extends React.Component<{
   closeModal: Function;
@@ -13,6 +14,14 @@ export class VBrowserModal extends React.Component<{
   subscribeButton: JSX.Element;
   user?: firebase.User;
 }> {
+  state = { isVMPoolFull: false };
+  async componentDidMount() {
+    const resp = await fetch(serverPath + '/metadata');
+    const metadata = await resp.json();
+    if (metadata.isVMPoolFull) {
+      this.setState({ isVMPoolFull: true });
+    }
+  }
   render() {
     const { closeModal, startVBrowser } = this.props;
     const LaunchButton = withGoogleReCaptcha(
@@ -31,6 +40,24 @@ export class VBrowserModal extends React.Component<{
           {large ? 'Launch VBrowser+' : 'Continue with Free'}
         </Button>
       )
+    );
+    const vmPoolFullMessage = (
+      <Message
+        size="small"
+        color="red"
+        icon="hourglass two"
+        style={{ width: '380px' }}
+        header="All Free VBrowsers In Use"
+        content={
+          <div>
+            <div>All of the free VBrowsers are currently being used.</div>
+            <div>
+              Please consider subscribing for anytime access to faster
+              VBrowsers, or try again later.
+            </div>
+          </div>
+        }
+      />
     );
     return (
       <GoogleReCaptchaProvider
@@ -73,7 +100,11 @@ export class VBrowserModal extends React.Component<{
                     <Table.Cell></Table.Cell>
                     <Table.Cell>
                       {this.props.user ? (
-                        <LaunchButton />
+                        this.state.isVMPoolFull ? (
+                          vmPoolFullMessage
+                        ) : (
+                          <LaunchButton />
+                        )
                       ) : (
                         <SignInButton fluid user={this.props.user} />
                       )}

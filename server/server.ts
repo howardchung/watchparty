@@ -258,23 +258,18 @@ app.get('/metadata', async (req, res) => {
     req.query?.uid as string,
     req.query?.token as string
   );
-  if (!decoded) {
-    return res.status(400).json({ error: 'invalid user token' });
-  }
-  if (!decoded.email) {
-    return res.status(400).json({ error: 'no email found' });
-  }
-  const customer = await getCustomerByEmail(decoded.email);
-  if (!customer) {
-    return res.json({ isSubscriber: false, isCustomer: false });
-  }
-  const isSubscriber = Boolean(
-    customer.subscriptions?.data?.find((sub) => sub?.status === 'active')
-  );
-  const isCustomer = Boolean(customer.subscriptions?.data?.length);
   const isVMPoolFull = vmManagers?.standard
     ? Boolean(await redis?.get(vmManagers.standard.getRedisVMPoolFullKey()))
     : false;
+  let isCustomer = false;
+  let isSubscriber = false;
+  if (decoded?.email) {
+    const customer = await getCustomerByEmail(decoded.email);
+    isSubscriber = Boolean(
+      customer?.subscriptions?.data?.find((sub) => sub?.status === 'active')
+    );
+    isCustomer = Boolean(customer?.subscriptions?.data?.length);
+  }
   return res.json({ isSubscriber, isCustomer, isVMPoolFull });
 });
 
