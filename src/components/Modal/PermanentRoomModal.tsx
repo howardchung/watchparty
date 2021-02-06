@@ -1,10 +1,5 @@
 import React from 'react';
-import { Modal, Button, Table, Icon } from 'semantic-ui-react';
-import {
-  GoogleReCaptchaProvider,
-  withGoogleReCaptcha,
-} from 'react-google-recaptcha-v3';
-import { SignInButton } from '../TopBar/TopBar';
+import { Modal, Table, Icon } from 'semantic-ui-react';
 
 export class PermanentRoomModal extends React.Component<{
   closeModal: Function;

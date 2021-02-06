@@ -8,7 +8,6 @@ import {
   Input,
   Button,
   Label,
-  Modal,
 } from 'semantic-ui-react';
 // import { SignInButton } from '../TopBar/TopBar';
 import { getCurrentSettings, updateSettings } from './LocalSettings';
