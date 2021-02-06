@@ -13,7 +13,7 @@ import { redisCount, redisCountDistinct } from './utils/redis';
 import { getCustomerByEmail } from './utils/stripe';
 import { AssignedVM, VMManager } from './vm/base';
 import { getStartOfDay } from './utils/time';
-import { assignVM } from './vm/utils';
+import { assignVM, createVMManagers } from './vm/utils';
 import { updateObject, upsertObject } from './utils/postgres';
 
 const gzip = util.promisify(zlib.gzip);
@@ -279,6 +279,7 @@ export class Room {
     const assignTime = this.vBrowser && this.vBrowser.assignTime;
     const id = this.vBrowser && this.vBrowser.id;
     const isLarge = this.vBrowser?.large;
+    const provider = this.vBrowser?.provider;
     this.vBrowser = undefined;
     this.cmdHost(undefined, '');
     // Force a save to record the vbrowser change
@@ -287,13 +288,10 @@ export class Room {
       await redis.lpush('vBrowserSessionMS', Number(new Date()) - assignTime);
       await redis.ltrim('vBrowserSessionMS', 0, 49);
     }
-    if (id) {
+    if (id && provider) {
       try {
-        // TODO use diff vmManager for resetting based on the current provider so we can switch clouds if needed
-        // const vmManagers = createVMManagers(this.vBrowser.provider);
-        const vmManager = isLarge
-          ? this.vmManagers?.large
-          : this.vmManagers?.standard;
+        const vmManagers = createVMManagers(provider);
+        const vmManager = isLarge ? vmManagers?.large : vmManagers?.standard;
         await vmManager?.resetVM(id);
       } catch (e) {
         console.warn(e);

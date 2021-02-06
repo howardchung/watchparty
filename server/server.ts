@@ -58,7 +58,7 @@ const names = Moniker.generator([
 ]);
 const launchTime = Number(new Date());
 const rooms = new Map<string, Room>();
-const vmManagers = createVMManagers();
+const vmManagers = createVMManagers(config.VM_MANAGER_ID);
 init();
 
 async function init() {

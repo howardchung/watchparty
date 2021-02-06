@@ -101,36 +101,31 @@ export const assignVM = async (
   }
 };
 
-export function createVMManagers() {
-  // Start the VM manager
+export function createVMManagers(vmManagerId: string) {
   let vmManager: VMManager | null = null;
   let vmManagerLarge: VMManager | null = null;
   if (
     config.REDIS_URL &&
     config.SCW_SECRET_KEY &&
     config.SCW_ORGANIZATION_ID &&
-    config.VM_MANAGER_ID === 'Scaleway'
+    vmManagerId === 'Scaleway'
   ) {
     vmManager = new Scaleway();
     vmManagerLarge = new Scaleway(true);
   } else if (
     config.REDIS_URL &&
     config.HETZNER_TOKEN &&
-    config.VM_MANAGER_ID === 'Hetzner'
+    vmManagerId === 'Hetzner'
   ) {
     vmManager = new Hetzner();
     vmManagerLarge = new Hetzner(true);
-  } else if (
-    config.REDIS_URL &&
-    config.DO_TOKEN &&
-    config.VM_MANAGER_ID === 'DO'
-  ) {
+  } else if (config.REDIS_URL && config.DO_TOKEN && vmManagerId === 'DO') {
     vmManager = new DigitalOcean();
     vmManagerLarge = new DigitalOcean(true);
   } else if (
     config.REDIS_URL &&
     config.DOCKER_VM_HOST &&
-    config.VM_MANAGER_ID === 'Docker'
+    vmManagerId === 'Docker'
   ) {
     vmManager = new Docker();
     vmManagerLarge = new Docker(true);
