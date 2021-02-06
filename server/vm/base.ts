@@ -191,7 +191,12 @@ export abstract class VMManager {
     const updateSize = async () => {
       const allVMs = await this.listVMs(this.getTag());
       this.currentSize = allVMs.length;
-      if (config.VM_POOL_LIMIT && this.currentSize >= config.VM_POOL_LIMIT) {
+      const availableCount = await this.redis.llen(this.getRedisQueueKey());
+      if (
+        config.VM_POOL_LIMIT &&
+        this.currentSize >= config.VM_POOL_LIMIT &&
+        availableCount === 0
+      ) {
         await this.redis.setex(
           this.getRedisVMPoolFullKey(),
           2 * 60,

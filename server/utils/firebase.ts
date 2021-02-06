@@ -14,6 +14,9 @@ export async function validateUserToken(uid: string, token: string) {
   if (!config.FIREBASE_ADMIN_SDK_CONFIG) {
     return undefined;
   }
+  if (!token) {
+    return undefined;
+  }
   const decoded = await admin.auth().verifyIdToken(token);
   if (uid !== decoded.uid) {
     return undefined;

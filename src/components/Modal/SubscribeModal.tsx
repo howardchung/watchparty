@@ -83,6 +83,11 @@ export class SubscribeModal extends React.Component<{
                   </Table.Cell>
                 </Table.Row>
                 <Table.Row>
+                  <Table.Cell>VBrowser Access</Table.Cell>
+                  <Table.Cell>When capacity allows</Table.Cell>
+                  <Table.Cell>Anytime</Table.Cell>
+                </Table.Row>
+                <Table.Row>
                   <Table.Cell>VBrowser Resolution</Table.Cell>
                   <Table.Cell>720p</Table.Cell>
                   <Table.Cell>1080p</Table.Cell>
