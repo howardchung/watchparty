@@ -60,7 +60,7 @@ export class SubscribeModal extends React.Component<{
               Please consider supporting us if you're enjoying WatchParty.
             </div>
             <Header>Features</Header>
-            <Table definition unstackable striped>
+            <Table definition unstackable striped celled>
               <Table.Header>
                 <Table.Row>
                   <Table.HeaderCell />
