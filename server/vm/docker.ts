@@ -7,7 +7,7 @@ import { cloudInit, imageName } from './utils';
 //@ts-ignore
 import sshExec from 'ssh-exec';
 
-const gatewayHost = config.DOCKER_VM_HOST || 'localhost';
+const gatewayHost = config.DOCKER_VM_HOST;
 const sshConfig = {
   user: config.DOCKER_VM_HOST_SSH_USER || 'root',
   host: gatewayHost,

@@ -11,7 +11,7 @@ import { Client, QueryResult } from 'pg';
 import { validateUserToken } from './utils/firebase';
 import { redisCount, redisCountDistinct } from './utils/redis';
 import { getCustomerByEmail } from './utils/stripe';
-import { AssignedVM, VMManager } from './vm/base';
+import { AssignedVM, VMManagers } from './vm/base';
 import { getStartOfDay } from './utils/time';
 import { assignVM, createVMManagers } from './vm/utils';
 import { updateObject, upsertObject } from './utils/postgres';
@@ -49,7 +49,7 @@ export class Room {
   public roster: User[] = [];
   private tsMap: NumberDict = {};
   private io: SocketIO.Server;
-  private vmManagers: { standard: VMManager | null; large: VMManager | null };
+  private vmManagers: VMManagers;
   public isAssigningVM = false;
   private clientIdMap: StringDict = {};
   private uidMap: StringDict = {};
@@ -59,7 +59,7 @@ export class Room {
 
   constructor(
     io: SocketIO.Server,
-    vmManagers: { standard: VMManager | null; large: VMManager | null },
+    vmManagers: VMManagers,
     roomId: string,
     roomData?: string | null | undefined
   ) {
@@ -520,7 +520,7 @@ export class Room {
       uid: string;
       token: string;
       rcToken: string;
-      options: { size: string };
+      options: { size: string; region: string };
     }
   ) => {
     if (this.vBrowser || this.isAssigningVM) {
@@ -570,6 +570,7 @@ export class Room {
     }
     this.isAssigningVM = true;
     let isLarge = false;
+    let region = null;
     if (config.STRIPE_SECRET_KEY && data && data.uid && data.token) {
       const decoded = await validateUserToken(data.uid, data.token);
       // Check if user is subscriber, if so allow isLarge
@@ -578,6 +579,7 @@ export class Room {
         if (customer?.subscriptions?.data?.[0]?.status === 'active') {
           console.log('found active sub for ', customer?.email);
           isLarge = data.options?.size === 'large';
+          region = data.options?.region;
         }
       }
     }
@@ -609,6 +611,7 @@ export class Room {
 
     redisCount('vBrowserStarts');
     this.cmdHost(socket, 'vbrowser://');
+    // TODO handle region
     const vmManager = isLarge
       ? this.vmManagers?.large
       : this.vmManagers?.standard;
