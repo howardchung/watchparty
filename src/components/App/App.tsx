@@ -389,7 +389,7 @@ export default class App extends React.Component<AppProps, AppState> {
     socket.on('REC:changeController', (data: string) => {
       this.setState({ controller: data });
     });
-    socket.on('REC:host', (data: HostState) => {
+    socket.on('REC:host', async (data: HostState) => {
       let currentMedia = data.video || '';
       if (this.isScreenShare() && !currentMedia.startsWith('screenshare://')) {
         this.stopScreenShare();
@@ -408,6 +408,7 @@ export default class App extends React.Component<AppProps, AppState> {
       if (this.isVBrowser() && !currentMedia.startsWith('vbrowser://')) {
         this.stopVBrowser();
       }
+      const canAutoplay = this.state.isAutoPlayable || (await testAutoplay());
       this.setState(
         {
           currentMedia,
@@ -422,6 +423,7 @@ export default class App extends React.Component<AppProps, AppState> {
             ? '1920x1080@30'
             : '1280x720@30',
           controller: data.controller,
+          isAutoPlayable: canAutoplay,
         },
         () => {
           if (
@@ -444,6 +446,8 @@ export default class App extends React.Component<AppProps, AppState> {
           // If we can't autoplay, start muted
           if (!this.state.isAutoPlayable) {
             this.setMute(true);
+          } else {
+            this.setMute(false);
           }
 
           if (this.isYouTube() && !this.watchPartyYTPlayer) {
@@ -683,6 +687,8 @@ export default class App extends React.Component<AppProps, AppState> {
           leftVideo.srcObject = stream;
           if (!this.state.isAutoPlayable) {
             this.setMute(true);
+          } else {
+            this.setMute(false);
           }
           leftVideo.play();
         }
@@ -1664,7 +1670,7 @@ export default class App extends React.Component<AppProps, AppState> {
                     style={{ flexGrow: 1 }}
                   >
                     <div id="playerContainer">
-                      {!this.state.isAutoPlayable && (
+                      {!this.state.isAutoPlayable && this.state.currentMedia && (
                         <Dimmer active>
                           <Button
                             primary

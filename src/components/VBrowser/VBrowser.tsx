@@ -64,6 +64,8 @@ export default class VBrowser extends React.Component<{
       video.srcObject = stream;
       if (!this.props.isAutoPlayable) {
         video.muted = true;
+      } else {
+        video.muted = false;
       }
       video.play();
     });
