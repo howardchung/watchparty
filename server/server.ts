@@ -377,7 +377,7 @@ async function release() {
     const room = roomArr[i];
     if (room.vBrowser && room.vBrowser.assignTime) {
       const ttl = await redis?.pttl(
-        'lock:' + room.vBrowser.provider + room.vBrowser.id
+        'lock:' + room.vBrowser.provider + ':' + room.vBrowser.id
       );
       const isTimedOut = ttl && ttl < releaseInterval;
       const isAlmostTimedOut = ttl && ttl < releaseInterval * 2;
