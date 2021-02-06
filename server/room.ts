@@ -207,7 +207,6 @@ export class Room {
     }
     if (roomObj.vBrowser) {
       this.vBrowser = roomObj.vBrowser;
-      // TODO create the vmManager based on the provider so we can switch clouds if needed
     }
     if (roomObj.creationTime) {
       this.creationTime = new Date(roomObj.creationTime);
@@ -290,6 +289,8 @@ export class Room {
     }
     if (id) {
       try {
+        // TODO use diff vmManager for resetting based on the current provider so we can switch clouds if needed
+        // const vmManagers = createVMManagers(this.vBrowser.provider);
         const vmManager = isLarge
           ? this.vmManagers?.large
           : this.vmManagers?.standard;
@@ -340,6 +341,15 @@ export class Room {
       console.log('[VALIDATELOCK] failed', socketId);
     }
     return result;
+  };
+
+  private validateOwner = async (uid: string) => {
+    const result = await postgres?.query(
+      'SELECT owner FROM room where "roomId" = $1',
+      [this.roomId]
+    );
+    const owner = result?.rows[0]?.owner;
+    return !owner || uid === owner;
   };
 
   private changeUserName = (socket: Socket, data: string) => {
@@ -732,11 +742,16 @@ export class Room {
       socket.emit('errorMessage', 'Failed to authenticate user');
       return;
     }
+    const owner = decoded.uid;
+    const isOwner = await this.validateOwner(decoded.uid);
+    if (!isOwner) {
+      socket.emit('errorMessage', 'Not current room owner');
+      return;
+    }
     const customer = await getCustomerByEmail(decoded.email as string);
     const isSubscriber = Boolean(
       customer?.subscriptions?.data?.[0]?.status === 'active'
     );
-    const owner = decoded.uid;
     if (data.undo) {
       if (config.ENABLE_POSTGRES_SAVING) {
         await updateObject(
@@ -806,6 +821,7 @@ export class Room {
     if (this.isChatDisabled === undefined) {
       this.isChatDisabled = Boolean(first?.isChatDisabled);
     }
+    // TODO only send the password if this is current owner
     socket.emit('REC:getRoomState', {
       password: first?.password,
       vanity: first?.vanity,
@@ -834,6 +850,11 @@ export class Room {
     );
     if (!decoded) {
       socket.emit('errorMessage', 'Failed to authenticate user');
+      return;
+    }
+    const isOwner = await this.validateOwner(decoded.uid);
+    if (!isOwner) {
+      socket.emit('errorMessage', 'Not current room owner');
       return;
     }
     const customer = await getCustomerByEmail(decoded.email as string);
@@ -876,6 +897,7 @@ export class Room {
       ]);
       const row = result.rows[0];
       this.isChatDisabled = Boolean(row?.isChatDisabled);
+      // TODO only send password if current owner
       this.io.of(this.roomId).emit('REC:getRoomState', {
         password: row?.password,
         vanity: row?.vanity,

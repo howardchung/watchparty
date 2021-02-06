@@ -8,6 +8,7 @@ export async function updateObject(
 ): Promise<QueryResult<any>> {
   const columns = Object.keys(object);
   const values = Object.values(object);
+  // TODO support compound conditions, not just one
   let query = `UPDATE ${table} SET ${columns
     .map((c, i) => `"${c}" = $${i + 1}`)
     .join(',')}
@@ -46,7 +47,7 @@ export async function upsertObject(
   const values = Object.values(object);
   let query = `INSERT INTO ${table} (${columns.map((c) => `"${c}"`).join(',')})
     VALUES (${values.map((_, i) => '$' + (i + 1)).join(',')})
-    ON CONFLICT ("${Object.keys(conflict)[0]}")
+    ON CONFLICT ("${Object.keys(conflict).join(',')}")
     DO UPDATE SET ${Object.keys(object)
       .map((c) => `"${c}" = EXCLUDED."${c}"`)
       .join(',')}
