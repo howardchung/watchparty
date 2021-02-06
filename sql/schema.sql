@@ -21,3 +21,4 @@ CREATE TABLE subscriber(
 
 CREATE UNIQUE INDEX on room (LOWER(vanity)) WHERE vanity IS NOT NULL;
 CREATE INDEX on room(owner) WHERE owner IS NOT NULL;
+CREATE INDEX on room("creationTime");
