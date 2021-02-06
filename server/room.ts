@@ -784,7 +784,10 @@ export class Room {
       const limit = isSubscriber ? 10 : 1;
       // console.log(roomCount, limit, isSubscriber);
       if (roomCount >= limit) {
-        socket.emit('errorMessage', 'Room limit exceeded');
+        socket.emit(
+          'errorMessage',
+          `You've exceeded the permanent room limit. Subscribe for additional permanent rooms.`
+        );
         return;
       }
       // Only keep the rows for which we have a postgres column

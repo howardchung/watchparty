@@ -44,7 +44,7 @@ export class VBrowserModal extends React.Component<{
               <div>
                 You're about to launch a virtual browser to share in this room.
               </div>
-              <Table definition unstackable striped>
+              <Table definition unstackable striped celled>
                 <Table.Header>
                   <Table.Row>
                     <Table.HeaderCell />

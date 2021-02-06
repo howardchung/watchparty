@@ -8,11 +8,13 @@ import {
   Input,
   Button,
   Label,
+  Modal,
 } from 'semantic-ui-react';
 // import { SignInButton } from '../TopBar/TopBar';
 import { getCurrentSettings, updateSettings } from './LocalSettings';
 import axios from 'axios';
 import { serverPath } from '../../utils';
+import { PermanentRoomModal } from '../Modal/PermanentRoomModal';
 
 interface SettingsTabProps {
   hide: boolean;
@@ -36,6 +38,7 @@ export const SettingsTab = ({
   setChatDisabled,
 }: SettingsTabProps) => {
   const [updateTS, setUpdateTS] = useState(0);
+  const [permModalOpen, setPermModalOpen] = useState(false);
   const [vanity, setVanity] = useState<string | undefined>(undefined);
   const [password, setPassword] = useState<string | undefined>(undefined);
   const [isChatDisabled, setIsChatDisabled] = useState(false);
@@ -116,6 +119,11 @@ export const SettingsTab = ({
 
   return (
     <div style={{ display: hide ? 'none' : 'block', color: 'white' }}>
+      {permModalOpen && (
+        <PermanentRoomModal
+          closeModal={() => setPermModalOpen(false)}
+        ></PermanentRoomModal>
+      )}
       <div className="sectionHeader">Room Settings</div>
       {!user && (
         <Message color="yellow" size="tiny">
@@ -134,8 +142,16 @@ export const SettingsTab = ({
         <SettingRow
           icon={'clock'}
           name={`Make Room Permanent`}
-          description="Standard rooms are deleted after one day of inactivity. Permanent rooms aren't deleted and can have passwords/custom URLs.
-          Permanent rooms of subscribers have a greater room capacity. Free users can only have one permanent room at a time."
+          description={
+            'Prevent this room from expiring. This also unlocks additional room features.'
+          }
+          helpIcon={
+            <Icon
+              name="help circle"
+              onClick={() => setPermModalOpen(true)}
+              style={{ cursor: 'pointer' }}
+            ></Icon>
+          }
           checked={Boolean(owner)}
           disabled={permanentDisabled}
           onChange={(_e, data) => setRoomOwner({ undo: !data.checked })}
@@ -270,16 +286,18 @@ const SettingRow = ({
   onChange,
   content,
   subOnly,
+  helpIcon,
 }: {
   icon: string;
   name: string;
-  description: React.ReactNode;
+  description?: React.ReactNode;
   checked?: boolean;
   disabled: boolean;
   updateTS?: number;
   onChange?: (e: React.FormEvent, data: CheckboxProps) => void;
   content?: React.ReactNode;
   subOnly?: boolean;
+  helpIcon?: React.ReactNode;
 }) => {
   return (
     <React.Fragment>
@@ -288,7 +306,7 @@ const SettingRow = ({
         <div style={{ display: 'flex' }}>
           <Icon size="large" name={icon as any} />
           <div>
-            {name}{' '}
+            {name} {helpIcon}
             {subOnly ? (
               <Label size="mini" color="orange">
                 Subscriber only
