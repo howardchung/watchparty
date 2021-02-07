@@ -1,4 +1,3 @@
-import config from './config';
 import { getBgVMManagers } from './vm/utils';
 
 const vmManagers = getBgVMManagers();
