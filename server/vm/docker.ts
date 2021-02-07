@@ -138,5 +138,6 @@ export class Docker extends VMManager {
     creation_date: server.State?.StartedAt,
     provider: this.id,
     large: this.isLarge,
+    region: this.region,
   });
 }

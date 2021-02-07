@@ -178,5 +178,6 @@ export class Hetzner extends VMManager {
     originalName: server.labels.originalName,
     provider: this.id,
     large: this.isLarge,
+    region: this.region,
   });
 }

@@ -165,5 +165,6 @@ export class Scaleway extends VMManager {
     creation_date: server.creation_date,
     provider: this.id,
     large: this.isLarge,
+    region: this.region,
   });
 }

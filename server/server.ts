@@ -22,7 +22,7 @@ import { validateUserToken } from './utils/firebase';
 import path from 'path';
 import { Client } from 'pg';
 import { getStartOfDay } from './utils/time';
-import { createVMManagers } from './vm/utils';
+import { getBgVMManagers } from './vm/utils';
 import { hashString } from './utils/string';
 import { insertObject } from './utils/postgres';
 
@@ -58,7 +58,7 @@ const names = Moniker.generator([
 ]);
 const launchTime = Number(new Date());
 const rooms = new Map<string, Room>();
-const vmManagers = createVMManagers(config.VM_MANAGER_ID);
+const vmManagers = getBgVMManagers();
 init();
 
 async function init() {
