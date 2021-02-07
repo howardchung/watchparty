@@ -408,7 +408,6 @@ export default class App extends React.Component<AppProps, AppState> {
       if (this.isVBrowser() && !currentMedia.startsWith('vbrowser://')) {
         this.stopVBrowser();
       }
-      const canAutoplay = this.state.isAutoPlayable || (await testAutoplay());
       this.setState(
         {
           currentMedia,
@@ -423,7 +422,6 @@ export default class App extends React.Component<AppProps, AppState> {
             ? '1920x1080@30'
             : '1280x720@30',
           controller: data.controller,
-          isAutoPlayable: canAutoplay,
         },
         () => {
           if (
@@ -442,13 +440,6 @@ export default class App extends React.Component<AppProps, AppState> {
           ) as HTMLMediaElement;
           leftVideo?.pause();
           this.watchPartyYTPlayer?.stopVideo();
-
-          // If we can't autoplay, start muted
-          if (!this.state.isAutoPlayable) {
-            this.setMute(true);
-          } else {
-            this.setMute(false);
-          }
 
           if (this.isYouTube() && !this.watchPartyYTPlayer) {
             console.log(
@@ -685,12 +676,7 @@ export default class App extends React.Component<AppProps, AppState> {
         if (leftVideo) {
           leftVideo.src = '';
           leftVideo.srcObject = stream;
-          if (!this.state.isAutoPlayable) {
-            this.setMute(true);
-          } else {
-            this.setMute(false);
-          }
-          leftVideo.play();
+          this.doPlay();
         }
       };
     }
@@ -880,26 +866,34 @@ export default class App extends React.Component<AppProps, AppState> {
   };
 
   doPlay = async () => {
-    this.setState({ currentMediaPaused: false }, async () => {
-      if (this.isVideo()) {
-        const leftVideo = document.getElementById(
-          'leftVideo'
-        ) as HTMLMediaElement;
-        try {
-          await leftVideo?.play();
-        } catch (e) {
-          // console.warn(e);
-          console.warn(e.name);
-          if (e.name === 'NotSupportedError') {
-            this.setState({ loading: false, nonPlayableMedia: true });
+    const canAutoplay = this.state.isAutoPlayable || (await testAutoplay());
+    this.setState(
+      { currentMediaPaused: false, isAutoPlayable: canAutoplay },
+      async () => {
+        if (this.isVideo()) {
+          const leftVideo = document.getElementById(
+            'leftVideo'
+          ) as HTMLMediaElement;
+          try {
+            if (this.state.isAutoPlayable) {
+              this.setMute(false);
+            } else {
+              this.setMute(true);
+            }
+            await leftVideo?.play();
+          } catch (e) {
+            console.warn(e);
+            if (e.name === 'NotSupportedError') {
+              this.setState({ loading: false, nonPlayableMedia: true });
+            }
           }
         }
+        if (this.isYouTube()) {
+          console.log('play yt');
+          this.watchPartyYTPlayer?.playVideo();
+        }
       }
-      if (this.isYouTube()) {
-        console.log('play yt');
-        this.watchPartyYTPlayer?.playVideo();
-      }
-    });
+    );
   };
 
   doPause = () => {
@@ -1752,7 +1746,7 @@ export default class App extends React.Component<AppProps, AppState> {
                           controlling={this.state.controller === this.socket.id}
                           setLoadingFalse={this.setLoadingFalse}
                           resolution={this.state.vBrowserResolution}
-                          isAutoPlayable={this.state.isAutoPlayable}
+                          doPlay={this.doPlay}
                           setResolution={(data: string) =>
                             this.setState({ vBrowserResolution: data })
                           }
