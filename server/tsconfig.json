@@ -5,7 +5,8 @@
     "allowJs": true,
     "strict": true,
     "esModuleInterop": true,
-    "module": "commonjs"
+    "module": "commonjs",
+    "outDir": "../buildServer"
   },
   "include": [".", "../global.d.ts"]
 }
