@@ -49,7 +49,6 @@ export class Room {
   public roster: User[] = [];
   private tsMap: NumberDict = {};
   private io: SocketIO.Server;
-  private vmManagers: VMManagers;
   public isAssigningVM = false;
   private clientIdMap: StringDict = {};
   private uidMap: StringDict = {};
@@ -59,13 +58,11 @@ export class Room {
 
   constructor(
     io: SocketIO.Server,
-    vmManagers: VMManagers,
     roomId: string,
     roomData?: string | null | undefined
   ) {
     this.roomId = roomId;
     this.io = io;
-    this.vmManagers = vmManagers;
 
     if (roomData) {
       this.deserialize(roomData);
@@ -612,9 +609,8 @@ export class Room {
     redisCount('vBrowserStarts');
     this.cmdHost(socket, 'vbrowser://');
     // TODO handle region
-    const vmManager = isLarge
-      ? this.vmManagers?.large
-      : this.vmManagers?.standard;
+    const vmManagers = createVMManagers(config.VM_MANAGER_ID);
+    const vmManager = isLarge ? vmManagers?.large : vmManagers?.standard;
     if (!vmManager) {
       socket.emit(
         'errorMessage',

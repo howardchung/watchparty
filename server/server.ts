@@ -72,7 +72,7 @@ async function init() {
       const data = permanentRooms[i].data
         ? JSON.stringify(permanentRooms[i].data)
         : undefined;
-      const room = new Room(io, vmManagers, key, data);
+      const room = new Room(io, key, data);
       rooms.set(key, room);
     }
   } else if (redis) {
@@ -88,7 +88,7 @@ async function init() {
       const roomData = data[i];
       // console.log(key, roomData);
       try {
-        rooms.set(key, new Room(io, vmManagers, key, roomData));
+        rooms.set(key, new Room(io, key, roomData));
       } catch (e) {
         console.warn(e);
       }
@@ -104,7 +104,7 @@ async function init() {
         const data = JSON.stringify(permanentRooms[i]);
         if (!keySet.has(key)) {
           console.log('detected room %s in postgres but not redis', key);
-          const missingRoom = new Room(io, vmManagers, key, data);
+          const missingRoom = new Room(io, key, data);
           missingRoom.saveToRedis(true);
           rooms.set(key, missingRoom);
         }
@@ -127,7 +127,7 @@ async function init() {
     }
   }
   if (!rooms.has('/default')) {
-    rooms.set('/default', new Room(io, vmManagers, '/default'));
+    rooms.set('/default', new Room(io, '/default'));
   }
 
   server.listen(config.PORT, config.HOST);
@@ -210,7 +210,7 @@ app.post('/createRoom', async (req, res) => {
     name = genName();
   }
   console.log('createRoom: ', name);
-  const newRoom = new Room(io, vmManagers, name);
+  const newRoom = new Room(io, name);
   newRoom.video = req.body?.video || '';
   rooms.set(name, newRoom);
   newRoom.saveToRedis(false);
