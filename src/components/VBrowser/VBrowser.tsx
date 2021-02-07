@@ -13,7 +13,7 @@ export default class VBrowser extends React.Component<{
   setLoadingFalse: Function;
   resolution: string;
   setResolution: Function;
-  isAutoPlayable: boolean;
+  doPlay: Function;
 }> {
   // private observer = new ResizeObserver(this.onResize);
   private focused = false;
@@ -62,12 +62,7 @@ export default class VBrowser extends React.Component<{
       const video = document.getElementById('leftVideo') as HTMLVideoElement;
       video.src = '';
       video.srcObject = stream;
-      if (!this.props.isAutoPlayable) {
-        video.muted = true;
-      } else {
-        video.muted = false;
-      }
-      video.play();
+      this.props.doPlay();
     });
     this.$client.on(EVENT.CONTROL.CLIPBOARD, this.onClipboardChanged);
 
