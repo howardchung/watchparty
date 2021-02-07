@@ -55,7 +55,8 @@ export const imageName = 'howardc93/vbrowser:latest';
 
 export const assignVM = async (
   redis: Redis.Redis,
-  vmManager: VMManager
+  vmManager: VMManager,
+  sessionLimitSeconds: number
 ): Promise<AssignedVM | undefined> => {
   try {
     const assignStart = Number(new Date());
@@ -79,7 +80,7 @@ export const assignVM = async (
         '1',
         'NX',
         'EX',
-        vmManager.getLockTimeSeconds()
+        sessionLimitSeconds
       );
       if (!lock) {
         console.log('failed to acquire lock on VM:', id);
@@ -138,4 +139,10 @@ export function getBgVMManagers() {
     large: getVMManager(config.VM_MANAGER_ID, true, ''),
     US: null, // getVMManager(config.VM_MANAGER_ID_US || config.VM_MANAGER_ID, true, 'US'),
   };
+}
+
+export function getSessionLimitSeconds(isLarge: boolean) {
+  return isLarge
+    ? config.VBROWSER_SESSION_SECONDS_LARGE
+    : config.VBROWSER_SESSION_SECONDS;
 }
