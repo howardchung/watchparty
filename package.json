@@ -55,7 +55,8 @@
     "server": "node buildServer/server.js",
     "pm2": "pm2 start buildServer/server.js",
     "deploy": "git fetch && git reset --hard origin/release && pm2 flush && pm2 reload --time buildServer/ecosystem.config.js",
-    "prettier": "prettier --write ."
+    "prettier": "prettier --write .",
+    "typecheck": "tsc --project server/tsconfig.json --noEmit"
   },
   "husky": {
     "hooks": {
