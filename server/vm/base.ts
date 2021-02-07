@@ -4,6 +4,11 @@ import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import { redisCount } from '../utils/redis';
 
+let redis: Redis.Redis | undefined = undefined;
+if (config.REDIS_URL) {
+  redis = new Redis(config.REDIS_URL);
+}
+
 const incrInterval = 5 * 1000;
 const decrInterval = 2 * 60 * 1000;
 const cleanupInterval = 4 * 60 * 1000;
@@ -12,12 +17,16 @@ const updateSizeInterval = 60 * 1000;
 export abstract class VMManager {
   protected isLarge = false;
   protected region = '';
-  protected redis = new Redis(config.REDIS_URL);
+  protected redis: Redis.Redis;
   private currentSize = 0;
 
   constructor(large?: boolean, region = '') {
     this.isLarge = Boolean(large);
     this.region = region;
+    if (!redis) {
+      throw new Error('Cannot construct VMManager without Redis');
+    }
+    this.redis = redis;
   }
 
   protected getMinSize = () =>
