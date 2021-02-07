@@ -13,7 +13,7 @@ import { redisCount, redisCountDistinct } from './utils/redis';
 import { getCustomerByEmail } from './utils/stripe';
 import { AssignedVM, VMManagers } from './vm/base';
 import { getStartOfDay } from './utils/time';
-import { assignVM, createVMManagers } from './vm/utils';
+import { assignVM, getVMManager } from './vm/utils';
 import { updateObject, upsertObject } from './utils/postgres';
 
 const gzip = util.promisify(zlib.gzip);
@@ -274,9 +274,10 @@ export class Room {
     this.roomRedis?.disconnect();
     this.roomRedis = undefined;
     const assignTime = this.vBrowser && this.vBrowser.assignTime;
-    const id = this.vBrowser && this.vBrowser.id;
-    const isLarge = this.vBrowser?.large;
-    const provider = this.vBrowser?.provider;
+    const id = this.vBrowser?.id;
+    const provider = this.vBrowser?.provider ?? config.VM_MANAGER_ID;
+    const isLarge = this.vBrowser?.large ?? false;
+    const region = this.vBrowser?.region ?? '';
     this.vBrowser = undefined;
     this.cmdHost(undefined, '');
     // Force a save to record the vbrowser change
@@ -285,10 +286,9 @@ export class Room {
       await redis.lpush('vBrowserSessionMS', Number(new Date()) - assignTime);
       await redis.ltrim('vBrowserSessionMS', 0, 49);
     }
-    if (id && provider) {
+    if (id) {
       try {
-        const vmManagers = createVMManagers(provider);
-        const vmManager = isLarge ? vmManagers?.large : vmManagers?.standard;
+        const vmManager = getVMManager(provider, isLarge, region);
         await vmManager?.resetVM(id);
       } catch (e) {
         console.warn(e);
@@ -567,7 +567,7 @@ export class Room {
     }
     this.isAssigningVM = true;
     let isLarge = false;
-    let region = null;
+    let region = '';
     if (config.STRIPE_SECRET_KEY && data && data.uid && data.token) {
       const decoded = await validateUserToken(data.uid, data.token);
       // Check if user is subscriber, if so allow isLarge
@@ -608,9 +608,7 @@ export class Room {
 
     redisCount('vBrowserStarts');
     this.cmdHost(socket, 'vbrowser://');
-    // TODO handle region
-    const vmManagers = createVMManagers(config.VM_MANAGER_ID);
-    const vmManager = isLarge ? vmManagers?.large : vmManagers?.standard;
+    const vmManager = getVMManager(config.VM_MANAGER_ID, isLarge, region);
     if (!vmManager) {
       socket.emit(
         'errorMessage',

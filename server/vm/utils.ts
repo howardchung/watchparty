@@ -101,47 +101,41 @@ export const assignVM = async (
   }
 };
 
-export function createVMManagers(
-  vmManagerId: string,
-  vmManagerIdUS?: string
-): VMManagers {
+export function getVMManager(
+  provider: string,
+  isLarge: boolean,
+  region: string
+): VMManager | null {
   let vmManager: VMManager | null = null;
-  let vmManagerLarge: VMManager | null = null;
-  let vmManagerUS: VMManager | null = null;
   if (
     config.REDIS_URL &&
     config.SCW_SECRET_KEY &&
     config.SCW_ORGANIZATION_ID &&
-    vmManagerId === 'Scaleway'
+    provider === 'Scaleway'
   ) {
-    vmManager = new Scaleway();
-    vmManagerLarge = new Scaleway(true);
+    vmManager = new Scaleway(isLarge, region);
   } else if (
     config.REDIS_URL &&
     config.HETZNER_TOKEN &&
-    vmManagerId === 'Hetzner'
+    provider === 'Hetzner'
   ) {
-    vmManager = new Hetzner();
-    vmManagerLarge = new Hetzner(true);
-  } else if (config.REDIS_URL && config.DO_TOKEN && vmManagerId === 'DO') {
-    vmManager = new DigitalOcean();
-    vmManagerLarge = new DigitalOcean(true);
+    vmManager = new Hetzner(isLarge, region);
+  } else if (config.REDIS_URL && config.DO_TOKEN && provider === 'DO') {
+    vmManager = new DigitalOcean(isLarge);
   } else if (
     config.REDIS_URL &&
     config.DOCKER_VM_HOST &&
-    vmManagerId === 'Docker'
+    provider === 'Docker'
   ) {
-    vmManager = new Docker();
-    vmManagerLarge = new Docker(true);
+    vmManager = new Docker(isLarge, region);
   }
-  if (config.REDIS_URL && config.DO_TOKEN && vmManagerIdUS === 'DO') {
-    vmManagerUS = new DigitalOcean();
-  } else if (
-    config.REDIS_URL &&
-    config.DOCKER_VM_HOST &&
-    vmManagerIdUS === 'Docker'
-  ) {
-    vmManagerUS = new Docker();
-  }
-  return { standard: vmManager, large: vmManagerLarge, US: vmManagerUS };
+  return vmManager;
+}
+
+export function getBgVMManagers() {
+  return {
+    standard: getVMManager(config.VM_MANAGER_ID, false, ''),
+    large: getVMManager(config.VM_MANAGER_ID, true, ''),
+    US: null, // getVMManager(config.VM_MANAGER_ID_US || config.VM_MANAGER_ID, true, 'US'),
+  };
 }

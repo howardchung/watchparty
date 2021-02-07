@@ -1,7 +1,8 @@
 import config from './config';
-import { createVMManagers } from './vm/utils';
+import { getBgVMManagers } from './vm/utils';
 
-const vmManagers = createVMManagers(config.VM_MANAGER_ID);
+const vmManagers = getBgVMManagers();
+
 vmManagers.standard?.runBackgroundJobs();
 vmManagers.large?.runBackgroundJobs();
 vmManagers.US?.runBackgroundJobs();

@@ -11,13 +11,13 @@ const updateSizeInterval = 60 * 1000;
 
 export abstract class VMManager {
   protected isLarge = false;
+  protected region = '';
   protected redis = new Redis(config.REDIS_URL);
   private currentSize = 0;
 
-  constructor(large?: boolean) {
-    if (large) {
-      this.isLarge = true;
-    }
+  constructor(large?: boolean, region = '') {
+    this.isLarge = Boolean(large);
+    this.region = region;
   }
 
   protected getMinSize = () =>
@@ -33,23 +33,31 @@ export abstract class VMManager {
   };
 
   public getRedisQueueKey = () => {
-    return 'availableList' + this.id + (this.isLarge ? 'Large' : '');
+    return (
+      'availableList' + this.id + this.region + (this.isLarge ? 'Large' : '')
+    );
   };
 
   public getRedisStagingKey = () => {
-    return 'stagingList' + this.id + (this.isLarge ? 'Large' : '');
+    return (
+      'stagingList' + this.id + this.region + (this.isLarge ? 'Large' : '')
+    );
   };
 
   public getRedisHostCacheKey = () => {
-    return 'hostCache' + this.id + (this.isLarge ? 'Large' : '');
+    return 'hostCache' + this.id + this.region + (this.isLarge ? 'Large' : '');
   };
 
   public getRedisVMPoolFullKey = () => {
-    return 'vmPoolFull' + this.id + (this.isLarge ? 'Large' : '');
+    return 'vmPoolFull' + this.id + this.region + (this.isLarge ? 'Large' : '');
   };
 
   public getTag = () => {
-    return (config.VBROWSER_TAG || 'vbrowser') + (this.isLarge ? 'Large' : '');
+    return (
+      (config.VBROWSER_TAG || 'vbrowser') +
+      this.region +
+      (this.isLarge ? 'Large' : '')
+    );
   };
 
   public getLockTimeSeconds = () => {
@@ -377,6 +385,7 @@ export interface VM {
   provider: string;
   originalName?: string;
   large: boolean;
+  region: string;
 }
 
 export interface AssignedVM extends VM {
