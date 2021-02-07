@@ -124,6 +124,10 @@ export abstract class VMManager {
   };
 
   public runBackgroundJobs = () => {
+    console.log(
+      '[VMWORKER] starting background jobs for %s',
+      this.getRedisQueueKey()
+    );
     const backgroundRedis = new Redis(config.REDIS_URL);
     let vmBufferSize = 0;
     let vmBufferFlex = 0;
