@@ -72,7 +72,7 @@ export abstract class VMManager {
     await this.redis.rpush(this.getRedisStagingKey(), id);
   };
 
-  protected startVMWrapper = async () => {
+  public startVMWrapper = async () => {
     // generate credentials and boot a VM
     try {
       const password = uuidv4();

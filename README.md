@@ -63,6 +63,7 @@ This project supports creating virtual browsers using several cloud providers, o
 - Install Docker: `curl -fsSL https://get.docker.com | sh`
 - Make sure you have an SSH key pair set up on the server (`id_rsa` in `~/.ssh` directory)
 - Add `DOCKER_VM_HOST=localhost` to your .env file (can substitute localhost for a public hostname)
+- Add `NODE_ENV=development` to .env to enable create-on-demand behavior for VMs
 - Configure Redis by adding `REDIS_URL` to your .env file (Redis is required for virtual browser management)
 
 ## Tech

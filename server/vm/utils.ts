@@ -61,13 +61,13 @@ export const assignVM = async (
     const assignStart = Number(new Date());
     let selected = null;
     while (!selected) {
-      // This code spawns a VM if none is available in the pool
-      // const availableCount = await redis.llen(this.getRedisQueueKey());
-      // const stagingCount = await redis.llen(this.getRedisStagingKey());
-      // const fixedSize = this.getFixedSize();
-      // if (availableCount + stagingCount === 0 && !fixedSize) {
-      //   await this.startVMWrapper();
-      // }
+      if (process.env.NODE_ENV === 'development') {
+        // This code spawns a VM if none is available in the pool
+        const availableCount = await redis.llen(vmManager.getRedisQueueKey());
+        if (!availableCount) {
+          await vmManager.startVMWrapper();
+        }
+      }
       let resp = await redis.blpop(vmManager.getRedisQueueKey(), 90);
       if (!resp) {
         return undefined;
