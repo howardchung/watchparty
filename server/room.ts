@@ -13,7 +13,7 @@ import { redisCount, redisCountDistinct } from './utils/redis';
 import { getCustomerByEmail } from './utils/stripe';
 import { AssignedVM, VMManagers } from './vm/base';
 import { getStartOfDay } from './utils/time';
-import { assignVM, getVMManager } from './vm/utils';
+import { assignVM, getSessionLimitSeconds, getVMManager } from './vm/utils';
 import { updateObject, upsertObject } from './utils/postgres';
 
 const gzip = util.promisify(zlib.gzip);
@@ -617,7 +617,8 @@ export class Room {
       return;
     }
     this.roomRedis = new Redis(config.REDIS_URL);
-    const assignment = await assignVM(this.roomRedis, vmManager);
+    const seconds = getSessionLimitSeconds(isLarge);
+    const assignment = await assignVM(this.roomRedis, vmManager, seconds);
     this.roomRedis?.disconnect();
     this.roomRedis = undefined;
     if (!this.isAssigningVM) {
