@@ -135,9 +135,9 @@ export function getVMManager(
 
 export function getBgVMManagers() {
   return {
-    standard: getVMManager(config.VM_MANAGER_ID, false, ''),
     large: getVMManager(config.VM_MANAGER_ID, true, ''),
     US: null, // getVMManager(config.VM_MANAGER_ID_US || config.VM_MANAGER_ID, true, 'US'),
+    standard: getVMManager(config.VM_MANAGER_ID, false, ''),
   };
 }
 
