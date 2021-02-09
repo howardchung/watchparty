@@ -10,7 +10,11 @@ export const Privacy = () => {
         {`
 Privacy Policy
 ====
-- Rooms are temporary and expire after one day of inactivity. Users have the option of making a room permanent, which can be undone at any time.
+
+Rooms
+----
+- By default, rooms are temporary and expire after one day of inactivity.
+- Users have the option of making a room permanent, which can be undone at any time.
 - We do not keep logs of the content that users watch.
 
 Personal Information
@@ -18,7 +22,7 @@ Personal Information
 - You are not required to register to use the service, but you have the option to sign in with an email or authentication provider, which will be used to display your name and picture in the rooms you join.
 - If you provide this information, we may use it to contact you regarding your use of the service, or to link your account to a subscription.
 - We do not sell personal information to third parties.
-- You have the right to request deletion of your user data, in accordance with various laws governing data protection.
+- You have the right to request deletion of your user data, in accordance with various laws governing data protection. Please contact support@watchparty.me to request user data deletion.
 - Payment information is handled by providers such as Stripe. We do not collect or access financial information directly.
 
 Cookies
@@ -51,6 +55,11 @@ By using this service you agree to the following terms:
 - Your use of the service may be terminated if you are found to be sharing illegal or infringing content
 - The service provides no guarantee of uptime or availability
 - You use the service at your own risk of encountering objectionable content, as we do not actively moderate rooms unless content is found to be illegal or infringing
+
+Subscriptions
+----
+- If you are dissatisfied with the service for any reason or believe you have been charged in error, please contact support@watchparty.me.
+- We will provide a full refund of the most recent payment, no questions asked.
 
 YouTube
 ----
