@@ -495,7 +495,7 @@ async function getStats() {
     if (obj.vBrowser && obj.vBrowser.large) {
       currentVBrowserLarge += 1;
     }
-    if (room.isAssigningVM) {
+    if (room.roomRedis) {
       currentVBrowserWaiting += 1;
     }
     if (obj.video?.startsWith('http') && obj.rosterLength) {
