@@ -49,10 +49,9 @@ export class Room {
   public roster: User[] = [];
   private tsMap: NumberDict = {};
   private io: SocketIO.Server;
-  public isAssigningVM = false;
   private clientIdMap: StringDict = {};
   private uidMap: StringDict = {};
-  private roomRedis: Redis.Redis | undefined = undefined;
+  public roomRedis: Redis.Redis | undefined = undefined;
   private tsInterval: NodeJS.Timeout | undefined = undefined;
   public isChatDisabled: boolean | undefined = undefined;
 
@@ -270,7 +269,6 @@ export class Room {
   };
 
   public stopVBrowserInternal = async () => {
-    this.isAssigningVM = false;
     this.roomRedis?.disconnect();
     this.roomRedis = undefined;
     const assignTime = this.vBrowser && this.vBrowser.assignTime;
@@ -520,7 +518,7 @@ export class Room {
       options: { size: string; region: string };
     }
   ) => {
-    if (this.vBrowser || this.isAssigningVM) {
+    if (this.vBrowser || this.roomRedis) {
       return;
     }
     if (!this.validateLock(socket.id)) {
@@ -565,7 +563,6 @@ export class Room {
       }
       // TODO limit users based on these counts
     }
-    this.isAssigningVM = true;
     let isLarge = false;
     let region = '';
     if (config.STRIPE_SECRET_KEY && data && data.uid && data.token) {
@@ -619,13 +616,12 @@ export class Room {
     this.roomRedis = new Redis(config.REDIS_URL);
     const seconds = getSessionLimitSeconds(isLarge);
     const assignment = await assignVM(this.roomRedis, vmManager, seconds);
-    this.roomRedis?.disconnect();
-    this.roomRedis = undefined;
-    if (!this.isAssigningVM) {
+    if (!this.roomRedis) {
       // Maybe the user cancelled the request before assignment finished
       return;
     }
-    this.isAssigningVM = false;
+    this.roomRedis?.disconnect();
+    this.roomRedis = undefined;
     if (!assignment) {
       this.cmdHost(socket, '');
       this.vBrowser = undefined;
@@ -647,7 +643,7 @@ export class Room {
   };
 
   private stopVBrowser = async (socket: Socket) => {
-    if (!this.vBrowser && !this.isAssigningVM && this.video !== 'vbrowser://') {
+    if (!this.vBrowser && !this.roomRedis && this.video !== 'vbrowser://') {
       return;
     }
     if (!this.validateLock(socket.id)) {
