@@ -165,16 +165,20 @@ app.use(compression());
 app.get('/stats', async (req, res) => {
   if (req.query.key && req.query.key === config.STATS_KEY) {
     const stats = await getStats();
-    if (
-      stats.availableVBrowsers?.length === 0 ||
-      stats.availableVBrowsersLarge?.length === 0
-    ) {
-      res.status(500);
-    }
     res.json(stats);
   } else {
     return res.status(403).json({ error: 'Access Denied' });
   }
+});
+
+app.get('/health/:metric', async (req, res) => {
+  const stats = await getStats();
+  const metrics: BooleanDict = {
+    vBrowser: Boolean(stats.availableVBrowsers?.length),
+    vBrowserLarge: Boolean(stats.availableVBrowsers?.length),
+  };
+  const result = metrics[req.params.metric];
+  res.status(result ? 200 : 500).json(result);
 });
 
 app.get('/timeSeries', async (req, res) => {
