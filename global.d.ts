@@ -6,6 +6,7 @@ declare module 'srt-webvtt';
 
 type StringDict = { [key: string]: string };
 type NumberDict = { [key: string]: number };
+type BooleanDict = { [key: string]: boolean };
 type PCDict = { [key: string]: RTCPeerConnection };
 type MediaType = 'vbrowser' | 'screenshare' | 'video' | 'youtube';
 
