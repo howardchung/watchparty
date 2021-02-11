@@ -175,7 +175,7 @@ app.get('/health/:metric', async (req, res) => {
   const stats = await getStats();
   const metrics: BooleanDict = {
     vBrowser: Boolean(stats.availableVBrowsers?.length),
-    vBrowserLarge: Boolean(stats.availableVBrowsers?.length),
+    vBrowserLarge: Boolean(stats.availableVBrowsersLarge?.length),
   };
   const result = metrics[req.params.metric];
   res.status(result ? 200 : 500).json(result);
