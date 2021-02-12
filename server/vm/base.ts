@@ -10,9 +10,9 @@ if (config.REDIS_URL) {
 }
 
 const incrInterval = 5 * 1000;
-const decrInterval = 2 * 60 * 1000;
-const cleanupInterval = 4 * 60 * 1000;
-const updateSizeInterval = 60 * 1000;
+const decrInterval = 1 * 60 * 1000;
+const cleanupInterval = 5 * 60 * 1000;
+const updateSizeInterval = 30 * 1000;
 
 export abstract class VMManager {
   protected isLarge = false;
