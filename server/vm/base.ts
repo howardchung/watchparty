@@ -294,6 +294,7 @@ export abstract class VMManager {
                   if (e.response.status === 404) {
                     await this.redis.lrem(this.getRedisQueueKey(), 1, id);
                     await this.redis.lrem(this.getRedisStagingKey(), 1, id);
+                    await this.redis.del(this.getRedisStagingKey() + ':' + id);
                   }
                 }
                 if (host) {
