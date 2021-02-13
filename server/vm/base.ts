@@ -264,7 +264,7 @@ export abstract class VMManager {
     };
 
     const checkStaging = async () => {
-      const checkStagingInterval = 2000;
+      const checkStagingInterval = 1000;
       while (true) {
         try {
           // Loop through staging list and check if VM is ready
@@ -323,7 +323,7 @@ export abstract class VMManager {
                 await this.redis.lpush('vBrowserStageRetries', retryCount);
                 await this.redis.ltrim('vBrowserStageRetries', 0, 49);
               } else {
-                if (retryCount >= 100) {
+                if (retryCount >= 200) {
                   console.log('[CHECKSTAGING] giving up:', id);
                   await this.redis
                     .multi()
@@ -333,17 +333,18 @@ export abstract class VMManager {
                   redisCount('vBrowserStagingFails');
                   await this.resetVM(id);
                 } else {
-                  if (retryCount % 25 === 0) {
+                  if (retryCount % 100 === 0) {
                     const vm = await this.getVM(id);
                     console.log(
-                      '[CHECKSTAGING] attempt to poweron and attach to network'
+                      '[CHECKSTAGING] %s attempt to poweron and attach to network',
+                      id
                     );
                     this.powerOn(id);
                     if (!vm?.private_ip) {
                       this.attachToNetwork(id);
                     }
                   }
-                  if (retryCount % 5 === 0) {
+                  if (retryCount % 10 === 0) {
                     console.log(
                       '[CHECKSTAGING] not ready:',
                       id,
