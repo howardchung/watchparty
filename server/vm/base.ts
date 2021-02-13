@@ -264,7 +264,7 @@ export abstract class VMManager {
     };
 
     const checkStaging = async () => {
-      const checkStagingInterval = 1000;
+      const checkStagingInterval = 2000;
       while (true) {
         try {
           // Loop through staging list and check if VM is ready
