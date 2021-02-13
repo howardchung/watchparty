@@ -227,9 +227,12 @@ export abstract class VMManager {
       // It's possible we created a VM but lost track of it in redis
       // Take the list of VMs from API, subtract VMs that have a lock in redis or are in the available or staging pool, delete the rest
       const allVMs = await this.listVMs(this.getTag());
-      const usedKeys = (await this.redis.keys(`lock:${this.id}:*`)).map((key) =>
-        key.slice(`lock:${this.id}:`.length)
-      );
+      const usedKeys: string[] = [];
+      for (let i = 0; i < allVMs.length; i++) {
+        if (await redis?.get(`lock:${this.id}:${allVMs[i].id}`)) {
+          usedKeys.push(allVMs[i].id);
+        }
+      }
       const availableKeys = await this.redis.lrange(
         this.getRedisQueueKey(),
         0,
