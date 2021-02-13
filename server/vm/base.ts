@@ -137,7 +137,6 @@ export abstract class VMManager {
       '[VMWORKER] starting background jobs for %s',
       this.getRedisQueueKey()
     );
-    const backgroundRedis = new Redis(config.REDIS_URL);
     let vmBufferSize = 0;
     let vmBufferFlex = 0;
     if (this.isLarge) {
@@ -265,82 +264,97 @@ export abstract class VMManager {
     };
 
     const checkStaging = async () => {
-      const checkStagingInterval = 250;
+      const checkStagingInterval = 500;
       while (true) {
         try {
           // Loop through staging list and check if VM is ready
-          const id = await backgroundRedis.brpoplpush(
+          const stagingKeys = await this.redis.lrange(
             this.getRedisStagingKey(),
-            this.getRedisStagingKey(),
-            0
+            0,
+            -1
           );
-          const retryCount = await this.redis.incr(
-            this.getRedisStagingKey() + ':' + id
-          );
-          let ready = false;
-          let host = await this.redis.get(
-            this.getRedisHostCacheKey() + ':' + id
-          );
-          if (!host) {
-            try {
-              const vm = await this.getVM(id);
-              host = vm?.host ?? null;
-            } catch (e) {
-              console.log(
-                '%s rate limit remaining',
-                e.response.headers['X-Rate-Limit-Remaining']
+          const stagingPromises = stagingKeys.map((id) => {
+            new Promise<void>(async (resolve) => {
+              const retryCount = await this.redis.incr(
+                this.getRedisStagingKey() + ':' + id
               );
-              if (e.response.status === 404) {
-                await this.redis.lrem(this.getRedisQueueKey(), 1, id);
-                await this.redis.lrem(this.getRedisStagingKey(), 1, id);
+              let ready = false;
+              let host = await this.redis.get(
+                this.getRedisHostCacheKey() + ':' + id
+              );
+              if (!host) {
+                try {
+                  const vm = await this.getVM(id);
+                  host = vm?.host ?? null;
+                } catch (e) {
+                  console.log(
+                    '%s rate limit remaining',
+                    e.response.headers['X-Rate-Limit-Remaining']
+                  );
+                  if (e.response.status === 404) {
+                    await this.redis.lrem(this.getRedisQueueKey(), 1, id);
+                    await this.redis.lrem(this.getRedisStagingKey(), 1, id);
+                  }
+                }
+                if (host) {
+                  console.log(
+                    '[CHECKSTAGING] caching host %s for id %s',
+                    host,
+                    id
+                  );
+                  await this.redis.setex(
+                    this.getRedisHostCacheKey() + ':' + id,
+                    60,
+                    host
+                  );
+                }
               }
-            }
-            if (host) {
-              console.log('[CHECKSTAGING] caching host %s for id %s', host, id);
-              await this.redis.setex(
-                this.getRedisHostCacheKey() + ':' + id,
-                60,
-                host
-              );
-            }
-          }
-          ready = await checkVMReady(host ?? '');
-          if (ready) {
-            console.log('[CHECKSTAGING] ready:', id, host, retryCount);
-            // If it is, move it to available list
-            await this.redis
-              .multi()
-              .lrem(this.getRedisStagingKey(), 1, id)
-              .rpush(this.getRedisQueueKey(), id)
-              .del(this.getRedisStagingKey() + ':' + id)
-              .exec();
-            await this.redis.lpush('vBrowserStageRetries', retryCount);
-            await this.redis.ltrim('vBrowserStageRetries', 0, 49);
-          } else {
-            if (retryCount % (25 * (1000 / checkStagingInterval)) === 0) {
-              const vm = await this.getVM(id);
-              console.log(
-                '[CHECKSTAGING] attempt to poweron and attach to network'
-              );
-              this.powerOn(id);
-              if (!vm?.private_ip) {
-                this.attachToNetwork(id);
+              ready = await checkVMReady(host ?? '');
+              if (ready) {
+                console.log('[CHECKSTAGING] ready:', id, host, retryCount);
+                // If it is, move it to available list
+                await this.redis
+                  .multi()
+                  .lrem(this.getRedisStagingKey(), 1, id)
+                  .rpush(this.getRedisQueueKey(), id)
+                  .del(this.getRedisStagingKey() + ':' + id)
+                  .exec();
+                await this.redis.lpush('vBrowserStageRetries', retryCount);
+                await this.redis.ltrim('vBrowserStageRetries', 0, 49);
+              } else {
+                if (retryCount % 25 === 0) {
+                  const vm = await this.getVM(id);
+                  console.log(
+                    '[CHECKSTAGING] attempt to poweron and attach to network'
+                  );
+                  this.powerOn(id);
+                  if (!vm?.private_ip) {
+                    this.attachToNetwork(id);
+                  }
+                }
+                if (retryCount % 5 === 0) {
+                  console.log(
+                    '[CHECKSTAGING] not ready:',
+                    id,
+                    host,
+                    retryCount
+                  );
+                }
+                if (retryCount > 100) {
+                  console.log('[CHECKSTAGING] giving up:', id);
+                  await this.redis
+                    .multi()
+                    .lrem(this.getRedisStagingKey(), 1, id)
+                    .del(this.getRedisStagingKey() + ':' + id)
+                    .exec();
+                  redisCount('vBrowserStagingFails');
+                  await this.resetVM(id);
+                }
               }
-            }
-            if (retryCount % 5 === 0) {
-              console.log('[CHECKSTAGING] not ready:', id, host, retryCount);
-            }
-            if (retryCount > 100 * (1000 / checkStagingInterval)) {
-              console.log('[CHECKSTAGING] giving up:', id);
-              await this.redis
-                .multi()
-                .lrem(this.getRedisStagingKey(), 1, id)
-                .del(this.getRedisStagingKey() + ':' + id)
-                .exec();
-              redisCount('vBrowserStagingFails');
-              await this.resetVM(id);
-            }
-          }
+              resolve();
+            });
+          });
+          await Promise.all(stagingPromises);
         } catch (e) {
           console.warn('[CHECKSTAGING-ERROR]', e);
         }
