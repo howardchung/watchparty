@@ -3,6 +3,7 @@ module.exports = {
     {
       name: 'server',
       script: './buildServer/server.js',
+      log_date_format: 'YYYY-MM-DD HH:mm Z',
       env: {
         PORT: 80,
       },
@@ -10,6 +11,7 @@ module.exports = {
     {
       name: 'shard1',
       script: './buildServer/server.js',
+      log_date_format: 'YYYY-MM-DD HH:mm Z',
       env: {
         SHARD: 1,
         PORT: 3001,
@@ -18,6 +20,7 @@ module.exports = {
     {
       name: 'shard2',
       script: './buildServer/server.js',
+      log_date_format: 'YYYY-MM-DD HH:mm Z',
       env: {
         SHARD: 2,
         PORT: 3002,
@@ -26,18 +29,22 @@ module.exports = {
     {
       name: 'vmWorker',
       script: './buildServer/vmWorker.js',
+      log_date_format: 'YYYY-MM-DD HH:mm Z',
     },
     {
       name: 'syncSubs',
       script: './buildServer/syncSubs.js',
+      log_date_format: 'YYYY-MM-DD HH:mm Z',
     },
     {
       name: 'timeSeries',
       script: './buildServer/timeSeries.js',
+      log_date_format: 'YYYY-MM-DD HH:mm Z',
     },
     // {
     //   name: 'cleanup',
     //   script: './buildServer/cleanup.js',
+    // log_date_format: 'YYYY-MM-DD HH:mm Z',
     // },
   ],
 };
