@@ -564,6 +564,8 @@ async function getStats() {
   );
   const numPermaRooms = (await postgres?.query('SELECT count(1) from room'))
     ?.rows[0].count;
+  const numSubs = (await postgres?.query('SELECT count(1) from subscriber'))
+    ?.rows[0].count;
   const chatMessages = await getRedisCountDay('chatMessages');
   const vBrowserStarts = await getRedisCountDay('vBrowserStarts');
   const vBrowserLaunches = await getRedisCountDay('vBrowserLaunches');
@@ -656,6 +658,7 @@ async function getStats() {
     currentVideoChat,
     currentVBrowserClientCounts,
     numPermaRooms,
+    numSubs,
     chatMessages,
     urlStarts,
     screenShareStarts,
