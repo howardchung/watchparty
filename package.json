@@ -32,7 +32,7 @@
     "react-router-dom": "^5.2.0",
     "react-scripts": "^4.0.1",
     "react-semantic-ui-range": "^0.7.0",
-    "recharts": "^1.8.5",
+    "recharts": "^2.0.7",
     "s3-client": "^4.4.2",
     "semantic-ui-css": "^2.4.1",
     "semantic-ui-react": "^0.88.2",
