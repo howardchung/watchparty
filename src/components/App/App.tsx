@@ -1372,6 +1372,23 @@ export default class App extends React.Component<AppProps, AppState> {
     );
     return (
       <React.Fragment>
+        {!this.state.isAutoPlayable && (
+          <Dimmer active>
+            <Button
+              primary
+              size="large"
+              onClick={() => {
+                this.setState({ isAutoPlayable: true });
+                this.setMute(false);
+              }}
+              icon
+              labelPosition="left"
+            >
+              <Icon name="volume up" />
+              Click to unmute
+            </Button>
+          </Dimmer>
+        )}
         {this.state.multiStreamSelection && (
           <MultiStreamModal
             streams={this.state.multiStreamSelection}
@@ -1664,23 +1681,6 @@ export default class App extends React.Component<AppProps, AppState> {
                     style={{ flexGrow: 1 }}
                   >
                     <div id="playerContainer">
-                      {!this.state.isAutoPlayable && this.state.currentMedia && (
-                        <Dimmer active>
-                          <Button
-                            primary
-                            size="medium"
-                            onClick={() => {
-                              this.setState({ isAutoPlayable: true });
-                              this.setMute(false);
-                            }}
-                            icon
-                            labelPosition="left"
-                          >
-                            <Icon name="volume up" />
-                            Click to unmute
-                          </Button>
-                        </Dimmer>
-                      )}
                       {(this.state.loading ||
                         !this.state.currentMedia ||
                         this.state.nonPlayableMedia) && (
