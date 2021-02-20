@@ -17,6 +17,7 @@ import {
   Popup,
   Progress,
   Menu,
+  Modal,
 } from 'semantic-ui-react';
 import io from 'socket.io-client';
 import VTTConverter from 'srt-webvtt';
@@ -1373,21 +1374,23 @@ export default class App extends React.Component<AppProps, AppState> {
     return (
       <React.Fragment>
         {!this.state.isAutoPlayable && (
-          <Dimmer active>
-            <Button
-              primary
-              size="large"
-              onClick={() => {
-                this.setState({ isAutoPlayable: true });
-                this.setMute(false);
-              }}
-              icon
-              labelPosition="left"
-            >
-              <Icon name="volume up" />
-              Click to unmute
-            </Button>
-          </Dimmer>
+          <Modal inverted basic open>
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <Button
+                primary
+                size="large"
+                onClick={() => {
+                  this.setState({ isAutoPlayable: true });
+                  this.setMute(false);
+                }}
+                icon
+                labelPosition="left"
+              >
+                <Icon name="volume up" />
+                Click to unmute
+              </Button>
+            </div>
+          </Modal>
         )}
         {this.state.multiStreamSelection && (
           <MultiStreamModal
