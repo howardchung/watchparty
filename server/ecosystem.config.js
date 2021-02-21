@@ -17,15 +17,24 @@ module.exports = {
         PORT: 3001,
       },
     },
-    {
-      name: 'shard2',
-      script: './buildServer/server.js',
-      log_date_format: 'YYYY-MM-DD HH:mm Z',
-      env: {
-        SHARD: 2,
-        PORT: 3002,
-      },
-    },
+    // {
+    //   name: 'shard2',
+    //   script: './buildServer/server.js',
+    //   log_date_format: 'YYYY-MM-DD HH:mm Z',
+    //   env: {
+    //     SHARD: 2,
+    //     PORT: 3002,
+    //   },
+    // },
+    // {
+    //   name: 'shard3',
+    //   script: './buildServer/server.js',
+    //   log_date_format: 'YYYY-MM-DD HH:mm Z',
+    //   env: {
+    //     SHARD: 3,
+    //     PORT: 3003,
+    //   },
+    // },
     {
       name: 'vmWorker',
       script: './buildServer/vmWorker.js',
