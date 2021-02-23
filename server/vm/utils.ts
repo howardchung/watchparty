@@ -1,4 +1,4 @@
-import { AssignedVM, VMManager, VMManagers } from './base';
+import { AssignedVM, VMManager } from './base';
 import Redis from 'ioredis';
 import config from '../config';
 import { Scaleway } from './scaleway';
@@ -55,8 +55,7 @@ export const imageName = 'howardc93/vbrowser:latest';
 
 export const assignVM = async (
   redis: Redis.Redis,
-  vmManager: VMManager,
-  sessionLimitSeconds: number
+  vmManager: VMManager
 ): Promise<AssignedVM | undefined> => {
   try {
     const assignStart = Number(new Date());
@@ -80,7 +79,7 @@ export const assignVM = async (
         '1',
         'NX',
         'EX',
-        sessionLimitSeconds
+        300
       );
       if (!lock) {
         console.log('failed to acquire lock on VM:', id);

@@ -11,9 +11,9 @@ import { Client, QueryResult } from 'pg';
 import { validateUserToken } from './utils/firebase';
 import { redisCount, redisCountDistinct } from './utils/redis';
 import { getCustomerByEmail } from './utils/stripe';
-import { AssignedVM, VMManagers } from './vm/base';
+import { AssignedVM } from './vm/base';
 import { getStartOfDay } from './utils/time';
-import { assignVM, getSessionLimitSeconds, getVMManager } from './vm/utils';
+import { assignVM, getVMManager } from './vm/utils';
 import { updateObject, upsertObject } from './utils/postgres';
 
 const gzip = util.promisify(zlib.gzip);
@@ -614,8 +614,7 @@ export class Room {
       return;
     }
     this.roomRedis = new Redis(config.REDIS_URL);
-    const seconds = getSessionLimitSeconds(isLarge);
-    const assignment = await assignVM(this.roomRedis, vmManager, seconds);
+    const assignment = await assignVM(this.roomRedis, vmManager);
     if (!this.roomRedis) {
       // Maybe the user cancelled the request before assignment finished
       return;
