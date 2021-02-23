@@ -22,7 +22,7 @@ import { validateUserToken } from './utils/firebase';
 import path from 'path';
 import { Client } from 'pg';
 import { getStartOfDay } from './utils/time';
-import { getBgVMManagers } from './vm/utils';
+import { getBgVMManagers, getSessionLimitSeconds } from './vm/utils';
 import { hashString } from './utils/string';
 import { insertObject } from './utils/postgres';
 
@@ -375,9 +375,9 @@ async function release() {
   for (let i = 0; i < roomArr.length; i++) {
     const room = roomArr[i];
     if (room.vBrowser && room.vBrowser.assignTime) {
-      const ttl = await redis?.pttl(
-        'lock:' + room.vBrowser.provider + ':' + room.vBrowser.id
-      );
+      const maxTime = getSessionLimitSeconds(room.vBrowser.large) * 1000;
+      const elapsed = Number(new Date()) - room.vBrowser.assignTime;
+      const ttl = maxTime - elapsed;
       const isTimedOut = ttl && ttl < releaseInterval;
       const isAlmostTimedOut = ttl && ttl < releaseInterval * 2;
       const isRoomEmpty = room.roster.length === 0;
@@ -413,8 +413,14 @@ async function minuteMetrics() {
   for (let i = 0; i < roomArr.length; i++) {
     const room = roomArr[i];
     if (room.vBrowser && room.vBrowser.id) {
+      // Renew the lock
+      await redis?.expire(
+        'lock:' + room.vBrowser.provider + ':' + room.vBrowser.id,
+        300
+      );
+
       const expireTime = getStartOfDay() / 1000 + 86400;
-      if (room.vBrowser.creatorClientID) {
+      if (room.vBrowser?.creatorClientID) {
         await redis?.zincrby(
           'vBrowserClientIDMinutes',
           1,
@@ -422,7 +428,7 @@ async function minuteMetrics() {
         );
         await redis?.expireat('vBrowserClientIDMinutes', expireTime);
       }
-      if (room.vBrowser.creatorUID) {
+      if (room.vBrowser?.creatorUID) {
         await redis?.zincrby('vBrowserUIDMinutes', 1, room.vBrowser.creatorUID);
         await redis?.expireat('vBrowserUIDMinutes', expireTime);
       }
