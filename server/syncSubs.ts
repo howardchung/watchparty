@@ -56,13 +56,17 @@ async function syncSubscribers() {
 
   // Upsert to DB
   // console.log(result);
-  await postgres2?.query('BEGIN TRANSACTION');
-  await postgres2?.query('DELETE FROM subscriber');
-  for (let i = 0; i < result.length; i++) {
-    const row = result[i];
-    await insertObject(postgres2, 'subscriber', row);
+  try {
+    await postgres2?.query('BEGIN TRANSACTION');
+    await postgres2?.query('DELETE FROM subscriber');
+    for (let i = 0; i < result.length; i++) {
+      const row = result[i];
+      await insertObject(postgres2, 'subscriber', row);
+    }
+    await postgres2?.query('COMMIT');
+    console.log('%s subscribers', result.length);
+  } catch (e) {
+    console.error(e);
   }
-  await postgres2?.query('COMMIT');
-  console.log('%s subscribers', result.length);
   console.timeEnd('syncSubscribers');
 }
