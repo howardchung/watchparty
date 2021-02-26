@@ -24,7 +24,7 @@ const Debug = () => {
     }) as any,
     [setData]
   );
-  const keys = Object.keys(data[0] ?? {});
+  const keys = Object.keys(data.slice(-1)[0] ?? {});
   return (
     <>
       {keys.map((key) => (
