@@ -9,7 +9,7 @@ if (config.REDIS_URL) {
   redis = new Redis(config.REDIS_URL);
 }
 
-const incrInterval = 5 * 1000;
+const incrInterval = 3 * 1000;
 const decrInterval = 1 * 60 * 1000;
 const cleanupInterval = 5 * 60 * 1000;
 const updateSizeInterval = 30 * 1000;
