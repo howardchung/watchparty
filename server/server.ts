@@ -480,7 +480,7 @@ async function getStats() {
   let currentFileShare = 0;
   let currentVideoChat = 0;
   let currentRoomSizeCounts: NumberDict = {};
-  let currentVBrowserClientCounts: NumberDict = {};
+  let currentVBrowserUIDCounts: NumberDict = {};
   let currentRoomCount = rooms.size;
   const vmManager = vmManagers.standard;
   const vmManagerLarge = vmManagers.large;
@@ -523,19 +523,19 @@ async function getStats() {
       }
       currentRoomSizeCounts[obj.rosterLength] += 1;
     }
-    if (obj.vBrowser && obj.vBrowser.creatorClientID) {
-      if (!currentVBrowserClientCounts[obj.vBrowser.creatorClientID]) {
-        currentVBrowserClientCounts[obj.vBrowser.creatorClientID] = 0;
+    if (obj.vBrowser && obj.vBrowser.creatorUID) {
+      if (!currentVBrowserUIDCounts[obj.vBrowser.creatorUID]) {
+        currentVBrowserUIDCounts[obj.vBrowser.creatorUID] = 0;
       }
-      currentVBrowserClientCounts[obj.vBrowser.creatorClientID] += 1;
+      currentVBrowserUIDCounts[obj.vBrowser.creatorUID] += 1;
     }
     if (obj.video) {
       currentRoomData.push(obj);
     }
   });
 
-  currentVBrowserClientCounts = Object.fromEntries(
-    Object.entries(currentVBrowserClientCounts).filter(([, val]) => val > 1)
+  currentVBrowserUIDCounts = Object.fromEntries(
+    Object.entries(currentVBrowserUIDCounts).filter(([, val]) => val > 1)
   );
 
   // Sort newest first
@@ -662,7 +662,7 @@ async function getStats() {
     currentScreenShare,
     currentFileShare,
     currentVideoChat,
-    currentVBrowserClientCounts,
+    currentVBrowserUIDCounts,
     numPermaRooms,
     numSubs,
     chatMessages,
