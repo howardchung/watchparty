@@ -777,6 +777,10 @@ export default class App extends React.Component<AppProps, AppState> {
     return 0;
   };
 
+  isPauseDisabled = () => {
+    return this.isScreenShare() || this.isVBrowser();
+  };
+
   isPaused = () => {
     if (this.isVideo()) {
       const leftVideo = document.getElementById(
@@ -925,6 +929,9 @@ export default class App extends React.Component<AppProps, AppState> {
   };
 
   togglePlay = () => {
+    if (this.isPauseDisabled()) {
+      return;
+    }
     let shouldPlay = true;
     if (this.isVideo()) {
       const leftVideo = document.getElementById(
@@ -1260,6 +1267,7 @@ export default class App extends React.Component<AppProps, AppState> {
         duration={this.getDuration()}
         disabled={!this.haveLock()}
         leaderTime={this.isHttp() ? this.getLeaderTime() : undefined}
+        isPauseDisabled={this.isPauseDisabled()}
       />
     );
     const subscribeButton = (
