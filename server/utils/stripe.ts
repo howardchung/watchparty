@@ -13,7 +13,7 @@ export async function getCustomerByEmail(email: string) {
     email,
     expand: ['data.subscriptions'],
   });
-  return customer?.data[0];
+  return customer?.data.slice(-1)[0];
 }
 
 export async function createSelfServicePortal(
