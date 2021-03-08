@@ -104,8 +104,8 @@ export abstract class VMManager {
   protected terminateVMWrapper = async (id: string) => {
     console.log('[TERMINATE]', id);
     // Remove from lists, if it exists
-    await this.redis.lrem(this.getRedisQueueKey(), 1, id);
-    await this.redis.lrem(this.getRedisStagingKey(), 1, id);
+    await this.redis.lrem(this.getRedisQueueKey(), 0, id);
+    await this.redis.lrem(this.getRedisStagingKey(), 0, id);
     // Get the VM data to calculate lifetime, if we fail do the terminate anyway
     const lifetime = await this.terminateVMMetrics(id);
     await this.terminateVM(id);
@@ -192,7 +192,7 @@ export abstract class VMManager {
         while (sortedVMs.length && !rem) {
           first = sortedVMs.shift();
           const id = first?.id;
-          rem = id ? await this.redis.lrem(this.getRedisQueueKey(), 1, id) : 0;
+          rem = id ? await this.redis.lrem(this.getRedisQueueKey(), 0, id) : 0;
         }
         if (first && rem) {
           const id = first?.id;
@@ -292,8 +292,8 @@ export abstract class VMManager {
                     e.response?.headers['X-Rate-Limit-Remaining']
                   );
                   if (e.response?.status === 404) {
-                    await this.redis.lrem(this.getRedisQueueKey(), 1, id);
-                    await this.redis.lrem(this.getRedisStagingKey(), 1, id);
+                    await this.redis.lrem(this.getRedisQueueKey(), 0, id);
+                    await this.redis.lrem(this.getRedisStagingKey(), 0, id);
                     await this.redis.del(this.getRedisStagingKey() + ':' + id);
                   }
                 }
