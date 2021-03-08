@@ -316,7 +316,7 @@ export abstract class VMManager {
                 // If it is, move it to available list
                 await this.redis
                   .multi()
-                  .lrem(this.getRedisStagingKey(), 1, id)
+                  .lrem(this.getRedisStagingKey(), 0, id)
                   .rpush(this.getRedisQueueKey(), id)
                   .del(this.getRedisStagingKey() + ':' + id)
                   .exec();
@@ -327,7 +327,7 @@ export abstract class VMManager {
                   console.log('[CHECKSTAGING] giving up:', id);
                   await this.redis
                     .multi()
-                    .lrem(this.getRedisStagingKey(), 1, id)
+                    .lrem(this.getRedisStagingKey(), 0, id)
                     .del(this.getRedisStagingKey() + ':' + id)
                     .exec();
                   redisCount('vBrowserStagingFails');
