@@ -67,6 +67,7 @@ async function syncSubscribers() {
     console.log('%s subscribers', result.length);
   } catch (e) {
     console.error(e);
+    process.exit(1);
   }
   console.timeEnd('syncSubscribers');
 }
