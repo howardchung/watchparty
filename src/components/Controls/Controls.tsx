@@ -19,6 +19,7 @@ interface ControlsProps {
   setVolume: Function;
   disabled?: boolean;
   leaderTime?: number;
+  isPauseDisabled?: boolean;
 }
 
 // TODO a lot of this state is currently tied to the per-second tsMap update, which is leading to some UI lag
@@ -69,6 +70,8 @@ export class Controls extends React.Component<ControlsProps> {
       currentTime,
       duration,
       leaderTime,
+      isPauseDisabled,
+      disabled,
     } = this.props;
     const isBehind = leaderTime && leaderTime - currentTime > 5;
     return (
@@ -77,7 +80,7 @@ export class Controls extends React.Component<ControlsProps> {
           size="large"
           onClick={togglePlay}
           className="control action"
-          disabled={this.props.disabled}
+          disabled={disabled || isPauseDisabled}
           name={paused ? 'play' : 'pause'}
         />
         <Popup
