@@ -772,7 +772,7 @@ export class Room {
           [owner, this.roomId]
         )
       ).rows[0].count;
-      const limit = isSubscriber ? 10 : 1;
+      const limit = isSubscriber ? config.SUBSCRIBER_ROOM_LIMIT : 1;
       // console.log(roomCount, limit, isSubscriber);
       if (roomCount >= limit) {
         socket.emit(
