@@ -105,7 +105,7 @@ export class SubscribeModal extends React.Component<{
                 <Table.Row>
                   <Table.Cell>Number of Permanent Rooms</Table.Cell>
                   <Table.Cell>1</Table.Cell>
-                  <Table.Cell>10</Table.Cell>
+                  <Table.Cell>20</Table.Cell>
                 </Table.Row>
                 {/* <Table.Row>
                   <Table.Cell>Max Room Capacity</Table.Cell>

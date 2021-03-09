@@ -46,6 +46,7 @@ const defaults = {
   SHARD: undefined, // Shard ID of the web server (configure in ecosystem.config.js)
   ENABLE_POSTGRES_SAVING: false, // Experimental incomplete feature to use postgres as the primary room data store
   ENABLE_POSTGRES_READING: false, // Experimental incomplete feature to use postgres as the primary room data store
+  SUBSCRIBER_ROOM_LIMIT: 20, // The maximum number of rooms a subscriber can have
 };
 
 export default {
