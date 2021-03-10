@@ -996,9 +996,13 @@ export default class App extends React.Component<AppProps, AppState> {
       'fullScreenContainer'
     ) as HTMLElement;
     if (bVideoOnly || isMobile()) {
-      container = document.getElementById(
-        this.isYouTube() ? 'leftYt' : 'leftVideo'
-      ) as HTMLElement;
+      if (this.isVBrowser()) {
+        container = document.getElementById('leftVideoParent') as HTMLElement;
+      } else {
+        container = document.getElementById(
+          this.isYouTube() ? 'leftYt' : 'leftVideo'
+        ) as HTMLElement;
+      }
     }
     if (!document.fullscreenElement) {
       await container.requestFullscreen();
