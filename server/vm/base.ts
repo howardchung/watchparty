@@ -192,7 +192,7 @@ export abstract class VMManager {
         while (sortedVMs.length && !rem) {
           first = sortedVMs.shift();
           const id = first?.id;
-          rem = id ? await this.redis.lrem(this.getRedisQueueKey(), 0, id) : 0;
+          rem = id ? await this.redis.lrem(this.getRedisQueueKey(), 1, id) : 0;
         }
         if (first && rem) {
           const id = first?.id;
@@ -314,14 +314,20 @@ export abstract class VMManager {
               if (ready) {
                 console.log('[CHECKSTAGING] ready:', id, host, retryCount);
                 // If it is, move it to available list
-                await this.redis
-                  .multi()
-                  .lrem(this.getRedisStagingKey(), 0, id)
-                  .rpush(this.getRedisQueueKey(), id)
-                  .del(this.getRedisStagingKey() + ':' + id)
-                  .exec();
-                await this.redis.lpush('vBrowserStageRetries', retryCount);
-                await this.redis.ltrim('vBrowserStageRetries', 0, 49);
+                const rem = await this.redis.lrem(
+                  this.getRedisStagingKey(),
+                  1,
+                  id
+                );
+                if (rem) {
+                  await this.redis
+                    .multi()
+                    .rpush(this.getRedisQueueKey(), id)
+                    .del(this.getRedisStagingKey() + ':' + id)
+                    .exec();
+                  await this.redis.lpush('vBrowserStageRetries', retryCount);
+                  await this.redis.ltrim('vBrowserStageRetries', 0, 49);
+                }
               } else {
                 if (retryCount >= 300) {
                   console.log('[CHECKSTAGING] giving up:', id);
