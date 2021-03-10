@@ -306,6 +306,7 @@ export default class VBrowser extends React.Component<{
   render() {
     return (
       <div
+        id="leftVideoParent"
         ref={this._container}
         style={{ position: 'relative', width: '100%' }}
       >
