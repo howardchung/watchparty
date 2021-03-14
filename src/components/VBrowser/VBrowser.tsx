@@ -307,34 +307,42 @@ export default class VBrowser extends React.Component<{
     return (
       <div
         id="leftVideoParent"
-        ref={this._container}
-        style={{ position: 'relative', width: '100%' }}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
       >
-        <video ref={this._video} id="leftVideo" style={{ width: '100%' }} />
         <div
-          ref={this._overlay}
-          id={'leftOverlay'}
-          tabIndex={0}
-          style={{
-            width: document.getElementById('leftVideo')?.clientWidth,
-            height: document.getElementById('leftVideo')?.clientHeight,
-            position: 'absolute',
-            top: 0,
-            bottom: 0,
-            // disable firefox scrollbars?
-            scrollbarWidth: 'none',
-          }}
-          onClick={this.onClick}
-          onContextMenu={this.onContextMenu}
-          // onWheel={this.onWheel}
-          onMouseMove={this.onMouseMove}
-          onMouseDown={this.onMouseDown}
-          onMouseUp={this.onMouseUp}
-          onMouseEnter={this.onMouseEnter}
-          onMouseLeave={this.onMouseLeave}
-          onKeyDown={this.onKeyDown}
-          onKeyUp={this.onKeyUp}
-        />
+          ref={this._container}
+          style={{ width: '100%', height: 'fit-content', position: 'relative' }}
+        >
+          <video ref={this._video} id="leftVideo" style={{ width: '100%' }} />
+          <div
+            ref={this._overlay}
+            id={'leftOverlay'}
+            tabIndex={0}
+            style={{
+              width: document.getElementById('leftVideo')?.clientWidth,
+              height: document.getElementById('leftVideo')?.clientHeight,
+              position: 'absolute',
+              top: 0,
+              bottom: 0,
+              // disable firefox scrollbars?
+              scrollbarWidth: 'none',
+            }}
+            onClick={this.onClick}
+            onContextMenu={this.onContextMenu}
+            // onWheel={this.onWheel}
+            onMouseMove={this.onMouseMove}
+            onMouseDown={this.onMouseDown}
+            onMouseUp={this.onMouseUp}
+            onMouseEnter={this.onMouseEnter}
+            onMouseLeave={this.onMouseLeave}
+            onKeyDown={this.onKeyDown}
+            onKeyUp={this.onKeyUp}
+          />
+        </div>
       </div>
     );
   }
