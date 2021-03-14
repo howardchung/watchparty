@@ -102,6 +102,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
       this.ourStream.getVideoTracks()[0].enabled = !this.ourStream.getVideoTracks()[0]
         ?.enabled;
     }
+    this.forceUpdate();
   };
 
   getVideoWebRTC = () => {
@@ -113,6 +114,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
       this.ourStream.getAudioTracks()[0].enabled = !this.ourStream.getAudioTracks()[0]
         ?.enabled;
     }
+    this.forceUpdate();
   };
 
   getAudioWebRTC = () => {
@@ -234,32 +236,43 @@ export class VideoChat extends React.Component<VideoChatProps> {
               onClick={this.stopWebRTC}
             >
               <Icon name="external" />
-              {`Leave`}
+              {`Leave Video Chat`}
             </Button>
-            <Button
-              fluid
-              color={this.getVideoWebRTC() ? 'green' : 'red'}
-              size="medium"
-              icon
-              labelPosition="left"
-              onClick={this.toggleVideoWebRTC}
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'center',
+                marginTop: '8px',
+                width: '100%',
+              }}
             >
-              <Icon name="video" />
-              {this.getVideoWebRTC() ? 'On' : 'Off'}
-            </Button>
-            <Button
-              fluid
-              color={this.getAudioWebRTC() ? 'green' : 'red'}
-              size="medium"
-              icon
-              labelPosition="left"
-              onClick={this.toggleAudioWebRTC}
-            >
-              <Icon
-                name={this.getAudioWebRTC() ? 'microphone' : 'microphone slash'}
-              />
-              {this.getAudioWebRTC() ? 'On' : 'Off'}
-            </Button>
+              <Button
+                color={this.getVideoWebRTC() ? 'green' : 'red'}
+                fluid
+                size="medium"
+                icon
+                labelPosition="left"
+                onClick={this.toggleVideoWebRTC}
+              >
+                <Icon name="video" />
+                {this.getVideoWebRTC() ? 'On' : 'Off'}
+              </Button>
+              <Button
+                color={this.getAudioWebRTC() ? 'green' : 'red'}
+                fluid
+                size="medium"
+                icon
+                labelPosition="left"
+                onClick={this.toggleAudioWebRTC}
+              >
+                <Icon
+                  name={
+                    this.getAudioWebRTC() ? 'microphone' : 'microphone slash'
+                  }
+                />
+                {this.getAudioWebRTC() ? 'On' : 'Off'}
+              </Button>
+            </div>
           </div>
         )}
         <div
