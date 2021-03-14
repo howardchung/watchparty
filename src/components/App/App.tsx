@@ -1770,7 +1770,8 @@ export default class App extends React.Component<AppProps, AppState> {
                         <video
                           style={{
                             display:
-                              this.isVideo() && !this.state.loading
+                              (this.isVideo() && !this.state.loading) ||
+                              this.state.fullScreen
                                 ? 'block'
                                 : 'none',
                             width: '100%',
