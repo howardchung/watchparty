@@ -78,6 +78,15 @@ export class VideoChat extends React.Component<VideoChatProps> {
       });
     } catch (e) {
       console.warn(e);
+      try {
+        console.log('attempt audio only stream');
+        stream = await navigator?.mediaDevices?.getUserMedia({
+          audio: true,
+          video: false,
+        });
+      } catch (e) {
+        console.warn(e);
+      }
     }
     this.ourStream = stream;
     // alert server we've joined video chat
