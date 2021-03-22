@@ -570,7 +570,9 @@ export class Room {
       // Check if user is subscriber, if so allow isLarge
       if (decoded?.email) {
         const customer = await getCustomerByEmail(decoded.email);
-        if (customer?.subscriptions?.data?.[0]?.status === 'active') {
+        if (
+          customer?.subscriptions?.data?.find((sub) => sub?.status === 'active')
+        ) {
           console.log('found active sub for ', customer?.email);
           isLarge = data.options?.size === 'large';
           region = data.options?.region;
@@ -741,7 +743,7 @@ export class Room {
     }
     const customer = await getCustomerByEmail(decoded.email as string);
     const isSubscriber = Boolean(
-      customer?.subscriptions?.data?.[0]?.status === 'active'
+      customer?.subscriptions?.data?.find((sub) => sub?.status === 'active')
     );
     if (data.undo) {
       if (config.ENABLE_POSTGRES_SAVING) {
@@ -853,7 +855,7 @@ export class Room {
     }
     const customer = await getCustomerByEmail(decoded.email as string);
     const isSubscriber = Boolean(
-      customer?.subscriptions?.data?.[0]?.status === 'active'
+      customer?.subscriptions?.data?.find((sub) => sub?.status === 'active')
     );
     const { password, vanity, isChatDisabled } = data;
     if (password) {
