@@ -32,7 +32,7 @@ export const SubscribeButton = ({
           }
         />
       )}
-      {isCustomer && (
+      {isSubscriber && (
         <Popup
           content="Manage your subscription"
           trigger={

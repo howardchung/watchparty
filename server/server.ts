@@ -272,7 +272,7 @@ app.get('/metadata', async (req, res) => {
     isSubscriber = Boolean(
       customer?.subscriptions?.data?.find((sub) => sub?.status === 'active')
     );
-    isCustomer = Boolean(customer?.subscriptions?.data?.length);
+    isCustomer = Boolean(customer);
   }
   return res.json({ isSubscriber, isCustomer, isVMPoolFull });
 });
