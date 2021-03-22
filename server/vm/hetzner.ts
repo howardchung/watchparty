@@ -96,6 +96,10 @@ export class Hetzner extends VMManager {
         Authorization: 'Bearer ' + HETZNER_TOKEN,
       },
     });
+    console.log(
+      '[GETVM] %s rate limit remaining',
+      response?.headers['ratelimit-remaining']
+    );
     const server = this.mapServerObject(response.data.server);
     if (!server.private_ip) {
       return null;
