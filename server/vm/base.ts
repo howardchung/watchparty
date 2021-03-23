@@ -266,6 +266,7 @@ export abstract class VMManager {
     const checkStaging = async () => {
       const checkStagingInterval = 1000;
       while (true) {
+        console.log('[CHECKSTAGING-START', Math.floor(Date.now() / 1000));
         try {
           // Loop through staging list and check if VM is ready
           const stagingKeys = await this.redis.lrange(
@@ -301,7 +302,7 @@ export abstract class VMManager {
                   );
                   await this.redis.setex(
                     this.getRedisHostCacheKey() + ':' + id,
-                    120,
+                    200,
                     host
                   );
                 }
@@ -325,7 +326,7 @@ export abstract class VMManager {
                   await this.redis.ltrim('vBrowserStageRetries', 0, 49);
                 }
               } else {
-                if (retryCount >= 300) {
+                if (retryCount >= 400) {
                   console.log('[CHECKSTAGING] giving up:', id);
                   await this.redis
                     .multi()
