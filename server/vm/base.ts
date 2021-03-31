@@ -76,7 +76,6 @@ export abstract class VMManager {
     await this.rebootVM(id);
     // Delete any locks
     await this.redis.del('lock:' + this.id + ':' + id);
-    await this.redis.del(this.getRedisHostCacheKey() + ':' + id);
     // We wait to give the VM time to shut down (if it's restarting)
     await new Promise((resolve) => setTimeout(resolve, 3000));
     // Add the VM back to the pool
@@ -266,7 +265,7 @@ export abstract class VMManager {
     const checkStaging = async () => {
       const checkStagingInterval = 1000;
       while (true) {
-        console.log('[CHECKSTAGING-START', Math.floor(Date.now() / 1000));
+        console.log('[CHECKSTAGING-START]', Math.floor(Date.now() / 1000));
         try {
           // Loop through staging list and check if VM is ready
           const stagingKeys = await this.redis.lrange(
@@ -302,7 +301,7 @@ export abstract class VMManager {
                   );
                   await this.redis.setex(
                     this.getRedisHostCacheKey() + ':' + id,
-                    200,
+                    3600,
                     host
                   );
                 }
