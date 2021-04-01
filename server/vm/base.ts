@@ -359,7 +359,7 @@ export abstract class VMManager {
               resolve();
             });
           });
-          await Promise.all(stagingPromises);
+          await Promise.allSettled(stagingPromises);
         } catch (e) {
           console.warn('[CHECKSTAGING-ERROR]', e);
         }
