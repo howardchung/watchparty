@@ -5,9 +5,8 @@ import { getUserByEmail } from './utils/firebase';
 import { insertObject, updateObject } from './utils/postgres';
 import { getAllActiveSubscriptions, getAllCustomers } from './utils/stripe';
 
-let lastSubsDigest: String;
-let currentSubsDigest: String;
-let currentSubsHash: Hash;
+let lastSubs: String;
+let currentSubs: String;
 
 const postgres2 = new Client({
   connectionString: config.DATABASE_URL,
@@ -58,18 +57,14 @@ async function syncSubscribers() {
     status: sub.status,
     uid: uidMap.get(emailMap.get(sub.customer)),
   }));
-
-  // generate hash value over all current sub uids
-  currentSubsHash = createHash('md5');
-  for (let i = 0; i < result.length; i++) {
-    const row = result[i];
-    currentSubsHash.update(row.uid);
-  }
-  currentSubsDigest = currentSubsHash.digest('hex');
+  currentSubs = result
+    .map((sub) => sub.uid)
+    .sort()
+    .join();
 
   // Upsert to DB
   // console.log(result);
-  if (currentSubsDigest !== lastSubsDigest) {
+  if (currentSubs !== lastSubs) {
     try {
       await postgres2?.query('BEGIN TRANSACTION');
       await postgres2?.query('DELETE FROM subscriber');
@@ -91,6 +86,6 @@ async function syncSubscribers() {
       process.exit(1);
     }
   }
-  lastSubsDigest = currentSubsDigest;
+  lastSubs = currentSubs;
   console.timeEnd('syncSubscribers');
 }
