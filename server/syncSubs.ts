@@ -1,8 +1,12 @@
 import { Client } from 'pg';
 import config from './config';
 import { getUserByEmail } from './utils/firebase';
-import { insertObject } from './utils/postgres';
+import { insertObject, updateObject } from './utils/postgres';
+import { stringToHash } from './utils/string';
 import { getAllActiveSubscriptions, getAllCustomers } from './utils/stripe';
+
+let lastSubsHash = 0;
+let currentSubsHash = 0;
 
 const postgres2 = new Client({
   connectionString: config.DATABASE_URL,
@@ -54,20 +58,37 @@ async function syncSubscribers() {
     uid: uidMap.get(emailMap.get(sub.customer)),
   }));
 
+  // generate hash value over all current sub uids
+  currentSubsHash = 0;
+  for (let i = 0; i < result.length; i++) {
+    const row = result[i];
+    currentSubsHash = currentSubsHash ^ stringToHash(row.uid);
+  }
+
   // Upsert to DB
   // console.log(result);
-  try {
-    await postgres2?.query('BEGIN TRANSACTION');
-    await postgres2?.query('DELETE FROM subscriber');
-    for (let i = 0; i < result.length; i++) {
-      const row = result[i];
-      await insertObject(postgres2, 'subscriber', row);
+  if (currentSubsHash != lastSubsHash) {
+    try {
+      await postgres2?.query('BEGIN TRANSACTION');
+      await postgres2?.query('DELETE FROM subscriber');
+      await postgres2?.query('UPDATE room SET "isSubRoom" = false');
+      for (let i = 0; i < result.length; i++) {
+        const row = result[i];
+        await insertObject(postgres2, 'subscriber', row);
+        await updateObject(
+          postgres2,
+          'room',
+          { isSubRoom: true },
+          { owner: row.uid }
+        );
+      }
+      await postgres2?.query('COMMIT');
+      console.log('%s subscribers', result.length);
+    } catch (e) {
+      console.error(e);
+      process.exit(1);
     }
-    await postgres2?.query('COMMIT');
-    console.log('%s subscribers', result.length);
-  } catch (e) {
-    console.error(e);
-    process.exit(1);
   }
+  lastSubsHash = currentSubsHash;
   console.timeEnd('syncSubscribers');
 }
