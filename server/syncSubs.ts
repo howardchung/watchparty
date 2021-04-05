@@ -1,6 +1,5 @@
 import { Client } from 'pg';
 import config from './config';
-import { createHash, Hash } from 'crypto';
 import { getUserByEmail } from './utils/firebase';
 import { insertObject, updateObject } from './utils/postgres';
 import { getAllActiveSubscriptions, getAllCustomers } from './utils/stripe';
