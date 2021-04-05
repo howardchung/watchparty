@@ -1,12 +1,13 @@
 import { Client } from 'pg';
 import config from './config';
+import { createHash, Hash } from 'crypto';
 import { getUserByEmail } from './utils/firebase';
 import { insertObject, updateObject } from './utils/postgres';
-import { stringToHash } from './utils/string';
 import { getAllActiveSubscriptions, getAllCustomers } from './utils/stripe';
 
-let lastSubsHash = 0;
-let currentSubsHash = 0;
+let lastSubsDigest: String;
+let currentSubsDigest: String;
+let currentSubsHash: Hash;
 
 const postgres2 = new Client({
   connectionString: config.DATABASE_URL,
@@ -59,15 +60,16 @@ async function syncSubscribers() {
   }));
 
   // generate hash value over all current sub uids
-  currentSubsHash = 0;
+  currentSubsHash = createHash('md5');
   for (let i = 0; i < result.length; i++) {
     const row = result[i];
-    currentSubsHash = currentSubsHash ^ stringToHash(row.uid);
+    currentSubsHash.update(row.uid);
   }
+  currentSubsDigest = currentSubsHash.digest('hex');
 
   // Upsert to DB
   // console.log(result);
-  if (currentSubsHash != lastSubsHash) {
+  if (currentSubsDigest !== lastSubsDigest) {
     try {
       await postgres2?.query('BEGIN TRANSACTION');
       await postgres2?.query('DELETE FROM subscriber');
@@ -89,6 +91,6 @@ async function syncSubscribers() {
       process.exit(1);
     }
   }
-  lastSubsHash = currentSubsHash;
+  lastSubsDigest = currentSubsDigest;
   console.timeEnd('syncSubscribers');
 }
