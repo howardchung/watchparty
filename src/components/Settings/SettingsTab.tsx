@@ -198,9 +198,9 @@ export const SettingsTab = ({
             selection
             value={userToBeKicked}
             options={participants?.map((u) => ({
-              text: `${nameMap[u.id]}#${u.id
-                .slice(u.id.lastIndexOf('#'))
-                .substring(1, 4)}`,
+              text:
+                nameMap[u.id] +
+                u.id.slice(u.id.lastIndexOf('#')).substring(0, 4),
               value: u.id,
             }))}
             onChange={(e_, data) => setUserToBeKicked(String(data.value))}
