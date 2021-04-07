@@ -196,6 +196,7 @@ export const SettingsTab = ({
             fluid
             search
             selection
+            clearable
             value={userToBeKicked}
             options={participants?.map((u) => ({
               text:
@@ -205,6 +206,21 @@ export const SettingsTab = ({
             }))}
             onChange={(e_, data) => setUserToBeKicked(String(data.value))}
           />
+          {userToBeKicked && (
+            <div
+              style={{
+                marginTop: 10,
+                backgroundColor: 'rgb(134 39 20)',
+                padding: 5,
+              }}
+            >
+              User{' '}
+              <span style={{ fontWeight: 'bold' }}>
+                {nameMap[userToBeKicked]}
+              </span>{' '}
+              will be kicked out after the admin settings have been saved.
+            </div>
+          )}
         </React.Fragment>
       )}
       {owner && owner === user?.uid && (
