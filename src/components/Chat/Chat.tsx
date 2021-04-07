@@ -242,7 +242,16 @@ const ChatMessage = ({
       <Comment.Content>
         <Comment.Author as="a" className="light">
           {Boolean(system) && 'System'}
-          {nameMap[id] || id}
+          {nameMap[id] ? (
+            <React.Fragment>
+              {nameMap[id]}
+              <span style={{ opacity: 0.1 }}>
+                #{id.slice(id.lastIndexOf('#')).substring(1, 4)}
+              </span>
+            </React.Fragment>
+          ) : (
+            id
+          )}
         </Comment.Author>
         <Comment.Metadata className="dark">
           <div>{new Date(timestamp).toLocaleTimeString()}</div>

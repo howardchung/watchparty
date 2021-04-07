@@ -8,6 +8,7 @@ import {
   Input,
   Button,
   Label,
+  Dropdown,
 } from 'semantic-ui-react';
 // import { SignInButton } from '../TopBar/TopBar';
 import { getCurrentSettings, updateSettings } from './LocalSettings';
@@ -24,6 +25,8 @@ interface SettingsTabProps {
   isSubscriber: boolean;
   roomId: string;
   setChatDisabled: (val: boolean) => void;
+  participants: User[] | null;
+  nameMap: StringDict;
 }
 
 export const SettingsTab = ({
@@ -35,11 +38,16 @@ export const SettingsTab = ({
   isSubscriber,
   roomId,
   setChatDisabled,
+  participants,
+  nameMap,
 }: SettingsTabProps) => {
   const [updateTS, setUpdateTS] = useState(0);
   const [permModalOpen, setPermModalOpen] = useState(false);
   const [vanity, setVanity] = useState<string | undefined>(undefined);
   const [password, setPassword] = useState<string | undefined>(undefined);
+  const [userToBeKicked, setUserToBeKicked] = useState<string | undefined>(
+    undefined
+  );
   const [isChatDisabled, setIsChatDisabled] = useState(false);
   const [owner, setOwner] = useState<string | undefined>(undefined);
   const [validVanity, setValidVanity] = useState(true);
@@ -175,6 +183,31 @@ export const SettingsTab = ({
         />
       )}
       {owner && owner === user?.uid && (
+        <React.Fragment>
+          <SettingRow
+            icon={'user delete'}
+            name={`Kick User`}
+            description="Kick a user out of the room. They can join again unless the room is protected with a password unknown to them."
+            disabled={true}
+            hideToggle={true}
+          />
+          <Dropdown
+            placeholder="Select the user to be kicked out."
+            fluid
+            search
+            selection
+            value={userToBeKicked}
+            options={participants?.map((u) => ({
+              text: `${nameMap[u.id]}#${u.id
+                .slice(u.id.lastIndexOf('#'))
+                .substring(1, 4)}`,
+              value: u.id,
+            }))}
+            onChange={(e_, data) => setUserToBeKicked(String(data.value))}
+          />
+        </React.Fragment>
+      )}
+      {owner && owner === user?.uid && (
         <SettingRow
           icon={'i cursor'}
           name={`Disable Chat`}
@@ -246,6 +279,7 @@ export const SettingsTab = ({
               vanity: vanity,
               password: password,
               isChatDisabled: isChatDisabled,
+              userToBeKicked: userToBeKicked,
             })
           }
         >
@@ -286,6 +320,7 @@ const SettingRow = ({
   content,
   subOnly,
   helpIcon,
+  hideToggle,
 }: {
   icon: string;
   name: string;
@@ -297,6 +332,7 @@ const SettingRow = ({
   content?: React.ReactNode;
   subOnly?: boolean;
   helpIcon?: React.ReactNode;
+  hideToggle?: boolean;
 }) => {
   return (
     <React.Fragment>
@@ -312,7 +348,7 @@ const SettingRow = ({
               </Label>
             ) : null}
           </div>
-          {!content && (
+          {!content && !hideToggle && (
             <Radio
               style={{ marginLeft: 'auto' }}
               toggle

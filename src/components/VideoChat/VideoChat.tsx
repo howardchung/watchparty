@@ -341,7 +341,13 @@ export class VideoChat extends React.Component<VideoChatProps> {
                       }}
                     >
                       <div
-                        title={nameMap[p.id] || p.id}
+                        title={
+                          nameMap[p.id]
+                            ? `${nameMap[p.id]}#${p.id
+                                .slice(p.id.lastIndexOf('#'))
+                                .substring(1, 4)}`
+                            : p.id
+                        }
                         style={{
                           width: '80px',
                           backdropFilter: 'brightness(80%)',
@@ -353,7 +359,19 @@ export class VideoChat extends React.Component<VideoChatProps> {
                         }}
                       >
                         {p.isVideoChat && <Icon size="small" name="video" />}
-                        {nameMap[p.id] || p.id}
+                        {nameMap[p.id] ? (
+                          <React.Fragment>
+                            {nameMap[p.id]}
+                            <span style={{ opacity: 0.15 }}>
+                              #
+                              {p.id
+                                .slice(p.id.lastIndexOf('#'))
+                                .substring(1, 4)}
+                            </span>
+                          </React.Fragment>
+                        ) : (
+                          p.id
+                        )}
                       </div>
                       <div
                         style={{

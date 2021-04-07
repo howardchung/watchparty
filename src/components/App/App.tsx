@@ -344,6 +344,9 @@ export default class App extends React.Component<AppProps, AppState> {
       this.updateName(null, { value: userName || generateName() });
       this.loadSignInData();
     });
+    socket.on('kicked', () => {
+      this.setState({ error: "You've been kicked out of the room." });
+    });
     socket.on('error', (err: any) => {
       console.error(err);
       if (err === 'Invalid namespace') {
@@ -1380,6 +1383,10 @@ export default class App extends React.Component<AppProps, AppState> {
           isSubscriber={this.state.isSubscriber}
           roomId={this.state.roomId}
           setChatDisabled={this.setChatDisabled}
+          participants={
+            this.state.state === 'connected' ? this.state.participants : null
+          }
+          nameMap={this.state.nameMap}
         />
       </Grid.Column>
     );

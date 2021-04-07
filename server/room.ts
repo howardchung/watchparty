@@ -834,6 +834,7 @@ export class Room {
       password: string;
       vanity: string;
       isChatDisabled: boolean;
+      userToBeKicked: string;
     }
   ) => {
     if (!postgres) {
@@ -857,7 +858,7 @@ export class Room {
     const isSubscriber = Boolean(
       customer?.subscriptions?.data?.find((sub) => sub?.status === 'active')
     );
-    const { password, vanity, isChatDisabled } = data;
+    const { password, vanity, isChatDisabled, userToBeKicked } = data;
     if (password) {
       if (password.length > 100) {
         socket.emit('errorMessage', 'Password too long');
@@ -903,6 +904,17 @@ export class Room {
       socket.emit('successMessage', 'Saved admin settings');
     } catch (e) {
       console.warn(e);
+    }
+    const userToBeKickedSocket = this.io.of(this.roomId).connected[
+      userToBeKicked
+    ];
+    if (userToBeKickedSocket) {
+      try {
+        userToBeKickedSocket.emit('kicked');
+        userToBeKickedSocket.disconnect();
+      } catch (e) {
+        console.warn(e);
+      }
     }
   };
 
