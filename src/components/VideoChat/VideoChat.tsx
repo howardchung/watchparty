@@ -343,9 +343,8 @@ export class VideoChat extends React.Component<VideoChatProps> {
                       <div
                         title={
                           nameMap[p.id]
-                            ? `${nameMap[p.id]}#${p.id
-                                .slice(p.id.lastIndexOf('#'))
-                                .substring(1, 4)}`
+                            ? nameMap[p.id] +
+                              p.id.slice(p.id.lastIndexOf('#')).substring(0, 4)
                             : p.id
                         }
                         style={{
@@ -363,10 +362,9 @@ export class VideoChat extends React.Component<VideoChatProps> {
                           <React.Fragment>
                             {nameMap[p.id]}
                             <span style={{ opacity: 0.15 }}>
-                              #
                               {p.id
                                 .slice(p.id.lastIndexOf('#'))
-                                .substring(1, 4)}
+                                .substring(0, 4)}
                             </span>
                           </React.Fragment>
                         ) : (

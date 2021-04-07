@@ -246,7 +246,7 @@ const ChatMessage = ({
             <React.Fragment>
               {nameMap[id]}
               <span style={{ opacity: 0.1 }}>
-                #{id.slice(id.lastIndexOf('#')).substring(1, 4)}
+                {id.slice(id.lastIndexOf('#')).substring(0, 4)}
               </span>
             </React.Fragment>
           ) : (
