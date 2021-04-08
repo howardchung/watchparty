@@ -1,8 +1,11 @@
 import { Client } from 'pg';
 import config from './config';
 import { getUserByEmail } from './utils/firebase';
-import { insertObject } from './utils/postgres';
+import { insertObject, updateObject } from './utils/postgres';
 import { getAllActiveSubscriptions, getAllCustomers } from './utils/stripe';
+
+let lastSubs: String;
+let currentSubs: String;
 
 const postgres2 = new Client({
   connectionString: config.DATABASE_URL,
@@ -53,21 +56,35 @@ async function syncSubscribers() {
     status: sub.status,
     uid: uidMap.get(emailMap.get(sub.customer)),
   }));
+  currentSubs = result
+    .map((sub) => sub.uid)
+    .sort()
+    .join();
 
   // Upsert to DB
   // console.log(result);
-  try {
-    await postgres2?.query('BEGIN TRANSACTION');
-    await postgres2?.query('DELETE FROM subscriber');
-    for (let i = 0; i < result.length; i++) {
-      const row = result[i];
-      await insertObject(postgres2, 'subscriber', row);
+  if (currentSubs !== lastSubs) {
+    try {
+      await postgres2?.query('BEGIN TRANSACTION');
+      await postgres2?.query('DELETE FROM subscriber');
+      await postgres2?.query('UPDATE room SET "isSubRoom" = false');
+      for (let i = 0; i < result.length; i++) {
+        const row = result[i];
+        await insertObject(postgres2, 'subscriber', row);
+        await updateObject(
+          postgres2,
+          'room',
+          { isSubRoom: true },
+          { owner: row.uid }
+        );
+      }
+      await postgres2?.query('COMMIT');
+    } catch (e) {
+      console.error(e);
+      process.exit(1);
     }
-    await postgres2?.query('COMMIT');
-    console.log('%s subscribers', result.length);
-  } catch (e) {
-    console.error(e);
-    process.exit(1);
   }
+  lastSubs = currentSubs;
+  console.log('%s subscribers', result.length);
   console.timeEnd('syncSubscribers');
 }
