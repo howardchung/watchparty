@@ -79,12 +79,12 @@ async function syncSubscribers() {
         );
       }
       await postgres2?.query('COMMIT');
-      console.log('%s subscribers', result.length);
     } catch (e) {
       console.error(e);
       process.exit(1);
     }
   }
   lastSubs = currentSubs;
+  console.log('%s subscribers', result.length);
   console.timeEnd('syncSubscribers');
 }
