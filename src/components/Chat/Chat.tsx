@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Comment, Icon, Input } from 'semantic-ui-react';
+import { Button, Comment, Dropdown, Icon, Input } from 'semantic-ui-react';
 import 'emoji-mart/css/emoji-mart.css';
 import { EmojiData, Picker } from 'emoji-mart';
 import onClickOutside from 'react-onclickoutside';
@@ -10,6 +10,7 @@ import {
   getDefaultPicture,
 } from '../../utils';
 import { Separator } from '../App/App';
+import { UserMenu } from '../UserMenu/UserMenu';
 
 interface ChatProps {
   chat: ChatMessage[];
@@ -21,6 +22,8 @@ interface ChatProps {
   getMediaDisplayName: Function;
   hide?: boolean;
   isChatDisabled?: boolean;
+  user: firebase.User | undefined;
+  owner: string | undefined;
 }
 
 export class Chat extends React.Component<ChatProps> {
@@ -154,6 +157,9 @@ export class Chat extends React.Component<ChatProps> {
                 pictureMap={this.props.pictureMap}
                 nameMap={this.props.nameMap}
                 formatMessage={this.formatMessage}
+                owner={this.props.owner}
+                user={this.props.user}
+                socket={this.props.socket}
               />
             ))}
             {/* <div ref={this.messagesEndRef} /> */}
@@ -222,13 +228,25 @@ const ChatMessage = ({
   nameMap,
   pictureMap,
   formatMessage,
+  user,
+  socket,
+  owner,
 }: {
   message: ChatMessage;
   nameMap: StringDict;
   pictureMap: StringDict;
   formatMessage: (cmd: string, msg: string) => React.ReactNode;
+  user: firebase.User | undefined;
+  socket: SocketIOClient.Socket;
+  owner: string | undefined;
 }) => {
   const { id, timestamp, cmd, msg, system } = message;
+  const Author = () => (
+    <Comment.Author as="a" className="light">
+      {Boolean(system) && 'System'}
+      {nameMap[id] || id}
+    </Comment.Author>
+  );
   return (
     <Comment>
       {id ? (
@@ -240,10 +258,16 @@ const ChatMessage = ({
         />
       ) : null}
       <Comment.Content>
-        <Comment.Author as="a" className="light">
-          {Boolean(system) && 'System'}
-          {nameMap[id] || id}
-        </Comment.Author>
+        {owner && owner === user?.uid ? (
+          <UserMenu
+            user={user}
+            socket={socket}
+            userToBeKicked={id}
+            trigger={<Author />}
+          />
+        ) : (
+          <Author />
+        )}
         <Comment.Metadata className="dark">
           <div>{new Date(timestamp).toLocaleTimeString()}</div>
         </Comment.Metadata>
