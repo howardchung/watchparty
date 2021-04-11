@@ -233,7 +233,7 @@ export class Room {
       const roomString = this.serialize();
       const key = this.roomId;
       if (permanent === null) {
-        await redis?.set(key, roomString);
+        await redis?.set(key, roomString, 'KEEPTTL');
       } else if (permanent === true) {
         await redis?.set(key, roomString);
         await redis?.persist(key);
