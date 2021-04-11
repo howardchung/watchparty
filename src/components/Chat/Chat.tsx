@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Comment, Dropdown, Icon, Input } from 'semantic-ui-react';
+import { Button, Comment, Icon, Input } from 'semantic-ui-react';
 import 'emoji-mart/css/emoji-mart.css';
 import { EmojiData, Picker } from 'emoji-mart';
 import onClickOutside from 'react-onclickoutside';
