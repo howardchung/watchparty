@@ -7,6 +7,7 @@ import {
   getDefaultPicture,
   iceServers,
 } from '../../utils';
+import { UserMenu } from '../UserMenu/UserMenu';
 
 interface VideoChatProps {
   socket: SocketIOClient.Socket;
@@ -16,6 +17,8 @@ interface VideoChatProps {
   tsMap: NumberDict;
   rosterUpdateTS: Number;
   hide?: boolean;
+  owner: string | undefined;
+  user: firebase.User | undefined;
 }
 
 export class VideoChat extends React.Component<VideoChatProps> {
@@ -192,7 +195,15 @@ export class VideoChat extends React.Component<VideoChatProps> {
   };
 
   render() {
-    const { participants, pictureMap, nameMap, tsMap, socket } = this.props;
+    const {
+      participants,
+      pictureMap,
+      nameMap,
+      tsMap,
+      socket,
+      owner,
+      user,
+    } = this.props;
     const videoChatContentStyle = {
       height: participants.length < 3 ? 220 : 110,
       borderRadius: '4px',
@@ -302,6 +313,15 @@ export class VideoChat extends React.Component<VideoChatProps> {
                   }}
                 >
                   <div>
+                    {owner && owner === user?.uid && (
+                      <UserMenu
+                        style={{ position: 'absolute' }}
+                        user={user}
+                        socket={socket}
+                        userToBeKicked={p.id}
+                        trigger={<Icon name="bars" size="large" />}
+                      />
+                    )}
                     {this.ourStream && p.isVideoChat ? (
                       <video
                         ref={(el) => {

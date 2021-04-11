@@ -47,6 +47,7 @@ import { SettingsTab } from '../Settings/SettingsTab';
 import { ErrorModal } from '../Modal/ErrorModal';
 import { PasswordModal } from '../Modal/PasswordModal';
 import { SubscribeButton } from '../SubscribeButton/SubscribeButton';
+import { Redirect } from 'react-router-dom';
 
 declare global {
   interface Window {
@@ -109,6 +110,8 @@ interface AppState {
   successMessage: string;
   isChatDisabled: boolean;
   showRightBar: boolean;
+  owner: string | undefined;
+  kicked: boolean;
 }
 
 export default class App extends React.Component<AppProps, AppState> {
@@ -161,6 +164,8 @@ export default class App extends React.Component<AppProps, AppState> {
     successMessage: '',
     isChatDisabled: false,
     showRightBar: true,
+    owner: undefined,
+    kicked: false,
   };
   socket: SocketIOClient.Socket = null as any;
   watchPartyYTPlayer: any = null;
@@ -205,6 +210,10 @@ export default class App extends React.Component<AppProps, AppState> {
     const customSettings = await customSettingsData.json();
     let settings = { ...getCurrentSettings(), ...customSettings };
     this.setState({ settings });
+  };
+
+  setOwner = (owner: string) => {
+    this.setState({ owner });
   };
 
   loadSignInData = async () => {
@@ -367,6 +376,9 @@ export default class App extends React.Component<AppProps, AppState> {
       setTimeout(() => {
         this.setState({ successMessage: '' });
       }, 3000);
+    });
+    socket.on('kicked', () => {
+      this.setState({ kicked: true });
     });
     socket.on('REC:play', () => {
       this.doPlay();
@@ -1252,6 +1264,9 @@ export default class App extends React.Component<AppProps, AppState> {
   };
 
   render() {
+    if (this.state.kicked) {
+      return <Redirect to="/" />;
+    }
     const sharer = this.state.participants.find((p) => p.isScreenShare);
     const controls = (
       <Controls
@@ -1359,6 +1374,8 @@ export default class App extends React.Component<AppProps, AppState> {
           getMediaDisplayName={this.getMediaDisplayName}
           hide={this.state.currentTab !== 'chat' || !displayRightContent}
           isChatDisabled={this.state.isChatDisabled}
+          owner={this.state.owner}
+          user={this.props.user}
         />
         {this.state.state === 'connected' && (
           <VideoChat
@@ -1369,6 +1386,8 @@ export default class App extends React.Component<AppProps, AppState> {
             tsMap={this.state.tsMap}
             rosterUpdateTS={this.state.rosterUpdateTS}
             hide={this.state.currentTab !== 'people' || !displayRightContent}
+            owner={this.state.owner}
+            user={this.props.user}
           />
         )}
         <SettingsTab
@@ -1380,6 +1399,8 @@ export default class App extends React.Component<AppProps, AppState> {
           isSubscriber={this.state.isSubscriber}
           roomId={this.state.roomId}
           setChatDisabled={this.setChatDisabled}
+          owner={this.state.owner}
+          setOwner={this.setOwner}
         />
       </Grid.Column>
     );

@@ -24,6 +24,8 @@ interface SettingsTabProps {
   isSubscriber: boolean;
   roomId: string;
   setChatDisabled: (val: boolean) => void;
+  owner: string | undefined;
+  setOwner: Function;
 }
 
 export const SettingsTab = ({
@@ -35,13 +37,14 @@ export const SettingsTab = ({
   isSubscriber,
   roomId,
   setChatDisabled,
+  owner,
+  setOwner,
 }: SettingsTabProps) => {
   const [updateTS, setUpdateTS] = useState(0);
   const [permModalOpen, setPermModalOpen] = useState(false);
   const [vanity, setVanity] = useState<string | undefined>(undefined);
   const [password, setPassword] = useState<string | undefined>(undefined);
   const [isChatDisabled, setIsChatDisabled] = useState(false);
-  const [owner, setOwner] = useState<string | undefined>(undefined);
   const [validVanity, setValidVanity] = useState(true);
   const [validVanityLoading, setValidVanityLoading] = useState(false);
   const [roomLink, setRoomLink] = useState<string>('');
