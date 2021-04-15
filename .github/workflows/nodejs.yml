@@ -32,6 +32,7 @@ jobs:
           REACT_APP_RECAPTCHA_SITE_KEY: 6LeDGP4UAAAAAGYZZenyU-3fRdhL3p0BaBmiK9mM
           REACT_APP_STRIPE_PUBLIC_KEY: pk_live_eVMbIifj5lnvgBleBCRaCv4E00aeXQkPxQ
       - name: Push to remote
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
         run: |
           git config --global user.name "github-actions[bot]"	
           git config --global user.email "watchparty+github-actions[bot]@users.noreply.github.com"	
