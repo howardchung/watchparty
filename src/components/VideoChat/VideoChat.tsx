@@ -307,7 +307,14 @@ export class VideoChat extends React.Component<VideoChatProps> {
                         ref={(el) => {
                           this.videoRefs[p.id] = el;
                         }}
-                        style={videoChatContentStyle as any}
+                        style={{
+                          ...(videoChatContentStyle as any),
+                          // mirror the video if it's our stream. this style mimics Zoom where your
+                          // video is mirrored only for you)
+                          transform: `scaleX(${
+                            p.id === socket.id ? '-1' : '1'
+                          })`,
+                        }}
                         autoPlay
                         muted={p.id === socket.id}
                         data-id={p.id}
