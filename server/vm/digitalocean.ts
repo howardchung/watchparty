@@ -6,7 +6,7 @@ import { cloudInit, imageName } from './utils';
 
 const DO_TOKEN = config.DO_TOKEN;
 const region = 'sfo3';
-const gatewayHost = 'gateway4.watchparty.me';
+const gatewayHost = config.DO_GATEWAY;
 const imageId = 64531018;
 const sshKeys = ['cc:3d:a7:d3:99:17:fe:b7:dd:59:c4:78:14:d4:02:d1'];
 

@@ -6,9 +6,9 @@ import { cloudInit, imageName } from './utils';
 
 const HETZNER_TOKEN = config.HETZNER_TOKEN;
 const region = ['nbg1', 'fsn1', 'hel1'];
-const gatewayHost = 'gateway3.watchparty.me';
+const gatewayHost = config.HETZNER_GATEWAY;
 const sshKeys = [1570536];
-const networks = [91163, 1007910, 1007911];
+const networks = config.HETZNER_NETWORKS.split(',').map(Number);
 const imageId = 26142182;
 
 export class Hetzner extends VMManager {
