@@ -588,8 +588,9 @@ export class Room {
           method: 'POST',
         });
         // console.log(validation?.data);
-        const isLowScore = validation?.data?.score < 0.2;
+        const isLowScore = validation?.data?.score < 0.1;
         const failed = validation?.data?.success === false;
+        console.log('[RECAPTCHA] score: ', validation?.data?.score);
         if (failed || isLowScore) {
           if (isLowScore) {
             redisCount('recaptchaRejectsLowScore');
