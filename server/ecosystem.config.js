@@ -6,8 +6,6 @@ module.exports = {
       log_date_format: 'YYYY-MM-DD HH:mm Z',
       env: {
         PORT: 80,
-        HETZNER_GATEWAY: 'gateway3.watchparty.me',
-        HETZNER_NETWORKS: '91163,1007910,1007911',
       },
     },
     {
@@ -17,7 +15,6 @@ module.exports = {
       env: {
         SHARD: 1,
         PORT: 3001,
-        HETZNER_GATEWAY: 'gateway4.watchparty.me',
       },
     },
     // {
@@ -42,6 +39,10 @@ module.exports = {
       name: 'vmWorker',
       script: './buildServer/vmWorker.js',
       log_date_format: 'YYYY-MM-DD HH:mm Z',
+      env: {
+        HETZNER_GATEWAY: 'gateway3.watchparty.me',
+        HETZNER_NETWORKS: '91163,1007910,1007911',
+      },
     },
     {
       name: 'syncSubs',
