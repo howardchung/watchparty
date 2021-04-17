@@ -1,31 +1,42 @@
 import React from 'react';
-import { Dropdown } from 'semantic-ui-react';
+import './UserMenu.css';
+import { Popup, Button } from 'semantic-ui-react';
 
 export const UserMenu = ({
   user,
   socket,
-  style,
   userToBeKicked,
   trigger,
-  icon,
+  displayName,
+  position,
 }: {
   user: firebase.User;
   socket: SocketIOClient.Socket;
-  style?: object;
   userToBeKicked: string;
   trigger: any;
   icon?: string;
-}) => (
-  <Dropdown trigger={trigger} style={style} icon={icon || null}>
-    <Dropdown.Menu>
-      <Dropdown.Item
-        onClick={async () => {
-          const token = await user?.getIdToken();
-          socket.emit('kickUser', { userToBeKicked, uid: user?.uid, token });
-        }}
-      >
-        Kick
-      </Dropdown.Item>
-    </Dropdown.Menu>
-  </Dropdown>
-);
+  displayName?: string;
+  position?: any;
+}) => {
+  return (
+    <Popup
+      trigger={trigger}
+      on="click"
+      position={position}
+      style={{ padding: 0, borderRadius: 0 }}
+    >
+      <div className="userMenuHeader">{displayName}</div>
+      <div className="userMenuContent">
+        <Button
+          content="Kick"
+          negative
+          icon="ban"
+          onClick={async () => {
+            const token = await user?.getIdToken();
+            socket.emit('kickUser', { userToBeKicked, uid: user?.uid, token });
+          }}
+        />
+      </div>
+    </Popup>
+  );
+};

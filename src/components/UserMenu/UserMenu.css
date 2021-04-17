@@ -1,0 +1,30 @@
+.userMenuHeader {
+  background: rgba(0, 0, 0, 0.25);
+  color: rgb(255, 255, 255);
+  padding: 5px;
+  font-size: 15px;
+  width: 110px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.userMenuContent {
+  display: flex;
+  justify-content: center;
+  padding: 10px;
+}
+
+.button {
+  margin: 0px !important;
+}
+
+.ui.popup {
+  background: rgb(8, 52, 84) !important;
+  border-color: rgb(186, 186, 188) !important;
+}
+
+.ui.popup:before {
+  background: rgb(8, 52, 84) !important;
+  z-index: -1 !important;
+}

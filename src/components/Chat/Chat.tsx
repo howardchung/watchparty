@@ -260,10 +260,15 @@ const ChatMessage = ({
       <Comment.Content>
         {owner && owner === user?.uid ? (
           <UserMenu
+            displayName={nameMap[id] || id}
             user={user}
             socket={socket}
             userToBeKicked={id}
-            trigger={<Author />}
+            trigger={
+              <span>
+                <Author />
+              </span>
+            }
           />
         ) : (
           <Author />

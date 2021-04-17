@@ -315,11 +315,23 @@ export class VideoChat extends React.Component<VideoChatProps> {
                   <div>
                     {owner && owner === user?.uid && (
                       <UserMenu
-                        style={{ position: 'absolute' }}
+                        displayName={nameMap[p.id] || p.id}
                         user={user}
+                        position={'left center'}
                         socket={socket}
                         userToBeKicked={p.id}
-                        trigger={<Icon name="bars" size="large" />}
+                        trigger={
+                          <Icon
+                            name="ellipsis vertical"
+                            size="large"
+                            style={{
+                              position: 'absolute',
+                              right: -7,
+                              top: 5,
+                              cursor: 'pointer',
+                            }}
+                          />
+                        }
                       />
                     )}
                     {this.ourStream && p.isVideoChat ? (
