@@ -19,12 +19,13 @@
   margin: 0px !important;
 }
 
-.ui.popup {
+.ui.popup.userMenu {
   background: rgb(8, 52, 84) !important;
   border-color: rgb(186, 186, 188) !important;
+  padding: 0px !important;
 }
 
-.ui.popup:before {
+.ui.popup.userMenu:before {
   background: rgb(8, 52, 84) !important;
   z-index: -1 !important;
 }

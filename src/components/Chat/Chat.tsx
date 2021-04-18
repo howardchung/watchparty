@@ -241,12 +241,6 @@ const ChatMessage = ({
   owner: string | undefined;
 }) => {
   const { id, timestamp, cmd, msg, system } = message;
-  const Author = () => (
-    <Comment.Author as="a" className="light">
-      {Boolean(system) && 'System'}
-      {nameMap[id] || id}
-    </Comment.Author>
-  );
   return (
     <Comment>
       {id ? (
@@ -258,21 +252,19 @@ const ChatMessage = ({
         />
       ) : null}
       <Comment.Content>
-        {owner && owner === user?.uid ? (
-          <UserMenu
-            displayName={nameMap[id] || id}
-            user={user}
-            socket={socket}
-            userToBeKicked={id}
-            trigger={
-              <span>
-                <Author />
-              </span>
-            }
-          />
-        ) : (
-          <Author />
-        )}
+        <UserMenu
+          displayName={nameMap[id] || id}
+          user={user}
+          socket={socket}
+          userToManage={id}
+          disabled={!Boolean(owner && owner === user?.uid)}
+          trigger={
+            <Comment.Author as="a" className="light">
+              {Boolean(system) && 'System'}
+              {nameMap[id] || id}
+            </Comment.Author>
+          }
+        />
         <Comment.Metadata className="dark">
           <div>{new Date(timestamp).toLocaleTimeString()}</div>
         </Comment.Metadata>
