@@ -1,29 +1,38 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './UserMenu.css';
 import { Popup, Button } from 'semantic-ui-react';
 
 export const UserMenu = ({
   user,
   socket,
-  userToBeKicked,
+  userToManage,
   trigger,
   displayName,
   position,
+  disabled,
 }: {
-  user: firebase.User;
+  user?: firebase.User;
   socket: SocketIOClient.Socket;
-  userToBeKicked: string;
+  userToManage: string;
   trigger: any;
   icon?: string;
   displayName?: string;
   position?: any;
+  disabled: boolean;
 }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const handleOpen = () => setIsOpen(true);
+  const handleClose = () => setIsOpen(false);
   return (
     <Popup
+      className="userMenu"
       trigger={trigger}
       on="click"
+      open={isOpen}
+      onOpen={handleOpen}
+      onClose={handleClose}
       position={position}
-      style={{ padding: 0, borderRadius: 0 }}
+      disabled={disabled}
     >
       <div className="userMenuHeader">{displayName}</div>
       <div className="userMenuContent">
@@ -33,7 +42,12 @@ export const UserMenu = ({
           icon="ban"
           onClick={async () => {
             const token = await user?.getIdToken();
-            socket.emit('kickUser', { userToBeKicked, uid: user?.uid, token });
+            socket.emit('kickUser', {
+              userToBeKicked: userToManage,
+              uid: user?.uid,
+              token,
+            });
+            handleClose();
           }}
         />
       </div>

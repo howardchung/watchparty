@@ -313,27 +313,30 @@ export class VideoChat extends React.Component<VideoChatProps> {
                   }}
                 >
                   <div>
-                    {owner && owner === user?.uid && (
-                      <UserMenu
-                        displayName={nameMap[p.id] || p.id}
-                        user={user}
-                        position={'left center'}
-                        socket={socket}
-                        userToBeKicked={p.id}
-                        trigger={
-                          <Icon
-                            name="ellipsis vertical"
-                            size="large"
-                            style={{
-                              position: 'absolute',
-                              right: -7,
-                              top: 5,
-                              cursor: 'pointer',
-                            }}
-                          />
-                        }
-                      />
-                    )}
+                    <UserMenu
+                      displayName={nameMap[p.id] || p.id}
+                      user={user}
+                      disabled={!Boolean(owner && owner === user?.uid)}
+                      position={'left center'}
+                      socket={socket}
+                      userToManage={p.id}
+                      trigger={
+                        <Icon
+                          name="ellipsis vertical"
+                          size="large"
+                          style={{
+                            position: 'absolute',
+                            right: -7,
+                            top: 5,
+                            cursor: 'pointer',
+                            opacity: 0.75,
+                            visibility: Boolean(owner && owner === user?.uid)
+                              ? 'visible'
+                              : 'hidden',
+                          }}
+                        />
+                      }
+                    />
                     {this.ourStream && p.isVideoChat ? (
                       <video
                         ref={(el) => {

@@ -112,6 +112,9 @@ interface AppState {
   showRightBar: boolean;
   owner: string | undefined;
   kicked: boolean;
+  vanity: string | undefined;
+  password: string | undefined;
+  roomLink: string;
 }
 
 export default class App extends React.Component<AppProps, AppState> {
@@ -166,6 +169,9 @@ export default class App extends React.Component<AppProps, AppState> {
     showRightBar: true,
     owner: undefined,
     kicked: false,
+    vanity: undefined,
+    password: undefined,
+    roomLink: '',
   };
   socket: SocketIOClient.Socket = null as any;
   watchPartyYTPlayer: any = null;
@@ -192,10 +198,28 @@ export default class App extends React.Component<AppProps, AppState> {
     this.init();
   }
 
+  getRoomLink = (vanity: string) => {
+    if (vanity) {
+      return `${window.location.origin}/r/${vanity}`;
+    }
+    return `${window.location.origin}${this.state.roomId.replace('/', '#')}`;
+  };
+
+  handleRoomState = (data: any) => {
+    this.setOwner(data.owner);
+    this.setVanity(data.vanity);
+    this.setPassword(data.password);
+    this.setRoomLink(this.getRoomLink(data.vanity));
+    this.setIsChatDisabled(data.isChatDisabled);
+    window.history.replaceState('', '', this.getRoomLink(data.vanity));
+    this.setIsChatDisabled(data.isChatDisabled);
+  };
+
   componentWillUnmount() {
     document.removeEventListener('fullscreenchange', this.onFullScreenChange);
     document.removeEventListener('keydown', this.onKeydown);
     window.clearInterval(this.heartbeat);
+    this.socket.off('REC:getRoomState', this.handleRoomState);
   }
 
   componentDidUpdate(prevProps: AppProps) {
@@ -210,10 +234,6 @@ export default class App extends React.Component<AppProps, AppState> {
     const customSettings = await customSettingsData.json();
     let settings = { ...getCurrentSettings(), ...customSettings };
     this.setState({ settings });
-  };
-
-  setOwner = (owner: string) => {
-    this.setState({ owner });
   };
 
   loadSignInData = async () => {
@@ -292,6 +312,19 @@ export default class App extends React.Component<AppProps, AppState> {
     };
   };
 
+  setOwner = (owner: string) => {
+    this.setState({ owner });
+  };
+  setVanity = (vanity: string | undefined) => {
+    this.setState({ vanity });
+  };
+  setPassword = (password: string | undefined) => {
+    this.setState({ password });
+  };
+  setRoomLink = (roomLink: string) => {
+    this.setState({ roomLink });
+  };
+
   init = async () => {
     // Load room ID from url
     let roomId = '/default';
@@ -316,8 +349,11 @@ export default class App extends React.Component<AppProps, AppState> {
         return;
       }
     }
-    this.setState({ roomId });
-    this.join(roomId);
+    this.setState({ roomId }, () => {
+      this.join(roomId);
+      this.socket.emit('CMD:getRoomState');
+      this.socket.on('REC:getRoomState', this.handleRoomState);
+    });
   };
 
   join = async (roomId: string) => {
@@ -378,7 +414,7 @@ export default class App extends React.Component<AppProps, AppState> {
       }, 3000);
     });
     socket.on('kicked', () => {
-      this.setState({ kicked: true });
+      window.location.assign('/');
     });
     socket.on('REC:play', () => {
       this.doPlay();
@@ -1257,16 +1293,13 @@ export default class App extends React.Component<AppProps, AppState> {
     return this.props.user?.uid === this.state.roomLock;
   };
 
-  setChatDisabled = (val: boolean) => this.setState({ isChatDisabled: val });
+  setIsChatDisabled = (val: boolean) => this.setState({ isChatDisabled: val });
 
   getLeaderTime = () => {
     return Math.max(...Object.values(this.state.tsMap));
   };
 
   render() {
-    if (this.state.kicked) {
-      return <Redirect to="/" />;
-    }
     const sharer = this.state.participants.find((p) => p.isScreenShare);
     const controls = (
       <Controls
@@ -1398,9 +1431,15 @@ export default class App extends React.Component<AppProps, AppState> {
           socket={this.socket}
           isSubscriber={this.state.isSubscriber}
           roomId={this.state.roomId}
-          setChatDisabled={this.setChatDisabled}
+          isChatDisabled={this.state.isChatDisabled}
+          setIsChatDisabled={this.setIsChatDisabled}
           owner={this.state.owner}
           setOwner={this.setOwner}
+          vanity={this.state.vanity}
+          setVanity={this.setVanity}
+          roomLink={this.state.roomLink}
+          password={this.state.password}
+          setPassword={this.setPassword}
         />
       </Grid.Column>
     );
