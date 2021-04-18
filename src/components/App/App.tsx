@@ -47,7 +47,6 @@ import { SettingsTab } from '../Settings/SettingsTab';
 import { ErrorModal } from '../Modal/ErrorModal';
 import { PasswordModal } from '../Modal/PasswordModal';
 import { SubscribeButton } from '../SubscribeButton/SubscribeButton';
-import { Redirect } from 'react-router-dom';
 
 declare global {
   interface Window {
