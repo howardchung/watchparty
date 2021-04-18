@@ -47,7 +47,7 @@ export const UserMenu = ({
               uid: user?.uid,
               token,
             });
-            handleClose();
+            setIsOpen(false);
           }}
         />
       </div>
