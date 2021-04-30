@@ -5,7 +5,7 @@
   "dependencies": {
     "@stripe/stripe-js": "^1.5.0",
     "@testing-library/jest-dom": "^4.2.4",
-    "@testing-library/react": "^9.5.0",
+    "@testing-library/react": "^11.2.6",
     "@testing-library/user-event": "^7.2.1",
     "axios": "^0.21.1",
     "body-parser": "^1.19.0",
