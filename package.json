@@ -20,7 +20,7 @@
     "firebase-admin": "^8.12.1",
     "form-data": "^3.0.0",
     "ioredis": "^4.16.1",
-    "magnet-uri": "^5.2.4",
+    "magnet-uri": "^6.1.1",
     "moniker": "^0.1.2",
     "pg": "^8.5.1",
     "pm2": "^4.5.0",
