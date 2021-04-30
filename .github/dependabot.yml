@@ -1,0 +1,45 @@
+version: 2
+updates:
+- package-ecosystem: npm
+  directory: "/"
+  schedule:
+    interval: daily
+  open-pull-requests-limit: 10
+  ignore:
+  - dependency-name: "@testing-library/jest-dom"
+    versions:
+    - 5.11.10
+    - 5.11.9
+  - dependency-name: recharts
+    versions:
+    - 2.0.4
+    - 2.0.6
+    - 2.0.7
+    - 2.0.8
+  - dependency-name: "@testing-library/react"
+    versions:
+    - 11.2.3
+    - 11.2.5
+  - dependency-name: "@types/ioredis"
+    versions:
+    - 4.17.11
+    - 4.19.3
+  - dependency-name: react-onclickoutside
+    versions:
+    - 6.10.0
+    - 6.9.1
+  - dependency-name: "@types/react-router-dom"
+    versions:
+    - 5.1.7
+  - dependency-name: socket.io
+    versions:
+    - 2.4.0
+  - dependency-name: systeminformation
+    versions:
+    - 4.34.9
+  - dependency-name: http-proxy
+    versions:
+    - 1.18.1
+  - dependency-name: elliptic
+    versions:
+    - 6.5.3
