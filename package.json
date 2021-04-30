@@ -43,7 +43,7 @@
     "stripe": "^8.56.0",
     "uuid": "^7.0.2",
     "xml2js": "^0.4.23",
-    "youtube-api": "^2.0.10"
+    "youtube-api": "^3.0.1"
   },
   "scripts": {
     "start": "react-scripts start",
