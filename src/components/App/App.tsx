@@ -533,6 +533,10 @@ export default class App extends React.Component<AppProps, AppState> {
         // console.log('offer');
         await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
         const answer = await pc.createAnswer();
+        answer.sdp = answer.sdp?.replace(
+          'useinbandfec=1',
+          'useinbandfec=1; stereo=1; maxaveragebitrate=510000'
+        );
         await pc.setLocalDescription(answer);
         this.sendSignalSS(from, { sdp: pc.localDescription }, !data.sharer);
       } else if (msg.sdp && msg.sdp.type === 'answer') {
@@ -581,7 +585,16 @@ export default class App extends React.Component<AppProps, AppState> {
       //@ts-ignore
       const stream = await navigator.mediaDevices.getDisplayMedia({
         video: { cursor: 'never', height: 720, logicalSurface: true },
-        audio: true,
+        audio: {
+          autoGainControl: false,
+          channelCount: 2,
+          echoCancellation: false,
+          latency: 0,
+          noiseSuppression: false,
+          sampleRate: 48000,
+          sampleSize: 16,
+          volume: 1.0,
+        },
       });
       stream.getVideoTracks()[0].onended = this.stopScreenShare;
       this.screenShareStream = stream;
