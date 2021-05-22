@@ -42,6 +42,7 @@ export class Room {
   private pictureMap: StringDict = {};
   public vBrowser: AssignedVM | undefined = undefined;
   public creationTime: Date = new Date();
+  public lastUpdateTime: Date = new Date();
   public lock: string | undefined = undefined; // uid of the user who locked the room
 
   // Non-serialized state
@@ -178,6 +179,7 @@ export class Room {
       pictureMap: abbrPictureMap,
       vBrowser: this.vBrowser,
       creationTime: this.creationTime,
+      lastUpdateTime: this.lastUpdateTime,
       lock: this.lock,
     });
   };
@@ -207,18 +209,22 @@ export class Room {
     if (roomObj.creationTime) {
       this.creationTime = new Date(roomObj.creationTime);
     }
+    if (roomObj.lastUpdateTime) {
+      this.lastUpdateTime = new Date(roomObj.lastUpdateTime);
+    }
     if (roomObj.lock) {
       this.lock = roomObj.lock;
     }
   };
 
   public saveToRedis = async (permanent: boolean | null) => {
+    this.lastUpdateTime = new Date();
     if (config.ENABLE_POSTGRES_SAVING && postgres) {
       try {
         const roomString = this.serialize();
         await postgres?.query(
           `UPDATE room SET "lastUpdateTime" = $1, data = $2 WHERE "roomId" = $3`,
-          [new Date(), roomString, this.roomId]
+          [this.lastUpdateTime, roomString, this.roomId]
         );
       } catch (e) {
         console.warn(e);
@@ -251,6 +257,15 @@ export class Room {
       this.roomRedis?.disconnect();
       this.roomRedis = undefined;
     }
+  };
+
+  public getRosterForStats = () => {
+    return this.roster.map((p) => ({
+      name: this.nameMap[p.id] || p.id,
+      uid: this.uidMap[p.id],
+      ip: this.io.of(this.roomId).sockets[p.id]?.request?.connection
+        ?.remoteAddress,
+    }));
   };
 
   private getHostState = (): HostState => {
