@@ -72,7 +72,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
     let stream = new MediaStream([black()]);
 
     try {
-      stream = await navigator?.mediaDevices?.getUserMedia({
+      stream = await navigator?.mediaDevices.getUserMedia({
         audio: true,
         video: true,
       });
@@ -157,20 +157,20 @@ export class VideoChat extends React.Component<VideoChatProps> {
         const pc = new RTCPeerConnection({ iceServers: iceServers() });
         this.videoPCs[id] = pc;
         // Add our own video as outgoing stream
-        //@ts-ignore
-        pc.addStream(this.ourStream);
+        this.ourStream?.getTracks().forEach((track) => {
+          pc.addTrack(track);
+        });
         pc.onicecandidate = (event) => {
           // We generated an ICE candidate, send it to peer
           if (event.candidate) {
             this.sendSignal(id, { ice: event.candidate });
           }
         };
-        //@ts-ignore
-        pc.onaddstream = (event: any) => {
+        pc.ontrack = (event: RTCTrackEvent) => {
           // Mount the stream from peer
-          const stream = event.stream;
+          const track = event.track;
           // console.log(stream);
-          this.videoRefs[id].srcObject = stream;
+          this.videoRefs[id].srcObject = new MediaStream([track]);
         };
         // For each pair, have the lexicographically smaller ID be the offerer
         const isOfferer = this.socket.id < id;

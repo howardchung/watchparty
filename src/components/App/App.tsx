@@ -568,7 +568,7 @@ export default class App extends React.Component<AppProps, AppState> {
     leftVideo.src = URL.createObjectURL(file);
     leftVideo.play();
     //@ts-ignore
-    const stream = leftVideo.captureStream();
+    const stream = leftVideo.captureStream ? leftVideo.captureStream() : {};
     // Can render video to a canvas to resize it, reduce size
     stream.onaddtrack = () => {
       console.log(stream, stream.getVideoTracks(), stream.getAudioTracks());
@@ -588,14 +588,17 @@ export default class App extends React.Component<AppProps, AppState> {
 
   setupScreenShare = async () => {
     //@ts-ignore
-    const stream = await navigator.mediaDevices.getDisplayMedia({
-      video: { cursor: 'never', height: 720, logicalSurface: true },
-      audio: true,
-    });
-    stream.getVideoTracks()[0].onended = this.stopScreenShare;
-    this.screenShareStream = stream;
-    this.socket.emit('CMD:joinScreenShare');
-    this.setState({ isScreenSharing: true });
+    if (navigator.mediaDevices.getDisplayMedia) {
+      //@ts-ignore
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        video: { cursor: 'never', height: 720, logicalSurface: true },
+        audio: true,
+      });
+      stream.getVideoTracks()[0].onended = this.stopScreenShare;
+      this.screenShareStream = stream;
+      this.socket.emit('CMD:joinScreenShare');
+      this.setState({ isScreenSharing: true });
+    }
   };
 
   stopScreenShare = async () => {
@@ -636,8 +639,9 @@ export default class App extends React.Component<AppProps, AppState> {
           // Set up the RTCPeerConnection for sharing media to each member
           const pc = new RTCPeerConnection({ iceServers: iceServers() });
           this.screenHostPC[id] = pc;
-          //@ts-ignore
-          pc.addStream(this.screenShareStream);
+          this.screenShareStream?.getTracks().forEach((track) => {
+            pc.addTrack(track);
+          });
           pc.onicecandidate = (event) => {
             // We generated an ICE candidate, send it to peer
             if (event.candidate) {
@@ -665,18 +669,17 @@ export default class App extends React.Component<AppProps, AppState> {
           this.sendSignalSS(sharer.id, { ice: event.candidate });
         }
       };
-      //@ts-ignore
-      pc.onaddstream = (event: any) => {
+      pc.ontrack = (event: RTCTrackEvent) => {
         console.log('stream from webrtc peer');
         // Mount the stream from peer
-        const stream = event.stream;
+        const track = event.track;
         // console.log(stream);
         const leftVideo = document.getElementById(
           'leftVideo'
         ) as HTMLMediaElement;
         if (leftVideo) {
           leftVideo.src = '';
-          leftVideo.srcObject = stream;
+          leftVideo.srcObject = new MediaStream([track]);
           this.doPlay();
         }
       };
