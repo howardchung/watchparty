@@ -28,7 +28,7 @@ export const SubscribeButton = ({
     const session = await resp.json();
     console.log(session);
     window.location.assign(session.url);
-  }, [user, serverPath]);
+  }, [user]);
   return (
     <>
       {isSubscribeModalOpen && (

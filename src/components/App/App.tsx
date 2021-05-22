@@ -41,7 +41,6 @@ import { MultiStreamModal } from '../Modal/MultiStreamModal';
 import { ComboBox } from '../ComboBox/ComboBox';
 import { SearchComponent } from '../SearchComponent/SearchComponent';
 import { Controls } from '../Controls/Controls';
-import { SubscribeModal } from '../Modal/SubscribeModal';
 import { VBrowserModal } from '../Modal/VBrowserModal';
 import { SettingsTab } from '../Settings/SettingsTab';
 import { ErrorModal } from '../Modal/ErrorModal';
