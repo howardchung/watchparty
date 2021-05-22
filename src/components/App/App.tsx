@@ -60,6 +60,8 @@ declare global {
 interface AppProps {
   vanity?: string;
   user?: firebase.User;
+  isSubscriber: boolean;
+  isCustomer: boolean;
 }
 
 interface AppState {
@@ -97,8 +99,6 @@ interface AppState {
   isVBrowserLarge: boolean;
   nonPlayableMedia: boolean;
   currentTab: string;
-  isSubscriber: boolean;
-  isCustomer: boolean;
   isSubscribeModalOpen: boolean;
   isVBrowserModalOpen: boolean;
   roomLock: string;
@@ -149,8 +149,6 @@ export default class App extends React.Component<AppProps, AppState> {
     currentTab:
       (querystring.parse(window.location.search.substring(1)).tab as string) ||
       'chat',
-    isSubscriber: false,
-    isCustomer: false,
     isSubscribeModalOpen: false,
     isVBrowserModalOpen: false,
     roomLock: '',
@@ -221,15 +219,6 @@ export default class App extends React.Component<AppProps, AppState> {
         this.updatePicture(user.photoURL + '?height=128&width=128');
       }
       this.updateUid(user);
-      const token = await user.getIdToken();
-      const response = await window.fetch(
-        serverPath + `/metadata?uid=${user.uid}&token=${token}`
-      );
-      const data = await response.json();
-      this.setState({
-        isSubscriber: data.isSubscriber,
-        isCustomer: data.isCustomer,
-      });
     }
   };
 
@@ -1218,23 +1207,6 @@ export default class App extends React.Component<AppProps, AppState> {
     this.setState({ loading: false });
   };
 
-  onManage = async () => {
-    const resp = await window.fetch(serverPath + '/manageSub', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        uid: this.props.user?.uid,
-        token: await this.props.user?.getIdToken(),
-        return_url: window.location.href,
-      }),
-    });
-    const session = await resp.json();
-    console.log(session);
-    window.location.assign(session.url);
-  };
-
   setRoomLock = async (locked: boolean) => {
     const uid = this.props.user?.uid;
     const token = await this.props.user?.getIdToken();
@@ -1279,10 +1251,9 @@ export default class App extends React.Component<AppProps, AppState> {
     );
     const subscribeButton = (
       <SubscribeButton
-        isSubscriber={this.state.isSubscriber}
-        isCustomer={this.state.isCustomer}
-        openManage={this.onManage}
-        openSubscribeModal={() => this.setState({ isSubscribeModalOpen: true })}
+        user={this.props.user}
+        isSubscriber={this.props.isSubscriber}
+        isCustomer={this.props.isCustomer}
       />
     );
     const displayRightContent =
@@ -1380,7 +1351,7 @@ export default class App extends React.Component<AppProps, AppState> {
           roomLock={this.state.roomLock}
           setRoomLock={this.setRoomLock}
           socket={this.socket}
-          isSubscriber={this.state.isSubscriber}
+          isSubscriber={this.props.isSubscriber}
           roomId={this.state.roomId}
           setChatDisabled={this.setChatDisabled}
         />
@@ -1414,18 +1385,9 @@ export default class App extends React.Component<AppProps, AppState> {
             resetMultiSelect={this.resetMultiSelect}
           />
         )}
-        {this.state.isSubscribeModalOpen && (
-          <SubscribeModal
-            user={this.props.user}
-            isSubscriber={this.state.isSubscriber}
-            closeSubscribe={() =>
-              this.setState({ isSubscribeModalOpen: false })
-            }
-          />
-        )}
         {this.state.isVBrowserModalOpen && (
           <VBrowserModal
-            isSubscriber={this.state.isSubscriber}
+            isSubscriber={this.props.isSubscriber}
             subscribeButton={subscribeButton}
             closeModal={() => this.setState({ isVBrowserModalOpen: false })}
             startVBrowser={this.startVBrowser}
@@ -1465,7 +1427,11 @@ export default class App extends React.Component<AppProps, AppState> {
             }}
           ></Message>
         )}
-        <TopBar user={this.props.user} />
+        <TopBar
+          user={this.props.user}
+          isCustomer={this.props.isCustomer}
+          isSubscriber={this.props.isSubscriber}
+        />
         {
           <Grid stackable celled="internally">
             <Grid.Row>
@@ -1688,7 +1654,6 @@ export default class App extends React.Component<AppProps, AppState> {
                         }
                       />
                     )}
-                    {subscribeButton}
                   </div>
                   <Separator />
                   <div
