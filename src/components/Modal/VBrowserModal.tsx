@@ -94,7 +94,7 @@ export class VBrowserModal extends React.Component<{
                   <Table.Row>
                     <Table.Cell>VBrowser Session Length</Table.Cell>
                     <Table.Cell>3 hours</Table.Cell>
-                    <Table.Cell>12 hours</Table.Cell>
+                    <Table.Cell>24 hours</Table.Cell>
                   </Table.Row>
                   <Table.Row>
                     <Table.Cell></Table.Cell>

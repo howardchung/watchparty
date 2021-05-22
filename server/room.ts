@@ -686,7 +686,7 @@ export class Room {
       .toString('hex');
     const gzipData = (await gzip(data)) as Buffer;
     // console.log(data.length, gzipData.length);
-    await redis.setex('subtitle:' + hash, 3 * 60 * 60, gzipData);
+    await redis.setex('subtitle:' + hash, 24 * 60 * 60, gzipData);
     this.subtitle = hash;
     this.io.of(this.roomId).emit('REC:subtitle', this.subtitle);
     redisCount('subUploads');
