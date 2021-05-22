@@ -30,6 +30,7 @@ import {
   testAutoplay,
   openFileSelector,
   getAndSaveClientId,
+  calculateMedian,
 } from '../../utils';
 import { generateName } from '../../utils/generateName';
 import { Chat } from '../Chat';
@@ -1222,7 +1223,7 @@ export default class App extends React.Component<AppProps, AppState> {
   setChatDisabled = (val: boolean) => this.setState({ isChatDisabled: val });
 
   getLeaderTime = () => {
-    return Math.max(...Object.values(this.state.tsMap));
+    return calculateMedian(Object.values(this.state.tsMap));
   };
 
   render() {
