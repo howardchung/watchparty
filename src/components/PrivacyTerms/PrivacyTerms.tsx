@@ -84,7 +84,7 @@ A virtual browser (VBrowser) is a browser running in the cloud that a room's mem
 Why did my VBrowser session stop?
 ----
 VBrowsers will terminate automatically if no one is in the room for a while.
-VBrowser sessions are also limited to a maximum of 3 hours for free users, and 12 hours for subscribers.
+VBrowser sessions are also limited to a maximum of 3 hours for free users, and 24 hours for subscribers.
 
 Does everyone in the room need to be a subscriber to get the benefits?
 ----
