@@ -629,7 +629,9 @@ export default class App extends React.Component<AppProps, AppState> {
           const pc = new RTCPeerConnection({ iceServers: iceServers() });
           this.screenHostPC[id] = pc;
           this.screenShareStream?.getTracks().forEach((track) => {
-            pc.addTrack(track);
+            if (this.screenShareStream != null) {
+              pc.addTrack(track, this.screenShareStream);
+            }
           });
           pc.onicecandidate = (event) => {
             // We generated an ICE candidate, send it to peer
@@ -659,16 +661,14 @@ export default class App extends React.Component<AppProps, AppState> {
         }
       };
       pc.ontrack = (event: RTCTrackEvent) => {
-        console.log('stream from webrtc peer');
         // Mount the stream from peer
-        const track = event.track;
         // console.log(stream);
         const leftVideo = document.getElementById(
           'leftVideo'
         ) as HTMLMediaElement;
         if (leftVideo) {
           leftVideo.src = '';
-          leftVideo.srcObject = new MediaStream([track]);
+          leftVideo.srcObject = event.streams[0];
           this.doPlay();
         }
       };

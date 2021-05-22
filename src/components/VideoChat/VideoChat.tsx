@@ -158,7 +158,9 @@ export class VideoChat extends React.Component<VideoChatProps> {
         this.videoPCs[id] = pc;
         // Add our own video as outgoing stream
         this.ourStream?.getTracks().forEach((track) => {
-          pc.addTrack(track);
+          if (this.ourStream) {
+            pc.addTrack(track, this.ourStream);
+          }
         });
         pc.onicecandidate = (event) => {
           // We generated an ICE candidate, send it to peer
@@ -168,9 +170,8 @@ export class VideoChat extends React.Component<VideoChatProps> {
         };
         pc.ontrack = (event: RTCTrackEvent) => {
           // Mount the stream from peer
-          const track = event.track;
           // console.log(stream);
-          this.videoRefs[id].srcObject = new MediaStream([track]);
+          this.videoRefs[id].srcObject = event.streams[0];
         };
         // For each pair, have the lexicographically smaller ID be the offerer
         const isOfferer = this.socket.id < id;
