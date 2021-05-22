@@ -1,19 +1,43 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import { Button, Icon, Popup } from 'semantic-ui-react';
+import { serverPath } from '../../utils';
+import { SubscribeModal } from '../Modal/SubscribeModal';
 
 export const SubscribeButton = ({
+  user,
   isSubscriber,
   isCustomer,
-  openSubscribeModal,
-  openManage,
 }: {
+  user: firebase.User | undefined;
   isSubscriber: boolean;
   isCustomer: boolean;
-  openSubscribeModal: () => void;
-  openManage: () => void;
 }) => {
+  const [isSubscribeModalOpen, setIsSubscribeModalOpen] = useState(false);
+  const onManage = useCallback(async () => {
+    const resp = await window.fetch(serverPath + '/manageSub', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        uid: user?.uid,
+        token: await user?.getIdToken(),
+        return_url: window.location.href,
+      }),
+    });
+    const session = await resp.json();
+    console.log(session);
+    window.location.assign(session.url);
+  }, [user, serverPath]);
   return (
     <>
+      {isSubscribeModalOpen && (
+        <SubscribeModal
+          user={user}
+          isSubscriber={isSubscriber}
+          closeSubscribe={() => setIsSubscribeModalOpen(false)}
+        />
+      )}
       {!isSubscriber && (
         <Popup
           content="Subscribe to help support us and enable additional features!"
@@ -24,7 +48,7 @@ export const SubscribeButton = ({
               className="toolButton"
               icon
               labelPosition="left"
-              onClick={openSubscribeModal}
+              onClick={() => setIsSubscribeModalOpen(true)}
             >
               <Icon name="plus" />
               Subscribe
@@ -42,7 +66,7 @@ export const SubscribeButton = ({
               className="toolButton"
               icon
               labelPosition="left"
-              onClick={openManage}
+              onClick={onManage}
             >
               <Icon name="wrench" />
               Manage

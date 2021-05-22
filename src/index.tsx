@@ -13,6 +13,7 @@ import { Footer } from './components/Footer/Footer';
 import * as serviceWorker from './serviceWorker';
 import firebase from 'firebase/app';
 import 'firebase/auth';
+import { serverPath } from './utils';
 
 const Debug = lazy(() => import('./components/Debug/Debug'));
 
@@ -23,7 +24,9 @@ if (firebaseConfig) {
 
 class WatchParty extends React.Component {
   public state = {
-    user: undefined,
+    user: undefined as firebase.User | undefined,
+    isSubscriber: false,
+    isCustomer: false,
   };
   async componentDidMount() {
     if (firebaseConfig) {
@@ -31,6 +34,15 @@ class WatchParty extends React.Component {
         if (user) {
           // console.log(user);
           this.setState({ user });
+          const token = await user.getIdToken();
+          const response = await window.fetch(
+            serverPath + `/metadata?uid=${user.uid}&token=${token}`
+          );
+          const data = await response.json();
+          this.setState({
+            isSubscriber: data.isSubscriber,
+            isCustomer: data.isCustomer,
+          });
         }
       });
     }
@@ -44,11 +56,22 @@ class WatchParty extends React.Component {
             exact
             render={(props) => {
               if (props.location?.hash) {
-                return <App user={this.state.user} />;
+                return (
+                  <App
+                    user={this.state.user}
+                    isSubscriber={this.state.isSubscriber}
+                    isCustomer={this.state.isCustomer}
+                  />
+                );
               }
               return (
                 <React.Fragment>
-                  <TopBar user={this.state.user} hideNewRoom />
+                  <TopBar
+                    user={this.state.user}
+                    isSubscriber={this.state.isSubscriber}
+                    isCustomer={this.state.isCustomer}
+                    hideNewRoom
+                  />
                   <Home />
                   <Footer />
                 </React.Fragment>
@@ -62,28 +85,46 @@ class WatchParty extends React.Component {
               return (
                 <App
                   user={this.state.user}
+                  isSubscriber={this.state.isSubscriber}
+                  isCustomer={this.state.isCustomer}
                   vanity={props.match.params.vanity}
                 />
               );
             }}
           />
           <Route path="/terms">
-            <TopBar user={this.state.user} />
+            <TopBar
+              user={this.state.user}
+              isSubscriber={this.state.isSubscriber}
+              isCustomer={this.state.isCustomer}
+            />
             <Terms />
             <Footer />
           </Route>
           <Route path="/privacy">
-            <TopBar user={this.state.user} />
+            <TopBar
+              user={this.state.user}
+              isSubscriber={this.state.isSubscriber}
+              isCustomer={this.state.isCustomer}
+            />
             <Privacy />
             <Footer />
           </Route>
           <Route path="/faq">
-            <TopBar user={this.state.user} />
+            <TopBar
+              user={this.state.user}
+              isSubscriber={this.state.isSubscriber}
+              isCustomer={this.state.isCustomer}
+            />
             <FAQ />
             <Footer />
           </Route>
           <Route path="/debug">
-            <TopBar user={this.state.user} />
+            <TopBar
+              user={this.state.user}
+              isSubscriber={this.state.isSubscriber}
+              isCustomer={this.state.isCustomer}
+            />
             <Suspense fallback={null}>
               <Debug />
             </Suspense>

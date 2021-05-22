@@ -5,6 +5,7 @@ import * as firebase from 'firebase/app';
 import 'firebase/auth';
 import { LoginModal } from '../Modal/LoginModal';
 import axios from 'axios';
+import { SubscribeButton } from '../SubscribeButton/SubscribeButton';
 
 export class NewRoomButton extends React.Component<{ size?: string }> {
   createRoom = async () => {
@@ -32,6 +33,7 @@ export class NewRoomButton extends React.Component<{ size?: string }> {
             labelPosition="left"
             onClick={this.createRoom}
             className="toolButton"
+            fluid
           >
             <Icon name="certificate" />
             New Room
@@ -67,7 +69,7 @@ export class SignInButton extends React.Component<{
     if (this.props.user) {
       return (
         <Button
-          style={{ height: '36px' }}
+          style={{ height: '36px', whiteSpace: 'nowrap' }}
           icon
           labelPosition="left"
           onClick={this.signOut}
@@ -215,12 +217,21 @@ export class ListRoomsButton extends React.Component<{
 }
 
 export class TopBar extends React.Component<{
-  user?: any;
+  user?: firebase.User;
   hideNewRoom?: boolean;
   hideSignin?: boolean;
   hideMyRooms?: boolean;
+  isSubscriber: boolean;
+  isCustomer: boolean;
 }> {
   render() {
+    const subscribeButton = (
+      <SubscribeButton
+        user={this.props.user}
+        isSubscriber={this.props.isSubscriber ?? false}
+        isCustomer={this.props.isCustomer ?? false}
+      />
+    );
     return (
       <React.Fragment>
         <div
@@ -324,6 +335,7 @@ export class TopBar extends React.Component<{
             </a>
           </div>
           <div
+            className="mobileStack"
             style={{
               display: 'flex',
               marginLeft: 'auto',
@@ -333,6 +345,7 @@ export class TopBar extends React.Component<{
             {!this.props.hideMyRooms && this.props.user && (
               <ListRoomsButton user={this.props.user} />
             )}
+            {subscribeButton}
             {!this.props.hideSignin && <SignInButton user={this.props.user} />}
           </div>
         </div>
