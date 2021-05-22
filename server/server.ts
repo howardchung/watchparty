@@ -487,10 +487,12 @@ async function getStats() {
   rooms.forEach((room) => {
     const obj = {
       creationTime: room.creationTime,
+      lastUpdateTime: room.lastUpdateTime,
       roomId: room.roomId,
       video: room.video,
       videoTS: room.videoTS,
       rosterLength: room.roster.length,
+      roster: room.getRosterForStats(),
       videoChats: room.roster.filter((p) => p.isVideoChat).length,
       vBrowser: room.vBrowser,
       vBrowserElapsed:
