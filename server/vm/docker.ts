@@ -32,7 +32,7 @@ export class Docker extends VMManager {
         UDP_START=$((59000+$INDEX*100))
         UDP_END=$((59099+$INDEX*100))
         #docker pull ${imageName} > /dev/null
-        docker run -d --rm --name=${name} --net=host --memory="2g" --cpus="2" -v /etc/letsencrypt:/etc/letsencrypt -l vbrowser -l index=$INDEX --log-opt max-size=1g --shm-size=1g --cap-add="SYS_ADMIN" -e NEKO_KEY="/etc/letsencrypt/live/${gatewayHost}/privkey.pem" -e NEKO_CERT="/etc/letsencrypt/live/${gatewayHost}/fullchain.pem" -e DISPLAY=":$INDEX.0" -e NEKO_SCREEN="1280x720@30" -e NEKO_PASSWORD=${name} -e NEKO_PASSWORD_ADMIN=${name} -e NEKO_BIND=":$PORT" -e NEKO_EPR=":$UDP_START-$UDP_END" ${imageName}
+        docker run -d --rm --name=${name} --net=host --memory="2g" --cpus="2" -v /etc/letsencrypt:/etc/letsencrypt -l vbrowser -l index=$INDEX --log-opt max-size=1g --shm-size=1g --cap-add="SYS_ADMIN" -e NEKO_KEY="/etc/letsencrypt/live/${gatewayHost}/privkey.pem" -e NEKO_CERT="/etc/letsencrypt/live/${gatewayHost}/fullchain.pem" -e DISPLAY=":$INDEX.0" -e NEKO_SCREEN="1280x720@30" -e NEKO_PASSWORD=${name} -e NEKO_PASSWORD_ADMIN=${name} -e NEKO_BIND=":$PORT" -e NEKO_EPR=":$UDP_START-$UDP_END" -e NEKO_H264="1" ${imageName}
         `,
         sshConfig,
         (err: string, stdout: string) => {

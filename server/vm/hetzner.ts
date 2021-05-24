@@ -9,7 +9,7 @@ const region = ['nbg1', 'fsn1', 'hel1'];
 const gatewayHost = config.HETZNER_GATEWAY;
 const sshKeys = [1570536];
 const networks = config.HETZNER_NETWORKS.split(',').map(Number);
-const imageId = 26142182;
+const imageId = 38960659;
 
 export class Hetzner extends VMManager {
   size = 'cpx11'; // cx11, cpx11, cpx21, cpx31, ccx11
@@ -32,7 +32,10 @@ export class Hetzner extends VMManager {
         networks: [networks[Math.floor(Math.random() * networks.length)]],
         user_data: cloudInit(
           imageName,
-          this.isLarge ? '1920x1080@30' : undefined
+          this.isLarge ? '1920x1080@30' : undefined,
+          false,
+          false,
+          true
         ),
         labels: {
           [this.getTag()]: '1',
