@@ -531,6 +531,14 @@ export default class App extends React.Component<AppProps, AppState> {
         pc.addIceCandidate(new RTCIceCandidate(msg.ice));
       } else if (msg.sdp && msg.sdp.type === 'offer') {
         // console.log('offer');
+        // TODO Currently ios/Safari cannot handle this property, so remove it from the offer
+        const _sdp = msg.sdp.sdp
+          .split('\n')
+          .filter((line: string) => {
+            return line.trim() !== 'a=extmap-allow-mixed';
+          })
+          .join('\n');
+        msg.sdp.sdp = _sdp;
         await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
         const answer = await pc.createAnswer();
         answer.sdp = answer.sdp?.replace(
