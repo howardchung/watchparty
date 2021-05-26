@@ -265,7 +265,7 @@ export abstract class VMManager {
     const checkStaging = async () => {
       const checkStagingInterval = 2000;
       while (true) {
-        console.log('[CHECKSTAGING-START]', Math.floor(Date.now() / 1000));
+        // console.log('[CHECKSTAGING-START]', Math.floor(Date.now() / 1000));
         try {
           // Loop through staging list and check if VM is ready
           const stagingKeys = await this.redis.lrange(
