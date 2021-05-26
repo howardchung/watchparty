@@ -4,7 +4,7 @@ import { Divider, Header, Icon, Step } from 'semantic-ui-react';
 import { NewRoomButton } from '../TopBar';
 import styles from './Home.module.css';
 
-export const Home: React.FC = () => {
+export const Home = ({ user }: { user: firebase.User | undefined }) => {
   return (
     <div>
       <div className={styles.container}>
@@ -13,7 +13,7 @@ export const Home: React.FC = () => {
           subText={'No registration or download required.'}
           action={
             <div style={{ marginTop: '8px', width: '160px' }}>
-              <NewRoomButton />
+              <NewRoomButton user={user} />
             </div>
           }
           image={'/screenshot4.png'}
@@ -133,7 +133,7 @@ export const Home: React.FC = () => {
             </Step.Group>
           </div>
           <div style={{ width: '160px' }}>
-            <NewRoomButton />
+            <NewRoomButton user={user} />
           </div>
         </div>
       </div>

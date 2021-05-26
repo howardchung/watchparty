@@ -72,7 +72,7 @@ class WatchParty extends React.Component {
                     isCustomer={this.state.isCustomer}
                     hideNewRoom
                   />
-                  <Home />
+                  <Home user={this.state.user} />
                   <Footer />
                 </React.Fragment>
               );

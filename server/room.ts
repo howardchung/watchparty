@@ -43,6 +43,7 @@ export class Room {
   public vBrowser: AssignedVM | undefined = undefined;
   public creationTime: Date = new Date();
   public lastUpdateTime: Date = new Date();
+  public creator: string | undefined = undefined;
   public lock: string | undefined = undefined; // uid of the user who locked the room
 
   // Non-serialized state
@@ -181,6 +182,7 @@ export class Room {
       creationTime: this.creationTime,
       lastUpdateTime: this.lastUpdateTime,
       lock: this.lock,
+      creator: this.creator,
     });
   };
 
@@ -214,6 +216,9 @@ export class Room {
     }
     if (roomObj.lock) {
       this.lock = roomObj.lock;
+    }
+    if (roomObj.creator) {
+      this.creator = roomObj.creator;
     }
   };
 
