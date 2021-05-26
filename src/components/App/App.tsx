@@ -350,7 +350,6 @@ export default class App extends React.Component<AppProps, AppState> {
     }
     this.setState({ roomId }, () => {
       this.join(roomId);
-      this.socket.emit('CMD:getRoomState');
       this.socket.on('REC:getRoomState', this.handleRoomState);
     });
   };
@@ -597,6 +596,7 @@ export default class App extends React.Component<AppProps, AppState> {
         pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
       }
     });
+    this.socket.emit('CMD:getRoomState');
     window.setInterval(() => {
       if (this.state.currentMedia) {
         this.socket.emit('CMD:ts', this.getCurrentTime());
