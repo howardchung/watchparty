@@ -215,6 +215,8 @@ app.post('/createRoom', async (req, res) => {
   }
   console.log('createRoom: ', name);
   const newRoom = new Room(io, name);
+  const decoded = await validateUserToken(req.body?.uid, req.body?.token);
+  newRoom.creator = decoded?.email;
   newRoom.video = req.body?.video || '';
   rooms.set(name, newRoom);
   newRoom.saveToRedis(false);
@@ -498,6 +500,7 @@ async function getStats() {
       vBrowserElapsed:
         room.vBrowser?.assignTime && now - room.vBrowser?.assignTime,
       lock: room.lock || undefined,
+      creator: room.creator || undefined,
     };
     currentUsers += obj.rosterLength;
     currentVideoChat += obj.videoChats;

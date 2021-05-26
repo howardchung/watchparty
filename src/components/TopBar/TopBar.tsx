@@ -7,14 +7,22 @@ import { LoginModal } from '../Modal/LoginModal';
 import axios from 'axios';
 import { SubscribeButton } from '../SubscribeButton/SubscribeButton';
 
-export class NewRoomButton extends React.Component<{ size?: string }> {
+export class NewRoomButton extends React.Component<{
+  user: firebase.User | undefined;
+  size?: string;
+}> {
   createRoom = async () => {
+    const uid = this.props.user?.uid;
+    const token = await this.props.user?.getIdToken();
     const response = await window.fetch(serverPath + '/createRoom', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({}),
+      body: JSON.stringify({
+        uid,
+        token,
+      }),
     });
     const data = await response.json();
     const { name } = data;
@@ -341,7 +349,9 @@ export class TopBar extends React.Component<{
               marginLeft: 'auto',
             }}
           >
-            {!this.props.hideNewRoom && <NewRoomButton />}
+            {!this.props.hideNewRoom && (
+              <NewRoomButton user={this.props.user} />
+            )}
             {!this.props.hideMyRooms && this.props.user && (
               <ListRoomsButton user={this.props.user} />
             )}
