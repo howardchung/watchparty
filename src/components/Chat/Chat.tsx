@@ -10,6 +10,7 @@ import {
   getDefaultPicture,
 } from '../../utils';
 import { Separator } from '../App/App';
+import { UserMenu } from '../UserMenu/UserMenu';
 
 interface ChatProps {
   chat: ChatMessage[];
@@ -21,6 +22,8 @@ interface ChatProps {
   getMediaDisplayName: Function;
   hide?: boolean;
   isChatDisabled?: boolean;
+  user: firebase.User | undefined;
+  owner: string | undefined;
 }
 
 export class Chat extends React.Component<ChatProps> {
@@ -154,6 +157,9 @@ export class Chat extends React.Component<ChatProps> {
                 pictureMap={this.props.pictureMap}
                 nameMap={this.props.nameMap}
                 formatMessage={this.formatMessage}
+                owner={this.props.owner}
+                user={this.props.user}
+                socket={this.props.socket}
               />
             ))}
             {/* <div ref={this.messagesEndRef} /> */}
@@ -222,11 +228,17 @@ const ChatMessage = ({
   nameMap,
   pictureMap,
   formatMessage,
+  user,
+  socket,
+  owner,
 }: {
   message: ChatMessage;
   nameMap: StringDict;
   pictureMap: StringDict;
   formatMessage: (cmd: string, msg: string) => React.ReactNode;
+  user: firebase.User | undefined;
+  socket: SocketIOClient.Socket;
+  owner: string | undefined;
 }) => {
   const { id, timestamp, cmd, msg, system } = message;
   return (
@@ -240,10 +252,19 @@ const ChatMessage = ({
         />
       ) : null}
       <Comment.Content>
-        <Comment.Author as="a" className="light">
-          {Boolean(system) && 'System'}
-          {nameMap[id] || id}
-        </Comment.Author>
+        <UserMenu
+          displayName={nameMap[id] || id}
+          user={user}
+          socket={socket}
+          userToManage={id}
+          disabled={!Boolean(owner && owner === user?.uid)}
+          trigger={
+            <Comment.Author as="a" className="light">
+              {Boolean(system) && 'System'}
+              {nameMap[id] || id}
+            </Comment.Author>
+          }
+        />
         <Comment.Metadata className="dark">
           <div>{new Date(timestamp).toLocaleTimeString()}</div>
         </Comment.Metadata>

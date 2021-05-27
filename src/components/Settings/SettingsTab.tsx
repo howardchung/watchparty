@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Icon,
   Divider,
@@ -23,7 +23,15 @@ interface SettingsTabProps {
   socket: SocketIOClient.Socket;
   isSubscriber: boolean;
   roomId: string;
-  setChatDisabled: (val: boolean) => void;
+  owner: string | undefined;
+  setOwner: Function;
+  vanity: string | undefined;
+  setVanity: Function;
+  roomLink: string;
+  password: string | undefined;
+  setPassword: Function;
+  isChatDisabled: boolean;
+  setIsChatDisabled: Function;
 }
 
 export const SettingsTab = ({
@@ -33,42 +41,20 @@ export const SettingsTab = ({
   setRoomLock,
   socket,
   isSubscriber,
-  roomId,
-  setChatDisabled,
+  owner,
+  vanity,
+  setVanity,
+  roomLink,
+  password,
+  setPassword,
+  isChatDisabled,
+  setIsChatDisabled,
 }: SettingsTabProps) => {
   const [updateTS, setUpdateTS] = useState(0);
   const [permModalOpen, setPermModalOpen] = useState(false);
-  const [vanity, setVanity] = useState<string | undefined>(undefined);
-  const [password, setPassword] = useState<string | undefined>(undefined);
-  const [isChatDisabled, setIsChatDisabled] = useState(false);
-  const [owner, setOwner] = useState<string | undefined>(undefined);
   const [validVanity, setValidVanity] = useState(true);
   const [validVanityLoading, setValidVanityLoading] = useState(false);
-  const [roomLink, setRoomLink] = useState<string>('');
-  useEffect(() => {
-    const getRoomLink = (vanity: string) => {
-      if (vanity) {
-        return `${window.location.origin}/r/${vanity}`;
-      }
-      return `${window.location.origin}${roomId.replace('/', '#')}`;
-    };
-    if (socket) {
-      socket.emit('CMD:getRoomState');
-      const handleRoomState = (data: any) => {
-        setOwner(data.owner);
-        setVanity(data.vanity);
-        setPassword(data.password);
-        setRoomLink(getRoomLink(data.vanity));
-        setIsChatDisabled(data.isChatDisabled);
-        window.history.replaceState('', '', getRoomLink(data.vanity));
-        setChatDisabled(data.isChatDisabled);
-      };
-      socket.on('REC:getRoomState', handleRoomState);
-      return function cleanup() {
-        socket.off('REC:getRoomState', handleRoomState);
-      };
-    }
-  }, [socket, roomId, setChatDisabled]);
+
   const setRoomState = useCallback(
     async (data: any) => {
       const token = await user?.getIdToken();
