@@ -110,7 +110,6 @@ interface AppState {
   isChatDisabled: boolean;
   showRightBar: boolean;
   owner: string | undefined;
-  kicked: boolean;
   vanity: string | undefined;
   password: string | undefined;
   roomLink: string;
@@ -167,7 +166,6 @@ export default class App extends React.Component<AppProps, AppState> {
     isChatDisabled: false,
     showRightBar: true,
     owner: undefined,
-    kicked: false,
     vanity: undefined,
     password: undefined,
     roomLink: '',
@@ -218,7 +216,6 @@ export default class App extends React.Component<AppProps, AppState> {
     document.removeEventListener('fullscreenchange', this.onFullScreenChange);
     document.removeEventListener('keydown', this.onKeydown);
     window.clearInterval(this.heartbeat);
-    this.socket.off('REC:getRoomState', this.handleRoomState);
   }
 
   componentDidUpdate(prevProps: AppProps) {
@@ -350,7 +347,6 @@ export default class App extends React.Component<AppProps, AppState> {
     }
     this.setState({ roomId }, () => {
       this.join(roomId);
-      this.socket.on('REC:getRoomState', this.handleRoomState);
     });
   };
 
@@ -596,7 +592,8 @@ export default class App extends React.Component<AppProps, AppState> {
         pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
       }
     });
-    this.socket.emit('CMD:getRoomState');
+    socket.on('REC:getRoomState', this.handleRoomState);
+    socket.emit('CMD:getRoomState');
     window.setInterval(() => {
       if (this.state.currentMedia) {
         this.socket.emit('CMD:ts', this.getCurrentTime());
