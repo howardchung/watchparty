@@ -7,6 +7,7 @@ import {
   getDefaultPicture,
   iceServers,
 } from '../../utils';
+import { UserMenu } from '../UserMenu/UserMenu';
 
 interface VideoChatProps {
   socket: SocketIOClient.Socket;
@@ -16,6 +17,8 @@ interface VideoChatProps {
   tsMap: NumberDict;
   rosterUpdateTS: Number;
   hide?: boolean;
+  owner: string | undefined;
+  user: firebase.User | undefined;
 }
 
 export class VideoChat extends React.Component<VideoChatProps> {
@@ -193,7 +196,15 @@ export class VideoChat extends React.Component<VideoChatProps> {
   };
 
   render() {
-    const { participants, pictureMap, nameMap, tsMap, socket } = this.props;
+    const {
+      participants,
+      pictureMap,
+      nameMap,
+      tsMap,
+      socket,
+      owner,
+      user,
+    } = this.props;
     const videoChatContentStyle = {
       height: participants.length < 3 ? 220 : 110,
       borderRadius: '4px',
@@ -303,6 +314,30 @@ export class VideoChat extends React.Component<VideoChatProps> {
                   }}
                 >
                   <div>
+                    <UserMenu
+                      displayName={nameMap[p.id] || p.id}
+                      user={user}
+                      disabled={!Boolean(owner && owner === user?.uid)}
+                      position={'left center'}
+                      socket={socket}
+                      userToManage={p.id}
+                      trigger={
+                        <Icon
+                          name="ellipsis vertical"
+                          size="large"
+                          style={{
+                            position: 'absolute',
+                            right: -7,
+                            top: 5,
+                            cursor: 'pointer',
+                            opacity: 0.75,
+                            visibility: Boolean(owner && owner === user?.uid)
+                              ? 'visible'
+                              : 'hidden',
+                          }}
+                        />
+                      }
+                    />
                     {this.ourStream && p.isVideoChat ? (
                       <video
                         ref={(el) => {

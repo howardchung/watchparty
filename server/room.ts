@@ -150,6 +150,8 @@ export class Room {
       socket.on('signal', (data) => this.sendSignal(socket, data));
       socket.on('signalSS', (data) => this.signalSS(socket, data));
 
+      socket.on('kickUser', (data) => this.kickUser(socket, data));
+
       socket.on('disconnect', () => this.disconnectUser(socket));
     });
   }
@@ -961,5 +963,39 @@ export class Room {
     }
     delete this.tsMap[socket.id];
     // delete nameMap[socket.id];
+  };
+
+  private kickUser = async (
+    socket: Socket,
+    data: {
+      uid: string;
+      token: string;
+      userToBeKicked: string;
+    }
+  ) => {
+    const decoded = await validateUserToken(
+      data?.uid as string,
+      data?.token as string
+    );
+    if (!decoded) {
+      socket.emit('errorMessage', 'Failed to authenticate user');
+      return;
+    }
+    const isOwner = await this.validateOwner(decoded.uid);
+    if (!isOwner) {
+      socket.emit('errorMessage', 'Not current room owner');
+      return;
+    }
+    const userToBeKickedSocket = this.io.of(this.roomId).connected[
+      data.userToBeKicked
+    ];
+    if (userToBeKickedSocket) {
+      try {
+        userToBeKickedSocket.emit('kicked');
+        userToBeKickedSocket.disconnect();
+      } catch (e) {
+        console.warn(e);
+      }
+    }
   };
 }

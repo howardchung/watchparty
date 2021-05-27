@@ -109,6 +109,10 @@ interface AppState {
   successMessage: string;
   isChatDisabled: boolean;
   showRightBar: boolean;
+  owner: string | undefined;
+  vanity: string | undefined;
+  password: string | undefined;
+  roomLink: string;
 }
 
 export default class App extends React.Component<AppProps, AppState> {
@@ -159,6 +163,10 @@ export default class App extends React.Component<AppProps, AppState> {
     successMessage: '',
     isChatDisabled: false,
     showRightBar: true,
+    owner: undefined,
+    vanity: undefined,
+    password: undefined,
+    roomLink: '',
   };
   socket: SocketIOClient.Socket = null as any;
   watchPartyYTPlayer: any = null;
@@ -184,6 +192,23 @@ export default class App extends React.Component<AppProps, AppState> {
     this.loadYouTube();
     this.init();
   }
+
+  getRoomLink = (vanity: string) => {
+    if (vanity) {
+      return `${window.location.origin}/r/${vanity}`;
+    }
+    return `${window.location.origin}${this.state.roomId.replace('/', '#')}`;
+  };
+
+  handleRoomState = (data: any) => {
+    this.setOwner(data.owner);
+    this.setVanity(data.vanity);
+    this.setPassword(data.password);
+    this.setRoomLink(this.getRoomLink(data.vanity));
+    this.setIsChatDisabled(data.isChatDisabled);
+    window.history.replaceState('', '', this.getRoomLink(data.vanity));
+    this.setIsChatDisabled(data.isChatDisabled);
+  };
 
   componentWillUnmount() {
     document.removeEventListener('fullscreenchange', this.onFullScreenChange);
@@ -272,6 +297,19 @@ export default class App extends React.Component<AppProps, AppState> {
     };
   };
 
+  setOwner = (owner: string) => {
+    this.setState({ owner });
+  };
+  setVanity = (vanity: string | undefined) => {
+    this.setState({ vanity });
+  };
+  setPassword = (password: string | undefined) => {
+    this.setState({ password });
+  };
+  setRoomLink = (roomLink: string) => {
+    this.setState({ roomLink });
+  };
+
   init = async () => {
     // Load room ID from url
     let roomId = '/default';
@@ -296,8 +334,9 @@ export default class App extends React.Component<AppProps, AppState> {
         return;
       }
     }
-    this.setState({ roomId });
-    this.join(roomId);
+    this.setState({ roomId }, () => {
+      this.join(roomId);
+    });
   };
 
   join = async (roomId: string) => {
@@ -356,6 +395,9 @@ export default class App extends React.Component<AppProps, AppState> {
       setTimeout(() => {
         this.setState({ successMessage: '' });
       }, 3000);
+    });
+    socket.on('kicked', () => {
+      window.location.assign('/');
     });
     socket.on('REC:play', () => {
       this.doPlay();
@@ -551,6 +593,8 @@ export default class App extends React.Component<AppProps, AppState> {
         pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
       }
     });
+    socket.on('REC:getRoomState', this.handleRoomState);
+    socket.emit('CMD:getRoomState');
     window.setInterval(() => {
       if (this.state.currentMedia) {
         this.socket.emit('CMD:ts', this.getCurrentTime());
@@ -1241,7 +1285,7 @@ export default class App extends React.Component<AppProps, AppState> {
     return this.props.user?.uid === this.state.roomLock;
   };
 
-  setChatDisabled = (val: boolean) => this.setState({ isChatDisabled: val });
+  setIsChatDisabled = (val: boolean) => this.setState({ isChatDisabled: val });
 
   getLeaderTime = () => {
     return calculateMedian(Object.values(this.state.tsMap));
@@ -1354,6 +1398,8 @@ export default class App extends React.Component<AppProps, AppState> {
           getMediaDisplayName={this.getMediaDisplayName}
           hide={this.state.currentTab !== 'chat' || !displayRightContent}
           isChatDisabled={this.state.isChatDisabled}
+          owner={this.state.owner}
+          user={this.props.user}
         />
         {this.state.state === 'connected' && (
           <VideoChat
@@ -1364,6 +1410,8 @@ export default class App extends React.Component<AppProps, AppState> {
             tsMap={this.state.tsMap}
             rosterUpdateTS={this.state.rosterUpdateTS}
             hide={this.state.currentTab !== 'people' || !displayRightContent}
+            owner={this.state.owner}
+            user={this.props.user}
           />
         )}
         <SettingsTab
@@ -1374,7 +1422,15 @@ export default class App extends React.Component<AppProps, AppState> {
           socket={this.socket}
           isSubscriber={this.props.isSubscriber}
           roomId={this.state.roomId}
-          setChatDisabled={this.setChatDisabled}
+          isChatDisabled={this.state.isChatDisabled}
+          setIsChatDisabled={this.setIsChatDisabled}
+          owner={this.state.owner}
+          setOwner={this.setOwner}
+          vanity={this.state.vanity}
+          setVanity={this.setVanity}
+          roomLink={this.state.roomLink}
+          password={this.state.password}
+          setPassword={this.setPassword}
         />
       </Grid.Column>
     );
