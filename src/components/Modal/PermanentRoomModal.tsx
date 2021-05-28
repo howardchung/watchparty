@@ -45,6 +45,13 @@ export class PermanentRoomModal extends React.Component<{
                   </Table.Cell>
                 </Table.Row>
                 <Table.Row>
+                  <Table.Cell>Kick Users</Table.Cell>
+                  <Table.Cell></Table.Cell>
+                  <Table.Cell>
+                    <Icon name="check" />
+                  </Table.Cell>
+                </Table.Row>
+                <Table.Row>
                   <Table.Cell>Custom Room URLs (subscribers)</Table.Cell>
                   <Table.Cell></Table.Cell>
                   <Table.Cell>
