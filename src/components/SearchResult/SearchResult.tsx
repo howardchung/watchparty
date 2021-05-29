@@ -13,10 +13,10 @@ export const YouTubeSearchResult = (
         setMedia(e, { value: result.url });
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center' }}>
-        <img style={{ height: '40px' }} src={result.img} alt={result.name} />
-        <Icon name="youtube" />
-        <div style={{ marginLeft: '5px' }}>{decodeEntities(result.name)}</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <img style={{ height: '50px' }} src={result.img} alt={result.name} />
+        <Icon color="red" size="large" name="youtube" />
+        <div>{decodeEntities(result.name)}</div>
       </div>
     </Menu.Item>
   );
