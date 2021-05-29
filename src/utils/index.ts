@@ -326,14 +326,14 @@ export async function getUserImage(
   // Check if user has a Gravatar
   const hash = user.email ? md5(user.email) : '';
   if (user.email) {
-    const gravatar = `https://www.gravatar.com/avatar/${hash}?d=404`;
+    const gravatar = `https://www.gravatar.com/avatar/${hash}?d=404&s=256`;
     const response = await window.fetch(gravatar);
     if (response.ok) {
       return gravatar;
     }
   }
   if (user.photoURL) {
-    return user.photoURL + '?height=128&width=128';
+    return user.photoURL + '?height=256&width=256';
   }
   return `https://www.gravatar.com/avatar/${hash}?d=identicon`;
 }
