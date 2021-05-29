@@ -605,6 +605,7 @@ export default class App extends React.Component<AppProps, AppState> {
     window.setInterval(() => {
       if (this.state.currentMedia) {
         this.socket.emit('CMD:ts', this.getCurrentTime());
+        // TODO check if video ended, playlistNext if true
       }
     }, 1000);
   };
