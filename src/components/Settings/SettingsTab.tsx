@@ -56,6 +56,7 @@ export const SettingsTab = ({
   const [permModalOpen, setPermModalOpen] = useState(false);
   const [validVanity, setValidVanity] = useState(true);
   const [validVanityLoading, setValidVanityLoading] = useState(false);
+  const [adminSettingsChanged, setAdminSettingsChanged] = useState(false);
 
   const setRoomState = useCallback(
     async (data: any) => {
@@ -85,12 +86,16 @@ export const SettingsTab = ({
         setValidVanity(true);
         return;
       }
+      setValidVanity(false);
       setValidVanityLoading(true);
       const response = await axios.get(serverPath + '/resolveRoom/' + input);
       const data = response.data;
       setValidVanityLoading(false);
-      // console.log(data.vanity, vanity);
-      if (data && data.vanity && data.vanity !== vanity) {
+      if (
+        data &&
+        data.vanity &&
+        data.vanity !== roomLink.split('/').slice(-1)[0]
+      ) {
         // Already exists and doesn't match current room
         setValidVanity(false);
       } else {
@@ -162,7 +167,11 @@ export const SettingsTab = ({
           content={
             <Input
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              size="mini"
+              onChange={(e) => {
+                setAdminSettingsChanged(true);
+                setPassword(e.target.value);
+              }}
               fluid
             />
           }
@@ -176,7 +185,10 @@ export const SettingsTab = ({
           description="Prevent users from sending messages in chat."
           checked={Boolean(isChatDisabled)}
           disabled={false}
-          onChange={(_e, data) => setIsChatDisabled(Boolean(data.checked))}
+          onChange={(_e, data) => {
+            setAdminSettingsChanged(true);
+            setIsChatDisabled(Boolean(data.checked));
+          }}
         />
       )}
       {owner && owner === user?.uid && (
@@ -212,6 +224,7 @@ export const SettingsTab = ({
                 value={vanity}
                 disabled={!isSubscriber}
                 onChange={(e) => {
+                  setAdminSettingsChanged(true);
                   checkValidVanity(e.target.value);
                   setVanity(e.target.value);
                 }}
@@ -228,21 +241,6 @@ export const SettingsTab = ({
                   )
                 }
               ></Input>
-              <Button
-                size="mini"
-                fluid
-                icon
-                labelPosition="left"
-                color="orange"
-                title="Copy link to clipboard"
-                onClick={() => {
-                  navigator.clipboard.writeText(roomLink);
-                }}
-              >
-                <Icon name="copy" />
-                {roomLink}
-              </Button>
-              <p />
             </React.Fragment>
           }
         />
@@ -251,17 +249,18 @@ export const SettingsTab = ({
       {owner && owner === user?.uid && (
         <Button
           primary
-          disabled={!validVanity}
+          disabled={!validVanity || !adminSettingsChanged}
           labelPosition="left"
           icon
           fluid
-          onClick={() =>
+          onClick={() => {
             setRoomState({
               vanity: vanity,
               password: password,
               isChatDisabled: isChatDisabled,
-            })
-          }
+            });
+            setAdminSettingsChanged(false);
+          }}
         >
           <Icon name="save" />
           Save Admin Settings
