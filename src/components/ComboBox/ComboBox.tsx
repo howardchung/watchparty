@@ -1,17 +1,26 @@
 import React from 'react';
-import { DropdownProps, Menu, Input, Icon } from 'semantic-ui-react';
+import {
+  DropdownProps,
+  Menu,
+  Input,
+  Icon,
+  Button,
+  Dropdown,
+} from 'semantic-ui-react';
 import { debounce, getYouTubeResults } from '../../utils';
 import { examples } from '../../utils/examples';
 import { YouTubeSearchResult } from '../SearchResult/SearchResult';
 
 interface ComboBoxProps {
   setMedia: Function;
+  playlistAdd: Function;
   currentMedia: string;
   getMediaDisplayName: Function;
   launchMultiSelect: Function;
   mediaPath: string | undefined;
   streamPath: string | undefined;
   disabled?: boolean;
+  playlist: PlaylistVideo[];
 }
 
 export class ComboBox extends React.Component<ComboBoxProps> {
@@ -23,7 +32,7 @@ export class ComboBox extends React.Component<ComboBoxProps> {
   };
   debounced: any = null;
 
-  setMedia = (e: any, data: DropdownProps) => {
+  setMediaAndClose = (e: any, data: DropdownProps) => {
     window.setTimeout(
       () => this.setState({ inputMedia: undefined, results: undefined }),
       300
@@ -44,9 +53,23 @@ export class ComboBox extends React.Component<ComboBoxProps> {
             results = examples.map((option: any) => (
               <Menu.Item
                 key={option.url}
-                onClick={(e: any) => this.setMedia(e, { value: option.url })}
+                onClick={(e: any) =>
+                  this.setMediaAndClose(e, { value: option.url })
+                }
               >
-                {option.url}
+                <div style={{ display: 'flex' }}>
+                  {option.url}
+                  <div style={{ marginLeft: 'auto' }}>
+                    <Button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        this.props.playlistAdd(e, { value: option.url });
+                      }}
+                    >
+                      Add to Playlist
+                    </Button>
+                  </div>
+                </div>
               </Menu.Item>
             ));
           } else {
@@ -55,7 +78,8 @@ export class ComboBox extends React.Component<ComboBoxProps> {
               <YouTubeSearchResult
                 key={result.url}
                 {...result}
-                setMedia={this.setMedia}
+                setMedia={this.setMediaAndClose}
+                playlistAdd={this.props.playlistAdd}
               />
             ));
           }
@@ -77,7 +101,7 @@ export class ComboBox extends React.Component<ComboBoxProps> {
     const { results } = this.state;
     return (
       <div style={{ position: 'relative' }}>
-        <div style={{ display: 'flex' }}>
+        <div style={{ display: 'flex', gap: '4px' }}>
           <Input
             style={{ flexGrow: 1 }}
             inverted
@@ -112,7 +136,7 @@ export class ComboBox extends React.Component<ComboBoxProps> {
             }
             onKeyPress={(e: any) => {
               if (e.key === 'Enter') {
-                this.setMedia(e, {
+                this.setMediaAndClose(e, {
                   value: this.state.inputMedia,
                 });
               }
@@ -120,7 +144,7 @@ export class ComboBox extends React.Component<ComboBoxProps> {
             icon={
               <Icon
                 onClick={(e: any) =>
-                  this.setMedia(e, {
+                  this.setMediaAndClose(e, {
                     value: this.state.inputMedia,
                   })
                 }
@@ -139,6 +163,35 @@ export class ComboBox extends React.Component<ComboBoxProps> {
                 : getMediaDisplayName(currentMedia)
             }
           />
+          <Dropdown
+            icon="list"
+            labeled
+            className="icon"
+            button
+            text={`Playlist (${this.props.playlist.length})`}
+          >
+            <Dropdown.Menu>
+              {this.props.playlist.length === 0 && (
+                <Dropdown.Item disabled>
+                  There are no items in the playlist.
+                </Dropdown.Item>
+              )}
+              {this.props.playlist.map((item: any) => {
+                return (
+                  <Dropdown.Item>
+                    <div style={{ display: 'flex' }}>
+                      {/* TODO style this */}
+                      {JSON.stringify(item)}
+                      {/* TODO disable actions if locked */}
+                      {/* TODO remove item */}
+                      {/* TODO move item */}
+                      {/* TODO play immediately */}
+                    </div>
+                  </Dropdown.Item>
+                );
+              })}
+            </Dropdown.Menu>
+          </Dropdown>
         </div>
         {Boolean(results) && this.state.inputMedia !== undefined && (
           <Menu

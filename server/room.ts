@@ -51,6 +51,7 @@ export class Room {
   public roomId: string;
   public roster: User[] = [];
   private tsMap: NumberDict = {};
+  private nextVotes: BooleanDict = {};
   private io: SocketIO.Server;
   private clientIdMap: StringDict = {};
   private uidMap: StringDict = {};
@@ -115,6 +116,7 @@ export class Room {
       socket.emit('REC:tsMap', this.tsMap);
       socket.emit('REC:lock', this.lock);
       socket.emit('chatinit', this.chat);
+      socket.emit('playlist', this.playlist);
       this.getRoomState(socket);
       io.of(roomId).emit('roster', this.roster);
 
@@ -434,9 +436,11 @@ export class Room {
   };
 
   private playlistNext = (socket: Socket) => {
-    // TODO race condition trigger repeatedly?
-    this.nextVotes += 1;
-    if (this.nextVotes >= Math.floor(this.roster.length / 2)) {
+    this.nextVotes[socket.id] = true;
+    if (
+      this.roster.filter((user) => this.nextVotes[user.id] === true).length >=
+      Math.floor(this.roster.length / 2)
+    ) {
       const next = this.playlist.shift();
       this.io.of(this.roomId).emit('playlist', this.playlist);
       if (next) {
@@ -448,6 +452,7 @@ export class Room {
   private playlistAdd = (socket: Socket, data: string) => {
     // TODO look up video if youtube, otherwise just add url
     this.playlist.push({ name: data, channel: 'N/A', duration: 0, url: data });
+    console.log(this.playlist);
   };
 
   private playlistDelete = (socket: Socket, url: string) => {

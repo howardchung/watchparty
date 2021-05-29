@@ -14,6 +14,7 @@ import {
 
 interface SearchComponentProps {
   setMedia: Function;
+  playlistAdd: Function;
   type?: 'youtube' | 'media' | 'stream';
   launchMultiSelect?: Function;
   mediaPath: string | undefined;
@@ -114,6 +115,7 @@ export class SearchComponent extends React.Component<SearchComponentProps> {
                       key={result.url}
                       {...result}
                       setMedia={setMedia}
+                      playlistAdd={this.props.playlistAdd}
                     />
                   );
                 } else if (this.props.type === 'media') {

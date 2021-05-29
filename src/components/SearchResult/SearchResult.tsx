@@ -1,9 +1,9 @@
 import React from 'react';
-import { Menu, Icon, Label } from 'semantic-ui-react';
+import { Menu, Icon, Label, Button } from 'semantic-ui-react';
 import { decodeEntities } from '../../utils';
 
 export const YouTubeSearchResult = (
-  props: SearchResult & { setMedia: Function }
+  props: SearchResult & { setMedia: Function; playlistAdd: Function }
 ) => {
   const result = props;
   const setMedia = props.setMedia;
@@ -17,6 +17,16 @@ export const YouTubeSearchResult = (
         <img style={{ height: '50px' }} src={result.img} alt={result.name} />
         <Icon color="red" size="large" name="youtube" />
         <div>{decodeEntities(result.name)}</div>
+        <div style={{ marginLeft: 'auto' }}>
+          <Button
+            onClick={(e) => {
+              e.stopPropagation();
+              props.playlistAdd(e, { value: result.url });
+            }}
+          >
+            Add To Playlist
+          </Button>
+        </div>
       </div>
     </Menu.Item>
   );

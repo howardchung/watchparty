@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button, ButtonGroup, Icon } from 'semantic-ui-react';
+import { formatTimestamp } from '../../utils';
 
-import createDurationString from '../../utils/createDurationString';
 import classes from './ChatVideoCard.module.css';
 
 const ChatVideoCard: React.FC<{
@@ -45,7 +45,7 @@ const ChatVideoCard: React.FC<{
         <div className={classes.ThumbnailWrapper}>
           {!!video.duration && (
             <div className={classes.DurationLabel}>
-              {createDurationString(parseInt(video.duration))}
+              {formatTimestamp(video.duration)}
             </div>
           )}
           {!!video.img && (
