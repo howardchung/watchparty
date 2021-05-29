@@ -452,7 +452,6 @@ export class Room {
   private playlistAdd = (socket: Socket, data: string) => {
     // TODO look up video if youtube, otherwise just add url
     this.playlist.push({ name: data, channel: 'N/A', duration: 0, url: data });
-    console.log(this.playlist);
   };
 
   private playlistDelete = (socket: Socket, url: string) => {
