@@ -2,6 +2,7 @@
 import canAutoplay from 'can-autoplay';
 import { parseStringPromise } from 'xml2js';
 import { v4 as uuidv4 } from 'uuid';
+import md5 from 'blueimp-md5';
 
 export function formatTimestamp(input: any) {
   if (
@@ -317,4 +318,22 @@ export function calculateMedian(array: Array<number>): number {
     }
   }
   return 0;
+}
+
+export async function getUserImage(
+  user: firebase.User
+): Promise<string | null> {
+  // Check if user has a Gravatar
+  const hash = user.email ? md5(user.email) : '';
+  if (user.email) {
+    const gravatar = `https://www.gravatar.com/avatar/${hash}?d=404`;
+    const response = await window.fetch(gravatar);
+    if (response.ok) {
+      return gravatar;
+    }
+  }
+  if (user.photoURL) {
+    return user.photoURL + '?height=128&width=128';
+  }
+  return `https://www.gravatar.com/avatar/${hash}?d=identicon`;
 }

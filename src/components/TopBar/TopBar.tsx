@@ -1,11 +1,12 @@
 import React from 'react';
-import { serverPath, colorMappings } from '../../utils';
-import { Icon, Popup, Button, Dropdown } from 'semantic-ui-react';
+import { serverPath, colorMappings, getUserImage } from '../../utils';
+import { Icon, Popup, Button, Dropdown, Image } from 'semantic-ui-react';
 import * as firebase from 'firebase/app';
 import 'firebase/auth';
 import { LoginModal } from '../Modal/LoginModal';
 import axios from 'axios';
 import { SubscribeButton } from '../SubscribeButton/SubscribeButton';
+import { ProfileModal } from '../Modal/ProfileModal';
 
 export class NewRoomButton extends React.Component<{
   user: firebase.User | undefined;
@@ -52,11 +53,19 @@ export class NewRoomButton extends React.Component<{
   }
 }
 
-export class SignInButton extends React.Component<{
+type SignInButtonProps = {
   user: firebase.User | undefined;
   fluid?: boolean;
-}> {
-  public state = { isLoginOpen: false };
+};
+
+export class SignInButton extends React.Component<SignInButtonProps> {
+  public state = { isLoginOpen: false, isProfileOpen: false, userImage: null };
+
+  async componentDidUpdate(prevProps: SignInButtonProps) {
+    if (!prevProps.user && this.props.user) {
+      this.setState({ userImage: await getUserImage(this.props.user) });
+    }
+  }
 
   facebookSignIn = async () => {
     const provider = new firebase.auth.FacebookAuthProvider();
@@ -76,16 +85,27 @@ export class SignInButton extends React.Component<{
   render() {
     if (this.props.user) {
       return (
-        <Button
-          style={{ height: '36px', whiteSpace: 'nowrap' }}
-          icon
-          labelPosition="left"
-          onClick={this.signOut}
-          fluid={this.props.fluid}
+        <div
+          style={{
+            margin: '4px',
+            width: '100px',
+            alignItems: 'center',
+            cursor: 'pointer',
+          }}
         >
-          <Icon name="sign out" />
-          Sign out
-        </Button>
+          <Image
+            avatar
+            src={this.state.userImage}
+            onClick={() => this.setState({ isProfileOpen: true })}
+          />
+          {this.state.isProfileOpen && this.props.user && (
+            <ProfileModal
+              user={this.props.user}
+              userImage={this.state.userImage}
+              close={() => this.setState({ isProfileOpen: false })}
+            />
+          )}
+        </div>
       );
     }
     return (
