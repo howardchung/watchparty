@@ -1053,13 +1053,23 @@ export default class App extends React.Component<AppProps, AppState> {
       'fullScreenContainer'
     ) as HTMLElement;
     if (bVideoOnly || isMobile()) {
-      if (this.isVBrowser()) {
+      if (this.isVBrowser() && !isMobile()) {
+        // Can't really control the VBrowser on mobile anyway, so just fullscreen the video
+        // https://github.com/howardchung/watchparty/issues/208
         container = document.getElementById('leftVideoParent') as HTMLElement;
       } else {
         container = document.getElementById(
           this.isYouTube() ? 'leftYt' : 'leftVideo'
         ) as HTMLElement;
       }
+    }
+    if (
+      !container.requestFullscreen &&
+      (container as any).webkitEnterFullScreen
+    ) {
+      // e.g. iPhone doesn't allow requestFullscreen
+      (container as any).webkitEnterFullscreen();
+      return;
     }
     if (!document.fullscreenElement) {
       await container.requestFullscreen();
