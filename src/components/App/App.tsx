@@ -1309,6 +1309,12 @@ export default class App extends React.Component<AppProps, AppState> {
 
   setIsChatDisabled = (val: boolean) => this.setState({ isChatDisabled: val });
 
+  clearChat = async () => {
+    const uid = this.props.user?.uid;
+    const token = await this.props.user?.getIdToken();
+    this.socket.emit('CMD:clearchat', { uid, token });
+  };
+
   getLeaderTime = () => {
     return calculateMedian(Object.values(this.state.tsMap));
   };
@@ -1453,6 +1459,7 @@ export default class App extends React.Component<AppProps, AppState> {
           roomLink={this.state.roomLink}
           password={this.state.password}
           setPassword={this.setPassword}
+          clearChat={this.clearChat}
         />
       </Grid.Column>
     );

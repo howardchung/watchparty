@@ -32,6 +32,7 @@ interface SettingsTabProps {
   setPassword: Function;
   isChatDisabled: boolean;
   setIsChatDisabled: Function;
+  clearChat: Function;
 }
 
 export const SettingsTab = ({
@@ -49,6 +50,7 @@ export const SettingsTab = ({
   setPassword,
   isChatDisabled,
   setIsChatDisabled,
+  clearChat,
 }: SettingsTabProps) => {
   const [updateTS, setUpdateTS] = useState(0);
   const [permModalOpen, setPermModalOpen] = useState(false);
@@ -103,7 +105,14 @@ export const SettingsTab = ({
     !Boolean(user) || Boolean(owner && owner !== user?.uid);
 
   return (
-    <div style={{ display: hide ? 'none' : 'block', color: 'white' }}>
+    <div
+      style={{
+        display: hide ? 'none' : 'block',
+        color: 'white',
+        overflow: 'scroll',
+        padding: '8px',
+      }}
+    >
       {permModalOpen && (
         <PermanentRoomModal
           closeModal={() => setPermModalOpen(false)}
@@ -168,6 +177,25 @@ export const SettingsTab = ({
           checked={Boolean(isChatDisabled)}
           disabled={false}
           onChange={(_e, data) => setIsChatDisabled(Boolean(data.checked))}
+        />
+      )}
+      {owner && owner === user?.uid && (
+        <SettingRow
+          icon={'i delete'}
+          name={`Clear Chat`}
+          description="Delete all existing chat messages"
+          disabled={false}
+          content={
+            <Button
+              color="red"
+              icon
+              labelPosition="left"
+              onClick={() => clearChat()}
+            >
+              <Icon name="delete" />
+              Delete Messages
+            </Button>
+          }
         />
       )}
       {owner && owner === user?.uid && (
@@ -308,7 +336,9 @@ const SettingRow = ({
             />
           )}
         </div>
-        <div className="smallText">{description}</div>
+        <div className="smallText" style={{ marginBottom: '8px' }}>
+          {description}
+        </div>
         {content}
       </div>
     </React.Fragment>
