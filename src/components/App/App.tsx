@@ -1573,7 +1573,10 @@ export default class App extends React.Component<AppProps, AppState> {
                     disabled={!this.haveLock()}
                   />
                   <Separator />
-                  <div className="mobileStack" style={{ display: 'flex' }}>
+                  <div
+                    className="mobileStack"
+                    style={{ display: 'flex', gap: '4px' }}
+                  >
                     {this.screenShareStream && (
                       <Button
                         fluid
