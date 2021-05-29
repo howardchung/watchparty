@@ -102,7 +102,7 @@ export const SettingsTab = ({
         setValidVanity(true);
       }
     },
-    [setValidVanity, vanity]
+    [setValidVanity, roomLink]
   );
   const lockDisabled =
     !Boolean(user) || Boolean(roomLock && roomLock !== user?.uid);
