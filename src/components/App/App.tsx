@@ -1214,7 +1214,7 @@ export default class App extends React.Component<AppProps, AppState> {
           'captions',
           'tracklist'
         );
-        this.watchPartyYTPlayer?.setOption('captions', 'track', tracks[0]);
+        this.watchPartyYTPlayer?.setOption('captions', 'track', tracks?.[0]);
       }
     }
   };
@@ -1726,25 +1726,28 @@ export default class App extends React.Component<AppProps, AppState> {
                         disabled={!this.haveLock()}
                       />
                     )}
-                    {this.state.currentMedia && (
-                      <Popup
-                        content="Upload a .srt subtitle file for this video"
-                        trigger={
-                          <Button
-                            fluid
-                            color="violet"
-                            className="toolButton"
-                            icon
-                            labelPosition="left"
-                            onClick={this.setSubtitle}
-                            disabled={!this.haveLock()}
-                          >
-                            <Icon name="closed captioning" />
-                            Subtitle
-                          </Button>
-                        }
-                      />
-                    )}
+                    {this.state.currentMedia &&
+                      !this.isScreenShare() &&
+                      !this.isVBrowser() &&
+                      !this.isYouTube() && (
+                        <Popup
+                          content="Upload a .srt subtitle file for this video"
+                          trigger={
+                            <Button
+                              fluid
+                              color="violet"
+                              className="toolButton"
+                              icon
+                              labelPosition="left"
+                              onClick={this.setSubtitle}
+                              disabled={!this.haveLock()}
+                            >
+                              <Icon name="closed captioning" />
+                              Subtitle
+                            </Button>
+                          }
+                        />
+                      )}
                   </div>
                   <Separator />
                   <div
