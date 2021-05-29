@@ -6,7 +6,7 @@ export class ScreenShareModal extends React.Component<{
   startScreenShare: Function;
 }> {
   render() {
-    const { closeModal, startScreenShare } = this.props;
+    const { closeModal } = this.props;
     return (
       <Modal open={true} onClose={closeModal as any}>
         <Modal.Header>Share Your Screen</Modal.Header>

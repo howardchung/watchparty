@@ -6,7 +6,7 @@ export class FileShareModal extends React.Component<{
   startFileShare: Function;
 }> {
   render() {
-    const { closeModal, startFileShare } = this.props;
+    const { closeModal } = this.props;
     return (
       <Modal open={true} onClose={closeModal as any}>
         <Modal.Header>Share A File</Modal.Header>
