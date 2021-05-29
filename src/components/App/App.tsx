@@ -75,6 +75,7 @@ interface AppState {
   participants: User[];
   rosterUpdateTS: Number;
   chat: ChatMessage[];
+  playlist: PlaylistVideo[];
   tsMap: NumberDict;
   nameMap: StringDict;
   pictureMap: StringDict;
@@ -129,6 +130,7 @@ export default class App extends React.Component<AppProps, AppState> {
     participants: [],
     rosterUpdateTS: Number(new Date()),
     chat: [],
+    playlist: [],
     tsMap: {},
     nameMap: {},
     pictureMap: {},
@@ -565,8 +567,11 @@ export default class App extends React.Component<AppProps, AppState> {
         }
       );
     });
-    socket.on('chatinit', (data: any) => {
+    socket.on('chatinit', (data: ChatMessage[]) => {
       this.setState({ chat: data, scrollTimestamp: Number(new Date()) });
+    });
+    socket.on('playlist', (data: PlaylistVideo[]) => {
+      this.setState({ playlist: data });
     });
     socket.on('signalSS', async (data: any) => {
       // Handle messages received from signaling server
@@ -601,11 +606,12 @@ export default class App extends React.Component<AppProps, AppState> {
       }
     });
     socket.on('REC:getRoomState', this.handleRoomState);
-    socket.emit('CMD:getRoomState');
     window.setInterval(() => {
       if (this.state.currentMedia) {
         this.socket.emit('CMD:ts', this.getCurrentTime());
-        // TODO check if video ended, playlistNext if true
+        if (this.getCurrentTime() >= this.getDuration()) {
+          this.socket.emit('CMD:playlistNext');
+        }
       }
     }, 1000);
   };
@@ -1231,6 +1237,18 @@ export default class App extends React.Component<AppProps, AppState> {
     this.socket.emit('CMD:host', data.value);
   };
 
+  playlistAdd = (_e: any, data: DropdownProps) => {
+    this.socket.emit('CMD:playlistAdd', data.value);
+  };
+
+  playlistMove = () => {
+    // TODO
+  };
+
+  playlistDelete = () => {
+    // TODO
+  };
+
   launchMultiSelect = (data: any) => {
     this.setState({ multiStreamSelection: data });
   };
@@ -1566,12 +1584,14 @@ export default class App extends React.Component<AppProps, AppState> {
                 >
                   <ComboBox
                     setMedia={this.setMedia}
+                    playlistAdd={this.playlistAdd}
                     currentMedia={this.state.currentMedia}
                     getMediaDisplayName={this.getMediaDisplayName}
                     launchMultiSelect={this.launchMultiSelect}
                     streamPath={this.state.settings.streamPath}
                     mediaPath={this.state.settings.mediaPath}
                     disabled={!this.haveLock()}
+                    playlist={this.state.playlist}
                   />
                   <Separator />
                   <div
@@ -1735,6 +1755,7 @@ export default class App extends React.Component<AppProps, AppState> {
                     {false && (
                       <SearchComponent
                         setMedia={this.setMedia}
+                        playlistAdd={this.playlistAdd}
                         type={'youtube'}
                         streamPath={this.state.settings.streamPath}
                         mediaPath={this.state.settings.mediaPath}
@@ -1744,6 +1765,7 @@ export default class App extends React.Component<AppProps, AppState> {
                     {Boolean(this.state.settings.mediaPath) && (
                       <SearchComponent
                         setMedia={this.setMedia}
+                        playlistAdd={this.playlistAdd}
                         type={'media'}
                         streamPath={this.state.settings.streamPath}
                         mediaPath={this.state.settings.mediaPath}
@@ -1753,6 +1775,7 @@ export default class App extends React.Component<AppProps, AppState> {
                     {Boolean(this.state.settings.streamPath) && (
                       <SearchComponent
                         setMedia={this.setMedia}
+                        playlistAdd={this.playlistAdd}
                         type={'stream'}
                         streamPath={this.state.settings.streamPath}
                         mediaPath={this.state.settings.mediaPath}

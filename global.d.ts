@@ -47,8 +47,8 @@ interface PlaylistVideo {
   url: string;
   name: string;
   img?: string;
-  channel: string;
-  duration: string;
+  channel?: string;
+  duration: number;
 }
 
 interface HostState {
