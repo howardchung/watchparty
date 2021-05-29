@@ -48,6 +48,8 @@ import { SettingsTab } from '../Settings/SettingsTab';
 import { ErrorModal } from '../Modal/ErrorModal';
 import { PasswordModal } from '../Modal/PasswordModal';
 import { SubscribeButton } from '../SubscribeButton/SubscribeButton';
+import { ScreenShareModal } from '../Modal/ScreenShareModal';
+import { FileShareModal } from '../Modal/FileShareModal';
 
 declare global {
   interface Window {
@@ -102,6 +104,8 @@ interface AppState {
   currentTab: string;
   isSubscribeModalOpen: boolean;
   isVBrowserModalOpen: boolean;
+  isScreenShareModalOpen: boolean;
+  isFileShareModalOpen: boolean;
   roomLock: string;
   controller?: string;
   savedPasswords: StringDict;
@@ -156,6 +160,8 @@ export default class App extends React.Component<AppProps, AppState> {
       'chat',
     isSubscribeModalOpen: false,
     isVBrowserModalOpen: false,
+    isScreenShareModalOpen: false,
+    isFileShareModalOpen: false,
     roomLock: '',
     controller: '',
     roomId: '',
@@ -1487,6 +1493,18 @@ export default class App extends React.Component<AppProps, AppState> {
             user={this.props.user}
           />
         )}
+        {this.state.isScreenShareModalOpen && (
+          <ScreenShareModal
+            closeModal={() => this.setState({ isScreenShareModalOpen: false })}
+            startScreenShare={this.setupScreenShare}
+          />
+        )}
+        {this.state.isFileShareModalOpen && (
+          <FileShareModal
+            closeModal={() => this.setState({ isFileShareModalOpen: false })}
+            startFileShare={this.setupFileShare}
+          />
+        )}
         {this.state.error && <ErrorModal error={this.state.error} />}
         {this.state.isErrorAuth && (
           <PasswordModal
@@ -1575,7 +1593,9 @@ export default class App extends React.Component<AppProps, AppState> {
                             icon
                             labelPosition="left"
                             color={'instagram'}
-                            onClick={this.setupScreenShare}
+                            onClick={() => {
+                              this.setState({ isScreenShareModalOpen: true });
+                            }}
                           >
                             <Icon name={'slideshare'} />
                             Screenshare
@@ -1692,7 +1712,9 @@ export default class App extends React.Component<AppProps, AppState> {
                             disabled={!this.haveLock()}
                             icon
                             labelPosition="left"
-                            onClick={this.setupFileShare}
+                            onClick={() => {
+                              this.setState({ isFileShareModalOpen: true });
+                            }}
                           >
                             <Icon name="file" />
                             File
