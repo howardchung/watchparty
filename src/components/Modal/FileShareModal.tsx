@@ -19,6 +19,7 @@ export class FileShareModal extends React.Component<{
                 There is a Chrome issue where the sharer needs to{' '}
                 <a
                   target="_blank"
+                  rel="noreferrer"
                   href="https://www.howtogeek.com/412738/how-to-turn-hardware-acceleration-on-and-off-in-chrome/"
                 >
                   disable hardware acceleration
