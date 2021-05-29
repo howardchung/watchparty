@@ -1,10 +1,5 @@
 import React from 'react';
-import { Modal, Button, Table, Message } from 'semantic-ui-react';
-import {
-  GoogleReCaptchaProvider,
-  withGoogleReCaptcha,
-} from 'react-google-recaptcha-v3';
-import { SignInButton } from '../TopBar/TopBar';
+import { Modal, Button } from 'semantic-ui-react';
 
 export class ScreenShareModal extends React.Component<{
   closeModal: Function;
