@@ -452,6 +452,13 @@ export class Room {
   private playlistAdd = (socket: Socket, data: string) => {
     // TODO look up video if youtube, otherwise just add url
     this.playlist.push({ name: data, channel: 'N/A', duration: 0, url: data });
+    this.io.of(this.roomId).emit('playlist', this.playlist);
+    const chatMsg = {
+      id: socket.id,
+      cmd: 'playlistAdd',
+      msg: data,
+    };
+    this.addChatMessage(socket, chatMsg);
   };
 
   private playlistDelete = (socket: Socket, url: string) => {
