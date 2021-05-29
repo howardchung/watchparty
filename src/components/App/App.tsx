@@ -1084,6 +1084,10 @@ export default class App extends React.Component<AppProps, AppState> {
       if (leftVideo) {
         leftVideo.muted = muted;
       }
+      const audio = document.getElementById('iPhoneAudio') as HTMLAudioElement;
+      if (audio) {
+        audio.muted = muted;
+      }
     }
     if (this.isYouTube()) {
       if (muted) {
@@ -1822,6 +1826,7 @@ export default class App extends React.Component<AppProps, AppState> {
                             width: '100%',
                           }}
                           id="leftVideo"
+                          playsInline
                         ></video>
                       )}
                       {this.state.fullScreen && this.state.currentMedia && (

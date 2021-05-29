@@ -62,6 +62,14 @@ export default class VBrowser extends React.Component<{
       const video = document.getElementById('leftVideo') as HTMLVideoElement;
       video.src = '';
       video.srcObject = stream;
+      // Manually play audio for iPhone Safari since this seems to create two separate streams
+      if (stream.getTracks().length === 1 && track.kind === 'audio') {
+        const audio = document.getElementById(
+          'iPhoneAudio'
+        ) as HTMLAudioElement;
+        audio.srcObject = new MediaStream([track]);
+        audio.play();
+      }
       this.props.doPlay();
     });
     this.$client.on(EVENT.CONTROL.CLIPBOARD, this.onClipboardChanged);
@@ -317,7 +325,13 @@ export default class VBrowser extends React.Component<{
           ref={this._container}
           style={{ width: '100%', height: 'fit-content', position: 'relative' }}
         >
-          <video ref={this._video} id="leftVideo" style={{ width: '100%' }} />
+          <video
+            playsInline
+            ref={this._video}
+            id="leftVideo"
+            style={{ width: '100%' }}
+          />
+          <audio id="iPhoneAudio" />
           <div
             ref={this._overlay}
             id={'leftOverlay'}
