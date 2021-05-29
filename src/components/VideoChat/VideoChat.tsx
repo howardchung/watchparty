@@ -358,7 +358,6 @@ export class VideoChat extends React.Component<VideoChatProps> {
                     ) : (
                       <img
                         style={videoChatContentStyle as any}
-                        // broken image: https://ui-avatars.com/api/?name=haidee&background=B03060&size=256&color=ffffff
                         src={
                           pictureMap[p.id] ||
                           getDefaultPicture(

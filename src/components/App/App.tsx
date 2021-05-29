@@ -31,6 +31,7 @@ import {
   openFileSelector,
   getAndSaveClientId,
   calculateMedian,
+  getUserImage,
 } from '../../utils';
 import { generateName } from '../../utils/generateName';
 import { Chat } from '../Chat';
@@ -240,8 +241,9 @@ export default class App extends React.Component<AppProps, AppState> {
       if (firstName) {
         this.updateName(null, { value: firstName });
       }
-      if (user.photoURL) {
-        this.updatePicture(user.photoURL + '?height=128&width=128');
+      const userImage = await getUserImage(user);
+      if (userImage) {
+        this.updatePicture(userImage);
       }
       this.updateUid(user);
     }
