@@ -214,7 +214,6 @@ export default class App extends React.Component<AppProps, AppState> {
     this.setRoomLink(this.getRoomLink(data.vanity));
     this.setIsChatDisabled(data.isChatDisabled);
     window.history.replaceState('', '', this.getRoomLink(data.vanity));
-    this.setIsChatDisabled(data.isChatDisabled);
   };
 
   componentWillUnmount() {
