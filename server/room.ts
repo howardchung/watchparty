@@ -45,6 +45,7 @@ export class Room {
   public lastUpdateTime: Date = new Date();
   public creator: string | undefined = undefined;
   public lock: string | undefined = undefined; // uid of the user who locked the room
+  public playlist: PlaylistVideo[] = [];
 
   // Non-serialized state
   public roomId: string;
@@ -148,6 +149,13 @@ export class Room {
       socket.on('CMD:getRoomState', () => this.getRoomState(socket));
       socket.on('CMD:setRoomState', (data) => this.setRoomState(socket, data));
       socket.on('CMD:setRoomOwner', (data) => this.setRoomOwner(socket, data));
+      socket.on('CMD:playlistNext', () => this.playlistNext(socket));
+      socket.on('CMD:playlistAdd', (data) => this.playlistAdd(socket, data));
+      socket.on('CMD:playlistMove', (data) => this.playlistMove(socket, data));
+      socket.on('CMD:playlistDelete', (data) =>
+        this.playlistDelete(socket, data)
+      );
+
       socket.on('signal', (data) => this.sendSignal(socket, data));
       socket.on('signalSS', (data) => this.signalSS(socket, data));
 
@@ -186,6 +194,7 @@ export class Room {
       lastUpdateTime: this.lastUpdateTime,
       lock: this.lock,
       creator: this.creator,
+      playlist: this.playlist,
     });
   };
 
@@ -222,6 +231,9 @@ export class Room {
     }
     if (roomObj.creator) {
       this.creator = roomObj.creator;
+    }
+    if (roomObj.playlist) {
+      this.playlist = roomObj.playlist;
     }
   };
 
@@ -405,11 +417,11 @@ export class Room {
     this.uidMap[socket.id] = decoded.uid;
   };
 
-  private startHosting = (socket: Socket, data: string) => {
+  private startHosting = (socket: Socket | undefined, data: string) => {
     if (data && data.length > 20000) {
       return;
     }
-    if (!this.validateLock(socket.id)) {
+    if (socket && !this.validateLock(socket.id)) {
       return;
     }
     const sharer = this.roster.find((user) => user.isScreenShare);
@@ -419,6 +431,47 @@ export class Room {
     }
     redisCount('urlStarts');
     this.cmdHost(socket, data);
+  };
+
+  private playlistNext = (socket: Socket) => {
+    // TODO race condition trigger repeatedly?
+    this.nextVotes += 1;
+    if (this.nextVotes >= Math.floor(this.roster.length / 2)) {
+      const next = this.playlist.shift();
+      this.io.of(this.roomId).emit('playlist', this.playlist);
+      if (next) {
+        this.startHosting(undefined, next.url);
+      }
+    }
+  };
+
+  private playlistAdd = (socket: Socket, data: string) => {
+    // TODO look up video if youtube, otherwise just add url
+    this.playlist.push({ name: data, channel: 'N/A', duration: 0, url: data });
+  };
+
+  private playlistDelete = (socket: Socket, url: string) => {
+    const videoIndex = this.playlist.findIndex((video) => video.url === url);
+    if (videoIndex !== -1) {
+      this.playlist.splice(videoIndex, 1);
+      this.io.of(this.roomId).emit('playlist', this.playlist);
+    }
+  };
+
+  private playlistMove = (
+    socket: Socket,
+    data: { url: string; index: number }
+  ) => {
+    const videoIndex = this.playlist.findIndex(
+      (video) => video.url === data.url
+    );
+
+    if (videoIndex !== -1) {
+      const items = this.playlist.splice(videoIndex, 1);
+      this.playlist.splice(data.index, 0, items[0]);
+    }
+
+    this.io.of(this.roomId).emit('playlist', this.playlist);
   };
 
   private playVideo = (socket: Socket) => {
