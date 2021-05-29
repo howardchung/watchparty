@@ -17,7 +17,10 @@ export class FileShareModal extends React.Component<{
               <li>This feature is only supported on Chrome and Edge.</li>
               <li>
                 There is a Chrome issue where the sharer needs to{' '}
-                <a href="https://www.howtogeek.com/412738/how-to-turn-hardware-acceleration-on-and-off-in-chrome/">
+                <a
+                  target="_blank"
+                  href="https://www.howtogeek.com/412738/how-to-turn-hardware-acceleration-on-and-off-in-chrome/"
+                >
                   disable hardware acceleration
                 </a>{' '}
                 in order for others to receive video.
