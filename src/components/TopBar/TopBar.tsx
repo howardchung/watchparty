@@ -367,6 +367,7 @@ export class TopBar extends React.Component<{
             style={{
               display: 'flex',
               marginLeft: 'auto',
+              gap: '4px',
             }}
           >
             {!this.props.hideNewRoom && (
