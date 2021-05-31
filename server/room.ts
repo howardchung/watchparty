@@ -315,7 +315,7 @@ export class Room {
     const region = this.vBrowser?.region ?? '';
     const uid = this.vBrowser?.creatorUID ?? '';
     this.vBrowser = undefined;
-    this.cmdHost(undefined, '');
+    this.cmdHost(null, '');
     // Force a save to record the vbrowser change
     this.saveToRedis(null);
     if (redis && assignTime) {
@@ -335,24 +335,25 @@ export class Room {
     }
   };
 
-  private cmdHost = (socket: Socket | undefined, data: string) => {
+  private cmdHost = (socket: Socket | null, data: string) => {
     this.video = data;
     this.videoTS = 0;
     this.paused = false;
     this.subtitle = '';
     this.tsMap = {};
+    this.nextVotes = {};
     this.io.of(this.roomId).emit('REC:tsMap', this.tsMap);
     this.io.of(this.roomId).emit('REC:host', this.getHostState());
     if (socket && data) {
       const chatMsg = { id: socket.id, cmd: 'host', msg: data };
       this.addChatMessage(socket, chatMsg);
     }
+    if (data === '') {
+      this.playlistNext(null);
+    }
   };
 
-  public addChatMessage = (
-    socket: Socket | undefined,
-    chatMsg: ChatMessageBase
-  ) => {
+  public addChatMessage = (socket: Socket | null, chatMsg: ChatMessageBase) => {
     if (this.isChatDisabled && !chatMsg.cmd) {
       return;
     }
@@ -419,7 +420,7 @@ export class Room {
     this.uidMap[socket.id] = decoded.uid;
   };
 
-  private startHosting = (socket: Socket | undefined, data: string) => {
+  private startHosting = (socket: Socket | null, data: string) => {
     if (data && data.length > 20000) {
       return;
     }
@@ -435,16 +436,18 @@ export class Room {
     this.cmdHost(socket, data);
   };
 
-  private playlistNext = (socket: Socket) => {
-    this.nextVotes[socket.id] = true;
-    if (
-      this.roster.filter((user) => this.nextVotes[user.id] === true).length >=
-      Math.floor(this.roster.length / 2)
-    ) {
+  private playlistNext = (socket: Socket | null) => {
+    // TODO possible for delayed nexts to come in, so check the current video
+    if (socket) {
+      this.nextVotes[socket.id] = true;
+    }
+    const votes = this.roster.filter((user) => this.nextVotes[user.id] === true)
+      .length;
+    if (!socket || votes >= Math.floor(this.roster.length / 2)) {
       const next = this.playlist.shift();
       this.io.of(this.roomId).emit('playlist', this.playlist);
       if (next) {
-        this.startHosting(undefined, next.url);
+        this.startHosting(null, next.url);
       }
     }
   };
@@ -459,6 +462,9 @@ export class Room {
       msg: data,
     };
     this.addChatMessage(socket, chatMsg);
+    if (!this.video) {
+      this.playlistNext(null);
+    }
   };
 
   private playlistDelete = (socket: Socket, url: string) => {
@@ -760,7 +766,7 @@ export class Room {
     this.vBrowser.creatorUID = uid;
     this.vBrowser.creatorClientID = clientId;
     this.cmdHost(
-      undefined,
+      null,
       'vbrowser://' + this.vBrowser.pass + '@' + this.vBrowser.host
     );
   };
