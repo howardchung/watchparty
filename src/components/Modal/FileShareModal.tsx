@@ -16,6 +16,14 @@ export class FileShareModal extends React.Component<{
             <ul>
               <li>This feature is only supported on Chrome and Edge.</li>
               <li>
+                To test whether the file can be shared, you can try opening it
+                locally with your browser to see if it will play properly.
+              </li>
+              <li>
+                Certain codecs, such as HEVC, AC3, and H265 will not play in
+                Chrome (they may work in Edge)
+              </li>
+              <li>
                 There is a Chrome issue where the sharer needs to{' '}
                 <a
                   target="_blank"
