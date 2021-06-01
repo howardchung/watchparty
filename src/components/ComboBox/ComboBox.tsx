@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-  DropdownProps,
-  Menu,
-  Input,
-  Icon,
-  Button,
-  Dropdown,
-} from 'semantic-ui-react';
+import { DropdownProps, Menu, Input, Icon, Dropdown } from 'semantic-ui-react';
 import { debounce, getYouTubeResults } from '../../utils';
 import { examples } from '../../utils/examples';
 import ChatVideoCard from '../Playlist/ChatVideoCard';
