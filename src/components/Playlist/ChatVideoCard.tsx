@@ -31,8 +31,6 @@ const ChatVideoCard: React.FC<{
 
   const handlePlayClick = React.useCallback(
     (e) => {
-      e.stopPropagation();
-      e.nativeEvent.stopImmediatePropagation();
       if (onPlay) {
         onPlay(index);
       }
