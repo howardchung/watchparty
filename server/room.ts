@@ -152,7 +152,7 @@ export class Room {
       socket.on('CMD:getRoomState', () => this.getRoomState(socket));
       socket.on('CMD:setRoomState', (data) => this.setRoomState(socket, data));
       socket.on('CMD:setRoomOwner', (data) => this.setRoomOwner(socket, data));
-      socket.on('CMD:playlistNext', () => this.playlistNext(socket));
+      socket.on('CMD:playlistNext', (data) => this.playlistNext(socket, data));
       socket.on('CMD:playlistAdd', (data) => this.playlistAdd(socket, data));
       socket.on('CMD:playlistMove', (data) => this.playlistMove(socket, data));
       socket.on('CMD:playlistDelete', (data) =>
@@ -441,7 +441,7 @@ export class Room {
     if (data && data.length > 20000) {
       return;
     }
-    if (socket && data === this.playlist[0]?.url) {
+    if (socket && data === this.video) {
       this.nextVotes[socket.id] = data;
     }
     const votes = this.roster.filter((user) => this.nextVotes[user.id]).length;
@@ -465,7 +465,7 @@ export class Room {
     } else {
       this.playlist.push({
         name: data,
-        channel: 'HTTP URL',
+        channel: 'Video URL',
         duration: 0,
         url: data,
       });

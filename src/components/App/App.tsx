@@ -1341,7 +1341,7 @@ export default class App extends React.Component<AppProps, AppState> {
   };
 
   onVideoEnded = () => {
-    this.socket.emit('CMD:playlistNext', this.state.playlist[0]?.url);
+    this.socket.emit('CMD:playlistNext', this.state.currentMedia);
   };
 
   render() {
