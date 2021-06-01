@@ -11,5 +11,6 @@ export const examples = [
 ].map((url) => ({
   url,
   type: 'file',
-  name: url.slice(url.lastIndexOf('/') + 1),
+  name: url,
+  duration: 0,
 }));

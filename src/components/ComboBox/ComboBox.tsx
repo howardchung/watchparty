@@ -10,7 +10,6 @@ import {
 import { debounce, getYouTubeResults } from '../../utils';
 import { examples } from '../../utils/examples';
 import ChatVideoCard from '../Playlist/ChatVideoCard';
-import { YouTubeSearchResult } from '../SearchResult/SearchResult';
 
 interface ComboBoxProps {
   setMedia: (e: any, data: DropdownProps) => void;
@@ -25,9 +24,6 @@ interface ComboBoxProps {
   disabled?: boolean;
   playlist: PlaylistVideo[];
 }
-
-// TODO change behavior: show current state as top option with add to playlist
-// show examples if field empty
 
 export class ComboBox extends React.Component<ComboBoxProps> {
   state = {
@@ -56,37 +52,47 @@ export class ComboBox extends React.Component<ComboBoxProps> {
           let timestamp = Number(new Date());
           let results: JSX.Element[] | undefined = undefined;
           if (query === '' || (query && query.startsWith('http'))) {
-            results = examples.map((option: any) => (
+            let items = examples;
+            if (query) {
+              items = [
+                {
+                  name: query,
+                  type: 'file',
+                  url: query,
+                  duration: 0,
+                },
+              ];
+            }
+            results = items.map((result: SearchResult, index: number) => (
               <Menu.Item
-                key={option.url}
+                key={result.url}
                 onClick={(e: any) =>
-                  this.setMediaAndClose(e, { value: option.url })
+                  this.setMediaAndClose(e, { value: result.url })
                 }
               >
-                <div style={{ display: 'flex' }}>
-                  {option.url}
-                  <div style={{ marginLeft: 'auto' }}>
-                    <Button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        this.props.playlistAdd(e, { value: option.url });
-                      }}
-                    >
-                      Add to Playlist
-                    </Button>
-                  </div>
-                </div>
+                <ChatVideoCard
+                  video={result}
+                  index={index}
+                  onPlaylistAdd={this.props.playlistAdd}
+                />
               </Menu.Item>
             ));
           } else {
             const data = await getYouTubeResults(query);
-            results = data.map((result) => (
-              <YouTubeSearchResult
+            results = data.map((result, index) => (
+              <Menu.Item
                 key={result.url}
-                {...result}
-                setMedia={this.setMediaAndClose}
-                playlistAdd={this.props.playlistAdd}
-              />
+                onClick={(e: any) =>
+                  this.setMediaAndClose(e, { value: result.url })
+                }
+              >
+                <ChatVideoCard
+                  video={result}
+                  index={index}
+                  onPlaylistAdd={this.props.playlistAdd}
+                  isYoutube
+                />
+              </Menu.Item>
             ));
           }
           if (timestamp > this.state.lastResultTimestamp) {
@@ -133,13 +139,13 @@ export class ComboBox extends React.Component<ComboBoxProps> {
               );
               setTimeout(() => e.target.select(), 100);
             }}
-            onBlur={() =>
+            onBlur={() => {
               setTimeout(
                 () =>
                   this.setState({ inputMedia: undefined, results: undefined }),
                 100
-              )
-            }
+              );
+            }}
             onKeyPress={(e: any) => {
               if (e.key === 'Enter') {
                 this.setMediaAndClose(e, {
@@ -186,24 +192,27 @@ export class ComboBox extends React.Component<ComboBoxProps> {
               {this.props.playlist.map((item: PlaylistVideo, index: number) => {
                 return (
                   <Dropdown.Item>
-                    <ChatVideoCard
-                      video={item}
-                      index={index}
-                      controls
-                      onPlay={(index) => {
-                        this.props.setMedia(null, {
-                          value: this.props.playlist[index]?.url,
-                        });
-                        this.props.playlistDelete(index);
-                      }}
-                      onPlayNext={(index) => {
-                        this.props.playlistMove(index, 0);
-                      }}
-                      onRemove={(index) => {
-                        this.props.playlistDelete(index);
-                      }}
-                      disabled={this.props.disabled}
-                    />
+                    <div style={{ maxWidth: '500px' }}>
+                      <ChatVideoCard
+                        video={item}
+                        index={index}
+                        controls
+                        onPlay={(index) => {
+                          this.props.setMedia(null, {
+                            value: this.props.playlist[index]?.url,
+                          });
+                          this.props.playlistDelete(index);
+                        }}
+                        onPlayNext={(index) => {
+                          this.props.playlistMove(index, 0);
+                        }}
+                        onRemove={(index) => {
+                          this.props.playlistDelete(index);
+                        }}
+                        disabled={this.props.disabled}
+                        isYoutube={Boolean(item.img)}
+                      />
+                    </div>
                   </Dropdown.Item>
                 );
               })}

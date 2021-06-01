@@ -21,6 +21,7 @@ export const YouTubeSearchResult = (
           <Button
             onClick={(e) => {
               e.stopPropagation();
+              e.nativeEvent.stopImmediatePropagation();
               props.playlistAdd(e, { value: result.url });
             }}
           >

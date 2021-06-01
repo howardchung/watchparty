@@ -220,24 +220,23 @@ export class ListRoomsButton extends React.Component<{
                   }
                 }}
               >
-                <div style={{ display: 'flex' }}>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
                   {room.vanity
                     ? `/r/${room.vanity}`
                     : room.roomId.replace('/', '#')}
                   <div style={{ marginLeft: 'auto', paddingLeft: '20px' }}>
-                    <Popup
-                      content="Delete room"
-                      trigger={
-                        <Icon
-                          onClick={(e: React.MouseEvent) => {
-                            e.stopPropagation();
-                            this.deleteRoom(room.roomId);
-                          }}
-                          name="x"
-                          color="red"
-                        />
-                      }
-                    />
+                    <Button
+                      icon
+                      onClick={(e: React.MouseEvent) => {
+                        e.stopPropagation();
+                        e.nativeEvent.stopImmediatePropagation();
+                        this.deleteRoom(room.roomId);
+                      }}
+                      color="red"
+                      size="mini"
+                    >
+                      <Icon name="trash" />
+                    </Button>
                   </div>
                 </div>
               </Dropdown.Item>

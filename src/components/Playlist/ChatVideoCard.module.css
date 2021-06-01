@@ -10,7 +10,8 @@
 .Wrapper {
   display: flex;
   align-items: center;
-  max-width: 500px;
+  display: flex;
+  gap: 8px;
 }
 
 .ThumbnailWrapper {
@@ -20,7 +21,6 @@
   overflow: hidden;
   position: relative;
   background: rgba(0, 0, 0, 0.1);
-  margin-right: 16px;
 }
 
 .Thumbnail {
@@ -70,5 +70,5 @@
 }
 
 .Controls {
-  margin-left: 12px;
+  margin-left: auto;
 }
