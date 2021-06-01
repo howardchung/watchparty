@@ -282,6 +282,12 @@ export default class App extends React.Component<AppProps, AppState> {
             ) {
               this.setState({ loading: false });
             }
+            if (
+              getMediaType(this.state.currentMedia) === 'youtube' &&
+              e.data === window.YT?.PlayerState?.ENDED
+            ) {
+              this.onVideoEnded();
+            }
             // console.log(this.ytDebounce, e.data, this.watchPartyYTPlayer?.getVideoUrl());
             if (
               this.ytDebounce &&
@@ -609,9 +615,6 @@ export default class App extends React.Component<AppProps, AppState> {
     window.setInterval(() => {
       if (this.state.currentMedia) {
         this.socket.emit('CMD:ts', this.getCurrentTime());
-        if (this.getCurrentTime() >= this.getDuration()) {
-          this.socket.emit('CMD:playlistNext');
-        }
       }
     }, 1000);
   };
@@ -1241,12 +1244,12 @@ export default class App extends React.Component<AppProps, AppState> {
     this.socket.emit('CMD:playlistAdd', data.value);
   };
 
-  playlistMove = () => {
-    // TODO
+  playlistMove = (index: number, toIndex: number) => {
+    this.socket.emit('CMD:playlistMove', { index, toIndex });
   };
 
-  playlistDelete = () => {
-    // TODO
+  playlistDelete = (index: number) => {
+    this.socket.emit('CMD:playlistDelete', index);
   };
 
   launchMultiSelect = (data: any) => {
@@ -1335,6 +1338,10 @@ export default class App extends React.Component<AppProps, AppState> {
 
   getLeaderTime = () => {
     return calculateMedian(Object.values(this.state.tsMap));
+  };
+
+  onVideoEnded = () => {
+    this.socket.emit('CMD:playlistNext', this.state.playlist[0]?.url);
   };
 
   render() {
@@ -1585,6 +1592,8 @@ export default class App extends React.Component<AppProps, AppState> {
                   <ComboBox
                     setMedia={this.setMedia}
                     playlistAdd={this.playlistAdd}
+                    playlistDelete={this.playlistDelete}
+                    playlistMove={this.playlistMove}
                     currentMedia={this.state.currentMedia}
                     getMediaDisplayName={this.getMediaDisplayName}
                     launchMultiSelect={this.launchMultiSelect}
@@ -1896,6 +1905,7 @@ export default class App extends React.Component<AppProps, AppState> {
                             width: '100%',
                           }}
                           id="leftVideo"
+                          onEnded={this.onVideoEnded}
                           playsInline
                         ></video>
                       )}

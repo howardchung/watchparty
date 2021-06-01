@@ -6,41 +6,45 @@ import classes from './ChatVideoCard.module.css';
 
 const ChatVideoCard: React.FC<{
   video: PlaylistVideo;
+  index: number;
   controls?: boolean;
-  onPlay?: (url: string) => void;
-  onRemove?: (url: string) => void;
-  onPlayNext?: (url: string) => void;
+  onPlay?: (index: number) => void;
+  onRemove?: (index: number) => void;
+  onPlayNext?: (index: number) => void;
+  disabled?: boolean;
 }> = (props) => {
-  const { video, controls, onPlay, onPlayNext, onRemove } = props;
+  const {
+    video,
+    index,
+    controls,
+    onPlay,
+    onPlayNext,
+    onRemove,
+    disabled,
+  } = props;
 
   const handlePlayClick = React.useCallback(() => {
     if (onPlay) {
-      onPlay(video.url);
+      onPlay(index);
     }
-  }, [onPlay, video.url]);
+  }, [onPlay, index]);
 
   const handlePlayNextClick = React.useCallback(() => {
     if (onPlayNext) {
-      onPlayNext(video.url);
+      onPlayNext(index);
     }
-  }, [onPlayNext, video.url]);
+  }, [onPlayNext, index]);
 
   const handleRemoveClick = React.useCallback(() => {
     if (onRemove) {
-      onRemove(video.url);
+      onRemove(index);
     }
-  }, [onRemove, video.url]);
+  }, [onRemove, index]);
 
-  const Element = controls ? 'div' : 'a';
+  const Element = 'div';
 
   return (
-    <Element
-      href={video.url}
-      target="_blank"
-      rel="noopener noreferrer"
-      title={video.name}
-      className={classes.Card}
-    >
+    <Element title={video.name} className={classes.Card}>
       <div className={classes.Wrapper}>
         <div className={classes.ThumbnailWrapper}>
           {!!video.duration && (
@@ -57,14 +61,7 @@ const ChatVideoCard: React.FC<{
           )}
         </div>
         <div className={classes.Content}>
-          <a
-            className={classes.Title}
-            href={video.url}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {video.name}
-          </a>
+          <div className={classes.Title}>{video.name}</div>
           <div className={classes.ChannelName}>{video.channel}</div>
         </div>
         {controls && (
@@ -75,24 +72,27 @@ const ChatVideoCard: React.FC<{
                 color="green"
                 title="Play now"
                 onClick={handlePlayClick}
+                disabled={disabled}
               >
                 <Icon name="play" />
-              </Button>
-              <Button
-                icon
-                color="red"
-                title="Remove"
-                onClick={handleRemoveClick}
-              >
-                <Icon name="trash" />
               </Button>
               <Button
                 icon
                 color="black"
                 title="Play next"
                 onClick={handlePlayNextClick}
+                disabled={disabled}
               >
                 <Icon name="arrow up" />
+              </Button>
+              <Button
+                icon
+                color="red"
+                title="Remove"
+                onClick={handleRemoveClick}
+                disabled={disabled}
+              >
+                <Icon name="trash" />
               </Button>
             </ButtonGroup>
           </div>

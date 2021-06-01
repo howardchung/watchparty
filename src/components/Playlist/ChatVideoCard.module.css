@@ -10,6 +10,7 @@
 .Wrapper {
   display: flex;
   align-items: center;
+  max-width: 500px;
 }
 
 .ThumbnailWrapper {
@@ -37,7 +38,7 @@
 }
 
 .Title {
-  color: #fff;
+  color: #000;
   line-height: 1.5;
   overflow: hidden;
   white-space: nowrap;
@@ -46,12 +47,8 @@
   display: block;
 }
 
-.Title:hover {
-  color: #fff;
-}
-
 .ChannelName {
-  color: #fff;
+  color: #000;
   opacity: 0.5;
   margin-top: 4px;
   display: block;
