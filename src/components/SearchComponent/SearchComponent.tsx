@@ -102,6 +102,7 @@ export class SearchComponent extends React.Component<SearchComponentProps> {
               this.doSearch(e);
             }
           }}
+          scrolling
           // onBlur={() => this.setState({ results: this.state.watchOptions })}
           //searchQuery={this.state.query}
           //loading={this.state.loading}

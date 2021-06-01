@@ -9,11 +9,14 @@ import {
 } from 'semantic-ui-react';
 import { debounce, getYouTubeResults } from '../../utils';
 import { examples } from '../../utils/examples';
+import ChatVideoCard from '../Playlist/ChatVideoCard';
 import { YouTubeSearchResult } from '../SearchResult/SearchResult';
 
 interface ComboBoxProps {
-  setMedia: Function;
-  playlistAdd: Function;
+  setMedia: (e: any, data: DropdownProps) => void;
+  playlistAdd: (e: any, data: DropdownProps) => void;
+  playlistMove: (index: number, toIndex: number) => void;
+  playlistDelete: (index: number) => void;
   currentMedia: string;
   getMediaDisplayName: Function;
   launchMultiSelect: Function;
@@ -22,6 +25,9 @@ interface ComboBoxProps {
   disabled?: boolean;
   playlist: PlaylistVideo[];
 }
+
+// TODO change behavior: show current state as top option with add to playlist
+// show examples if field empty
 
 export class ComboBox extends React.Component<ComboBoxProps> {
   state = {
@@ -169,24 +175,35 @@ export class ComboBox extends React.Component<ComboBoxProps> {
             className="icon"
             button
             text={`Playlist (${this.props.playlist.length})`}
+            scrolling
           >
-            <Dropdown.Menu>
+            <Dropdown.Menu direction="left">
               {this.props.playlist.length === 0 && (
                 <Dropdown.Item disabled>
                   There are no items in the playlist.
                 </Dropdown.Item>
               )}
-              {this.props.playlist.map((item: any) => {
+              {this.props.playlist.map((item: PlaylistVideo, index: number) => {
                 return (
                   <Dropdown.Item>
-                    <div style={{ display: 'flex' }}>
-                      {/* TODO style this */}
-                      {JSON.stringify(item)}
-                      {/* TODO disable actions if locked */}
-                      {/* TODO remove item */}
-                      {/* TODO move item */}
-                      {/* TODO play immediately */}
-                    </div>
+                    <ChatVideoCard
+                      video={item}
+                      index={index}
+                      controls
+                      onPlay={(index) => {
+                        this.props.setMedia(null, {
+                          value: this.props.playlist[index]?.url,
+                        });
+                        this.props.playlistDelete(index);
+                      }}
+                      onPlayNext={(index) => {
+                        this.props.playlistMove(index, 0);
+                      }}
+                      onRemove={(index) => {
+                        this.props.playlistDelete(index);
+                      }}
+                      disabled={this.props.disabled}
+                    />
                   </Dropdown.Item>
                 );
               })}

@@ -387,7 +387,7 @@ async function release() {
         console.log('[RELEASE][%s] VM in room:', currBatch, room.roomId);
         room.stopVBrowserInternal();
         if (isTimedOut) {
-          room.addChatMessage(undefined, {
+          room.addChatMessage(null, {
             id: '',
             system: true,
             cmd: 'vBrowserTimeout',
@@ -398,7 +398,7 @@ async function release() {
           redisCount('vBrowserTerminateEmpty');
         }
       } else if (isAlmostTimedOut) {
-        room.addChatMessage(undefined, {
+        room.addChatMessage(null, {
           id: '',
           system: true,
           cmd: 'vBrowserAlmostTimeout',

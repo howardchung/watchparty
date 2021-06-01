@@ -3,7 +3,7 @@ export interface PlaylistVideo {
   url: string;
   name: string;
   img?: string;
-  duration?: number;
+  duration: number;
 }
 
 export interface YoutubeAPIVideoResult {

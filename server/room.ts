@@ -15,6 +15,7 @@ import { AssignedVM } from './vm/base';
 import { getStartOfDay } from './utils/time';
 import { assignVM, getVMManager } from './vm/utils';
 import { updateObject, upsertObject } from './utils/postgres';
+import { fetchYoutubeVideo, getYoutubeVideoID } from './utils/youtube';
 
 const gzip = util.promisify(zlib.gzip);
 
@@ -51,7 +52,7 @@ export class Room {
   public roomId: string;
   public roster: User[] = [];
   private tsMap: NumberDict = {};
-  private nextVotes: BooleanDict = {};
+  private nextVotes: StringDict = {};
   private io: SocketIO.Server;
   private clientIdMap: StringDict = {};
   private uidMap: StringDict = {};
@@ -436,13 +437,14 @@ export class Room {
     this.cmdHost(socket, data);
   };
 
-  private playlistNext = (socket: Socket | null) => {
-    // TODO possible for delayed nexts to come in, so check the current video
-    if (socket) {
-      this.nextVotes[socket.id] = true;
+  private playlistNext = (socket: Socket | null, data?: string) => {
+    if (data && data.length > 20000) {
+      return;
     }
-    const votes = this.roster.filter((user) => this.nextVotes[user.id] === true)
-      .length;
+    if (socket && data === this.playlist[0]?.url) {
+      this.nextVotes[socket.id] = data;
+    }
+    const votes = this.roster.filter((user) => this.nextVotes[user.id]).length;
     if (!socket || votes >= Math.floor(this.roster.length / 2)) {
       const next = this.playlist.shift();
       this.io.of(this.roomId).emit('playlist', this.playlist);
@@ -452,9 +454,22 @@ export class Room {
     }
   };
 
-  private playlistAdd = (socket: Socket, data: string) => {
-    // TODO look up video if youtube, otherwise just add url
-    this.playlist.push({ name: data, channel: 'N/A', duration: 0, url: data });
+  private playlistAdd = async (socket: Socket, data: string) => {
+    if (data && data.length > 20000) {
+      return;
+    }
+    const youtubeVideoId = getYoutubeVideoID(data);
+    if (youtubeVideoId) {
+      const video = await fetchYoutubeVideo(youtubeVideoId);
+      this.playlist.push(video);
+    } else {
+      this.playlist.push({
+        name: data,
+        channel: 'HTTP URL',
+        duration: 0,
+        url: data,
+      });
+    }
     this.io.of(this.roomId).emit('playlist', this.playlist);
     const chatMsg = {
       id: socket.id,
@@ -467,28 +482,22 @@ export class Room {
     }
   };
 
-  private playlistDelete = (socket: Socket, url: string) => {
-    const videoIndex = this.playlist.findIndex((video) => video.url === url);
-    if (videoIndex !== -1) {
-      this.playlist.splice(videoIndex, 1);
+  private playlistDelete = (socket: Socket, index: number) => {
+    if (index !== -1) {
+      this.playlist.splice(index, 1);
       this.io.of(this.roomId).emit('playlist', this.playlist);
     }
   };
 
   private playlistMove = (
     socket: Socket,
-    data: { url: string; index: number }
+    data: { index: number; toIndex: number }
   ) => {
-    const videoIndex = this.playlist.findIndex(
-      (video) => video.url === data.url
-    );
-
-    if (videoIndex !== -1) {
-      const items = this.playlist.splice(videoIndex, 1);
-      this.playlist.splice(data.index, 0, items[0]);
+    if (data.index !== -1) {
+      const items = this.playlist.splice(data.index, 1);
+      this.playlist.splice(data.toIndex, 0, items[0]);
+      this.io.of(this.roomId).emit('playlist', this.playlist);
     }
-
-    this.io.of(this.roomId).emit('playlist', this.playlist);
   };
 
   private playVideo = (socket: Socket) => {
