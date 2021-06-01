@@ -299,6 +299,7 @@ export class Room {
     const provider = this.vBrowser?.provider ?? config.VM_MANAGER_ID;
     const isLarge = this.vBrowser?.large ?? false;
     const region = this.vBrowser?.region ?? '';
+    const uid = this.vBrowser?.creatorUID ?? '';
     this.vBrowser = undefined;
     this.cmdHost(undefined, '');
     // Force a save to record the vbrowser change
@@ -306,6 +307,9 @@ export class Room {
     if (redis && assignTime) {
       await redis.lpush('vBrowserSessionMS', Number(new Date()) - assignTime);
       await redis.ltrim('vBrowserSessionMS', 0, 49);
+    }
+    if (redis && uid) {
+      await redis.del('vBrowserUIDLock:' + uid);
     }
     if (id) {
       try {
@@ -592,16 +596,29 @@ export class Room {
           clientId
         );
         redis.expireat('vBrowserClientIDMinutes', expireTime);
-        console.log(clientId, clientCount, clientMinutes);
       }
       if (uid) {
         const uidCount = await redis.zincrby('vBrowserUIDs', 1, uid);
         redis.expireat('vBrowserUIDs', expireTime);
         const uidMinutes = await redis.zincrby('vBrowserUIDMinutes', 1, uid);
         redis.expireat('vBrowserUIDMinutes', expireTime);
-        console.log(uid, uidCount, uidMinutes);
+        // TODO limit users based on these counts
+
+        const uidLock = await redis.set(
+          'vBrowserUIDLock:' + uid,
+          '1',
+          'NX',
+          'EX',
+          120
+        );
+        if (!uidLock) {
+          socket.emit(
+            'errorMessage',
+            'There is already an active vBrowser for this user.'
+          );
+          return;
+        }
       }
-      // TODO limit users based on these counts
     }
     let isLarge = false;
     let region = '';
