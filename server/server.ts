@@ -415,11 +415,12 @@ async function minuteMetrics() {
   for (let i = 0; i < roomArr.length; i++) {
     const room = roomArr[i];
     if (room.vBrowser && room.vBrowser.id) {
-      // Renew the lock
+      // Renew the locks
       await redis?.expire(
         'lock:' + room.vBrowser.provider + ':' + room.vBrowser.id,
         300
       );
+      await redis?.expire('vBrowserUIDLock:' + room.vBrowser.creatorUID, 120);
 
       const expireTime = getStartOfDay() / 1000 + 86400;
       if (room.vBrowser?.creatorClientID) {
