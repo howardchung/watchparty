@@ -11,6 +11,7 @@ import { ProfileModal } from '../Modal/ProfileModal';
 export class NewRoomButton extends React.Component<{
   user: firebase.User | undefined;
   size?: string;
+  openNewTab?: boolean;
 }> {
   createRoom = async () => {
     const uid = this.props.user?.uid;
@@ -27,7 +28,11 @@ export class NewRoomButton extends React.Component<{
     });
     const data = await response.json();
     const { name } = data;
-    window.location.assign('/#' + name);
+    if (this.props.openNewTab) {
+      window.open('/#' + name);
+    } else {
+      window.location.assign('/#' + name);
+    }
   };
   render() {
     return (
@@ -370,7 +375,7 @@ export class TopBar extends React.Component<{
             }}
           >
             {!this.props.hideNewRoom && (
-              <NewRoomButton user={this.props.user} />
+              <NewRoomButton user={this.props.user} openNewTab />
             )}
             {!this.props.hideMyRooms && this.props.user && (
               <ListRoomsButton user={this.props.user} />
