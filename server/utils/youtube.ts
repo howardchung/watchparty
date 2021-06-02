@@ -1,7 +1,6 @@
 import config from '../config';
 import Youtube from 'youtube-api';
 import {
-  PlaylistVideo,
   YoutubeAPIVideoResult,
   YoutubeListResult,
   YoutubeSearchResult,

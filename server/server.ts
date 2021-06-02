@@ -605,6 +605,7 @@ async function getStats() {
   );
   const recaptchaRejectsOther = await getRedisCountDay('recaptchaRejectsOther');
   const urlStarts = await getRedisCountDay('urlStarts');
+  const playlistAdds = await getRedisCountDay('playlistAdds');
   const screenShareStarts = await getRedisCountDay('screenShareStarts');
   const fileShareStarts = await getRedisCountDay('fileShareStarts');
   const videoChatStarts = await getRedisCountDay('videoChatStarts');
@@ -673,6 +674,7 @@ async function getStats() {
     numSubs,
     chatMessages,
     urlStarts,
+    playlistAdds,
     screenShareStarts,
     fileShareStarts,
     subUploads,

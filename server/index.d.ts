@@ -1,11 +1,3 @@
-export interface PlaylistVideo {
-  channel: string;
-  url: string;
-  name: string;
-  img?: string;
-  duration: number;
-}
-
 export interface YoutubeAPIVideoResult {
   kind: string;
   etag: string;

@@ -421,11 +421,11 @@ export class Room {
     this.uidMap[socket.id] = decoded.uid;
   };
 
-  private startHosting = (socket: Socket | null, data: string) => {
+  private startHosting = (socket: Socket, data: string) => {
     if (data && data.length > 20000) {
       return;
     }
-    if (socket && !this.validateLock(socket.id)) {
+    if (!this.validateLock(socket.id)) {
       return;
     }
     const sharer = this.roster.find((user) => user.isScreenShare);
@@ -449,7 +449,7 @@ export class Room {
       const next = this.playlist.shift();
       this.io.of(this.roomId).emit('playlist', this.playlist);
       if (next) {
-        this.startHosting(null, next.url);
+        this.cmdHost(null, next.url);
       }
     }
   };
@@ -458,6 +458,7 @@ export class Room {
     if (data && data.length > 20000) {
       return;
     }
+    redisCount('playlistAdds');
     const youtubeVideoId = getYoutubeVideoID(data);
     if (youtubeVideoId) {
       const video = await fetchYoutubeVideo(youtubeVideoId);
