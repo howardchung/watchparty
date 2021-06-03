@@ -1342,6 +1342,15 @@ export default class App extends React.Component<AppProps, AppState> {
 
   onVideoEnded = () => {
     this.socket.emit('CMD:playlistNext', this.state.currentMedia);
+    // Play next
+    if (this.state.currentMedia?.includes('/stream?torrent=magnet')) {
+      const url = new URL(this.state.currentMedia);
+      const fileIndex = url.searchParams.get('fileIndex');
+      if (fileIndex != null) {
+        url.searchParams.set('fileIndex', (Number(fileIndex) + 1).toString());
+        this.setMedia(null, { value: url.toString() });
+      }
+    }
   };
 
   render() {
