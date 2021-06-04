@@ -286,6 +286,7 @@ export class Room {
     return this.roster.map((p) => ({
       name: this.nameMap[p.id] || p.id,
       uid: this.uidMap[p.id],
+      ts: this.tsMap[p.id],
       ip: this.io.of(this.roomId).sockets[p.id]?.request?.connection
         ?.remoteAddress,
     }));
