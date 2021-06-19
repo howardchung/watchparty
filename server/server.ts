@@ -387,7 +387,7 @@ async function release() {
         console.log('[RELEASE][%s] VM in room:', currBatch, room.roomId);
         room.stopVBrowserInternal();
         if (isTimedOut) {
-          room.addChatMessage(undefined, {
+          room.addChatMessage(null, {
             id: '',
             system: true,
             cmd: 'vBrowserTimeout',
@@ -398,7 +398,7 @@ async function release() {
           redisCount('vBrowserTerminateEmpty');
         }
       } else if (isAlmostTimedOut) {
-        room.addChatMessage(undefined, {
+        room.addChatMessage(null, {
           id: '',
           system: true,
           cmd: 'vBrowserAlmostTimeout',
@@ -605,6 +605,7 @@ async function getStats() {
   );
   const recaptchaRejectsOther = await getRedisCountDay('recaptchaRejectsOther');
   const urlStarts = await getRedisCountDay('urlStarts');
+  const playlistAdds = await getRedisCountDay('playlistAdds');
   const screenShareStarts = await getRedisCountDay('screenShareStarts');
   const fileShareStarts = await getRedisCountDay('fileShareStarts');
   const videoChatStarts = await getRedisCountDay('videoChatStarts');
@@ -673,6 +674,7 @@ async function getStats() {
     numSubs,
     chatMessages,
     urlStarts,
+    playlistAdds,
     screenShareStarts,
     fileShareStarts,
     subUploads,

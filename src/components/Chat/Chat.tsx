@@ -96,6 +96,15 @@ export class Chat extends React.Component<ChatProps> {
           </span>
         </React.Fragment>
       );
+    } else if (cmd === 'playlistAdd') {
+      return (
+        <React.Fragment>
+          {`added to the playlist: `}
+          <span style={{ textTransform: 'initial' }}>
+            {this.props.getMediaDisplayName(msg)}
+          </span>
+        </React.Fragment>
+      );
     } else if (cmd === 'seek') {
       return `jumped to ${formatTimestamp(msg)}`;
     } else if (cmd === 'play') {
