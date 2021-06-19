@@ -1,5 +1,3 @@
-import { PlaylistVideo } from '..';
-
 export const findPlaylistVideoByUrl = (
   playlist: PlaylistVideo[],
   url?: string

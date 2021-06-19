@@ -28,15 +28,6 @@ interface ChatMessage extends ChatMessageBase {
   videoTS?: number;
 }
 
-interface SearchResult {
-  name: string;
-  url: string;
-  size?: string;
-  seeders?: string;
-  magnet?: string;
-  img?: string;
-}
-
 interface Settings {
   mediaPath?: string;
   streamPath?: string;
@@ -47,8 +38,14 @@ interface PlaylistVideo {
   url: string;
   name: string;
   img?: string;
-  channel: string;
-  duration: string;
+  channel?: string;
+  duration: number;
+}
+
+interface SearchResult extends PlaylistVideo {
+  size?: string;
+  seeders?: string;
+  magnet?: string;
 }
 
 interface HostState {

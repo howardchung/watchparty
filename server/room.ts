@@ -15,6 +15,7 @@ import { AssignedVM } from './vm/base';
 import { getStartOfDay } from './utils/time';
 import { assignVM, getVMManager } from './vm/utils';
 import { updateObject, upsertObject } from './utils/postgres';
+import { fetchYoutubeVideo, getYoutubeVideoID } from './utils/youtube';
 
 const gzip = util.promisify(zlib.gzip);
 
@@ -45,11 +46,13 @@ export class Room {
   public lastUpdateTime: Date = new Date();
   public creator: string | undefined = undefined;
   public lock: string | undefined = undefined; // uid of the user who locked the room
+  public playlist: PlaylistVideo[] = [];
 
   // Non-serialized state
   public roomId: string;
   public roster: User[] = [];
   private tsMap: NumberDict = {};
+  private nextVotes: StringDict = {};
   private io: SocketIO.Server;
   private clientIdMap: StringDict = {};
   private uidMap: StringDict = {};
@@ -114,6 +117,7 @@ export class Room {
       socket.emit('REC:tsMap', this.tsMap);
       socket.emit('REC:lock', this.lock);
       socket.emit('chatinit', this.chat);
+      socket.emit('playlist', this.playlist);
       this.getRoomState(socket);
       io.of(roomId).emit('roster', this.roster);
 
@@ -148,6 +152,13 @@ export class Room {
       socket.on('CMD:getRoomState', () => this.getRoomState(socket));
       socket.on('CMD:setRoomState', (data) => this.setRoomState(socket, data));
       socket.on('CMD:setRoomOwner', (data) => this.setRoomOwner(socket, data));
+      socket.on('CMD:playlistNext', (data) => this.playlistNext(socket, data));
+      socket.on('CMD:playlistAdd', (data) => this.playlistAdd(socket, data));
+      socket.on('CMD:playlistMove', (data) => this.playlistMove(socket, data));
+      socket.on('CMD:playlistDelete', (data) =>
+        this.playlistDelete(socket, data)
+      );
+
       socket.on('signal', (data) => this.sendSignal(socket, data));
       socket.on('signalSS', (data) => this.signalSS(socket, data));
 
@@ -186,6 +197,7 @@ export class Room {
       lastUpdateTime: this.lastUpdateTime,
       lock: this.lock,
       creator: this.creator,
+      playlist: this.playlist,
     });
   };
 
@@ -222,6 +234,9 @@ export class Room {
     }
     if (roomObj.creator) {
       this.creator = roomObj.creator;
+    }
+    if (roomObj.playlist) {
+      this.playlist = roomObj.playlist;
     }
   };
 
@@ -271,6 +286,7 @@ export class Room {
     return this.roster.map((p) => ({
       name: this.nameMap[p.id] || p.id,
       uid: this.uidMap[p.id],
+      ts: this.tsMap[p.id],
       ip: this.io.of(this.roomId).sockets[p.id]?.request?.connection
         ?.remoteAddress,
     }));
@@ -301,7 +317,7 @@ export class Room {
     const region = this.vBrowser?.region ?? '';
     const uid = this.vBrowser?.creatorUID ?? '';
     this.vBrowser = undefined;
-    this.cmdHost(undefined, '');
+    this.cmdHost(null, '');
     // Force a save to record the vbrowser change
     this.saveToRedis(null);
     if (redis && assignTime) {
@@ -321,24 +337,25 @@ export class Room {
     }
   };
 
-  private cmdHost = (socket: Socket | undefined, data: string) => {
+  private cmdHost = (socket: Socket | null, data: string) => {
     this.video = data;
     this.videoTS = 0;
     this.paused = false;
     this.subtitle = '';
     this.tsMap = {};
+    this.nextVotes = {};
     this.io.of(this.roomId).emit('REC:tsMap', this.tsMap);
     this.io.of(this.roomId).emit('REC:host', this.getHostState());
     if (socket && data) {
       const chatMsg = { id: socket.id, cmd: 'host', msg: data };
       this.addChatMessage(socket, chatMsg);
     }
+    if (data === '') {
+      this.playlistNext(null);
+    }
   };
 
-  public addChatMessage = (
-    socket: Socket | undefined,
-    chatMsg: ChatMessageBase
-  ) => {
+  public addChatMessage = (socket: Socket | null, chatMsg: ChatMessageBase) => {
     if (this.isChatDisabled && !chatMsg.cmd) {
       return;
     }
@@ -419,6 +436,70 @@ export class Room {
     }
     redisCount('urlStarts');
     this.cmdHost(socket, data);
+  };
+
+  private playlistNext = (socket: Socket | null, data?: string) => {
+    if (data && data.length > 20000) {
+      return;
+    }
+    if (socket && data === this.video) {
+      this.nextVotes[socket.id] = data;
+    }
+    const votes = this.roster.filter((user) => this.nextVotes[user.id]).length;
+    if (!socket || votes >= Math.floor(this.roster.length / 2)) {
+      const next = this.playlist.shift();
+      this.io.of(this.roomId).emit('playlist', this.playlist);
+      if (next) {
+        this.cmdHost(null, next.url);
+      }
+    }
+  };
+
+  private playlistAdd = async (socket: Socket, data: string) => {
+    if (data && data.length > 20000) {
+      return;
+    }
+    redisCount('playlistAdds');
+    const youtubeVideoId = getYoutubeVideoID(data);
+    if (youtubeVideoId) {
+      const video = await fetchYoutubeVideo(youtubeVideoId);
+      this.playlist.push(video);
+    } else {
+      this.playlist.push({
+        name: data,
+        channel: 'Video URL',
+        duration: 0,
+        url: data,
+      });
+    }
+    this.io.of(this.roomId).emit('playlist', this.playlist);
+    const chatMsg = {
+      id: socket.id,
+      cmd: 'playlistAdd',
+      msg: data,
+    };
+    this.addChatMessage(socket, chatMsg);
+    if (!this.video) {
+      this.playlistNext(null);
+    }
+  };
+
+  private playlistDelete = (socket: Socket, index: number) => {
+    if (index !== -1) {
+      this.playlist.splice(index, 1);
+      this.io.of(this.roomId).emit('playlist', this.playlist);
+    }
+  };
+
+  private playlistMove = (
+    socket: Socket,
+    data: { index: number; toIndex: number }
+  ) => {
+    if (data.index !== -1) {
+      const items = this.playlist.splice(data.index, 1);
+      this.playlist.splice(data.toIndex, 0, items[0]);
+      this.io.of(this.roomId).emit('playlist', this.playlist);
+    }
   };
 
   private playVideo = (socket: Socket) => {
@@ -696,7 +777,7 @@ export class Room {
     this.vBrowser.creatorUID = uid;
     this.vBrowser.creatorClientID = clientId;
     this.cmdHost(
-      undefined,
+      null,
       'vbrowser://' + this.vBrowser.pass + '@' + this.vBrowser.host
     );
   };

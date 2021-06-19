@@ -99,7 +99,7 @@ body {
 }
 
 #leftYt {
-  pointer-events: none;
+  /*pointer-events: none;*/
 }
 
 @media only screen and (max-width: 600px) {

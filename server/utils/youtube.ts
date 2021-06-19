@@ -1,7 +1,6 @@
 import config from '../config';
 import Youtube from 'youtube-api';
 import {
-  PlaylistVideo,
   YoutubeAPIVideoResult,
   YoutubeListResult,
   YoutubeSearchResult,
@@ -28,6 +27,7 @@ export const mapYoutubeSearchResult = (
     url: 'https://www.youtube.com/watch?v=' + video.id.videoId,
     name: video.snippet.title,
     img: video.snippet.thumbnails.default.url,
+    duration: 0,
   };
 };
 
@@ -40,7 +40,7 @@ export const mapYoutubeListResult = (
     name: video.snippet.title,
     img: video.snippet.thumbnails.default.url,
     channel: video.snippet.channelTitle,
-    duration: getVideoDuration(video.contentDetails.duration),
+    duration: getVideoDuration(video.contentDetails.duration) ?? 0,
   };
 };
 

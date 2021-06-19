@@ -1,0 +1,74 @@
+.Card {
+  color: inherit;
+  display: block;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  padding: 8px;
+  margin: 4px 0;
+}
+
+.Wrapper {
+  display: flex;
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+
+.ThumbnailWrapper {
+  flex: 0 0 auto;
+  width: 100px;
+  height: 56px;
+  overflow: hidden;
+  position: relative;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.Thumbnail {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.Content {
+  overflow: hidden;
+  flex: 1 1 auto;
+}
+
+.Title {
+  color: #000;
+  line-height: 1.5;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  width: 100%;
+  display: block;
+}
+
+.ChannelName {
+  color: #000;
+  opacity: 0.5;
+  margin-top: 4px;
+  display: block;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.DurationLabel {
+  position: absolute;
+  z-index: 1;
+  bottom: 0;
+  right: 0;
+  padding: 2px 4px;
+  background: rgba(0, 0, 0, 0.95);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.Controls {
+  margin-left: auto;
+}

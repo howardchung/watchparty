@@ -75,6 +75,7 @@ interface AppState {
   participants: User[];
   rosterUpdateTS: Number;
   chat: ChatMessage[];
+  playlist: PlaylistVideo[];
   tsMap: NumberDict;
   nameMap: StringDict;
   pictureMap: StringDict;
@@ -129,6 +130,7 @@ export default class App extends React.Component<AppProps, AppState> {
     participants: [],
     rosterUpdateTS: Number(new Date()),
     chat: [],
+    playlist: [],
     tsMap: {},
     nameMap: {},
     pictureMap: {},
@@ -279,6 +281,12 @@ export default class App extends React.Component<AppProps, AppState> {
               e.data === window.YT?.PlayerState?.CUED
             ) {
               this.setState({ loading: false });
+            }
+            if (
+              getMediaType(this.state.currentMedia) === 'youtube' &&
+              e.data === window.YT?.PlayerState?.ENDED
+            ) {
+              this.onVideoEnded();
             }
             // console.log(this.ytDebounce, e.data, this.watchPartyYTPlayer?.getVideoUrl());
             if (
@@ -565,8 +573,11 @@ export default class App extends React.Component<AppProps, AppState> {
         }
       );
     });
-    socket.on('chatinit', (data: any) => {
+    socket.on('chatinit', (data: ChatMessage[]) => {
       this.setState({ chat: data, scrollTimestamp: Number(new Date()) });
+    });
+    socket.on('playlist', (data: PlaylistVideo[]) => {
+      this.setState({ playlist: data });
     });
     socket.on('signalSS', async (data: any) => {
       // Handle messages received from signaling server
@@ -601,7 +612,6 @@ export default class App extends React.Component<AppProps, AppState> {
       }
     });
     socket.on('REC:getRoomState', this.handleRoomState);
-    socket.emit('CMD:getRoomState');
     window.setInterval(() => {
       if (this.state.currentMedia) {
         this.socket.emit('CMD:ts', this.getCurrentTime());
@@ -1230,6 +1240,18 @@ export default class App extends React.Component<AppProps, AppState> {
     this.socket.emit('CMD:host', data.value);
   };
 
+  playlistAdd = (_e: any, data: DropdownProps) => {
+    this.socket.emit('CMD:playlistAdd', data.value);
+  };
+
+  playlistMove = (index: number, toIndex: number) => {
+    this.socket.emit('CMD:playlistMove', { index, toIndex });
+  };
+
+  playlistDelete = (index: number) => {
+    this.socket.emit('CMD:playlistDelete', index);
+  };
+
   launchMultiSelect = (data: any) => {
     this.setState({ multiStreamSelection: data });
   };
@@ -1316,6 +1338,19 @@ export default class App extends React.Component<AppProps, AppState> {
 
   getLeaderTime = () => {
     return calculateMedian(Object.values(this.state.tsMap));
+  };
+
+  onVideoEnded = () => {
+    this.socket.emit('CMD:playlistNext', this.state.currentMedia);
+    // Play next
+    if (this.state.currentMedia?.includes('/stream?torrent=magnet')) {
+      const url = new URL(this.state.currentMedia);
+      const fileIndex = url.searchParams.get('fileIndex');
+      if (fileIndex != null) {
+        url.searchParams.set('fileIndex', (Number(fileIndex) + 1).toString());
+        this.setMedia(null, { value: url.toString() });
+      }
+    }
   };
 
   render() {
@@ -1565,12 +1600,16 @@ export default class App extends React.Component<AppProps, AppState> {
                 >
                   <ComboBox
                     setMedia={this.setMedia}
+                    playlistAdd={this.playlistAdd}
+                    playlistDelete={this.playlistDelete}
+                    playlistMove={this.playlistMove}
                     currentMedia={this.state.currentMedia}
                     getMediaDisplayName={this.getMediaDisplayName}
                     launchMultiSelect={this.launchMultiSelect}
                     streamPath={this.state.settings.streamPath}
                     mediaPath={this.state.settings.mediaPath}
                     disabled={!this.haveLock()}
+                    playlist={this.state.playlist}
                   />
                   <Separator />
                   <div
@@ -1734,6 +1773,7 @@ export default class App extends React.Component<AppProps, AppState> {
                     {false && (
                       <SearchComponent
                         setMedia={this.setMedia}
+                        playlistAdd={this.playlistAdd}
                         type={'youtube'}
                         streamPath={this.state.settings.streamPath}
                         mediaPath={this.state.settings.mediaPath}
@@ -1743,6 +1783,7 @@ export default class App extends React.Component<AppProps, AppState> {
                     {Boolean(this.state.settings.mediaPath) && (
                       <SearchComponent
                         setMedia={this.setMedia}
+                        playlistAdd={this.playlistAdd}
                         type={'media'}
                         streamPath={this.state.settings.streamPath}
                         mediaPath={this.state.settings.mediaPath}
@@ -1752,6 +1793,7 @@ export default class App extends React.Component<AppProps, AppState> {
                     {Boolean(this.state.settings.streamPath) && (
                       <SearchComponent
                         setMedia={this.setMedia}
+                        playlistAdd={this.playlistAdd}
                         type={'stream'}
                         streamPath={this.state.settings.streamPath}
                         mediaPath={this.state.settings.mediaPath}
@@ -1872,6 +1914,7 @@ export default class App extends React.Component<AppProps, AppState> {
                             width: '100%',
                           }}
                           id="leftVideo"
+                          onEnded={this.onVideoEnded}
                           playsInline
                         ></video>
                       )}
