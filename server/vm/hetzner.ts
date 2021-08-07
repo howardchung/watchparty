@@ -176,18 +176,22 @@ export class Hetzner extends VMManager {
     }
   };
 
-  mapServerObject = (server: any): VM => ({
-    id: server.id?.toString(),
-    pass: server.name,
-    // The gateway handles SSL termination and proxies to the private IP
-    host: `${gatewayHost}/?ip=${server.private_net?.[0]?.ip}`,
-    private_ip: server.private_net?.[0]?.ip,
-    state: server.status,
-    tags: Object.keys(server.labels),
-    creation_date: server.created,
-    originalName: server.labels.originalName,
-    provider: this.id,
-    large: this.isLarge,
-    region: this.region,
-  });
+  mapServerObject = (server: any): VM => {
+    const ip = server.public_net?.ipv4?.ip;
+    // const ip = server.private_net?.[0]?.ip;
+    return {
+      id: server.id?.toString(),
+      pass: server.name,
+      // The gateway handles SSL termination and proxies to the private IP
+      host: `${gatewayHost}/?ip=${ip}`,
+      private_ip: ip,
+      state: server.status,
+      tags: Object.keys(server.labels),
+      creation_date: server.created,
+      originalName: server.labels.originalName,
+      provider: this.id,
+      large: this.isLarge,
+      region: this.region,
+    };
+  };
 }
