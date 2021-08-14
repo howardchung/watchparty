@@ -9,7 +9,7 @@ if (config.REDIS_URL) {
   redis = new Redis(config.REDIS_URL);
 }
 
-const incrInterval = 3 * 1000;
+const incrInterval = 5 * 1000;
 const decrInterval = 1 * 60 * 1000;
 const cleanupInterval = 5 * 60 * 1000;
 const updateSizeInterval = 30 * 1000;
@@ -161,7 +161,11 @@ export abstract class VMManager {
           'available:',
           availableCount,
           'staging:',
-          stagingCount
+          stagingCount,
+          'currentSize:',
+          this.getCurrentSize(),
+          'limit:',
+          this.getLimitSize()
         );
         this.startVMWrapper();
       }
