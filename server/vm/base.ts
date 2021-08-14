@@ -3,6 +3,7 @@ import Redis from 'ioredis';
 import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import { redisCount } from '../utils/redis';
+import urlExist from 'url-exist';
 
 let redis: Redis.Redis | undefined = undefined;
 if (config.REDIS_URL) {
@@ -295,6 +296,7 @@ export abstract class VMManager {
                     await this.redis.lrem(this.getRedisQueueKey(), 0, id);
                     await this.redis.lrem(this.getRedisStagingKey(), 0, id);
                     await this.redis.del(this.getRedisStagingKey() + ':' + id);
+                    return resolve();
                   }
                 }
                 if (host) {
@@ -310,7 +312,10 @@ export abstract class VMManager {
                   );
                 }
               }
-              ready = await checkVMReady(host ?? '');
+              if (!host) {
+                return resolve();
+              }
+              ready = await checkVMReady(host);
               if (ready) {
                 console.log('[CHECKSTAGING] ready:', id, host, retryCount);
                 // If it is, move it to available list
@@ -375,16 +380,17 @@ export abstract class VMManager {
 
     const checkVMReady = async (host: string) => {
       const url = 'https://' + host + '/healthz';
-      try {
-        await axios({
-          method: 'GET',
-          url,
-          timeout: 1000,
-        });
-      } catch (e) {
-        return false;
-      }
-      return true;
+      return await urlExist(url);
+      // try {
+      //   await axios({
+      //     method: 'GET',
+      //     url,
+      //     timeout: 1000,
+      //   });
+      // } catch (e) {
+      //   return false;
+      // }
+      // return true;
     };
     setInterval(resizeVMGroupIncr, incrInterval);
     setInterval(resizeVMGroupDecr, decrInterval);
