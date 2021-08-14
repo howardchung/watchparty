@@ -7,7 +7,7 @@ async function start() {
     const resp = await axios({
       method: 'GET',
       url: 'https://gateway3.watchparty.me/?ip=10.1.0.81/healthz',
-      //timeout: 1000
+      timeout: 1000,
     });
     console.log(resp);
   } catch (ex) {
