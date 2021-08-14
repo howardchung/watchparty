@@ -333,7 +333,7 @@ export abstract class VMManager {
                   await this.redis.ltrim('vBrowserStageRetries', 0, 49);
                 }
               } else {
-                if (retryCount >= 400) {
+                if (retryCount >= 500) {
                   console.log('[CHECKSTAGING] giving up:', id);
                   await this.redis
                     .multi()
@@ -383,7 +383,7 @@ export abstract class VMManager {
         await axios({
           method: 'GET',
           url,
-          timeout: 1000,
+          timeout: 5000,
         });
       } catch (e) {
         return false;
@@ -394,6 +394,7 @@ export abstract class VMManager {
     setInterval(resizeVMGroupDecr, decrInterval);
     updateSize();
     setInterval(updateSize, updateSizeInterval);
+    cleanupVMGroup();
     setInterval(cleanupVMGroup, cleanupInterval);
     setTimeout(checkStaging, 100); // Add some delay to make sure the object is constructed first
   };
