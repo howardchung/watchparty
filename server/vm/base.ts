@@ -381,9 +381,9 @@ export abstract class VMManager {
       const url = 'https://' + host + '/healthz';
       try {
         await axios({
-          method: 'HEAD',
+          method: 'GET',
           url,
-          // timeout: 1000,
+          timeout: 1000,
         });
       } catch (e) {
         return false;
