@@ -3,7 +3,6 @@ import Redis from 'ioredis';
 import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import { redisCount } from '../utils/redis';
-import urlExist from 'url-exist';
 
 let redis: Redis.Redis | undefined = undefined;
 if (config.REDIS_URL) {
@@ -380,17 +379,16 @@ export abstract class VMManager {
 
     const checkVMReady = async (host: string) => {
       const url = 'https://' + host + '/healthz';
-      return await urlExist(url);
-      // try {
-      //   await axios({
-      //     method: 'GET',
-      //     url,
-      //     timeout: 1000,
-      //   });
-      // } catch (e) {
-      //   return false;
-      // }
-      // return true;
+      try {
+        await axios({
+          method: 'HEAD',
+          url,
+          // timeout: 1000,
+        });
+      } catch (e) {
+        return false;
+      }
+      return true;
     };
     setInterval(resizeVMGroupIncr, incrInterval);
     setInterval(resizeVMGroupDecr, decrInterval);
