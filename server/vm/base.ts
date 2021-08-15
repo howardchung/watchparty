@@ -313,10 +313,7 @@ export abstract class VMManager {
                   );
                 }
               }
-              if (!host) {
-                return resolve();
-              }
-              ready = await checkVMReady(host);
+              ready = await checkVMReady(host ?? '');
               // ready = retryCount > 100;
               if (ready) {
                 console.log('[CHECKSTAGING] ready:', id, host, retryCount);
