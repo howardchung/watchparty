@@ -262,6 +262,7 @@ export abstract class VMManager {
         if (!dontDelete.has(server.id)) {
           console.log('[CLEANUP]', server.id);
           this.resetVM(server.id);
+          //this.terminateVM(server.id);
         }
       }
     };
@@ -387,7 +388,7 @@ export abstract class VMManager {
           timeout: 10000,
         });
       } catch (e) {
-        console.log(e.response?.status);
+        console.log(e, e.response?.status);
         return false;
       }
       return true;
