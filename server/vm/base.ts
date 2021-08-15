@@ -380,18 +380,15 @@ export abstract class VMManager {
     const checkVMReady = async (host: string) => {
       const url = 'https://' + host.replace('/', '/healthz');
       try {
-        const out = execSync(`curl -i -L -v --ipv4 '${host}'`);
-        if (
-          !out.toString().startsWith('OK') &&
-          !out.toString().startsWith('404 page not found')
-        ) {
-          throw new Error('mismatched response from healthz');
-        }
-        // await axios({
-        //   method: 'GET',
-        //   url,
-        //   timeout: 30000,
-        // });
+        // const out = execSync(`curl -i -L -v --ipv4 '${host}'`);
+        // if (!out.toString().startsWith('OK') && !out.toString().startsWith('404 page not found')) {
+        //   throw new Error('mismatched response from healthz');
+        // }
+        await axios({
+          method: 'GET',
+          url,
+          timeout: 30000,
+        });
       } catch (e) {
         console.log(url, e.message, e.response?.status);
         return false;
