@@ -28,6 +28,13 @@ http {
         proxy_set_header Connection "upgrade";
     }
   }
+  server {
+    listen 80 default_server;
+
+    server_name _;
+
+    return 301 https://$host$request_uri;
+  }
 }' | sed "s/HOSTNAME_PLACEHOLDER/$(hostname)/g" > /etc/nginx/nginx.conf
 /etc/init.d/nginx reload
 
