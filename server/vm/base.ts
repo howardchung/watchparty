@@ -385,10 +385,10 @@ export abstract class VMManager {
         await axios({
           method: 'GET',
           url,
-          timeout: 10000,
+          timeout: 15000,
         });
       } catch (e) {
-        console.log(e, e.response?.status);
+        console.log(e.message, e.response?.status);
         return false;
       }
       return true;
