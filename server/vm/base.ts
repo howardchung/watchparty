@@ -383,7 +383,7 @@ export abstract class VMManager {
     const checkVMReady = async (host: string) => {
       const url = 'https://' + host + '/healthz';
       try {
-        execSync(`curl --ipv4 '${host}'`);
+        execSync(`curl -v --ipv4 '${host}'`);
         // await axios({
         //   method: 'GET',
         //   url,
