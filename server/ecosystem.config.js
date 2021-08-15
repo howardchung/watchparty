@@ -40,7 +40,7 @@ module.exports = {
       script: './buildServer/vmWorker.js',
       log_date_format: 'YYYY-MM-DD HH:mm Z',
       env: {
-        HETZNER_GATEWAY: 'gateway3.watchparty.me',
+        HETZNER_GATEWAY: '116.203.53.105',
         HETZNER_NETWORKS: '91163,1007910,1007911',
       },
     },
