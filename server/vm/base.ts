@@ -381,13 +381,16 @@ export abstract class VMManager {
       const url = 'https://' + host + '/healthz';
       try {
         const out = execSync(`curl -i -L -v --ipv4 '${host}'`);
-        if (out.toString() !== 'OK') {
+        if (
+          out.toString() !== 'OK' &&
+          out.toString() !== '404 page not found'
+        ) {
           throw new Error('mismatched response from healthz');
         }
         // await axios({
         //   method: 'GET',
         //   url,
-        //   timeout: 20000,
+        //   timeout: 30000,
         // });
       } catch (e) {
         console.log(url, e.message, e.response?.status);
