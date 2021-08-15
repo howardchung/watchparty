@@ -3,13 +3,14 @@ import Redis from 'ioredis';
 import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import { redisCount } from '../utils/redis';
+import { execSync } from 'child_process';
 
 let redis: Redis.Redis | undefined = undefined;
 if (config.REDIS_URL) {
   redis = new Redis(config.REDIS_URL);
 }
 
-const incrInterval = 5 * 1000;
+const incrInterval = 10 * 1000;
 const decrInterval = 1 * 60 * 1000;
 const cleanupInterval = 5 * 60 * 1000;
 const updateSizeInterval = 30 * 1000;
@@ -382,13 +383,14 @@ export abstract class VMManager {
     const checkVMReady = async (host: string) => {
       const url = 'https://' + host + '/healthz';
       try {
-        await axios({
-          method: 'GET',
-          url,
-          timeout: 15000,
-        });
+        execSync(`curl ${host}`);
+        // await axios({
+        //   method: 'GET',
+        //   url,
+        //   timeout: 20000,
+        // });
       } catch (e) {
-        console.log(e.message, e.response?.status);
+        console.log(url, e.message, e.response?.status);
         return false;
       }
       return true;
