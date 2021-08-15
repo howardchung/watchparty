@@ -378,12 +378,12 @@ export abstract class VMManager {
     };
 
     const checkVMReady = async (host: string) => {
-      const url = 'https://' + host + '/healthz';
+      const url = 'https://' + host.replace('/', '/healthz');
       try {
         const out = execSync(`curl -i -L -v --ipv4 '${host}'`);
         if (
-          out.toString() !== 'OK' &&
-          out.toString() !== '404 page not found'
+          !out.toString().startsWith('OK') &&
+          !out.toString().startsWith('404 page not found')
         ) {
           throw new Error('mismatched response from healthz');
         }
