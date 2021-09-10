@@ -136,16 +136,19 @@ export class SubscribeModal extends React.Component<{
             <div style={{ textAlign: 'right' }}>
               {/* if user isn't logged in, provide login prompt */}
               {this.props.user && this.props.user.email ? (
-                <Button
-                  icon
-                  labelPosition="left"
-                  color="blue"
-                  size="large"
-                  onClick={this.onSubscribe}
-                >
-                  <Icon name="cc stripe" />
-                  Subscribe with Stripe
-                </Button>
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <Button
+                    icon
+                    labelPosition="left"
+                    color="blue"
+                    size="large"
+                    onClick={this.onSubscribe}
+                  >
+                    <Icon name="cc stripe" />
+                    Subscribe with Stripe
+                  </Button>
+                  <PayPalButton />
+                </div>
               ) : (
                 <div>
                   Please sign in to subscribe: <SignInButton user={undefined} />
@@ -156,5 +159,50 @@ export class SubscribeModal extends React.Component<{
         </Modal.Content>
       </Modal>
     );
+  }
+}
+
+// Load the sdk
+const clientIdProd =
+  'AYVMiKogO7TowY2El_gP98yPbo_npA-RcsRCTQt8wbIvBcIrhry2XcZvV6795LBTP0L2SMHARDHqSeL9';
+const clientIdSandbox =
+  'AVZw8R_EEj9H2dH4Gaxe95G5sC9OCQewoqejJlge5ITL1DI9EJXUKDOT7OalefE_0qcyV4ukm-kZ9AYq';
+const PAYPAL_SCRIPT = `https://www.paypal.com/sdk/js?client-id=${
+  process.env.NODE_ENV === 'development' ? clientIdSandbox : clientIdProd
+}&vault=true&disable-funding=credit`;
+const script = document.createElement('script');
+script.setAttribute('src', PAYPAL_SCRIPT);
+document.head.appendChild(script);
+
+class PayPalButton extends React.Component {
+  componentDidMount() {
+    window.paypal
+      .Buttons({
+        style: {
+          shape: 'rect',
+          color: 'gold',
+          layout: 'horizontal',
+          label: 'paypal',
+          size: 'medium',
+          height: 41,
+          tagline: false,
+        },
+        createSubscription: function (data: any, actions: any) {
+          return actions.subscription.create({
+            plan_id:
+              process.env.NODE_ENV === 'development'
+                ? 'P-6F19130075532800RL3P2KEA'
+                : 'P-71S87976YP813940EL3PPKNQ',
+          });
+        },
+        onApprove: function (data: any, actions: any) {
+          console.log(data);
+          // TODO Send the subscription ID and user id/token to server to validate that the user subscribed and create a record
+        },
+      })
+      .render('#paypal-button-container');
+  }
+  render() {
+    return <div id="paypal-button-container"></div>;
   }
 }
