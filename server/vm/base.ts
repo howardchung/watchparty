@@ -10,7 +10,7 @@ if (config.REDIS_URL) {
   redis = new Redis(config.REDIS_URL);
 }
 
-const incrInterval = 10 * 1000;
+const incrInterval = 5 * 1000;
 const decrInterval = 1 * 60 * 1000;
 const cleanupInterval = 5 * 60 * 1000;
 const updateSizeInterval = 30 * 1000;
@@ -313,8 +313,8 @@ export abstract class VMManager {
                   );
                 }
               }
-              //ready = await checkVMReady(host ?? '');
-              ready = retryCount > 100;
+              ready = await checkVMReady(host ?? '');
+              //ready = retryCount > 100;
               if (ready) {
                 console.log('[CHECKSTAGING] ready:', id, host, retryCount);
                 // If it is, move it to available list
@@ -368,12 +368,15 @@ export abstract class VMManager {
             });
           });
           await Promise.allSettled(stagingPromises);
+          await new Promise((resolve) =>
+            setTimeout(resolve, checkStagingInterval)
+          );
         } catch (e) {
           console.warn('[CHECKSTAGING-ERROR]', e);
+          await new Promise((resolve) =>
+            setTimeout(resolve, checkStagingInterval)
+          );
         }
-        await new Promise((resolve) =>
-          setTimeout(resolve, checkStagingInterval)
-        );
       }
     };
 
@@ -387,7 +390,7 @@ export abstract class VMManager {
         await axios({
           method: 'GET',
           url,
-          timeout: 30000,
+          timeout: 2000,
         });
       } catch (e) {
         console.log(url, e.message, e.response?.status);
