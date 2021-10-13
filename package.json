@@ -109,6 +109,6 @@
     "lint-staged": "^10.2.4",
     "prettier": "2.0.5",
     "ts-node-dev": "^1.0.0",
-    "typescript": "^4.1.3"
+    "typescript": "^4.4.4"
   }
 }
