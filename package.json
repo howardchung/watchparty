@@ -37,7 +37,7 @@
     "s3-client": "^4.4.2",
     "semantic-ui-css": "^2.4.1",
     "semantic-ui-react": "^0.88.2",
-    "socket.io": "^2.3.0",
+    "socket.io": "^4.3.0",
     "socket.io-client": "^2.3.0",
     "srt-webvtt": "^1.0.1",
     "ssh-exec": "^2.0.0",
