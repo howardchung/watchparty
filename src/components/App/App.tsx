@@ -57,6 +57,7 @@ declare global {
     YT: any;
     FB: any;
     fbAsyncInit: Function;
+    Hls: any;
   }
 }
 
@@ -953,6 +954,13 @@ export default class App extends React.Component<AppProps, AppState> {
           const leftVideo = document.getElementById(
             'leftVideo'
           ) as HTMLMediaElement;
+          //check for HLS
+          let lv=leftVideo?.src.split('.');
+          if(lv[lv.length-1]==="m3u8" && !leftVideo?.canPlayType('application/vnd.apple.mpegurl')){
+            let hls=new window.Hls();
+            hls.loadSource(leftVideo.src)
+            hls.attachMedia(leftVideo);
+          }
           try {
             if (this.state.isAutoPlayable) {
               this.setMute(false);
