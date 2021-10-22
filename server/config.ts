@@ -22,8 +22,10 @@ const defaults = {
   DO_TOKEN: '', // Optional, for DigitalOcean VMs
   DO_GATEWAY: '', // Warning, needs to be set on both vmWorker and server!
   HETZNER_TOKEN: '', // Optional, for Hetzner VMs
-  HETZNER_GATEWAY: '', // Warning, needs to be set on both vmWorker and server!
-  HETZNER_NETWORKS: '',
+  HETZNER_GATEWAY: '', // Warning: needs to be set on both vmWorker and server!
+  HETZNER_NETWORKS: '', // IDs of Hetzner networks vbrowsers are using
+  HETZNER_SSH_KEYS: '', // IDs of Hetzner SSH keys to access vbrowsers
+  HETZNER_IMAGE: '', // ID of Hetzner snapshot image to use for vbrowser
   SCW_SECRET_KEY: '', // Optional, for Scaleway VMs
   SCW_ORGANIZATION_ID: '', // Optional, for Scaleway VMs
   SCW_GATEWAY: '', // Warning, needs to be set on both vmWorker and server!
