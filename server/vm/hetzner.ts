@@ -7,9 +7,9 @@ import { cloudInit, imageName } from './utils';
 const HETZNER_TOKEN = config.HETZNER_TOKEN;
 const region = ['nbg1', 'fsn1', 'hel1'];
 const gatewayHost = config.HETZNER_GATEWAY;
-const sshKeys = [1570536];
+const sshKeys = config.HETZNER_SSH_KEYS.split(',').map(Number);
 const networks = config.HETZNER_NETWORKS.split(',').map(Number);
-const imageId = 38960659;
+const imageId = Number(config.HETZNER_IMAGE);
 
 export class Hetzner extends VMManager {
   size = 'cpx11'; // cx11, cpx11, cpx21, cpx31, ccx11
