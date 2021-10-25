@@ -333,7 +333,7 @@ export abstract class VMManager {
                   await this.redis.ltrim('vBrowserStageRetries', 0, 49);
                 }
               } else {
-                if (retryCount >= 500) {
+                if (retryCount >= 200) {
                   console.log('[CHECKSTAGING] giving up:', id);
                   await this.redis
                     .multi()
@@ -393,7 +393,7 @@ export abstract class VMManager {
           timeout: 2000,
         });
       } catch (e) {
-        console.log(url, e.message, e.response?.status);
+        // console.log(url, e.message, e.response?.status);
         return false;
       }
       return true;
