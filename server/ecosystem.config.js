@@ -7,6 +7,7 @@ module.exports = {
       env: {
         PORT: 80,
         HETZNER_GATEWAY: 'gateway3.watchparty.me',
+        HETZNER_IMAGE: '51135214',
       },
     },
     {
