@@ -258,8 +258,8 @@ export abstract class VMManager {
         const server = allVMs[i];
         if (!dontDelete.has(server.id)) {
           console.log('[CLEANUP]', server.id);
-          //this.resetVM(server.id);
-          this.terminateVM(server.id);
+          this.resetVM(server.id);
+          //this.terminateVM(server.id);
         }
       }
     };
