@@ -47,7 +47,7 @@ export class VBrowserModal extends React.Component<{
         color="red"
         icon="hourglass two"
         style={{ width: '380px' }}
-        header="All Free VBrowsers In Use"
+        header="No Free VBrowsers Available"
         content={
           <div>
             <div>All of the free VBrowsers are currently being used.</div>
