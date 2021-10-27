@@ -277,7 +277,7 @@ export abstract class VMManager {
           -1
         );
         const stagingPromises = stagingKeys.map((id) => {
-          new Promise<string>(async (resolve, reject) => {
+          return new Promise<string>(async (resolve, reject) => {
             const retryCount = await this.redis.incr(
               this.getRedisStagingKey() + ':' + id
             );
