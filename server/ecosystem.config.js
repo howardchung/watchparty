@@ -1,3 +1,5 @@
+const hetznerImage = '51615253';
+
 module.exports = {
   apps: [
     {
@@ -7,7 +9,7 @@ module.exports = {
       env: {
         PORT: 80,
         HETZNER_GATEWAY: 'gateway3.watchparty.me',
-        HETZNER_IMAGE: '51135214',
+        HETZNER_IMAGE: hetznerImage,
       },
     },
     {
@@ -45,7 +47,7 @@ module.exports = {
         HETZNER_GATEWAY: 'gateway3.watchparty.me',
         HETZNER_NETWORKS: '91163,1007910,1007911',
         HETZNER_SSH_KEYS: '1570536',
-        HETZNER_IMAGE: '51135214',
+        HETZNER_IMAGE: hetznerImage,
       },
     },
     {
