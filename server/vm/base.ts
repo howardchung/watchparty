@@ -283,7 +283,7 @@ export abstract class VMManager {
             );
             if (retryCount < 10) {
               // Do a minimum of 10 retries to give reboot time
-              return reject();
+              return resolve(id + ', ' + retryCount + ', ' + false);
             }
             let ready = false;
             let host = await this.redis.get(
@@ -334,7 +334,7 @@ export abstract class VMManager {
                 await this.redis.ltrim('vBrowserStageRetries', 0, 49);
               }
             } else {
-              if (retryCount >= 180) {
+              if (retryCount >= 150) {
                 console.log(
                   '[CHECKSTAGING]',
                   checkStagingStart,
@@ -392,7 +392,7 @@ export abstract class VMManager {
     setInterval(updateSize, updateSizeInterval);
     cleanupVMGroup();
     setInterval(cleanupVMGroup, cleanupInterval);
-    const checkStagingInterval = 2000;
+    const checkStagingInterval = 1000;
     while (true) {
       await new Promise((resolve) => setTimeout(resolve, checkStagingInterval));
       await checkStaging();
@@ -422,7 +422,7 @@ async function checkVMReady(host: string) {
     await axios({
       method: 'GET',
       url,
-      timeout: 2000,
+      timeout: 1000,
     });
   } catch (e) {
     // console.log(url, e.message, e.response?.status);
