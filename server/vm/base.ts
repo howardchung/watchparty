@@ -375,10 +375,11 @@ export abstract class VMManager {
             resolve();
           });
         });
+        const result = await Promise.allSettled(stagingPromises);
         if (checkStagingStart) {
           console.log('[CHECKSTAGING-DONE]', checkStagingStart);
         }
-        return await Promise.allSettled(stagingPromises);
+        return result;
       } catch (e) {
         console.warn('[CHECKSTAGING-ERROR]', e);
         return [];
