@@ -277,7 +277,7 @@ export abstract class VMManager {
           -1
         );
         const stagingPromises = stagingKeys.map((id) => {
-          new Promise<void>(async (resolve, reject) => {
+          new Promise<string>(async (resolve, reject) => {
             const retryCount = await this.redis.incr(
               this.getRedisStagingKey() + ':' + id
             );
@@ -372,12 +372,12 @@ export abstract class VMManager {
                 }
               }
             }
-            resolve();
+            resolve(id + ', ' + retryCount + ', ' + ready);
           });
         });
         const result = await Promise.allSettled(stagingPromises);
         if (checkStagingStart) {
-          console.log('[CHECKSTAGING-DONE]', checkStagingStart);
+          console.log('[CHECKSTAGING-DONE]', checkStagingStart, result);
         }
         return result;
       } catch (e) {
@@ -386,24 +386,6 @@ export abstract class VMManager {
       }
     };
 
-    const checkVMReady = async (host: string) => {
-      const url = 'https://' + host.replace('/', '/healthz');
-      try {
-        // const out = execSync(`curl -i -L -v --ipv4 '${host}'`);
-        // if (!out.toString().startsWith('OK') && !out.toString().startsWith('404 page not found')) {
-        //   throw new Error('mismatched response from healthz');
-        // }
-        await axios({
-          method: 'GET',
-          url,
-          timeout: 2000,
-        });
-      } catch (e) {
-        // console.log(url, e.message, e.response?.status);
-        return false;
-      }
-      return true;
-    };
     setInterval(resizeVMGroupIncr, incrInterval);
     setInterval(resizeVMGroupDecr, decrInterval);
     updateSize();
@@ -428,6 +410,25 @@ export abstract class VMManager {
   protected abstract powerOn: (id: string) => Promise<void>;
   protected abstract attachToNetwork: (id: string) => Promise<void>;
   protected abstract mapServerObject: (server: any) => VM;
+}
+
+async function checkVMReady(host: string) {
+  const url = 'https://' + host.replace('/', '/healthz');
+  try {
+    // const out = execSync(`curl -i -L -v --ipv4 '${host}'`);
+    // if (!out.toString().startsWith('OK') && !out.toString().startsWith('404 page not found')) {
+    //   throw new Error('mismatched response from healthz');
+    // }
+    await axios({
+      method: 'GET',
+      url,
+      timeout: 2000,
+    });
+  } catch (e) {
+    // console.log(url, e.message, e.response?.status);
+    return false;
+  }
+  return true;
 }
 
 export interface VM {
