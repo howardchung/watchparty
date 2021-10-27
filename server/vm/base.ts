@@ -263,6 +263,8 @@ export abstract class VMManager {
     };
 
     const checkStaging = async () => {
+      const checkStagingStart = Math.floor(Date.now() / 1000);
+      console.log('[CHECKSTAGING', checkStagingStart, ']');
       try {
         // Loop through staging list and check if VM is ready
         const stagingKeys = await this.redis.lrange(
@@ -311,7 +313,14 @@ export abstract class VMManager {
             ready = await checkVMReady(host ?? '');
             //ready = retryCount > 100;
             if (ready) {
-              console.log('[CHECKSTAGING] ready:', id, host, retryCount);
+              console.log(
+                '[CHECKSTAGING',
+                checkStagingStart,
+                '] ready:',
+                id,
+                host,
+                retryCount
+              );
               // If it is, move it to available list
               const rem = await this.redis.lrem(
                 this.getRedisStagingKey(),
@@ -328,8 +337,13 @@ export abstract class VMManager {
                 await this.redis.ltrim('vBrowserStageRetries', 0, 49);
               }
             } else {
-              if (retryCount >= 150) {
-                console.log('[CHECKSTAGING] giving up:', id);
+              if (retryCount >= 180) {
+                console.log(
+                  '[CHECKSTAGING',
+                  checkStagingStart,
+                  '] giving up:',
+                  id
+                );
                 await this.redis
                   .multi()
                   .lrem(this.getRedisStagingKey(), 0, id)
@@ -351,7 +365,9 @@ export abstract class VMManager {
                 }
                 if (retryCount % 10 === 0) {
                   console.log(
-                    '[CHECKSTAGING] not ready:',
+                    '[CHECKSTAGING',
+                    checkStagingStart,
+                    '] not ready:',
                     id,
                     host,
                     retryCount
@@ -395,7 +411,6 @@ export abstract class VMManager {
     setInterval(cleanupVMGroup, cleanupInterval);
     const checkStagingInterval = 2000;
     while (true) {
-      // const checkStagingStart =  Math.floor(Date.now() / 1000));
       await new Promise((resolve) => setTimeout(resolve, checkStagingInterval));
       await checkStaging();
     }
