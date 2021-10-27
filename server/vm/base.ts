@@ -263,8 +263,12 @@ export abstract class VMManager {
     };
 
     const checkStaging = async () => {
-      const checkStagingStart = Math.floor(Date.now() / 1000);
-      console.log('[CHECKSTAGING', checkStagingStart, ']');
+      const checkStagingStart = this.isLarge
+        ? 0
+        : Math.floor(Date.now() / 1000);
+      if (checkStagingStart) {
+        console.log('[CHECKSTAGING]', checkStagingStart);
+      }
       try {
         // Loop through staging list and check if VM is ready
         const stagingKeys = await this.redis.lrange(
@@ -313,14 +317,7 @@ export abstract class VMManager {
             ready = await checkVMReady(host ?? '');
             //ready = retryCount > 100;
             if (ready) {
-              console.log(
-                '[CHECKSTAGING',
-                checkStagingStart,
-                '] ready:',
-                id,
-                host,
-                retryCount
-              );
+              console.log('[CHECKSTAGING] ready:', id, host, retryCount);
               // If it is, move it to available list
               const rem = await this.redis.lrem(
                 this.getRedisStagingKey(),
@@ -339,9 +336,9 @@ export abstract class VMManager {
             } else {
               if (retryCount >= 180) {
                 console.log(
-                  '[CHECKSTAGING',
+                  '[CHECKSTAGING]',
                   checkStagingStart,
-                  '] giving up:',
+                  'giving up:',
                   id
                 );
                 await this.redis
@@ -365,9 +362,9 @@ export abstract class VMManager {
                 }
                 if (retryCount % 10 === 0) {
                   console.log(
-                    '[CHECKSTAGING',
+                    '[CHECKSTAGING]',
                     checkStagingStart,
-                    '] not ready:',
+                    'not ready:',
                     id,
                     host,
                     retryCount
@@ -378,6 +375,9 @@ export abstract class VMManager {
             resolve();
           });
         });
+        if (checkStagingStart) {
+          console.log('[CHECKSTAGING-DONE]', checkStagingStart);
+        }
         return await Promise.allSettled(stagingPromises);
       } catch (e) {
         console.warn('[CHECKSTAGING-ERROR]', e);
