@@ -955,10 +955,13 @@ export default class App extends React.Component<AppProps, AppState> {
             'leftVideo'
           ) as HTMLMediaElement;
           //check for HLS
-          let lv=leftVideo?.src.split('.');
-          if(lv[lv.length-1]==="m3u8" && !leftVideo?.canPlayType('application/vnd.apple.mpegurl')){
-            let hls=new window.Hls();
-            hls.loadSource(leftVideo.src)
+          let lv = leftVideo?.src.split('.');
+          if (
+            lv[lv.length - 1] === 'm3u8' &&
+            !leftVideo?.canPlayType('application/vnd.apple.mpegurl')
+          ) {
+            let hls = new window.Hls();
+            hls.loadSource(leftVideo.src);
             hls.attachMedia(leftVideo);
           }
           try {

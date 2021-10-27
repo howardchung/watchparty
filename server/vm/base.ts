@@ -77,8 +77,6 @@ export abstract class VMManager {
     await this.rebootVM(id);
     // Delete any locks
     await this.redis.del('lock:' + this.id + ':' + id);
-    // We wait to give the VM time to shut down (if it's restarting)
-    await new Promise((resolve) => setTimeout(resolve, 3000));
     // Add the VM back to the pool
     await this.redis.rpush(this.getRedisStagingKey(), id);
   };
@@ -132,7 +130,7 @@ export abstract class VMManager {
     return 0;
   };
 
-  public runBackgroundJobs = () => {
+  public runBackgroundJobs = async () => {
     console.log(
       '[VMWORKER] starting background jobs for %s',
       this.getRedisQueueKey()
@@ -265,114 +263,109 @@ export abstract class VMManager {
     };
 
     const checkStaging = async () => {
-      const checkStagingInterval = 2000;
-      while (true) {
-        // console.log('[CHECKSTAGING-START]', Math.floor(Date.now() / 1000));
-        try {
-          // Loop through staging list and check if VM is ready
-          const stagingKeys = await this.redis.lrange(
-            this.getRedisStagingKey(),
-            0,
-            -1
-          );
-          const stagingPromises = stagingKeys.map((id) => {
-            new Promise<void>(async (resolve) => {
-              const retryCount = await this.redis.incr(
-                this.getRedisStagingKey() + ':' + id
-              );
-              let ready = false;
-              let host = await this.redis.get(
-                this.getRedisHostCacheKey() + ':' + id
-              );
-              if (!host) {
-                try {
-                  const vm = await this.getVM(id);
-                  host = vm?.host ?? null;
-                } catch (e) {
-                  if (e.response?.status === 404) {
-                    await this.redis.lrem(this.getRedisQueueKey(), 0, id);
-                    await this.redis.lrem(this.getRedisStagingKey(), 0, id);
-                    await this.redis.del(this.getRedisStagingKey() + ':' + id);
-                    return resolve();
-                  }
-                }
-                if (host) {
-                  console.log(
-                    '[CHECKSTAGING] caching host %s for id %s',
-                    host,
-                    id
-                  );
-                  await this.redis.setex(
-                    this.getRedisHostCacheKey() + ':' + id,
-                    3600,
-                    host
-                  );
+      try {
+        // Loop through staging list and check if VM is ready
+        const stagingKeys = await this.redis.lrange(
+          this.getRedisStagingKey(),
+          0,
+          -1
+        );
+        const stagingPromises = stagingKeys.map((id) => {
+          new Promise<void>(async (resolve, reject) => {
+            const retryCount = await this.redis.incr(
+              this.getRedisStagingKey() + ':' + id
+            );
+            if (retryCount < 10) {
+              // Do a minimum of 10 retries to give reboot time
+              return reject();
+            }
+            let ready = false;
+            let host = await this.redis.get(
+              this.getRedisHostCacheKey() + ':' + id
+            );
+            if (!host) {
+              try {
+                const vm = await this.getVM(id);
+                host = vm?.host ?? null;
+              } catch (e) {
+                if (e.response?.status === 404) {
+                  await this.redis.lrem(this.getRedisQueueKey(), 0, id);
+                  await this.redis.lrem(this.getRedisStagingKey(), 0, id);
+                  await this.redis.del(this.getRedisStagingKey() + ':' + id);
+                  return reject();
                 }
               }
-              ready = await checkVMReady(host ?? '');
-              //ready = retryCount > 100;
-              if (ready) {
-                console.log('[CHECKSTAGING] ready:', id, host, retryCount);
-                // If it is, move it to available list
-                const rem = await this.redis.lrem(
-                  this.getRedisStagingKey(),
-                  1,
+              if (host) {
+                console.log(
+                  '[CHECKSTAGING] caching host %s for id %s',
+                  host,
                   id
                 );
-                if (rem) {
-                  await this.redis
-                    .multi()
-                    .rpush(this.getRedisQueueKey(), id)
-                    .del(this.getRedisStagingKey() + ':' + id)
-                    .exec();
-                  await this.redis.lpush('vBrowserStageRetries', retryCount);
-                  await this.redis.ltrim('vBrowserStageRetries', 0, 49);
-                }
+                await this.redis.setex(
+                  this.getRedisHostCacheKey() + ':' + id,
+                  3600,
+                  host
+                );
+              }
+            }
+            ready = await checkVMReady(host ?? '');
+            //ready = retryCount > 100;
+            if (ready) {
+              console.log('[CHECKSTAGING] ready:', id, host, retryCount);
+              // If it is, move it to available list
+              const rem = await this.redis.lrem(
+                this.getRedisStagingKey(),
+                1,
+                id
+              );
+              if (rem) {
+                await this.redis
+                  .multi()
+                  .rpush(this.getRedisQueueKey(), id)
+                  .del(this.getRedisStagingKey() + ':' + id)
+                  .exec();
+                await this.redis.lpush('vBrowserStageRetries', retryCount);
+                await this.redis.ltrim('vBrowserStageRetries', 0, 49);
+              }
+            } else {
+              if (retryCount >= 150) {
+                console.log('[CHECKSTAGING] giving up:', id);
+                await this.redis
+                  .multi()
+                  .lrem(this.getRedisStagingKey(), 0, id)
+                  .del(this.getRedisStagingKey() + ':' + id)
+                  .exec();
+                redisCount('vBrowserStagingFails');
+                await this.resetVM(id);
               } else {
-                if (retryCount >= 200) {
-                  console.log('[CHECKSTAGING] giving up:', id);
-                  await this.redis
-                    .multi()
-                    .lrem(this.getRedisStagingKey(), 0, id)
-                    .del(this.getRedisStagingKey() + ':' + id)
-                    .exec();
-                  redisCount('vBrowserStagingFails');
-                  await this.resetVM(id);
-                } else {
-                  if (retryCount % 100 === 0) {
-                    const vm = await this.getVM(id);
-                    console.log(
-                      '[CHECKSTAGING] %s attempt to poweron and attach to network',
-                      id
-                    );
-                    this.powerOn(id);
-                    if (!vm?.private_ip) {
-                      this.attachToNetwork(id);
-                    }
+                if (retryCount % 100 === 0) {
+                  const vm = await this.getVM(id);
+                  console.log(
+                    '[CHECKSTAGING] %s attempt to poweron and attach to network',
+                    id
+                  );
+                  this.powerOn(id);
+                  if (!vm?.private_ip) {
+                    this.attachToNetwork(id);
                   }
-                  if (retryCount % 10 === 0) {
-                    console.log(
-                      '[CHECKSTAGING] not ready:',
-                      id,
-                      host,
-                      retryCount
-                    );
-                  }
+                }
+                if (retryCount % 10 === 0) {
+                  console.log(
+                    '[CHECKSTAGING] not ready:',
+                    id,
+                    host,
+                    retryCount
+                  );
                 }
               }
-              resolve();
-            });
+            }
+            resolve();
           });
-          await Promise.allSettled(stagingPromises);
-          await new Promise((resolve) =>
-            setTimeout(resolve, checkStagingInterval)
-          );
-        } catch (e) {
-          console.warn('[CHECKSTAGING-ERROR]', e);
-          await new Promise((resolve) =>
-            setTimeout(resolve, checkStagingInterval)
-          );
-        }
+        });
+        return await Promise.allSettled(stagingPromises);
+      } catch (e) {
+        console.warn('[CHECKSTAGING-ERROR]', e);
+        return [];
       }
     };
 
@@ -400,7 +393,12 @@ export abstract class VMManager {
     setInterval(updateSize, updateSizeInterval);
     cleanupVMGroup();
     setInterval(cleanupVMGroup, cleanupInterval);
-    setTimeout(checkStaging, 100); // Add some delay to make sure the object is constructed first
+    const checkStagingInterval = 2000;
+    while (true) {
+      // const checkStagingStart =  Math.floor(Date.now() / 1000));
+      await new Promise((resolve) => setTimeout(resolve, checkStagingInterval));
+      await checkStaging();
+    }
   };
 
   public abstract id: string;
