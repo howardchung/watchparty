@@ -257,19 +257,19 @@ export abstract class VMManager {
         if (!dontDelete.has(server.id)) {
           console.log('[CLEANUP]', server.id);
           this.resetVM(server.id);
-          //this.terminateVM(server.id);
+          //this.terminateVMWrapper(server.id);
         }
       }
     };
 
     const checkStaging = async () => {
-      const checkStagingStart = this.isLarge
-        ? 0
-        : Math.floor(Date.now() / 1000);
-      if (checkStagingStart) {
-        console.log('[CHECKSTAGING]', checkStagingStart);
-      }
       try {
+        const checkStagingStart = this.isLarge
+          ? 0
+          : Math.floor(Date.now() / 1000);
+        if (checkStagingStart) {
+          console.log('[CHECKSTAGING]', checkStagingStart);
+        }
         // Loop through staging list and check if VM is ready
         const stagingKeys = await this.redis.lrange(
           this.getRedisStagingKey(),
@@ -334,7 +334,7 @@ export abstract class VMManager {
                 await this.redis.ltrim('vBrowserStageRetries', 0, 49);
               }
             } else {
-              if (retryCount >= 150) {
+              if (retryCount >= 180) {
                 console.log(
                   '[CHECKSTAGING]',
                   checkStagingStart,
@@ -347,7 +347,8 @@ export abstract class VMManager {
                   .del(this.getRedisStagingKey() + ':' + id)
                   .exec();
                 redisCount('vBrowserStagingFails');
-                await this.resetVM(id);
+                //await this.resetVM(id);
+                await this.terminateVMWrapper(id);
               } else {
                 if (retryCount % 100 === 0) {
                   const vm = await this.getVM(id);
