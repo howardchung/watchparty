@@ -145,12 +145,13 @@ export abstract class VMManager {
       vmBufferFlex = Number(config.VBROWSER_VM_BUFFER_FLEX) || 0;
     }
     const vmBufferMax = vmBufferSize + vmBufferFlex;
+    const vmBufferMin = vmBufferSize - vmBufferFlex;
     const resizeVMGroupIncr = async () => {
       const availableCount = await this.redis.llen(this.getRedisQueueKey());
       const stagingCount = await this.redis.llen(this.getRedisStagingKey());
       let launch = false;
       launch =
-        availableCount + stagingCount < vmBufferSize &&
+        availableCount + stagingCount < vmBufferMin &&
         this.getCurrentSize() < (this.getLimitSize() || Infinity);
       if (launch) {
         console.log(
@@ -347,8 +348,8 @@ export abstract class VMManager {
                   .del(this.getRedisStagingKey() + ':' + id)
                   .exec();
                 redisCount('vBrowserStagingFails');
-                //await this.resetVM(id);
-                await this.terminateVMWrapper(id);
+                await this.resetVM(id);
+                //await this.terminateVMWrapper(id);
               } else {
                 if (retryCount % 100 === 0) {
                   const vm = await this.getVM(id);
