@@ -71,29 +71,12 @@ async function init() {
       const data = persistedRooms[i].data
         ? JSON.stringify(persistedRooms[i].data)
         : undefined;
-      // const room = new Room(io, key, data);
-      // rooms.set(key, room);
+      const room = new Room(io, key, data);
+      rooms.set(key, room);
     }
     console.timeEnd('[LOADROOMSPOSTGRES]');
   }
-  // TODO: Remove when postgres saving deployed
-  if (redis) {
-    // Load rooms from Redis
-    console.time('[LOADROOMSREDIS]');
-    const keys = await redis.keys(config.SHARD ? `/${config.SHARD}@*` : '/*');
-    const data = keys.length ? await redis?.mget(keys) : [];
-    console.log('found %s rooms in redis', keys.length);
-    for (let i = 0; i < keys.length; i++) {
-      const key = keys[i];
-      const roomData = data[i];
-      try {
-        rooms.set(key, new Room(io, key, roomData));
-      } catch (e) {
-        console.warn(e);
-      }
-    }
-    console.timeEnd('[LOADROOMSREDIS]');
-  }
+
   if (!rooms.has('/default')) {
     rooms.set('/default', new Room(io, '/default'));
   }
@@ -323,7 +306,7 @@ async function saveRooms() {
     const roomArr = Array.from(rooms.values());
     for (let i = 0; i < roomArr.length; i++) {
       if (roomArr[i].roster.length) {
-        await roomArr[i].saveRoom(null);
+        await roomArr[i].saveRoom();
       }
     }
     console.timeEnd('[SAVEROOMS]');
@@ -500,7 +483,7 @@ async function getStats() {
       }
       currentVBrowserUIDCounts[obj.vBrowser.creatorUID] += 1;
     }
-    if (obj.video) {
+    if (obj.video || obj.rosterLength > 0) {
       currentRoomData.push(obj);
     }
   });
@@ -539,8 +522,9 @@ async function getStats() {
     0,
     -1
   );
-  const numPermaRooms = (await postgres?.query('SELECT count(1) from room'))
-    ?.rows[0].count;
+  const numPermaRooms = (
+    await postgres?.query('SELECT count(1) from room WHERE owner IS NOT NULL')
+  )?.rows[0].count;
   const numSubs = (await postgres?.query('SELECT count(1) from subscriber'))
     ?.rows[0].count;
   const chatMessages = await getRedisCountDay('chatMessages');
