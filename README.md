@@ -22,7 +22,7 @@ An website for watching videos together.
 
 - Clone this repo via `git clone git@github.com:howardchung/watchparty.git`
 - Install npm dependencies for the project via `npm install`
-- Start the server via `npm run dev`
+- Start the server via `PORT=8080 npm run dev`
   - Defaults to port 8080, customize with `PORT` env var
   - Run using self-signed HTTPS cert with `HTTPS=true`. This is needed for some WebRTC features (camera, etc.)
 - Start the React application in a separate shell and port via `PORT=3000 npm run start`
@@ -65,6 +65,11 @@ This project supports creating virtual browsers using several cloud providers, o
 - Add `DOCKER_VM_HOST=localhost` to your .env file (can substitute localhost for a public hostname)
 - Add `NODE_ENV=development` to .env to enable create-on-demand behavior for VMs
 - Configure Redis by adding `REDIS_URL` to your .env file (Redis is required for virtual browser management)
+
+### Room Persistence
+
+- Configure Postgres by adding POSTGRES_URL to your .env file
+- This allows rooms to persist between server restarts
 
 ## Tech
 

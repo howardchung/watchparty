@@ -67,10 +67,10 @@ module.exports = {
       script: './buildServer/timeSeries.js',
       log_date_format: 'YYYY-MM-DD HH:mm Z',
     },
-    // {
-    //   name: 'cleanup',
-    //   script: './buildServer/cleanup.js',
-    // log_date_format: 'YYYY-MM-DD HH:mm Z',
-    // },
+    {
+      name: 'cleanup',
+      script: './buildServer/cleanup.js',
+      log_date_format: 'YYYY-MM-DD HH:mm Z',
+    },
   ],
 };

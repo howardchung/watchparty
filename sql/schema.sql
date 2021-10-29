@@ -1,3 +1,5 @@
+CREATE EXTENSION pg_trgm;
+
 CREATE TABLE room(
   "roomId" text,
   "creationTime" timestamp with time zone,
@@ -22,3 +24,4 @@ CREATE TABLE subscriber(
 CREATE UNIQUE INDEX on room (LOWER(vanity)) WHERE vanity IS NOT NULL;
 CREATE INDEX on room(owner) WHERE owner IS NOT NULL;
 CREATE INDEX on room("creationTime");
+CREATE INDEX on room USING GIN("roomId" gin_trgm_ops);

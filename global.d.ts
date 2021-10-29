@@ -57,7 +57,7 @@ interface HostState {
   controller?: string;
 }
 
-interface PermanentRoom {
+interface PersistentRoom {
   roomId: string;
   creationTime: string;
   password: string;

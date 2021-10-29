@@ -62,31 +62,30 @@ const vmManagers = getBgVMManagers();
 init();
 
 async function init() {
-  if (config.ENABLE_POSTGRES_READING && postgres) {
+  if (postgres) {
     console.time('[LOADROOMSPOSTGRES]');
-    const permanentRooms = await getPermanentRooms();
-    console.log('found %s rooms in postgres', permanentRooms.length);
-    console.timeEnd('[LOADROOMSPOSTGRES]');
-    for (let i = 0; i < permanentRooms.length; i++) {
-      const key = permanentRooms[i].roomId;
-      const data = permanentRooms[i].data
-        ? JSON.stringify(permanentRooms[i].data)
+    const persistedRooms = await getAllRooms();
+    console.log('found %s rooms in postgres', persistedRooms.length);
+    for (let i = 0; i < persistedRooms.length; i++) {
+      const key = persistedRooms[i].roomId;
+      const data = persistedRooms[i].data
+        ? JSON.stringify(persistedRooms[i].data)
         : undefined;
-      const room = new Room(io, key, data);
-      rooms.set(key, room);
+      // const room = new Room(io, key, data);
+      // rooms.set(key, room);
     }
-  } else if (redis) {
+    console.timeEnd('[LOADROOMSPOSTGRES]');
+  }
+  // TODO: Remove when postgres saving deployed
+  if (redis) {
     // Load rooms from Redis
     console.time('[LOADROOMSREDIS]');
-    const keys = await redis.keys(
-      config.SHARD ? `/${config.SHARD}-[a-z]*` : '/[a-z]*'
-    );
+    const keys = await redis.keys(config.SHARD ? `/${config.SHARD}@*` : '/*');
     const data = keys.length ? await redis?.mget(keys) : [];
     console.log('found %s rooms in redis', keys.length);
     for (let i = 0; i < keys.length; i++) {
       const key = keys[i];
       const roomData = data[i];
-      // console.log(key, roomData);
       try {
         rooms.set(key, new Room(io, key, roomData));
       } catch (e) {
@@ -94,37 +93,6 @@ async function init() {
       }
     }
     console.timeEnd('[LOADROOMSREDIS]');
-    if (postgres) {
-      console.time('[LOADMISSINGROOMSPOSTGRES]');
-      const permanentRooms = await getPermanentRooms();
-      console.log('found %s rooms in postgres', permanentRooms.length);
-      const keySet = new Set(keys);
-      for (let i = 0; i < permanentRooms.length; i++) {
-        const key = permanentRooms[i].roomId;
-        const data = JSON.stringify(permanentRooms[i]);
-        if (!keySet.has(key)) {
-          console.log('detected room %s in postgres but not redis', key);
-          const missingRoom = new Room(io, key, data);
-          missingRoom.saveToRedis(true);
-          rooms.set(key, missingRoom);
-        }
-      }
-      console.timeEnd('[LOADMISSINGROOMSPOSTGRES]');
-      // temporarily give all non-permanent rooms without ttl a 1 day timeout (repair)
-      console.time('[TTLREPAIR]');
-      const permanentSet = new Set(permanentRooms.map((room) => room.roomId));
-      for (let i = 0; i < keys.length; i++) {
-        const ttl = await redis.ttl(keys[i]);
-        if (ttl === -1 && !permanentSet.has(keys[i])) {
-          console.log(
-            '[TTLREPAIR] setting ttl on non-permanent room %s',
-            keys[i]
-          );
-          await redis.expire(keys[i], 24 * 60 * 60);
-        }
-      }
-      console.timeEnd('[TTLREPAIR]');
-    }
   }
   if (!rooms.has('/default')) {
     rooms.set('/default', new Room(io, '/default'));
@@ -134,7 +102,7 @@ async function init() {
   // Following functions iterate over in-memory rooms
   setInterval(minuteMetrics, 60 * 1000);
   setInterval(release, releaseInterval / releaseBatches);
-  setInterval(cleanupRooms, 5 * 60 * 1000);
+  setInterval(freeUnusedRooms, 5 * 60 * 1000);
   saveRooms();
   if (process.env.NODE_ENV === 'development') {
     require('./vmWorker');
@@ -207,7 +175,7 @@ app.get('/youtube', async (req, res) => {
 
 app.post('/createRoom', async (req, res) => {
   const genName = () =>
-    '/' + (config.SHARD ? `${config.SHARD}-` : '') + names.choose();
+    '/' + (config.SHARD ? `${config.SHARD}@` : '') + names.choose();
   let name = genName();
   // Keep retrying until no collision
   while (rooms.has(name)) {
@@ -219,8 +187,7 @@ app.post('/createRoom', async (req, res) => {
   newRoom.creator = decoded?.email;
   newRoom.video = req.body?.video || '';
   rooms.set(name, newRoom);
-  newRoom.saveToRedis(false);
-  if (config.ENABLE_POSTGRES_SAVING && postgres) {
+  if (postgres) {
     const roomObj: any = {
       roomId: newRoom.roomId,
       creationTime: newRoom.creationTime,
@@ -298,7 +265,7 @@ app.get('/listRooms', async (req, res) => {
   if (!decoded) {
     return res.status(400).json({ error: 'invalid user token' });
   }
-  const result = await postgres?.query<PermanentRoom>(
+  const result = await postgres?.query<PersistentRoom>(
     `SELECT "roomId", vanity from room WHERE owner = $1`,
     [decoded.uid]
   );
@@ -352,15 +319,14 @@ app.use('/*', (_req, res) => {
 
 async function saveRooms() {
   while (true) {
-    // console.time('roomSave');
+    console.time('[SAVEROOMS]');
     const roomArr = Array.from(rooms.values());
     for (let i = 0; i < roomArr.length; i++) {
       if (roomArr[i].roster.length) {
-        await roomArr[i].saveToRedis(null);
-        // await roomArr[i].saveToPostgres();
+        await roomArr[i].saveRoom(null);
       }
     }
-    // console.timeEnd('roomSave');
+    console.timeEnd('[SAVEROOMS]');
     await new Promise((resolve) => setTimeout(resolve, 1000));
   }
 }
@@ -439,18 +405,17 @@ async function minuteMetrics() {
   }
 }
 
-async function cleanupRooms() {
-  // Clean up rooms that are no longer in Redis (expired) and empty
+async function freeUnusedRooms() {
+  // Clean up rooms that are no longer persisted and empty
   // Frees up some JS memory space when process is long-running
   if (!redis) {
     return;
   }
-  const permanentRooms = await getPermanentRooms();
-  const permanentSet = new Set(permanentRooms.map((room) => room.roomId));
+  const persistedRooms = await getAllRooms();
+  const persistedSet = new Set(persistedRooms.map((room) => room.roomId));
   rooms.forEach(async (room, key) => {
     if (room.roster.length === 0) {
-      const inRedis = await redis?.get(room.roomId);
-      if (!inRedis && !permanentSet.has(room.roomId)) {
+      if (!persistedSet.has(room.roomId)) {
         room.destroy();
         rooms.delete(key);
       }
@@ -458,15 +423,15 @@ async function cleanupRooms() {
   });
 }
 
-async function getPermanentRooms() {
+async function getAllRooms() {
   if (!postgres) {
     return [];
   }
   return (
-    await postgres.query<PermanentRoom>(
-      `SELECT * from room where "roomId" SIMILAR TO '${
-        config.SHARD ? `/${config.SHARD}-[a-z]%` : '/[a-z]%'
-      }' AND owner IS NOT NULL`
+    await postgres.query<PersistentRoom>(
+      `SELECT * from room where "roomId" LIKE '${
+        config.SHARD ? `/${config.SHARD}@%` : '/%'
+      }'`
     )
   ).rows;
 }

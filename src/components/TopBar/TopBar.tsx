@@ -159,7 +159,7 @@ export class SignInButton extends React.Component<SignInButtonProps> {
 export class ListRoomsButton extends React.Component<{
   user: firebase.User | undefined;
 }> {
-  public state = { rooms: [] as PermanentRoom[] };
+  public state = { rooms: [] as PersistentRoom[] };
 
   componentDidMount() {
     this.refreshRooms();
