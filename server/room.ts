@@ -240,7 +240,7 @@ export class Room {
     }
   };
 
-  public saveRoom = async (permanent: boolean | null) => {
+  public saveRoom = async () => {
     this.lastUpdateTime = new Date();
     if (postgres) {
       try {
@@ -252,24 +252,6 @@ export class Room {
       } catch (e) {
         console.warn(e);
       }
-    }
-    // TODO: Remove when postgres saving deployed
-    if (!redis) {
-      return;
-    }
-    try {
-      const roomString = this.serialize();
-      const key = this.roomId;
-      if (permanent === null) {
-        await redis?.set(key, roomString, 'KEEPTTL');
-      } else if (permanent === true) {
-        await redis?.set(key, roomString);
-        await redis?.persist(key);
-      } else if (permanent === false) {
-        await redis?.setex(key, 24 * 60 * 60, roomString);
-      }
-    } catch (e) {
-      console.warn(e);
     }
   };
 
@@ -319,8 +301,8 @@ export class Room {
     const uid = this.vBrowser?.creatorUID ?? '';
     this.vBrowser = undefined;
     this.cmdHost(null, '');
-    // Force a save to record the vbrowser change
-    this.saveRoom(null);
+    // Force a save because this might change in unattended rooms
+    this.saveRoom();
     if (redis && assignTime) {
       await redis.lpush('vBrowserSessionMS', Number(new Date()) - assignTime);
       await redis.ltrim('vBrowserSessionMS', 0, 49);
