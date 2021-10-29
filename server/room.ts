@@ -240,9 +240,9 @@ export class Room {
     }
   };
 
-  public saveToRedis = async (permanent: boolean | null) => {
+  public saveRoom = async (permanent: boolean | null) => {
     this.lastUpdateTime = new Date();
-    if (config.ENABLE_POSTGRES_SAVING && postgres) {
+    if (postgres) {
       try {
         const roomString = this.serialize();
         await postgres?.query(
@@ -253,6 +253,7 @@ export class Room {
         console.warn(e);
       }
     }
+    // TODO: Remove when postgres saving deployed
     if (!redis) {
       return;
     }
@@ -319,7 +320,7 @@ export class Room {
     this.vBrowser = undefined;
     this.cmdHost(null, '');
     // Force a save to record the vbrowser change
-    this.saveToRedis(null);
+    this.saveRoom(null);
     if (redis && assignTime) {
       await redis.lpush('vBrowserSessionMS', Number(new Date()) - assignTime);
       await redis.ltrim('vBrowserSessionMS', 0, 49);
@@ -885,26 +886,19 @@ export class Room {
       customer?.subscriptions?.data?.find((sub) => sub?.status === 'active')
     );
     if (data.undo) {
-      if (config.ENABLE_POSTGRES_SAVING) {
-        await updateObject(
-          postgres,
-          'room',
-          {
-            password: null,
-            owner: null,
-            vanity: null,
-            isChatDisabled: null,
-            isSubRoom: null,
-          },
-          { roomId: this.roomId }
-        );
-      } else {
-        await postgres.query('DELETE from room where "roomId" = $1', [
-          this.roomId,
-        ]);
-      }
+      await updateObject(
+        postgres,
+        'room',
+        {
+          password: null,
+          owner: null,
+          vanity: null,
+          isChatDisabled: null,
+          isSubRoom: null,
+        },
+        { roomId: this.roomId }
+      );
       socket.emit('REC:getRoomState', {});
-      this.saveToRedis(false);
     } else {
       // validate room count
       const roomCount = (
@@ -940,7 +934,6 @@ export class Room {
         vanity: row?.vanity,
         owner: row?.owner,
       });
-      this.saveToRedis(true);
     }
   };
 

@@ -50,8 +50,6 @@ const defaults = {
   VM_MANAGER_ID_US: '', // ID value of the VM Manager implementation to use for US based VMs
   VM_MIN_UPTIME_MINUTES: 0, // Number of minutes of the hour VMs must exist for before being eligible for termination
   SHARD: undefined, // Shard ID of the web server (configure in ecosystem.config.js)
-  ENABLE_POSTGRES_SAVING: false, // Experimental incomplete feature to use postgres as the primary room data store
-  ENABLE_POSTGRES_READING: false, // Experimental incomplete feature to use postgres as the primary room data store
   SUBSCRIBER_ROOM_LIMIT: 20, // The maximum number of rooms a subscriber can have
 };
 

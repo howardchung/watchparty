@@ -10,10 +10,12 @@ postgres.connect();
 setInterval(cleanupPostgres, 5 * 60 * 1000);
 
 async function cleanupPostgres() {
-  if (!postgres || !config.ENABLE_POSTGRES_SAVING) {
+  if (!postgres) {
     return;
   }
+  console.time('[CLEANUP]');
   await postgres?.query(
     `DELETE FROM room WHERE owner IS NULL AND "lastUpdateTime" < NOW() - INTERVAL '1 day'`
   );
+  console.timeEnd('[CLEANUP]');
 }
