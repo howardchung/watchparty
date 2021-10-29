@@ -50,10 +50,13 @@ export abstract class VMManager {
     const isRampDown =
       nowHour >= rampDownHours[0] && nowHour < rampDownHours[1];
     const isRampUp = nowHour >= rampUpHours[0] && nowHour < rampUpHours[1];
-    return [
-      vmBufferSize - (isRampUp ? 0 : vmBufferFlex),
-      vmBufferSize + (isRampDown ? 0 : vmBufferFlex),
-    ];
+    let min = vmBufferSize - vmBufferFlex;
+    if (isRampDown) {
+      min = 0;
+    } else if (isRampUp) {
+      min = vmBufferSize;
+    }
+    return [min, min + vmBufferFlex * 2];
   };
   protected getCurrentSize = () => {
     return this.currentSize;
@@ -394,7 +397,10 @@ export abstract class VMManager {
             resolve(id + ', ' + retryCount + ', ' + ready);
           });
         });
-        const result = await Promise.allSettled(stagingPromises);
+        const result = await Promise.race([
+          Promise.allSettled(stagingPromises),
+          new Promise((resolve) => setTimeout(resolve, 30000)),
+        ]);
         if (checkStagingStart) {
           console.log('[CHECKSTAGING-DONE]', checkStagingStart, result);
         }
