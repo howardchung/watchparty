@@ -38,6 +38,23 @@ export abstract class VMManager {
     this.isLarge
       ? Number(config.VM_POOL_LIMIT_LARGE)
       : Number(config.VM_POOL_LIMIT);
+  protected getAdjustedBuffer = (
+    vmBufferSize: number,
+    vmBufferFlex: number
+  ) => {
+    // During ramp down hours, keep a smaller buffer
+    // During ramp up hours, keep a larger buffer
+    const rampDownHours = [4, 10];
+    const rampUpHours = [10, 16];
+    const nowHour = new Date().getHours();
+    const isRampDown =
+      nowHour >= rampDownHours[0] && nowHour < rampDownHours[1];
+    const isRampUp = nowHour >= rampUpHours[0] && nowHour < rampUpHours[1];
+    return [
+      vmBufferSize - (isRampUp ? 0 : vmBufferFlex),
+      vmBufferSize + (isRampDown ? 0 : vmBufferFlex),
+    ];
+  };
   protected getCurrentSize = () => {
     return this.currentSize;
   };
@@ -144,14 +161,13 @@ export abstract class VMManager {
       vmBufferSize = Number(config.VBROWSER_VM_BUFFER) || 0;
       vmBufferFlex = Number(config.VBROWSER_VM_BUFFER_FLEX) || 0;
     }
-    const vmBufferMax = vmBufferSize + vmBufferFlex;
-    const vmBufferMin = vmBufferSize - vmBufferFlex;
     const resizeVMGroupIncr = async () => {
       const availableCount = await this.redis.llen(this.getRedisQueueKey());
       const stagingCount = await this.redis.llen(this.getRedisStagingKey());
       let launch = false;
       launch =
-        availableCount + stagingCount < vmBufferMin &&
+        availableCount + stagingCount <
+          this.getAdjustedBuffer(vmBufferSize, vmBufferFlex)[0] &&
         this.getCurrentSize() < (this.getLimitSize() || Infinity);
       if (launch) {
         console.log(
@@ -174,7 +190,8 @@ export abstract class VMManager {
     const resizeVMGroupDecr = async () => {
       let unlaunch = false;
       const availableCount = await this.redis.llen(this.getRedisQueueKey());
-      unlaunch = availableCount > vmBufferMax;
+      unlaunch =
+        availableCount > this.getAdjustedBuffer(vmBufferSize, vmBufferFlex)[1];
       if (unlaunch) {
         const allVMs = await this.listVMs(this.getTag());
         const now = Date.now();

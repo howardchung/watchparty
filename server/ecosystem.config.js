@@ -1,4 +1,5 @@
 const hetznerImage = '51615253';
+const hetznerGateway = 'gateway3.watchparty.me';
 
 module.exports = {
   apps: [
@@ -8,7 +9,7 @@ module.exports = {
       log_date_format: 'YYYY-MM-DD HH:mm Z',
       env: {
         PORT: 80,
-        HETZNER_GATEWAY: 'gateway3.watchparty.me',
+        HETZNER_GATEWAY: hetznerGateway,
         HETZNER_IMAGE: hetznerImage,
       },
     },
@@ -19,6 +20,8 @@ module.exports = {
       env: {
         SHARD: 1,
         PORT: 3001,
+        HETZNER_GATEWAY: hetznerGateway,
+        HETZNER_IMAGE: hetznerImage,
       },
     },
     // {
@@ -28,6 +31,8 @@ module.exports = {
     //   env: {
     //     SHARD: 2,
     //     PORT: 3002,
+    //     HETZNER_GATEWAY: hetznerGateway,
+    //     HETZNER_IMAGE: hetznerImage,
     //   },
     // },
     // {
@@ -37,6 +42,8 @@ module.exports = {
     //   env: {
     //     SHARD: 3,
     //     PORT: 3003,
+    //     HETZNER_GATEWAY: hetznerGateway,
+    //     HETZNER_IMAGE: hetznerImage,
     //   },
     // },
     {
@@ -44,7 +51,7 @@ module.exports = {
       script: './buildServer/vmWorker.js',
       log_date_format: 'YYYY-MM-DD HH:mm Z',
       env: {
-        HETZNER_GATEWAY: 'gateway3.watchparty.me',
+        HETZNER_GATEWAY: hetznerGateway,
         HETZNER_NETWORKS: '91163,1007910,1007911',
         HETZNER_SSH_KEYS: '1570536',
         HETZNER_IMAGE: hetznerImage,
