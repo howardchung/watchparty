@@ -46,7 +46,7 @@ export abstract class VMManager {
     // During ramp up hours, keep a larger buffer
     const rampDownHours = [4, 10];
     const rampUpHours = [10, 16];
-    const nowHour = new Date().getHours();
+    const nowHour = new Date().getUTCHours();
     const isRampDown =
       nowHour >= rampDownHours[0] && nowHour < rampDownHours[1];
     const isRampUp = nowHour >= rampUpHours[0] && nowHour < rampUpHours[1];
@@ -285,12 +285,12 @@ export abstract class VMManager {
 
     const checkStaging = async () => {
       try {
-        const checkStagingStart = this.isLarge
-          ? 0
-          : Math.floor(Date.now() / 1000);
-        if (checkStagingStart) {
-          console.log('[CHECKSTAGING]', checkStagingStart);
-        }
+        // const checkStagingStart = this.isLarge
+        //   ? 0
+        //   : Math.floor(Date.now() / 1000);
+        // if (checkStagingStart) {
+        //   console.log('[CHECKSTAGING]', checkStagingStart);
+        // }
         // Loop through staging list and check if VM is ready
         const stagingKeys = await this.redis.lrange(
           this.getRedisStagingKey(),
@@ -356,12 +356,7 @@ export abstract class VMManager {
               }
             } else {
               if (retryCount >= 180) {
-                console.log(
-                  '[CHECKSTAGING]',
-                  checkStagingStart,
-                  'giving up:',
-                  id
-                );
+                console.log('[CHECKSTAGING]', 'giving up:', id);
                 await this.redis
                   .multi()
                   .lrem(this.getRedisStagingKey(), 0, id)
@@ -385,7 +380,6 @@ export abstract class VMManager {
                 if (retryCount % 10 === 0) {
                   console.log(
                     '[CHECKSTAGING]',
-                    checkStagingStart,
                     'not ready:',
                     id,
                     host,
@@ -401,9 +395,9 @@ export abstract class VMManager {
           Promise.allSettled(stagingPromises),
           new Promise((resolve) => setTimeout(resolve, 30000)),
         ]);
-        if (checkStagingStart) {
-          console.log('[CHECKSTAGING-DONE]', checkStagingStart, result);
-        }
+        // if (checkStagingStart) {
+        //   console.log('[CHECKSTAGING-DONE]', checkStagingStart, result);
+        // }
         return result;
       } catch (e) {
         console.warn('[CHECKSTAGING-ERROR]', e);

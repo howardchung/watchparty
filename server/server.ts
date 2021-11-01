@@ -302,14 +302,14 @@ app.use('/*', (_req, res) => {
 
 async function saveRooms() {
   while (true) {
-    console.time('[SAVEROOMS]');
+    // console.time('[SAVEROOMS]');
     const roomArr = Array.from(rooms.values());
     for (let i = 0; i < roomArr.length; i++) {
       if (roomArr[i].roster.length) {
         await roomArr[i].saveRoom();
       }
     }
-    console.timeEnd('[SAVEROOMS]');
+    // console.timeEnd('[SAVEROOMS]');
     await new Promise((resolve) => setTimeout(resolve, 1000));
   }
 }
@@ -502,6 +502,9 @@ async function getStats() {
     .find((line) => line.startsWith('used_memory:'))
     ?.split(':')[1]
     .trim();
+  const postgresUsage = (
+    await postgres?.query(`SELECT pg_database_size('postgres');`)
+  )?.rows[0].pg_database_size;
   const availableVBrowsers = await redis?.lrange(
     vmManager?.getRedisQueueKey() || 'availableList',
     0,
@@ -608,6 +611,7 @@ async function getStats() {
     cpuUsage,
     memUsage,
     redisUsage,
+    postgresUsage,
     currentRoomCount,
     currentRoomSizeCounts,
     currentUsers,
