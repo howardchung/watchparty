@@ -52,7 +52,7 @@ export abstract class VMManager {
     const isRampUp = nowHour >= rampUpHours[0] && nowHour < rampUpHours[1];
     let min = vmBufferSize - vmBufferFlex;
     if (isRampDown) {
-      min = 0;
+      min = 1;
     } else if (isRampUp) {
       min = vmBufferSize;
     }
