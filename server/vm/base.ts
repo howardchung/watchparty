@@ -44,7 +44,7 @@ export abstract class VMManager {
   ) => {
     // During ramp down hours, keep a smaller buffer
     // During ramp up hours, keep a larger buffer
-    const rampDownHours = [4, 9];
+    const rampDownHours = [5, 9];
     const rampUpHours = [9, 17];
     const nowHour = new Date().getUTCHours();
     const isRampDown =
