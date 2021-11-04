@@ -6,7 +6,7 @@ import { cloudInit, imageName } from './utils';
 
 const HETZNER_TOKEN = config.HETZNER_TOKEN;
 // const region = ['nbg1', 'fsn1', 'hel1'];
-const region = ['ash1'];
+const region = ['ash'];
 const gatewayHost = config.HETZNER_GATEWAY;
 const sshKeys = config.HETZNER_SSH_KEYS.split(',').map(Number);
 const networks = config.HETZNER_NETWORKS.split(',').map(Number);
