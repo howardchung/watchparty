@@ -51,11 +51,11 @@ export abstract class VMManager {
       nowHour >= rampDownHours[0] && nowHour < rampDownHours[1];
     const isRampUp = nowHour >= rampUpHours[0] && nowHour < rampUpHours[1];
     let min = vmBufferSize - vmBufferFlex;
-    if (isRampDown) {
-      min = 1;
-    } else if (isRampUp) {
-      min = vmBufferSize;
-    }
+    // if (isRampDown) {
+    //   min = 2;
+    // } else if (isRampUp) {
+    //   min = vmBufferSize;
+    // }
     return [min, min + vmBufferFlex * 2];
   };
   protected getCurrentSize = () => {
