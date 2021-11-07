@@ -125,8 +125,10 @@ app.get('/stats', async (req, res) => {
 app.get('/health/:metric', async (req, res) => {
   const stats = await getStats();
   const metrics: BooleanDict = {
-    vBrowser: Boolean(stats.availableVBrowsers?.length),
-    vBrowserLarge: Boolean(stats.availableVBrowsersLarge?.length),
+    vBrowser: Boolean(stats.vmManagerStats?.US?.availableVBrowsers?.length),
+    vBrowserLarge: Boolean(
+      stats.vmManagerStats?.largeUS?.availableVBrowsers?.length
+    ),
   };
   const result = metrics[req.params.metric];
   res.status(result ? 200 : 500).json(result);
@@ -214,9 +216,13 @@ app.get('/metadata', async (req, res) => {
     req.query?.uid as string,
     req.query?.token as string
   );
-  const isVMPoolFull = vmManagers?.standard
-    ? Boolean(await redis?.get(vmManagers.standard.getRedisVMPoolFullKey()))
-    : false;
+  const isVMPoolFull: BooleanDict = {};
+  Object.entries(vmManagers).forEach(async ([key, value]) => {
+    const isPoolFull = Boolean(
+      await redis?.get(value?.getRedisVMPoolFullKey() ?? '')
+    );
+    isVMPoolFull[key] = isPoolFull;
+  });
   let isCustomer = false;
   let isSubscriber = false;
   if (decoded?.email) {
@@ -433,8 +439,6 @@ async function getStats() {
   let currentRoomSizeCounts: NumberDict = {};
   let currentVBrowserUIDCounts: NumberDict = {};
   let currentRoomCount = rooms.size;
-  const vmManager = vmManagers.standard;
-  const vmManagerLarge = vmManagers.large;
   rooms.forEach((room) => {
     const obj = {
       creationTime: room.creationTime,
@@ -505,26 +509,23 @@ async function getStats() {
   const postgresUsage = (
     await postgres?.query(`SELECT pg_database_size('postgres');`)
   )?.rows[0].pg_database_size;
-  const availableVBrowsers = await redis?.lrange(
-    vmManager?.getRedisQueueKey() || 'availableList',
-    0,
-    -1
-  );
-  const stagingVBrowsers = await redis?.lrange(
-    vmManager?.getRedisStagingKey() || 'stagingList',
-    0,
-    -1
-  );
-  const availableVBrowsersLarge = await redis?.lrange(
-    vmManagerLarge?.getRedisQueueKey() || 'availableList',
-    0,
-    -1
-  );
-  const stagingVBrowsersLarge = await redis?.lrange(
-    vmManagerLarge?.getRedisStagingKey() || 'stagingList',
-    0,
-    -1
-  );
+  const vmManagerStats: AnyDict = {};
+  Object.entries(vmManagers).forEach(async ([key, vmManager]) => {
+    const availableVBrowsers = await redis?.lrange(
+      vmManager?.getRedisQueueKey() || 'availableList',
+      0,
+      -1
+    );
+    const stagingVBrowsers = await redis?.lrange(
+      vmManager?.getRedisStagingKey() || 'stagingList',
+      0,
+      -1
+    );
+    vmManagerStats[key] = {
+      availableVBrowsers,
+      stagingVBrowsers,
+    };
+  });
   const numPermaRooms = (
     await postgres?.query('SELECT count(1) from room WHERE owner IS NOT NULL')
   )?.rows[0].count;
@@ -644,10 +645,7 @@ async function getStats() {
     vBrowserTerminateTimeout,
     recaptchaRejectsLowScore,
     recaptchaRejectsOther,
-    availableVBrowsers,
-    stagingVBrowsers,
-    availableVBrowsersLarge,
-    stagingVBrowsersLarge,
+    vmManagerStats,
     vBrowserStartMS,
     vBrowserStageRetries,
     vBrowserSessionMS,

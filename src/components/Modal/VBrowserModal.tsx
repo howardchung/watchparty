@@ -18,7 +18,8 @@ export class VBrowserModal extends React.Component<{
   async componentDidMount() {
     const resp = await fetch(serverPath + '/metadata');
     const metadata = await resp.json();
-    if (metadata.isVMPoolFull) {
+    // TODO temporary check the default pool
+    if (metadata.isVMPoolFull?.US) {
       this.setState({ isVMPoolFull: true });
     }
   }

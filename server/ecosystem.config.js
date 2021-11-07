@@ -1,5 +1,6 @@
 const hetznerImage = '51615253';
 const hetznerGateway = 'gateway3.watchparty.me';
+const hetznerGatewayUS = 'gateway2.watchparty.me';
 
 module.exports = {
   apps: [
@@ -10,6 +11,7 @@ module.exports = {
       env: {
         PORT: 80,
         HETZNER_GATEWAY: hetznerGateway,
+        HETZNER_GATEWAY_US: hetznerGatewayUS,
         HETZNER_IMAGE: hetznerImage,
       },
     },
@@ -21,6 +23,7 @@ module.exports = {
         SHARD: 1,
         PORT: 3001,
         HETZNER_GATEWAY: hetznerGateway,
+        HETZNER_GATEWAY_US: hetznerGatewayUS,
         HETZNER_IMAGE: hetznerImage,
       },
     },
@@ -32,6 +35,7 @@ module.exports = {
     //     SHARD: 2,
     //     PORT: 3002,
     //     HETZNER_GATEWAY: hetznerGateway,
+    //     HETZNER_GATEWAY_US: hetznerGatewayUS,
     //     HETZNER_IMAGE: hetznerImage,
     //   },
     // },
@@ -43,6 +47,7 @@ module.exports = {
     //     SHARD: 3,
     //     PORT: 3003,
     //     HETZNER_GATEWAY: hetznerGateway,
+    //     HETZNER_GATEWAY_US: hetznerGatewayUS,
     //     HETZNER_IMAGE: hetznerImage,
     //   },
     // },
@@ -53,6 +58,8 @@ module.exports = {
       env: {
         HETZNER_GATEWAY: hetznerGateway,
         HETZNER_NETWORKS: '91163,1007910,1007911',
+        HETZNER_GATEWAY_US: hetznerGatewayUS,
+        HETZNER_NETWORKS_US: '1258313,1258314,1258315',
         HETZNER_SSH_KEYS: '1570536',
         HETZNER_IMAGE: hetznerImage,
       },

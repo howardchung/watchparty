@@ -30,18 +30,21 @@ export abstract class VMManager {
     this.redis = redis;
   }
 
-  protected getMinSize = () =>
-    this.isLarge
+  protected getMinSize = () => {
+    // TODO temporary, decommission nonUS pool
+    if (this.region !== 'US') {
+      return 0;
+    }
+    return this.isLarge
       ? Number(config.VM_POOL_MIN_SIZE_LARGE)
       : Number(config.VM_POOL_MIN_SIZE);
+  };
   protected getLimitSize = () =>
     this.isLarge
       ? Number(config.VM_POOL_LIMIT_LARGE)
       : Number(config.VM_POOL_LIMIT);
-  protected getAdjustedBuffer = (
-    vmBufferSize: number,
-    vmBufferFlex: number
-  ) => {
+
+  protected getAdjustedBuffer = () => {
     // During ramp down hours, keep a smaller buffer
     // During ramp up hours, keep a larger buffer
     const rampDownHours = [5, 9];
@@ -50,13 +53,22 @@ export abstract class VMManager {
     const isRampDown =
       nowHour >= rampDownHours[0] && nowHour < rampDownHours[1];
     const isRampUp = nowHour >= rampUpHours[0] && nowHour < rampUpHours[1];
-    let min = vmBufferSize - vmBufferFlex;
+    let vmBufferSize = 0;
+    // TODO temporary, decommission nonUS pool
+    if (this.region !== 'US') {
+      return [0, 0];
+    }
+    if (this.isLarge) {
+      vmBufferSize = Number(config.VM_POOL_BUFFER_LARGE) || 0;
+    } else {
+      vmBufferSize = Number(config.VM_POOL_BUFFER) || 0;
+    }
     // if (isRampDown) {
     //   min = 2;
     // } else if (isRampUp) {
     //   min = vmBufferSize;
     // }
-    return [min, min + vmBufferFlex * 2];
+    return [vmBufferSize, vmBufferSize];
   };
   protected getCurrentSize = () => {
     return this.currentSize;
@@ -155,28 +167,18 @@ export abstract class VMManager {
       '[VMWORKER] starting background jobs for %s',
       this.getRedisQueueKey()
     );
-    let vmBufferSize = 0;
-    let vmBufferFlex = 0;
-    if (this.isLarge) {
-      vmBufferSize = Number(config.VBROWSER_VM_BUFFER_LARGE) || 0;
-      vmBufferFlex = Number(config.VBROWSER_VM_BUFFER_LARGE_FLEX) || 0;
-    } else {
-      vmBufferSize = Number(config.VBROWSER_VM_BUFFER) || 0;
-      vmBufferFlex = Number(config.VBROWSER_VM_BUFFER_FLEX) || 0;
-    }
     const resizeVMGroupIncr = async () => {
       const availableCount = await this.redis.llen(this.getRedisQueueKey());
       const stagingCount = await this.redis.llen(this.getRedisStagingKey());
       let launch = false;
       launch =
-        availableCount + stagingCount <
-          this.getAdjustedBuffer(vmBufferSize, vmBufferFlex)[0] &&
+        availableCount + stagingCount < this.getAdjustedBuffer()[0] &&
         this.getCurrentSize() < (this.getLimitSize() || Infinity);
       if (launch) {
         console.log(
           '[RESIZE-LAUNCH]',
-          'desired:',
-          vmBufferSize,
+          'minimum:',
+          this.getAdjustedBuffer()[0],
           'available:',
           availableCount,
           'staging:',
@@ -193,8 +195,7 @@ export abstract class VMManager {
     const resizeVMGroupDecr = async () => {
       let unlaunch = false;
       const availableCount = await this.redis.llen(this.getRedisQueueKey());
-      unlaunch =
-        availableCount > this.getAdjustedBuffer(vmBufferSize, vmBufferFlex)[1];
+      unlaunch = availableCount > this.getAdjustedBuffer()[1];
       if (unlaunch) {
         const allVMs = await this.listVMs(this.getTag());
         const now = Date.now();
