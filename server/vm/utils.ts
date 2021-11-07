@@ -97,7 +97,7 @@ export function getVMManager(
   ) {
     vmManager = new Hetzner(isLarge, region);
   } else if (config.REDIS_URL && config.DO_TOKEN && provider === 'DO') {
-    vmManager = new DigitalOcean(isLarge);
+    vmManager = new DigitalOcean(isLarge, region);
   } else if (
     config.REDIS_URL &&
     config.DOCKER_VM_HOST &&
@@ -111,8 +111,9 @@ export function getVMManager(
 export function getBgVMManagers() {
   return {
     large: getVMManager(config.VM_MANAGER_ID, true, ''),
-    US: null, // getVMManager(config.VM_MANAGER_ID_US || config.VM_MANAGER_ID, true, 'US'),
     standard: getVMManager(config.VM_MANAGER_ID, false, ''),
+    largeUS: getVMManager(config.VM_MANAGER_ID, true, 'US'),
+    US: getVMManager(config.VM_MANAGER_ID, false, 'US'),
   };
 }
 

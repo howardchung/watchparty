@@ -8,12 +8,10 @@ const defaults = {
   FIREBASE_ADMIN_SDK_CONFIG: '', // Optional, for features requiring sign-in/authentication
   FIREBASE_DATABASE_URL: '', // Optional (unused)
   STRIPE_SECRET_KEY: '', // Optional, for subscriptions
-  VBROWSER_VM_BUFFER_LARGE: 0, // Number of large VMs to keep available
-  VBROWSER_VM_BUFFER: 0, // Number of VMs to keep available
-  VBROWSER_VM_BUFFER_LARGE_FLEX: 0, // Flexibility in size of large VM buffer
-  VBROWSER_VM_BUFFER_FLEX: 0, // Flexibility in size of VM buffer
   VBROWSER_SESSION_SECONDS: 10800, // Number of seconds to allow vbrowsers to run for
   VBROWSER_SESSION_SECONDS_LARGE: 43200, // Number of seconds to allow large vbrowsers to run for
+  VM_POOL_BUFFER_LARGE: 0, // Number of large VMs to keep available
+  VM_POOL_BUFFER: 0, // Number of VMs to keep available
   VM_POOL_LIMIT_LARGE: 0, // Max number of large VMs to have in pool (0 to disable limit)
   VM_POOL_LIMIT: 0, // Max number of VMs to have in pool (0 to disable limit)
   VM_POOL_MIN_SIZE: 0, // Minimum number of VM instances to keep in the pool
@@ -23,7 +21,9 @@ const defaults = {
   DO_GATEWAY: '', // Warning, needs to be set on both vmWorker and server!
   HETZNER_TOKEN: '', // Optional, for Hetzner VMs
   HETZNER_GATEWAY: '', // Warning: needs to be set on both vmWorker and server!
+  HETZNER_GATEWAY_US: '',
   HETZNER_NETWORKS: '', // IDs of Hetzner networks vbrowsers are using
+  HETZNER_NETWORKS_US: '',
   HETZNER_SSH_KEYS: '', // IDs of Hetzner SSH keys to access vbrowsers
   HETZNER_IMAGE: '', // ID of Hetzner snapshot image to use for vbrowser
   SCW_SECRET_KEY: '', // Optional, for Scaleway VMs
@@ -47,7 +47,6 @@ const defaults = {
   ROOM_CAPACITY_SUB: 0, // Maximum capacity of a sub room. Set to 0 for unlimited.
   BUILD_DIRECTORY: 'build', // Name of the directory where the built React UI is served from
   VM_MANAGER_ID: 'Docker', // ID value of the VM Manager implementation to use (see vm directory)
-  VM_MANAGER_ID_US: '', // ID value of the VM Manager implementation to use for US based VMs
   VM_MIN_UPTIME_MINUTES: 0, // Number of minutes of the hour VMs must exist for before being eligible for termination
   SHARD: undefined, // Shard ID of the web server (configure in ecosystem.config.js)
   SUBSCRIBER_ROOM_LIMIT: 20, // The maximum number of rooms a subscriber can have

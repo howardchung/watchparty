@@ -5,17 +5,23 @@ import { VMManager, VM } from './base';
 import { cloudInit, imageName } from './utils';
 
 const HETZNER_TOKEN = config.HETZNER_TOKEN;
-const region = ['nbg1', 'fsn1', 'hel1'];
-// const region = ['ash'];
-const gatewayHost = config.HETZNER_GATEWAY;
 const sshKeys = config.HETZNER_SSH_KEYS.split(',').map(Number);
-const networks = config.HETZNER_NETWORKS.split(',').map(Number);
 const imageId = Number(config.HETZNER_IMAGE);
 
 export class Hetzner extends VMManager {
   size = 'cpx11'; // cx11, cpx11, cpx21, cpx31, ccx11
   largeSize = 'cpx31';
   id = 'Hetzner';
+  networks = (this.region === 'US'
+    ? config.HETZNER_NETWORKS_US
+    : config.HETZNER_NETWORKS
+  )
+    .split(',')
+    .map(Number);
+  gateway =
+    this.region === 'US' ? config.HETZNER_GATEWAY_US : config.HETZNER_GATEWAY;
+  datacenters = this.region === 'US' ? ['ash'] : ['nbg1', 'fsn1', 'hel1'];
+
   startVM = async (name: string) => {
     const response = await axios({
       method: 'POST',
@@ -30,7 +36,9 @@ export class Hetzner extends VMManager {
         start_after_create: true,
         image: imageId,
         ssh_keys: sshKeys,
-        networks: [networks[Math.floor(Math.random() * networks.length)]],
+        networks: [
+          this.networks[Math.floor(Math.random() * this.networks.length)],
+        ],
         user_data: cloudInit(
           imageName,
           this.isLarge ? '1920x1080@30' : undefined,
@@ -42,7 +50,9 @@ export class Hetzner extends VMManager {
           [this.getTag()]: '1',
           originalName: name,
         },
-        location: region[Math.floor(Math.random() * region.length)],
+        location: this.datacenters[
+          Math.floor(Math.random() * this.datacenters.length)
+        ],
       },
     });
     const id = response.data.server.id;
@@ -169,7 +179,7 @@ export class Hetzner extends VMManager {
           'Content-Type': 'application/json',
         },
         data: {
-          network: networks.slice(-1)[0],
+          network: this.networks.slice(-1)[0],
         },
       });
     } catch (e) {
@@ -184,7 +194,7 @@ export class Hetzner extends VMManager {
       id: server.id?.toString(),
       pass: server.name,
       // The gateway handles SSL termination and proxies to the private IP
-      host: `${gatewayHost}/?ip=${ip}`,
+      host: `${this.gateway}/?ip=${ip}`,
       private_ip: ip,
       state: server.status,
       tags: Object.keys(server.labels),
