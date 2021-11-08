@@ -685,8 +685,7 @@ export class Room {
       }
     }
     let isLarge = false;
-    // TODO temporary testing out default to US region
-    let region = 'US';
+    let region = null;
     if (config.STRIPE_SECRET_KEY && data && data.uid && data.token) {
       const decoded = await validateUserToken(data.uid, data.token);
       // Check if user is subscriber, if so allow isLarge
@@ -701,6 +700,8 @@ export class Room {
         }
       }
     }
+    // TODO temporary testing out default to US region
+    region = 'US';
 
     if (config.RECAPTCHA_SECRET_KEY) {
       try {
