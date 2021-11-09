@@ -188,8 +188,8 @@ export class Hetzner extends VMManager {
   };
 
   mapServerObject = (server: any): VM => {
-    const ip = server.public_net?.ipv4?.ip;
-    //const ip = server.private_net?.[0]?.ip;
+    //const ip = server.public_net?.ipv4?.ip;
+    const ip = server.private_net?.[0]?.ip;
     return {
       id: server.id?.toString(),
       pass: server.name,

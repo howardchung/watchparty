@@ -31,10 +31,6 @@ export abstract class VMManager {
   }
 
   protected getMinSize = () => {
-    // TODO temporary, decommission nonUS pool
-    if (this.region !== 'US') {
-      return 0;
-    }
     return this.isLarge
       ? Number(config.VM_POOL_MIN_SIZE_LARGE)
       : Number(config.VM_POOL_MIN_SIZE);
@@ -54,10 +50,6 @@ export abstract class VMManager {
       nowHour >= rampDownHours[0] && nowHour < rampDownHours[1];
     const isRampUp = nowHour >= rampUpHours[0] && nowHour < rampUpHours[1];
     let vmBufferSize = 0;
-    // TODO temporary, decommission nonUS pool
-    if (this.region !== 'US') {
-      return [0, 0];
-    }
     if (this.isLarge) {
       vmBufferSize = Number(config.VM_POOL_BUFFER_LARGE) || 0;
     } else {
