@@ -45,8 +45,8 @@ async function statsTimeSeries() {
       'timeSeries',
       JSON.stringify({
         time: new Date(),
-        availableVBrowsers: stats.availableVBrowsers?.length,
-        availableVBrowsersLarge: stats.availableVBrowsersLarge?.length,
+        availableVBrowsers: stats.US?.availableVBrowsers?.length,
+        availableVBrowsersLarge: stats.largeUS?.availableVBrowsers?.length,
         currentUsers: stats.currentUsers,
         currentVBrowser: stats.currentVBrowser,
         currentVBrowserLarge: stats.currentVBrowserLarge,
