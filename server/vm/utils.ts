@@ -14,6 +14,8 @@ export const cloudInit = (
   h264 = false
 ) => `#!/bin/bash
 iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 5000
+sysctl -w net.ipv6.conf.all.disable_ipv6=1
+sysctl -w net.ipv6.conf.default.disable_ipv6=1
 sed -i 's/scripts-user$/\[scripts-user, always\]/' /etc/cloud/cloud.cfg
 ${
   hetznerCloudInit
