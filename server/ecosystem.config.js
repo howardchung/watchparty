@@ -1,4 +1,4 @@
-const hetznerImage = '53169302';
+const hetznerImage = '53170708';
 const hetznerGateway = 'gateway3.watchparty.me';
 const hetznerGatewayUS = 'gateway2.watchparty.me';
 
