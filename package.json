@@ -95,7 +95,7 @@
     "@types/ioredis": "^4.16.2",
     "@types/jest": "^25.2.1",
     "@types/magnet-uri": "^5.1.2",
-    "@types/node": "^13.13.9",
+    "@types/node": "^16.11.9",
     "@types/pg": "^7.14.4",
     "@types/react": "^17.0.0",
     "@types/react-dom": "^17.0.0",
