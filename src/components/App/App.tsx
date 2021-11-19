@@ -262,9 +262,7 @@ export default class App extends React.Component<AppProps, AppState> {
     // This code loads the IFrame Player API code asynchronously.
     const tag = document.createElement('script');
     tag.src = 'https://www.youtube.com/iframe_api';
-    var firstScriptTag = document.getElementsByTagName('script')[0];
-    firstScriptTag!.parentNode!.insertBefore(tag, firstScriptTag);
-
+    document.body.append(tag);
     window.onYouTubeIframeAPIReady = () => {
       // Note: this fails silently if the element is not available
       const ytPlayer = new window.YT.Player('leftYt', {
@@ -979,8 +977,11 @@ export default class App extends React.Component<AppProps, AppState> {
           }
         }
         if (this.isYouTube()) {
-          console.log('play yt');
-          this.watchPartyYTPlayer?.playVideo();
+          setTimeout(() => {
+            console.log('play yt');
+            this.watchPartyYTPlayer?.playVideo();
+          },
+          100);
         }
       }
     );
