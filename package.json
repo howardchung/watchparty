@@ -19,7 +19,6 @@
     "express": "^4.17.1",
     "firebase": "^7.14.4",
     "firebase-admin": "^8.12.1",
-    "form-data": "^3.0.0",
     "ioredis": "^4.16.1",
     "magnet-uri": "^5.2.4",
     "moniker": "^0.1.2",
