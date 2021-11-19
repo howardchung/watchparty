@@ -2,6 +2,7 @@ import React from 'react';
 import { Modal, Header, Table, Button, Icon } from 'semantic-ui-react';
 import { loadStripe } from '@stripe/stripe-js';
 import { SignInButton } from '../TopBar/TopBar';
+import firebase from 'firebase/compat/app';
 
 // Make sure to call `loadStripe` outside of a component’s render to avoid
 // recreating the `Stripe` object on every render.

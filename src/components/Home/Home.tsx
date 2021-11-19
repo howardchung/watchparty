@@ -1,5 +1,6 @@
 import React from 'react';
 import { Divider, Header, Icon, Step } from 'semantic-ui-react';
+import firebase from 'firebase/compat/app';
 
 import { NewRoomButton } from '../TopBar';
 import styles from './Home.module.css';

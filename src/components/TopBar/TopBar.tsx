@@ -1,8 +1,8 @@
 import React from 'react';
 import { serverPath, colorMappings, getUserImage } from '../../utils';
 import { Icon, Popup, Button, Dropdown, Image } from 'semantic-ui-react';
-import * as firebase from 'firebase/app';
-import 'firebase/auth';
+import firebase from 'firebase/compat/app';
+import 'firebase/compat/auth';
 import { LoginModal } from '../Modal/LoginModal';
 import axios from 'axios';
 import { SubscribeButton } from '../SubscribeButton/SubscribeButton';
