@@ -11,12 +11,14 @@ import {
 } from '../../utils';
 import { Separator } from '../App/App';
 import { UserMenu } from '../UserMenu/UserMenu';
+import { Socket } from 'socket.io-client';
+import firebase from 'firebase/compat/app';
 
 interface ChatProps {
   chat: ChatMessage[];
   nameMap: StringDict;
   pictureMap: StringDict;
-  socket: SocketIOClient.Socket;
+  socket: Socket;
   scrollTimestamp: number;
   className?: string;
   getMediaDisplayName: Function;
@@ -246,7 +248,7 @@ const ChatMessage = ({
   pictureMap: StringDict;
   formatMessage: (cmd: string, msg: string) => React.ReactNode;
   user: firebase.User | undefined;
-  socket: SocketIOClient.Socket;
+  socket: Socket;
   owner: string | undefined;
 }) => {
   const { id, timestamp, cmd, msg, system } = message;

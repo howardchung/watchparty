@@ -11,7 +11,7 @@ import { Privacy, Terms, FAQ } from './components/PrivacyTerms/PrivacyTerms';
 import { TopBar } from './components/TopBar/TopBar';
 import { Footer } from './components/Footer/Footer';
 import * as serviceWorker from './serviceWorker';
-import firebase from 'firebase/app';
+import firebase from 'firebase/compat/app';
 import 'firebase/auth';
 import { serverPath } from './utils';
 

@@ -19,7 +19,7 @@ import {
   Menu,
   Modal,
 } from 'semantic-ui-react';
-import io from 'socket.io-client';
+import io, { Socket } from 'socket.io-client';
 import VTTConverter from 'srt-webvtt';
 import {
   formatSpeed,
@@ -50,6 +50,7 @@ import { PasswordModal } from '../Modal/PasswordModal';
 import { SubscribeButton } from '../SubscribeButton/SubscribeButton';
 import { ScreenShareModal } from '../Modal/ScreenShareModal';
 import { FileShareModal } from '../Modal/FileShareModal';
+import firebase from 'firebase/compat/app';
 
 declare global {
   interface Window {
@@ -178,7 +179,7 @@ export default class App extends React.Component<AppProps, AppState> {
     password: undefined,
     roomLink: '',
   };
-  socket: SocketIOClient.Socket = null as any;
+  socket: Socket = null as any;
   watchPartyYTPlayer: any = null;
   ytDebounce = true;
   screenShareStream?: MediaStream;
@@ -372,7 +373,7 @@ export default class App extends React.Component<AppProps, AppState> {
       // Rooms assigned to shards start with a number
       shard = /^\d+/.exec(roomId.slice(1))?.[0] ?? '';
     }
-    const socket = io.connect(serverPath + roomId, {
+    const socket = io(serverPath + roomId, {
       transports: ['websocket'],
       query: {
         clientId: getAndSaveClientId(),
@@ -652,9 +653,9 @@ export default class App extends React.Component<AppProps, AppState> {
   setupScreenShare = async () => {
     //@ts-ignore
     if (navigator.mediaDevices.getDisplayMedia) {
-      //@ts-ignore
       const stream = await navigator.mediaDevices.getDisplayMedia({
-        video: { cursor: 'never', height: 720, logicalSurface: true },
+        //@ts-ignore
+        video: { height: 720, logicalSurface: true },
         audio: {
           autoGainControl: false,
           channelCount: 2,
@@ -663,7 +664,6 @@ export default class App extends React.Component<AppProps, AppState> {
           noiseSuppression: false,
           sampleRate: 48000,
           sampleSize: 16,
-          volume: 1.0,
         },
       });
       stream.getVideoTracks()[0].onended = this.stopScreenShare;
@@ -971,7 +971,7 @@ export default class App extends React.Component<AppProps, AppState> {
               this.setMute(true);
             }
             await leftVideo?.play();
-          } catch (e) {
+          } catch (e: any) {
             console.warn(e);
             if (e.name === 'NotSupportedError') {
               this.setState({ loading: false, nonPlayableMedia: true });
