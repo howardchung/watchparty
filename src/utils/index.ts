@@ -3,6 +3,7 @@ import canAutoplay from 'can-autoplay';
 import { parseStringPromise } from 'xml2js';
 import { v4 as uuidv4 } from 'uuid';
 import md5 from 'blueimp-md5';
+import firebase from 'firebase/compat/app';
 
 export function formatTimestamp(input: any) {
   if (

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import './UserMenu.css';
 import { Popup, Button } from 'semantic-ui-react';
+import { Socket } from 'socket.io-client';
+import firebase from 'firebase/compat/app';
 
 export const UserMenu = ({
   user,
@@ -12,7 +14,7 @@ export const UserMenu = ({
   disabled,
 }: {
   user?: firebase.User;
-  socket: SocketIOClient.Socket;
+  socket: Socket;
   userToManage: string;
   trigger: any;
   icon?: string;

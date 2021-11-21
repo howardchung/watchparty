@@ -1,7 +1,7 @@
 import React from 'react';
 import { Modal, Button, Form, Message } from 'semantic-ui-react';
-import * as firebase from 'firebase/app';
-import 'firebase/auth';
+import firebase from 'firebase/compat/app';
+import 'firebase/compat/auth';
 
 export class LoginModal extends React.Component<{
   closeLogin: Function;
@@ -12,7 +12,7 @@ export class LoginModal extends React.Component<{
     try {
       await firebase.auth().sendPasswordResetEmail(this.state.email);
       this.props.closeLogin();
-    } catch (e) {
+    } catch (e: any) {
       // handle exceptions
       this.setState({ error: e.message });
     }
@@ -23,7 +23,7 @@ export class LoginModal extends React.Component<{
       await firebase.auth().signInWithEmailAndPassword(email, password);
 
       this.props.closeLogin();
-    } catch (e) {
+    } catch (e: any) {
       // handle exceptions
       this.setState({ error: e.message });
     }
@@ -32,7 +32,7 @@ export class LoginModal extends React.Component<{
   createAccount = async (email: string, password: string) => {
     try {
       await firebase.auth().createUserWithEmailAndPassword(email, password);
-    } catch (e) {
+    } catch (e: any) {
       // handle exceptions
       this.setState({ error: e.message });
     }
