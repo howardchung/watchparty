@@ -1,6 +1,7 @@
 import React from 'react';
 import { Modal, Button, Icon, Image } from 'semantic-ui-react';
-import firebase from 'firebase';
+import firebase from 'firebase/compat/app';
+import 'firebase/compat/auth';
 
 export class ProfileModal extends React.Component<{
   close: Function;

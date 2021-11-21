@@ -37,7 +37,7 @@ async function statsTimeSeries() {
         const data = shard.data;
         stats = combine(stats, data);
       });
-    } catch (e) {
+    } catch (e: any) {
       console.warn(`[TIMESERIES] %s when collecting stats`, e.code);
     }
 

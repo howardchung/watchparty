@@ -1,5 +1,6 @@
 import React from 'react';
 import { Button, Icon } from 'semantic-ui-react';
+import { Socket } from 'socket.io-client';
 
 import {
   formatTimestamp,
@@ -8,9 +9,10 @@ import {
   iceServers,
 } from '../../utils';
 import { UserMenu } from '../UserMenu/UserMenu';
+import firebase from 'firebase/compat/app';
 
 interface VideoChatProps {
-  socket: SocketIOClient.Socket;
+  socket: Socket;
   participants: User[];
   pictureMap: StringDict;
   nameMap: StringDict;

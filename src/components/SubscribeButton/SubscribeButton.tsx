@@ -2,6 +2,7 @@ import React, { useCallback, useState } from 'react';
 import { Button, Icon, Popup } from 'semantic-ui-react';
 import { serverPath } from '../../utils';
 import { SubscribeModal } from '../Modal/SubscribeModal';
+import firebase from 'firebase/compat/app';
 
 export const SubscribeButton = ({
   user,

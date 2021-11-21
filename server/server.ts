@@ -9,7 +9,7 @@ import cors from 'cors';
 import Redis from 'ioredis';
 import https from 'https';
 import http from 'http';
-import socketIO from 'socket.io';
+import { Server } from 'socket.io';
 import { searchYoutube } from './utils/youtube';
 import { Room } from './room';
 import {
@@ -37,7 +37,7 @@ if (config.HTTPS) {
 } else {
   server = new http.Server(app);
 }
-const io = socketIO(server, { origins: '*:*', transports: ['websocket'] });
+const io = new Server(server, { cors: {}, transports: ['websocket'] });
 let redis: Redis.Redis | undefined = undefined;
 if (config.REDIS_URL) {
   redis = new Redis(config.REDIS_URL);
