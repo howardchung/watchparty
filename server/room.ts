@@ -5,7 +5,7 @@ import util from 'util';
 
 import axios from 'axios';
 import Redis from 'ioredis';
-import { Socket } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 import { Client, QueryResult } from 'pg';
 
 import { validateUserToken } from './utils/firebase';
@@ -54,7 +54,7 @@ export class Room {
   public subscribers: BooleanDict = {};
   private tsMap: NumberDict = {};
   private nextVotes: StringDict = {};
-  private io: SocketIO.Server;
+  private io: Server;
   private clientIdMap: StringDict = {};
   private uidMap: StringDict = {};
   public roomRedis: Redis.Redis | undefined = undefined;
@@ -62,7 +62,7 @@ export class Room {
   public isChatDisabled: boolean | undefined = undefined;
 
   constructor(
-    io: SocketIO.Server,
+    io: Server,
     roomId: string,
     roomData?: string | null | undefined
   ) {
@@ -106,7 +106,7 @@ export class Room {
       next();
     });
     io.of(roomId).on('connection', (socket: Socket) => {
-      const clientId = socket.handshake.query?.clientId;
+      const clientId = socket.handshake.query?.clientId as string;
       this.roster.push({ id: socket.id });
       this.clientIdMap[socket.id] = clientId;
       redisCount('connectStarts');
@@ -275,7 +275,7 @@ export class Room {
       name: this.nameMap[p.id] || p.id,
       uid: this.uidMap[p.id],
       ts: this.tsMap[p.id],
-      ip: this.io.of(this.roomId).sockets[p.id]?.request?.connection
+      ip: this.io.of(this.roomId).sockets.get(p.id)?.request?.connection
         ?.remoteAddress,
     }));
   };
@@ -1109,9 +1109,9 @@ export class Room {
       socket.emit('errorMessage', 'Not current room owner');
       return;
     }
-    const userToBeKickedSocket = this.io.of(this.roomId).connected[
+    const userToBeKickedSocket = this.io.of(this.roomId).sockets.get(
       data.userToBeKicked
-    ];
+    );
     if (userToBeKickedSocket) {
       try {
         userToBeKickedSocket.emit('kicked');
