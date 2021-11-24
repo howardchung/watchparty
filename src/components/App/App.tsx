@@ -74,6 +74,7 @@ interface AppState {
   currentSubtitle: string;
   currentMediaPaused: boolean;
   participants: User[];
+  subscribers: BooleanDict;
   rosterUpdateTS: Number;
   chat: ChatMessage[];
   playlist: PlaylistVideo[];
@@ -129,6 +130,7 @@ export default class App extends React.Component<AppProps, AppState> {
     currentMediaPaused: false,
     currentSubtitle: '',
     participants: [],
+    subscribers: {},
     rosterUpdateTS: Number(new Date()),
     chat: [],
     playlist: [],
@@ -201,6 +203,9 @@ export default class App extends React.Component<AppProps, AppState> {
     this.loadSettings();
     this.loadYouTube();
     this.init();
+    if (this.props.isSubscriber) {
+      this.verifySubscriberStatus();
+    }
   }
 
   getRoomLink = (vanity: string) => {
@@ -225,11 +230,24 @@ export default class App extends React.Component<AppProps, AppState> {
     window.clearInterval(this.heartbeat);
   }
 
-  componentDidUpdate(prevProps: AppProps) {
+  async componentDidUpdate(prevProps: AppProps) {
     if (this.props.user && !prevProps.user) {
       this.loadSignInData();
     }
+    if (this.props.isSubscriber && !prevProps.isSubscriber) {
+      this.verifySubscriberStatus();
+    }
   }
+
+  verifySubscriberStatus = async () => {
+    if (this.socket && this.props.user) {
+      const token = await this.props.user?.getIdToken();
+      this.socket.emit('CMD:verifyAndEmitSubscriberStatus', {
+        uid: this.props.user?.uid,
+        token,
+      });
+    }
+  };
 
   loadSettings = async () => {
     // Load settings from localstorage and remote
@@ -565,6 +583,9 @@ export default class App extends React.Component<AppProps, AppState> {
     });
     socket.on('REC:lock', (data: string) => {
       this.setState({ roomLock: data });
+    });
+    socket.on('subscribers', (data: BooleanDict) => {
+      this.setState({ subscribers: data });
     });
     socket.on('roster', (data: User[]) => {
       this.setState(
@@ -1473,6 +1494,7 @@ export default class App extends React.Component<AppProps, AppState> {
           isChatDisabled={this.state.isChatDisabled}
           owner={this.state.owner}
           user={this.props.user}
+          subscribers={this.state.subscribers}
         />
         {this.state.state === 'connected' && (
           <VideoChat
