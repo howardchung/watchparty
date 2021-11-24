@@ -27,7 +27,6 @@ let postgres: Client | undefined = undefined;
 if (config.DATABASE_URL) {
   postgres = new Client({
     connectionString: config.DATABASE_URL,
-    ssl: { rejectUnauthorized: false },
   });
   postgres.connect();
 }
@@ -51,6 +50,7 @@ export class Room {
   // Non-serialized state
   public roomId: string;
   public roster: User[] = [];
+  public subscribers: BooleanDict = {};
   private tsMap: NumberDict = {};
   private nextVotes: StringDict = {};
   private io: SocketIO.Server;
@@ -119,6 +119,7 @@ export class Room {
       socket.emit('chatinit', this.chat);
       socket.emit('playlist', this.playlist);
       this.getRoomState(socket);
+      io.of(roomId).emit('subscribers', this.subscribers);
       io.of(roomId).emit('roster', this.roster);
 
       socket.on('CMD:name', (data) => this.changeUserName(socket, data));
@@ -157,6 +158,9 @@ export class Room {
       socket.on('CMD:playlistMove', (data) => this.playlistMove(socket, data));
       socket.on('CMD:playlistDelete', (data) =>
         this.playlistDelete(socket, data)
+      );
+      socket.on('CMD:verifyAndEmitSubscriberStatus', (data) =>
+        this.verifyAndEmitSubscriberStatus(socket, data)
       );
 
       socket.on('signal', (data) => this.sendSignal(socket, data));
@@ -918,6 +922,31 @@ export class Room {
         vanity: row?.vanity,
         owner: row?.owner,
       });
+    }
+  };
+
+  private verifyAndEmitSubscriberStatus = async (
+    socket: Socket,
+    data: {
+      uid: string;
+      token: string;
+    }
+  ) => {
+    const decoded = await validateUserToken(
+      data?.uid as string,
+      data?.token as string
+    );
+    if (!decoded) {
+      socket.emit('errorMessage', 'Failed to authenticate user');
+      return;
+    }
+    const customer = await getCustomerByEmail(decoded.email as string);
+    const isSubscriber = Boolean(
+      customer?.subscriptions?.data?.find((sub) => sub?.status === 'active')
+    );
+    if (isSubscriber) {
+      this.subscribers[socket.id] = true;
+      this.io.of(this.roomId).emit('subscribers', this.subscribers);
     }
   };
 
