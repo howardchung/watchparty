@@ -14,13 +14,15 @@ import { getCurrentSettings, updateSettings } from './LocalSettings';
 import axios from 'axios';
 import { serverPath } from '../../utils';
 import { PermanentRoomModal } from '../Modal/PermanentRoomModal';
+import firebase from 'firebase/compat/app';
+import { Socket } from 'socket.io-client';
 
 interface SettingsTabProps {
   hide: boolean;
   user: firebase.User | undefined;
   roomLock: string;
   setRoomLock: Function;
-  socket: SocketIOClient.Socket;
+  socket: Socket;
   isSubscriber: boolean;
   roomId: string;
   owner: string | undefined;

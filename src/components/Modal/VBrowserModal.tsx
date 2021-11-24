@@ -6,6 +6,7 @@ import {
 } from 'react-google-recaptcha-v3';
 import { SignInButton } from '../TopBar/TopBar';
 import { serverPath } from '../../utils';
+import firebase from 'firebase/compat/app';
 
 export class VBrowserModal extends React.Component<{
   closeModal: Function;

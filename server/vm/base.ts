@@ -113,7 +113,7 @@ export abstract class VMManager {
       await this.redis.rpush(this.getRedisStagingKey(), id);
       redisCount('vBrowserLaunches');
       return id;
-    } catch (e) {
+    } catch (e: any) {
       console.log(
         e.response?.status,
         JSON.stringify(e.response?.data),
@@ -307,7 +307,7 @@ export abstract class VMManager {
               try {
                 const vm = await this.getVM(id);
                 host = vm?.host ?? null;
-              } catch (e) {
+              } catch (e: any) {
                 if (e.response?.status === 404) {
                   await this.redis.lrem(this.getRedisQueueKey(), 0, id);
                   await this.redis.lrem(this.getRedisStagingKey(), 0, id);
