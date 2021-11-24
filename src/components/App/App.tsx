@@ -231,7 +231,7 @@ export default class App extends React.Component<AppProps, AppState> {
     window.clearInterval(this.heartbeat);
   }
 
-  async componentDidUpdate(prevProps: AppProps) {
+  componentDidUpdate(prevProps: AppProps) {
     if (this.props.user && !prevProps.user) {
       this.loadSignInData();
     }
