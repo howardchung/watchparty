@@ -20,7 +20,7 @@ import {
   Modal,
 } from 'semantic-ui-react';
 import io, { Socket } from 'socket.io-client';
-import VTTConverter from 'srt-webvtt';
+import { default as toWebVTT } from 'srt-webvtt';
 import {
   formatSpeed,
   getMediaType,
@@ -1182,8 +1182,7 @@ export default class App extends React.Component<AppProps, AppState> {
     if (subtitleSrc) {
       const response = await window.fetch(subtitleSrc);
       const buffer = await response.arrayBuffer();
-      const vttConverter = new VTTConverter(new Blob([buffer]));
-      const url = await vttConverter.getURL();
+      const url = await toWebVTT(new Blob([buffer]));
       const track = document.createElement('track');
       track.kind = 'captions';
       track.label = 'English';
