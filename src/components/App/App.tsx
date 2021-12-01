@@ -979,7 +979,6 @@ export default class App extends React.Component<AppProps, AppState> {
         if (this.isYouTube()) {
           setTimeout(() => {
             console.log('play yt');
-            this.setVolume(1);
             this.watchPartyYTPlayer?.playVideo();
           },
           100);
