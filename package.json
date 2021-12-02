@@ -29,7 +29,7 @@
     "react-google-recaptcha-v3": "^1.9.7",
     "react-markdown": "^7.1.1",
     "react-onclickoutside": "^6.12.1",
-    "react-router-dom": "^5.3.0",
+    "react-router-dom": "^6.0.2",
     "react-scripts": "^4.0.3",
     "react-semantic-ui-range": "^0.7.1",
     "recharts": "^2.1.6",
