@@ -10,10 +10,12 @@ const defaults = {
   STRIPE_SECRET_KEY: '', // Optional, for subscriptions
   VBROWSER_SESSION_SECONDS: 10800, // Number of seconds to allow vbrowsers to run for
   VBROWSER_SESSION_SECONDS_LARGE: 43200, // Number of seconds to allow large vbrowsers to run for
-  VM_POOL_BUFFER_LARGE: 0, // Number of large VMs to keep available
   VM_POOL_BUFFER: 0, // Number of VMs to keep available
-  VM_POOL_LIMIT_LARGE: 0, // Max number of large VMs to have in pool (0 to disable limit)
+  VM_POOL_BUFFER_LARGE: 0, // Number of large VMs to keep available
+  VM_POOL_BUFFER_FLEX: 0, // Number of additional VMs allows to exist in the pool
+  VM_POOL_BUFFER_FLEX_LARGE: 0, // Number of additional large VMs allowed to exist in the pool
   VM_POOL_LIMIT: 0, // Max number of VMs to have in pool (0 to disable limit)
+  VM_POOL_LIMIT_LARGE: 0, // Max number of large VMs to have in pool (0 to disable limit)
   VM_POOL_MIN_SIZE: 0, // Minimum number of VM instances to keep in the pool
   VM_POOL_MIN_SIZE_LARGE: 0, // Minimum number of large VM instances to keep in the pool
   VBROWSER_TAG: '', // Optional, tag to put on VBrowser VM instances
