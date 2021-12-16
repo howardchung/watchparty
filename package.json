@@ -18,7 +18,7 @@
     "eventemitter3": "^4.0.7",
     "express": "^4.17.1",
     "firebase": "^9.6.1",
-    "firebase-admin": "^10.0.0",
+    "firebase-admin": "^10.0.1",
     "ioredis": "^4.28.2",
     "magnet-uri": "^6.2.0",
     "moniker": "^0.1.2",
