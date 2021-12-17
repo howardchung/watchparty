@@ -51,7 +51,6 @@ export class Room {
   // Non-serialized state
   public roomId: string;
   public roster: User[] = [];
-  public subscribers: BooleanDict = {};
   private tsMap: NumberDict = {};
   private nextVotes: StringDict = {};
   private io: Server;
@@ -120,7 +119,6 @@ export class Room {
       socket.emit('chatinit', this.chat);
       socket.emit('playlist', this.playlist);
       this.getRoomState(socket);
-      io.of(roomId).emit('subscribers', this.subscribers);
       io.of(roomId).emit('roster', this.roster);
 
       socket.on('CMD:name', (data) => this.changeUserName(socket, data));
@@ -946,8 +944,11 @@ export class Room {
       customer?.subscriptions?.data?.find((sub) => sub?.status === 'active')
     );
     if (isSubscriber) {
-      this.subscribers[socket.id] = true;
-      this.io.of(this.roomId).emit('subscribers', this.subscribers);
+      const user = this.roster.find((user) => user.id === socket.id);
+      if(user) {
+        user.isSubscriber = true;
+        this.io.of(this.roomId).emit('roster', this.roster);
+      }
     }
   };
 
