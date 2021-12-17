@@ -583,12 +583,15 @@ export default class App extends React.Component<AppProps, AppState> {
     socket.on('REC:lock', (data: string) => {
       this.setState({ roomLock: data });
     });
-    socket.on('subscribers', (data: BooleanDict) => {
-      this.setState({ subscribers: data });
-    });
     socket.on('roster', (data: User[]) => {
+      const subscribers : BooleanDict = {};
+      data.forEach(user => {
+        if(user.isSubscriber) {
+          subscribers[user.id] = true;
+        }
+      })
       this.setState(
-        { participants: data, rosterUpdateTS: Number(new Date()) },
+        { participants: data, rosterUpdateTS: Number(new Date()), subscribers },
         () => {
           this.updateScreenShare();
         }

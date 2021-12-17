@@ -24,7 +24,7 @@
   height: 100%;
   z-index: -1;
   border-radius: 2px;
-  animation: animatedgradient 2s ease alternate infinite;
+  animation: animatedgradient 2.5s ease infinite;
   background-size: 200% 200%;
 }
 
