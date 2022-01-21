@@ -18,6 +18,7 @@ import {
   Progress,
   Menu,
   Modal,
+  Label,
 } from 'semantic-ui-react';
 import io, { Socket } from 'socket.io-client';
 import { default as toWebVTT } from 'srt-webvtt';
@@ -32,6 +33,7 @@ import {
   getAndSaveClientId,
   calculateMedian,
   getUserImage,
+  getColorForString,
 } from '../../utils';
 import { generateName } from '../../utils/generateName';
 import { Chat } from '../Chat';
@@ -96,6 +98,7 @@ interface AppState {
   myPicture: string;
   loading: boolean;
   scrollTimestamp: number;
+  unreadCount: number;
   fullScreen: boolean;
   controlsTimestamp: number;
   watchOptions: SearchResult[];
@@ -151,6 +154,7 @@ export default class App extends React.Component<AppProps, AppState> {
     myPicture: '',
     loading: true,
     scrollTimestamp: 0,
+    unreadCount: 0,
     fullScreen: false,
     controlsTimestamp: 0,
     watchOptions: [],
@@ -561,6 +565,7 @@ export default class App extends React.Component<AppProps, AppState> {
       this.setState({
         chat: this.state.chat,
         scrollTimestamp: Number(new Date()),
+        unreadCount: this.state.currentTab === 'chat' ? this.state.unreadCount : this.state.unreadCount + 1,
       });
     });
     socket.on('REC:tsMap', (data: NumberDict) => {
@@ -1446,11 +1451,15 @@ export default class App extends React.Component<AppProps, AppState> {
             <Menu.Item
               name="chat"
               active={this.state.currentTab === 'chat'}
-              onClick={() => this.setState({ currentTab: 'chat' })}
+              onClick={() => {
+                this.setState({ currentTab: 'chat', unreadCount: 0 });
+              }}
               as="a"
             >
-              {/* <Icon name="conversation" /> */}
               Chat
+              {this.state.unreadCount > 0 && <Label circular color='red'>
+        {this.state.unreadCount}
+      </Label>}
             </Menu.Item>
             <Menu.Item
               name="people"
@@ -1458,8 +1467,10 @@ export default class App extends React.Component<AppProps, AppState> {
               onClick={() => this.setState({ currentTab: 'people' })}
               as="a"
             >
-              {/* <Icon name="group" /> */}
-              People ({this.state.participants.length})
+              People
+              <Label circular color={getColorForString(this.state.participants.length.toString()) as SemanticCOLORS}>
+        {this.state.participants.length}
+      </Label>
             </Menu.Item>
             <Menu.Item
               name="settings"
