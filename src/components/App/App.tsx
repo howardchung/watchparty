@@ -1608,7 +1608,9 @@ export default class App extends React.Component<AppProps, AppState> {
             <Grid.Row id="theaterContainer">
               <Grid.Column
                 width={this.state.showRightBar ? 12 : 15}
-                className="fullHeightColumn"
+                className={this.state.fullScreen
+                  ? 'fullHeightColumnFullscreen'
+                  : 'fullHeightColumn'}
               >
                 <div
                   style={{
@@ -1941,6 +1943,7 @@ export default class App extends React.Component<AppProps, AppState> {
                                 ? 'block'
                                 : 'none',
                             width: '100%',
+                            maxHeight: 'calc(100vh - 62px - 36px - 36px - 8px - 41px - 16px)',
                           }}
                           id="leftVideo"
                           onEnded={this.onVideoEnded}
