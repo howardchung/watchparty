@@ -1088,9 +1088,7 @@ export default class App extends React.Component<AppProps, AppState> {
   };
 
   fullScreen = async (bVideoOnly: boolean) => {
-    let container = document.getElementById(
-      'fullScreenContainer'
-    ) as HTMLElement;
+    let container = document.getElementById('theaterContainer') as HTMLElement;
     if (bVideoOnly || isMobile()) {
       if (this.isVBrowser() && !isMobile()) {
         // Can't really control the VBrowser on mobile anyway, so just fullscreen the video
@@ -1607,7 +1605,7 @@ export default class App extends React.Component<AppProps, AppState> {
         />
         {
           <Grid stackable celled="internally">
-            <Grid.Row>
+            <Grid.Row id="theaterContainer">
               <Grid.Column
                 width={this.state.showRightBar ? 12 : 15}
                 className="fullHeightColumn"
@@ -1619,240 +1617,250 @@ export default class App extends React.Component<AppProps, AppState> {
                     height: '100%',
                   }}
                 >
-                  <ComboBox
-                    setMedia={this.setMedia}
-                    playlistAdd={this.playlistAdd}
-                    playlistDelete={this.playlistDelete}
-                    playlistMove={this.playlistMove}
-                    currentMedia={this.state.currentMedia}
-                    getMediaDisplayName={this.getMediaDisplayName}
-                    launchMultiSelect={this.launchMultiSelect}
-                    streamPath={this.state.settings.streamPath}
-                    mediaPath={this.state.settings.mediaPath}
-                    disabled={!this.haveLock()}
-                    playlist={this.state.playlist}
-                  />
-                  <Separator />
-                  <div
-                    className="mobileStack"
-                    style={{ display: 'flex', gap: '4px' }}
-                  >
-                    {this.screenShareStream && (
-                      <Button
-                        fluid
-                        className="toolButton"
-                        icon
-                        labelPosition="left"
-                        color="red"
-                        onClick={this.stopScreenShare}
-                        disabled={sharer?.id !== this.socket?.id}
+                  {!this.state.fullScreen && (
+                    <React.Fragment>
+                      <ComboBox
+                        setMedia={this.setMedia}
+                        playlistAdd={this.playlistAdd}
+                        playlistDelete={this.playlistDelete}
+                        playlistMove={this.playlistMove}
+                        currentMedia={this.state.currentMedia}
+                        getMediaDisplayName={this.getMediaDisplayName}
+                        launchMultiSelect={this.launchMultiSelect}
+                        streamPath={this.state.settings.streamPath}
+                        mediaPath={this.state.settings.mediaPath}
+                        disabled={!this.haveLock()}
+                        playlist={this.state.playlist}
+                      />
+                      <Separator />
+                      <div
+                        className="mobileStack"
+                        style={{ display: 'flex', gap: '4px' }}
                       >
-                        <Icon name="cancel" />
-                        Stop Share
-                      </Button>
-                    )}
-                    {!this.screenShareStream && !sharer && !this.isVBrowser() && (
-                      <Popup
-                        content={`Share a tab or an application. Make sure to check "Share audio" for best results.`}
-                        trigger={
+                        {this.screenShareStream && (
                           <Button
                             fluid
                             className="toolButton"
-                            disabled={!this.haveLock()}
                             icon
                             labelPosition="left"
-                            color={'instagram'}
-                            onClick={() => {
-                              this.setState({ isScreenShareModalOpen: true });
-                            }}
+                            color="red"
+                            onClick={this.stopScreenShare}
+                            disabled={sharer?.id !== this.socket?.id}
                           >
-                            <Icon name={'slideshare'} />
-                            Screenshare
+                            <Icon name="cancel" />
+                            Stop Share
                           </Button>
-                        }
-                      />
-                    )}
-                    {!this.screenShareStream && !sharer && !this.isVBrowser() && (
-                      <Popup
-                        content="Launch a shared virtual browser"
-                        trigger={
-                          <Button
-                            fluid
-                            className="toolButton"
-                            disabled={!this.haveLock()}
-                            icon
-                            labelPosition="left"
-                            color="green"
-                            onClick={() => {
-                              this.setState({ isVBrowserModalOpen: true });
-                            }}
-                          >
-                            <Icon name="desktop" />
-                            VBrowser
-                          </Button>
-                        }
-                      />
-                    )}
-                    {this.isVBrowser() && (
-                      <Popup
-                        content="Choose the person controlling the VBrowser"
-                        trigger={
+                        )}
+                        {!this.screenShareStream &&
+                          !sharer &&
+                          !this.isVBrowser() && (
+                            <Popup
+                              content={`Share a tab or an application. Make sure to check "Share audio" for best results.`}
+                              trigger={
+                                <Button
+                                  fluid
+                                  className="toolButton"
+                                  disabled={!this.haveLock()}
+                                  icon
+                                  labelPosition="left"
+                                  color={'instagram'}
+                                  onClick={() => {
+                                    this.setState({
+                                      isScreenShareModalOpen: true,
+                                    });
+                                  }}
+                                >
+                                  <Icon name={'slideshare'} />
+                                  Screenshare
+                                </Button>
+                              }
+                            />
+                          )}
+                        {!this.screenShareStream &&
+                          !sharer &&
+                          !this.isVBrowser() && (
+                            <Popup
+                              content="Launch a shared virtual browser"
+                              trigger={
+                                <Button
+                                  fluid
+                                  className="toolButton"
+                                  disabled={!this.haveLock()}
+                                  icon
+                                  labelPosition="left"
+                                  color="green"
+                                  onClick={() => {
+                                    this.setState({
+                                      isVBrowserModalOpen: true,
+                                    });
+                                  }}
+                                >
+                                  <Icon name="desktop" />
+                                  VBrowser
+                                </Button>
+                              }
+                            />
+                          )}
+                        {this.isVBrowser() && (
+                          <Popup
+                            content="Choose the person controlling the VBrowser"
+                            trigger={
+                              <Dropdown
+                                icon="keyboard"
+                                labeled
+                                className="icon"
+                                style={{ height: '36px' }}
+                                button
+                                value={this.state.controller}
+                                placeholder="No controller"
+                                clearable
+                                onChange={this.changeController}
+                                selection
+                                disabled={!this.haveLock()}
+                                options={this.state.participants.map((p) => ({
+                                  text: this.state.nameMap[p.id] || p.id,
+                                  value: p.id,
+                                }))}
+                              ></Dropdown>
+                            }
+                          />
+                        )}
+                        {this.isVBrowser() && (
                           <Dropdown
-                            icon="keyboard"
+                            icon="desktop"
                             labeled
                             className="icon"
                             style={{ height: '36px' }}
                             button
-                            value={this.state.controller}
-                            placeholder="No controller"
-                            clearable
-                            onChange={this.changeController}
-                            selection
                             disabled={!this.haveLock()}
-                            options={this.state.participants.map((p) => ({
-                              text: this.state.nameMap[p.id] || p.id,
-                              value: p.id,
-                            }))}
+                            value={this.state.vBrowserResolution}
+                            onChange={(_e, data) =>
+                              this.setState({
+                                vBrowserResolution: data.value as string,
+                              })
+                            }
+                            selection
+                            options={[
+                              {
+                                text: '1080p (WatchParty Plus)',
+                                value: '1920x1080@30',
+                                disabled: !this.state.isVBrowserLarge,
+                              },
+                              {
+                                text: '720p',
+                                value: '1280x720@30',
+                              },
+                              {
+                                text: '576p',
+                                value: '1024x576@60',
+                              },
+                              {
+                                text: '486p',
+                                value: '864x486@60',
+                              },
+                              {
+                                text: '360p',
+                                value: '640x360@60',
+                              },
+                            ]}
                           ></Dropdown>
-                        }
-                      />
-                    )}
-                    {this.isVBrowser() && (
-                      <Dropdown
-                        icon="desktop"
-                        labeled
-                        className="icon"
-                        style={{ height: '36px' }}
-                        button
-                        disabled={!this.haveLock()}
-                        value={this.state.vBrowserResolution}
-                        onChange={(_e, data) =>
-                          this.setState({
-                            vBrowserResolution: data.value as string,
-                          })
-                        }
-                        selection
-                        options={[
-                          {
-                            text: '1080p (WatchParty Plus)',
-                            value: '1920x1080@30',
-                            disabled: !this.state.isVBrowserLarge,
-                          },
-                          {
-                            text: '720p',
-                            value: '1280x720@30',
-                          },
-                          {
-                            text: '576p',
-                            value: '1024x576@60',
-                          },
-                          {
-                            text: '486p',
-                            value: '864x486@60',
-                          },
-                          {
-                            text: '360p',
-                            value: '640x360@60',
-                          },
-                        ]}
-                      ></Dropdown>
-                    )}
-                    {this.isVBrowser() && (
-                      <Button
-                        fluid
-                        className="toolButton"
-                        icon
-                        labelPosition="left"
-                        color="red"
-                        disabled={!this.haveLock()}
-                        onClick={this.stopVBrowser}
-                      >
-                        <Icon name="cancel" />
-                        Stop VBrowser
-                      </Button>
-                    )}
-                    {!this.screenShareStream && !sharer && !this.isVBrowser() && (
-                      <Popup
-                        content="Stream your own video file"
-                        trigger={
+                        )}
+                        {this.isVBrowser() && (
                           <Button
                             fluid
                             className="toolButton"
-                            disabled={!this.haveLock()}
                             icon
                             labelPosition="left"
-                            onClick={() => {
-                              this.setState({ isFileShareModalOpen: true });
-                            }}
+                            color="red"
+                            disabled={!this.haveLock()}
+                            onClick={this.stopVBrowser}
                           >
-                            <Icon name="file" />
-                            File
+                            <Icon name="cancel" />
+                            Stop VBrowser
                           </Button>
-                        }
-                      />
-                    )}
-                    {false && (
-                      <SearchComponent
-                        setMedia={this.setMedia}
-                        playlistAdd={this.playlistAdd}
-                        type={'youtube'}
-                        streamPath={this.state.settings.streamPath}
-                        mediaPath={this.state.settings.mediaPath}
-                        disabled={!this.haveLock()}
-                      />
-                    )}
-                    {Boolean(this.state.settings.mediaPath) && (
-                      <SearchComponent
-                        setMedia={this.setMedia}
-                        playlistAdd={this.playlistAdd}
-                        type={'media'}
-                        streamPath={this.state.settings.streamPath}
-                        mediaPath={this.state.settings.mediaPath}
-                        disabled={!this.haveLock()}
-                      />
-                    )}
-                    {Boolean(this.state.settings.streamPath) && (
-                      <SearchComponent
-                        setMedia={this.setMedia}
-                        playlistAdd={this.playlistAdd}
-                        type={'stream'}
-                        streamPath={this.state.settings.streamPath}
-                        mediaPath={this.state.settings.mediaPath}
-                        launchMultiSelect={this.launchMultiSelect}
-                        disabled={!this.haveLock()}
-                      />
-                    )}
-                    {this.state.currentMedia &&
-                      !this.isScreenShare() &&
-                      !this.isVBrowser() &&
-                      !this.isYouTube() && (
-                        <Popup
-                          content="Upload a .srt subtitle file for this video"
-                          trigger={
-                            <Button
-                              fluid
-                              color="violet"
-                              className="toolButton"
-                              icon
-                              labelPosition="left"
-                              onClick={this.setSubtitle}
-                              disabled={!this.haveLock()}
-                            >
-                              <Icon name="closed captioning" />
-                              Subtitle
-                            </Button>
-                          }
-                        />
-                      )}
-                  </div>
-                  <Separator />
-                  <div
-                    id="fullScreenContainer"
-                    className={
-                      this.state.fullScreen ? 'fullScreenContainer' : ''
-                    }
-                    style={{ flexGrow: 1 }}
-                  >
+                        )}
+                        {!this.screenShareStream &&
+                          !sharer &&
+                          !this.isVBrowser() && (
+                            <Popup
+                              content="Stream your own video file"
+                              trigger={
+                                <Button
+                                  fluid
+                                  className="toolButton"
+                                  disabled={!this.haveLock()}
+                                  icon
+                                  labelPosition="left"
+                                  onClick={() => {
+                                    this.setState({
+                                      isFileShareModalOpen: true,
+                                    });
+                                  }}
+                                >
+                                  <Icon name="file" />
+                                  File
+                                </Button>
+                              }
+                            />
+                          )}
+                        {false && (
+                          <SearchComponent
+                            setMedia={this.setMedia}
+                            playlistAdd={this.playlistAdd}
+                            type={'youtube'}
+                            streamPath={this.state.settings.streamPath}
+                            mediaPath={this.state.settings.mediaPath}
+                            disabled={!this.haveLock()}
+                          />
+                        )}
+                        {Boolean(this.state.settings.mediaPath) && (
+                          <SearchComponent
+                            setMedia={this.setMedia}
+                            playlistAdd={this.playlistAdd}
+                            type={'media'}
+                            streamPath={this.state.settings.streamPath}
+                            mediaPath={this.state.settings.mediaPath}
+                            disabled={!this.haveLock()}
+                          />
+                        )}
+                        {Boolean(this.state.settings.streamPath) && (
+                          <SearchComponent
+                            setMedia={this.setMedia}
+                            playlistAdd={this.playlistAdd}
+                            type={'stream'}
+                            streamPath={this.state.settings.streamPath}
+                            mediaPath={this.state.settings.mediaPath}
+                            launchMultiSelect={this.launchMultiSelect}
+                            disabled={!this.haveLock()}
+                          />
+                        )}
+                        {this.state.currentMedia &&
+                          !this.isScreenShare() &&
+                          !this.isVBrowser() &&
+                          !this.isYouTube() && (
+                            <Popup
+                              content="Upload a .srt subtitle file for this video"
+                              trigger={
+                                <Button
+                                  fluid
+                                  color="violet"
+                                  className="toolButton"
+                                  icon
+                                  labelPosition="left"
+                                  onClick={this.setSubtitle}
+                                  disabled={!this.haveLock()}
+                                >
+                                  <Icon name="closed captioning" />
+                                  Subtitle
+                                </Button>
+                              }
+                            />
+                          )}
+                      </div>
+                      <Separator />
+                    </React.Fragment>
+                  )}
+                  <div style={{ flexGrow: 1 }}>
                     <div id="playerContainer">
                       {(this.state.loading ||
                         !this.state.currentMedia ||
@@ -1939,13 +1947,7 @@ export default class App extends React.Component<AppProps, AppState> {
                           playsInline
                         ></video>
                       )}
-                      {this.state.fullScreen && this.state.currentMedia && (
-                        <div className="controlsContainer">{controls}</div>
-                      )}
                     </div>
-                    {this.state.fullScreen && (
-                      <div className="fullScreenChat">{rightBar}</div>
-                    )}
                   </div>
                   {this.state.currentMedia && controls}
                   {Boolean(this.state.total) && (

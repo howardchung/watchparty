@@ -71,11 +71,6 @@ body {
   height: 100%;
 }
 
-.fullScreenContainer {
-  display: flex;
-  flex-direction: row;
-}
-
 #playerContainer {
   height: 100%;
   position: relative;
@@ -84,10 +79,6 @@ body {
   justify-content: center;
   /* Making this larger causes issues on mobile */
   min-height: 48vh;
-}
-
-.fullScreenContainer:fullscreen > #playerContainer {
-  width: 80vw;
 }
 
 .fullScreenChat.fullScreenChat.fullScreenChat {
