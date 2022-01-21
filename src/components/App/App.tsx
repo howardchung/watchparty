@@ -566,7 +566,10 @@ export default class App extends React.Component<AppProps, AppState> {
       this.setState({
         chat: this.state.chat,
         scrollTimestamp: Number(new Date()),
-        unreadCount: this.state.currentTab === 'chat' ? this.state.unreadCount : this.state.unreadCount + 1,
+        unreadCount:
+          this.state.currentTab === 'chat'
+            ? this.state.unreadCount
+            : this.state.unreadCount + 1,
       });
     });
     socket.on('REC:tsMap', (data: NumberDict) => {
@@ -1458,9 +1461,11 @@ export default class App extends React.Component<AppProps, AppState> {
               as="a"
             >
               Chat
-              {this.state.unreadCount > 0 && <Label circular color='red'>
-        {this.state.unreadCount}
-      </Label>}
+              {this.state.unreadCount > 0 && (
+                <Label circular color="red">
+                  {this.state.unreadCount}
+                </Label>
+              )}
             </Menu.Item>
             <Menu.Item
               name="people"
@@ -1469,9 +1474,16 @@ export default class App extends React.Component<AppProps, AppState> {
               as="a"
             >
               People
-              <Label circular color={getColorForString(this.state.participants.length.toString()) as SemanticCOLORS}>
-        {this.state.participants.length}
-      </Label>
+              <Label
+                circular
+                color={
+                  getColorForString(
+                    this.state.participants.length.toString()
+                  ) as SemanticCOLORS
+                }
+              >
+                {this.state.participants.length}
+              </Label>
             </Menu.Item>
             <Menu.Item
               name="settings"
@@ -1623,9 +1635,11 @@ export default class App extends React.Component<AppProps, AppState> {
             <Grid.Row id="theaterContainer">
               <Grid.Column
                 width={this.state.showRightBar ? 12 : 15}
-                className={this.state.fullScreen
-                  ? 'fullHeightColumnFullscreen'
-                  : 'fullHeightColumn'}
+                className={
+                  this.state.fullScreen
+                    ? 'fullHeightColumnFullscreen'
+                    : 'fullHeightColumn'
+                }
               >
                 <div
                   style={{
@@ -1958,7 +1972,8 @@ export default class App extends React.Component<AppProps, AppState> {
                                 ? 'block'
                                 : 'none',
                             width: '100%',
-                            maxHeight: 'calc(100vh - 62px - 36px - 36px - 8px - 41px - 16px)',
+                            maxHeight:
+                              'calc(100vh - 62px - 36px - 36px - 8px - 41px - 16px)',
                           }}
                           id="leftVideo"
                           onEnded={this.onVideoEnded}
