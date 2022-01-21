@@ -990,6 +990,7 @@ export default class App extends React.Component<AppProps, AppState> {
         if (this.isYouTube()) {
           setTimeout(() => {
             console.log('play yt');
+            this.setVolume(1);
             this.watchPartyYTPlayer?.playVideo();
           }, 100);
         }
@@ -1527,6 +1528,7 @@ export default class App extends React.Component<AppProps, AppState> {
                 onClick={() => {
                   this.setState({ isAutoPlayable: true });
                   this.setMute(false);
+                  this.setVolume(1);
                 }}
                 icon
                 labelPosition="left"
