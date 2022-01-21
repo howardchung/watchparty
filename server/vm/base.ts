@@ -60,7 +60,13 @@ export abstract class VMManager {
     // } else if (isRampUp) {
     //   min = vmBufferSize;
     // }
-    return [vmBufferSize, vmBufferSize + (this.isLarge ? Number(config.VM_POOL_BUFFER_FLEX_LARGE) : Number(config.VM_POOL_BUFFER_FLEX))];
+    return [
+      vmBufferSize,
+      vmBufferSize +
+        (this.isLarge
+          ? Number(config.VM_POOL_BUFFER_FLEX_LARGE)
+          : Number(config.VM_POOL_BUFFER_FLEX)),
+    ];
   };
   protected getCurrentSize = () => {
     return this.currentSize;

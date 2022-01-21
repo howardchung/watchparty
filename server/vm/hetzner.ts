@@ -50,9 +50,8 @@ export class Hetzner extends VMManager {
           [this.getTag()]: '1',
           originalName: name,
         },
-        location: this.datacenters[
-          Math.floor(Math.random() * this.datacenters.length)
-        ],
+        location:
+          this.datacenters[Math.floor(Math.random() * this.datacenters.length)],
       },
     });
     const id = response.data.server.id;
