@@ -113,8 +113,8 @@ export class VideoChat extends React.Component<VideoChatProps> {
   toggleVideoWebRTC = () => {
     const ourStream = window.watchparty.ourStream;
     if (ourStream && ourStream.getVideoTracks()[0]) {
-      ourStream.getVideoTracks()[0].enabled = !ourStream.getVideoTracks()[0]
-        ?.enabled;
+      ourStream.getVideoTracks()[0].enabled =
+        !ourStream.getVideoTracks()[0]?.enabled;
     }
     this.forceUpdate();
   };
@@ -127,8 +127,8 @@ export class VideoChat extends React.Component<VideoChatProps> {
   toggleAudioWebRTC = () => {
     const ourStream = window.watchparty.ourStream;
     if (ourStream && ourStream.getAudioTracks()[0]) {
-      ourStream.getAudioTracks()[0].enabled = !ourStream.getAudioTracks()[0]
-        ?.enabled;
+      ourStream.getAudioTracks()[0].enabled =
+        !ourStream.getAudioTracks()[0]?.enabled;
     }
     this.forceUpdate();
   };
@@ -204,15 +204,8 @@ export class VideoChat extends React.Component<VideoChatProps> {
   };
 
   render() {
-    const {
-      participants,
-      pictureMap,
-      nameMap,
-      tsMap,
-      socket,
-      owner,
-      user,
-    } = this.props;
+    const { participants, pictureMap, nameMap, tsMap, socket, owner, user } =
+      this.props;
     const ourStream = window.watchparty.ourStream;
     const videoRefs = window.watchparty.videoRefs;
     const videoChatContentStyle = {

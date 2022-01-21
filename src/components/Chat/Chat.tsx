@@ -84,7 +84,8 @@ export class Chat extends React.Component<ChatProps> {
 
   scrollToBottom = () => {
     if (this.messagesRef.current) {
-      this.messagesRef.current.scrollTop = this.messagesRef.current.scrollHeight;
+      this.messagesRef.current.scrollTop =
+        this.messagesRef.current.scrollHeight;
     }
   };
 
