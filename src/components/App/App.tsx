@@ -59,8 +59,19 @@ declare global {
     FB: any;
     fbAsyncInit: Function;
     Hls: any;
+    watchparty: {
+      ourStream: MediaStream | undefined;
+      videoRefs: HTMLVideoElementDict;
+      videoPCs: PCDict;
+    }
   }
 }
+
+window.watchparty = {
+  ourStream: undefined,
+  videoRefs: {},
+  videoPCs: {},
+};
 
 interface AppProps {
   vanity?: string;

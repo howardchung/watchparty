@@ -24,9 +24,6 @@ interface VideoChatProps {
 }
 
 export class VideoChat extends React.Component<VideoChatProps> {
-  ourStream?: MediaStream;
-  videoRefs: any = {};
-  videoPCs: PCDict = {};
   socket = this.props.socket;
 
   componentDidMount() {
@@ -47,7 +44,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
     // Handle messages received from signaling server
     const msg = data.msg;
     const from = data.from;
-    const pc = this.videoPCs[from];
+    const pc = window.watchparty.videoPCs[from];
     console.log('recv', from, data);
     if (msg.ice !== undefined) {
       pc.addIceCandidate(new RTCIceCandidate(msg.ice));
@@ -93,78 +90,87 @@ export class VideoChat extends React.Component<VideoChatProps> {
         console.warn(e);
       }
     }
-    this.ourStream = stream;
+    window.watchparty.ourStream = stream;
     // alert server we've joined video chat
     this.socket.emit('CMD:joinVideo');
   };
 
   stopWebRTC = () => {
-    this.ourStream &&
-      this.ourStream.getTracks().forEach((track) => {
+    const ourStream = window.watchparty.ourStream;
+    const videoPCs = window.watchparty.videoPCs;
+    ourStream &&
+      ourStream.getTracks().forEach((track) => {
         track.stop();
       });
-    this.ourStream = undefined;
-    Object.keys(this.videoPCs).forEach((key) => {
-      this.videoPCs[key].close();
-      delete this.videoPCs[key];
+    window.watchparty.ourStream = undefined;
+    Object.keys(videoPCs).forEach((key) => {
+      videoPCs[key].close();
+      delete videoPCs[key];
     });
     this.socket.emit('CMD:leaveVideo');
   };
 
   toggleVideoWebRTC = () => {
-    if (this.ourStream && this.ourStream.getVideoTracks()[0]) {
-      this.ourStream.getVideoTracks()[0].enabled = !this.ourStream.getVideoTracks()[0]
+    const ourStream = window.watchparty.ourStream;
+    if (ourStream && ourStream.getVideoTracks()[0]) {
+      ourStream.getVideoTracks()[0].enabled = !ourStream.getVideoTracks()[0]
         ?.enabled;
     }
     this.forceUpdate();
   };
 
   getVideoWebRTC = () => {
-    return this.ourStream && this.ourStream.getVideoTracks()[0]?.enabled;
+    const ourStream = window.watchparty.ourStream;
+    return ourStream && ourStream.getVideoTracks()[0]?.enabled;
   };
 
   toggleAudioWebRTC = () => {
-    if (this.ourStream && this.ourStream.getAudioTracks()[0]) {
-      this.ourStream.getAudioTracks()[0].enabled = !this.ourStream.getAudioTracks()[0]
+    const ourStream = window.watchparty.ourStream;
+    if (ourStream && ourStream.getAudioTracks()[0]) {
+      ourStream.getAudioTracks()[0].enabled = !ourStream.getAudioTracks()[0]
         ?.enabled;
     }
     this.forceUpdate();
   };
 
   getAudioWebRTC = () => {
+    const ourStream = window.watchparty.ourStream;
     return (
-      this.ourStream &&
-      this.ourStream.getAudioTracks()[0] &&
-      this.ourStream.getAudioTracks()[0].enabled
+      ourStream &&
+      ourStream.getAudioTracks()[0] &&
+      ourStream.getAudioTracks()[0].enabled
     );
   };
 
   updateWebRTC = () => {
-    if (!this.ourStream) {
+    const ourStream = window.watchparty.ourStream;
+    const videoPCs = window.watchparty.videoPCs;
+    const videoRefs = window.watchparty.videoRefs;
+    if (!ourStream) {
       // We haven't started video chat, exit
       return;
     }
     this.props.participants.forEach((user) => {
       const id = user.id;
-      if (!user.isVideoChat && this.videoPCs[id]) {
+      if (!user.isVideoChat && videoPCs[id]) {
         // User isn't in video chat but we have a connection, close it
-        this.videoPCs[id].close();
-        delete this.videoPCs[id];
+        videoPCs[id].close();
+        delete videoPCs[id];
       }
-      if (!user.isVideoChat || this.videoPCs[id]) {
+      if (!user.isVideoChat || videoPCs[id]) {
         // User isn't in video chat, or we already have a connection to them
         return;
       }
       if (id === this.socket.id) {
-        this.videoPCs[id] = new RTCPeerConnection();
-        this.videoRefs[id].srcObject = this.ourStream;
+        videoPCs[id] = new RTCPeerConnection();
+        videoRefs[id].srcObject = ourStream;
       } else {
         const pc = new RTCPeerConnection({ iceServers: iceServers() });
-        this.videoPCs[id] = pc;
+        videoPCs[id] = pc;
         // Add our own video as outgoing stream
-        this.ourStream?.getTracks().forEach((track) => {
-          if (this.ourStream) {
-            pc.addTrack(track, this.ourStream);
+        ourStream?.getTracks().forEach((track) => {
+          if (ourStream) {
+            pc.addTrack(track, ourStream);
           }
         });
         pc.onicecandidate = (event) => {
@@ -176,7 +182,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
         pc.ontrack = (event: RTCTrackEvent) => {
           // Mount the stream from peer
           // console.log(stream);
-          this.videoRefs[id].srcObject = event.streams[0];
+          videoRefs[id].srcObject = event.streams[0];
         };
         // For each pair, have the lexicographically smaller ID be the offerer
         const isOfferer = this.socket.id < id;
@@ -207,6 +213,8 @@ export class VideoChat extends React.Component<VideoChatProps> {
       owner,
       user,
     } = this.props;
+    const ourStream = window.watchparty.ourStream;
+    const videoRefs = window.watchparty.videoRefs;
     const videoChatContentStyle = {
       height: participants.length < 3 ? 220 : 110,
       borderRadius: '4px',
@@ -221,7 +229,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
           overflow: 'auto',
         }}
       >
-        {!this.ourStream && (
+        {!ourStream && (
           <div
             style={{
               display: 'flex',
@@ -243,7 +251,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
             </Button>
           </div>
         )}
-        {this.ourStream && (
+        {ourStream && (
           <div
             style={{
               display: 'flex',
@@ -340,10 +348,12 @@ export class VideoChat extends React.Component<VideoChatProps> {
                         />
                       }
                     />
-                    {this.ourStream && p.isVideoChat ? (
+                    {ourStream && p.isVideoChat ? (
                       <video
                         ref={(el) => {
-                          this.videoRefs[p.id] = el;
+                          if (el) {
+                            videoRefs[p.id] = el;
+                          }
                         }}
                         style={{
                           ...(videoChatContentStyle as any),

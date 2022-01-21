@@ -9,6 +9,7 @@ type NumberDict = { [key: string]: number };
 type BooleanDict = { [key: string]: boolean };
 type AnyDict = { [key: string]: any };
 type PCDict = { [key: string]: RTCPeerConnection };
+type HTMLVideoElementDict = { [key: string]: HTMLVideoElement };
 type MediaType = 'vbrowser' | 'screenshare' | 'video' | 'youtube';
 
 interface User {
