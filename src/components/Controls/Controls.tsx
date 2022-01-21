@@ -15,22 +15,21 @@ interface ControlsProps {
   muted: boolean;
   subtitled: boolean;
   currentTime: number;
-  getVolume: Function;
   setVolume: Function;
   disabled?: boolean;
   leaderTime?: number;
   isPauseDisabled?: boolean;
 }
 
-// TODO a lot of this state is currently tied to the per-second tsMap update, which is leading to some UI lag
-// e.g. cc, mute, timestamp
-// play/pause seems to work better since it triggers a server emit
-// Should probably have local state tracking CC/mute/time etc.
 export class Controls extends React.Component<ControlsProps> {
   state = {
     showTimestamp: false,
     currTimestamp: 0,
     posTimestamp: 0,
+    paused: this.props.paused,
+    muted: this.props.muted,
+    subtitled: this.props.subtitled,
+    volume: 1,
   };
 
   onMouseOver = () => {
@@ -64,21 +63,22 @@ export class Controls extends React.Component<ControlsProps> {
       toggleMute,
       toggleSubtitle,
       jumpToLeader,
-      paused,
-      muted,
-      subtitled,
       currentTime,
       duration,
       leaderTime,
       isPauseDisabled,
       disabled,
     } = this.props;
+    const {muted, subtitled, volume, paused} = this.state;
     const isBehind = leaderTime && leaderTime - currentTime > 5;
     return (
       <div className="controls">
         <Icon
           size="large"
-          onClick={togglePlay}
+          onClick={() => {
+            togglePlay();
+            this.setState({ paused: !this.state.paused });
+          }}
           className="control action"
           disabled={disabled || isPauseDisabled}
           name={paused ? 'play' : 'pause'}
@@ -139,7 +139,10 @@ export class Controls extends React.Component<ControlsProps> {
         <div className="control">{formatTimestamp(duration)}</div>
         <Icon
           size="large"
-          onClick={toggleSubtitle}
+          onClick={() => {
+            toggleSubtitle();
+            this.setState({ subtitled: !this.state.subtitled });
+          }}
           className="control action"
           name={subtitled ? 'closed captioning' : 'closed captioning outline'}
           title="Captions"
@@ -161,20 +164,24 @@ export class Controls extends React.Component<ControlsProps> {
         />
         <Icon
           size="large"
-          onClick={toggleMute}
+          onClick={() => {
+            toggleMute();
+            this.setState({ muted: !this.state.muted });
+          }}
           className="control action"
           name={muted ? 'volume off' : 'volume up'}
           title="Mute"
         />
         <div style={{ width: '100px', marginRight: '10px' }}>
           <Slider
-            value={this.props.getVolume()}
+            value={volume}
             color="blue"
             settings={{
               min: 0,
               max: 1,
               step: 0.01,
               onChange: (value: number) => {
+                this.setState({ volume: value });
                 this.props.setVolume(value);
               },
             }}

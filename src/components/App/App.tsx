@@ -512,7 +512,6 @@ export default class App extends React.Component<AppProps, AppState> {
             this.doSrc(data.video, data.videoTS);
             if (!data.paused) {
               this.doPlay();
-              this.setVolume(1);
             }
             if (data.subtitle) {
               if (!this.isSubtitled()) {
@@ -1357,7 +1356,10 @@ export default class App extends React.Component<AppProps, AppState> {
   };
 
   getLeaderTime = () => {
-    return calculateMedian(Object.values(this.state.tsMap));
+    if (this.state.participants.length > 2) {
+      return calculateMedian(Object.values(this.state.tsMap));
+    }
+    return Math.max(...Object.values(this.state.tsMap));
   };
 
   onVideoEnded = () => {
@@ -1384,7 +1386,6 @@ export default class App extends React.Component<AppProps, AppState> {
         toggleMute={this.toggleMute}
         toggleSubtitle={this.toggleSubtitle}
         setVolume={this.setVolume}
-        getVolume={this.getVolume}
         jumpToLeader={this.jumpToLeader}
         paused={this.isPaused()}
         muted={this.isMuted()}
