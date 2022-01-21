@@ -512,6 +512,7 @@ export default class App extends React.Component<AppProps, AppState> {
             this.doSrc(data.video, data.videoTS);
             if (!data.paused) {
               this.doPlay();
+              this.setVolume(1);
             }
             if (data.subtitle) {
               if (!this.isSubtitled()) {
@@ -990,9 +991,8 @@ export default class App extends React.Component<AppProps, AppState> {
         if (this.isYouTube()) {
           setTimeout(() => {
             console.log('play yt');
-            this.setVolume(1);
             this.watchPartyYTPlayer?.playVideo();
-          }, 100);
+          }, 200);
         }
       }
     );
