@@ -40,14 +40,14 @@
     "socket.io-client": "^4.4.0",
     "srt-webvtt": "^2.0.0",
     "ssh-exec": "^2.0.0",
-    "stripe": "^8.193.0",
+    "stripe": "^8.199.0",
     "url-exist": "^3.0.0",
     "uuid": "^8.3.2",
     "xml2js": "^0.4.23",
     "youtube-api": "^2.0.10"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start": "BROWSER=false react-scripts start",
     "build": "react-scripts build && npm run buildServer",
     "buildServer": "tsc --project server/tsconfig.json",
     "test": "react-scripts test",
