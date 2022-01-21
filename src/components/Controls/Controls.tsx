@@ -69,7 +69,7 @@ export class Controls extends React.Component<ControlsProps> {
       isPauseDisabled,
       disabled,
     } = this.props;
-    const {muted, subtitled, volume, paused} = this.state;
+    const { muted, subtitled, volume, paused } = this.state;
     const isBehind = leaderTime && leaderTime - currentTime > 5;
     return (
       <div className="controls">
