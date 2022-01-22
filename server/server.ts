@@ -25,6 +25,7 @@ import { getStartOfDay } from './utils/time';
 import { getBgVMManagers, getSessionLimitSeconds } from './vm/utils';
 import { hashString } from './utils/string';
 import { insertObject } from './utils/postgres';
+import axios from 'axios';
 
 const releaseInterval = 5 * 60 * 1000;
 const releaseBatches = 5;
@@ -112,6 +113,47 @@ app.get('/subtitle/:hash', async (req, res) => {
 });
 
 app.use(compression());
+
+app.post('/subtitle', async (req, res) => {});
+
+app.get('/searchSubtitles', async (req, res) => {
+  const url = req.query.url;
+  const startResp = await axios({
+    method: 'get',
+    url: url as string,
+    headers: {
+      Range: 'bytes=0-65535',
+    },
+    responseType: 'arraybuffer',
+  });
+  const start = startResp.data;
+  const size = Number(startResp.headers['content-range'].split('/')[1]);
+  const endResp = await axios({
+    method: 'get',
+    url: url as string,
+    headers: {
+      Range: `bytes=${size - 65536}-`,
+    },
+    responseType: 'arraybuffer',
+  });
+  const end = endResp.data;
+  // console.log(start, end, size);
+  let hash = computeOpenSubtitlesHash(start, end, size);
+  // hash = 'f65334e75574f00f';
+  // Search API for subtitles by hash
+  const subUrl = `https://rest.opensubtitles.org/search/moviebytesize-${size}/moviehash-${hash}/sublanguageid-eng`;
+  console.log(subUrl);
+  const response = await axios.get(subUrl, {
+    headers: { 'User-Agent': 'VLSub 0.10.2' },
+  });
+  // console.log(response);
+  const subtitles = response.data;
+  res.json(subtitles);
+  // const response2 = await axios.get(match.SubDownloadLink, { responseType: 'arraybuffer' });
+  // res.append('Content-Encoding', 'gzip');
+  // res.append('Content-Type', 'text/plain');
+  // res.end(response2.data);
+});
 
 app.get('/stats', async (req, res) => {
   if (req.query.key && req.query.key === config.STATS_KEY) {
@@ -274,28 +316,6 @@ app.delete('/deleteRoom', async (req, res) => {
     [decoded.uid, req.query.roomId]
   );
   return res.json(result?.rows);
-});
-
-app.get('/kv', async (req, res) => {
-  if (req.query.key === config.KV_KEY && redis) {
-    return res.end(await redis.get(('kv:' + req.query.k) as string));
-  } else {
-    return res.status(403).json({ error: 'Access Denied' });
-  }
-});
-
-app.post('/kv', async (req, res) => {
-  if (req.query.key === config.KV_KEY && redis) {
-    return res.end(
-      await redis.setex(
-        'kv:' + req.query.k,
-        24 * 60 * 60,
-        req.query.v as string
-      )
-    );
-  } else {
-    return res.status(403).json({ error: 'Access Denied' });
-  }
 });
 
 app.use(express.static(config.BUILD_DIRECTORY));
@@ -658,4 +678,21 @@ async function getStats() {
     vBrowserUIDMinutes,
     currentRoomData,
   };
+}
+
+function computeOpenSubtitlesHash(first: Buffer, last: Buffer, size: number) {
+  // console.log(first.length, last.length, size);
+  let temp = BigInt(size);
+  process(first);
+  process(last);
+
+  temp = temp & BigInt('0xffffffffffffffff');
+  return temp.toString(16).padStart(16, '0');
+
+  function process(chunk: Buffer) {
+    for (let i = 0; i < chunk.length; i += 8) {
+      const long = chunk.readBigUInt64LE(i);
+      temp += long;
+    }
+  }
 }
