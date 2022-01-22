@@ -26,6 +26,11 @@ import { getBgVMManagers, getSessionLimitSeconds } from './vm/utils';
 import { hashString } from './utils/string';
 import { insertObject } from './utils/postgres';
 import axios from 'axios';
+import crypto from 'crypto';
+import zlib from 'zlib';
+import util from 'util';
+
+const gzip = util.promisify(zlib.gzip);
 
 const releaseInterval = 5 * 60 * 1000;
 const releaseBatches = 5;
@@ -97,6 +102,7 @@ async function init() {
 
 app.use(cors());
 app.use(bodyParser.json());
+app.use(bodyParser.raw({ type: 'text/plain' }));
 
 app.get('/ping', (_req, res) => {
   res.json('pong');
@@ -114,7 +120,32 @@ app.get('/subtitle/:hash', async (req, res) => {
 
 app.use(compression());
 
-app.post('/subtitle', async (req, res) => {});
+app.post('/subtitle', async (req, res) => {
+  const data = req.body;
+  if (!redis) {
+    return;
+  }
+  // calculate hash, gzip and save to redis
+  const hash = crypto
+    .createHash('sha256')
+    .update(data, 'utf8')
+    .digest()
+    .toString('hex');
+  let gzipData = (await gzip(data)) as Buffer;
+  await redis.setex('subtitle:' + hash, 24 * 60 * 60, gzipData);
+  redisCount('subUploads');
+  return res.json({ hash });
+});
+
+app.get('/downloadSubtitles', async (req, res) => {
+  const response = await axios.get(req.query.url as string, {
+    responseType: 'arraybuffer',
+  });
+  res.append('Content-Encoding', 'gzip');
+  res.append('Content-Type', 'text/plain');
+  redisCount('subDownloadsOS');
+  res.end(response.data);
+});
 
 app.get('/searchSubtitles', async (req, res) => {
   const url = req.query.url;
@@ -149,10 +180,7 @@ app.get('/searchSubtitles', async (req, res) => {
   // console.log(response);
   const subtitles = response.data;
   res.json(subtitles);
-  // const response2 = await axios.get(match.SubDownloadLink, { responseType: 'arraybuffer' });
-  // res.append('Content-Encoding', 'gzip');
-  // res.append('Content-Type', 'text/plain');
-  // res.end(response2.data);
+  redisCount('subSearchesOS');
 });
 
 app.get('/stats', async (req, res) => {
@@ -587,6 +615,8 @@ async function getStats() {
     'connectStartsDistinct'
   );
   const subUploads = await getRedisCountDay('subUploads');
+  const subDownloadsOS = await getRedisCountDay('subDownloadsOS');
+  const subSearchesOS = await getRedisCountDay('subSearchesOS');
   const youtubeSearch = await getRedisCountDay('youtubeSearch');
   const vBrowserClientIDs = await redis?.zrevrangebyscore(
     'vBrowserClientIDs',
@@ -652,6 +682,8 @@ async function getStats() {
     screenShareStarts,
     fileShareStarts,
     subUploads,
+    subDownloadsOS,
+    subSearchesOS,
     youtubeSearch,
     videoChatStarts,
     connectStarts,

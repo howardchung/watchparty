@@ -54,6 +54,7 @@ import { SubscribeButton } from '../SubscribeButton/SubscribeButton';
 import { ScreenShareModal } from '../Modal/ScreenShareModal';
 import { FileShareModal } from '../Modal/FileShareModal';
 import firebase from 'firebase/compat/app';
+import { SubtitleModal } from '../Modal/SubtitleModal';
 
 declare global {
   interface Window {
@@ -124,6 +125,7 @@ interface AppState {
   isVBrowserModalOpen: boolean;
   isScreenShareModalOpen: boolean;
   isFileShareModalOpen: boolean;
+  isSubtitleModalOpen: boolean;
   roomLock: string;
   controller?: string;
   savedPasswords: StringDict;
@@ -182,6 +184,7 @@ export default class App extends React.Component<AppProps, AppState> {
     isVBrowserModalOpen: false,
     isScreenShareModalOpen: false,
     isFileShareModalOpen: false,
+    isSubtitleModalOpen: false,
     roomLock: '',
     controller: '',
     roomId: '',
@@ -440,14 +443,9 @@ export default class App extends React.Component<AppProps, AppState> {
       this.doSeek(data);
     });
     socket.on('REC:subtitle', (data: string) => {
-      this.setState(
-        { currentSubtitle: serverPath + '/subtitle/' + data },
-        () => {
-          if (!this.isSubtitled()) {
-            this.toggleSubtitle();
-          }
-        }
-      );
+      this.setState({ currentSubtitle: data }, () => {
+        this.loadSubtitles();
+      });
     });
     socket.on('REC:changeController', (data: string) => {
       this.setState({ controller: data });
@@ -475,9 +473,7 @@ export default class App extends React.Component<AppProps, AppState> {
         {
           currentMedia,
           currentMediaPaused: data.paused,
-          currentSubtitle: Boolean(data.subtitle)
-            ? serverPath + '/subtitle/' + data.subtitle
-            : '',
+          currentSubtitle: data.subtitle,
           loading: Boolean(data.video),
           nonPlayableMedia: false,
           isVBrowserLarge: data.isVBrowserLarge,
@@ -519,9 +515,7 @@ export default class App extends React.Component<AppProps, AppState> {
               this.doPlay();
             }
             if (data.subtitle) {
-              if (!this.isSubtitled()) {
-                this.toggleSubtitle();
-              }
+              this.loadSubtitles();
             }
             // One time, when we're ready to play
             leftVideo?.addEventListener(
@@ -794,20 +788,6 @@ export default class App extends React.Component<AppProps, AppState> {
     this.socket.emit('CMD:changeController', data.value);
   };
 
-  setSubtitle = async () => {
-    const files = await openFileSelector('.srt');
-    if (!files) {
-      return;
-    }
-    const file = files[0];
-    const reader = new FileReader();
-    reader.addEventListener('load', (event) => {
-      const subData = event.target?.result;
-      this.socket.emit('CMD:subtitle', subData);
-    });
-    reader.readAsText(file);
-  };
-
   sendSignalSS = async (to: string, data: any, sharer?: boolean) => {
     // console.log('sendSS', to, data);
     this.socket.emit('signalSS', { to, msg: data, sharer });
@@ -907,12 +887,7 @@ export default class App extends React.Component<AppProps, AppState> {
 
   isSubtitled = () => {
     if (this.isVideo()) {
-      const leftVideo = document.getElementById(
-        'leftVideo'
-      ) as HTMLMediaElement;
-      return (
-        leftVideo.textTracks[0] && leftVideo.textTracks[0].mode === 'showing'
-      );
+      return Boolean(this.state.currentSubtitle);
     }
     if (this.isYouTube()) {
       try {
@@ -1181,31 +1156,24 @@ export default class App extends React.Component<AppProps, AppState> {
 
   loadSubtitles = async () => {
     const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
-    // Clear subtitles
-    leftVideo.innerHTML = '';
-    let subtitleSrc = '';
-    const src = this.state.currentMedia;
-    if (this.state.currentSubtitle) {
-      subtitleSrc = this.state.currentSubtitle;
-    } else if (src.includes('/stream?torrent=magnet')) {
-      subtitleSrc = src.replace('/stream', '/subtitles2');
-    } else if (src.startsWith('http')) {
-      const subtitlePath = src.slice(0, src.lastIndexOf('/') + 1);
-      // Expect subtitle name to be file name + .srt
-      subtitleSrc =
-        subtitlePath + 'subtitles/' + this.getFileName(src) + '.srt';
-    }
-    if (subtitleSrc) {
-      const response = await window.fetch(subtitleSrc);
-      const buffer = await response.arrayBuffer();
-      const url = await toWebVTT(new Blob([buffer]));
-      const track = document.createElement('track');
-      track.kind = 'captions';
-      track.label = 'English';
-      track.srclang = 'en';
-      track.src = url;
-      leftVideo.appendChild(track);
-      leftVideo.textTracks[0].mode = 'showing';
+    if (!this.isSubtitled()) {
+      leftVideo.innerHTML = '';
+    } else {
+      // Clear subtitles and put new ones in
+      leftVideo.innerHTML = '';
+      let subtitleSrc = this.state.currentSubtitle;
+      if (subtitleSrc) {
+        const response = await window.fetch(subtitleSrc);
+        const buffer = await response.arrayBuffer();
+        const url = await toWebVTT(new Blob([buffer]));
+        const track = document.createElement('track');
+        track.kind = 'captions';
+        track.label = 'English';
+        track.srclang = 'en';
+        track.src = url;
+        leftVideo.appendChild(track);
+        leftVideo.textTracks[0].mode = 'showing';
+      }
     }
   };
 
@@ -1238,14 +1206,7 @@ export default class App extends React.Component<AppProps, AppState> {
 
   toggleSubtitle = () => {
     if (this.isVideo()) {
-      const leftVideo = document.getElementById(
-        'leftVideo'
-      ) as HTMLMediaElement;
-      if (this.isSubtitled()) {
-        leftVideo.innerHTML = '';
-      } else {
-        this.loadSubtitles();
-      }
+      this.setState({ isSubtitleModalOpen: true });
     }
     if (this.isYouTube()) {
       const isSubtitled = this.isSubtitled();
@@ -1592,6 +1553,15 @@ export default class App extends React.Component<AppProps, AppState> {
             startFileShare={this.setupFileShare}
           />
         )}
+        {this.state.isSubtitleModalOpen && (
+          <SubtitleModal
+            closeModal={() => this.setState({ isSubtitleModalOpen: false })}
+            socket={this.socket}
+            currentSubtitle={this.state.currentSubtitle}
+            src={this.state.currentMedia}
+            haveLock={this.haveLock}
+          />
+        )}
         {this.state.error && <ErrorModal error={this.state.error} />}
         {this.state.isErrorAuth && (
           <PasswordModal
@@ -1865,28 +1835,6 @@ export default class App extends React.Component<AppProps, AppState> {
                             disabled={!this.haveLock()}
                           />
                         )}
-                        {this.state.currentMedia &&
-                          !this.isScreenShare() &&
-                          !this.isVBrowser() &&
-                          !this.isYouTube() && (
-                            <Popup
-                              content="Upload a .srt subtitle file for this video"
-                              trigger={
-                                <Button
-                                  fluid
-                                  color="violet"
-                                  className="toolButton"
-                                  icon
-                                  labelPosition="left"
-                                  onClick={this.setSubtitle}
-                                  disabled={!this.haveLock()}
-                                >
-                                  <Icon name="closed captioning" />
-                                  Subtitle
-                                </Button>
-                              }
-                            />
-                          )}
                       </div>
                       <Separator />
                     </React.Fragment>
