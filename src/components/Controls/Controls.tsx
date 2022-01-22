@@ -28,7 +28,6 @@ export class Controls extends React.Component<ControlsProps> {
     posTimestamp: 0,
     paused: this.props.paused,
     muted: this.props.muted,
-    subtitled: this.props.subtitled,
     volume: 1,
   };
 
@@ -68,8 +67,9 @@ export class Controls extends React.Component<ControlsProps> {
       leaderTime,
       isPauseDisabled,
       disabled,
+      subtitled,
     } = this.props;
-    const { muted, subtitled, volume, paused } = this.state;
+    const { muted, volume, paused } = this.state;
     const isBehind = leaderTime && leaderTime - currentTime > 5;
     return (
       <div className="controls">
@@ -141,7 +141,6 @@ export class Controls extends React.Component<ControlsProps> {
           size="large"
           onClick={() => {
             toggleSubtitle();
-            this.setState({ subtitled: !this.state.subtitled });
           }}
           className="control action"
           name={subtitled ? 'closed captioning' : 'closed captioning outline'}

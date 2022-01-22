@@ -1,7 +1,4 @@
 import config from './config';
-import crypto from 'crypto';
-import zlib from 'zlib';
-import util from 'util';
 
 import axios from 'axios';
 import Redis from 'ioredis';
@@ -16,8 +13,6 @@ import { getStartOfDay } from './utils/time';
 import { assignVM, getVMManager } from './vm/utils';
 import { updateObject, upsertObject } from './utils/postgres';
 import { fetchYoutubeVideo, getYoutubeVideoID } from './utils/youtube';
-
-const gzip = util.promisify(zlib.gzip);
 
 let redis: Redis.Redis | undefined = undefined;
 if (config.REDIS_URL) {
@@ -792,27 +787,14 @@ export class Room {
   };
 
   private addSubtitles = async (socket: Socket, data: string) => {
-    if (data && data.length > 1000000) {
+    if (data && data.length > 10000) {
       return;
     }
     if (!this.validateLock(socket.id)) {
       return;
     }
-    if (!redis) {
-      return;
-    }
-    // calculate hash, gzip and save to redis
-    const hash = crypto
-      .createHash('sha256')
-      .update(data, 'utf8')
-      .digest()
-      .toString('hex');
-    const gzipData = (await gzip(data)) as Buffer;
-    // console.log(data.length, gzipData.length);
-    await redis.setex('subtitle:' + hash, 24 * 60 * 60, gzipData);
-    this.subtitle = hash;
+    this.subtitle = data;
     this.io.of(this.roomId).emit('REC:subtitle', this.subtitle);
-    redisCount('subUploads');
   };
 
   private lockRoom = async (
