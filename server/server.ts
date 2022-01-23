@@ -102,7 +102,7 @@ async function init() {
 
 app.use(cors());
 app.use(bodyParser.json());
-app.use(bodyParser.raw({ type: 'text/plain' }));
+app.use(bodyParser.raw({ type: 'text/plain', limit: 1000000 }));
 
 app.get('/ping', (_req, res) => {
   res.json('pong');
