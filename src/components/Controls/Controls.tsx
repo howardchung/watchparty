@@ -26,9 +26,8 @@ export class Controls extends React.Component<ControlsProps> {
     showTimestamp: false,
     currTimestamp: 0,
     posTimestamp: 0,
-    paused: this.props.paused,
-    muted: this.props.muted,
     volume: 1,
+    muted: this.props.muted,
   };
 
   onMouseOver = () => {
@@ -68,8 +67,9 @@ export class Controls extends React.Component<ControlsProps> {
       isPauseDisabled,
       disabled,
       subtitled,
+      paused,
     } = this.props;
-    const { muted, volume, paused } = this.state;
+    const { muted, volume } = this.state;
     const isBehind = leaderTime && leaderTime - currentTime > 5;
     return (
       <div className="controls">
@@ -77,7 +77,6 @@ export class Controls extends React.Component<ControlsProps> {
           size="large"
           onClick={() => {
             togglePlay();
-            this.setState({ paused: !this.state.paused });
           }}
           className="control action"
           disabled={disabled || isPauseDisabled}

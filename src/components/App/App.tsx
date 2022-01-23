@@ -1357,7 +1357,7 @@ export default class App extends React.Component<AppProps, AppState> {
         toggleSubtitle={this.toggleSubtitle}
         setVolume={this.setVolume}
         jumpToLeader={this.jumpToLeader}
-        paused={this.isPaused()}
+        paused={this.state.currentMediaPaused}
         muted={this.isMuted()}
         subtitled={this.isSubtitled()}
         currentTime={this.getCurrentTime()}
