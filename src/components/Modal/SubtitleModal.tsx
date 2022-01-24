@@ -67,6 +67,24 @@ export class SubtitleModal extends React.Component<{
               </div>
             )}
             <Grid columns={2}>
+            <Grid.Column>
+                <Popup
+                  content="Upload a .srt subtitle file for this video"
+                  trigger={
+                    <Button
+                      color="violet"
+                      icon
+                      labelPosition="left"
+                      fluid
+                      onClick={() => this.uploadSubtitle()}
+                      disabled={!this.props.haveLock()}
+                    >
+                      <Icon name="closed captioning" />
+                      Upload Subtitle
+                    </Button>
+                  }
+                />
+              </Grid.Column>
               <Grid.Column>
                 <Button
                   loading={this.state.loading}
@@ -88,24 +106,6 @@ export class SubtitleModal extends React.Component<{
                   <Icon name="search" />
                   Search OpenSubtitles
                 </Button>
-              </Grid.Column>
-              <Grid.Column>
-                <Popup
-                  content="Upload a .srt subtitle file for this video"
-                  trigger={
-                    <Button
-                      color="violet"
-                      icon
-                      labelPosition="left"
-                      fluid
-                      onClick={() => this.uploadSubtitle()}
-                      disabled={!this.props.haveLock()}
-                    >
-                      <Icon name="closed captioning" />
-                      Upload Subtitle
-                    </Button>
-                  }
-                />
               </Grid.Column>
             </Grid>
             <div>
