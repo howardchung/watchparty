@@ -854,24 +854,6 @@ export default class App extends React.Component<AppProps, AppState> {
     return this.isScreenShare() || this.isVBrowser();
   };
 
-  isPaused = () => {
-    if (this.isVideo()) {
-      const leftVideo = document.getElementById(
-        'leftVideo'
-      ) as HTMLMediaElement;
-      return leftVideo.paused || leftVideo.ended;
-    }
-    if (this.isYouTube()) {
-      return (
-        this.watchPartyYTPlayer?.getPlayerState() ===
-          window.YT?.PlayerState?.PAUSED ||
-        this.watchPartyYTPlayer?.getPlayerState() ===
-          window.YT?.PlayerState?.ENDED
-      );
-    }
-    return false;
-  };
-
   isMuted = () => {
     if (this.isVideo()) {
       const leftVideo = document.getElementById(
