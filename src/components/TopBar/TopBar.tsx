@@ -230,6 +230,7 @@ export class ListRoomsButton extends React.Component<{
                       onClick={(e: React.MouseEvent) => {
                         e.stopPropagation();
                         e.nativeEvent.stopImmediatePropagation();
+                        e.preventDefault();
                         this.deleteRoom(room.roomId);
                       }}
                       color="red"
