@@ -933,34 +933,6 @@ export class Room {
     }
   };
 
-  private verifyAndEmitSubscriberStatus = async (
-    socket: Socket,
-    data: {
-      uid: string;
-      token: string;
-    }
-  ) => {
-    const decoded = await validateUserToken(
-      data?.uid as string,
-      data?.token as string
-    );
-    if (!decoded) {
-      socket.emit('errorMessage', 'Failed to authenticate user');
-      return;
-    }
-    const customer = await getCustomerByEmail(decoded.email as string);
-    const isSubscriber = Boolean(
-      customer?.subscriptions?.data?.find((sub) => sub?.status === 'active')
-    );
-    if (isSubscriber) {
-      const user = this.roster.find((user) => user.id === socket.id);
-      if (user) {
-        user.isSubscriber = true;
-        this.io.of(this.roomId).emit('roster', this.roster);
-      }
-    }
-  };
-
   private getRoomState = async (socket: Socket) => {
     if (!postgres) {
       return;
