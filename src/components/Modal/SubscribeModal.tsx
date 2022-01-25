@@ -128,6 +128,13 @@ export class SubscribeModal extends React.Component<{
                   </Table.Cell>
                 </Table.Row>
                 <Table.Row>
+                  <Table.Cell>Animated Chat Avatar Frame</Table.Cell>
+                  <Table.Cell></Table.Cell>
+                  <Table.Cell>
+                    <Icon name="check" />
+                  </Table.Cell>
+                </Table.Row>
+                <Table.Row>
                   <Table.Cell>Price</Table.Cell>
                   <Table.Cell>$0 / month</Table.Cell>
                   <Table.Cell>$5 / month</Table.Cell>

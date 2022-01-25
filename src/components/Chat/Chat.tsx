@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Comment, Icon, Input } from 'semantic-ui-react';
+import { Button, Comment, Icon, Input, Popup } from 'semantic-ui-react';
 import 'emoji-mart/css/emoji-mart.css';
 import { EmojiData, Picker } from 'emoji-mart';
 import onClickOutside from 'react-onclickoutside';
@@ -261,11 +261,17 @@ const ChatMessage = ({
   return (
     <Comment>
       {id ? (
-        <Comment.Avatar
-          className={subscribers[id] ? classes.subscriber : ''}
-          src={
-            pictureMap[id] ||
-            getDefaultPicture(nameMap[id], getColorForStringHex(id))
+        <Popup
+          content="WatchParty Plus subscriber"
+          disabled={!subscribers[id]}
+          trigger={
+            <Comment.Avatar
+              className={subscribers[id] ? classes.subscriber : ''}
+              src={
+                pictureMap[id] ||
+                getDefaultPicture(nameMap[id], getColorForStringHex(id))
+              }
+            />
           }
         />
       ) : null}
