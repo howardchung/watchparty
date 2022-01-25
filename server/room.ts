@@ -1091,9 +1091,9 @@ export class Room {
       socket.emit('errorMessage', 'Not current room owner');
       return;
     }
-    const userToBeKickedSocket = this.io
-      .of(this.roomId)
-      .sockets.get(data.userToBeKicked);
+    const userToBeKickedSocket = this.io.of(this.roomId).sockets.get(
+      data.userToBeKicked
+    );
     if (userToBeKickedSocket) {
       try {
         userToBeKickedSocket.emit('kicked');

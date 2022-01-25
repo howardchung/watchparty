@@ -592,9 +592,9 @@ export default class App extends React.Component<AppProps, AppState> {
       const msg = data.msg;
       const from = data.from;
       // Determine whether the message came from the sharer or the sharee
-      const pc = (
-        data.sharer ? this.screenSharePC : this.screenHostPC[from]
-      ) as RTCPeerConnection;
+      const pc = (data.sharer
+        ? this.screenSharePC
+        : this.screenHostPC[from]) as RTCPeerConnection;
       if (msg.ice !== undefined) {
         pc.addIceCandidate(new RTCIceCandidate(msg.ice));
       } else if (msg.sdp && msg.sdp.type === 'offer') {
@@ -989,7 +989,8 @@ export default class App extends React.Component<AppProps, AppState> {
             console.log('play yt');
             this.setVolume(1);
             this.watchPartyYTPlayer?.playVideo();
-          }, 100);
+          },
+          100);
         }
       }
     );
