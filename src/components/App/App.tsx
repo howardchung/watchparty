@@ -204,9 +204,6 @@ export default class App extends React.Component<AppProps, AppState> {
     this.loadSettings();
     this.loadYouTube();
     this.init();
-    if (this.props.isSubscriber) {
-      this.verifySubscriberStatus();
-    }
   }
 
   getRoomLink = (vanity: string) => {
@@ -235,20 +232,7 @@ export default class App extends React.Component<AppProps, AppState> {
     if (this.props.user && !prevProps.user) {
       this.loadSignInData();
     }
-    if (this.props.isSubscriber && !prevProps.isSubscriber) {
-      this.verifySubscriberStatus();
-    }
   }
-
-  verifySubscriberStatus = async () => {
-    if (this.socket && this.props.user) {
-      const token = await this.props.user?.getIdToken();
-      this.socket.emit('CMD:verifyAndEmitSubscriberStatus', {
-        uid: this.props.user?.uid,
-        token,
-      });
-    }
-  };
 
   loadSettings = async () => {
     // Load settings from localstorage and remote
@@ -584,12 +568,12 @@ export default class App extends React.Component<AppProps, AppState> {
       this.setState({ roomLock: data });
     });
     socket.on('roster', (data: User[]) => {
-      const subscribers : BooleanDict = {};
-      data.forEach(user => {
-        if(user.isSubscriber) {
+      const subscribers: BooleanDict = {};
+      data.forEach((user) => {
+        if (user.isSubscriber) {
           subscribers[user.id] = true;
         }
-      })
+      });
       this.setState(
         { participants: data, rosterUpdateTS: Number(new Date()), subscribers },
         () => {
@@ -608,9 +592,9 @@ export default class App extends React.Component<AppProps, AppState> {
       const msg = data.msg;
       const from = data.from;
       // Determine whether the message came from the sharer or the sharee
-      const pc = (data.sharer
-        ? this.screenSharePC
-        : this.screenHostPC[from]) as RTCPeerConnection;
+      const pc = (
+        data.sharer ? this.screenSharePC : this.screenHostPC[from]
+      ) as RTCPeerConnection;
       if (msg.ice !== undefined) {
         pc.addIceCandidate(new RTCIceCandidate(msg.ice));
       } else if (msg.sdp && msg.sdp.type === 'offer') {
@@ -1005,8 +989,7 @@ export default class App extends React.Component<AppProps, AppState> {
             console.log('play yt');
             this.setVolume(1);
             this.watchPartyYTPlayer?.playVideo();
-          },
-          100);
+          }, 100);
         }
       }
     );

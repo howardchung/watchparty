@@ -158,9 +158,6 @@ export class Room {
       socket.on('CMD:playlistDelete', (data) =>
         this.playlistDelete(socket, data)
       );
-      socket.on('CMD:verifyAndEmitSubscriberStatus', (data) =>
-        this.verifyAndEmitSubscriberStatus(socket, data)
-      );
 
       socket.on('signal', (data) => this.sendSignal(socket, data));
       socket.on('signalSS', (data) => this.signalSS(socket, data));
@@ -406,6 +403,18 @@ export class Room {
       return;
     }
     this.uidMap[socket.id] = decoded.uid;
+
+    const customer = await getCustomerByEmail(decoded.email as string);
+    const isSubscriber = Boolean(
+      customer?.subscriptions?.data?.find((sub) => sub?.status === 'active')
+    );
+    if (isSubscriber) {
+      const user = this.roster.find((user) => user.id === socket.id);
+      if (user) {
+        user.isSubscriber = true;
+        this.io.of(this.roomId).emit('roster', this.roster);
+      }
+    }
   };
 
   private startHosting = (socket: Socket, data: string) => {
@@ -945,7 +954,7 @@ export class Room {
     );
     if (isSubscriber) {
       const user = this.roster.find((user) => user.id === socket.id);
-      if(user) {
+      if (user) {
         user.isSubscriber = true;
         this.io.of(this.roomId).emit('roster', this.roster);
       }
@@ -1110,9 +1119,9 @@ export class Room {
       socket.emit('errorMessage', 'Not current room owner');
       return;
     }
-    const userToBeKickedSocket = this.io.of(this.roomId).sockets.get(
-      data.userToBeKicked
-    );
+    const userToBeKickedSocket = this.io
+      .of(this.roomId)
+      .sockets.get(data.userToBeKicked);
     if (userToBeKickedSocket) {
       try {
         userToBeKickedSocket.emit('kicked');
