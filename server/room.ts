@@ -398,6 +398,18 @@ export class Room {
       return;
     }
     this.uidMap[socket.id] = decoded.uid;
+
+    const customer = await getCustomerByEmail(decoded.email as string);
+    const isSubscriber = Boolean(
+      customer?.subscriptions?.data?.find((sub) => sub?.status === 'active')
+    );
+    if (isSubscriber) {
+      const user = this.roster.find((user) => user.id === socket.id);
+      if (user) {
+        user.isSubscriber = true;
+        this.io.of(this.roomId).emit('roster', this.roster);
+      }
+    }
   };
 
   private startHosting = (socket: Socket, data: string) => {
