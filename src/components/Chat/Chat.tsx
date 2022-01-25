@@ -13,6 +13,7 @@ import { Separator } from '../App/App';
 import { UserMenu } from '../UserMenu/UserMenu';
 import { Socket } from 'socket.io-client';
 import firebase from 'firebase/compat/app';
+import classes from './Chat.module.css';
 
 interface ChatProps {
   chat: ChatMessage[];
@@ -26,6 +27,7 @@ interface ChatProps {
   isChatDisabled?: boolean;
   user: firebase.User | undefined;
   owner: string | undefined;
+  subscribers: BooleanDict;
 }
 
 export class Chat extends React.Component<ChatProps> {
@@ -172,6 +174,7 @@ export class Chat extends React.Component<ChatProps> {
                 owner={this.props.owner}
                 user={this.props.user}
                 socket={this.props.socket}
+                subscribers={this.props.subscribers}
               />
             ))}
             {/* <div ref={this.messagesEndRef} /> */}
@@ -243,6 +246,7 @@ const ChatMessage = ({
   user,
   socket,
   owner,
+  subscribers,
 }: {
   message: ChatMessage;
   nameMap: StringDict;
@@ -251,12 +255,14 @@ const ChatMessage = ({
   user: firebase.User | undefined;
   socket: Socket;
   owner: string | undefined;
+  subscribers: BooleanDict;
 }) => {
   const { id, timestamp, cmd, msg, system } = message;
   return (
     <Comment>
       {id ? (
         <Comment.Avatar
+          className={subscribers[id] ? classes.subscriber : ''}
           src={
             pictureMap[id] ||
             getDefaultPicture(nameMap[id], getColorForStringHex(id))
