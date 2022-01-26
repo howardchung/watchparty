@@ -253,16 +253,16 @@ const ChatMessage = ({
   socket: Socket;
   owner: string | undefined;
 }) => {
-  const { id, timestamp, cmd, msg, system, isSubscriber } = message;
+  const { id, timestamp, cmd, msg, system, isSub} = message;
   return (
     <Comment>
       {id ? (
         <Popup
           content="WatchParty Plus subscriber"
-          disabled={!isSubscriber}
+          disabled={!isSub}
           trigger={
             <Comment.Avatar
-              className={isSubscriber ? classes.subscriber : ''}
+              className={isSub ? classes.subscriber : ''}
               src={
                 pictureMap[id] ||
                 getDefaultPicture(nameMap[id], getColorForStringHex(id))
