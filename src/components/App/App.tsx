@@ -90,7 +90,6 @@ interface AppState {
   currentSubtitle: string;
   currentMediaPaused: boolean;
   participants: User[];
-  subscribers: BooleanDict;
   rosterUpdateTS: Number;
   chat: ChatMessage[];
   playlist: PlaylistVideo[];
@@ -148,7 +147,6 @@ export default class App extends React.Component<AppProps, AppState> {
     currentMediaPaused: false,
     currentSubtitle: '',
     participants: [],
-    subscribers: {},
     rosterUpdateTS: Number(new Date()),
     chat: [],
     playlist: [],
@@ -582,14 +580,8 @@ export default class App extends React.Component<AppProps, AppState> {
       this.setState({ roomLock: data });
     });
     socket.on('roster', (data: User[]) => {
-      const subscribers: BooleanDict = {};
-      data.forEach((user) => {
-        if (user.isSubscriber) {
-          subscribers[user.id] = true;
-        }
-      });
       this.setState(
-        { participants: data, rosterUpdateTS: Number(new Date()), subscribers },
+        { participants: data, rosterUpdateTS: Number(new Date()) },
         () => {
           this.updateScreenShare();
         }
@@ -1458,7 +1450,6 @@ export default class App extends React.Component<AppProps, AppState> {
           isChatDisabled={this.state.isChatDisabled}
           owner={this.state.owner}
           user={this.props.user}
-          subscribers={this.state.subscribers}
         />
         {this.state.state === 'connected' && (
           <VideoChat
