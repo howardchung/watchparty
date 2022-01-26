@@ -16,7 +16,7 @@ interface User {
   id: string;
   isVideoChat?: boolean;
   isScreenShare?: boolean;
-  isSubscriber?: boolean;
+  isSub?: boolean;
 }
 
 interface ChatMessageBase {
@@ -24,12 +24,12 @@ interface ChatMessageBase {
   cmd?: string;
   msg: string;
   system?: boolean;
+  isSub?: boolean;
 }
 
 interface ChatMessage extends ChatMessageBase {
   timestamp: string;
   videoTS?: number;
-  isSubscriber?: boolean;
 }
 
 interface Settings {

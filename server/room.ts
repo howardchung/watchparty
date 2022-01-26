@@ -337,6 +337,8 @@ export class Room {
     if (this.isChatDisabled && !chatMsg.cmd) {
       return;
     }
+    const user = this.roster.find((user) => user.id === socket?.id);
+    chatMsg.isSub = user?.isSub;
     const chatWithTime: ChatMessage = {
       ...chatMsg,
       timestamp: new Date().toISOString(),
@@ -406,7 +408,7 @@ export class Room {
     if (isSubscriber) {
       const user = this.roster.find((user) => user.id === socket.id);
       if (user) {
-        user.isSubscriber = true;
+        user.isSub = true;
       }
     }
   };
@@ -547,8 +549,7 @@ export class Room {
       return;
     }
     redisCount('chatMessages');
-    const user = this.roster.find((user) => user.id === socket.id);
-    const chatMsg = { id: socket.id, msg: data, isSubscriber: user?.isSubscriber };
+    const chatMsg = { id: socket.id, msg: data };
     this.addChatMessage(socket, chatMsg);
   };
 
