@@ -337,6 +337,8 @@ export class Room {
     if (this.isChatDisabled && !chatMsg.cmd) {
       return;
     }
+    const user = this.roster.find((user) => user.id === socket?.id);
+    chatMsg.isSub = user?.isSub;
     const chatWithTime: ChatMessage = {
       ...chatMsg,
       timestamp: new Date().toISOString(),
@@ -406,8 +408,7 @@ export class Room {
     if (isSubscriber) {
       const user = this.roster.find((user) => user.id === socket.id);
       if (user) {
-        user.isSubscriber = true;
-        this.io.of(this.roomId).emit('roster', this.roster);
+        user.isSub = true;
       }
     }
   };

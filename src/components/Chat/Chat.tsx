@@ -27,7 +27,6 @@ interface ChatProps {
   isChatDisabled?: boolean;
   user: firebase.User | undefined;
   owner: string | undefined;
-  subscribers: BooleanDict;
 }
 
 export class Chat extends React.Component<ChatProps> {
@@ -174,7 +173,6 @@ export class Chat extends React.Component<ChatProps> {
                 owner={this.props.owner}
                 user={this.props.user}
                 socket={this.props.socket}
-                subscribers={this.props.subscribers}
               />
             ))}
             {/* <div ref={this.messagesEndRef} /> */}
@@ -246,7 +244,6 @@ const ChatMessage = ({
   user,
   socket,
   owner,
-  subscribers,
 }: {
   message: ChatMessage;
   nameMap: StringDict;
@@ -255,18 +252,17 @@ const ChatMessage = ({
   user: firebase.User | undefined;
   socket: Socket;
   owner: string | undefined;
-  subscribers: BooleanDict;
 }) => {
-  const { id, timestamp, cmd, msg, system } = message;
+  const { id, timestamp, cmd, msg, system, isSub} = message;
   return (
     <Comment>
       {id ? (
         <Popup
           content="WatchParty Plus subscriber"
-          disabled={!subscribers[id]}
+          disabled={!isSub}
           trigger={
             <Comment.Avatar
-              className={subscribers[id] ? classes.subscriber : ''}
+              className={isSub ? classes.subscriber : ''}
               src={
                 pictureMap[id] ||
                 getDefaultPicture(nameMap[id], getColorForStringHex(id))
