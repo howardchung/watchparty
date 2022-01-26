@@ -22,7 +22,6 @@ let postgres: Client | undefined = undefined;
 if (config.DATABASE_URL) {
   postgres = new Client({
     connectionString: config.DATABASE_URL,
-    ssl: { rejectUnauthorized: false },
   });
   postgres.connect();
 }
@@ -407,7 +406,6 @@ export class Room {
       const user = this.roster.find((user) => user.id === socket.id);
       if (user) {
         user.isSubscriber = true;
-        this.io.of(this.roomId).emit('roster', this.roster);
       }
     }
   };
@@ -548,7 +546,8 @@ export class Room {
       return;
     }
     redisCount('chatMessages');
-    const chatMsg = { id: socket.id, msg: data };
+    const user = this.roster.find((user) => user.id === socket.id);
+    const chatMsg = { id: socket.id, msg: data, isSubscriber: user?.isSubscriber };
     this.addChatMessage(socket, chatMsg);
   };
 

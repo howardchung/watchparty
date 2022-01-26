@@ -29,6 +29,7 @@ interface ChatMessageBase {
 interface ChatMessage extends ChatMessageBase {
   timestamp: string;
   videoTS?: number;
+  isSubscriber?: boolean;
 }
 
 interface Settings {
