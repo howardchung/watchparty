@@ -566,15 +566,6 @@ export default class App extends React.Component<AppProps, AppState> {
             : this.state.unreadCount + 1,
       });
     });
-    socket.on('REC:deleteChatMessages', (data: any) => {
-      const chat = this.state.chat.filter((msg) => {
-        if (data.timestamp) {
-          return msg.id !== data.author || msg.timestamp !== data.timestamp;
-        }
-        return msg.id !== data.author;
-      });
-      this.setState({ chat });
-    });
     socket.on('REC:tsMap', (data: NumberDict) => {
       this.setState({ tsMap: data });
       this.syncSubtitle();
@@ -1313,7 +1304,7 @@ export default class App extends React.Component<AppProps, AppState> {
   clearChat = async () => {
     const uid = this.props.user?.uid;
     const token = await this.props.user?.getIdToken();
-    this.socket.emit('CMD:clearchat', { uid, token });
+    this.socket.emit('CMD:deleteChatMessages', { uid, token });
   };
 
   getLeaderTime = () => {
