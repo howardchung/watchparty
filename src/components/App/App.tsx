@@ -566,6 +566,15 @@ export default class App extends React.Component<AppProps, AppState> {
             : this.state.unreadCount + 1,
       });
     });
+    socket.on('REC:deleteChatMessages', (data: any) => {
+      const chat = this.state.chat.filter((msg) => {
+        if (data.timestamp) {
+          return msg.id !== data.author || msg.timestamp !== data.timestamp;
+        }
+        return msg.id !== data.author;
+      });
+      this.setState({ chat });
+    });
     socket.on('REC:tsMap', (data: NumberDict) => {
       this.setState({ tsMap: data });
       this.syncSubtitle();

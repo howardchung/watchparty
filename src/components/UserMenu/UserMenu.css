@@ -3,7 +3,6 @@
   color: rgb(255, 255, 255);
   padding: 5px;
   font-size: 15px;
-  width: 110px;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -13,10 +12,6 @@
   display: flex;
   justify-content: center;
   padding: 10px;
-}
-
-.button {
-  margin: 0px !important;
 }
 
 .ui.popup.userMenu {

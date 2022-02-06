@@ -275,8 +275,10 @@ const ChatMessage = ({
         <UserMenu
           displayName={nameMap[id] || id}
           user={user}
+          timestamp={timestamp}
           socket={socket}
           userToManage={id}
+          isChatMessage
           disabled={!Boolean(owner && owner === user?.uid)}
           trigger={
             <Comment.Author as="a" className="light">
