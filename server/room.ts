@@ -158,6 +158,9 @@ export class Room {
       socket.on('signalSS', (data) => this.signalSS(socket, data));
 
       socket.on('kickUser', (data) => this.kickUser(socket, data));
+      socket.on('CMD:deleteChatMessages', (data) =>
+        this.deleteChatMessages(socket, data)
+      );
 
       socket.on('disconnect', () => this.disconnectUser(socket));
     });
@@ -1085,5 +1088,40 @@ export class Room {
         console.warn(e);
       }
     }
+  };
+
+  private deleteChatMessages = async (
+    socket: Socket,
+    data: {
+      author: string;
+      timestamp: string | undefined;
+      uid: string;
+      token: string;
+    }
+  ) => {
+    const decoded = await validateUserToken(
+      data?.uid as string,
+      data?.token as string
+    );
+    if (!decoded) {
+      socket.emit('errorMessage', 'Failed to authenticate user');
+      return;
+    }
+    const isOwner = await this.validateOwner(decoded.uid);
+    if (!isOwner) {
+      socket.emit('errorMessage', 'Not current room owner');
+      return;
+    }
+    this.chat = this.chat.filter((msg) => {
+      if (data.timestamp) {
+        return msg.id !== data.author || msg.timestamp !== data.timestamp;
+      }
+      return msg.id !== data.author;
+    });
+    this.io.of(this.roomId).emit('REC:deleteChatMessages', {
+      author: data.author,
+      timestamp: data.timestamp,
+    });
+    return;
   };
 }

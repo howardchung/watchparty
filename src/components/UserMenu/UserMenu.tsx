@@ -12,6 +12,8 @@ export const UserMenu = ({
   displayName,
   position,
   disabled,
+  timestamp,
+  isChatMessage,
 }: {
   user?: firebase.User;
   socket: Socket;
@@ -21,6 +23,8 @@ export const UserMenu = ({
   displayName?: string;
   position?: any;
   disabled: boolean;
+  timestamp?: string;
+  isChatMessage?: boolean;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const handleOpen = () => setIsOpen(true);
@@ -38,20 +42,51 @@ export const UserMenu = ({
     >
       <div className="userMenuHeader">{displayName}</div>
       <div className="userMenuContent">
-        <Button
-          content="Kick"
-          negative
-          icon="ban"
-          onClick={async () => {
-            const token = await user?.getIdToken();
-            socket.emit('kickUser', {
-              userToBeKicked: userToManage,
-              uid: user?.uid,
-              token,
-            });
-            setIsOpen(false);
-          }}
-        />
+        <Button.Group vertical labeled icon>
+          <Button
+            content="Kick"
+            negative
+            icon="ban"
+            onClick={async () => {
+              const token = await user?.getIdToken();
+              socket.emit('kickUser', {
+                userToBeKicked: userToManage,
+                uid: user?.uid,
+                token,
+              });
+              setIsOpen(false);
+            }}
+          />
+          {isChatMessage && (
+            <Button
+              content="Delete Message"
+              icon="comment"
+              onClick={async () => {
+                const token = await user?.getIdToken();
+                socket.emit('CMD:deleteChatMessages', {
+                  author: userToManage,
+                  timestamp: timestamp,
+                  uid: user?.uid,
+                  token,
+                });
+                setIsOpen(false);
+              }}
+            />
+          )}
+          <Button
+            content="Delete All Messages"
+            icon="comments"
+            onClick={async () => {
+              const token = await user?.getIdToken();
+              socket.emit('CMD:deleteChatMessages', {
+                author: userToManage,
+                uid: user?.uid,
+                token,
+              });
+              setIsOpen(false);
+            }}
+          />
+        </Button.Group>
       </div>
     </Popup>
   );
