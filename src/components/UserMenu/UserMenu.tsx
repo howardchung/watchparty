@@ -74,7 +74,7 @@ export const UserMenu = ({
             />
           )}
           <Button
-            content="Delete All Messages"
+            content="Delete User's Messages"
             icon="comments"
             onClick={async () => {
               const token = await user?.getIdToken();

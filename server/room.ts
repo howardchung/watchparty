@@ -125,7 +125,6 @@ export class Room {
       socket.on('CMD:seek', (data) => this.seekVideo(socket, data));
       socket.on('CMD:ts', (data) => this.setTimestamp(socket, data));
       socket.on('CMD:chat', (data) => this.sendChatMessage(socket, data));
-      socket.on('CMD:clearchat', (data) => this.clearChat(socket, data));
       socket.on('CMD:joinVideo', () => this.joinVideo(socket));
       socket.on('CMD:leaveVideo', () => this.leaveVideo(socket));
       socket.on('CMD:joinScreenShare', (data) =>
@@ -554,28 +553,6 @@ export class Room {
     redisCount('chatMessages');
     const chatMsg = { id: socket.id, msg: data };
     this.addChatMessage(socket, chatMsg);
-  };
-
-  private clearChat = async (
-    socket: Socket,
-    data: { uid: string; token: string }
-  ) => {
-    const decoded = await validateUserToken(
-      data?.uid as string,
-      data?.token as string
-    );
-    if (!decoded) {
-      socket.emit('errorMessage', 'Failed to authenticate user');
-      return;
-    }
-    const isOwner = await this.validateOwner(decoded.uid);
-    if (!isOwner) {
-      socket.emit('errorMessage', 'Not current room owner');
-      return;
-    }
-    this.chat.length = 0;
-    this.io.of(this.roomId).emit('chatinit', this.chat);
-    return;
   };
 
   private joinVideo = (socket: Socket) => {
@@ -1112,16 +1089,17 @@ export class Room {
       socket.emit('errorMessage', 'Not current room owner');
       return;
     }
-    this.chat = this.chat.filter((msg) => {
-      if (data.timestamp) {
-        return msg.id !== data.author || msg.timestamp !== data.timestamp;
-      }
-      return msg.id !== data.author;
-    });
-    this.io.of(this.roomId).emit('REC:deleteChatMessages', {
-      author: data.author,
-      timestamp: data.timestamp,
-    });
+    if(!data.timestamp && !data.author) {
+      this.chat.length = 0;
+    } else {
+      this.chat = this.chat.filter((msg) => {
+        if (data.timestamp) {
+          return msg.id !== data.author || msg.timestamp !== data.timestamp;
+        }
+        return msg.id !== data.author;
+      });
+    }
+    this.io.of(this.roomId).emit('chatinit', this.chat);
     return;
   };
 }
