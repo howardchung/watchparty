@@ -1089,7 +1089,7 @@ export class Room {
       socket.emit('errorMessage', 'Not current room owner');
       return;
     }
-    if(!data.timestamp && !data.author) {
+    if (!data.timestamp && !data.author) {
       this.chat.length = 0;
     } else {
       this.chat = this.chat.filter((msg) => {
