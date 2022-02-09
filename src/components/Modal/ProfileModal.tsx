@@ -26,6 +26,16 @@ export class ProfileModal extends React.Component<{
     }
   };
 
+  verifyEmail = async () => {
+    try {
+      if (this.props.user) {
+        await this.props.user.sendEmailVerification();
+      }
+    } catch (e) {
+      console.warn(e);
+    }
+  }
+
   render() {
     const { close, userImage } = this.props;
     return (
@@ -33,6 +43,7 @@ export class ProfileModal extends React.Component<{
         <Modal.Header>
           <Image avatar src={userImage} />
           {this.props.user.email}
+          {this.props.user.emailVerified && <Icon style={{ marginLeft: '8px' }} title="Thie email is verified" name="check circle"></Icon>}
         </Modal.Header>
         <Modal.Content>
           <div
@@ -54,6 +65,17 @@ export class ProfileModal extends React.Component<{
             >
               <Icon name="image" />
               Edit Gravatar
+            </Button>
+            <Button
+              disabled={this.props.user.emailVerified}
+              icon
+              labelPosition="left"
+              fluid
+              color="purple"
+              onClick={this.verifyEmail}
+            >
+              <Icon name="check circle" />
+              Verify Email
             </Button>
             <Button
               disabled={this.state.resetDisabled}
