@@ -5,7 +5,7 @@ import Redis from 'ioredis';
 import { Server, Socket } from 'socket.io';
 import { Client, QueryResult } from 'pg';
 
-import { validateUserToken } from './utils/firebase';
+import { getUser, validateUserToken } from './utils/firebase';
 import { redisCount, redisCountDistinct } from './utils/redis';
 import { getCustomerByEmail } from './utils/stripe';
 import { AssignedVM } from './vm/base';
@@ -641,15 +641,27 @@ export class Room {
       socket.emit('errorMessage', 'Room is locked.');
       return;
     }
-    const decoded = await validateUserToken(data.uid, data.token);
-    if (!decoded) {
-      socket.emit('errorMessage', 'Invalid user token.');
-      return;
-    }
     if (!data) {
       socket.emit('errorMessage', 'Invalid input.');
       return;
     }
+
+    const decoded = await validateUserToken(data.uid, data.token);
+    if (!decoded || !decoded.uid) {
+      socket.emit('errorMessage', 'Invalid user token.');
+      return;
+    }
+
+    const user = await getUser(decoded.uid);
+    // Validate verified email if not a third-party auth provider
+    if (user?.providerData[0].providerId === 'password' && !user?.emailVerified) {
+      socket.emit(
+        'errorMessage',
+        'A verified email is required to start a VBrowser.'
+      );
+      return;
+    }
+
     const clientId = this.clientIdMap[socket.id];
     const uid = this.uidMap[socket.id];
     // Log the vbrowser creation by uid and clientid
