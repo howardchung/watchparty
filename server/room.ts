@@ -654,7 +654,10 @@ export class Room {
 
     const user = await getUser(decoded.uid);
     // Validate verified email if not a third-party auth provider
-    if (user?.providerData[0].providerId === 'password' && !user?.emailVerified) {
+    if (
+      user?.providerData[0].providerId === 'password' &&
+      !user?.emailVerified
+    ) {
       socket.emit(
         'errorMessage',
         'A verified email is required to start a VBrowser.'

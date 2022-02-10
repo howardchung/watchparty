@@ -67,7 +67,7 @@ export class SubtitleModal extends React.Component<{
               </div>
             )}
             <Grid columns={2}>
-            <Grid.Column>
+              <Grid.Column>
                 <Popup
                   content="Upload a .srt subtitle file for this video"
                   trigger={
