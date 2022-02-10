@@ -18,7 +18,7 @@ import {
   redisCount,
 } from './utils/redis';
 import { getCustomerByEmail, createSelfServicePortal } from './utils/stripe';
-import { validateUserToken } from './utils/firebase';
+import { deleteUser, validateUserToken } from './utils/firebase';
 import path from 'path';
 import { Client } from 'pg';
 import { getStartOfDay } from './utils/time';
@@ -279,6 +279,18 @@ app.post('/manageSub', async (req, res) => {
     req.body?.return_url
   );
   return res.json(session);
+});
+
+app.delete('/deleteAccount', async (req, res) => {
+  const decoded = await validateUserToken(req.body?.uid, req.body?.token);
+  if (!decoded) {
+    return res.status(400).json({ error: 'invalid user token' });
+  }
+  if (postgres) {
+    await postgres?.query('DELETE FROM room WHERE owner = $1', [decoded.uid]);
+  }
+  await deleteUser(decoded.uid);
+  return res.json({});
 });
 
 app.get('/metadata', async (req, res) => {

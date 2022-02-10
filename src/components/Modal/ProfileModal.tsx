@@ -2,13 +2,14 @@ import React from 'react';
 import { Modal, Button, Icon, Image } from 'semantic-ui-react';
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
+import { serverPath } from '../../utils';
 
 export class ProfileModal extends React.Component<{
   close: Function;
   user: firebase.User;
   userImage: string | null;
 }> {
-  public state = { resetDisabled: false };
+  public state = { resetDisabled: false, deleteConfirmOpen: false };
 
   onSignOut = () => {
     firebase.auth().signOut();
@@ -34,12 +35,47 @@ export class ProfileModal extends React.Component<{
     } catch (e) {
       console.warn(e);
     }
-  }
+  };
+
+  deleteAccountConfirm = () => {
+    this.setState({deleteConfirmOpen: true })
+  };
+
+  deleteAccount = async () => {
+    const token = await this.props.user.getIdToken();
+    await window.fetch(serverPath + '/deleteAccount', { method: 'DELETE', 
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ uid: this.props.user.uid, token }),
+  });
+  window.location.reload();
+  };
 
   render() {
     const { close, userImage } = this.props;
     return (
-      <Modal open={true} onClose={close as any}>
+      <Modal open={true} onClose={close as any} size="tiny">
+        <Modal open={this.state.deleteConfirmOpen} onClose={() => {
+          this.setState({deleteConfirmOpen: false});
+        }} size="tiny">
+        <Modal.Header>Delete Your Account</Modal.Header>
+        <Modal.Content>
+          <p>Are you sure you want to delete your account? This can't be undone.</p>
+        </Modal.Content>
+        <Modal.Actions>
+          <Button positive onClick={async () => {
+              await this.deleteAccount();
+            }}>
+              Yes
+          </Button>
+          <Button negative onClick={() => {
+            this.setState({deleteConfirmOpen: false});
+          }}>
+            No
+          </Button>
+        </Modal.Actions>
+        </Modal>
         <Modal.Header>
           <Image avatar src={userImage} />
           {this.props.user.email}
@@ -91,8 +127,17 @@ export class ProfileModal extends React.Component<{
             <Button
               icon
               labelPosition="left"
-              onClick={this.onSignOut}
+              fluid
               color="red"
+              onClick={this.deleteAccountConfirm}
+            >
+              <Icon name="trash" />
+              Delete Account
+            </Button>
+            <Button
+              icon
+              labelPosition="left"
+              onClick={this.onSignOut}
               fluid
             >
               <Icon name="sign out" />
