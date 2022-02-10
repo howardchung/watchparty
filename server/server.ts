@@ -148,6 +148,7 @@ app.get('/downloadSubtitles', async (req, res) => {
 });
 
 app.get('/searchSubtitles', async (req, res) => {
+  try {
   const url = req.query.url;
   const startResp = await axios({
     method: 'get',
@@ -180,6 +181,10 @@ app.get('/searchSubtitles', async (req, res) => {
   // console.log(response);
   const subtitles = response.data;
   res.json(subtitles);
+  } catch (e) {
+    console.error(e.message);
+    res.json([]);
+  }
   redisCount('subSearchesOS');
 });
 
