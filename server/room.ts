@@ -51,7 +51,6 @@ export class Room {
   private io: Server;
   private clientIdMap: StringDict = {};
   private uidMap: StringDict = {};
-  public roomRedis: Redis.Redis | undefined = undefined;
   private tsInterval: NodeJS.Timeout | undefined = undefined;
   public isChatDisabled: boolean | undefined = undefined;
 
@@ -254,10 +253,6 @@ export class Room {
     if (this.tsInterval) {
       clearInterval(this.tsInterval);
     }
-    if (this.roomRedis) {
-      this.roomRedis?.disconnect();
-      this.roomRedis = undefined;
-    }
   };
 
   public getRosterForStats = () => {
@@ -286,8 +281,6 @@ export class Room {
   };
 
   public stopVBrowserInternal = async () => {
-    this.roomRedis?.disconnect();
-    this.roomRedis = undefined;
     const assignTime = this.vBrowser && this.vBrowser.assignTime;
     const id = this.vBrowser?.id;
     const provider = this.vBrowser?.provider ?? config.VM_MANAGER_ID;
@@ -307,8 +300,16 @@ export class Room {
     }
     if (id) {
       try {
-        const vmManager = getVMManager(provider, isLarge, region);
-        await vmManager?.resetVM(id);
+        await axios.post(
+          'http://localhost:' + config.VMWORKER_PORT + '/releaseVM',
+          {
+            provider,
+            isLarge,
+            region,
+            id,
+            uid,
+          }
+        );
       } catch (e) {
         console.warn(e);
       }
@@ -634,7 +635,7 @@ export class Room {
       options: { size: string; region: string };
     }
   ) => {
-    if (this.vBrowser || this.roomRedis) {
+    if (this.video.startsWith('vbrowser://')) {
       return;
     }
     if (!this.validateLock(socket.id)) {
@@ -754,22 +755,19 @@ export class Room {
 
     redisCount('vBrowserStarts');
     this.cmdHost(socket, 'vbrowser://');
-    const vmManager = getVMManager(config.VM_MANAGER_ID, isLarge, region);
-    if (!vmManager) {
-      socket.emit(
-        'errorMessage',
-        'Server is not configured properly for VBrowsers.'
-      );
+    const assignmentResp = await axios.post(
+      'http://localhost:' + config.VMWORKER_PORT + '/assignVM',
+      {
+        provider: config.VM_MANAGER_ID,
+        isLarge,
+        region,
+        uid,
+      }
+    );
+    const assignment: AssignedVM = assignmentResp.data;
+    if (this.video !== 'vbrowser://') {
       return;
     }
-    this.roomRedis = new Redis(config.REDIS_URL);
-    const assignment = await assignVM(this.roomRedis, vmManager);
-    if (!this.roomRedis) {
-      // Maybe the user cancelled the request before assignment finished
-      return;
-    }
-    this.roomRedis?.disconnect();
-    this.roomRedis = undefined;
     if (!assignment) {
       this.cmdHost(socket, '');
       this.vBrowser = undefined;
@@ -791,7 +789,7 @@ export class Room {
   };
 
   private stopVBrowser = async (socket: Socket) => {
-    if (!this.vBrowser && !this.roomRedis && this.video !== 'vbrowser://') {
+    if (!this.vBrowser && this.video !== 'vbrowser://') {
       return;
     }
     if (!this.validateLock(socket.id)) {
