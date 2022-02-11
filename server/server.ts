@@ -18,7 +18,7 @@ import {
   redisCount,
 } from './utils/redis';
 import { getCustomerByEmail, createSelfServicePortal } from './utils/stripe';
-import { validateUserToken } from './utils/firebase';
+import { deleteUser, validateUserToken } from './utils/firebase';
 import path from 'path';
 import { Client } from 'pg';
 import { getStartOfDay } from './utils/time';
@@ -148,38 +148,43 @@ app.get('/downloadSubtitles', async (req, res) => {
 });
 
 app.get('/searchSubtitles', async (req, res) => {
-  const url = req.query.url;
-  const startResp = await axios({
-    method: 'get',
-    url: url as string,
-    headers: {
-      Range: 'bytes=0-65535',
-    },
-    responseType: 'arraybuffer',
-  });
-  const start = startResp.data;
-  const size = Number(startResp.headers['content-range'].split('/')[1]);
-  const endResp = await axios({
-    method: 'get',
-    url: url as string,
-    headers: {
-      Range: `bytes=${size - 65536}-`,
-    },
-    responseType: 'arraybuffer',
-  });
-  const end = endResp.data;
-  // console.log(start, end, size);
-  let hash = computeOpenSubtitlesHash(start, end, size);
-  // hash = 'f65334e75574f00f';
-  // Search API for subtitles by hash
-  const subUrl = `https://rest.opensubtitles.org/search/moviebytesize-${size}/moviehash-${hash}/sublanguageid-eng`;
-  console.log(subUrl);
-  const response = await axios.get(subUrl, {
-    headers: { 'User-Agent': 'VLSub 0.10.2' },
-  });
-  // console.log(response);
-  const subtitles = response.data;
-  res.json(subtitles);
+  try {
+    const url = req.query.url;
+    const startResp = await axios({
+      method: 'get',
+      url: url as string,
+      headers: {
+        Range: 'bytes=0-65535',
+      },
+      responseType: 'arraybuffer',
+    });
+    const start = startResp.data;
+    const size = Number(startResp.headers['content-range'].split('/')[1]);
+    const endResp = await axios({
+      method: 'get',
+      url: url as string,
+      headers: {
+        Range: `bytes=${size - 65536}-`,
+      },
+      responseType: 'arraybuffer',
+    });
+    const end = endResp.data;
+    // console.log(start, end, size);
+    let hash = computeOpenSubtitlesHash(start, end, size);
+    // hash = 'f65334e75574f00f';
+    // Search API for subtitles by hash
+    const subUrl = `https://rest.opensubtitles.org/search/moviebytesize-${size}/moviehash-${hash}/sublanguageid-eng`;
+    console.log(subUrl);
+    const response = await axios.get(subUrl, {
+      headers: { 'User-Agent': 'VLSub 0.10.2' },
+    });
+    // console.log(response);
+    const subtitles = response.data;
+    res.json(subtitles);
+  } catch (e: any) {
+    console.error(e.message);
+    res.json([]);
+  }
   redisCount('subSearchesOS');
 });
 
@@ -279,6 +284,18 @@ app.post('/manageSub', async (req, res) => {
     req.body?.return_url
   );
   return res.json(session);
+});
+
+app.delete('/deleteAccount', async (req, res) => {
+  const decoded = await validateUserToken(req.body?.uid, req.body?.token);
+  if (!decoded) {
+    return res.status(400).json({ error: 'invalid user token' });
+  }
+  if (postgres) {
+    await postgres?.query('DELETE FROM room WHERE owner = $1', [decoded.uid]);
+  }
+  await deleteUser(decoded.uid);
+  return res.json({});
 });
 
 app.get('/metadata', async (req, res) => {
@@ -423,7 +440,7 @@ async function minuteMetrics() {
         'lock:' + room.vBrowser.provider + ':' + room.vBrowser.id,
         300
       );
-      await redis?.expire('vBrowserUIDLock:' + room.vBrowser.creatorUID, 120);
+      await redis?.expire('vBrowserUIDLock:' + room.vBrowser?.creatorUID, 120);
 
       const expireTime = getStartOfDay() / 1000 + 86400;
       if (room.vBrowser?.creatorClientID) {
@@ -435,7 +452,11 @@ async function minuteMetrics() {
         await redis?.expireat('vBrowserClientIDMinutes', expireTime);
       }
       if (room.vBrowser?.creatorUID) {
-        await redis?.zincrby('vBrowserUIDMinutes', 1, room.vBrowser.creatorUID);
+        await redis?.zincrby(
+          'vBrowserUIDMinutes',
+          1,
+          room.vBrowser?.creatorUID
+        );
         await redis?.expireat('vBrowserUIDMinutes', expireTime);
       }
     }
@@ -475,7 +496,6 @@ async function getAllRooms() {
 
 async function getStats() {
   const now = Number(new Date());
-  const currentRoomData: any[] = [];
   let currentUsers = 0;
   let currentHttp = 0;
   let currentVBrowser = 0;
@@ -489,19 +509,10 @@ async function getStats() {
   let currentRoomCount = rooms.size;
   rooms.forEach((room) => {
     const obj = {
-      creationTime: room.creationTime,
-      lastUpdateTime: room.lastUpdateTime,
-      roomId: room.roomId,
       video: room.video,
-      videoTS: room.videoTS,
       rosterLength: room.roster.length,
-      roster: room.getRosterForStats(),
       videoChats: room.roster.filter((p) => p.isVideoChat).length,
       vBrowser: room.vBrowser,
-      vBrowserElapsed:
-        room.vBrowser?.assignTime && now - room.vBrowser?.assignTime,
-      lock: room.lock || undefined,
-      creator: room.creator || undefined,
     };
     currentUsers += obj.rosterLength;
     currentVideoChat += obj.videoChats;
@@ -510,9 +521,6 @@ async function getStats() {
     }
     if (obj.vBrowser && obj.vBrowser.large) {
       currentVBrowserLarge += 1;
-    }
-    if (room.roomRedis) {
-      currentVBrowserWaiting += 1;
     }
     if (obj.video?.startsWith('http') && obj.rosterLength) {
       currentHttp += 1;
@@ -535,17 +543,47 @@ async function getStats() {
       }
       currentVBrowserUIDCounts[obj.vBrowser.creatorUID] += 1;
     }
-    if (obj.video || obj.rosterLength > 0) {
-      currentRoomData.push(obj);
-    }
   });
 
   currentVBrowserUIDCounts = Object.fromEntries(
     Object.entries(currentVBrowserUIDCounts).filter(([, val]) => val > 1)
   );
 
-  // Sort newest first
-  currentRoomData.sort((a, b) => b.creationTime - a.creationTime);
+  const dbRoomData = (
+    await postgres?.query(
+      `SELECT "roomId", "creationTime", "lastUpdateTime", vanity, "isSubRoom", owner, password from room WHERE "lastUpdateTime" > NOW() - INTERVAL '30 day'`
+    )
+  )?.rows;
+  const currentRoomData = dbRoomData
+    ?.map((dbRoom) => {
+      const room = rooms.get(dbRoom.roomId);
+      if (!room) {
+        return null;
+      }
+      const obj = {
+        ...dbRoom,
+        creationTime: room.creationTime,
+        lastUpdateTime: room.lastUpdateTime,
+        roomId: room.roomId,
+        video: room.video,
+        videoTS: room.videoTS,
+        rosterLength: room.roster.length,
+        roster: room.getRosterForStats(),
+        videoChats: room.roster.filter((p) => p.isVideoChat).length,
+        vBrowser: room.vBrowser,
+        vBrowserElapsed:
+          room.vBrowser?.assignTime && now - room.vBrowser?.assignTime,
+        lock: room.lock || undefined,
+        creator: room.creator || undefined,
+      };
+      if (obj.video || obj.rosterLength > 0) {
+        return obj;
+      } else {
+        return null;
+      }
+    })
+    .filter(Boolean);
+
   const uptime = Number(new Date()) - launchTime;
   const cpuUsage = os.loadavg();
   const memUsage = process.memoryUsage().rss;

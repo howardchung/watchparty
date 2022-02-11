@@ -253,7 +253,7 @@ const ChatMessage = ({
   socket: Socket;
   owner: string | undefined;
 }) => {
-  const { id, timestamp, cmd, msg, system, isSub} = message;
+  const { id, timestamp, cmd, msg, system, isSub } = message;
   return (
     <Comment>
       {id ? (
