@@ -37,10 +37,17 @@ async function syncSubscribers() {
     const batch = subs.slice(i, i + 50);
     const fbUsers = await Promise.all(
       batch
-        .map((sub) =>
-          emailMap.get(sub.customer)
+        .map((sub) => {
+          try {
+          return emailMap.get(sub.customer)
             ? getUserByEmail(emailMap.get(sub.customer))
             : null
+          } catch(e) {
+            console.warn(e);
+            console.warn(sub.customer, emailMap.get(sub.customer));
+            return null;
+          }
+        }
         )
         .filter(Boolean)
     );
