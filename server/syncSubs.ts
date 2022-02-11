@@ -55,7 +55,7 @@ async function syncSubscribers() {
     email: emailMap.get(sub.customer),
     status: sub.status,
     uid: uidMap.get(emailMap.get(sub.customer)),
-  }));
+  })).filter(sub => sub.uid);
   currentSubs = result
     .map((sub) => sub.uid)
     .sort()

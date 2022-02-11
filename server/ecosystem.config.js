@@ -10,9 +10,6 @@ module.exports = {
       log_date_format: 'YYYY-MM-DD HH:mm Z',
       env: {
         PORT: 80,
-        HETZNER_GATEWAY: hetznerGateway,
-        HETZNER_GATEWAY_US: hetznerGatewayUS,
-        HETZNER_IMAGE: hetznerImage,
       },
     },
     {
@@ -22,9 +19,6 @@ module.exports = {
       env: {
         SHARD: 1,
         PORT: 3001,
-        HETZNER_GATEWAY: hetznerGateway,
-        HETZNER_GATEWAY_US: hetznerGatewayUS,
-        HETZNER_IMAGE: hetznerImage,
       },
     },
     // {
@@ -34,9 +28,6 @@ module.exports = {
     //   env: {
     //     SHARD: 2,
     //     PORT: 3002,
-    //     HETZNER_GATEWAY: hetznerGateway,
-    //     HETZNER_GATEWAY_US: hetznerGatewayUS,
-    //     HETZNER_IMAGE: hetznerImage,
     //   },
     // },
     // {
@@ -46,9 +37,6 @@ module.exports = {
     //   env: {
     //     SHARD: 3,
     //     PORT: 3003,
-    //     HETZNER_GATEWAY: hetznerGateway,
-    //     HETZNER_GATEWAY_US: hetznerGatewayUS,
-    //     HETZNER_IMAGE: hetznerImage,
     //   },
     // },
     {
