@@ -37,10 +37,10 @@ export async function getUserByEmail(email: string) {
   }
   try {
     return await admin.auth().getUserByEmail(email);
-  } catch (e) {
+  } catch (e: any) {
     console.log(email, e.message);
-    return null;
   }
+  return null;
 }
 
 export async function getUser(uid: string) {
