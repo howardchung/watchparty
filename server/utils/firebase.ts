@@ -35,7 +35,12 @@ export async function getUserByEmail(email: string) {
   if (!config.FIREBASE_ADMIN_SDK_CONFIG) {
     return null;
   }
-  return await admin.auth().getUserByEmail(email);
+  try {
+    return await admin.auth().getUserByEmail(email);
+  } catch (e) {
+    console.log(email, e.message);
+    return null;
+  }
 }
 
 export async function getUser(uid: string) {

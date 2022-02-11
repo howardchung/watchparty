@@ -6,7 +6,7 @@ import bodyParser from 'body-parser';
 
 const app = express();
 const vmManagers = getBgVMManagers();
-const redisRefs: {[key: string]: Redis.Redis} = {};
+const redisRefs: { [key: string]: Redis.Redis } = {};
 
 app.use(bodyParser.json());
 
