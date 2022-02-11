@@ -551,7 +551,7 @@ async function getStats() {
 
   const dbRoomData = (
     await postgres?.query(
-      `SELECT "roomId", "creationTime", "lastUpdateTime", vanity, "isSubRoom", owner, password from room WHERE "lastUpdateTime" < NOW() - INTERVAL '30 day'`
+      `SELECT "roomId", "creationTime", "lastUpdateTime", vanity, "isSubRoom", owner, password from room WHERE "lastUpdateTime" > NOW() - INTERVAL '30 day'`
     )
   )?.rows;
   const currentRoomData = dbRoomData
