@@ -440,7 +440,7 @@ async function minuteMetrics() {
         'lock:' + room.vBrowser.provider + ':' + room.vBrowser.id,
         300
       );
-      await redis?.expire('vBrowserUIDLock:' + room.vBrowser.creatorUID, 120);
+      await redis?.expire('vBrowserUIDLock:' + room.vBrowser?.creatorUID, 120);
 
       const expireTime = getStartOfDay() / 1000 + 86400;
       if (room.vBrowser?.creatorClientID) {
@@ -452,7 +452,11 @@ async function minuteMetrics() {
         await redis?.expireat('vBrowserClientIDMinutes', expireTime);
       }
       if (room.vBrowser?.creatorUID) {
-        await redis?.zincrby('vBrowserUIDMinutes', 1, room.vBrowser.creatorUID);
+        await redis?.zincrby(
+          'vBrowserUIDMinutes',
+          1,
+          room.vBrowser?.creatorUID
+        );
         await redis?.expireat('vBrowserUIDMinutes', expireTime);
       }
     }
@@ -492,7 +496,6 @@ async function getAllRooms() {
 
 async function getStats() {
   const now = Number(new Date());
-  const currentRoomData: any[] = [];
   let currentUsers = 0;
   let currentHttp = 0;
   let currentVBrowser = 0;
@@ -506,19 +509,10 @@ async function getStats() {
   let currentRoomCount = rooms.size;
   rooms.forEach((room) => {
     const obj = {
-      creationTime: room.creationTime,
-      lastUpdateTime: room.lastUpdateTime,
-      roomId: room.roomId,
       video: room.video,
-      videoTS: room.videoTS,
       rosterLength: room.roster.length,
-      roster: room.getRosterForStats(),
       videoChats: room.roster.filter((p) => p.isVideoChat).length,
       vBrowser: room.vBrowser,
-      vBrowserElapsed:
-        room.vBrowser?.assignTime && now - room.vBrowser?.assignTime,
-      lock: room.lock || undefined,
-      creator: room.creator || undefined,
     };
     currentUsers += obj.rosterLength;
     currentVideoChat += obj.videoChats;
@@ -552,17 +546,47 @@ async function getStats() {
       }
       currentVBrowserUIDCounts[obj.vBrowser.creatorUID] += 1;
     }
-    if (obj.video || obj.rosterLength > 0) {
-      currentRoomData.push(obj);
-    }
   });
 
   currentVBrowserUIDCounts = Object.fromEntries(
     Object.entries(currentVBrowserUIDCounts).filter(([, val]) => val > 1)
   );
 
-  // Sort newest first
-  currentRoomData.sort((a, b) => b.creationTime - a.creationTime);
+  const dbRoomData = (
+    await postgres?.query(
+      `SELECT "roomId", "creationTime", "lastUpdateTime", vanity, "isSubRoom", owner, password from room WHERE "lastUpdateTime" < NOW() - INTERVAL '30 day'`
+    )
+  )?.rows;
+  const currentRoomData = dbRoomData
+    ?.map((dbRoom) => {
+      const room = rooms.get(dbRoom.roomId);
+      if (!room) {
+        return null;
+      }
+      const obj = {
+        ...dbRoom,
+        creationTime: room.creationTime,
+        lastUpdateTime: room.lastUpdateTime,
+        roomId: room.roomId,
+        video: room.video,
+        videoTS: room.videoTS,
+        rosterLength: room.roster.length,
+        roster: room.getRosterForStats(),
+        videoChats: room.roster.filter((p) => p.isVideoChat).length,
+        vBrowser: room.vBrowser,
+        vBrowserElapsed:
+          room.vBrowser?.assignTime && now - room.vBrowser?.assignTime,
+        lock: room.lock || undefined,
+        creator: room.creator || undefined,
+      };
+      if (obj.video || obj.rosterLength > 0) {
+        return obj;
+      } else {
+        return null;
+      }
+    })
+    .filter(Boolean);
+
   const uptime = Number(new Date()) - launchTime;
   const cpuUsage = os.loadavg();
   const memUsage = process.memoryUsage().rss;
