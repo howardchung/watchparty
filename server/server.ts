@@ -500,7 +500,7 @@ async function getStats() {
   let currentHttp = 0;
   let currentVBrowser = 0;
   let currentVBrowserLarge = 0;
-  let currentVBrowserWaiting = 0;
+  let currentVBrowserWaiting = await redis?.get('currentVBrowserWaiting');
   let currentScreenShare = 0;
   let currentFileShare = 0;
   let currentVideoChat = 0;

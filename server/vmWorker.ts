@@ -4,6 +4,10 @@ import express from 'express';
 import Redis from 'ioredis';
 import bodyParser from 'body-parser';
 
+let redis: Redis.Redis | undefined = undefined;
+if (config.REDIS_URL) {
+  redis = new Redis(config.REDIS_URL);
+}
 const app = express();
 const vmManagers = getBgVMManagers();
 const redisRefs: { [key: string]: Redis.Redis } = {};
@@ -14,14 +18,19 @@ Object.values(vmManagers).forEach((manager) => {
   manager?.runBackgroundJobs();
 });
 
+setInterval(() => {
+  redis?.setex('currentVBrowserWaiting', 90, Object.keys(redisRefs).length);
+}, 60000);
+
 app.post('/assignVM', async (req, res) => {
   try {
     let redis: Redis.Redis | undefined = undefined;
-    if (!redis && config.REDIS_URL) {
+    if (config.REDIS_URL) {
       redis = new Redis(config.REDIS_URL);
       redisRefs[req.body.uid] = redis;
       setTimeout(() => {
         redis?.disconnect();
+        delete redisRefs[req.body.uid];
       }, 60000);
     }
     const pool = getVMManager(
@@ -32,6 +41,7 @@ app.post('/assignVM', async (req, res) => {
     if (redis && pool) {
       const vm = await assignVM(redis, pool);
       redis?.disconnect();
+      delete redisRefs[req.body.uid];
       return res.json(vm ?? null);
     }
   } catch (e) {
