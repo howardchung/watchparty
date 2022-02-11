@@ -1304,7 +1304,7 @@ export default class App extends React.Component<AppProps, AppState> {
   clearChat = async () => {
     const uid = this.props.user?.uid;
     const token = await this.props.user?.getIdToken();
-    this.socket.emit('CMD:clearchat', { uid, token });
+    this.socket.emit('CMD:deleteChatMessages', { uid, token });
   };
 
   getLeaderTime = () => {
