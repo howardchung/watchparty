@@ -44,7 +44,7 @@ async function syncSubscribers() {
         )
         .filter(Boolean)
     );
-    fbUsers.forEach((user) => {
+    fbUsers.filter(Boolean).forEach((user) => {
       uidMap.set(user?.email, user?.uid);
     });
   }
