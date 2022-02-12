@@ -37,37 +37,36 @@ async function statsTimeSeries() {
         const data = shard.data;
         stats = combine(stats, data);
       });
+      await redis.lpush(
+        'timeSeries',
+        JSON.stringify({
+          time: new Date(),
+          availableVBrowsers:
+            stats.vmManagerStats?.US?.availableVBrowsers?.length,
+          availableVBrowsersLarge:
+            stats.vmManagerStats?.largeUS?.availableVBrowsers?.length,
+          currentUsers: stats.currentUsers,
+          currentVBrowser: stats.currentVBrowser,
+          currentVBrowserLarge: stats.currentVBrowserLarge,
+          currentHttp: stats.currentHttp,
+          currentScreenShare: stats.currentScreenShare,
+          currentFileShare: stats.currentFileShare,
+          currentVideoChat: stats.currentVideoChat,
+          currentRoomCount: stats.currentRoomCount,
+          chatMessages: stats.chatMessages,
+          redisUsage: stats.redisUsage,
+          avgStartMS:
+            stats.vBrowserStartMS &&
+            stats.vBrowserStartMS.reduce(
+              (a: string, b: string) => Number(a) + Number(b),
+              0
+            ) / stats.vBrowserStartMS.length,
+        })
+      );
+      await redis.ltrim('timeSeries', 0, 288);
     } catch (e: any) {
       console.warn(`[TIMESERIES] %s when collecting stats`, e.code);
     }
-
-    await redis.lpush(
-      'timeSeries',
-      JSON.stringify({
-        time: new Date(),
-        availableVBrowsers:
-          stats.vmManagerStats?.US?.availableVBrowsers?.length,
-        availableVBrowsersLarge:
-          stats.vmManagerStats?.largeUS?.availableVBrowsers?.length,
-        currentUsers: stats.currentUsers,
-        currentVBrowser: stats.currentVBrowser,
-        currentVBrowserLarge: stats.currentVBrowserLarge,
-        currentHttp: stats.currentHttp,
-        currentScreenShare: stats.currentScreenShare,
-        currentFileShare: stats.currentFileShare,
-        currentVideoChat: stats.currentVideoChat,
-        currentRoomCount: stats.currentRoomCount,
-        chatMessages: stats.chatMessages,
-        redisUsage: stats.redisUsage,
-        avgStartMS:
-          stats.vBrowserStartMS &&
-          stats.vBrowserStartMS.reduce(
-            (a: string, b: string) => Number(a) + Number(b),
-            0
-          ) / stats.vBrowserStartMS.length,
-      })
-    );
-    await redis.ltrim('timeSeries', 0, 288);
     console.timeEnd('timeSeries');
   }
 }
