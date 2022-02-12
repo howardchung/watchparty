@@ -36,6 +36,7 @@ interface Settings {
   mediaPath?: string;
   streamPath?: string;
   disableChatSound?: boolean;
+  beta?: boolean;
 }
 
 interface PlaylistVideo {
