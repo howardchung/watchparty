@@ -125,13 +125,13 @@ export abstract class VMManager {
     // Remove from lists, if it exists
     await this.redis.lrem(this.getRedisQueueKey(), 0, id);
     await this.redis.lrem(this.getRedisStagingKey(), 0, id);
-    await this.terminateVM(id);
     // Get the VM data to calculate lifetime, if we fail do the terminate anyway
-    const lifetime = await this.terminateVMMetrics(id);
-    if (lifetime) {
-      await this.redis.lpush('vBrowserVMLifetime', lifetime);
-      await this.redis.ltrim('vBrowserVMLifetime', 0, 49);
-    }
+    // const lifetime = await this.terminateVMMetrics(id);
+    await this.terminateVM(id);
+    // if (lifetime) {
+    //   await this.redis.lpush('vBrowserVMLifetime', lifetime);
+    //   await this.redis.ltrim('vBrowserVMLifetime', 0, 49);
+    // }
     // Delete any locks
     await this.redis.del('lock:' + this.id + ':' + id);
     await this.redis.del(this.getRedisHostCacheKey() + ':' + id);
