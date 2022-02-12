@@ -1,7 +1,3 @@
-const hetznerImage = '53175462';
-const hetznerGateway = 'gateway3.watchparty.me';
-const hetznerGatewayUS = 'gateway2.watchparty.me';
-
 module.exports = {
   apps: [
     {
@@ -44,12 +40,14 @@ module.exports = {
       script: './buildServer/vmWorker.js',
       log_date_format: 'YYYY-MM-DD HH:mm Z',
       env: {
-        HETZNER_GATEWAY: hetznerGateway,
+        HETZNER_GATEWAY: 'gateway3.watchparty.me',
         HETZNER_NETWORKS: '91163,1007910,1007911',
-        HETZNER_GATEWAY_US: hetznerGatewayUS,
+        HETZNER_GATEWAY_US: 'gateway2.watchparty.me',
         HETZNER_NETWORKS_US: '1258313,1258314,1258315',
         HETZNER_SSH_KEYS: '1570536',
-        HETZNER_IMAGE: hetznerImage,
+        HETZNER_IMAGE: '53175462',
+        SCW_GATEWAY: 'gateway1.watchparty.me',
+        SCW_IMAGE: '',
       },
     },
     {
