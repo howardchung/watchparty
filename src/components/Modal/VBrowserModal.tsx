@@ -17,9 +17,10 @@ import firebase from 'firebase/compat/app';
 export class VBrowserModal extends React.Component<{
   closeModal: Function;
   startVBrowser: Function;
-  isSubscriber: Boolean;
+  isSubscriber: boolean;
   subscribeButton: JSX.Element;
   user?: firebase.User;
+  beta?: boolean;
 }> {
   state = { isVMPoolFull: false, region: 'US', regionPlus: 'US' };
   async componentDidMount() {
@@ -113,7 +114,7 @@ export class VBrowserModal extends React.Component<{
                     <Table.Cell>3 hours</Table.Cell>
                     <Table.Cell>24 hours</Table.Cell>
                   </Table.Row>
-                  {process.env.NODE_ENV === 'development' && (
+                  {this.props.beta && (
                     <Table.Row>
                       <Table.Cell>Region</Table.Cell>
                       <Table.Cell>

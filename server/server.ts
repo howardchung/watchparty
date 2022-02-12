@@ -257,6 +257,7 @@ app.get('/settings', (req, res) => {
     return res.json({
       mediaPath: config.MEDIA_PATH,
       streamPath: config.STREAM_PATH,
+      beta: true,
     });
   }
   return res.json({});

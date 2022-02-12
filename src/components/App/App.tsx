@@ -1521,6 +1521,7 @@ export default class App extends React.Component<AppProps, AppState> {
             closeModal={() => this.setState({ isVBrowserModalOpen: false })}
             startVBrowser={this.startVBrowser}
             user={this.props.user}
+            beta={this.state.settings.beta}
           />
         )}
         {this.state.isScreenShareModalOpen && (
