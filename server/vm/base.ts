@@ -269,7 +269,7 @@ export abstract class VMManager {
           console.log('[CLEANUP]', server.id);
           await this.resetVM(server.id);
           //this.terminateVMWrapper(server.id);
-          await new Promise((resolve) => setTimeout(resolve, 1000));
+          await new Promise((resolve) => setTimeout(resolve, 2000));
         }
       }
     };
