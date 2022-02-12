@@ -567,7 +567,7 @@ async function getStats() {
         video: room.video || undefined,
         videoTS: room.videoTS || undefined,
         vanity: dbRoom.vanity || undefined,
-        isSubRoom: dbRoom.vanity || undefined,
+        isSubRoom: dbRoom.isSubRoom || undefined,
         owner: dbRoom.owner || undefined,
         password: dbRoom.password || undefined,
         rosterLength: room.roster.length,
