@@ -20,10 +20,22 @@ export abstract class VMManager {
   protected region = '';
   protected redis: Redis.Redis;
   private currentSize = 0;
+  private limitSize = 0;
+  private minSize = 0;
+  private minBuffer = 0;
 
-  constructor(large?: boolean, region = '') {
+  constructor(
+    large?: boolean,
+    region = '',
+    limitSize = 0,
+    minSize = 0,
+    minBuffer = 0
+  ) {
     this.isLarge = Boolean(large);
     this.region = region;
+    this.limitSize = limitSize;
+    this.minSize = minSize;
+    this.minBuffer = minBuffer;
     if (!redis) {
       throw new Error('Cannot construct VMManager without Redis');
     }
@@ -31,20 +43,19 @@ export abstract class VMManager {
   }
 
   protected getMinSize = () => {
-    return this.isLarge
-      ? Number(config.VM_POOL_MIN_SIZE_LARGE)
-      : Number(config.VM_POOL_MIN_SIZE);
+    return this.minSize;
   };
-  protected getLimitSize = () =>
-    this.isLarge
-      ? Number(config.VM_POOL_LIMIT_LARGE)
-      : Number(config.VM_POOL_LIMIT);
+
+  protected getLimitSize = () => {
+    return this.limitSize;
+  };
 
   protected getAdjustedBuffer = () => {
     // Test out dynamically sizing buffer and flex to 10% of current size
-    const vmBufferSize =
-      Math.floor(this.getCurrentSize() * 0.1) +
-      (process.env.NODE_ENV === 'production' ? 1 : 0);
+    const vmBufferSize = Math.max(
+      Math.floor(this.getCurrentSize() * 0.1),
+      this.minBuffer
+    );
     return [vmBufferSize, Math.floor(vmBufferSize * 1.1)];
   };
 

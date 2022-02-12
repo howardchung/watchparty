@@ -284,7 +284,7 @@ export class Room {
   public stopVBrowserInternal = async () => {
     const assignTime = this.vBrowser && this.vBrowser.assignTime;
     const id = this.vBrowser?.id;
-    const provider = this.vBrowser?.provider ?? config.VM_MANAGER_ID;
+    const provider = this.vBrowser?.provider;
     const isLarge = this.vBrowser?.large ?? false;
     const region = this.vBrowser?.region ?? '';
     const uid = this.vBrowser?.creatorUID ?? '';
@@ -614,7 +614,7 @@ export class Room {
       options: { size: string; region: string };
     }
   ) => {
-    if (this.video.startsWith('vbrowser://')) {
+    if (this.video?.startsWith('vbrowser://')) {
       return;
     }
     if (!this.validateLock(socket.id)) {
