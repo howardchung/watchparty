@@ -37,7 +37,7 @@ export const assignVM = async (
     const assignStart = Number(new Date());
     let selected = null;
     while (!selected) {
-      if (process.env.NODE_ENV === 'development') {
+      if (vmManager.getMinSize() === 0) {
         // This code spawns a VM if none is available in the pool
         const availableCount = await redis.llen(vmManager.getRedisQueueKey());
         if (!availableCount) {
