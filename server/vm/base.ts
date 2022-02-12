@@ -75,11 +75,17 @@ export abstract class VMManager {
     );
   };
 
+  public getRedisAllKey = () => {
+    return (
+      'allList' + this.id + this.region + (this.isLarge ? 'Large' : '')
+    );
+  };
+
   public getRedisHostCacheKey = () => {
     return 'hostCache' + this.id + this.region + (this.isLarge ? 'Large' : '');
   };
 
-  public getRedisVMPoolFullKey = () => {
+  public getRedisPoolSizeKey = () => {
     return 'vmPoolFull' + this.id + this.region + (this.isLarge ? 'Large' : '');
   };
 
@@ -218,16 +224,11 @@ export abstract class VMManager {
     const updateSize = async () => {
       const allVMs = await this.listVMs(this.getTag());
       this.currentSize = allVMs.length;
-      const availableCount = await this.redis.llen(this.getRedisQueueKey());
-      if (availableCount === 0) {
-        await this.redis.setex(
-          this.getRedisVMPoolFullKey(),
-          2 * 60,
-          this.currentSize
-        );
-      } else {
-        await this.redis.del(this.getRedisVMPoolFullKey() + this.id);
-      }
+      await this.redis.setex(
+        this.getRedisPoolSizeKey(),
+        2 * 60,
+        this.currentSize
+      );
     };
 
     const cleanupVMGroup = async () => {
@@ -358,12 +359,12 @@ export abstract class VMManager {
                 //await this.terminateVMWrapper(id);
               } else {
                 if (retryCount % 33 === 0) {
-                  const vm = await this.getVM(id);
                   console.log(
                     '[CHECKSTAGING] %s attempt to poweron and attach to network',
                     id
-                  );
-                  this.powerOn(id);
+                    );
+                    this.powerOn(id);
+                  // const vm = await this.getVM(id);
                   // if (!vm?.private_ip) {
                   //   this.attachToNetwork(id);
                   // }
@@ -398,9 +399,9 @@ export abstract class VMManager {
 
     setInterval(resizeVMGroupIncr, incrInterval);
     setInterval(resizeVMGroupDecr, decrInterval);
-    updateSize();
+    await updateSize();
     setInterval(updateSize, updateSizeInterval);
-    cleanupVMGroup();
+    await cleanupVMGroup();
     setInterval(cleanupVMGroup, cleanupInterval);
     const checkStagingInterval = 3000;
     while (true) {
