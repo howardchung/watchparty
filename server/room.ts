@@ -10,7 +10,6 @@ import { redisCount, redisCountDistinct } from './utils/redis';
 import { getCustomerByEmail } from './utils/stripe';
 import { AssignedVM } from './vm/base';
 import { getStartOfDay } from './utils/time';
-import { assignVM, getVMManager } from './vm/utils';
 import { updateObject, upsertObject } from './utils/postgres';
 import { fetchYoutubeVideo, getYoutubeVideoID } from './utils/youtube';
 

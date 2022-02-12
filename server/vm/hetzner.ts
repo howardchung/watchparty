@@ -121,9 +121,7 @@ export class Hetzner extends VMManager {
   };
 
   listVMs = async (filter?: string) => {
-    const limit = this.isLarge
-      ? config.VM_POOL_LIMIT_LARGE
-      : config.VM_POOL_LIMIT;
+    const limit = this.getLimitSize();
     const pageCount = Math.ceil((limit || 1) / 50);
     const pages = Array.from(Array(pageCount).keys()).map((i) => i + 1);
     const responses: any[] = await Promise.all(
