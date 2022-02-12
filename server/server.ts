@@ -301,10 +301,11 @@ app.get('/metadata', async (req, res) => {
   );
   const isVMPoolFull: BooleanDict = {};
   Object.entries(vmManagers).forEach(async ([key, value]) => {
-    const isPoolFull = Boolean(
-      await redis?.get(value?.getRedisVMPoolFullKey() ?? '')
-    );
-    isVMPoolFull[key] = isPoolFull;
+    if (value) {
+      const availableCount = await redis?.llen(value.getRedisQueueKey());
+      const minSize = value?.getMinSize(); 
+      isVMPoolFull[key] = minSize > 0 && availableCount === 0;
+    }
   });
   let isCustomer = false;
   let isSubscriber = false;
@@ -605,9 +606,11 @@ async function getStats() {
       0,
       -1
     );
+    const size = redis?.get(vmManager?.getRedisPoolSizeKey() || 'vmPoolFull');
     vmManagerStats[key] = {
       availableVBrowsers,
       stagingVBrowsers,
+      size,
     };
   });
   const numPermaRooms = (
