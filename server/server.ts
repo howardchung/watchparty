@@ -561,15 +561,17 @@ async function getStats() {
         return null;
       }
       const obj = {
-        ...dbRoom,
+        roomId: room.roomId,
         creationTime: room.creationTime,
         lastUpdateTime: room.lastUpdateTime,
-        roomId: room.roomId,
-        video: room.video,
-        videoTS: room.videoTS,
+        video: room.video || undefined,
+        videoTS: room.videoTS || undefined,
+        vanity: dbRoom.vanity || undefined,
+        isSubRoom: dbRoom.vanity || undefined,
+        owner: dbRoom.owner || undefined,
+        password: dbRoom.password || undefined,
         rosterLength: room.roster.length,
         roster: room.getRosterForStats(),
-        videoChats: room.roster.filter((p) => p.isVideoChat).length,
         vBrowser: room.vBrowser,
         vBrowserElapsed:
           room.vBrowser?.assignTime && now - room.vBrowser?.assignTime,
