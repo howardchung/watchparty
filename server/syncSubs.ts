@@ -50,12 +50,14 @@ async function syncSubscribers() {
   }
 
   // Create sub objects
-  const result = subs.map((sub) => ({
-    customerId: sub.customer,
-    email: emailMap.get(sub.customer),
-    status: sub.status,
-    uid: uidMap.get(emailMap.get(sub.customer)),
-  })).filter(sub => sub.uid);
+  const result = subs
+    .map((sub) => ({
+      customerId: sub.customer,
+      email: emailMap.get(sub.customer),
+      status: sub.status,
+      uid: uidMap.get(emailMap.get(sub.customer)),
+    }))
+    .filter((sub) => sub.uid);
   currentSubs = result
     .map((sub) => sub.uid)
     .sort()
