@@ -42,11 +42,11 @@ export abstract class VMManager {
     this.redis = redis;
   }
 
-  protected getMinSize = () => {
+  public getMinSize = () => {
     return this.minSize;
   };
 
-  protected getLimitSize = () => {
+  public getLimitSize = () => {
     return this.limitSize;
   };
 
