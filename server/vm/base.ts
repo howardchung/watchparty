@@ -292,8 +292,8 @@ export abstract class VMManager {
             const retryCount = await this.redis.incr(
               this.getRedisStagingKey() + ':' + id
             );
-            if (retryCount < 10) {
-              // Do a minimum of 10 retries to give reboot time
+            if (retryCount < 5) {
+              // Do a minimum # of retries to give reboot time
               return resolve(id + ', ' + retryCount + ', ' + false);
             }
             let ready = false;
@@ -345,7 +345,7 @@ export abstract class VMManager {
                 await this.redis.ltrim('vBrowserStageRetries', 0, 49);
               }
             } else {
-              if (retryCount >= 180) {
+              if (retryCount >= 90) {
                 console.log('[CHECKSTAGING]', 'giving up:', id);
                 await this.redis
                   .multi()
@@ -356,7 +356,7 @@ export abstract class VMManager {
                 await this.resetVM(id);
                 //await this.terminateVMWrapper(id);
               } else {
-                if (retryCount % 100 === 0) {
+                if (retryCount % 50 === 0) {
                   const vm = await this.getVM(id);
                   console.log(
                     '[CHECKSTAGING] %s attempt to poweron and attach to network',
@@ -401,7 +401,7 @@ export abstract class VMManager {
     setInterval(updateSize, updateSizeInterval);
     cleanupVMGroup();
     setInterval(cleanupVMGroup, cleanupInterval);
-    const checkStagingInterval = 1000;
+    const checkStagingInterval = 2000;
     while (true) {
       await new Promise((resolve) => setTimeout(resolve, checkStagingInterval));
       await checkStaging();
