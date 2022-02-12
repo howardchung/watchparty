@@ -37,31 +37,31 @@ async function statsTimeSeries() {
         const data = shard.data;
         stats = combine(stats, data);
       });
+      const datapoint: any = {
+        time: new Date(),
+        currentUsers: stats.currentUsers,
+        currentVBrowser: stats.currentVBrowser,
+        currentVBrowserLarge: stats.currentVBrowserLarge,
+        currentHttp: stats.currentHttp,
+        currentScreenShare: stats.currentScreenShare,
+        currentFileShare: stats.currentFileShare,
+        currentVideoChat: stats.currentVideoChat,
+        currentRoomCount: stats.currentRoomCount,
+        chatMessages: stats.chatMessages,
+        redisUsage: stats.redisUsage,
+        avgStartMS:
+          stats.vBrowserStartMS &&
+          stats.vBrowserStartMS.reduce(
+            (a: string, b: string) => Number(a) + Number(b),
+            0
+          ) / stats.vBrowserStartMS.length,
+      };
+      Object.keys(stats.vmManagerStats).forEach(key => {
+        datapoint[key] = stats.vmManagerStats[key]?.availableVBrowsers?.length;
+      });
       await redis.lpush(
         'timeSeries',
-        JSON.stringify({
-          time: new Date(),
-          availableVBrowsers:
-            stats.vmManagerStats?.US?.availableVBrowsers?.length,
-          availableVBrowsersLarge:
-            stats.vmManagerStats?.largeUS?.availableVBrowsers?.length,
-          currentUsers: stats.currentUsers,
-          currentVBrowser: stats.currentVBrowser,
-          currentVBrowserLarge: stats.currentVBrowserLarge,
-          currentHttp: stats.currentHttp,
-          currentScreenShare: stats.currentScreenShare,
-          currentFileShare: stats.currentFileShare,
-          currentVideoChat: stats.currentVideoChat,
-          currentRoomCount: stats.currentRoomCount,
-          chatMessages: stats.chatMessages,
-          redisUsage: stats.redisUsage,
-          avgStartMS:
-            stats.vBrowserStartMS &&
-            stats.vBrowserStartMS.reduce(
-              (a: string, b: string) => Number(a) + Number(b),
-              0
-            ) / stats.vBrowserStartMS.length,
-        })
+        JSON.stringify(datapoint),
       );
       await redis.ltrim('timeSeries', 0, 288);
     } catch (e: any) {
