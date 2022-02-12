@@ -8,11 +8,11 @@ const SCW_SECRET_KEY = config.SCW_SECRET_KEY;
 const SCW_ORGANIZATION_ID = config.SCW_ORGANIZATION_ID;
 const region = 'nl-ams-1'; //fr-par-1
 const gatewayHost = config.SCW_GATEWAY;
-const imageId = '1e72e882-f000-4c6e-b538-974af74c2a6a';
+const imageId = config.SCW_IMAGE;
 
 export class Scaleway extends VMManager {
-  size = 'DEV1-M'; // DEV1-S, DEV1-M, DEV1-L, GP1-XS
-  largeSize = 'GP1-XS';
+  size = 'DEV1-S'; // DEV1-S, DEV1-M, DEV1-L, GP1-XS
+  largeSize = 'DEV1-M';
   id = 'Scaleway';
   startVM = async (name: string) => {
     const response = await axios({

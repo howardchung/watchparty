@@ -16,17 +16,18 @@ const defaults = {
   VM_POOL_MIN_SIZE_LARGE: 0, // Minimum number of large VM instances to keep in the pool
   VBROWSER_TAG: '', // Optional, tag to put on VBrowser VM instances
   DO_TOKEN: '', // Optional, for DigitalOcean VMs
-  DO_GATEWAY: '', // Warning, needs to be set on both vmWorker and server!
+  DO_GATEWAY: '', // Gateway handling SSL termination
   HETZNER_TOKEN: '', // Optional, for Hetzner VMs
-  HETZNER_GATEWAY: '', // Warning: needs to be set on both vmWorker and server!
-  HETZNER_GATEWAY_US: '',
+  HETZNER_GATEWAY: '', // Gateway handling SSL termination
+  HETZNER_GATEWAY_US: '', // Gateway handling SSL termination
   HETZNER_NETWORKS: '', // IDs of Hetzner networks vbrowsers are using
-  HETZNER_NETWORKS_US: '',
+  HETZNER_NETWORKS_US: '', // IDs of Hetzner networks vbrowsers are using
   HETZNER_SSH_KEYS: '', // IDs of Hetzner SSH keys to access vbrowsers
   HETZNER_IMAGE: '', // ID of Hetzner snapshot image to use for vbrowser
   SCW_SECRET_KEY: '', // Optional, for Scaleway VMs
   SCW_ORGANIZATION_ID: '', // Optional, for Scaleway VMs
-  SCW_GATEWAY: '', // Warning, needs to be set on both vmWorker and server!
+  SCW_GATEWAY: '', // Gateway handling SSL termination
+  SCW_IMAGE: '', // ID of Scaleway snapshot image to use for vbrowser
   DOCKER_VM_HOST: '', // Optional, for Docker VMs
   DOCKER_VM_HOST_SSH_USER: '', // Optional, username for Docker host
   DOCKER_VM_HOST_SSH_KEY_BASE64: '', // Optional, private SSH key for Docker host
