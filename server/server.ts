@@ -199,7 +199,8 @@ app.get('/stats', async (req, res) => {
 
 app.get('/health/:metric', async (req, res) => {
   const stats = await getStats();
-  const result = stats.vmManagerStats[req.params.metric]?.availableVBrowsers?.length;
+  const result =
+    stats.vmManagerStats[req.params.metric]?.availableVBrowsers?.length;
   res.status(result ? 200 : 500).json(result);
 });
 

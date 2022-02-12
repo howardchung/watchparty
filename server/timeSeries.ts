@@ -56,13 +56,10 @@ async function statsTimeSeries() {
             0
           ) / stats.vBrowserStartMS.length,
       };
-      Object.keys(stats.vmManagerStats).forEach(key => {
+      Object.keys(stats.vmManagerStats).forEach((key) => {
         datapoint[key] = stats.vmManagerStats[key]?.availableVBrowsers?.length;
       });
-      await redis.lpush(
-        'timeSeries',
-        JSON.stringify(datapoint),
-      );
+      await redis.lpush('timeSeries', JSON.stringify(datapoint));
       await redis.ltrim('timeSeries', 0, 288);
     } catch (e: any) {
       console.warn(`[TIMESERIES] %s when collecting stats`, e.code);

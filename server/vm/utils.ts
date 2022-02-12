@@ -80,7 +80,10 @@ export const assignVM = async (
 export function getVMManager(
   provider: string,
   isLarge: boolean,
-  region: string
+  region: string,
+  limitSize = 0,
+  minSize = 0,
+  minBuffer = 0
 ): VMManager | null {
   let vmManager: VMManager | null = null;
   if (
@@ -89,7 +92,7 @@ export function getVMManager(
     config.SCW_ORGANIZATION_ID &&
     provider === 'Scaleway'
   ) {
-    vmManager = new Scaleway(isLarge, region);
+    vmManager = new Scaleway(isLarge, region, limitSize, minSize, minBuffer);
   } else if (
     config.REDIS_URL &&
     config.HETZNER_TOKEN &&
@@ -97,23 +100,47 @@ export function getVMManager(
   ) {
     vmManager = new Hetzner(isLarge, region);
   } else if (config.REDIS_URL && config.DO_TOKEN && provider === 'DO') {
-    vmManager = new DigitalOcean(isLarge, region);
+    vmManager = new DigitalOcean(
+      isLarge,
+      region,
+      limitSize,
+      minSize,
+      minBuffer
+    );
   } else if (
     config.REDIS_URL &&
     config.DOCKER_VM_HOST &&
     provider === 'Docker'
   ) {
-    vmManager = new Docker(isLarge, region);
+    vmManager = new Docker(isLarge, region, limitSize, minSize, minBuffer);
   }
   return vmManager;
 }
 
 export function getBgVMManagers() {
   return {
-    // large: getVMManager(config.VM_MANAGER_ID, true, ''),
-    // standard: getVMManager(config.VM_MANAGER_ID, false, ''),
-    largeUS: getVMManager(config.VM_MANAGER_ID, true, 'US'),
-    US: getVMManager(config.VM_MANAGER_ID, false, 'US'),
+    // dockerLarge: getVMManager('Docker', true, ''),
+    // docker: getVMManager('Docker', false, ''),
+    // scwLarge: getVMManager('Scaleway', true, ''),
+    // scw: getVMManager('Scaleway', false, ''),
+    largeEU: getVMManager('Hetzner', true, ''),
+    EU: getVMManager('Hetzner', false, ''),
+    largeUS: getVMManager(
+      'Hetzner',
+      true,
+      'US',
+      config.VM_POOL_LIMIT_LARGE,
+      config.VM_POOL_MIN_SIZE_LARGE,
+      1
+    ),
+    US: getVMManager(
+      'Hetzner',
+      false,
+      'US',
+      config.VM_POOL_LIMIT,
+      config.VM_POOL_MIN_SIZE,
+      1
+    ),
   };
 }
 
