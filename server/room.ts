@@ -688,7 +688,7 @@ export class Room {
       }
     }
     let isLarge = false;
-    let region = null;
+    let region = 'US';
     if (config.STRIPE_SECRET_KEY && data && data.uid && data.token) {
       const decoded = await validateUserToken(data.uid, data.token);
       // Check if user is subscriber, if so allow isLarge
@@ -699,12 +699,12 @@ export class Room {
         ) {
           console.log('found active sub for ', customer?.email);
           isLarge = data.options?.size === 'large';
-          region = data.options?.region;
+          if (data.options?.region) {
+            region = data.options?.region;
+          }
         }
       }
     }
-    // TODO temporary testing out default to US region
-    region = 'US';
 
     if (config.RECAPTCHA_SECRET_KEY) {
       try {

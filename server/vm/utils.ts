@@ -119,12 +119,12 @@ export function getVMManager(
 
 export function getBgVMManagers() {
   return {
-    // dockerLarge: getVMManager('Docker', true, ''),
-    // docker: getVMManager('Docker', false, ''),
-    // scwLarge: getVMManager('Scaleway', true, ''),
-    // scw: getVMManager('Scaleway', false, ''),
-    largeEU: getVMManager('Hetzner', true, ''),
-    EU: getVMManager('Hetzner', false, ''),
+    // dockerLarge: getVMManager('Docker', true, 'US'),
+    // docker: getVMManager('Docker', false, 'US'),
+    // scwLarge: getVMManager('Scaleway', true, 'US'),
+    // scw: getVMManager('Scaleway', false, 'US'),
+    largeEU: getVMManager('Hetzner', true, 'EU'),
+    EU: getVMManager('Hetzner', false, 'EU'),
     largeUS: getVMManager(
       'Hetzner',
       true,

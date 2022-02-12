@@ -1,5 +1,11 @@
 import React from 'react';
-import { Modal, Button, Table, Message } from 'semantic-ui-react';
+import {
+  Modal,
+  Button,
+  Table,
+  Message,
+  Dropdown,
+} from 'semantic-ui-react';
 import {
   GoogleReCaptchaProvider,
   withGoogleReCaptcha,
@@ -15,12 +21,12 @@ export class VBrowserModal extends React.Component<{
   subscribeButton: JSX.Element;
   user?: firebase.User;
 }> {
-  state = { isVMPoolFull: false };
+  state = { isVMPoolFull: false, region: 'US', regionPlus: 'US' };
   async componentDidMount() {
     const resp = await window.fetch(serverPath + '/metadata');
     const metadata = await resp.json();
-    // TODO temporary check the default pool
-    if (metadata.isVMPoolFull?.US) {
+    // TODO make this check on region change
+    if (metadata.isVMPoolFull?.[this.state.region]) {
       this.setState({ isVMPoolFull: true });
     }
   }
@@ -35,7 +41,10 @@ export class VBrowserModal extends React.Component<{
             const rcToken = await (
               googleReCaptchaProps as any
             ).executeRecaptcha('launchVBrowser');
-            startVBrowser(rcToken, { size: large ? 'large' : '' });
+            startVBrowser(rcToken, {
+              size: large ? 'large' : '',
+              region: large ? this.state.regionPlus : this.state.region,
+            });
             closeModal();
           }}
         >
@@ -61,6 +70,12 @@ export class VBrowserModal extends React.Component<{
         }
       />
     );
+
+    const options = [
+      { key: 'US', text: 'US', value: 'US', icon: 'flag' },
+      { key: 'EU', text: 'EU', value: 'EU', icon: 'flag' },
+    ];
+
     return (
       <GoogleReCaptchaProvider
         reCaptchaKey={process.env.REACT_APP_RECAPTCHA_SITE_KEY as string}
@@ -98,6 +113,33 @@ export class VBrowserModal extends React.Component<{
                     <Table.Cell>3 hours</Table.Cell>
                     <Table.Cell>24 hours</Table.Cell>
                   </Table.Row>
+                  {process.env.NODE_ENV === 'development' && (
+                    <Table.Row>
+                      <Table.Cell>Region</Table.Cell>
+                      <Table.Cell>
+                        <Dropdown
+                          selection
+                          onChange={(e, { value }) =>
+                            this.setState({ region: value })
+                          }
+                          value={this.state.region}
+                          options={options}
+                        >
+                        </Dropdown>
+                      </Table.Cell>
+                      <Table.Cell>
+                        <Dropdown
+                          selection
+                          onChange={(e, { value }) =>
+                            this.setState({ regionPlus: value })
+                          }
+                          value={this.state.regionPlus}
+                          options={options}
+                        >
+                        </Dropdown>
+                      </Table.Cell>
+                    </Table.Row>
+                  )}
                   <Table.Row>
                     <Table.Cell></Table.Cell>
                     <Table.Cell>
