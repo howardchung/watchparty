@@ -267,8 +267,9 @@ export abstract class VMManager {
         const server = allVMs[i];
         if (!dontDelete.has(server.id)) {
           console.log('[CLEANUP]', server.id);
-          this.resetVM(server.id);
+          await this.resetVM(server.id);
           //this.terminateVMWrapper(server.id);
+          await new Promise((resolve) => setTimeout(resolve, 1000));
         }
       }
     };
@@ -363,9 +364,9 @@ export abstract class VMManager {
                     id
                   );
                   this.powerOn(id);
-                  if (!vm?.private_ip) {
-                    this.attachToNetwork(id);
-                  }
+                  // if (!vm?.private_ip) {
+                  //   this.attachToNetwork(id);
+                  // }
                 }
                 if (retryCount % 10 === 0) {
                   console.log(
