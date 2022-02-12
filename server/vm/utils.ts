@@ -98,7 +98,7 @@ export function getVMManager(
     config.HETZNER_TOKEN &&
     provider === 'Hetzner'
   ) {
-    vmManager = new Hetzner(isLarge, region);
+    vmManager = new Hetzner(isLarge, region, limitSize, minSize, minBuffer);
   } else if (config.REDIS_URL && config.DO_TOKEN && provider === 'DO') {
     vmManager = new DigitalOcean(
       isLarge,

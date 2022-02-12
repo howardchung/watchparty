@@ -25,11 +25,11 @@ export abstract class VMManager {
   private minBuffer = 0;
 
   constructor(
-    large?: boolean,
-    region = '',
-    limitSize = 0,
-    minSize = 0,
-    minBuffer = 0
+    large: boolean,
+    region: string,
+    limitSize: number,
+    minSize: number,
+    minBuffer: number
   ) {
     this.isLarge = Boolean(large);
     this.region = region;
