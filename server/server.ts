@@ -303,7 +303,7 @@ app.get('/metadata', async (req, res) => {
   Object.entries(vmManagers).forEach(async ([key, value]) => {
     if (value) {
       const availableCount = await redis?.llen(value.getRedisQueueKey());
-      const minSize = value?.getMinSize(); 
+      const minSize = value?.getMinSize();
       isVMPoolFull[key] = minSize > 0 && availableCount === 0;
     }
   });
@@ -606,7 +606,9 @@ async function getStats() {
       0,
       -1
     );
-    const size = await redis?.get(vmManager?.getRedisPoolSizeKey() || 'vmPoolFull');
+    const size = await redis?.get(
+      vmManager?.getRedisPoolSizeKey() || 'vmPoolFull'
+    );
     vmManagerStats[key] = {
       availableVBrowsers,
       stagingVBrowsers,
