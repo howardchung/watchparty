@@ -231,11 +231,11 @@ export abstract class VMManager {
           (now - Number(new Date(vm.creation_date))) % (60 * 60 * 1000) >
           config.VM_MIN_UPTIME_MINUTES * 60 * 1000
       );
-      await this.redis
-        .multi()
-        .del(this.getRedisTerminationKey())
-        .sadd(this.getRedisTerminationKey(), sortedVMs.map((vm) => vm.id))
-        .exec();
+      const cmd = this.redis.multi().del(this.getRedisTerminationKey());
+      if (sortedVMs.length) {
+        cmd.sadd(this.getRedisTerminationKey(), sortedVMs.map((vm) => vm.id));
+      }
+      await cmd.exec();
     };
 
     const cleanupVMGroup = async () => {
