@@ -372,10 +372,10 @@ export abstract class VMManager {
                     id
                   );
                   this.powerOn(id);
-                  // const vm = await this.getVM(id);
-                  // if (!vm?.private_ip) {
-                  //   this.attachToNetwork(id);
-                  // }
+                  const vm = await this.getVM(id);
+                  if (!vm?.private_ip) {
+                    this.attachToNetwork(id);
+                  }
                 }
                 if (retryCount % 10 === 0) {
                   console.log(

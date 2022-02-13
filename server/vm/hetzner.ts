@@ -111,7 +111,8 @@ export class Hetzner extends VMManager {
       },
     });
     console.log(
-      '[GETVM] %s rate limit remaining',
+      '[GETVM] %s: %s rate limit remaining',
+      id,
       response?.headers['ratelimit-remaining']
     );
     const server = this.mapServerObject(response.data.server);
