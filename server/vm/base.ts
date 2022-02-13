@@ -355,7 +355,7 @@ export abstract class VMManager {
                 await this.redis.ltrim('vBrowserStageRetries', 0, 49);
               }
             } else {
-              if (retryCount >= 60) {
+              if (retryCount >= 80) {
                 console.log('[CHECKSTAGING]', 'giving up:', id);
                 await this.redis
                   .multi()
@@ -366,7 +366,7 @@ export abstract class VMManager {
                 await this.resetVM(id);
                 //await this.terminateVMWrapper(id);
               } else {
-                if (retryCount % 33 === 0) {
+                if (retryCount % 45 === 0) {
                   console.log(
                     '[CHECKSTAGING] %s attempt to poweron and attach to network',
                     id
