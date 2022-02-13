@@ -154,6 +154,10 @@ export class DigitalOcean extends VMManager {
 
   attachToNetwork = async (_id: string) => {};
 
+  updateSnapshot = async () => {
+    return '';
+  };
+  
   mapServerObject = (server: any): VM => {
     const ip = server.networks.v4.find(
       (network: any) => network.type === 'private'

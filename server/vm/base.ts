@@ -432,6 +432,7 @@ export abstract class VMManager {
   protected abstract powerOn: (id: string) => Promise<void>;
   protected abstract attachToNetwork: (id: string) => Promise<void>;
   protected abstract mapServerObject: (server: any) => VM;
+  public abstract updateSnapshot: () => Promise<string>;
 }
 
 async function checkVMReady(host: string) {

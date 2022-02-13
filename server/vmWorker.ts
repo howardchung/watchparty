@@ -66,6 +66,17 @@ app.post('/releaseVM', async (req, res) => {
   return res.end();
 });
 
+// curl -X POST http://localhost:3100/updateSnapshot -H 'Content-Type: application/json' -d '{"provider":"Hetzner","isLarge":false,"region":""}'
+app.post('/updateSnapshot', async (req, res) => {
+  const pool = getVMManager(
+    req.body.provider,
+    req.body.isLarge,
+    req.body.region
+  );
+  const result = await pool?.updateSnapshot();
+  return res.send(result);
+});
+
 app.listen(config.VMWORKER_PORT, () => {
   console.log('vmWorker listening on %s', config.VMWORKER_PORT);
 });

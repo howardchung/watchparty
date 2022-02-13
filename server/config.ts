@@ -14,6 +14,8 @@ const defaults = {
   VM_POOL_LIMIT_LARGE: 0, // Max number of large VMs to have in pool (0 to disable limit)
   VM_POOL_MIN_SIZE: 0, // Minimum number of VM instances to keep in the pool
   VM_POOL_MIN_SIZE_LARGE: 0, // Minimum number of large VM instances to keep in the pool
+  VM_POOL_MIN_BUFFER: 0, // Minimum number of instances to keep as a buffer
+  VM_POOL_MIN_BUFFER_LARGE: 0, // Minimum number of large instances to keep as a buffer
   VBROWSER_TAG: '', // Optional, tag to put on VBrowser VM instances
   DO_TOKEN: '', // Optional, for DigitalOcean VMs
   DO_GATEWAY: '', // Gateway handling SSL termination

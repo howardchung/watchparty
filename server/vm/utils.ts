@@ -131,7 +131,7 @@ export function getBgVMManagers() {
       'US',
       config.VM_POOL_LIMIT_LARGE,
       config.VM_POOL_MIN_SIZE_LARGE,
-      1
+      config.VM_POOL_MIN_BUFFER_LARGE,
     ),
     US: getVMManager(
       'Hetzner',
@@ -139,7 +139,7 @@ export function getBgVMManagers() {
       'US',
       config.VM_POOL_LIMIT,
       config.VM_POOL_MIN_SIZE,
-      1
+      config.VM_POOL_MIN_BUFFER,
     ),
   };
 }
