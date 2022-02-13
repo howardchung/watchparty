@@ -30,7 +30,7 @@ interface ChatProps {
 }
 
 export class Chat extends React.Component<ChatProps> {
-  public state = { chatMsg: '', isNearBottom: true, isPickerOpen: false };
+  public state = { chatMsg: '', isNearBottom: true, isPickerOpen: false, isReactionOpen: false };
   messagesRef = React.createRef<HTMLDivElement>();
 
   componentDidMount() {
@@ -173,6 +173,8 @@ export class Chat extends React.Component<ChatProps> {
                 owner={this.props.owner}
                 user={this.props.user}
                 socket={this.props.socket}
+                isChatDisabled={this.props.isChatDisabled}
+                setReactionOpen={(value: boolean) => this.setState({ isReactionOpen: value })}
               />
             ))}
             {/* <div ref={this.messagesEndRef} /> */}
@@ -199,6 +201,10 @@ export class Chat extends React.Component<ChatProps> {
             closeMenu={() => this.setState({ isPickerOpen: false })}
           />
         )}
+        {this.state.isReactionOpen && <ReactionMenu
+          addEmoji={() => {}}
+          closeMenu={() => this.setState({ isReactionOpen: false })}
+        />}
         <Input
           inverted
           fluid
@@ -244,6 +250,8 @@ const ChatMessage = ({
   user,
   socket,
   owner,
+  isChatDisabled,
+  setReactionOpen,
 }: {
   message: ChatMessage;
   nameMap: StringDict;
@@ -252,6 +260,8 @@ const ChatMessage = ({
   user: firebase.User | undefined;
   socket: Socket;
   owner: string | undefined;
+  isChatDisabled: boolean | undefined;
+  setReactionOpen: (value: boolean) => void;
 }) => {
   const { id, timestamp, cmd, msg, system, isSub } = message;
   return (
@@ -294,6 +304,20 @@ const ChatMessage = ({
           {cmd && formatMessage(cmd, msg)}
         </Comment.Text>
         <Comment.Text className="light">{!cmd && msg}</Comment.Text>
+        <Icon
+            // style={{ right: '40px' }}
+            onClick={() => setReactionOpen(true)}
+            name={'' as any}
+            inverted
+            circular
+            link
+            disabled={isChatDisabled}
+            style={{ opacity: 1 }}
+          >
+            <span role="img" aria-label="React">
+              😀
+            </span>
+          </Icon>
       </Comment.Content>
     </Comment>
   );
@@ -323,3 +347,22 @@ class PickerMenuInner extends React.Component<{
 }
 
 const PickerMenu = onClickOutside(PickerMenuInner);
+
+class ReactionMenuInner extends React.Component<{
+  addEmoji: (emoji: EmojiData) => void;
+  closeMenu: Function;
+}> {
+  handleClickOutside = () => {
+    this.props.closeMenu();
+  };
+  render() {
+    return (
+      <div style={{ position: 'absolute', bottom: '60px' }}>
+        <div style={{ fontSize: '24px' }}>
+          🤣😄😢❤️😮👍
+        </div>
+      </div>
+    );
+  }
+}
+const ReactionMenu = onClickOutside(ReactionMenuInner);
