@@ -7,8 +7,8 @@ import { cloudInit, imageName } from './utils';
 const DO_TOKEN = config.DO_TOKEN;
 const region = 'sfo3';
 const gatewayHost = config.DO_GATEWAY;
-const imageId = 64531018;
-const sshKeys = ['cc:3d:a7:d3:99:17:fe:b7:dd:59:c4:78:14:d4:02:d1'];
+const imageId = Number(config.DO_IMAGE);
+const sshKeys = config.DO_SSH_KEYS.split(',');
 
 export class DigitalOcean extends VMManager {
   size = 's-2vcpu-2gb'; // s-1vcpu-1gb, s-1vcpu-2gb, s-2vcpu-2gb, s-4vcpu-8gb, c-2
@@ -157,7 +157,7 @@ export class DigitalOcean extends VMManager {
   updateSnapshot = async () => {
     return '';
   };
-  
+
   mapServerObject = (server: any): VM => {
     const ip = server.networks.v4.find(
       (network: any) => network.type === 'private'
