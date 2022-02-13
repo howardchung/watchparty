@@ -214,28 +214,28 @@ export abstract class VMManager {
     const updateSize = async () => {
       const allVMs = await this.listVMs(this.getTag());
       const now = Date.now();
-      let sortedVMs = allVMs
-        // Sort newest first (decreasing alphabetically)
-        .sort((a, b) => -a.creation_date?.localeCompare(b.creation_date))
-        // Remove the minimum number of VMs to keep
-        .slice(0, -this.getMinSize() || undefined)
-        // Consider only VMs that have been up for most of an hour
-        .filter(
-          (vm) =>
-            (now - Number(new Date(vm.creation_date))) % (60 * 60 * 1000) >
-            config.VM_MIN_UPTIME_MINUTES * 60 * 1000
-        );
-      await this.redis
-        .multi()
-        .del(this.getRedisTerminationKey())
-        .sadd(this.getRedisTerminationKey(), ...sortedVMs.map((vm) => vm.id))
-        .exec();
       this.currentSize = allVMs.length;
       await this.redis.setex(
         this.getRedisPoolSizeKey(),
         2 * 60,
         this.currentSize
       );
+      let sortedVMs = allVMs
+      // Sort newest first (decreasing alphabetically)
+      .sort((a, b) => -a.creation_date?.localeCompare(b.creation_date))
+      // Remove the minimum number of VMs to keep
+      .slice(0, -this.getMinSize() || undefined)
+      // Consider only VMs that have been up for most of an hour
+      .filter(
+        (vm) =>
+          (now - Number(new Date(vm.creation_date))) % (60 * 60 * 1000) >
+          config.VM_MIN_UPTIME_MINUTES * 60 * 1000
+      );
+      await this.redis
+        .multi()
+        .del(this.getRedisTerminationKey())
+        .sadd(this.getRedisTerminationKey(), sortedVMs.map((vm) => vm.id))
+        .exec();
     };
 
     const cleanupVMGroup = async () => {
