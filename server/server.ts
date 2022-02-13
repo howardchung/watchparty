@@ -606,12 +606,16 @@ async function getStats() {
       0,
       -1
     );
+    const terminationVBrowsers = await redis?.smembers(
+      vmManager?.getRedisTerminationKey() || 'terminationList',
+    );
     const size = await redis?.get(
       vmManager?.getRedisPoolSizeKey() || 'vmPoolFull'
     );
     vmManagerStats[key] = {
       availableVBrowsers,
       stagingVBrowsers,
+      terminationVBrowsers,
       size,
     };
   });
