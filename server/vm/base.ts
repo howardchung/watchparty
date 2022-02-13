@@ -11,7 +11,7 @@ if (config.REDIS_URL) {
 }
 
 const incrInterval = 5 * 1000;
-const decrInterval = 1 * 60 * 1000;
+// const decrInterval = 1 * 60 * 1000;
 const cleanupInterval = 5 * 60 * 1000;
 const updateSizeInterval = 60 * 1000;
 
@@ -102,14 +102,21 @@ export abstract class VMManager {
   };
 
   public resetVM = async (id: string): Promise<void> => {
-    // We can attempt to reuse the instance which is more efficient if users tend to use them for a short time
-    // Otherwise terminating them is simpler but more expensive since they're billed for an hour
-    console.log('[RESET]', id);
-    await this.rebootVM(id);
-    // Add the VM back to the pool
-    await this.redis.rpush(this.getRedisStagingKey(), id);
-    // Delete any locks
-    await this.redis.del('lock:' + this.id + ':' + id);
+    const availableCount = await this.redis.llen(this.getRedisQueueKey());
+    const deletable = await this.redis.sismember(this.getRedisTerminationKey(), id);
+    const unlaunch = availableCount > this.getAdjustedBuffer()[1] && deletable;
+    if (unlaunch) {
+      await this.terminateVMWrapper(id);
+    } else {
+      // We can attempt to reuse the instance which is more efficient if users tend to use them for a short time
+      // Otherwise terminating them is simpler but more expensive since they're billed for an hour
+      console.log('[RESET]', id);
+      await this.rebootVM(id);
+      // Add the VM back to the pool
+      await this.redis.rpush(this.getRedisStagingKey(), id);
+      // Delete any locks
+      await this.redis.del('lock:' + this.id + ':' + id);
+    }
   };
 
   public startVMWrapper = async () => {
@@ -191,25 +198,25 @@ export abstract class VMManager {
       }
     };
 
-    const resizeVMGroupDecr = async () => {
-      let unlaunch = false;
-      const availableCount = await this.redis.llen(this.getRedisQueueKey());
-      unlaunch = availableCount > this.getAdjustedBuffer()[1];
-      if (unlaunch) {
-        const ids = await this.redis.smembers(this.getRedisTerminationKey());
-        // Remove the first available VM
-        let first = null;
-        let rem = 0;
-        while (ids.length && !rem) {
-          first = ids.shift();
-          rem = first ? (await this.redis.lrem(this.getRedisQueueKey(), 1, first)) : 0;
-          if (first && rem) {
-            console.log('[RESIZE-UNLAUNCH]', first);
-            await this.terminateVMWrapper(first);
-          }
-        }
-      }
-    };
+    // const resizeVMGroupDecr = async () => {
+    //   let unlaunch = false;
+    //   const availableCount = await this.redis.llen(this.getRedisQueueKey());
+    //   unlaunch = availableCount > this.getAdjustedBuffer()[1];
+    //   if (unlaunch) {
+    //     const ids = await this.redis.smembers(this.getRedisTerminationKey());
+    //     // Remove the first available VM
+    //     let first = null;
+    //     let rem = 0;
+    //     while (ids.length && !rem) {
+    //       first = ids.shift();
+    //       rem = first ? (await this.redis.lrem(this.getRedisQueueKey(), 1, first)) : 0;
+    //       if (first && rem) {
+    //         console.log('[RESIZE-UNLAUNCH]', first);
+    //         await this.terminateVMWrapper(first);
+    //       }
+    //     }
+    //   }
+    // };
 
     const updateSize = async () => {
       const allVMs = await this.listVMs(this.getTag());
@@ -406,10 +413,10 @@ export abstract class VMManager {
 
     try {
       setInterval(resizeVMGroupIncr, incrInterval);
-      setInterval(resizeVMGroupDecr, decrInterval);
+      // setInterval(resizeVMGroupDecr, decrInterval);
       setInterval(updateSize, updateSizeInterval);
       setInterval(cleanupVMGroup, cleanupInterval);
-      cleanupVMGroup();
+      await cleanupVMGroup();
       await updateSize();
     } catch (e) {
       console.error(e);

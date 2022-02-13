@@ -74,7 +74,7 @@ app.post('/updateSnapshot', async (req, res) => {
     req.body.region
   );
   const result = await pool?.updateSnapshot();
-  return res.send(result);
+  return res.send(result?.toString());
 });
 
 app.listen(config.VMWORKER_PORT, () => {

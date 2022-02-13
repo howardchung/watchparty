@@ -198,7 +198,7 @@ export class Hetzner extends VMManager {
         server_type: 'cpx11',
         start_after_create: true,
         image: 15512617, // Ubuntu 20.04
-        // ssh_keys: sshKeys,
+        ssh_keys: sshKeys,
         user_data: fs.readFileSync(__dirname + '/../../dev/vbrowser.sh').toString(),
       },
     });
