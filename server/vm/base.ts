@@ -417,8 +417,8 @@ export abstract class VMManager {
       // setInterval(resizeVMGroupDecr, decrInterval);
       setInterval(updateSize, updateSizeInterval);
       setInterval(cleanupVMGroup, cleanupInterval);
-      await cleanupVMGroup();
-      await updateSize();
+      cleanupVMGroup();
+      updateSize();
     } catch (e) {
       console.error(e);
     }
