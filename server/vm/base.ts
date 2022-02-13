@@ -87,6 +87,12 @@ export abstract class VMManager {
     return 'vmPoolFull' + this.id + this.region + (this.isLarge ? 'Large' : '');
   };
 
+  public getRedisTerminationKey = () => {
+    return (
+      'terminationList' + this.id + this.region + (this.isLarge ? 'Large' : '')
+    );
+  };
+
   public getTag = () => {
     return (
       (config.VBROWSER_TAG || 'vbrowser') +
@@ -96,14 +102,18 @@ export abstract class VMManager {
   };
 
   public resetVM = async (id: string): Promise<void> => {
-    console.log('[RESET]', id);
     // We can attempt to reuse the instance which is more efficient if users tend to use them for a short time
     // Otherwise terminating them is simpler but more expensive since they're billed for an hour
-    await this.rebootVM(id);
-    // Delete any locks
-    await this.redis.del('lock:' + this.id + ':' + id);
-    // Add the VM back to the pool
-    await this.redis.rpush(this.getRedisStagingKey(), id);
+    if (await this.redis.sismember(this.getRedisTerminationKey(), id)) {
+      await this.terminateVMWrapper(id);
+    } else {
+      console.log('[RESET]', id);
+      await this.rebootVM(id);
+      // Add the VM back to the pool
+      await this.redis.rpush(this.getRedisStagingKey(), id);
+      // Delete any locks
+      await this.redis.del('lock:' + this.id + ':' + id);
+    }
   };
 
   public startVMWrapper = async () => {
@@ -185,42 +195,59 @@ export abstract class VMManager {
       }
     };
 
-    const resizeVMGroupDecr = async () => {
-      let unlaunch = false;
-      const availableCount = await this.redis.llen(this.getRedisQueueKey());
-      unlaunch = availableCount > this.getAdjustedBuffer()[1];
-      if (unlaunch) {
-        const allVMs = await this.listVMs(this.getTag());
-        const now = Date.now();
-        let sortedVMs = allVMs
-          // Sort newest first (decreasing alphabetically)
-          .sort((a, b) => -a.creation_date?.localeCompare(b.creation_date))
-          // Remove the minimum number of VMs to keep
-          .slice(0, -this.getMinSize() || undefined)
-          // Consider only VMs that have been up for most of an hour
-          .filter(
-            (vm) =>
-              (now - Number(new Date(vm.creation_date))) % (60 * 60 * 1000) >
-              config.VM_MIN_UPTIME_MINUTES * 60 * 1000
-          );
-        let first = null;
-        let rem = 0;
-        // Remove the first available VM
-        while (sortedVMs.length && !rem) {
-          first = sortedVMs.shift();
-          const id = first?.id;
-          rem = id ? await this.redis.lrem(this.getRedisQueueKey(), 1, id) : 0;
-        }
-        if (first && rem) {
-          const id = first?.id;
-          console.log('[RESIZE-UNLAUNCH]', id);
-          await this.terminateVMWrapper(id);
-        }
-      }
-    };
+    // const resizeVMGroupDecr = async () => {
+    //   let unlaunch = false;
+    //   const availableCount = await this.redis.llen(this.getRedisQueueKey());
+    //   unlaunch = availableCount > this.getAdjustedBuffer()[1];
+    //   if (unlaunch) {
+    //     const allVMs = await this.listVMs(this.getTag());
+    //     const now = Date.now();
+    //     let sortedVMs = allVMs
+    //       // Sort newest first (decreasing alphabetically)
+    //       .sort((a, b) => -a.creation_date?.localeCompare(b.creation_date))
+    //       // Remove the minimum number of VMs to keep
+    //       .slice(0, -this.getMinSize() || undefined)
+    //       // Consider only VMs that have been up for most of an hour
+    //       .filter(
+    //         (vm) =>
+    //           (now - Number(new Date(vm.creation_date))) % (60 * 60 * 1000) >
+    //           config.VM_MIN_UPTIME_MINUTES * 60 * 1000
+    //       );
+    //     let first = null;
+    //     let rem = 0;
+    //     // Remove the first available VM
+    //     while (sortedVMs.length && !rem) {
+    //       first = sortedVMs.shift();
+    //       const id = first?.id;
+    //       rem = id ? await this.redis.lrem(this.getRedisQueueKey(), 1, id) : 0;
+    //     }
+    //     if (first && rem) {
+    //       const id = first?.id;
+    //       console.log('[RESIZE-UNLAUNCH]', id);
+    //       await this.terminateVMWrapper(id);
+    //     }
+    //   }
+    // };
 
     const updateSize = async () => {
       const allVMs = await this.listVMs(this.getTag());
+      const now = Date.now();
+      let sortedVMs = allVMs
+        // Sort newest first (decreasing alphabetically)
+        .sort((a, b) => -a.creation_date?.localeCompare(b.creation_date))
+        // Remove the minimum number of VMs to keep
+        .slice(0, -this.getMinSize() || undefined)
+        // Consider only VMs that have been up for most of an hour
+        .filter(
+          (vm) =>
+            (now - Number(new Date(vm.creation_date))) % (60 * 60 * 1000) >
+            config.VM_MIN_UPTIME_MINUTES * 60 * 1000
+        );
+      await this.redis
+        .multi()
+        .del(this.getRedisTerminationKey())
+        .sadd(this.getRedisTerminationKey(), ...sortedVMs.map((vm) => vm.id))
+        .exec();
       this.currentSize = allVMs.length;
       await this.redis.setex(
         this.getRedisPoolSizeKey(),
@@ -236,7 +263,7 @@ export abstract class VMManager {
       const allVMs = await this.listVMs(this.getTag());
       const usedKeys: string[] = [];
       for (let i = 0; i < allVMs.length; i++) {
-        if (await redis?.get(`lock:${this.id}:${allVMs[i].id}`)) {
+        if (await this.redis.get(`lock:${this.id}:${allVMs[i].id}`)) {
           usedKeys.push(allVMs[i].id);
         }
       }
@@ -397,7 +424,7 @@ export abstract class VMManager {
 
     try {
       setInterval(resizeVMGroupIncr, incrInterval);
-      setInterval(resizeVMGroupDecr, decrInterval);
+      // setInterval(resizeVMGroupDecr, decrInterval);
       setInterval(updateSize, updateSizeInterval);
       setInterval(cleanupVMGroup, cleanupInterval);
       cleanupVMGroup();
