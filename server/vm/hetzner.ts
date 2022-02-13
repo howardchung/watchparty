@@ -3,6 +3,7 @@ import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import { VMManager, VM } from './base';
 import { cloudInit, imageName } from './utils';
+import fs from 'fs';
 
 const HETZNER_TOKEN = config.HETZNER_TOKEN;
 const sshKeys = config.HETZNER_SSH_KEYS.split(',').map(Number);
@@ -183,6 +184,40 @@ export class Hetzner extends VMManager {
       console.log('failed to attach to network');
     }
   };
+
+  updateSnapshot = async () => {
+    const response = await axios({
+      method: 'POST',
+      url: `https://api.hetzner.cloud/v1/servers`,
+      headers: {
+        Authorization: 'Bearer ' + HETZNER_TOKEN,
+        'Content-Type': 'application/json',
+      },
+      data: {
+        name: 'vBrowserSnapshot',
+        server_type: 'cpx11',
+        start_after_create: true,
+        image: 15512617, // Ubuntu 20.04
+        // ssh_keys: sshKeys,
+        user_data: fs.readFileSync(__dirname + '/../../dev/vbrowser.sh').toString(),
+      },
+    });
+    const id = response.data.server.id;
+    await new Promise((resolve) => setTimeout(resolve, 10 * 60 * 1000));
+    // Validate snapshot server was created successfully
+    const response3 = await axios('http://' + response.data.server.public_net?.ipv4?.ip + ':5000/healthz');
+    const response2 = await axios({
+      method: 'POST',
+      url: `https://api.hetzner.cloud/v1/servers/${id}/actions/create_image`,
+      headers: {
+        Authorization: 'Bearer ' + HETZNER_TOKEN,
+        'Content-Type': 'application/json',
+      },
+    });
+    const imageId = response2.data.image.id;
+    await this.terminateVM(id);
+    return imageId;
+  }
 
   mapServerObject = (server: any): VM => {
     //const ip = server.public_net?.ipv4?.ip;
