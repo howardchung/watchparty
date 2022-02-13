@@ -11,6 +11,6 @@ docker pull howardc93/vbrowser
 apt-get install -y fonts-noto-cjk
 # install certbot
 DEBIAN_FRONTEND=noninteractive apt-get install -y certbot
-certbot certonly --standalone -n --email howardzchung@gmail.com --agree-tos -d dedi1.watchparty.me
+certbot certonly --standalone -n --email howardzchung@gmail.com --agree-tos -d docker1.watchparty.me
 chmod -R 755 /etc/letsencrypt/live/
 chmod -R 755 /etc/letsencrypt/archive/

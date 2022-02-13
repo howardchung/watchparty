@@ -141,8 +141,8 @@ export function getBgVMManagers() {
     DO: getVMManager('DO', false, 'US'),
     scwLarge: getVMManager('Scaleway', true, 'US'),
     scw: getVMManager('Scaleway', false, 'US'),
-    // dockerLarge: getVMManager('Docker', true, 'US'),
-    // docker: getVMManager('Docker', false, 'US'),
+    dockerLarge: getVMManager('Docker', true, 'US'),
+    docker: getVMManager('Docker', false, 'US'),
 };
 }
 

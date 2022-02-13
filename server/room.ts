@@ -614,9 +614,6 @@ export class Room {
       options: { size: string; region: string };
     }
   ) => {
-    if (this.video?.startsWith('vbrowser://')) {
-      return;
-    }
     if (!this.validateLock(socket.id)) {
       socket.emit('errorMessage', 'Room is locked.');
       return;
