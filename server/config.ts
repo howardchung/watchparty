@@ -19,6 +19,8 @@ const defaults = {
   VBROWSER_TAG: '', // Optional, tag to put on VBrowser VM instances
   DO_TOKEN: '', // Optional, for DigitalOcean VMs
   DO_GATEWAY: '', // Gateway handling SSL termination
+  DO_IMAGE: '', // ID of DigitalOcean snapshot image to use for vbrowser
+  DO_SSH_KEYS: '', // IDs of DigitalOcean SSH keys to access vbrowsers
   HETZNER_TOKEN: '', // Optional, for Hetzner VMs
   HETZNER_GATEWAY: '', // Gateway handling SSL termination
   HETZNER_GATEWAY_US: '', // Gateway handling SSL termination

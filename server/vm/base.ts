@@ -272,7 +272,8 @@ export abstract class VMManager {
         ...stagingKeys,
       ]);
       console.log(
-        '[CLEANUP] found %s VMs, usedKeys %s, availableKeys %s, stagingKeys %s',
+        '[CLEANUP] %s found %s VMs, usedKeys %s, availableKeys %s, stagingKeys %s',
+        this.getRedisQueueKey(),
         allVMs.length,
         usedKeys.length,
         availableKeys.length,
