@@ -56,7 +56,7 @@ export abstract class VMManager {
       Math.floor(this.getCurrentSize() * 0.1),
       this.minBuffer
     );
-    return [vmBufferSize, Math.floor(vmBufferSize * 1.1)];
+    return [vmBufferSize, Math.floor(vmBufferSize * 1.2)];
   };
 
   protected getCurrentSize = () => {
@@ -401,7 +401,7 @@ export abstract class VMManager {
     setInterval(resizeVMGroupDecr, decrInterval);
     await updateSize();
     setInterval(updateSize, updateSizeInterval);
-    await cleanupVMGroup();
+    cleanupVMGroup();
     setInterval(cleanupVMGroup, cleanupInterval);
     const checkStagingInterval = 3000;
     while (true) {
