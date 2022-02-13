@@ -48,6 +48,9 @@ module.exports = {
         HETZNER_IMAGE: '61352611',
         SCW_GATEWAY: 'gateway1.watchparty.me',
         SCW_IMAGE: '',
+        DO_GATEWAY: 'gateway4.watchparty.me',
+        DO_IMAGE: '',
+        DO_SSH_KEYS: '',
       },
     },
     {
