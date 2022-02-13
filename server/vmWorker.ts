@@ -31,7 +31,7 @@ app.post('/assignVM', async (req, res) => {
       setTimeout(() => {
         redis?.disconnect();
         delete redisRefs[req.body.uid];
-      }, 60000);
+      }, 90000);
     }
     const pool = getVMManager(
       req.body.provider,
