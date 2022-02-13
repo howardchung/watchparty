@@ -3,7 +3,7 @@ module.exports = {
     {
       name: 'server',
       script: './buildServer/server.js',
-      log_date_format: 'YYYY-MM-DD HH:mm Z',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
       env: {
         PORT: 80,
       },
@@ -11,7 +11,7 @@ module.exports = {
     {
       name: 'shard1',
       script: './buildServer/server.js',
-      log_date_format: 'YYYY-MM-DD HH:mm Z',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
       env: {
         SHARD: 1,
         PORT: 3001,
@@ -20,7 +20,7 @@ module.exports = {
     // {
     //   name: 'shard2',
     //   script: './buildServer/server.js',
-    //   log_date_format: 'YYYY-MM-DD HH:mm Z',
+    //   log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
     //   env: {
     //     SHARD: 2,
     //     PORT: 3002,
@@ -29,7 +29,7 @@ module.exports = {
     // {
     //   name: 'shard3',
     //   script: './buildServer/server.js',
-    //   log_date_format: 'YYYY-MM-DD HH:mm Z',
+    //   log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
     //   env: {
     //     SHARD: 3,
     //     PORT: 3003,
@@ -38,7 +38,7 @@ module.exports = {
     {
       name: 'vmWorker',
       script: './buildServer/vmWorker.js',
-      log_date_format: 'YYYY-MM-DD HH:mm Z',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
       env: {
         HETZNER_GATEWAY: 'gateway3.watchparty.me',
         HETZNER_NETWORKS: '91163,1007910,1007911',
@@ -56,17 +56,17 @@ module.exports = {
     {
       name: 'syncSubs',
       script: './buildServer/syncSubs.js',
-      log_date_format: 'YYYY-MM-DD HH:mm Z',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
     },
     {
       name: 'timeSeries',
       script: './buildServer/timeSeries.js',
-      log_date_format: 'YYYY-MM-DD HH:mm Z',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
     },
     {
       name: 'cleanup',
       script: './buildServer/cleanup.js',
-      log_date_format: 'YYYY-MM-DD HH:mm Z',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
     },
   ],
 };
