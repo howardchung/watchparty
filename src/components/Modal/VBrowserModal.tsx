@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  Modal,
-  Button,
-  Table,
-  Message,
-  Dropdown,
-} from 'semantic-ui-react';
+import { Modal, Button, Table, Message, Dropdown } from 'semantic-ui-react';
 import {
   GoogleReCaptchaProvider,
   withGoogleReCaptcha,
@@ -125,8 +119,7 @@ export class VBrowserModal extends React.Component<{
                           }
                           value={this.state.region}
                           options={options}
-                        >
-                        </Dropdown>
+                        ></Dropdown>
                       </Table.Cell>
                       <Table.Cell>
                         <Dropdown
@@ -136,8 +129,7 @@ export class VBrowserModal extends React.Component<{
                           }
                           value={this.state.regionPlus}
                           options={options}
-                        >
-                        </Dropdown>
+                        ></Dropdown>
                       </Table.Cell>
                     </Table.Row>
                   )}

@@ -76,9 +76,7 @@ export abstract class VMManager {
   };
 
   public getRedisAllKey = () => {
-    return (
-      'allList' + this.id + this.region + (this.isLarge ? 'Large' : '')
-    );
+    return 'allList' + this.id + this.region + (this.isLarge ? 'Large' : '');
   };
 
   public getRedisHostCacheKey = () => {
@@ -362,8 +360,8 @@ export abstract class VMManager {
                   console.log(
                     '[CHECKSTAGING] %s attempt to poweron and attach to network',
                     id
-                    );
-                    this.powerOn(id);
+                  );
+                  this.powerOn(id);
                   // const vm = await this.getVM(id);
                   // if (!vm?.private_ip) {
                   //   this.attachToNetwork(id);
@@ -397,12 +395,16 @@ export abstract class VMManager {
       }
     };
 
-    setInterval(resizeVMGroupIncr, incrInterval);
-    setInterval(resizeVMGroupDecr, decrInterval);
-    await updateSize();
-    setInterval(updateSize, updateSizeInterval);
-    cleanupVMGroup();
-    setInterval(cleanupVMGroup, cleanupInterval);
+    try {
+      setInterval(resizeVMGroupIncr, incrInterval);
+      setInterval(resizeVMGroupDecr, decrInterval);
+      await updateSize();
+      setInterval(updateSize, updateSizeInterval);
+      cleanupVMGroup();
+      setInterval(cleanupVMGroup, cleanupInterval);
+    } catch (e) {
+      console.error(e);
+    }
     const checkStagingInterval = 3000;
     while (true) {
       await new Promise((resolve) => setTimeout(resolve, checkStagingInterval));
