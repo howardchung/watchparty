@@ -27,7 +27,7 @@ docker run -d --rm --name=vbrowser -v /usr/share/fonts:/usr/share/fonts --log-op
 }" -e NEKO_H264="${h264 ? 1 : 0}" ${imageName}
 `;
 
-export const imageName = 'howardc93/vbrowser:latest';
+export const imageName = 'howardc93/vbrowser';
 
 export const assignVM = async (
   redis: Redis.Redis,
