@@ -119,14 +119,6 @@ export function getVMManager(
 
 export function getBgVMManagers() {
   return {
-    // dockerLarge: getVMManager('Docker', true, 'US'),
-    // docker: getVMManager('Docker', false, 'US'),
-    DOLarge: getVMManager('DO', true, 'US'),
-    DO: getVMManager('DO', false, 'US'),
-    scwLarge: getVMManager('Scaleway', true, 'US'),
-    scw: getVMManager('Scaleway', false, 'US'),
-    largeEU: getVMManager('Hetzner', true, 'EU'),
-    EU: getVMManager('Hetzner', false, 'EU'),
     largeUS: getVMManager(
       'Hetzner',
       true,
@@ -143,7 +135,15 @@ export function getBgVMManagers() {
       config.VM_POOL_MIN_SIZE,
       config.VM_POOL_MIN_BUFFER,
     ),
-  };
+    largeEU: getVMManager('Hetzner', true, 'EU'),
+    EU: getVMManager('Hetzner', false, 'EU'),
+    DOLarge: getVMManager('DO', true, 'US'),
+    DO: getVMManager('DO', false, 'US'),
+    scwLarge: getVMManager('Scaleway', true, 'US'),
+    scw: getVMManager('Scaleway', false, 'US'),
+    // dockerLarge: getVMManager('Docker', true, 'US'),
+    // docker: getVMManager('Docker', false, 'US'),
+};
 }
 
 export function getSessionLimitSeconds(isLarge: boolean) {
