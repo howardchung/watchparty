@@ -104,16 +104,12 @@ export abstract class VMManager {
   public resetVM = async (id: string): Promise<void> => {
     // We can attempt to reuse the instance which is more efficient if users tend to use them for a short time
     // Otherwise terminating them is simpler but more expensive since they're billed for an hour
-    if (await this.redis.sismember(this.getRedisTerminationKey(), id)) {
-      await this.terminateVMWrapper(id);
-    } else {
-      console.log('[RESET]', id);
-      await this.rebootVM(id);
-      // Add the VM back to the pool
-      await this.redis.rpush(this.getRedisStagingKey(), id);
-      // Delete any locks
-      await this.redis.del('lock:' + this.id + ':' + id);
-    }
+    console.log('[RESET]', id);
+    await this.rebootVM(id);
+    // Add the VM back to the pool
+    await this.redis.rpush(this.getRedisStagingKey(), id);
+    // Delete any locks
+    await this.redis.del('lock:' + this.id + ':' + id);
   };
 
   public startVMWrapper = async () => {
