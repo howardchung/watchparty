@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   Icon,
   Divider,
@@ -8,6 +8,7 @@ import {
   Input,
   Button,
   Label,
+  Popup,
 } from 'semantic-ui-react';
 // import { SignInButton } from '../TopBar/TopBar';
 import { getCurrentSettings, updateSettings } from './LocalSettings';
@@ -16,6 +17,11 @@ import { serverPath } from '../../utils';
 import { PermanentRoomModal } from '../Modal/PermanentRoomModal';
 import firebase from 'firebase/compat/app';
 import { Socket } from 'socket.io-client';
+import { HexColorPicker } from 'react-colorful';
+
+const defaultRoomTitleColor = '#FFFFFF';
+const roomTitleMaxCharLength = 50;
+const roomDescriptionMaxCharLength = 120;
 
 interface SettingsTabProps {
   hide: boolean;
@@ -35,6 +41,12 @@ interface SettingsTabProps {
   isChatDisabled: boolean;
   setIsChatDisabled: Function;
   clearChat: Function;
+  roomTitle: string | undefined;
+  setRoomTitle: Function;
+  roomDescription: string | undefined;
+  setRoomDescription: Function;
+  roomTitleColor: string | undefined;
+  setRoomTitleColor: Function;
 }
 
 export const SettingsTab = ({
@@ -53,12 +65,28 @@ export const SettingsTab = ({
   isChatDisabled,
   setIsChatDisabled,
   clearChat,
+  roomTitle,
+  roomDescription,
+  roomTitleColor,
 }: SettingsTabProps) => {
   const [updateTS, setUpdateTS] = useState(0);
   const [permModalOpen, setPermModalOpen] = useState(false);
   const [validVanity, setValidVanity] = useState(true);
   const [validVanityLoading, setValidVanityLoading] = useState(false);
   const [adminSettingsChanged, setAdminSettingsChanged] = useState(false);
+  const [_roomTitle, _setRoomTitle] = useState<string | undefined>('');
+  const [_roomDescription, _setRoomDescription] = useState<string | undefined>(
+    ''
+  );
+  const [_roomTitleColor, _setRoomTitleColor] = useState<string | undefined>(
+    ''
+  );
+
+  useEffect(() => {
+    _setRoomTitle(roomTitle);
+    _setRoomDescription(roomDescription);
+    _setRoomTitleColor(roomTitleColor);
+  }, [roomTitle, roomDescription, roomTitleColor]);
 
   const setRoomState = useCallback(
     async (data: any) => {
@@ -247,7 +275,96 @@ export const SettingsTab = ({
           }
         />
       )}
-      <p />
+      {owner && owner === user?.uid && (
+        <SettingRow
+          icon={'pencil'}
+          name={`Set Room Title, Description & Color`}
+          description="Set a room title and description to be displayed in the top bar.
+          Subscribers can also set a title color."
+          disabled={false}
+          content={
+            <React.Fragment>
+              <div style={{ display: 'flex', marginBottom: 2 }}>
+                <Input
+                  style={{ marginRight: 3, flexGrow: 1 }}
+                  value={_roomTitle}
+                  maxLength={roomTitleMaxCharLength}
+                  onChange={(e) => {
+                    setAdminSettingsChanged(true);
+                    _setRoomTitle(e.target.value);
+                  }}
+                  placeholder={`Title (max. ${roomTitleMaxCharLength} characters)`}
+                  fluid
+                  size="mini"
+                  icon
+                ></Input>
+                <Popup
+                  content={
+                    <React.Fragment>
+                      <h5>
+                        Edit Title Color
+                        <Label
+                          style={{ position: 'relative', left: 29, bottom: 2 }}
+                          size="mini"
+                          color="orange"
+                        >
+                          Subscriber only
+                        </Label>
+                      </h5>
+                      <HexColorPicker
+                        style={{
+                          opacity: isSubscriber ? 1 : 0.3,
+                          pointerEvents: isSubscriber ? 'auto' : 'none',
+                        }}
+                        color={_roomTitleColor || defaultRoomTitleColor}
+                        onChange={(e) => {
+                          setAdminSettingsChanged(true);
+                          _setRoomTitleColor(e);
+                        }}
+                      />
+                      <div
+                        style={{
+                          marginTop: 8,
+                          paddingLeft: 4,
+                          borderLeft: `24px solid ${_roomTitleColor}`,
+                        }}
+                      >
+                        {_roomTitleColor?.toUpperCase()}
+                      </div>
+                    </React.Fragment>
+                  }
+                  on="click"
+                  trigger={
+                    <Button icon color="orange" size="tiny">
+                      <Icon name="paint brush" />
+                    </Button>
+                  }
+                />
+              </div>
+              <Input
+                style={{ marginBottom: 2 }}
+                value={_roomDescription}
+                maxLength={roomDescriptionMaxCharLength}
+                onChange={(e) => {
+                  setAdminSettingsChanged(true);
+                  _setRoomDescription(e.target.value);
+                }}
+                placeholder={`Description (max. ${roomDescriptionMaxCharLength} characters)`}
+                fluid
+                size="mini"
+                icon
+              ></Input>
+            </React.Fragment>
+          }
+        />
+      )}
+      <div
+        style={{
+          borderTop: '3px dashed white',
+          marginTop: 10,
+          marginBottom: 10,
+        }}
+      />
       {owner && owner === user?.uid && (
         <Button
           primary
@@ -260,6 +377,9 @@ export const SettingsTab = ({
               vanity: vanity,
               password: password,
               isChatDisabled: isChatDisabled,
+              roomTitle: _roomTitle,
+              roomDescription: _roomDescription,
+              roomTitleColor: _roomTitleColor || defaultRoomTitleColor,
             });
             setAdminSettingsChanged(false);
           }}

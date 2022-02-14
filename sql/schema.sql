@@ -10,6 +10,9 @@ CREATE TABLE room(
   "isSubRoom" boolean,
   data jsonb,
   "lastUpdateTime" timestamp with time zone,
+  "roomTitle" text,
+  "roomDescription" text,
+  "roomTitleColor" text,
   PRIMARY KEY ("roomId")
 );
 
