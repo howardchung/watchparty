@@ -299,21 +299,19 @@ export class Room {
     if (redis && uid) {
       await redis.del('vBrowserUIDLock:' + uid);
     }
-    if (id) {
-      try {
-        await axios.post(
-          'http://localhost:' + config.VMWORKER_PORT + '/releaseVM',
-          {
-            provider,
-            isLarge,
-            region,
-            id,
-            uid,
-          }
-        );
-      } catch (e) {
-        console.warn(e);
-      }
+    try {
+      await axios.post(
+        'http://localhost:' + config.VMWORKER_PORT + '/releaseVM',
+        {
+          provider,
+          isLarge,
+          region,
+          id,
+          uid,
+        }
+      );
+    } catch (e) {
+      console.warn(e);
     }
   };
 
