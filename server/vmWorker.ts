@@ -59,7 +59,9 @@ app.post('/releaseVM', async (req, res) => {
     );
     redisRefs[req.body.uid]?.disconnect();
     delete redisRefs[req.body.uid];
-    await pool?.resetVM(req.body.id);
+    if (req.body.id) {
+      await pool?.resetVM(req.body.id);
+    }
   } catch (e) {
     console.warn(e);
   }
