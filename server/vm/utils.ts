@@ -61,7 +61,11 @@ export const assignVM = async (
         console.log('failed to acquire lock on VM:', id);
         continue;
       }
-      let candidate = await vmManager.getVM(id);
+      const cachedData = await redis.get(vmManager.getRedisHostCacheKey() + ':' + id);
+      let candidate = cachedData && cachedData.startsWith('{') && JSON.parse(cachedData);
+      if (!candidate) {
+        candidate = await vmManager.getVM(id);
+      }
       selected = candidate;
     }
     const assignEnd = Number(new Date());

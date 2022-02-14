@@ -103,8 +103,9 @@ export abstract class VMManager {
     await this.rebootVM(id);
     // Add the VM back to the pool
     await this.redis.rpush(this.getRedisStagingKey(), id);
-    // Delete any locks
+    // Delete any locks/caches
     await this.redis.del('lock:' + this.id + ':' + id);
+    await this.redis.del(this.getRedisHostCacheKey() + ':' + id);
   };
 
   public startVMWrapper = async () => {
@@ -139,7 +140,6 @@ export abstract class VMManager {
     // }
     // Delete any locks
     await this.redis.del('lock:' + this.id + ':' + id);
-    await this.redis.del(this.getRedisHostCacheKey() + ':' + id);
   };
 
   protected terminateVMMetrics = async (id: string) => {
@@ -303,9 +303,10 @@ export abstract class VMManager {
               return resolve(id + ', ' + retryCount + ', ' + false);
             }
             let ready = false;
-            let host = await this.redis.get(
+            let vm = await this.redis.get(
               this.getRedisHostCacheKey() + ':' + id
             );
+            let host = vm?.startsWith('{') ? JSON.parse(vm).host : vm;
             if (!host) {
               try {
                 const vm = await this.getVM(id);
@@ -326,8 +327,8 @@ export abstract class VMManager {
                 );
                 await this.redis.setex(
                   this.getRedisHostCacheKey() + ':' + id,
-                  3600,
-                  host
+                  3 * 3600,
+                  JSON.stringify(vm),
                 );
               }
             }
