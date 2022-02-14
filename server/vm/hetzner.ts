@@ -12,6 +12,7 @@ const imageId = Number(config.HETZNER_IMAGE);
 export class Hetzner extends VMManager {
   size = 'cpx11'; // cx11, cpx11, cpx21, cpx31, ccx11
   largeSize = 'cpx31';
+  minRetries = 10;
   id = 'Hetzner';
   networks = (this.region === 'US'
     ? config.HETZNER_NETWORKS_US
