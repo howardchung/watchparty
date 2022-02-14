@@ -33,7 +33,7 @@ import util from 'util';
 const gzip = util.promisify(zlib.gzip);
 
 const releaseInterval = 5 * 60 * 1000;
-const releaseBatches = 5;
+const releaseBatches = 3;
 const app = express();
 let server: any = null;
 if (config.HTTPS) {
