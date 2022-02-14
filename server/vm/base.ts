@@ -101,11 +101,11 @@ export abstract class VMManager {
     // Otherwise terminating them is simpler but more expensive since they're billed for an hour
     console.log('[RESET]', id);
     await this.rebootVM(id);
-    // Add the VM back to the pool
-    await this.redis.rpush(this.getRedisStagingKey(), id);
     // Delete any locks/caches
     await this.redis.del('lock:' + this.id + ':' + id);
     await this.redis.del(this.getRedisHostCacheKey() + ':' + id);
+    // Add the VM back to the pool
+    await this.redis.rpush(this.getRedisStagingKey(), id);
   };
 
   public startVMWrapper = async () => {
