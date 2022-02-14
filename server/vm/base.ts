@@ -51,12 +51,7 @@ export abstract class VMManager {
   };
 
   protected getAdjustedBuffer = () => {
-    // Test out dynamically sizing buffer and flex to 10% of current size
-    const vmBufferSize = Math.max(
-      Math.floor(this.getCurrentSize() * 0.1),
-      this.minBuffer
-    );
-    return [vmBufferSize, Math.floor(vmBufferSize * 1.2)];
+    return [this.minBuffer, Math.floor(this.minBuffer * 1.3)];
   };
 
   protected getCurrentSize = () => {
