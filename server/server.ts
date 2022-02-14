@@ -33,7 +33,7 @@ import util from 'util';
 const gzip = util.promisify(zlib.gzip);
 
 const releaseInterval = 5 * 60 * 1000;
-const releaseBatches = 3;
+const releaseBatches = 10;
 const app = express();
 let server: any = null;
 if (config.HTTPS) {
@@ -400,7 +400,8 @@ async function release() {
       const isTimedOut = ttl && ttl < releaseInterval;
       const isAlmostTimedOut = ttl && ttl < releaseInterval * 2;
       const isRoomEmpty = room.roster.length === 0;
-      if (isTimedOut || isRoomEmpty) {
+      const isRoomIdle = Date.now() - Number(room.lastUpdateTime) > 5 * 60 * 1000;
+      if (isTimedOut || (isRoomEmpty && isRoomIdle)) {
         console.log('[RELEASE][%s] VM in room:', currBatch, room.roomId);
         room.stopVBrowserInternal();
         if (isTimedOut) {
