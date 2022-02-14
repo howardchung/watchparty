@@ -74,18 +74,18 @@ export const SettingsTab = ({
   const [validVanity, setValidVanity] = useState(true);
   const [validVanityLoading, setValidVanityLoading] = useState(false);
   const [adminSettingsChanged, setAdminSettingsChanged] = useState(false);
-  const [_roomTitle, _setRoomTitle] = useState<string | undefined>('');
-  const [_roomDescription, _setRoomDescription] = useState<string | undefined>(
+  const [roomTitleInput, setRoomTitleInput] = useState<string | undefined>('');
+  const [roomDescriptionInput, setRoomDescriptionInput] = useState<string | undefined>(
     ''
   );
-  const [_roomTitleColor, _setRoomTitleColor] = useState<string | undefined>(
+  const [roomTitleColorInput, setRoomTitleColorInput] = useState<string | undefined>(
     ''
   );
 
   useEffect(() => {
-    _setRoomTitle(roomTitle);
-    _setRoomDescription(roomDescription);
-    _setRoomTitleColor(roomTitleColor);
+    setRoomTitleInput(roomTitle);
+    setRoomDescriptionInput(roomDescription);
+    setRoomTitleColorInput(roomTitleColor);
   }, [roomTitle, roomDescription, roomTitleColor]);
 
   const setRoomState = useCallback(
@@ -279,19 +279,20 @@ export const SettingsTab = ({
         <SettingRow
           icon={'pencil'}
           name={`Set Room Title, Description & Color`}
-          description="Set a room title and description to be displayed in the top bar.
-          Subscribers can also set a title color."
-          disabled={false}
+          description="Set the room title, description and title color to be displayed in the top bar."
+          disabled={!isSubscriber}
+          subOnly={true}
           content={
             <React.Fragment>
               <div style={{ display: 'flex', marginBottom: 2 }}>
                 <Input
                   style={{ marginRight: 3, flexGrow: 1 }}
-                  value={_roomTitle}
+                  value={roomTitleInput}
+                  disabled={!isSubscriber}
                   maxLength={roomTitleMaxCharLength}
                   onChange={(e) => {
                     setAdminSettingsChanged(true);
-                    _setRoomTitle(e.target.value);
+                    setRoomTitleInput(e.target.value);
                   }}
                   placeholder={`Title (max. ${roomTitleMaxCharLength} characters)`}
                   fluid
@@ -301,35 +302,22 @@ export const SettingsTab = ({
                 <Popup
                   content={
                     <React.Fragment>
-                      <h5>
-                        Edit Title Color
-                        <Label
-                          style={{ position: 'relative', left: 29, bottom: 2 }}
-                          size="mini"
-                          color="orange"
-                        >
-                          Subscriber only
-                        </Label>
-                      </h5>
+                      <h5>Edit Title Color</h5>
                       <HexColorPicker
-                        style={{
-                          opacity: isSubscriber ? 1 : 0.3,
-                          pointerEvents: isSubscriber ? 'auto' : 'none',
-                        }}
-                        color={_roomTitleColor || defaultRoomTitleColor}
+                        color={roomTitleColorInput || defaultRoomTitleColor}
                         onChange={(e) => {
                           setAdminSettingsChanged(true);
-                          _setRoomTitleColor(e);
+                          setRoomTitleColorInput(e);
                         }}
                       />
                       <div
                         style={{
                           marginTop: 8,
                           paddingLeft: 4,
-                          borderLeft: `24px solid ${_roomTitleColor}`,
+                          borderLeft: `24px solid ${roomTitleColorInput}`,
                         }}
                       >
-                        {_roomTitleColor?.toUpperCase()}
+                        {roomTitleColorInput?.toUpperCase()}
                       </div>
                     </React.Fragment>
                   }
@@ -337,9 +325,10 @@ export const SettingsTab = ({
                   trigger={
                     <Button
                       icon
-                      color="orange"
+                      color="teal"
                       size="tiny"
                       style={{ margin: 0 }}
+                      disabled={!isSubscriber}
                     >
                       <Icon name="paint brush" />
                     </Button>
@@ -348,11 +337,12 @@ export const SettingsTab = ({
               </div>
               <Input
                 style={{ marginBottom: 2 }}
-                value={_roomDescription}
+                value={roomDescriptionInput}
+                disabled={!isSubscriber}
                 maxLength={roomDescriptionMaxCharLength}
                 onChange={(e) => {
                   setAdminSettingsChanged(true);
-                  _setRoomDescription(e.target.value);
+                  setRoomDescriptionInput(e.target.value);
                 }}
                 placeholder={`Description (max. ${roomDescriptionMaxCharLength} characters)`}
                 fluid
@@ -382,9 +372,9 @@ export const SettingsTab = ({
               vanity: vanity,
               password: password,
               isChatDisabled: isChatDisabled,
-              roomTitle: _roomTitle,
-              roomDescription: _roomDescription,
-              roomTitleColor: _roomTitleColor || defaultRoomTitleColor,
+              roomTitle: roomTitleInput,
+              roomDescription: roomDescriptionInput,
+              roomTitleColor: roomTitleColorInput || defaultRoomTitleColor,
             });
             setAdminSettingsChanged(false);
           }}

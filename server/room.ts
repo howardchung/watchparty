@@ -866,6 +866,9 @@ export class Room {
           vanity: null,
           isChatDisabled: null,
           isSubRoom: null,
+          roomTitle: null,
+          roomDescription: null,
+          roomTitleColor: null,
         },
         { roomId: this.roomId }
       );
@@ -1001,12 +1004,12 @@ export class Room {
       roomId: this.roomId,
       password: password,
       isChatDisabled: isChatDisabled,
-      roomTitle: roomTitle,
-      roomDescription: roomDescription,
     };
     if (isSubscriber) {
       // user must be sub to set certain properties
       roomObj.vanity = vanity;
+      roomObj.roomTitle = roomTitle;
+      roomObj.roomDescription = roomDescription;
       roomObj.roomTitleColor = roomTitleColor;
     }
     try {

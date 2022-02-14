@@ -332,7 +332,7 @@ export class TopBar extends React.Component<{
                   letterSpacing: 1,
                 }}
               >
-                {this.props.roomTitle}
+                {this.props.roomTitle?.toUpperCase()}
               </div>
               <div style={{ marginTop: 4, color: 'rgb(255 255 255 / 63%)' }}>
                 {this.props.roomDescription}
