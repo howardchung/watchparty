@@ -297,7 +297,7 @@ export abstract class VMManager {
             const retryCount = await this.redis.incr(
               this.getRedisStagingKey() + ':' + id
             );
-            if (retryCount <= 5) {
+            if (retryCount < this.minRetries) {
               // Do a minimum # of retries to give reboot time
               return resolve(id + ', ' + retryCount + ', ' + false);
             }
@@ -420,6 +420,7 @@ export abstract class VMManager {
   public abstract id: string;
   protected abstract size: string;
   protected abstract largeSize: string;
+  protected abstract minRetries: number;
   protected abstract startVM: (name: string) => Promise<string>;
   protected abstract rebootVM: (id: string) => Promise<void>;
   protected abstract terminateVM: (id: string) => Promise<void>;
