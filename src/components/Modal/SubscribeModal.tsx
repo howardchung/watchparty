@@ -135,7 +135,7 @@ export class SubscribeModal extends React.Component<{
                   </Table.Cell>
                 </Table.Row>
                 <Table.Row>
-                  <Table.Cell>Colored Room Titles</Table.Cell>
+                  <Table.Cell>Room Title & Description</Table.Cell>
                   <Table.Cell></Table.Cell>
                   <Table.Cell>
                     <Icon name="check" />
