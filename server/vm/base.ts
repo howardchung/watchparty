@@ -307,7 +307,7 @@ export abstract class VMManager {
               this.getRedisHostCacheKey() + ':' + id
             );
             let host = vmCached?.startsWith('{') ? JSON.parse(vmCached).host : vmCached;
-            if (!host) {
+            if (!host && (retryCount === 1 || retryCount % 5 === 0)) {
               try {
                 const vm = await this.getVM(id);
                 host = vm?.host ?? null;
