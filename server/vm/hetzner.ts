@@ -179,7 +179,7 @@ export class Hetzner extends VMManager {
           'Content-Type': 'application/json',
         },
         data: {
-          network: this.networks.slice(-1)[0],
+          network: this.networks[Math.floor(Math.random() * this.networks.length)],
         },
       });
     } catch (e) {
