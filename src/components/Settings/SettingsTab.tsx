@@ -335,7 +335,12 @@ export const SettingsTab = ({
                   }
                   on="click"
                   trigger={
-                    <Button icon color="orange" size="tiny">
+                    <Button
+                      icon
+                      color="orange"
+                      size="tiny"
+                      style={{ margin: 0 }}
+                    >
                       <Icon name="paint brush" />
                     </Button>
                   }
