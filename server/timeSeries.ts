@@ -57,7 +57,9 @@ async function statsTimeSeries() {
           ) / stats.vBrowserStartMS.length,
       };
       Object.keys(stats.vmManagerStats).forEach((key) => {
-        datapoint[key] = stats.vmManagerStats[key]?.availableVBrowsers?.length;
+        if (stats.vmManagerStats[key]) {
+          datapoint[key] = stats.vmManagerStats[key]?.availableVBrowsers?.length;
+        }
       });
       await redis.lpush('timeSeries', JSON.stringify(datapoint));
       await redis.ltrim('timeSeries', 0, 288);
