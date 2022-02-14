@@ -913,7 +913,7 @@ export class Room {
       return;
     }
     const result = await postgres.query(
-      `SELECT password, vanity, owner, "isChatDisabled" FROM room where "roomId" = $1`,
+      `SELECT password, vanity, owner, "isChatDisabled", "roomTitle", "roomDescription", "roomTitleColor" FROM room where "roomId" = $1`,
       [this.roomId]
     );
     const first = result.rows[0];
@@ -926,6 +926,9 @@ export class Room {
       vanity: first?.vanity,
       owner: first?.owner,
       isChatDisabled: first?.isChatDisabled,
+      roomTitle: first?.roomTitle,
+      roomDescription: first?.roomDescription,
+      roomTitleColor: first?.roomTitleColor,
     });
   };
 
@@ -937,6 +940,9 @@ export class Room {
       password: string;
       vanity: string;
       isChatDisabled: boolean;
+      roomTitle: string;
+      roomDescription: string;
+      roomTitleColor: string;
     }
   ) => {
     if (!postgres) {
@@ -960,7 +966,14 @@ export class Room {
     const isSubscriber = Boolean(
       customer?.subscriptions?.data?.find((sub) => sub?.status === 'active')
     );
-    const { password, vanity, isChatDisabled } = data;
+    const {
+      password,
+      vanity,
+      isChatDisabled,
+      roomTitle,
+      roomDescription,
+      roomTitleColor,
+    } = data;
     if (password) {
       if (password.length > 100) {
         socket.emit('errorMessage', 'Password too long');
@@ -973,15 +986,28 @@ export class Room {
         return;
       }
     }
+    if (roomTitle && roomTitle.length > 50) {
+      return;
+    }
+    if (roomDescription && roomDescription.length > 120) {
+      return;
+    }
+    // check if is valid hex color representation
+    if (!/^#([0-9a-f]{3}){1,2}$/i.test(roomTitleColor)) {
+      return;
+    }
     // console.log(owner, vanity, password);
     const roomObj: any = {
       roomId: this.roomId,
       password: password,
       isChatDisabled: isChatDisabled,
+      roomTitle: roomTitle,
+      roomDescription: roomDescription,
     };
     if (isSubscriber) {
-      // user must be sub to set vanity
+      // user must be sub to set certain properties
       roomObj.vanity = vanity;
+      roomObj.roomTitleColor = roomTitleColor;
     }
     try {
       const query = `UPDATE room
@@ -1002,6 +1028,9 @@ export class Room {
         vanity: row?.vanity,
         owner: row?.owner,
         isChatDisabled: row?.isChatDisabled,
+        roomTitle: row?.roomTitle,
+        roomDescription: row?.roomDescription,
+        roomTitleColor: row?.roomTitleColor,
       });
       socket.emit('successMessage', 'Saved admin settings');
     } catch (e) {

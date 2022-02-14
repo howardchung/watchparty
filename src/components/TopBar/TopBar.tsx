@@ -256,6 +256,9 @@ export class TopBar extends React.Component<{
   hideMyRooms?: boolean;
   isSubscriber: boolean;
   isCustomer: boolean;
+  roomTitle?: string;
+  roomDescription?: string;
+  roomTitleColor?: string;
 }> {
   render() {
     const subscribeButton = (
@@ -310,37 +313,67 @@ export class TopBar extends React.Component<{
                 }}
               />
             </div>
+          </a>
+          {this.props.roomTitle || this.props.roomDescription ? (
             <div
               style={{
                 display: 'flex',
-                alignItems: 'center',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                marginRight: 10,
+                marginLeft: 10,
               }}
             >
               <div
                 style={{
-                  textTransform: 'uppercase',
-                  fontWeight: 700,
-                  color: '#2185d0',
-                  fontSize: '30px',
-                  lineHeight: '30px',
+                  fontSize: 30,
+                  color: this.props.roomTitleColor || 'white',
+                  fontWeight: 'bold',
+                  letterSpacing: 1,
                 }}
               >
-                Watch
+                {this.props.roomTitle}
               </div>
-              <div
-                style={{
-                  textTransform: 'uppercase',
-                  fontWeight: 700,
-                  color: '#21ba45',
-                  fontSize: '30px',
-                  lineHeight: '30px',
-                  marginLeft: 'auto',
-                }}
-              >
-                Party
+              <div style={{ marginTop: 4, color: 'rgb(255 255 255 / 63%)' }}>
+                {this.props.roomDescription}
               </div>
             </div>
-          </a>
+          ) : (
+            <React.Fragment>
+              <a href="/" style={{ display: 'flex' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                  }}
+                >
+                  <div
+                    style={{
+                      textTransform: 'uppercase',
+                      fontWeight: 700,
+                      color: '#2185d0',
+                      fontSize: '30px',
+                      lineHeight: '30px',
+                    }}
+                  >
+                    Watch
+                  </div>
+                  <div
+                    style={{
+                      textTransform: 'uppercase',
+                      fontWeight: 700,
+                      color: '#21ba45',
+                      fontSize: '30px',
+                      lineHeight: '30px',
+                      marginLeft: 'auto',
+                    }}
+                  >
+                    Party
+                  </div>
+                </div>
+              </a>
+            </React.Fragment>
+          )}
           <div
             style={{
               display: 'flex',
