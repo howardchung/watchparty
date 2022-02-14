@@ -402,16 +402,22 @@ export abstract class VMManager {
       }
     };
 
-    try {
-      setInterval(resizeVMGroupIncr, incrInterval);
-      setInterval(resizeVMGroupDecr, decrInterval);
-      setInterval(updateSize, updateSizeInterval);
-      setInterval(cleanupVMGroup, cleanupInterval);
-      cleanupVMGroup();
-      updateSize();
-    } catch (e) {
-      console.error(e);
-    }
+    setInterval(resizeVMGroupIncr, incrInterval);
+    setInterval(resizeVMGroupDecr, decrInterval);
+
+    updateSize();
+    setInterval(updateSize, updateSizeInterval);
+
+    setImmediate(async () => {
+      try {
+        await cleanupVMGroup();
+      }
+      catch (e) {
+        console.error(e);
+      }
+      await new Promise((resolve) => setTimeout(resolve, cleanupInterval));
+    });
+
     const checkStagingInterval = 3000;
     while (true) {
       await new Promise((resolve) => setTimeout(resolve, checkStagingInterval));
