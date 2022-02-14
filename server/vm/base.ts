@@ -319,7 +319,7 @@ export abstract class VMManager {
                   return reject();
                 }
               }
-              if (host) {
+              if (vm) {
                 console.log(
                   '[CHECKSTAGING] caching host %s for id %s',
                   host,
