@@ -167,6 +167,7 @@ export abstract class VMManager {
       let launch = false;
       launch =
         availableCount + stagingCount < this.getAdjustedBuffer()[0] &&
+        this.getCurrentSize() != null &&
         this.getCurrentSize() < (this.getLimitSize() || Infinity);
       if (launch) {
         console.log(
