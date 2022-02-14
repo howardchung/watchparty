@@ -303,14 +303,26 @@ export abstract class VMManager {
               return resolve(id + ', ' + retryCount + ', ' + false);
             }
             let ready = false;
-            let vm = await this.redis.get(
+            let vmCached = await this.redis.get(
               this.getRedisHostCacheKey() + ':' + id
             );
-            let host = vm?.startsWith('{') ? JSON.parse(vm).host : vm;
+            let host = vmCached?.startsWith('{') ? JSON.parse(vmCached).host : vmCached;
             if (!host) {
               try {
                 const vm = await this.getVM(id);
                 host = vm?.host ?? null;
+                if (vm && vm.host) {
+                  console.log(
+                    '[CHECKSTAGING] caching host %s for id %s',
+                    host,
+                    id
+                  );
+                  await this.redis.setex(
+                    this.getRedisHostCacheKey() + ':' + id,
+                    3 * 3600,
+                    JSON.stringify(vm),
+                  );
+                }
               } catch (e: any) {
                 if (e.response?.status === 404) {
                   await this.redis.lrem(this.getRedisQueueKey(), 0, id);
@@ -318,18 +330,6 @@ export abstract class VMManager {
                   await this.redis.del(this.getRedisStagingKey() + ':' + id);
                   return reject();
                 }
-              }
-              if (vm) {
-                console.log(
-                  '[CHECKSTAGING] caching host %s for id %s',
-                  host,
-                  id
-                );
-                await this.redis.setex(
-                  this.getRedisHostCacheKey() + ':' + id,
-                  3 * 3600,
-                  JSON.stringify(vm),
-                );
               }
             }
             ready = await checkVMReady(host ?? '');
