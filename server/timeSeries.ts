@@ -55,6 +55,7 @@ async function statsTimeSeries() {
             (a: string, b: string) => Number(a) + Number(b),
             0
           ) / stats.vBrowserStartMS.length,
+        hetznerApiRemaining: stats.hetznerApiRemaining,
       };
       Object.keys(stats.vmManagerStats).forEach((key) => {
         if (stats.vmManagerStats[key]) {
