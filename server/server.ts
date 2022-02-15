@@ -626,6 +626,7 @@ async function getStats() {
   const numSubs = (await postgres?.query('SELECT count(1) from subscriber'))
     ?.rows[0].count;
   const chatMessages = await getRedisCountDay('chatMessages');
+  const hetznerApiRemaining = await redis?.get('hetznerApiRemaining');
   const vBrowserStarts = await getRedisCountDay('vBrowserStarts');
   const vBrowserLaunches = await getRedisCountDay('vBrowserLaunches');
   const vBrowserFails = await getRedisCountDay('vBrowserFails');
@@ -734,6 +735,7 @@ async function getStats() {
     videoChatStarts,
     connectStarts,
     connectStartsDistinct,
+    hetznerApiRemaining,
     vBrowserStarts,
     vBrowserLaunches,
     vBrowserFails,
