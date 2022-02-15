@@ -21,7 +21,7 @@ export class VBrowserModal extends React.Component<{
     const resp = await window.fetch(serverPath + '/metadata');
     const metadata = await resp.json();
     // TODO make this check on region change
-    if (metadata.isVMPoolFull?.[this.state.region]) {
+    if (metadata.isVMPoolFull?.HetznerUS) {
       this.setState({ isVMPoolFull: true });
     }
   }

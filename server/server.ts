@@ -300,13 +300,15 @@ app.get('/metadata', async (req, res) => {
     req.query?.token as string
   );
   const isVMPoolFull: BooleanDict = {};
-  Object.entries(vmManagers).forEach(async ([key, value]) => {
+  for (let i = 0; i <= Object.keys(vmManagers).length; i++) {
+    const key = Object.keys(vmManagers)[i];
+    const value = vmManagers[key];
     if (value) {
       const availableCount = await redis?.llen(value.getRedisQueueKey());
-      const minSize = value?.getMinSize();
-      isVMPoolFull[key] = minSize > 0 && availableCount === 0;
+      const minSize = value?.getMinSize() ?? 0;
+      isVMPoolFull[key] = Boolean(minSize > 0 && availableCount === 0);
     }
-  });
+  }
   let isCustomer = false;
   let isSubscriber = false;
   if (decoded?.email) {
