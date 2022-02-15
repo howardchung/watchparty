@@ -409,13 +409,15 @@ export abstract class VMManager {
     setInterval(updateSize, updateSizeInterval);
 
     setImmediate(async () => {
+      while(true) {
       try {
-        await cleanupVMGroup();
+          await cleanupVMGroup();
+        }
+        catch (e) {
+          console.error(e);
+        }
+        await new Promise((resolve) => setTimeout(resolve, cleanupInterval));
       }
-      catch (e) {
-        console.error(e);
-      }
-      await new Promise((resolve) => setTimeout(resolve, cleanupInterval));
     });
 
     const checkStagingInterval = 3000;
