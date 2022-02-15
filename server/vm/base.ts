@@ -50,8 +50,23 @@ export abstract class VMManager {
     return this.limitSize;
   };
 
-  protected getAdjustedBuffer = () => {
-    return [this.minBuffer, Math.floor(this.minBuffer * 1.5)];
+  public getAdjustedBuffer = () => {
+    let minBuffer = this.minBuffer;
+    // If ramping config, adjust minBuffer based on the hour
+    // During ramp down hours, keep a smaller buffer
+    // During ramp up hours, keep a larger buffer
+    const rampDownHours = config.VM_POOL_RAMP_DOWN_HOURS.split(',').map(Number);
+    const rampUpHours = config.VM_POOL_RAMP_UP_HOURS.split(',').map(Number);
+    const nowHour = new Date().getUTCHours();
+    const isRampDown = rampDownHours.length && nowHour >= rampDownHours[0] && nowHour < rampDownHours[1];
+    const isRampUp = rampUpHours.length && nowHour >= rampUpHours[0] && nowHour < rampUpHours[1];
+    if (isRampDown) {
+      minBuffer /= 2;
+    }
+    else if (isRampUp) {
+      minBuffer *= 2;
+    }
+    return [minBuffer, Math.floor(minBuffer * 1.5)];
   };
 
   protected getCurrentSize = () => {
