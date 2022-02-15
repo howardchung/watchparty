@@ -120,6 +120,9 @@ export class Hetzner extends VMManager {
       'hetznerApiRemaining',
       response?.headers['ratelimit-remaining']
     );
+    if (response.data.server.private_net?.length > 1) {
+      console.log('[WARNING] %s has more than one private network', id);
+    }
     const server = this.mapServerObject(response.data.server);
     if (!server.private_ip) {
       return null;
@@ -175,18 +178,27 @@ export class Hetzner extends VMManager {
   attachToNetwork = async (id: string) => {
     // Attach server to network (usually not needed)
     try {
-      await axios({
-        method: 'POST',
-        url: `https://api.hetzner.cloud/v1/servers/${id}/actions/attach_to_network`,
+      const response: any = await axios({
+        method: 'GET',
+        url: `https://api.hetzner.cloud/v1/servers/${id}`,
         headers: {
           Authorization: 'Bearer ' + HETZNER_TOKEN,
-          'Content-Type': 'application/json',
-        },
-        data: {
-          network:
-            this.networks[Math.floor(Math.random() * this.networks.length)],
         },
       });
+      if (response.data.server.private_net?.[0] == null) {
+        await axios({
+          method: 'POST',
+          url: `https://api.hetzner.cloud/v1/servers/${id}/actions/attach_to_network`,
+          headers: {
+            Authorization: 'Bearer ' + HETZNER_TOKEN,
+            'Content-Type': 'application/json',
+          },
+          data: {
+            network:
+              this.networks[Math.floor(Math.random() * this.networks.length)],
+          },
+        });
+      }
     } catch (e: any) {
       console.log('%s failed to attach to network', id);
       console.log(e.response?.data);
