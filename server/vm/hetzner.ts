@@ -164,7 +164,7 @@ export class Hetzner extends VMManager {
         },
       });
     } catch (e) {
-      console.log('failed to poweron');
+      console.log('%s failed to poweron', id);
     }
   };
 
@@ -182,8 +182,9 @@ export class Hetzner extends VMManager {
           network: this.networks[Math.floor(Math.random() * this.networks.length)],
         },
       });
-    } catch (e) {
-      console.log('failed to attach to network');
+    } catch (e: any) {
+      console.log('%s failed to attach to network', id);
+      console.log(e.response?.data);
     }
   };
 
