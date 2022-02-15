@@ -54,6 +54,10 @@ export abstract class VMManager {
     return this.minBuffer;
   };
 
+  public getCurrentSize = () => {
+    return this.currentSize;
+  };
+
   public getAdjustedBuffer = () => {
     let minBuffer = this.getMinBuffer();
     // If ramping config, adjust minBuffer based on the hour
@@ -76,10 +80,6 @@ export abstract class VMManager {
       minBuffer *= 2;
     }
     return [minBuffer, Math.floor(minBuffer * 1.5)];
-  };
-
-  protected getCurrentSize = () => {
-    return this.currentSize;
   };
 
   public getRedisQueueKey = () => {
