@@ -400,7 +400,8 @@ async function release() {
       const isTimedOut = ttl && ttl < releaseInterval;
       const isAlmostTimedOut = ttl && ttl < releaseInterval * 2;
       const isRoomEmpty = room.roster.length === 0;
-      const isRoomIdle = Date.now() - Number(room.lastUpdateTime) > 5 * 60 * 1000;
+      const isRoomIdle =
+        Date.now() - Number(room.lastUpdateTime) > 5 * 60 * 1000;
       if (isTimedOut || (isRoomEmpty && isRoomIdle)) {
         console.log('[RELEASE][%s] VM in room:', currBatch, room.roomId);
         room.stopVBrowserInternal();

@@ -59,7 +59,8 @@ async function statsTimeSeries() {
       };
       Object.keys(stats.vmManagerStats).forEach((key) => {
         if (stats.vmManagerStats[key]) {
-          datapoint[key] = stats.vmManagerStats[key]?.availableVBrowsers?.length;
+          datapoint[key] =
+            stats.vmManagerStats[key]?.availableVBrowsers?.length;
         }
       });
       await redis.lpush('timeSeries', JSON.stringify(datapoint));

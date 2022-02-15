@@ -1,5 +1,5 @@
 import config from './config';
-import { assignVM, getBgVMManagers, getVMManager } from './vm/utils';
+import { assignVM, getBgVMManagers } from './vm/utils';
 import express from 'express';
 import Redis from 'ioredis';
 import bodyParser from 'body-parser';
@@ -33,11 +33,10 @@ app.post('/assignVM', async (req, res) => {
         delete redisRefs[req.body.uid];
       }, 90000);
     }
-    const pool = getVMManager(
-      req.body.provider,
-      req.body.isLarge,
-      req.body.region
-    );
+    const pool =
+      vmManagers[
+        req.body.provider + (req.body.isLarge ? 'Large' : '') + req.body.region
+      ];
     if (redis && pool) {
       const vm = await assignVM(redis, pool);
       redis?.disconnect();
@@ -52,11 +51,10 @@ app.post('/assignVM', async (req, res) => {
 
 app.post('/releaseVM', async (req, res) => {
   try {
-    const pool = getVMManager(
-      req.body.provider,
-      req.body.isLarge,
-      req.body.region
-    );
+    const pool =
+      vmManagers[
+        req.body.provider + (req.body.isLarge ? 'Large' : '') + req.body.region
+      ];
     redisRefs[req.body.uid]?.disconnect();
     delete redisRefs[req.body.uid];
     if (req.body.id) {
@@ -70,11 +68,10 @@ app.post('/releaseVM', async (req, res) => {
 
 // curl -X POST http://localhost:3100/updateSnapshot -H 'Content-Type: application/json' -d '{"provider":"Hetzner","isLarge":false,"region":""}'
 app.post('/updateSnapshot', async (req, res) => {
-  const pool = getVMManager(
-    req.body.provider,
-    req.body.isLarge,
-    req.body.region
-  );
+  const pool =
+    vmManagers[
+      req.body.provider + (req.body.isLarge ? 'Large' : '') + req.body.region
+    ];
   const result = await pool?.updateSnapshot();
   return res.send(result?.toString());
 });
