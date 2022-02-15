@@ -51,7 +51,7 @@ export abstract class VMManager {
   };
 
   protected getAdjustedBuffer = () => {
-    return [this.minBuffer, Math.floor(this.minBuffer * 1.3)];
+    return [this.minBuffer, Math.floor(this.minBuffer * 1.5)];
   };
 
   protected getCurrentSize = () => {
