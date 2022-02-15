@@ -33,9 +33,9 @@ export abstract class VMManager {
   ) {
     this.isLarge = Boolean(large);
     this.region = region;
-    this.limitSize = limitSize;
-    this.minSize = minSize;
-    this.minBuffer = minBuffer;
+    this.limitSize = Number(limitSize);
+    this.minSize = Number(minSize);
+    this.minBuffer = Number(minBuffer);
     if (!redis) {
       throw new Error('Cannot construct VMManager without Redis');
     }
@@ -50,20 +50,29 @@ export abstract class VMManager {
     return this.limitSize;
   };
 
+  public getMinBuffer = () => {
+    return this.minBuffer;
+  };
+
   public getAdjustedBuffer = () => {
-    let minBuffer = this.minBuffer;
+    let minBuffer = this.getMinBuffer();
     // If ramping config, adjust minBuffer based on the hour
     // During ramp down hours, keep a smaller buffer
     // During ramp up hours, keep a larger buffer
     const rampDownHours = config.VM_POOL_RAMP_DOWN_HOURS.split(',').map(Number);
     const rampUpHours = config.VM_POOL_RAMP_UP_HOURS.split(',').map(Number);
     const nowHour = new Date().getUTCHours();
-    const isRampDown = rampDownHours.length && nowHour >= rampDownHours[0] && nowHour < rampDownHours[1];
-    const isRampUp = rampUpHours.length && nowHour >= rampUpHours[0] && nowHour < rampUpHours[1];
+    const isRampDown =
+      rampDownHours.length &&
+      nowHour >= rampDownHours[0] &&
+      nowHour < rampDownHours[1];
+    const isRampUp =
+      rampUpHours.length &&
+      nowHour >= rampUpHours[0] &&
+      nowHour < rampUpHours[1];
     if (isRampDown) {
       minBuffer /= 2;
-    }
-    else if (isRampUp) {
+    } else if (isRampUp) {
       minBuffer *= 2;
     }
     return [minBuffer, Math.floor(minBuffer * 1.5)];
@@ -214,7 +223,9 @@ export abstract class VMManager {
         let rem = 0;
         while (ids.length && !rem) {
           first = ids.shift();
-          rem = first ? (await this.redis.lrem(this.getRedisQueueKey(), 1, first)) : 0;
+          rem = first
+            ? await this.redis.lrem(this.getRedisQueueKey(), 1, first)
+            : 0;
           if (first && rem) {
             console.log('[RESIZE-UNLAUNCH]', first);
             await this.terminateVMWrapper(first);
@@ -233,19 +244,22 @@ export abstract class VMManager {
         this.currentSize
       );
       let sortedVMs = allVMs
-      // Sort newest first (decreasing alphabetically)
-      .sort((a, b) => -a.creation_date?.localeCompare(b.creation_date))
-      // Remove the minimum number of VMs to keep
-      .slice(0, -this.getMinSize() || undefined)
-      // Consider only VMs that have been up for most of an hour
-      .filter(
-        (vm) =>
-          (now - Number(new Date(vm.creation_date))) % (60 * 60 * 1000) >
-          config.VM_MIN_UPTIME_MINUTES * 60 * 1000
-      );
+        // Sort newest first (decreasing alphabetically)
+        .sort((a, b) => -a.creation_date?.localeCompare(b.creation_date))
+        // Remove the minimum number of VMs to keep
+        .slice(0, -this.getMinSize() || undefined)
+        // Consider only VMs that have been up for most of an hour
+        .filter(
+          (vm) =>
+            (now - Number(new Date(vm.creation_date))) % (60 * 60 * 1000) >
+            config.VM_MIN_UPTIME_MINUTES * 60 * 1000
+        );
       const cmd = this.redis.multi().del(this.getRedisTerminationKey());
       if (sortedVMs.length) {
-        cmd.sadd(this.getRedisTerminationKey(), sortedVMs.map((vm) => vm.id));
+        cmd.sadd(
+          this.getRedisTerminationKey(),
+          sortedVMs.map((vm) => vm.id)
+        );
       }
       await cmd.exec();
     };
@@ -322,7 +336,9 @@ export abstract class VMManager {
             let vmCached = await this.redis.get(
               this.getRedisHostCacheKey() + ':' + id
             );
-            let host = vmCached?.startsWith('{') ? JSON.parse(vmCached).host : vmCached;
+            let host = vmCached?.startsWith('{')
+              ? JSON.parse(vmCached).host
+              : vmCached;
             if (!host && (retryCount === 1 || retryCount % 5 === 0)) {
               try {
                 const vm = await this.getVM(id);
@@ -336,7 +352,7 @@ export abstract class VMManager {
                   await this.redis.setex(
                     this.getRedisHostCacheKey() + ':' + id,
                     3 * 3600,
-                    JSON.stringify(vm),
+                    JSON.stringify(vm)
                   );
                 }
               } catch (e: any) {
@@ -425,11 +441,10 @@ export abstract class VMManager {
     setInterval(updateSize, updateSizeInterval);
 
     setImmediate(async () => {
-      while(true) {
-      try {
+      while (true) {
+        try {
           await cleanupVMGroup();
-        }
-        catch (e) {
+        } catch (e) {
           console.error(e);
         }
         await new Promise((resolve) => setTimeout(resolve, cleanupInterval));

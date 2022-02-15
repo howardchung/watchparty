@@ -61,8 +61,11 @@ export const assignVM = async (
         console.log('failed to acquire lock on VM:', id);
         continue;
       }
-      const cachedData = await redis.get(vmManager.getRedisHostCacheKey() + ':' + id);
-      let candidate = cachedData && cachedData.startsWith('{') && JSON.parse(cachedData);
+      const cachedData = await redis.get(
+        vmManager.getRedisHostCacheKey() + ':' + id
+      );
+      let candidate =
+        cachedData && cachedData.startsWith('{') && JSON.parse(cachedData);
       if (!candidate) {
         candidate = await vmManager.getVM(id);
       }
@@ -81,14 +84,21 @@ export const assignVM = async (
   }
 };
 
-export function getVMManager(
-  provider: string,
-  isLarge: boolean,
-  region: string,
-  limitSize = 0,
-  minSize = 0,
-  minBuffer = 0
-): VMManager | null {
+function getVMManager({
+  provider,
+  isLarge,
+  region,
+  limitSize,
+  minSize,
+  minBuffer,
+}: {
+  provider: string;
+  isLarge: boolean;
+  region: string;
+  limitSize: number;
+  minSize: number;
+  minBuffer: number;
+}): VMManager | null {
   let vmManager: VMManager | null = null;
   if (
     config.REDIS_URL &&
@@ -121,33 +131,87 @@ export function getVMManager(
   return vmManager;
 }
 
-export function getBgVMManagers() {
-  return {
-    largeUS: getVMManager(
-      'Hetzner',
-      true,
-      'US',
-      config.VM_POOL_LIMIT_LARGE,
-      config.VM_POOL_MIN_SIZE_LARGE,
-      config.VM_POOL_MIN_BUFFER_LARGE,
-    ),
-    US: getVMManager(
-      'Hetzner',
-      false,
-      'US',
-      config.VM_POOL_LIMIT,
-      config.VM_POOL_MIN_SIZE,
-      config.VM_POOL_MIN_BUFFER,
-    ),
-    largeEU: getVMManager('Hetzner', true, 'EU'),
-    EU: getVMManager('Hetzner', false, 'EU'),
-    DOLarge: getVMManager('DO', true, 'US'),
-    DO: getVMManager('DO', false, 'US'),
-    scwLarge: getVMManager('Scaleway', true, 'US'),
-    scw: getVMManager('Scaleway', false, 'US'),
-    dockerLarge: getVMManager('Docker', true, 'US'),
-    docker: getVMManager('Docker', false, 'US'),
-};
+export function getBgVMManagers(): { [key: string]: VMManager | null } {
+  const conf = [
+    {
+      provider: 'Hetzner',
+      isLarge: true,
+      region: 'US',
+      limitSize: config.VM_POOL_LIMIT_LARGE,
+      minSize: config.VM_POOL_MIN_SIZE_LARGE,
+      minBuffer: config.VM_POOL_MIN_BUFFER_LARGE,
+    },
+    {
+      provider: 'Hetzner',
+      isLarge: false,
+      region: 'US',
+      limitSize: config.VM_POOL_LIMIT,
+      minSize: config.VM_POOL_MIN_SIZE,
+      minBuffer: config.VM_POOL_MIN_BUFFER,
+    },
+    {
+      provider: 'Hetzner',
+      isLarge: true,
+      region: 'EU',
+      limitSize: 0,
+      minSize: 0,
+      minBuffer: 0,
+    },
+    {
+      provider: 'Hetzner',
+      isLarge: false,
+      region: 'EU',
+      limitSize: 0,
+      minSize: 0,
+      minBuffer: 0,
+    },
+    {
+      provider: 'Scaleway',
+      isLarge: true,
+      region: 'US',
+      limitSize: 0,
+      minSize: 0,
+      minBuffer: 0,
+    },
+    {
+      provider: 'Scaleway',
+      isLarge: false,
+      region: 'US',
+      limitSize: 0,
+      minSize: 0,
+      minBuffer: 0,
+    },
+    {
+      provider: 'DO',
+      isLarge: true,
+      region: 'US',
+      limitSize: 0,
+      minSize: 0,
+      minBuffer: 0,
+    },
+    {
+      provider: 'DO',
+      isLarge: false,
+      region: 'US',
+      limitSize: 0,
+      minSize: 0,
+      minBuffer: 0,
+    },
+    {
+      provider: 'Docker',
+      isLarge: true,
+      region: 'US',
+      limitSize: 0,
+      minSize: 0,
+      minBuffer: 0,
+    },
+  ];
+  const result: { [key: string]: VMManager | null } = {};
+  conf.forEach((c) => {
+    result[c.provider + (c.isLarge ? 'Large' : '') + c.region] =
+      getVMManager(c);
+  });
+  return result;
 }
 
 export function getSessionLimitSeconds(isLarge: boolean) {
