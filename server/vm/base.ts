@@ -403,11 +403,11 @@ export abstract class VMManager {
               } else {
                 if (retryCount % 45 === 0) {
                   console.log(
-                    '[CHECKSTAGING] %s attempt to poweron and attach to network',
+                    '[CHECKSTAGING] %s attempt to poweron, attach to network',
                     id
                   );
                   this.powerOn(id);
-                  this.attachToNetwork(id);
+                  //this.attachToNetwork(id);
                 }
                 if (retryCount % 10 === 0) {
                   console.log(
