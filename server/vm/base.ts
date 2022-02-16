@@ -302,7 +302,11 @@ export abstract class VMManager {
         const server = allVMs[i];
         if (!dontDelete.has(server.id)) {
           console.log('[CLEANUP]', server.id);
-          await this.resetVM(server.id);
+          try {
+            await this.resetVM(server.id);
+          } catch (e) {
+            console.warn(e);
+          }
           //this.terminateVMWrapper(server.id);
           await new Promise((resolve) => setTimeout(resolve, 2000));
         }
