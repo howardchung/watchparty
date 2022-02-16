@@ -307,8 +307,8 @@ app.get('/metadata', async (req, res) => {
       const availableCount = await redis?.llen(value.getRedisQueueKey());
       const minSize = value?.getMinSize() ?? 0;
       const limitSize = value?.getLimitSize() ?? 0;
-      const currentSize = value?.getCurrentSize() ?? 0;
-      isVMPoolFull[key] = Boolean((minSize > 0 && availableCount === 0) || (limitSize > 0 && currentSize > limitSize * 0.97));
+      const currentSize = await redis?.get(value.getRedisPoolSizeKey());
+      isVMPoolFull[key] = Boolean((minSize > 0 && availableCount === 0) || (limitSize > 0 && Number(currentSize) > limitSize * 0.97));
     }
   }
   let isCustomer = false;
