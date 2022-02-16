@@ -13,14 +13,9 @@ apt install -y bind9
 echo 'events {}
 http {
   upstream roundrobin {
-    server 127.0.0.1:3000;
     server 127.0.0.1:3001;
-    # server 127.0.0.1:3002;
-    # server 127.0.0.1:3003;
-  }
-
-  upstream 0 {
-    server 127.0.0.1:3000;
+    server 127.0.0.1:3002;
+    server 127.0.0.1:3003;
   }
 
   upstream 1 {
@@ -37,10 +32,9 @@ http {
 
   map $arg_shard $pool {
      default "roundrobin";
-     0 "0";
      1 "1";
-     # 2 "2";
-     # 3 "3";
+     2 "2";
+     3 "3";
   }
 
   server {

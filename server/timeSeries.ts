@@ -18,8 +18,6 @@ async function statsTimeSeries() {
       process.env.NODE_ENV === 'development'
         ? [8080]
         : ecosystem.apps
-            // TODO remove this filter when sharding deployed
-            .filter((app) => app.name === 'server')
             .map((app) => app.env?.PORT)
             .filter(Boolean);
 
