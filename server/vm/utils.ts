@@ -27,7 +27,7 @@ docker run -d --rm --name=vbrowser --log-opt max-size=1g --net=host --shm-size=1
 }" -e NEKO_H264="${h264 ? 1 : 0}" ${imageName}
 `;
 
-export const imageName = 'howardc93/vbrowser2';
+export const imageName = 'howardc93/vbrowser';
 
 export const assignVM = async (
   redis: Redis.Redis,
