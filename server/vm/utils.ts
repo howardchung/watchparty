@@ -77,14 +77,12 @@ function getVMManager({
   region,
   limitSize,
   minSize,
-  minBuffer,
 }: {
   provider: string;
   isLarge: boolean;
   region: string;
   limitSize: number;
   minSize: number;
-  minBuffer: number;
 }): VMManager | null {
   let vmManager: VMManager | null = null;
   if (
@@ -93,27 +91,26 @@ function getVMManager({
     config.SCW_ORGANIZATION_ID &&
     provider === 'Scaleway'
   ) {
-    vmManager = new Scaleway(isLarge, region, limitSize, minSize, minBuffer);
+    vmManager = new Scaleway(isLarge, region, limitSize, minSize);
   } else if (
     config.REDIS_URL &&
     config.HETZNER_TOKEN &&
     provider === 'Hetzner'
   ) {
-    vmManager = new Hetzner(isLarge, region, limitSize, minSize, minBuffer);
+    vmManager = new Hetzner(isLarge, region, limitSize, minSize);
   } else if (config.REDIS_URL && config.DO_TOKEN && provider === 'DO') {
     vmManager = new DigitalOcean(
       isLarge,
       region,
       limitSize,
       minSize,
-      minBuffer
     );
   } else if (
     config.REDIS_URL &&
     config.DOCKER_VM_HOST &&
     provider === 'Docker'
   ) {
-    vmManager = new Docker(isLarge, region, limitSize, minSize, minBuffer);
+    vmManager = new Docker(isLarge, region, limitSize, minSize);
   }
   return vmManager;
 }
@@ -126,7 +123,6 @@ export function getBgVMManagers(): { [key: string]: VMManager | null } {
       region: 'US',
       limitSize: config.VM_POOL_LIMIT_LARGE,
       minSize: config.VM_POOL_MIN_SIZE_LARGE,
-      minBuffer: config.VM_POOL_MIN_BUFFER_LARGE,
     },
     {
       provider: 'Hetzner',
@@ -134,7 +130,6 @@ export function getBgVMManagers(): { [key: string]: VMManager | null } {
       region: 'US',
       limitSize: config.VM_POOL_LIMIT,
       minSize: config.VM_POOL_MIN_SIZE,
-      minBuffer: config.VM_POOL_MIN_BUFFER,
     },
     {
       provider: 'Hetzner',
@@ -142,7 +137,6 @@ export function getBgVMManagers(): { [key: string]: VMManager | null } {
       region: 'EU',
       limitSize: 0,
       minSize: 0,
-      minBuffer: 0,
     },
     {
       provider: 'Hetzner',
@@ -150,7 +144,6 @@ export function getBgVMManagers(): { [key: string]: VMManager | null } {
       region: 'EU',
       limitSize: 0,
       minSize: 0,
-      minBuffer: 0,
     },
     {
       provider: 'Scaleway',
@@ -158,7 +151,6 @@ export function getBgVMManagers(): { [key: string]: VMManager | null } {
       region: 'US',
       limitSize: 0,
       minSize: 0,
-      minBuffer: 0,
     },
     {
       provider: 'Scaleway',
@@ -166,7 +158,6 @@ export function getBgVMManagers(): { [key: string]: VMManager | null } {
       region: 'US',
       limitSize: 0,
       minSize: 0,
-      minBuffer: 0,
     },
     {
       provider: 'DO',
@@ -174,7 +165,6 @@ export function getBgVMManagers(): { [key: string]: VMManager | null } {
       region: 'US',
       limitSize: 0,
       minSize: 0,
-      minBuffer: 0,
     },
     {
       provider: 'DO',
@@ -182,7 +172,6 @@ export function getBgVMManagers(): { [key: string]: VMManager | null } {
       region: 'US',
       limitSize: 0,
       minSize: 0,
-      minBuffer: 0,
     },
     {
       provider: 'Docker',
@@ -190,7 +179,6 @@ export function getBgVMManagers(): { [key: string]: VMManager | null } {
       region: 'US',
       limitSize: 0,
       minSize: 0,
-      minBuffer: 0,
     },
     {
       provider: 'Docker',
@@ -198,7 +186,6 @@ export function getBgVMManagers(): { [key: string]: VMManager | null } {
       region: 'US',
       limitSize: 0,
       minSize: 0,
-      minBuffer: 0,
     },
   ];
   const result: { [key: string]: VMManager | null } = {};
