@@ -305,12 +305,12 @@ app.get('/metadata', async (req, res) => {
     const value = vmManagers[key];
     if (value) {
       const availableCount = await redis?.llen(value.getRedisQueueKey());
+      const stagingCount = await redis?.llen(value.getRedisStagingKey());
       const minSize = value?.getMinSize() ?? 0;
       const limitSize = value?.getLimitSize() ?? 0;
       const currentSize = await redis?.get(value.getRedisPoolSizeKey());
       isVMPoolFull[key] = Boolean(
-        (minSize > 0 && availableCount === 0) ||
-          (limitSize > 0 && Number(currentSize) > limitSize * 0.97)
+        minSize > 0 && (Number(currentSize) - Number(availableCount) - Number(stagingCount)) > limitSize * 0.95,
       );
     }
   }
