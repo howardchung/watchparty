@@ -79,7 +79,7 @@ export abstract class VMManager {
     } else if (isRampUp) {
       minBuffer *= 2;
     }
-    return [minBuffer, minBuffer * 1.5];
+    return [Math.ceil(minBuffer), Math.ceil(minBuffer * 1.5)];
   };
 
   public getRedisQueueKey = () => {
