@@ -67,11 +67,12 @@ export interface GuacamoleKeyboardInterface {
   listenTo: (element: Element | Document) => void;
 }
 
-//@ts-ignore
-export default function (element?: Element): GuacamoleKeyboardInterface {
+const Interface = function (element?: Element): GuacamoleKeyboardInterface {
   const Keyboard = {};
 
   GuacamoleKeyboard.bind(Keyboard, element)();
 
   return Keyboard as GuacamoleKeyboardInterface;
-}
+};
+
+export default Interface;
