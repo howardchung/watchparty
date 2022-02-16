@@ -308,7 +308,10 @@ app.get('/metadata', async (req, res) => {
       const minSize = value?.getMinSize() ?? 0;
       const limitSize = value?.getLimitSize() ?? 0;
       const currentSize = await redis?.get(value.getRedisPoolSizeKey());
-      isVMPoolFull[key] = Boolean((minSize > 0 && availableCount === 0) || (limitSize > 0 && Number(currentSize) > limitSize * 0.97));
+      isVMPoolFull[key] = Boolean(
+        (minSize > 0 && availableCount === 0) ||
+          (limitSize > 0 && Number(currentSize) > limitSize * 0.97)
+      );
     }
   }
   let isCustomer = false;
@@ -643,8 +646,9 @@ async function getStats() {
     0,
     -1
   );
+  const vBrowserStageFails = await redis?.lrange('vBrowserStageFails', 0, -1);
   const vBrowserSessionMS = await redis?.lrange('vBrowserSessionMS', 0, -1);
-  const vBrowserVMLifetime = await redis?.lrange('vBrowserVMLifetime', 0, -1);
+  // const vBrowserVMLifetime = await redis?.lrange('vBrowserVMLifetime', 0, -1);
   const vBrowserTerminateTimeout = await getRedisCountDay(
     'vBrowserTerminateTimeout'
   );
@@ -754,8 +758,9 @@ async function getStats() {
     vmManagerStats,
     vBrowserStartMS,
     vBrowserStageRetries,
+    vBrowserStageFails,
     vBrowserSessionMS,
-    vBrowserVMLifetime,
+    // vBrowserVMLifetime,
     vBrowserClientIDs,
     vBrowserClientIDsCard,
     vBrowserClientIDMinutes,

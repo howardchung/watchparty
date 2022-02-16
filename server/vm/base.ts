@@ -160,7 +160,7 @@ export abstract class VMManager {
     await this.terminateVM(id);
     // if (lifetime) {
     //   await this.redis.lpush('vBrowserVMLifetime', lifetime);
-    //   await this.redis.ltrim('vBrowserVMLifetime', 0, 49);
+    //   await this.redis.ltrim('vBrowserVMLifetime', 0, 24);
     // }
     // Delete any locks
     await this.redis.del('lock:' + this.id + ':' + id);
@@ -385,7 +385,7 @@ export abstract class VMManager {
                   .del(this.getRedisStagingKey() + ':' + id)
                   .exec();
                 await this.redis.lpush('vBrowserStageRetries', retryCount);
-                await this.redis.ltrim('vBrowserStageRetries', 0, 49);
+                await this.redis.ltrim('vBrowserStageRetries', 0, 24);
               }
             } else {
               if (retryCount >= 80) {
@@ -396,6 +396,8 @@ export abstract class VMManager {
                   .del(this.getRedisStagingKey() + ':' + id)
                   .exec();
                 redisCount('vBrowserStagingFails');
+                await this.redis.lpush('vBrowserStageFails', id);
+                await this.redis.ltrim('vBrowserStageFails', 0, 24);
                 await this.resetVM(id);
                 //await this.terminateVMWrapper(id);
               } else {
