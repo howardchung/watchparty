@@ -294,7 +294,7 @@ export class Room {
     this.saveRoom();
     if (redis && assignTime) {
       await redis.lpush('vBrowserSessionMS', Number(new Date()) - assignTime);
-      await redis.ltrim('vBrowserSessionMS', 0, 49);
+      await redis.ltrim('vBrowserSessionMS', 0, 24);
     }
     if (redis && uid) {
       await redis.del('vBrowserUIDLock:' + uid);
