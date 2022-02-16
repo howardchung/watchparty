@@ -22,12 +22,12 @@ ${
 }
 PASSWORD=$(hostname)
 # docker pull ${imageName}
-docker run -d --rm --name=vbrowser -v /usr/share/fonts:/usr/share/fonts --log-opt max-size=1g --net=host --shm-size=1g --cap-add="SYS_ADMIN" -e DISPLAY=":99.0" -e NEKO_SCREEN="${resolution}" -e NEKO_PASSWORD=$PASSWORD -e NEKO_PASSWORD_ADMIN=$PASSWORD -e NEKO_BIND=":5000" -e NEKO_EPR=":59000-59100" -e NEKO_VP9="${
+docker run -d --rm --name=vbrowser --log-opt max-size=1g --net=host --shm-size=1g --cap-add="SYS_ADMIN" -e DISPLAY=":99.0" -e NEKO_SCREEN="${resolution}" -e NEKO_PASSWORD=$PASSWORD -e NEKO_PASSWORD_ADMIN=$PASSWORD -e NEKO_BIND=":5000" -e NEKO_EPR=":59000-59100" -e NEKO_VP9="${
   vp9 ? 1 : 0
 }" -e NEKO_H264="${h264 ? 1 : 0}" ${imageName}
 `;
 
-export const imageName = 'howardc93/vbrowser';
+export const imageName = 'howardc93/vbrowser2';
 
 export const assignVM = async (
   redis: Redis.Redis,
@@ -200,6 +200,14 @@ export function getBgVMManagers(): { [key: string]: VMManager | null } {
     {
       provider: 'Docker',
       isLarge: true,
+      region: 'US',
+      limitSize: 0,
+      minSize: 0,
+      minBuffer: 0,
+    },
+    {
+      provider: 'Docker',
+      isLarge: false,
       region: 'US',
       limitSize: 0,
       minSize: 0,
