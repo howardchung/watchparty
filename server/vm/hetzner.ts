@@ -38,9 +38,9 @@ export class Hetzner extends VMManager {
         start_after_create: true,
         image: imageId,
         ssh_keys: sshKeys,
-        networks: [
-          this.networks[Math.floor(Math.random() * this.networks.length)],
-        ],
+        // networks: [
+        //   this.networks[Math.floor(Math.random() * this.networks.length)],
+        // ],
         // user_data: cloudInit(
         //   imageName,
         //   this.isLarge ? '1920x1080@30' : undefined,
@@ -243,8 +243,9 @@ export class Hetzner extends VMManager {
   };
 
   mapServerObject = (server: any): VM => {
-    //const ip = server.public_net?.ipv4?.ip;
-    const ip = server.private_net?.[0]?.ip;
+    const public_ip = server.public_net?.ipv4?.ip;
+    const private_ip = server.private_net?.[0]?.ip;
+    const ip = private_ip ?? public_ip;
     return {
       id: server.id?.toString(),
       pass: server.name,
