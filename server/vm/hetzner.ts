@@ -222,6 +222,8 @@ export class Hetzner extends VMManager {
         user_data: fs
           .readFileSync(__dirname + '/../../dev/vbrowser.sh')
           .toString(),
+        location:
+          this.datacenters[Math.floor(Math.random() * this.datacenters.length)],
       },
     });
     const id = response.data.server.id;

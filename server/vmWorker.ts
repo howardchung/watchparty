@@ -66,7 +66,7 @@ app.post('/releaseVM', async (req, res) => {
   return res.end();
 });
 
-// curl -X POST http://localhost:3100/updateSnapshot -H 'Content-Type: application/json' -d '{"provider":"Hetzner","isLarge":false,"region":""}'
+// curl -X POST http://localhost:3100/updateSnapshot -H 'Content-Type: application/json' -d '{"provider":"Hetzner","isLarge":false,"region":"US"}'
 app.post('/updateSnapshot', async (req, res) => {
   const pool =
     vmManagers[

@@ -74,7 +74,7 @@ export const assignVM = async (
     const assignEnd = Number(new Date());
     const assignElapsed = assignEnd - assignStart;
     await redis.lpush('vBrowserStartMS', assignElapsed);
-    await redis.ltrim('vBrowserStartMS', 0, 99);
+    await redis.ltrim('vBrowserStartMS', 0, 24);
     console.log('[ASSIGN]', selected.id, assignElapsed + 'ms');
     const retVal = { ...selected, assignTime: Number(new Date()) };
     return retVal;
