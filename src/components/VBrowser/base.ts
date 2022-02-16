@@ -1,22 +1,33 @@
 import EventEmitter from 'eventemitter3';
 
-import { iceServers } from '../../utils';
+// import { iceServers } from '../../utils';
 import { OPCODE } from './data';
 import { EVENT, WebSocketEvents } from './events';
 import {
-  SignalProvidePayload,
   WebSocketMessages,
   WebSocketPayloads,
+  SignalProvidePayload,
+  SignalCandidatePayload,
+  SignalOfferPayload,
+  SignalAnswerMessage,
 } from './messages';
+
+// export interface BaseEvents {
+//   info: (...message: any[]) => void;
+//   warn: (...message: any[]) => void;
+//   debug: (...message: any[]) => void;
+//   error: (error: Error) => void;
+// }
 
 export abstract class BaseClient extends EventEmitter<any> {
   protected _ws?: WebSocket;
   protected _peer?: RTCPeerConnection;
   protected _channel?: RTCDataChannel;
-  protected _timeout?: NodeJS.Timeout;
+  protected _timeout?: number;
   protected _displayname?: string;
   protected _state: RTCIceConnectionState = 'disconnected';
   protected _id = '';
+  protected _candidates: RTCIceCandidate[] = [];
 
   get id() {
     return this._id;
@@ -59,21 +70,19 @@ export abstract class BaseClient extends EventEmitter<any> {
       return;
     }
 
-    if (displayname === '') {
-      throw new Error('Must add a displayname');
-    }
-
     this._displayname = displayname;
     this[EVENT.CONNECTING]();
 
     try {
-      this._ws = new WebSocket(`${url}ws?password=${password}`);
+      this._ws = new WebSocket(
+        `${url}?password=${encodeURIComponent(password)}`
+      );
       this.emit('debug', `connecting to ${this._ws.url}`);
       this._ws.onmessage = this.onMessage.bind(this);
       this._ws.onerror = (event) => this.onError.bind(this);
       this._ws.onclose = (event) =>
         this.onDisconnected.bind(this, new Error('websocket closed'));
-      this._timeout = setTimeout(this.onTimeout.bind(this), 15000);
+      this._timeout = window.setTimeout(this.onTimeout.bind(this), 15000);
     } catch (err: any) {
       this.onDisconnected(err);
     }
@@ -82,19 +91,46 @@ export abstract class BaseClient extends EventEmitter<any> {
   protected disconnect() {
     if (this._timeout) {
       clearTimeout(this._timeout);
+      this._timeout = undefined;
     }
 
-    if (this.socketOpen) {
+    if (this._ws) {
+      // reset all events
+      this._ws.onmessage = () => {};
+      this._ws.onerror = () => {};
+      this._ws.onclose = () => {};
+
       try {
-        this._ws!.close();
+        this._ws.close();
       } catch (err) {}
+
       this._ws = undefined;
     }
 
-    if (this.peerConnected) {
+    if (this._channel) {
+      // reset all events
+      this._channel.onmessage = () => {};
+      this._channel.onerror = () => {};
+      this._channel.onclose = () => {};
+
       try {
-        this._peer!.close();
+        this._channel.close();
       } catch (err) {}
+
+      this._channel = undefined;
+    }
+
+    if (this._peer) {
+      // reset all events
+      this._peer.onconnectionstatechange = () => {};
+      this._peer.onsignalingstatechange = () => {};
+      this._peer.oniceconnectionstatechange = () => {};
+      this._peer.ontrack = () => {};
+
+      try {
+        this._peer.close();
+      } catch (err) {}
+
       this._peer = undefined;
     }
 
@@ -138,19 +174,19 @@ export abstract class BaseClient extends EventEmitter<any> {
         break;
       case 'keydown':
       case 'mousedown':
-        buffer = new ArrayBuffer(5);
+        buffer = new ArrayBuffer(11);
         payload = new DataView(buffer);
         payload.setUint8(0, OPCODE.KEY_DOWN);
-        payload.setUint16(1, 1, true);
-        payload.setUint16(3, data.key, true);
+        payload.setUint16(1, 8, true);
+        payload.setBigUint64(3, BigInt(data.key), true);
         break;
       case 'keyup':
       case 'mouseup':
-        buffer = new ArrayBuffer(5);
+        buffer = new ArrayBuffer(11);
         payload = new DataView(buffer);
         payload.setUint8(0, OPCODE.KEY_UP);
-        payload.setUint16(1, 1, true);
-        payload.setUint16(3, data.key, true);
+        payload.setUint16(1, 8, true);
+        payload.setBigUint64(3, BigInt(data.key), true);
         break;
       default:
         this.emit('warn', `unknown data event: ${event}`);
@@ -175,7 +211,7 @@ export abstract class BaseClient extends EventEmitter<any> {
     this._ws!.send(JSON.stringify({ event, ...payload }));
   }
 
-  public createPeer(sdp: string, lite: boolean, servers: string[]) {
+  public async createPeer(lite: boolean, servers: RTCIceServer[]) {
     this.emit('debug', `creating peer`);
     if (!this.socketOpen) {
       this.emit(
@@ -194,7 +230,7 @@ export abstract class BaseClient extends EventEmitter<any> {
     this._peer = new RTCPeerConnection();
     if (lite !== true) {
       this._peer = new RTCPeerConnection({
-        iceServers: servers ? [{ urls: servers }] : iceServers(),
+        iceServers: servers,
       });
     }
 
@@ -226,23 +262,43 @@ export abstract class BaseClient extends EventEmitter<any> {
         case 'checking':
           if (this._timeout) {
             clearTimeout(this._timeout);
+            this._timeout = undefined;
           }
           break;
         case 'connected':
           this.onConnected();
           break;
+        case 'disconnected':
+          this[EVENT.RECONNECTING]();
+          break;
+        // https://developer.mozilla.org/en-US/docs/Web/API/WebRTC_API/Signaling_and_video_calling#ice_connection_state
+        // We don't watch the disconnected signaling state here as it can indicate temporary issues and may
+        // go back to a connected state after some time. Watching it would close the video call on any temporary
+        // network issue.
         case 'failed':
           this.onDisconnected(new Error('peer failed'));
           break;
-        case 'disconnected':
-          this.onDisconnected(new Error('peer disconnected'));
+        case 'closed':
+          this.onDisconnected(new Error('peer closed'));
           break;
       }
     };
 
     this._peer.ontrack = this.onTrack.bind(this);
-    this._peer.addTransceiver('audio', { direction: 'recvonly' });
-    this._peer.addTransceiver('video', { direction: 'recvonly' });
+
+    this._peer.onnegotiationneeded = async () => {
+      this.emit('warn', `negotiation is needed`);
+
+      const d = await this._peer!.createOffer();
+      this._peer!.setLocalDescription(d);
+
+      this._ws!.send(
+        JSON.stringify({
+          event: EVENT.SIGNAL.OFFER,
+          sdp: d.sdp,
+        })
+      );
+    };
 
     this._channel = this._peer.createDataChannel('data');
     this._channel.onerror = this.onError.bind(this);
@@ -251,24 +307,47 @@ export abstract class BaseClient extends EventEmitter<any> {
       this,
       new Error('peer data channel closed')
     );
-
-    this._peer.setRemoteDescription({ type: 'offer', sdp });
-    this._peer
-      .createAnswer()
-      .then((d) => {
-        this._peer!.setLocalDescription(d);
-        this._ws!.send(
-          JSON.stringify({
-            event: EVENT.SIGNAL.ANSWER,
-            sdp: d.sdp,
-            displayname: this._displayname,
-          })
-        );
-      })
-      .catch((err) => this.emit('error', err));
   }
 
-  private onMessage(e: MessageEvent) {
+  public async setRemoteOffer(sdp: string) {
+    if (!this._peer) {
+      this.emit('warn', `attempting to set remote offer while disconnected`);
+      return;
+    }
+
+    this._peer.setRemoteDescription({ type: 'offer', sdp });
+
+    for (const candidate of this._candidates) {
+      this._peer.addIceCandidate(candidate);
+    }
+    this._candidates = [];
+
+    try {
+      const d = await this._peer.createAnswer();
+      this._peer!.setLocalDescription(d);
+
+      this._ws!.send(
+        JSON.stringify({
+          event: EVENT.SIGNAL.ANSWER,
+          sdp: d.sdp,
+          displayname: this._displayname,
+        })
+      );
+    } catch (err: any) {
+      this.emit('error', err);
+    }
+  }
+
+  public async setRemoteAnswer(sdp: string) {
+    if (!this._peer) {
+      this.emit('warn', `attempting to set remote answer while disconnected`);
+      return;
+    }
+
+    this._peer.setRemoteDescription({ type: 'answer', sdp });
+  }
+
+  private async onMessage(e: MessageEvent) {
     const { event, ...payload } = JSON.parse(e.data) as WebSocketMessages;
 
     this.emit(
@@ -280,7 +359,31 @@ export abstract class BaseClient extends EventEmitter<any> {
     if (event === EVENT.SIGNAL.PROVIDE) {
       const { sdp, lite, ice, id } = payload as SignalProvidePayload;
       this._id = id;
-      this.createPeer(sdp, lite, ice);
+      await this.createPeer(lite, ice);
+      await this.setRemoteOffer(sdp);
+      return;
+    }
+
+    if (event === EVENT.SIGNAL.OFFER) {
+      const { sdp } = payload as SignalOfferPayload;
+      await this.setRemoteOffer(sdp);
+      return;
+    }
+
+    if (event === EVENT.SIGNAL.ANSWER) {
+      const { sdp } = payload as SignalAnswerMessage;
+      await this.setRemoteAnswer(sdp);
+      return;
+    }
+
+    if (event === EVENT.SIGNAL.CANDIDATE) {
+      const { data } = payload as SignalCandidatePayload;
+      const candidate: RTCIceCandidate = JSON.parse(data);
+      if (this._peer) {
+        this._peer.addIceCandidate(candidate);
+      } else {
+        this._candidates.push(candidate);
+      }
       return;
     }
 
@@ -321,6 +424,7 @@ export abstract class BaseClient extends EventEmitter<any> {
   private onConnected() {
     if (this._timeout) {
       clearTimeout(this._timeout);
+      this._timeout = undefined;
     }
 
     if (!this.connected) {
@@ -336,6 +440,7 @@ export abstract class BaseClient extends EventEmitter<any> {
     this.emit('debug', `connection timeout`);
     if (this._timeout) {
       clearTimeout(this._timeout);
+      this._timeout = undefined;
     }
     this.onDisconnected(new Error('connection timeout'));
   }
@@ -350,6 +455,7 @@ export abstract class BaseClient extends EventEmitter<any> {
     this.emit('warn', `unhandled websocket event '${event}':`, payload);
   }
 
+  protected abstract [EVENT.RECONNECTING](): void;
   protected abstract [EVENT.CONNECTING](): void;
   protected abstract [EVENT.CONNECTED](): void;
   protected abstract [EVENT.DISCONNECTED](reason?: Error): void;

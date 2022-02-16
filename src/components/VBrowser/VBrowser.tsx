@@ -2,6 +2,7 @@ import React from 'react';
 
 import { EVENT } from './events';
 import { NekoClient } from '.';
+import GuacamoleKeyboard from './keyboard';
 
 // import { EVENT } from './events';
 
@@ -16,6 +17,7 @@ export default class VBrowser extends React.Component<{
   doPlay: Function;
 }> {
   // private observer = new ResizeObserver(this.onResize);
+  private keyboard = GuacamoleKeyboard();
   private focused = false;
   private fullscreen = false;
   private activeKeys: Set<number> = new Set();
@@ -78,7 +80,7 @@ export default class VBrowser extends React.Component<{
       this.$client.on('debug', (e, data) => console.log(e, data));
     }
 
-    const url = 'wss://' + this.props.hostname + '/';
+    const url = 'wss://' + this.props.hostname + '/ws';
     this.$client.login(url, this.props.password, this.props.username);
 
     // this._container.current?.addEventListener('resize', this.onResize);
@@ -88,12 +90,28 @@ export default class VBrowser extends React.Component<{
     //   this.onResize();
     // });
 
-    document.addEventListener('focusin', this.onFocus.bind(this));
-    document.addEventListener('focusout', this.onBlur.bind(this));
+    // document.addEventListener('focusin', this.onFocus.bind(this));
+    // document.addEventListener('focusout', this.onBlur.bind(this));
 
     document
       .getElementById('leftOverlay')
       ?.addEventListener('wheel', this.onWheel, { passive: false });
+
+    /* Initialize Guacamole Keyboard */
+    this.keyboard.onkeydown = (key: number) => {
+      if (!this.focused || !this.controlling) {
+        return true;
+      }
+      this.$client.sendData('keydown', { key: this.keyMap(key) });
+      return false;
+    };
+    this.keyboard.onkeyup = (key: number) => {
+      if (!this.focused || !this.controlling) {
+        return;
+      }
+      this.$client.sendData('keyup', { key: this.keyMap(key) });
+    };
+    this.keyboard.listenTo(document.getElementById('leftOverlay') as Element);
   }
 
   componentDidUpdate(prevProps: any) {
@@ -140,7 +158,7 @@ export default class VBrowser extends React.Component<{
       navigator.clipboard.writeText(clipboard);
     }
   }
-  onFocus = async () => {
+  onFocus = async (e: React.MouseEvent) => {
     if (
       this.props.controlling &&
       navigator.clipboard &&
@@ -150,6 +168,11 @@ export default class VBrowser extends React.Component<{
       // console.log('[FOCUS]', text);
       // send clipboard contents to vbrowser
       this.$client.sendMessage(EVENT.CONTROL.CLIPBOARD, { text });
+      this.$client.sendMessage(EVENT.CONTROL.KEYBOARD, {
+        capsLock: e.getModifierState('CapsLock'),
+        numLock: e.getModifierState('NumLock'),
+        scrollLock: e.getModifierState('ScrollLock'),
+      });
     }
   };
 
@@ -212,7 +235,7 @@ export default class VBrowser extends React.Component<{
       return;
     }
     this.onMousePos(e);
-    this.$client.sendData('mousedown', { key: e.button });
+    this.$client.sendData('mousedown', { key: e.button + 1 });
   };
 
   onMouseUp = (e: React.MouseEvent) => {
@@ -222,7 +245,7 @@ export default class VBrowser extends React.Component<{
       return;
     }
     this.onMousePos(e);
-    this.$client.sendData('mouseup', { key: e.button });
+    this.$client.sendData('mouseup', { key: e.button + 1 });
   };
 
   onMouseMove = (e: React.MouseEvent) => {
@@ -237,7 +260,7 @@ export default class VBrowser extends React.Component<{
       return;
     }
     this._overlay.current!.focus();
-    this.onFocus();
+    this.onFocus(e);
     this.focused = true;
   };
 
@@ -247,49 +270,52 @@ export default class VBrowser extends React.Component<{
     }
     this._overlay.current!.blur();
     this.focused = false;
+    this.keyboard.reset();
   };
 
-  // frick you firefox
-  getCode = (e: React.KeyboardEvent): number => {
-    let key = e.keyCode;
-    if (key === 59 && (e.key === ';' || e.key === ':')) {
-      key = 186;
-    }
+  KeyTable = {
+    XK_ISO_Level3_Shift: 0xfe03, // AltGr
+    XK_Mode_switch: 0xff7e, // Character set switch
+    XK_Control_L: 0xffe3, // Left control
+    XK_Control_R: 0xffe4, // Right control
+    XK_Meta_L: 0xffe7, // Left meta
+    XK_Meta_R: 0xffe8, // Right meta
+    XK_Alt_L: 0xffe9, // Left alt
+    XK_Alt_R: 0xffea, // Right alt
+    XK_Super_L: 0xffeb, // Left super
+    XK_Super_R: 0xffec, // Right super
+  };
 
-    if (key === 61 && (e.key === '=' || e.key === '+')) {
-      key = 187;
-    }
+  get hasMacOSKbd() {
+    return /(Mac|iPhone|iPod|iPad)/i.test(navigator.platform);
+  }
 
-    if (key === 173 && (e.key === '-' || e.key === '_')) {
-      key = 189;
+  keyMap(key: number): number {
+    // Alt behaves more like AltGraph on macOS, so shuffle the
+    // keys around a bit to make things more sane for the remote
+    // server. This method is used by noVNC, RealVNC and TigerVNC
+    // (and possibly others).
+    if (this.hasMacOSKbd) {
+      switch (key) {
+        case this.KeyTable.XK_Meta_L:
+          key = this.KeyTable.XK_Control_L;
+          break;
+        case this.KeyTable.XK_Super_L:
+          key = this.KeyTable.XK_Alt_L;
+          break;
+        case this.KeyTable.XK_Super_R:
+          key = this.KeyTable.XK_Super_L;
+          break;
+        case this.KeyTable.XK_Alt_L:
+          key = this.KeyTable.XK_Mode_switch;
+          break;
+        case this.KeyTable.XK_Alt_R:
+          key = this.KeyTable.XK_ISO_Level3_Shift;
+          break;
+      }
     }
-
     return key;
-  };
-
-  onKeyDown = (e: React.KeyboardEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    if (!this.focused || !this.controlling) {
-      return;
-    }
-
-    let key = this.getCode(e);
-    this.$client.sendData('keydown', { key });
-    this.activeKeys.add(key);
-  };
-
-  onKeyUp = (e: React.KeyboardEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    if (!this.focused || !this.controlling) {
-      return;
-    }
-
-    let key = this.getCode(e);
-    this.$client.sendData('keyup', { key });
-    this.activeKeys.delete(key);
-  };
+  }
 
   onResize = () => {
     // let height = 0;
@@ -319,6 +345,7 @@ export default class VBrowser extends React.Component<{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          width: '100%',
         }}
       >
         <div
@@ -353,8 +380,6 @@ export default class VBrowser extends React.Component<{
             onMouseUp={this.onMouseUp}
             onMouseEnter={this.onMouseEnter}
             onMouseLeave={this.onMouseLeave}
-            onKeyDown={this.onKeyDown}
-            onKeyUp={this.onKeyUp}
           />
         </div>
       </div>
