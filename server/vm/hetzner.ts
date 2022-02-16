@@ -227,10 +227,10 @@ export class Hetzner extends VMManager {
       },
     });
     const id = response.data.server.id;
-    await new Promise((resolve) => setTimeout(resolve, 10 * 60 * 1000));
+    await new Promise((resolve) => setTimeout(resolve, 4 * 60 * 1000));
     // Validate snapshot server was created successfully
     const response3 = await axios(
-      'http://' + response.data.server.public_net?.ipv4?.ip + ':5000/healthz'
+      'http://' + response.data.server.public_net?.ipv4?.ip + ':5000'
     );
     const response2 = await axios({
       method: 'POST',
