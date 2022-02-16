@@ -7,9 +7,9 @@ import {
   ControlClipboardPayload,
   ControlPayload,
   ControlTargetPayload,
-  DisconnectPayload,
   ScreenConfigurationsPayload,
   ScreenResolutionPayload,
+  SystemMessagePayload,
 } from './messages';
 
 export class NekoClient extends BaseClient implements EventEmitter<any> {
@@ -24,6 +24,7 @@ export class NekoClient extends BaseClient implements EventEmitter<any> {
   /////////////////////////////
   // Internal Events
   /////////////////////////////
+  protected [EVENT.RECONNECTING]() {}
   protected [EVENT.CONNECTING]() {}
 
   protected [EVENT.CONNECTED]() {
@@ -47,7 +48,7 @@ export class NekoClient extends BaseClient implements EventEmitter<any> {
   /////////////////////////////
   // System Events
   /////////////////////////////
-  protected [EVENT.SYSTEM.DISCONNECT]({ message }: DisconnectPayload) {
+  protected [EVENT.SYSTEM.DISCONNECT]({ message }: SystemMessagePayload) {
     this.onDisconnected(new Error(message));
   }
 
