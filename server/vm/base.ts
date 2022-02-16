@@ -22,20 +22,17 @@ export abstract class VMManager {
   private currentSize = 0;
   private limitSize = 0;
   private minSize = 0;
-  private minBuffer = 0;
 
   constructor(
     large: boolean,
     region: string,
     limitSize: number,
     minSize: number,
-    minBuffer: number
   ) {
     this.isLarge = Boolean(large);
     this.region = region;
     this.limitSize = Number(limitSize);
     this.minSize = Number(minSize);
-    this.minBuffer = Number(minBuffer);
     if (!redis) {
       throw new Error('Cannot construct VMManager without Redis');
     }
@@ -51,7 +48,7 @@ export abstract class VMManager {
   };
 
   public getMinBuffer = () => {
-    return this.minBuffer;
+    return this.limitSize * 0.05;
   };
 
   public getCurrentSize = () => {
@@ -241,7 +238,7 @@ export abstract class VMManager {
       await this.redis.setex(
         this.getRedisPoolSizeKey(),
         2 * 60,
-        this.currentSize
+        allVMs.length,
       );
       let sortedVMs = allVMs
         // Sort newest first (decreasing alphabetically)
@@ -262,6 +259,26 @@ export abstract class VMManager {
         );
       }
       await cmd.exec();
+      if (allVMs.length) {
+        const availableKeys = await this.redis.lrange(
+          this.getRedisQueueKey(),
+          0,
+          -1
+        );
+        const stagingKeys = await this.redis.lrange(
+          this.getRedisStagingKey(),
+          0,
+          -1
+        );
+        console.log(
+          '[STATS] %s: currentSize %s, available %s, staging %s, buffer %s',
+          this.getRedisQueueKey(),
+          allVMs.length,
+          availableKeys.length,
+          stagingKeys.length,
+          this.getAdjustedBuffer(),
+        );
+      }
     };
 
     const cleanupVMGroup = async () => {
@@ -291,12 +308,9 @@ export abstract class VMManager {
         ...stagingKeys,
       ]);
       console.log(
-        '[CLEANUP] %s found %s VMs, usedKeys %s, availableKeys %s, stagingKeys %s',
+        '[CLEANUP] %s: cleanup %s VMs',
         this.getRedisQueueKey(),
-        allVMs.length,
-        usedKeys.length,
-        availableKeys.length,
-        stagingKeys.length
+        allVMs.length - dontDelete.size,
       );
       for (let i = 0; i < allVMs.length; i++) {
         const server = allVMs[i];
