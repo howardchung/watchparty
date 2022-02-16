@@ -41,13 +41,10 @@ export class Hetzner extends VMManager {
         networks: [
           this.networks[Math.floor(Math.random() * this.networks.length)],
         ],
-        user_data: cloudInit(
-          imageName,
-          this.isLarge ? '1920x1080@30' : undefined,
-          false,
-          false,
-          true
-        ),
+        // user_data: cloudInit(
+        //   imageName,
+        //   this.isLarge ? '1920x1080@30' : undefined,
+        // ),
         labels: {
           [this.getTag()]: '1',
           originalName: name,
@@ -229,9 +226,9 @@ export class Hetzner extends VMManager {
     const id = response.data.server.id;
     await new Promise((resolve) => setTimeout(resolve, 4 * 60 * 1000));
     // Validate snapshot server was created successfully
-    const response3 = await axios(
-      'http://' + response.data.server.public_net?.ipv4?.ip + ':5000'
-    );
+    // const response3 = await axios(
+    //   'http://' + response.data.server.public_net?.ipv4?.ip + ':5000'
+    // );
     const response2 = await axios({
       method: 'POST',
       url: `https://api.hetzner.cloud/v1/servers/${id}/actions/create_image`,

@@ -124,6 +124,11 @@ export abstract class VMManager {
     // We can attempt to reuse the instance which is more efficient if users tend to use them for a short time
     // Otherwise terminating them is simpler but more expensive since they're billed for an hour
     console.log('[RESET]', id);
+    if (Number(id) < 18034350) {
+      // TODO temporarily reset instances
+      this.terminateVM(id);
+      return;
+    }
     await this.rebootVM(id);
     // Delete any locks/caches
     await this.redis.del('lock:' + this.id + ':' + id);
