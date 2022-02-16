@@ -1,6 +1,6 @@
 import EventEmitter from 'eventemitter3';
 
-import { iceServers } from '../../utils';
+// import { iceServers } from '../../utils';
 import { OPCODE } from './data';
 import { EVENT, WebSocketEvents } from './events';
 import {
