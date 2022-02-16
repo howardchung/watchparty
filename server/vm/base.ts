@@ -477,11 +477,11 @@ export abstract class VMManager {
 }
 
 async function checkVMReady(host: string) {
-  const url = 'https://' + host.replace('/', '/healthz');
+  const url = 'https://' + host.replace('/', '/health');
   try {
     // const out = execSync(`curl -i -L -v --ipv4 '${host}'`);
     // if (!out.toString().startsWith('OK') && !out.toString().startsWith('404 page not found')) {
-    //   throw new Error('mismatched response from healthz');
+    //   throw new Error('mismatched response from health');
     // }
     await axios({
       method: 'GET',
