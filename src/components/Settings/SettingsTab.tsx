@@ -82,12 +82,6 @@ export const SettingsTab = ({
     ''
   );
 
-  useEffect(() => {
-    setRoomTitleInput(roomTitle);
-    setRoomDescriptionInput(roomDescription);
-    setRoomTitleColorInput(roomTitleColor);
-  }, [roomTitle, roomDescription, roomTitleColor]);
-
   const setRoomState = useCallback(
     async (data: any) => {
       const token = await user?.getIdToken();
@@ -287,7 +281,7 @@ export const SettingsTab = ({
               <div style={{ display: 'flex', marginBottom: 2 }}>
                 <Input
                   style={{ marginRight: 3, flexGrow: 1 }}
-                  value={roomTitleInput}
+                  value={roomTitleInput || roomTitle}
                   disabled={!isSubscriber}
                   maxLength={roomTitleMaxCharLength}
                   onChange={(e) => {
@@ -304,7 +298,7 @@ export const SettingsTab = ({
                     <React.Fragment>
                       <h5>Edit Title Color</h5>
                       <HexColorPicker
-                        color={roomTitleColorInput || defaultRoomTitleColor}
+                        color={roomTitleColorInput || roomTitleColor || defaultRoomTitleColor}
                         onChange={(e) => {
                           setAdminSettingsChanged(true);
                           setRoomTitleColorInput(e);
@@ -337,7 +331,7 @@ export const SettingsTab = ({
               </div>
               <Input
                 style={{ marginBottom: 2 }}
-                value={roomDescriptionInput}
+                value={roomDescriptionInput || roomDescription}
                 disabled={!isSubscriber}
                 maxLength={roomDescriptionMaxCharLength}
                 onChange={(e) => {
@@ -372,9 +366,9 @@ export const SettingsTab = ({
               vanity: vanity,
               password: password,
               isChatDisabled: isChatDisabled,
-              roomTitle: roomTitleInput,
-              roomDescription: roomDescriptionInput,
-              roomTitleColor: roomTitleColorInput || defaultRoomTitleColor,
+              roomTitle: roomTitleInput || roomTitle,
+              roomDescription: roomDescriptionInput || roomDescription,
+              roomTitleColor: roomTitleColorInput || roomTitleColor,
             });
             setAdminSettingsChanged(false);
           }}
