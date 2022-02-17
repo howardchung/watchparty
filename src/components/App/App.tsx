@@ -138,6 +138,9 @@ interface AppState {
   vanity: string | undefined;
   password: string | undefined;
   roomLink: string;
+  roomTitle: string | undefined;
+  roomDescription: string | undefined;
+  roomTitleColor: string | undefined;
 }
 
 export default class App extends React.Component<AppProps, AppState> {
@@ -197,6 +200,9 @@ export default class App extends React.Component<AppProps, AppState> {
     vanity: undefined,
     password: undefined,
     roomLink: '',
+    roomTitle: '',
+    roomDescription: '',
+    roomTitleColor: '',
   };
   socket: Socket = null as any;
   watchPartyYTPlayer: any = null;
@@ -236,6 +242,9 @@ export default class App extends React.Component<AppProps, AppState> {
     this.setPassword(data.password);
     this.setRoomLink(this.getRoomLink(data.vanity));
     this.setIsChatDisabled(data.isChatDisabled);
+    this.setRoomTitle(data.roomTitle);
+    this.setRoomDescription(data.roomDescription)
+    this.setRoomTitleColor(data.roomTitleColor)
     window.history.replaceState('', '', this.getRoomLink(data.vanity));
   };
 
@@ -342,6 +351,15 @@ export default class App extends React.Component<AppProps, AppState> {
   };
   setRoomLink = (roomLink: string) => {
     this.setState({ roomLink });
+  };
+  setRoomTitle = (roomTitle: string | undefined) => {
+    this.setState({ roomTitle });
+  };
+  setRoomDescription = (roomDescription: string | undefined) => {
+    this.setState({ roomDescription });
+  };
+  setRoomTitleColor = (roomTitleColor: string | undefined) => {
+    this.setState({ roomTitleColor });
   };
 
   init = async () => {
@@ -1482,6 +1500,12 @@ export default class App extends React.Component<AppProps, AppState> {
           password={this.state.password}
           setPassword={this.setPassword}
           clearChat={this.clearChat}
+          roomTitle={this.state.roomTitle}
+          setRoomTitle={this.setRoomTitle}
+          roomDescription={this.state.roomDescription}
+          setRoomDescription={this.setRoomDescription}
+          roomTitleColor={this.state.roomTitleColor}
+          setRoomTitleColor={this.setRoomTitleColor}
         />
       </Grid.Column>
     );
@@ -1582,6 +1606,9 @@ export default class App extends React.Component<AppProps, AppState> {
           user={this.props.user}
           isCustomer={this.props.isCustomer}
           isSubscriber={this.props.isSubscriber}
+          roomTitle={this.state.roomTitle}
+          roomDescription={this.state.roomDescription}
+          roomTitleColor={this.state.roomTitleColor}
         />
         {
           <Grid stackable celled="internally">
