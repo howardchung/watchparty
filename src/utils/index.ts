@@ -1,9 +1,9 @@
 //@ts-ignore
 import canAutoplay from 'can-autoplay';
-import { parseStringPromise } from 'xml2js';
 import { v4 as uuidv4 } from 'uuid';
 import md5 from 'blueimp-md5';
 import firebase from 'firebase/compat/app';
+import { XMLParser } from 'fast-xml-parser';
 
 export function formatTimestamp(input: any) {
   if (
@@ -226,13 +226,14 @@ export async function getMediaPathResults(
   if (mediaPath.includes('s3.')) {
     // S3-style buckets return data in XML
     const xml = await response.text();
-    const data = await parseStringPromise(xml);
+    const parser = new XMLParser();
+    const data = parser.parse(xml);
     let filtered = data.ListBucketResult.Contents.filter(
-      (file: any) => !file.Key[0].includes('/')
+      (file: any) => !file.Key.includes('/')
     );
     results = filtered.map((file: any) => ({
-      url: mediaPath + '/' + file.Key[0],
-      name: mediaPath + '/' + file.Key[0],
+      url: mediaPath + '/' + file.Key,
+      name: mediaPath + '/' + file.Key,
     }));
   } else {
     const data = await response.json();
