@@ -172,8 +172,8 @@ export abstract class VMManager {
           Number(new Date()) - Number(new Date(vm.creation_date));
         return lifetime;
       }
-    } catch (e) {
-      console.warn(e);
+    } catch (e: any) {
+      console.warn(e.response?.data);
     }
     return 0;
   };
@@ -314,8 +314,8 @@ export abstract class VMManager {
           console.log('[CLEANUP]', server.id);
           try {
             await this.resetVM(server.id);
-          } catch (e) {
-            console.warn(e);
+          } catch (e: any) {
+            console.warn(e.response?.data);
           }
           //this.terminateVMWrapper(server.id);
           await new Promise((resolve) => setTimeout(resolve, 2000));
@@ -347,41 +347,40 @@ export abstract class VMManager {
               return resolve(id + ', ' + retryCount + ', ' + false);
             }
             let ready = false;
-            let vmCached = await this.redis.get(
-              this.getRedisHostCacheKey() + ':' + id
-            );
-            let host = vmCached?.startsWith('{')
-              ? JSON.parse(vmCached).host
-              : vmCached;
-            if (!host && (retryCount === 1 || retryCount % 5 === 0)) {
-              try {
-                const vm = await this.getVM(id);
-                host = vm?.host ?? null;
-                if (vm && vm.host) {
+            let vm = null;
+            try {
+              const cached = await this.redis.get(
+                this.getRedisHostCacheKey() + ':' + id
+              );
+              vm = cached ? JSON.parse(cached) : null;
+              if (!vm && (retryCount === 1 || retryCount % 10 === 0)) {
+                vm = await this.getVM(id);
+                if (vm?.host) {
                   console.log(
                     '[CHECKSTAGING] caching host %s for id %s',
-                    host,
+                    vm?.host,
                     id
                   );
                   await this.redis.setex(
                     this.getRedisHostCacheKey() + ':' + id,
-                    3 * 3600,
+                    2 * 3600,
                     JSON.stringify(vm)
                   );
                 }
-              } catch (e: any) {
-                if (e.response?.status === 404) {
-                  await this.redis.lrem(this.getRedisQueueKey(), 0, id);
-                  await this.redis.lrem(this.getRedisStagingKey(), 0, id);
-                  await this.redis.del(this.getRedisStagingKey() + ':' + id);
-                  return reject();
-                }
+              }
+            } catch (e: any) {
+              console.warn(e.response?.data);
+              if (e.response?.status === 404) {
+                await this.redis.lrem(this.getRedisQueueKey(), 0, id);
+                await this.redis.lrem(this.getRedisStagingKey(), 0, id);
+                await this.redis.del(this.getRedisStagingKey() + ':' + id);
+                return reject();
               }
             }
-            ready = await checkVMReady(host ?? '');
+            ready = await checkVMReady(vm?.host ?? '');
             //ready = retryCount > 100;
             if (ready) {
-              console.log('[CHECKSTAGING] ready:', id, host, retryCount);
+              console.log('[CHECKSTAGING] ready:', id, vm?.host, retryCount);
               // If it is, move it to available list
               const rem = await this.redis.lrem(
                 this.getRedisStagingKey(),
@@ -424,7 +423,7 @@ export abstract class VMManager {
                     '[CHECKSTAGING]',
                     'not ready:',
                     id,
-                    host,
+                    vm?.host,
                     retryCount
                   );
                 }
@@ -457,8 +456,8 @@ export abstract class VMManager {
       while (true) {
         try {
           await cleanupVMGroup();
-        } catch (e) {
-          console.error(e);
+        } catch (e: any) {
+          console.warn(e.response?.data);
         }
         await new Promise((resolve) => setTimeout(resolve, cleanupInterval));
       }
