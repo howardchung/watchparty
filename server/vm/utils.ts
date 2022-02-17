@@ -31,7 +31,10 @@ export const assignVM = async (
           await vmManager.startVMWrapper();
         }
       }
-      let resp = await redis.blpop(vmManager.getRedisQueueKey(), 90);
+      let resp = await redis.blpop(
+        vmManager.getRedisQueueKey(),
+        config.VM_ASSIGNMENT_TIMEOUT
+      );
       if (!resp) {
         return undefined;
       }
