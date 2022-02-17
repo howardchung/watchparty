@@ -999,6 +999,7 @@ export class Room {
     }
     // check if is valid hex color representation
     if (!/^#([0-9a-f]{3}){1,2}$/i.test(roomTitleColor)) {
+      socket.emit('errorMessage', 'Invalid color code');
       return;
     }
     // console.log(owner, vanity, password);
