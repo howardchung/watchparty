@@ -64,7 +64,6 @@ const names = Moniker.generator([
 ]);
 const launchTime = Number(new Date());
 const rooms = new Map<string, Room>();
-const vmManagers = getBgVMManagers();
 init();
 
 async function init() {
@@ -198,9 +197,10 @@ app.get('/stats', async (req, res) => {
 });
 
 app.get('/health/:metric', async (req, res) => {
-  const stats = await getStats();
-  const result =
-    stats.vmManagerStats[req.params.metric]?.availableVBrowsers?.length;
+  const vmManagerStats = (
+    await axios.get('http://localhost:' + config.VMWORKER_PORT + '/stats')
+  ).data;
+  const result = vmManagerStats[req.params.metric]?.availableVBrowsers?.length;
   res.status(result ? 200 : 500).json(result);
 });
 
@@ -299,20 +299,6 @@ app.get('/metadata', async (req, res) => {
     req.query?.uid as string,
     req.query?.token as string
   );
-  const isVMPoolFull: BooleanDict = {};
-  for (let i = 0; i <= Object.keys(vmManagers).length; i++) {
-    const key = Object.keys(vmManagers)[i];
-    const value = vmManagers[key];
-    if (value) {
-      const availableCount = await redis?.llen(value.getRedisQueueKey());
-      const limitSize = value?.getLimitSize() ?? 0;
-      const currentSize = await redis?.get(value.getRedisPoolSizeKey());
-      isVMPoolFull[key] = Boolean(
-        limitSize > 0 &&
-          Number(currentSize) - Number(availableCount) > limitSize * 0.95
-      );
-    }
-  }
   let isCustomer = false;
   let isSubscriber = false;
   if (decoded?.email) {
@@ -321,6 +307,16 @@ app.get('/metadata', async (req, res) => {
       customer?.subscriptions?.data?.find((sub) => sub?.status === 'active')
     );
     isCustomer = Boolean(customer);
+  }
+  let isVMPoolFull = null;
+  try {
+    isVMPoolFull = (
+      await axios.get(
+        'http://localhost' + config.VMWORKER_PORT + '/isVMPoolFull'
+      )
+    ).data;
+  } catch (e) {
+    console.warn(e);
   }
   return res.json({ isSubscriber, isCustomer, isVMPoolFull });
 });
@@ -602,32 +598,6 @@ async function getStats() {
   const postgresUsage = (
     await postgres?.query(`SELECT pg_database_size('postgres');`)
   )?.rows[0].pg_database_size;
-  const vmManagerStats: AnyDict = {};
-  Object.entries(vmManagers).forEach(async ([key, vmManager]) => {
-    const availableVBrowsers = await redis?.lrange(
-      vmManager?.getRedisQueueKey() || 'availableList',
-      0,
-      -1
-    );
-    const stagingVBrowsers = await redis?.lrange(
-      vmManager?.getRedisStagingKey() || 'stagingList',
-      0,
-      -1
-    );
-    // const terminationVBrowsers = await redis?.smembers(
-    //   vmManager?.getRedisTerminationKey() || 'terminationList',
-    // );
-    const size = await redis?.get(
-      vmManager?.getRedisPoolSizeKey() || 'vmPoolFull'
-    );
-    vmManagerStats[key] = {
-      availableVBrowsers,
-      stagingVBrowsers,
-      adjustedBuffer: vmManager?.getAdjustedBuffer(),
-      // terminationVBrowsers,
-      size,
-    };
-  });
   const numPermaRooms = (
     await postgres?.query('SELECT count(1) from room WHERE owner IS NOT NULL')
   )?.rows[0].count;
@@ -712,6 +682,15 @@ async function getStats() {
   );
   const vBrowserClientIDsCard = await redis?.zcard('vBrowserClientIDs');
   const vBrowserUIDsCard = await redis?.zcard('vBrowserUIDs');
+
+  let vmManagerStats = null;
+  try {
+    vmManagerStats = (
+      await axios.get('http://localhost:' + config.VMWORKER_PORT + '/stats')
+    ).data;
+  } catch (e) {
+    console.warn(e);
+  }
 
   return {
     uptime,

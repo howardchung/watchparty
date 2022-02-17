@@ -28,7 +28,11 @@ export class VBrowserModal extends React.Component<{
   user?: firebase.User;
   beta?: boolean;
 }> {
-  state = { isVMPoolFull: {} as BooleanDict, region: 'US', provider: process.env.NODE_ENV === 'development' ? 'Docker' : 'Hetzner' };
+  state = {
+    isVMPoolFull: {} as BooleanDict,
+    region: 'US',
+    provider: process.env.NODE_ENV === 'development' ? 'Docker' : 'Hetzner',
+  };
   async componentDidMount() {
     const resp = await window.fetch(serverPath + '/metadata');
     const metadata = await resp.json();
@@ -133,7 +137,7 @@ export class VBrowserModal extends React.Component<{
                       <Table.Cell>Provider</Table.Cell>
                       <Table.Cell colspan={2}>
                         <Dropdown
-                          placeholder='Select provider'
+                          placeholder="Select provider"
                           selection
                           onChange={(e, { value }) =>
                             this.setState({ provider: value })
@@ -148,7 +152,9 @@ export class VBrowserModal extends React.Component<{
                     <Table.Cell></Table.Cell>
                     <Table.Cell>
                       {this.props.user ? (
-                        this.state.isVMPoolFull[this.state.provider + '' + this.state.region] ? (
+                        this.state.isVMPoolFull[
+                          this.state.provider + '' + this.state.region
+                        ] ? (
                           vmPoolFullMessage
                         ) : (
                           <LaunchButton />

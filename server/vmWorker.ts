@@ -66,6 +66,54 @@ app.post('/releaseVM', async (req, res) => {
   return res.end();
 });
 
+app.get('/stats', async (req, res) => {
+  const vmManagerStats: AnyDict = {};
+  Object.entries(vmManagers).forEach(async ([key, vmManager]) => {
+    const availableVBrowsers = await redis?.lrange(
+      vmManager?.getRedisQueueKey() || 'availableList',
+      0,
+      -1
+    );
+    const stagingVBrowsers = await redis?.lrange(
+      vmManager?.getRedisStagingKey() || 'stagingList',
+      0,
+      -1
+    );
+    // const terminationVBrowsers = await redis?.smembers(
+    //   vmManager?.getRedisTerminationKey() || 'terminationList',
+    // );
+    const size = await redis?.get(
+      vmManager?.getRedisPoolSizeKey() || 'vmPoolFull'
+    );
+    vmManagerStats[key] = {
+      availableVBrowsers,
+      stagingVBrowsers,
+      adjustedBuffer: vmManager?.getAdjustedBuffer(),
+      // terminationVBrowsers,
+      size,
+    };
+  });
+  return res.json(vmManagerStats);
+});
+
+app.get('/isVMPoolFull', async (req, res) => {
+  const isVMPoolFull: BooleanDict = {};
+  for (let i = 0; i <= Object.keys(vmManagers).length; i++) {
+    const key = Object.keys(vmManagers)[i];
+    const value = vmManagers[key];
+    if (value) {
+      const availableCount = await redis?.llen(value.getRedisQueueKey());
+      const limitSize = value?.getLimitSize() ?? 0;
+      const currentSize = await redis?.get(value.getRedisPoolSizeKey());
+      isVMPoolFull[key] = Boolean(
+        limitSize > 0 &&
+          Number(currentSize) - Number(availableCount) > limitSize * 0.95
+      );
+    }
+  }
+  return res.json(isVMPoolFull);
+});
+
 // curl -X POST http://localhost:3100/updateSnapshot -H 'Content-Type: application/json' -d '{"provider":"Hetzner","isLarge":false,"region":"US"}'
 app.post('/updateSnapshot', async (req, res) => {
   const pool =
