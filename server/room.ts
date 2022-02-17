@@ -609,7 +609,7 @@ export class Room {
       uid: string;
       token: string;
       rcToken: string;
-      options: { size: string; region: string, provider: string };
+      options: { size: string; region: string; provider: string };
     }
   ) => {
     if (!this.validateLock(socket.id)) {
