@@ -308,7 +308,8 @@ app.get('/metadata', async (req, res) => {
       const limitSize = value?.getLimitSize() ?? 0;
       const currentSize = await redis?.get(value.getRedisPoolSizeKey());
       isVMPoolFull[key] = Boolean(
-        limitSize > 0 && (Number(currentSize) - Number(availableCount)) > limitSize * 0.95,
+        limitSize > 0 &&
+          Number(currentSize) - Number(availableCount) > limitSize * 0.95
       );
     }
   }

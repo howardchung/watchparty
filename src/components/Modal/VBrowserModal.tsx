@@ -8,6 +8,18 @@ import { SignInButton } from '../TopBar/TopBar';
 import { serverPath } from '../../utils';
 import firebase from 'firebase/compat/app';
 
+const regionOptions = [
+  { key: 'US', text: 'USA', value: 'US', icon: 'flag' },
+  { key: 'EU', text: 'Europe', value: 'EU', icon: 'flag' },
+];
+
+const providerOptions = [
+  { key: 'Hetzner', text: 'Hetzner', value: 'Hetzner' },
+  { key: 'DO', text: 'DigitalOcean', value: 'DO' },
+  { key: 'Scaleway', text: 'Scaleway', value: 'Scaleway' },
+  { key: 'Docker', text: 'Docker', value: 'Docker' },
+];
+
 export class VBrowserModal extends React.Component<{
   closeModal: Function;
   startVBrowser: Function;
@@ -16,14 +28,11 @@ export class VBrowserModal extends React.Component<{
   user?: firebase.User;
   beta?: boolean;
 }> {
-  state = { isVMPoolFull: false, region: 'US', regionPlus: 'US' };
+  state = { isVMPoolFull: {} as BooleanDict, region: 'US', provider: process.env.NODE_ENV === 'development' ? 'Docker' : 'Hetzner' };
   async componentDidMount() {
     const resp = await window.fetch(serverPath + '/metadata');
     const metadata = await resp.json();
-    // TODO make this check on region change
-    if (metadata.isVMPoolFull?.HetznerUS) {
-      this.setState({ isVMPoolFull: true });
-    }
+    this.setState({ isVMPoolFull: metadata.isVMPoolFull });
   }
   render() {
     const { closeModal, startVBrowser } = this.props;
@@ -38,7 +47,8 @@ export class VBrowserModal extends React.Component<{
             ).executeRecaptcha('launchVBrowser');
             startVBrowser(rcToken, {
               size: large ? 'large' : '',
-              region: large ? this.state.regionPlus : this.state.region,
+              region: this.state.region,
+              provider: this.state.provider,
             });
             closeModal();
           }}
@@ -65,11 +75,6 @@ export class VBrowserModal extends React.Component<{
         }
       />
     );
-
-    const options = [
-      { key: 'US', text: 'US', value: 'US', icon: 'flag' },
-      { key: 'EU', text: 'EU', value: 'EU', icon: 'flag' },
-    ];
 
     return (
       <GoogleReCaptchaProvider
@@ -111,24 +116,30 @@ export class VBrowserModal extends React.Component<{
                   {this.props.beta && (
                     <Table.Row>
                       <Table.Cell>Region</Table.Cell>
-                      <Table.Cell>
+                      <Table.Cell colspan={2}>
                         <Dropdown
                           selection
                           onChange={(e, { value }) =>
                             this.setState({ region: value })
                           }
                           value={this.state.region}
-                          options={options}
+                          options={regionOptions}
                         ></Dropdown>
                       </Table.Cell>
-                      <Table.Cell>
+                    </Table.Row>
+                  )}
+                  {this.props.beta && (
+                    <Table.Row>
+                      <Table.Cell>Provider</Table.Cell>
+                      <Table.Cell colspan={2}>
                         <Dropdown
+                          placeholder='Select provider'
                           selection
                           onChange={(e, { value }) =>
-                            this.setState({ regionPlus: value })
+                            this.setState({ provider: value })
                           }
-                          value={this.state.regionPlus}
-                          options={options}
+                          value={this.state.provider}
+                          options={providerOptions}
                         ></Dropdown>
                       </Table.Cell>
                     </Table.Row>
@@ -137,7 +148,7 @@ export class VBrowserModal extends React.Component<{
                     <Table.Cell></Table.Cell>
                     <Table.Cell>
                       {this.props.user ? (
-                        this.state.isVMPoolFull ? (
+                        this.state.isVMPoolFull[this.state.provider + '' + this.state.region] ? (
                           vmPoolFullMessage
                         ) : (
                           <LaunchButton />
