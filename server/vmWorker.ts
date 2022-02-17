@@ -87,13 +87,15 @@ app.get('/stats', async (req, res) => {
     const size = await redis?.get(
       vmManager?.getRedisPoolSizeKey() || 'vmPoolFull'
     );
-    vmManagerStats[key] = {
-      availableVBrowsers,
-      stagingVBrowsers,
-      adjustedBuffer: vmManager?.getAdjustedBuffer(),
-      // terminationVBrowsers,
-      size,
-    };
+    if (key && vmManager) {
+      vmManagerStats[key] = {
+        availableVBrowsers,
+        stagingVBrowsers,
+        adjustedBuffer: vmManager?.getAdjustedBuffer(),
+        // terminationVBrowsers,
+        size,
+      };
+    }
   }
   return res.json(vmManagerStats);
 });
