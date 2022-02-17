@@ -368,7 +368,7 @@ export const SettingsTab = ({
               isChatDisabled: isChatDisabled,
               roomTitle: roomTitleInput || roomTitle,
               roomDescription: roomDescriptionInput || roomDescription,
-              roomTitleColor: roomTitleColorInput || roomTitleColor,
+              roomTitleColor: roomTitleColorInput || roomTitleColor || defaultRoomTitleColor,
             });
             setAdminSettingsChanged(false);
           }}
