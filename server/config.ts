@@ -19,9 +19,6 @@ const defaults = {
   DO_SSH_KEYS: '', // IDs of DigitalOcean SSH keys to access vbrowsers
   HETZNER_TOKEN: '', // Optional, for Hetzner VMs
   HETZNER_GATEWAY: '', // Gateway handling SSL termination
-  HETZNER_GATEWAY_US: '', // Gateway handling SSL termination
-  HETZNER_NETWORKS: '', // IDs of Hetzner networks vbrowsers are using
-  HETZNER_NETWORKS_US: '', // IDs of Hetzner networks vbrowsers are using
   HETZNER_SSH_KEYS: '', // IDs of Hetzner SSH keys to access vbrowsers
   HETZNER_IMAGE: '', // ID of Hetzner snapshot image to use for vbrowser
   HETZNER_POOL_SIZE: '', // Comma separated min/max instances to keep in pool (0 to disable)

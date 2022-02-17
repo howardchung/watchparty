@@ -14,14 +14,7 @@ export class Hetzner extends VMManager {
   largeSize = 'cpx31';
   minRetries = 10;
   id = 'Hetzner';
-  networks = (this.region === 'US'
-    ? config.HETZNER_NETWORKS_US
-    : config.HETZNER_NETWORKS
-  )
-    .split(',')
-    .map(Number);
-  gateway =
-    this.region === 'US' ? config.HETZNER_GATEWAY_US : config.HETZNER_GATEWAY;
+  gateway = config.HETZNER_GATEWAY;
   datacenters = this.region === 'US' ? ['ash'] : ['nbg1', 'fsn1', 'hel1'];
 
   startVM = async (name: string) => {
@@ -173,33 +166,33 @@ export class Hetzner extends VMManager {
   };
 
   attachToNetwork = async (id: string) => {
-    // Attach server to network (usually not needed)
-    try {
-      const response: any = await axios({
-        method: 'GET',
-        url: `https://api.hetzner.cloud/v1/servers/${id}`,
-        headers: {
-          Authorization: 'Bearer ' + HETZNER_TOKEN,
-        },
-      });
-      if (response.data.server.private_net?.[0] == null) {
-        await axios({
-          method: 'POST',
-          url: `https://api.hetzner.cloud/v1/servers/${id}/actions/attach_to_network`,
-          headers: {
-            Authorization: 'Bearer ' + HETZNER_TOKEN,
-            'Content-Type': 'application/json',
-          },
-          data: {
-            network:
-              this.networks[Math.floor(Math.random() * this.networks.length)],
-          },
-        });
-      }
-    } catch (e: any) {
-      console.log('%s failed to attach to network', id);
-      console.log(e.response?.data);
-    }
+    // // Attach server to network (usually not needed)
+    // try {
+    //   const response: any = await axios({
+    //     method: 'GET',
+    //     url: `https://api.hetzner.cloud/v1/servers/${id}`,
+    //     headers: {
+    //       Authorization: 'Bearer ' + HETZNER_TOKEN,
+    //     },
+    //   });
+    //   if (response.data.server.private_net?.[0] == null) {
+    //     await axios({
+    //       method: 'POST',
+    //       url: `https://api.hetzner.cloud/v1/servers/${id}/actions/attach_to_network`,
+    //       headers: {
+    //         Authorization: 'Bearer ' + HETZNER_TOKEN,
+    //         'Content-Type': 'application/json',
+    //       },
+    //       data: {
+    //         network:
+    //           this.networks[Math.floor(Math.random() * this.networks.length)],
+    //       },
+    //     });
+    //   }
+    // } catch (e: any) {
+    //   console.log('%s failed to attach to network', id);
+    //   console.log(e.response?.data);
+    // }
   };
 
   updateSnapshot = async () => {
@@ -244,8 +237,8 @@ export class Hetzner extends VMManager {
 
   mapServerObject = (server: any): VM => {
     const public_ip = server.public_net?.ipv4?.ip;
-    const private_ip = server.private_net?.[0]?.ip;
-    const ip = private_ip ?? public_ip;
+    // const private_ip = server.private_net?.[0]?.ip;
+    const ip = public_ip;
     return {
       id: server.id?.toString(),
       pass: server.name,
