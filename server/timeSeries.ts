@@ -49,13 +49,17 @@ async function statsTimeSeries() {
         currentRoomCount: stats.currentRoomCount,
         chatMessages: stats.chatMessages,
         redisUsage: stats.redisUsage,
+        hetznerApiRemaining: stats.hetznerApiRemaining,
         avgStartMS:
           stats.vBrowserStartMS &&
           stats.vBrowserStartMS.reduce(
             (a: string, b: string) => Number(a) + Number(b),
             0
           ) / stats.vBrowserStartMS.length,
-        hetznerApiRemaining: stats.hetznerApiRemaining,
+        vBrowserStarts: stats.vBrowserStarts,
+        vBrowserLaunches: stats.vBrowserLaunches,
+        vBrowserFails: stats.vBrowserFails,
+        vBrowserStagingFails: stats.vBrowserStagingFails,
       };
       Object.keys(stats.vmManagerStats).forEach((key) => {
         if (stats.vmManagerStats[key]) {

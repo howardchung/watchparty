@@ -609,6 +609,14 @@ async function getStats() {
   const vBrowserLaunches = await getRedisCountDay('vBrowserLaunches');
   const vBrowserFails = await getRedisCountDay('vBrowserFails');
   const vBrowserStagingFails = await getRedisCountDay('vBrowserStagingFails');
+  const vBrowserStopTimeout = await getRedisCountDay(
+    'vBrowserTerminateTimeout'
+  );
+  const vBrowserStopEmpty = await getRedisCountDay('vBrowserTerminateEmpty');
+  const vBrowserStopManual = await getRedisCountDay('vBrowserTerminateManual');
+  const recaptchaRejectsLowScore = await getRedisCountDay(
+    'recaptchaRejectsLowScore'
+  );
   const vBrowserStartMS = await redis?.lrange('vBrowserStartMS', 0, -1);
   const vBrowserStageRetries = await redis?.lrange(
     'vBrowserStageRetries',
@@ -618,18 +626,6 @@ async function getStats() {
   const vBrowserStageFails = await redis?.lrange('vBrowserStageFails', 0, -1);
   const vBrowserSessionMS = await redis?.lrange('vBrowserSessionMS', 0, -1);
   // const vBrowserVMLifetime = await redis?.lrange('vBrowserVMLifetime', 0, -1);
-  const vBrowserTerminateTimeout = await getRedisCountDay(
-    'vBrowserTerminateTimeout'
-  );
-  const vBrowserTerminateEmpty = await getRedisCountDay(
-    'vBrowserTerminateEmpty'
-  );
-  const vBrowserTerminateManual = await getRedisCountDay(
-    'vBrowserTerminateManual'
-  );
-  const recaptchaRejectsLowScore = await getRedisCountDay(
-    'recaptchaRejectsLowScore'
-  );
   const recaptchaRejectsOther = await getRedisCountDay('recaptchaRejectsOther');
   const urlStarts = await getRedisCountDay('urlStarts');
   const playlistAdds = await getRedisCountDay('playlistAdds');
@@ -728,9 +724,9 @@ async function getStats() {
     vBrowserLaunches,
     vBrowserFails,
     vBrowserStagingFails,
-    vBrowserTerminateManual,
-    vBrowserTerminateEmpty,
-    vBrowserTerminateTimeout,
+    vBrowserStopManual,
+    vBrowserStopEmpty,
+    vBrowserStopTimeout,
     recaptchaRejectsLowScore,
     recaptchaRejectsOther,
     vmManagerStats,
