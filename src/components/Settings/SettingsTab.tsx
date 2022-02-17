@@ -8,6 +8,7 @@ import {
   Input,
   Button,
   Label,
+  Popup,
 } from 'semantic-ui-react';
 // import { SignInButton } from '../TopBar/TopBar';
 import { getCurrentSettings, updateSettings } from './LocalSettings';
@@ -16,6 +17,11 @@ import { serverPath } from '../../utils';
 import { PermanentRoomModal } from '../Modal/PermanentRoomModal';
 import firebase from 'firebase/compat/app';
 import { Socket } from 'socket.io-client';
+import { HexColorPicker } from 'react-colorful';
+
+const defaultRoomTitleColor = '#FFFFFF';
+const roomTitleMaxCharLength = 50;
+const roomDescriptionMaxCharLength = 120;
 
 interface SettingsTabProps {
   hide: boolean;
@@ -35,6 +41,12 @@ interface SettingsTabProps {
   isChatDisabled: boolean;
   setIsChatDisabled: Function;
   clearChat: Function;
+  roomTitle: string | undefined;
+  setRoomTitle: Function;
+  roomDescription: string | undefined;
+  setRoomDescription: Function;
+  roomTitleColor: string | undefined;
+  setRoomTitleColor: Function;
 }
 
 export const SettingsTab = ({
@@ -53,12 +65,22 @@ export const SettingsTab = ({
   isChatDisabled,
   setIsChatDisabled,
   clearChat,
+  roomTitle,
+  roomDescription,
+  roomTitleColor,
 }: SettingsTabProps) => {
   const [updateTS, setUpdateTS] = useState(0);
   const [permModalOpen, setPermModalOpen] = useState(false);
   const [validVanity, setValidVanity] = useState(true);
   const [validVanityLoading, setValidVanityLoading] = useState(false);
   const [adminSettingsChanged, setAdminSettingsChanged] = useState(false);
+  const [roomTitleInput, setRoomTitleInput] = useState<string | undefined>('');
+  const [roomDescriptionInput, setRoomDescriptionInput] = useState<string | undefined>(
+    ''
+  );
+  const [roomTitleColorInput, setRoomTitleColorInput] = useState<string | undefined>(
+    ''
+  );
 
   const setRoomState = useCallback(
     async (data: any) => {
@@ -247,7 +269,91 @@ export const SettingsTab = ({
           }
         />
       )}
-      <p />
+      {owner && owner === user?.uid && (
+        <SettingRow
+          icon={'pencil'}
+          name={`Set Room Title, Description & Color`}
+          description="Set the room title, description and title color to be displayed in the top bar."
+          disabled={!isSubscriber}
+          subOnly={true}
+          content={
+            <React.Fragment>
+              <div style={{ display: 'flex', marginBottom: 2 }}>
+                <Input
+                  style={{ marginRight: 3, flexGrow: 1 }}
+                  value={roomTitleInput || roomTitle}
+                  disabled={!isSubscriber}
+                  maxLength={roomTitleMaxCharLength}
+                  onChange={(e) => {
+                    setAdminSettingsChanged(true);
+                    setRoomTitleInput(e.target.value);
+                  }}
+                  placeholder={`Title (max. ${roomTitleMaxCharLength} characters)`}
+                  fluid
+                  size="mini"
+                  icon
+                ></Input>
+                <Popup
+                  content={
+                    <React.Fragment>
+                      <h5>Edit Title Color</h5>
+                      <HexColorPicker
+                        color={roomTitleColorInput || roomTitleColor || defaultRoomTitleColor}
+                        onChange={(e) => {
+                          setAdminSettingsChanged(true);
+                          setRoomTitleColorInput(e);
+                        }}
+                      />
+                      <div
+                        style={{
+                          marginTop: 8,
+                          paddingLeft: 4,
+                          borderLeft: `24px solid ${roomTitleColorInput}`,
+                        }}
+                      >
+                        {roomTitleColorInput?.toUpperCase()}
+                      </div>
+                    </React.Fragment>
+                  }
+                  on="click"
+                  trigger={
+                    <Button
+                      icon
+                      color="teal"
+                      size="tiny"
+                      style={{ margin: 0 }}
+                      disabled={!isSubscriber}
+                    >
+                      <Icon name="paint brush" />
+                    </Button>
+                  }
+                />
+              </div>
+              <Input
+                style={{ marginBottom: 2 }}
+                value={roomDescriptionInput || roomDescription}
+                disabled={!isSubscriber}
+                maxLength={roomDescriptionMaxCharLength}
+                onChange={(e) => {
+                  setAdminSettingsChanged(true);
+                  setRoomDescriptionInput(e.target.value);
+                }}
+                placeholder={`Description (max. ${roomDescriptionMaxCharLength} characters)`}
+                fluid
+                size="mini"
+                icon
+              ></Input>
+            </React.Fragment>
+          }
+        />
+      )}
+      <div
+        style={{
+          borderTop: '3px dashed white',
+          marginTop: 10,
+          marginBottom: 10,
+        }}
+      />
       {owner && owner === user?.uid && (
         <Button
           primary
@@ -260,6 +366,9 @@ export const SettingsTab = ({
               vanity: vanity,
               password: password,
               isChatDisabled: isChatDisabled,
+              roomTitle: roomTitleInput || roomTitle,
+              roomDescription: roomDescriptionInput || roomDescription,
+              roomTitleColor: roomTitleColorInput || roomTitleColor || defaultRoomTitleColor,
             });
             setAdminSettingsChanged(false);
           }}

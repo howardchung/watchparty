@@ -1,2 +1,3 @@
-ALTER TABLE room ADD data jsonb;
-ALTER TABLE room ADD "lastUpdateTime" timestamp with time zone;
+alter table room add column "roomTitle" text;
+alter table room add column "roomDescription" text;
+alter table room add column "roomTitleColor" text;
