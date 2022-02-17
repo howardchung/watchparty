@@ -49,7 +49,7 @@ const defaults = {
   SHARD: undefined, // Shard ID of the web server (configure in ecosystem.config.js)
   SUBSCRIBER_ROOM_LIMIT: 20, // The maximum number of rooms a subscriber can have
   VMWORKER_PORT: 3100, // Port to use for the vmWorker HTTP server
-  VM_ASSIGNMENT_TIMEOUT: 60, // Number of seconds to wait for a VM before failing
+  VM_ASSIGNMENT_TIMEOUT: 75, // Number of seconds to wait for a VM before failing
 };
 
 export default {
