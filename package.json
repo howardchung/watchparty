@@ -30,7 +30,7 @@
     "react-markdown": "^7.1.2",
     "react-onclickoutside": "^6.12.1",
     "react-router-dom": "^5.3.0",
-    "react-scripts": "^4.0.3",
+    "react-scripts": "^5.0.0",
     "react-semantic-ui-range": "^0.7.1",
     "recharts": "^2.1.9",
     "s3-client": "^4.4.2",
