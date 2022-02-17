@@ -68,7 +68,9 @@ app.post('/releaseVM', async (req, res) => {
 
 app.get('/stats', async (req, res) => {
   const vmManagerStats: AnyDict = {};
-  Object.entries(vmManagers).forEach(async ([key, vmManager]) => {
+  for (let i = 0; i <= Object.keys(vmManagers).length; i++) {
+    const key = Object.keys(vmManagers)[i];
+    const vmManager = vmManagers[key];
     const availableVBrowsers = await redis?.lrange(
       vmManager?.getRedisQueueKey() || 'availableList',
       0,
@@ -92,7 +94,7 @@ app.get('/stats', async (req, res) => {
       // terminationVBrowsers,
       size,
     };
-  });
+  }
   return res.json(vmManagerStats);
 });
 
