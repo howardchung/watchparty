@@ -990,9 +990,11 @@ export class Room {
       }
     }
     if (roomTitle && roomTitle.length > 50) {
+      socket.emit('errorMessage', 'Room title too long');
       return;
     }
     if (roomDescription && roomDescription.length > 120) {
+      socket.emit('errorMessage', 'Room description too long');
       return;
     }
     // check if is valid hex color representation
