@@ -27,7 +27,7 @@ export abstract class VMManager {
     large: boolean,
     region: string,
     limitSize: number,
-    minSize: number,
+    minSize: number
   ) {
     this.isLarge = Boolean(large);
     this.region = region;
@@ -235,11 +235,7 @@ export abstract class VMManager {
       const allVMs = await this.listVMs(this.getTag());
       const now = Date.now();
       this.currentSize = allVMs.length;
-      await this.redis.setex(
-        this.getRedisPoolSizeKey(),
-        2 * 60,
-        allVMs.length,
-      );
+      await this.redis.setex(this.getRedisPoolSizeKey(), 2 * 60, allVMs.length);
       let sortedVMs = allVMs
         // Sort newest first (decreasing alphabetically)
         .sort((a, b) => -a.creation_date?.localeCompare(b.creation_date))
@@ -276,7 +272,7 @@ export abstract class VMManager {
           allVMs.length,
           availableKeys.length,
           stagingKeys.length,
-          this.getAdjustedBuffer(),
+          this.getAdjustedBuffer()
         );
       }
     };
@@ -310,7 +306,7 @@ export abstract class VMManager {
       console.log(
         '[CLEANUP] %s: cleanup %s VMs',
         this.getRedisQueueKey(),
-        allVMs.length - dontDelete.size,
+        allVMs.length - dontDelete.size
       );
       for (let i = 0; i < allVMs.length; i++) {
         const server = allVMs[i];

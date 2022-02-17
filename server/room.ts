@@ -609,7 +609,7 @@ export class Room {
       uid: string;
       token: string;
       rcToken: string;
-      options: { size: string; region: string };
+      options: { size: string; region: string, provider: string };
     }
   ) => {
     if (!this.validateLock(socket.id)) {
@@ -684,6 +684,7 @@ export class Room {
     }
     let isLarge = false;
     let region = 'US';
+    let provider = data.options?.provider ?? config.VM_MANAGER_ID;
     if (config.STRIPE_SECRET_KEY && data && data.uid && data.token) {
       const decoded = await validateUserToken(data.uid, data.token);
       // Check if user is subscriber, if so allow isLarge
@@ -732,7 +733,7 @@ export class Room {
     const assignmentResp = await axios.post(
       'http://localhost:' + config.VMWORKER_PORT + '/assignVM',
       {
-        provider: config.VM_MANAGER_ID,
+        provider,
         isLarge,
         region,
         uid,
