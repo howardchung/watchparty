@@ -9,11 +9,7 @@ const defaults = {
   FIREBASE_DATABASE_URL: '', // Optional (unused)
   STRIPE_SECRET_KEY: '', // Optional, for subscriptions
   VBROWSER_SESSION_SECONDS: 10800, // Number of seconds to allow vbrowsers to run for
-  VBROWSER_SESSION_SECONDS_LARGE: 43200, // Number of seconds to allow large vbrowsers to run for
-  VM_POOL_LIMIT: 0, // Max number of VMs to have in pool (0 to disable limit)
-  VM_POOL_LIMIT_LARGE: 0, // Max number of large VMs to have in pool (0 to disable limit)
-  VM_POOL_MIN_SIZE: 0, // Minimum number of VM instances to keep in the pool
-  VM_POOL_MIN_SIZE_LARGE: 0, // Minimum number of large VM instances to keep in the pool
+  VBROWSER_SESSION_SECONDS_LARGE: 86400, // Number of seconds to allow large vbrowsers to run for
   VM_POOL_RAMP_DOWN_HOURS: '', // Comma separated start/end UTC hours of the ramp down period
   VM_POOL_RAMP_UP_HOURS: '', // Comma separated start/end UTC hours of the ramp up period
   VBROWSER_TAG: '', // Optional, tag to put on VBrowser VM instances
@@ -28,6 +24,8 @@ const defaults = {
   HETZNER_NETWORKS_US: '', // IDs of Hetzner networks vbrowsers are using
   HETZNER_SSH_KEYS: '', // IDs of Hetzner SSH keys to access vbrowsers
   HETZNER_IMAGE: '', // ID of Hetzner snapshot image to use for vbrowser
+  HETZNER_POOL_SIZE: '', // Comma separated min/max instances to keep in pool (0 to disable)
+  HETZNER_POOL_SIZE_LARGE: '', // Comma separated min/max large instances to keep in pool (0 to disable)
   SCW_SECRET_KEY: '', // Optional, for Scaleway VMs
   SCW_ORGANIZATION_ID: '', // Optional, for Scaleway VMs
   SCW_GATEWAY: '', // Gateway handling SSL termination
