@@ -312,7 +312,7 @@ app.get('/metadata', async (req, res) => {
   try {
     isVMPoolFull = (
       await axios.get(
-        'http://localhost' + config.VMWORKER_PORT + '/isVMPoolFull'
+        'http://localhost:' + config.VMWORKER_PORT + '/isVMPoolFull'
       )
     ).data;
   } catch (e) {
