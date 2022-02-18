@@ -210,7 +210,7 @@ export const SettingsTab = ({
         <SettingRow
           icon={'folder'}
           name={`Set Room Media Source`}
-          description="Set a media source URL with files to replace the default examples. Supports S3 buckets and GitLab repositories."
+          description="Set a media source URL with files to replace the default examples. Supports S3 buckets and nginx file servers."
           content={
             <Input
               value={mediaPath}
@@ -397,6 +397,7 @@ export const SettingsTab = ({
               roomDescription: roomDescriptionInput || roomDescription,
               roomTitleColor:
                 roomTitleColorInput || roomTitleColor || defaultRoomTitleColor,
+              mediaPath: mediaPath,
             });
             setAdminSettingsChanged(false);
           }}

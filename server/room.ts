@@ -865,6 +865,7 @@ export class Room {
           roomTitle: null,
           roomDescription: null,
           roomTitleColor: null,
+          mediaPath: null,
         },
         { roomId: this.roomId }
       );
@@ -912,7 +913,7 @@ export class Room {
       return;
     }
     const result = await postgres.query(
-      `SELECT password, vanity, owner, "isChatDisabled", "roomTitle", "roomDescription", "roomTitleColor" FROM room where "roomId" = $1`,
+      `SELECT password, vanity, owner, "isChatDisabled", "roomTitle", "roomDescription", "roomTitleColor", "mediaPath" FROM room where "roomId" = $1`,
       [this.roomId]
     );
     const first = result.rows[0];
@@ -928,6 +929,7 @@ export class Room {
       roomTitle: first?.roomTitle,
       roomDescription: first?.roomDescription,
       roomTitleColor: first?.roomTitleColor,
+      mediaPath: first?.mediaPath,
     });
   };
 
