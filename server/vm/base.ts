@@ -65,12 +65,10 @@ export abstract class VMManager {
     const nowHour = new Date().getUTCHours();
     const isRampDown =
       rampDownHours.length &&
-      nowHour >= rampDownHours[0] &&
-      nowHour < rampDownHours[1];
+      pointInInterval24(nowHour, rampDownHours[0], rampDownHours[1]);
     const isRampUp =
       rampUpHours.length &&
-      nowHour >= rampUpHours[0] &&
-      nowHour < rampUpHours[1];
+      pointInInterval24(nowHour, rampUpHours[0], rampUpHours[1]);
     if (isRampDown) {
       minBuffer /= 2;
     } else if (isRampUp) {
@@ -502,6 +500,14 @@ async function checkVMReady(host: string) {
     return false;
   }
   return true;
+}
+
+function pointInInterval24(x: number, a: number, b: number) {
+  return nonNegativeMod(x - a, 24) <= nonNegativeMod(b - a, 24);
+}
+
+function nonNegativeMod(n: number, m: number) {
+  return ((n % m) + m) % m;
 }
 
 export interface VM {
