@@ -541,6 +541,15 @@ export default class App extends React.Component<AppProps, AppState> {
             if (data.subtitle) {
               this.loadSubtitles();
             }
+            // else if (this.isHttp() && !this.isYouTube()) {
+            //   const src = data.video;
+            //   const subtitlePath = src.slice(0, src.lastIndexOf('/') + 1);
+            //   // Expect subtitle name to be file name + .srt
+            //   const subtitleSrc = subtitlePath + 'subtitles/' + this.getFileName(src) + '.srt';
+            //   this.setState({ currentSubtitle: subtitleSrc }, () => {
+            //     this.loadSubtitles();
+            //   });
+            // }
             // One time, when we're ready to play
             leftVideo?.addEventListener(
               'canplay',
