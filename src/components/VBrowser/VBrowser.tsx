@@ -40,8 +40,8 @@ export default class VBrowser extends React.Component<{
   componentDidMount() {
     this.controlling = this.props.controlling;
     this.keepAliveInterval = window.setInterval(
-      () => this.$client.sendMessage('ka'),
-      10000
+      () => this.$client.sendMessage('chat/message'),
+      30000
     );
 
     this.$client.on(EVENT.CONNECTED, () => {
