@@ -47,6 +47,8 @@ interface SettingsTabProps {
   setRoomDescription: Function;
   roomTitleColor: string | undefined;
   setRoomTitleColor: Function;
+  mediaPath: string | undefined;
+  setMediaPath: Function;
 }
 
 export const SettingsTab = ({
@@ -68,6 +70,8 @@ export const SettingsTab = ({
   roomTitle,
   roomDescription,
   roomTitleColor,
+  mediaPath,
+  setMediaPath,
 }: SettingsTabProps) => {
   const [updateTS, setUpdateTS] = useState(0);
   const [permModalOpen, setPermModalOpen] = useState(false);
@@ -75,12 +79,12 @@ export const SettingsTab = ({
   const [validVanityLoading, setValidVanityLoading] = useState(false);
   const [adminSettingsChanged, setAdminSettingsChanged] = useState(false);
   const [roomTitleInput, setRoomTitleInput] = useState<string | undefined>('');
-  const [roomDescriptionInput, setRoomDescriptionInput] = useState<string | undefined>(
-    ''
-  );
-  const [roomTitleColorInput, setRoomTitleColorInput] = useState<string | undefined>(
-    ''
-  );
+  const [roomDescriptionInput, setRoomDescriptionInput] = useState<
+    string | undefined
+  >('');
+  const [roomTitleColorInput, setRoomTitleColorInput] = useState<
+    string | undefined
+  >('');
 
   const setRoomState = useCallback(
     async (data: any) => {
@@ -204,6 +208,25 @@ export const SettingsTab = ({
       )}
       {owner && owner === user?.uid && (
         <SettingRow
+          icon={'folder'}
+          name={`Set Room Media Source`}
+          description="Set a media source URL with files to replace the default examples. Supports S3 buckets and GitLab repositories."
+          content={
+            <Input
+              value={mediaPath}
+              size="mini"
+              onChange={(e) => {
+                setAdminSettingsChanged(true);
+                setMediaPath(e.target.value);
+              }}
+              fluid
+            />
+          }
+          disabled={false}
+        />
+      )}
+      {owner && owner === user?.uid && (
+        <SettingRow
           icon={'i cursor'}
           name={`Disable Chat`}
           description="Prevent users from sending messages in chat."
@@ -298,7 +321,11 @@ export const SettingsTab = ({
                     <React.Fragment>
                       <h5>Edit Title Color</h5>
                       <HexColorPicker
-                        color={roomTitleColorInput || roomTitleColor || defaultRoomTitleColor}
+                        color={
+                          roomTitleColorInput ||
+                          roomTitleColor ||
+                          defaultRoomTitleColor
+                        }
                         onChange={(e) => {
                           setAdminSettingsChanged(true);
                           setRoomTitleColorInput(e);
@@ -368,7 +395,8 @@ export const SettingsTab = ({
               isChatDisabled: isChatDisabled,
               roomTitle: roomTitleInput || roomTitle,
               roomDescription: roomDescriptionInput || roomDescription,
-              roomTitleColor: roomTitleColorInput || roomTitleColor || defaultRoomTitleColor,
+              roomTitleColor:
+                roomTitleColorInput || roomTitleColor || defaultRoomTitleColor,
             });
             setAdminSettingsChanged(false);
           }}
@@ -377,7 +405,6 @@ export const SettingsTab = ({
           Save Admin Settings
         </Button>
       )}
-      {/* MEDIA_PATH */}
       <div className="sectionHeader">Local Settings</div>
       <SettingRow
         updateTS={updateTS}

@@ -38,7 +38,6 @@ const defaults = {
   HOST: '0.0.0.0', // Host interface to bind server to
   STATS_KEY: '', // Secret string to validate viewing stats
   CUSTOM_SETTINGS_HOSTNAME: '', // Hostname to send different config settings to client
-  MEDIA_PATH: '', // Path of server where media files might be found (GitLab/S3/nginx)
   STREAM_PATH: '', // Path of server that supports additional video streams
   KV_KEY: '', // Secret string to validate use of KV endpoint (unused)
   ROOM_CAPACITY: 0, // Maximum capacity of a standard room. Set to 0 for unlimited.
