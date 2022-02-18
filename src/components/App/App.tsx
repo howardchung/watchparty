@@ -141,6 +141,7 @@ interface AppState {
   roomTitle: string | undefined;
   roomDescription: string | undefined;
   roomTitleColor: string | undefined;
+  mediaPath: string | undefined;
 }
 
 export default class App extends React.Component<AppProps, AppState> {
@@ -203,6 +204,7 @@ export default class App extends React.Component<AppProps, AppState> {
     roomTitle: '',
     roomDescription: '',
     roomTitleColor: '',
+    mediaPath: undefined,
   };
   socket: Socket = null as any;
   watchPartyYTPlayer: any = null;
@@ -243,8 +245,9 @@ export default class App extends React.Component<AppProps, AppState> {
     this.setRoomLink(this.getRoomLink(data.vanity));
     this.setIsChatDisabled(data.isChatDisabled);
     this.setRoomTitle(data.roomTitle);
-    this.setRoomDescription(data.roomDescription)
-    this.setRoomTitleColor(data.roomTitleColor)
+    this.setRoomDescription(data.roomDescription);
+    this.setRoomTitleColor(data.roomTitleColor);
+    this.setMediaPath(data.mediaPath);
     window.history.replaceState('', '', this.getRoomLink(data.vanity));
   };
 
@@ -360,6 +363,9 @@ export default class App extends React.Component<AppProps, AppState> {
   };
   setRoomTitleColor = (roomTitleColor: string | undefined) => {
     this.setState({ roomTitleColor });
+  };
+  setMediaPath = (mediaPath: string | undefined) => {
+    this.setState({ mediaPath });
   };
 
   init = async () => {
@@ -1506,6 +1512,8 @@ export default class App extends React.Component<AppProps, AppState> {
           setRoomDescription={this.setRoomDescription}
           roomTitleColor={this.state.roomTitleColor}
           setRoomTitleColor={this.setRoomTitleColor}
+          mediaPath={this.state.mediaPath}
+          setMediaPath={this.setMediaPath}
         />
       </Grid.Column>
     );
@@ -1639,7 +1647,7 @@ export default class App extends React.Component<AppProps, AppState> {
                         getMediaDisplayName={this.getMediaDisplayName}
                         launchMultiSelect={this.launchMultiSelect}
                         streamPath={this.state.settings.streamPath}
-                        mediaPath={this.state.settings.mediaPath}
+                        mediaPath={this.state.mediaPath}
                         disabled={!this.haveLock()}
                         playlist={this.state.playlist}
                       />
@@ -1820,17 +1828,6 @@ export default class App extends React.Component<AppProps, AppState> {
                             playlistAdd={this.playlistAdd}
                             type={'youtube'}
                             streamPath={this.state.settings.streamPath}
-                            mediaPath={this.state.settings.mediaPath}
-                            disabled={!this.haveLock()}
-                          />
-                        )}
-                        {Boolean(this.state.settings.mediaPath) && (
-                          <SearchComponent
-                            setMedia={this.setMedia}
-                            playlistAdd={this.playlistAdd}
-                            type={'media'}
-                            streamPath={this.state.settings.streamPath}
-                            mediaPath={this.state.settings.mediaPath}
                             disabled={!this.haveLock()}
                           />
                         )}
@@ -1840,7 +1837,6 @@ export default class App extends React.Component<AppProps, AppState> {
                             playlistAdd={this.playlistAdd}
                             type={'stream'}
                             streamPath={this.state.settings.streamPath}
-                            mediaPath={this.state.settings.mediaPath}
                             launchMultiSelect={this.launchMultiSelect}
                             disabled={!this.haveLock()}
                           />

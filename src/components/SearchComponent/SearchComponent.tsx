@@ -1,14 +1,8 @@
 import React from 'react';
-import {
-  debounce,
-  getYouTubeResults,
-  getMediaPathResults,
-  getStreamPathResults,
-} from '../../utils';
+import { debounce, getYouTubeResults, getStreamPathResults } from '../../utils';
 import { DropdownProps, Dropdown } from 'semantic-ui-react';
 import {
   YouTubeSearchResult,
-  MediaPathSearchResult,
   StreamPathSearchResult,
 } from '../SearchResult/SearchResult';
 
@@ -17,7 +11,6 @@ interface SearchComponentProps {
   playlistAdd: Function;
   type?: 'youtube' | 'media' | 'stream';
   launchMultiSelect?: Function;
-  mediaPath: string | undefined;
   streamPath: string | undefined;
   disabled?: boolean;
 }
@@ -43,8 +36,6 @@ export class SearchComponent extends React.Component<SearchComponentProps> {
           let timestamp = Number(new Date());
           if (this.props.type === 'youtube') {
             results = await getYouTubeResults(query);
-          } else if (this.props.type === 'media' && this.props.mediaPath) {
-            results = await getMediaPathResults(this.props.mediaPath, query);
           } else if (this.props.type === 'stream' && this.props.streamPath) {
             results = await getStreamPathResults(this.props.streamPath, query);
           }
@@ -71,14 +62,11 @@ export class SearchComponent extends React.Component<SearchComponentProps> {
 
   render() {
     const setMedia = this.setMedia;
-    let placeholder = 'Search streams';
+    let placeholder = '[SECRET] Search streams';
     let icon = 'film';
     if (this.props.type === 'youtube') {
       placeholder = 'Search YouTube';
       icon = 'youtube';
-    } else if (this.props.type === 'media') {
-      placeholder = this.props.mediaPath || '';
-      icon = 'file';
     }
     if (this.state.loading) {
       icon = 'loading circle notch';
@@ -97,11 +85,6 @@ export class SearchComponent extends React.Component<SearchComponentProps> {
           search={(() => {}) as any}
           text={placeholder}
           onSearchChange={this.doSearch}
-          onFocus={async (e) => {
-            if (this.props.type === 'media' && this.props.mediaPath) {
-              this.doSearch(e);
-            }
-          }}
           scrolling
           // onBlur={() => this.setState({ results: this.state.watchOptions })}
           //searchQuery={this.state.query}
@@ -117,14 +100,6 @@ export class SearchComponent extends React.Component<SearchComponentProps> {
                       {...result}
                       setMedia={setMedia}
                       playlistAdd={this.props.playlistAdd}
-                    />
-                  );
-                } else if (this.props.type === 'media') {
-                  return (
-                    <MediaPathSearchResult
-                      key={result.url}
-                      {...result}
-                      setMedia={setMedia}
                     />
                   );
                 }
