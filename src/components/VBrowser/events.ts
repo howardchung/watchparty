@@ -71,8 +71,7 @@ export type WebSocketEvents =
   | ChatEvents
   | ScreenEvents
   | BroadcastEvents
-  | AdminEvents
-  | 'ka';
+  | AdminEvents;
 
 export type ControlEvents =
   | typeof EVENT.CONTROL.LOCKED
