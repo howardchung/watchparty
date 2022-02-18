@@ -1,6 +1,6 @@
 import React from 'react';
 import { DropdownProps, Menu, Input, Icon, Dropdown } from 'semantic-ui-react';
-import { debounce, getYouTubeResults } from '../../utils';
+import { debounce, getMediaPathResults, getYouTubeResults } from '../../utils';
 import { examples } from '../../utils/examples';
 import ChatVideoCard from '../Playlist/ChatVideoCard';
 
@@ -21,7 +21,7 @@ interface ComboBoxProps {
 export class ComboBox extends React.Component<ComboBoxProps> {
   state = {
     inputMedia: undefined as string | undefined,
-    results: undefined,
+    results: undefined as JSX.Element[] | undefined,
     loading: false,
     lastResultTimestamp: Number(new Date()),
   };
@@ -46,6 +46,9 @@ export class ComboBox extends React.Component<ComboBoxProps> {
           let results: JSX.Element[] | undefined = undefined;
           if (query === '' || (query && query.startsWith('http'))) {
             let items = examples;
+            if (!this.state.inputMedia && this.props.mediaPath) {
+              items = await getMediaPathResults(this.props.mediaPath, '');
+            }
             if (query) {
               items = [
                 {
@@ -58,6 +61,7 @@ export class ComboBox extends React.Component<ComboBoxProps> {
             }
             results = items.map((result: SearchResult, index: number) => (
               <Menu.Item
+                style={{ padding: '2px' }}
                 key={result.url}
                 onClick={(e: any) =>
                   this.setMediaAndClose(e, { value: result.url })
@@ -114,7 +118,7 @@ export class ComboBox extends React.Component<ComboBoxProps> {
             focus
             disabled={this.props.disabled}
             onChange={this.doSearch}
-            onFocus={(e: any) => {
+            onFocus={async (e: any) => {
               e.persist();
               this.setState(
                 {

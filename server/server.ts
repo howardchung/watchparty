@@ -255,7 +255,6 @@ app.post('/createRoom', async (req, res) => {
 app.get('/settings', (req, res) => {
   if (req.hostname === config.CUSTOM_SETTINGS_HOSTNAME) {
     return res.json({
-      mediaPath: config.MEDIA_PATH,
       streamPath: config.STREAM_PATH,
       beta: true,
     });

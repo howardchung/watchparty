@@ -942,6 +942,7 @@ export class Room {
       roomTitle: string;
       roomDescription: string;
       roomTitleColor: string;
+      mediaPath: string;
     }
   ) => {
     if (!postgres) {
@@ -972,6 +973,7 @@ export class Room {
       roomTitle,
       roomDescription,
       roomTitleColor,
+      mediaPath,
     } = data;
     if (password) {
       if (password.length > 100) {
@@ -998,11 +1000,16 @@ export class Room {
       socket.emit('errorMessage', 'Invalid color code');
       return;
     }
+    if (mediaPath && mediaPath.length > 1000) {
+      socket.emit('errorMessage', 'Media source too long');
+      return;
+    }
     // console.log(owner, vanity, password);
     const roomObj: any = {
       roomId: this.roomId,
       password: password,
       isChatDisabled: isChatDisabled,
+      mediaPath: mediaPath,
     };
     if (isSubscriber) {
       // user must be sub to set certain properties
@@ -1033,6 +1040,7 @@ export class Room {
         roomTitle: row?.roomTitle,
         roomDescription: row?.roomDescription,
         roomTitleColor: row?.roomTitleColor,
+        mediaPath: row?.mediaPath,
       });
       socket.emit('successMessage', 'Saved admin settings');
     } catch (e) {

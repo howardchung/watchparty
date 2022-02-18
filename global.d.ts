@@ -32,7 +32,6 @@ interface ChatMessage extends ChatMessageBase {
 }
 
 interface Settings {
-  mediaPath?: string;
   streamPath?: string;
   disableChatSound?: boolean;
   beta?: boolean;
@@ -50,6 +49,10 @@ interface SearchResult extends PlaylistVideo {
   size?: string;
   seeders?: string;
   magnet?: string;
+  type: string;
+  url: string;
+  name: string;
+  duration: number;
 }
 
 interface HostState {
