@@ -743,11 +743,12 @@ export default class App extends React.Component<AppProps, AppState> {
     }
     // TODO teardown for those who leave
     const sharer = this.state.participants.find((p) => p.isScreenShare);
-    if (sharer && sharer.id === this.socket.id) {
+    const selfId = getAndSaveClientId();
+    if (sharer && sharer.clientId === selfId) {
       // We're the sharer, create a connection to each other member
       this.state.participants.forEach((user) => {
-        const id = user.id;
-        if (id === this.socket.id && this.state.isScreenSharingFile) {
+        const id = user.clientId;
+        if (id === selfId && this.state.isScreenSharingFile) {
           // Don't set up a connection to ourselves if sharing file
           return;
         }
@@ -784,7 +785,7 @@ export default class App extends React.Component<AppProps, AppState> {
       pc.onicecandidate = (event) => {
         // We generated an ICE candidate, send it to peer
         if (event.candidate) {
-          this.sendSignalSS(sharer.id, { ice: event.candidate });
+          this.sendSignalSS(sharer.clientId, { ice: event.candidate });
         }
       };
       pc.ontrack = (event: RTCTrackEvent) => {
@@ -1289,10 +1290,12 @@ export default class App extends React.Component<AppProps, AppState> {
       return input;
     }
     if (input.startsWith('screenshare://')) {
+      // TODO need to switch to handle clientID
       let id = input.slice('screenshare://'.length);
       return this.state.nameMap[id] + "'s screen";
     }
     if (input.startsWith('fileshare://')) {
+      // TODO need to switch to handle clientID
       let id = input.slice('fileshare://'.length);
       return this.state.nameMap[id] + "'s file";
     }
