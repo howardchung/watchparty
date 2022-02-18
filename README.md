@@ -68,7 +68,7 @@ This project supports creating virtual browsers using several cloud providers, o
 
 ### Room Persistence
 
-- Configure Postgres by adding POSTGRES_URL to your .env file
+- Configure Postgres by adding DATABASE_URL to your .env file and then setting up the database schema
 - This allows rooms to persist between server restarts
 
 ## Tech
