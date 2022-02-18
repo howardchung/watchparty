@@ -99,8 +99,8 @@ export class Room {
     });
     io.of(roomId).on('connection', (socket: Socket) => {
       const clientId = socket.handshake.query?.clientId as string;
-      this.roster.push({ id: socket.id });
       this.clientIdMap[socket.id] = clientId;
+      this.roster.push({ id: socket.id, clientId });
       redisCount('connectStarts');
       redisCountDistinct('connectStartsDistinct', clientId);
 
@@ -580,16 +580,17 @@ export class Room {
       return;
     }
     if (data && data.file) {
-      this.cmdHost(socket, 'fileshare://' + socket.id);
+      this.cmdHost(socket, 'fileshare://' + this.clientIdMap[socket.id]);
       redisCount('fileShareStarts');
     } else {
-      this.cmdHost(socket, 'screenshare://' + socket.id);
+      this.cmdHost(socket, 'screenshare://' + this.clientIdMap[socket.id]);
       redisCount('screenShareStarts');
     }
-    const match = this.roster.find((user) => user.id === socket.id);
-    if (match) {
-      match.isScreenShare = true;
-    }
+    // TODO make isScreenShare a dynamic property
+    // const match = this.roster.find((user) => user.id === socket.id);
+    // if (match) {
+    //   match.isScreenShare = true;
+    // }
     this.io.of(this.roomId).emit('roster', this.roster);
   };
 
@@ -1054,10 +1055,12 @@ export class Room {
     if (!data) {
       return;
     }
+    const fromClientId = this.roster.find((p) => p.id === socket.id)?.clientId;
+    const toId = this.roster.find((p) => p.clientId === data.to)?.id;
     this.io
       .of(this.roomId)
-      .to(data.to)
-      .emit('signal', { from: socket.id, msg: data.msg });
+      .to(toId ?? '')
+      .emit('signal', { from: fromClientId, msg: data.msg });
   };
 
   private signalSS = (
@@ -1067,11 +1070,17 @@ export class Room {
     if (!data) {
       return;
     }
-    this.io.of(this.roomId).to(data.to).emit('signalSS', {
-      from: socket.id,
-      sharer: data.sharer,
-      msg: data.msg,
-    });
+    const fromClientId = this.roster.find((p) => p.id === socket.id)?.clientId;
+    const toId = this.roster.find((p) => p.clientId === data.to)?.id;
+    console.log(fromClientId, toId);
+    this.io
+      .of(this.roomId)
+      .to(toId ?? '')
+      .emit('signalSS', {
+        from: fromClientId,
+        sharer: data.sharer,
+        msg: data.msg,
+      });
   };
 
   private disconnectUser = (socket: Socket) => {
