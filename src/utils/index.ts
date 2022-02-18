@@ -159,19 +159,6 @@ export function debounce(func: Function, wait: number, immediate?: boolean) {
   };
 }
 
-export const getMediaPathForList = (list: string) => {
-  if (list.startsWith('https://gitlab.com/')) {
-    const match = list.match(
-      /https:\/\/gitlab.com\/api\/v4\/projects\/(.*)\/repository\/tree/
-    );
-    const name = match && match[1];
-    const decoded = decodeURIComponent(name || '');
-    return `https://glcdn.githack.com/${decoded}/-/raw/master/`;
-  }
-  // Nginx servers use the same mediapath as list, add trailing /
-  return list + '/';
-};
-
 export const getDefaultPicture = (name: string, background = 'a0a0a0') => {
   return `https://ui-avatars.com/api/?name=${name}&background=${background}&size=256&color=ffffff`;
 };
@@ -220,7 +207,6 @@ export async function getMediaPathResults(
   mediaPath: string,
   query: string
 ): Promise<SearchResult[]> {
-  // Get media list if provided
   const response = await window.fetch(mediaPath);
   let results: SearchResult[] = [];
   if (mediaPath.includes('s3.')) {
@@ -236,12 +222,13 @@ export async function getMediaPathResults(
       name: mediaPath + '/' + file.Key,
     }));
   } else {
+    // nginx with autoindex_format json;
     const data = await response.json();
     results = data
       .filter((file: any) => file.type === 'file')
       .map((file: any) => ({
-        url: file.url || getMediaPathForList(mediaPath) + file.name,
-        name: getMediaPathForList(mediaPath) + file.name,
+        url: mediaPath + '/' + file.name,
+        name: mediaPath + '/' + file.name,
       }));
   }
   results = results.filter((option: SearchResult) =>
