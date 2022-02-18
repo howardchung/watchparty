@@ -72,7 +72,7 @@ export abstract class VMManager {
     if (isRampDown) {
       minBuffer /= 2;
     } else if (isRampUp) {
-      minBuffer *= 2;
+      minBuffer *= 1.5;
     }
     return [Math.ceil(minBuffer), Math.ceil(minBuffer * 1.5)];
   };
