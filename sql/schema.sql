@@ -13,6 +13,7 @@ CREATE TABLE room(
   "roomTitle" text,
   "roomDescription" text,
   "roomTitleColor" text,
+  "mediaPath" text,
   PRIMARY KEY ("roomId")
 );
 
