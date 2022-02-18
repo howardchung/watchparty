@@ -2,7 +2,6 @@ import './App.css';
 
 import querystring from 'querystring';
 import axios from 'axios';
-import magnet from 'magnet-uri';
 import React from 'react';
 import {
   Button,
@@ -1304,8 +1303,8 @@ export default class App extends React.Component<AppProps, AppState> {
       const search = new URL(input).search;
       const magnetUrl = querystring.parse(search.substring(1))
         .torrent as string;
-      const magnetParsed = magnet.decode(magnetUrl);
-      return magnetParsed.name;
+      const magnetParsed = querystring.parse(magnetUrl);
+      return magnetParsed.dn;
     }
     // Get the filename out of the URL
     return input;
