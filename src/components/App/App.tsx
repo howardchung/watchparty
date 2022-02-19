@@ -741,11 +741,21 @@ export default class App extends React.Component<AppProps, AppState> {
     if (!this.isScreenShare() && !this.isFileShare()) {
       return;
     }
-    // TODO teardown for those who leave
     const sharer = this.state.participants.find((p) => p.isScreenShare);
     const selfId = getAndSaveClientId();
     if (sharer && sharer.clientId === selfId) {
       // We're the sharer, create a connection to each other member
+
+      // Delete and close any connections that aren't in the current member list (maybe someone disconnected)
+      // This allows them to rejoin later
+      const clientIds = new Set(this.state.participants.map((p) => p.clientId));
+      Object.entries(this.screenHostPC).forEach(([key, value]) => {
+        if (!clientIds.has(key)) {
+          value.close();
+          delete this.screenHostPC[key];
+        }
+      });
+
       this.state.participants.forEach((user) => {
         const id = user.clientId;
         if (id === selfId && this.state.isScreenSharingFile) {
