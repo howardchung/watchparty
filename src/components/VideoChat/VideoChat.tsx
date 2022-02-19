@@ -152,13 +152,23 @@ export class VideoChat extends React.Component<VideoChatProps> {
       return;
     }
     const selfId = getAndSaveClientId();
+
+    // Delete and close any connections that aren't in the current member list (maybe someone disconnected)
+    // This allows them to rejoin later
+    const clientIds = new Set(
+      this.props.participants
+        .filter((p) => p.isVideoChat)
+        .map((p) => p.clientId)
+    );
+    Object.entries(videoPCs).forEach(([key, value]) => {
+      if (!clientIds.has(key)) {
+        value.close();
+        delete videoPCs[key];
+      }
+    });
+
     this.props.participants.forEach((user) => {
       const id = user.clientId;
-      if (!user.isVideoChat && videoPCs[id]) {
-        // User isn't in video chat but we have a connection, close it
-        videoPCs[id].close();
-        delete videoPCs[id];
-      }
       if (!user.isVideoChat || videoPCs[id]) {
         // User isn't in video chat, or we already have a connection to them
         return;
