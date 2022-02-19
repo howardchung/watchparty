@@ -153,7 +153,7 @@ export abstract class BaseClient extends EventEmitter<any> {
       return;
     }
 
-    let buffer: ArrayBuffer;
+    let buffer: ArrayBuffer | undefined = undefined;
     let payload: DataView;
     switch (event) {
       case 'mousemove':
@@ -192,8 +192,7 @@ export abstract class BaseClient extends EventEmitter<any> {
         this.emit('warn', `unknown data event: ${event}`);
     }
 
-    // @ts-ignore
-    if (typeof buffer !== 'undefined') {
+    if (buffer) {
       this._channel!.send(buffer);
     }
   }

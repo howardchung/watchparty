@@ -3,6 +3,9 @@ import { Button, Comment, Icon, Input, Popup } from 'semantic-ui-react';
 import 'emoji-mart/css/emoji-mart.css';
 import { EmojiData, Picker } from 'emoji-mart';
 import onClickOutside from 'react-onclickoutside';
+//@ts-ignore
+import Linkify from 'react-linkify';
+import { SecureLink } from 'react-secure-link';
 
 import {
   formatTimestamp,
@@ -293,7 +296,19 @@ const ChatMessage = ({
         <Comment.Text className="light system">
           {cmd && formatMessage(cmd, msg)}
         </Comment.Text>
-        <Comment.Text className="light">{!cmd && msg}</Comment.Text>
+        <Linkify
+          componentDecorator={(
+            decoratedHref: string,
+            decoratedText: string,
+            key: string
+          ) => (
+            <SecureLink href={decoratedHref} key={key}>
+              {decoratedText}
+            </SecureLink>
+          )}
+        >
+          <Comment.Text className="light">{!cmd && msg}</Comment.Text>
+        </Linkify>
       </Comment.Content>
     </Comment>
   );
