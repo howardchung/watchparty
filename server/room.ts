@@ -614,7 +614,7 @@ export class Room {
       return;
     }
     this.cmdHost(socket, '');
-    this.io.of(this.roomId).emit('roster', this.getRosterForApp);
+    this.io.of(this.roomId).emit('roster', this.getRosterForApp());
   };
 
   private startVBrowser = async (
@@ -1068,7 +1068,7 @@ export class Room {
     if (!data) {
       return;
     }
-    const fromClientId = this.roster.find((p) => p.id === socket.id)?.clientId;
+    const fromClientId = this.clientIdMap[socket.id];
     const toId = this.roster.find((p) => p.clientId === data.to)?.id;
     this.io
       .of(this.roomId)
@@ -1083,7 +1083,7 @@ export class Room {
     if (!data) {
       return;
     }
-    const fromClientId = this.roster.find((p) => p.id === socket.id)?.clientId;
+    const fromClientId = this.clientIdMap[socket.id];
     const toId = this.roster.find((p) => p.clientId === data.to)?.id;
     this.io
       .of(this.roomId)
