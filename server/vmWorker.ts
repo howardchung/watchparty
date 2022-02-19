@@ -125,7 +125,7 @@ app.post('/updateSnapshot', async (req, res) => {
       req.body.provider + (req.body.isLarge ? 'Large' : '') + req.body.region
     ];
   const result = await pool?.updateSnapshot();
-  return res.send(result?.toString());
+  return res.send(result?.toString() + '\n');
 });
 
 app.listen(config.VMWORKER_PORT, () => {
