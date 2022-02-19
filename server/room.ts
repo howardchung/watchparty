@@ -112,7 +112,7 @@ export class Room {
       socket.emit('chatinit', this.chat);
       socket.emit('playlist', this.playlist);
       this.getRoomState(socket);
-      io.of(roomId).emit('roster', this.roster);
+      io.of(roomId).emit('roster', this.getRosterForApp());
 
       socket.on('CMD:name', (data) => this.changeUserName(socket, data));
       socket.on('CMD:picture', (data) => this.changeUserPicture(socket, data));
@@ -264,6 +264,25 @@ export class Room {
       ip: this.io.of(this.roomId).sockets.get(p.id)?.request?.connection
         ?.remoteAddress,
     }));
+  };
+
+  protected getSharerId = (): string => {
+    let sharerId = '';
+    if (this.video.startsWith('screenshare://')) {
+      sharerId = this.video.slice('screenshare://'.length);
+    } else if (this.video.startsWith('fileshare://')) {
+      sharerId = this.video.slice('fileshare://'.length);
+    }
+    return sharerId;
+  };
+
+  protected getRosterForApp = (): User[] => {
+    return this.roster.map((p) => {
+      return {
+        ...p,
+        isScreenShare: p.clientId === this.getSharerId(),
+      };
+    });
   };
 
   private getHostState = (): HostState => {
@@ -420,7 +439,7 @@ export class Room {
     if (!this.validateLock(socket.id)) {
       return;
     }
-    const sharer = this.roster.find((user) => user.isScreenShare);
+    const sharer = this.getRosterForApp().find((user) => user.isScreenShare);
     if (sharer || this.vBrowser) {
       // Can't update the video while someone is screensharing/filesharing or vbrowser is running
       return;
@@ -559,7 +578,7 @@ export class Room {
       match.isVideoChat = true;
       redisCount('videoChatStarts');
     }
-    this.io.of(this.roomId).emit('roster', this.roster);
+    this.io.of(this.roomId).emit('roster', this.getRosterForApp());
   };
 
   private leaveVideo = (socket: Socket) => {
@@ -567,14 +586,14 @@ export class Room {
     if (match) {
       match.isVideoChat = false;
     }
-    this.io.of(this.roomId).emit('roster', this.roster);
+    this.io.of(this.roomId).emit('roster', this.getRosterForApp());
   };
 
   private joinScreenSharing = (socket: Socket, data: { file: boolean }) => {
     if (!this.validateLock(socket.id)) {
       return;
     }
-    const sharer = this.roster.find((user) => user.isScreenShare);
+    const sharer = this.getRosterForApp().find((user) => user.isScreenShare);
     if (sharer) {
       // Someone's already sharing
       return;
@@ -586,22 +605,16 @@ export class Room {
       this.cmdHost(socket, 'screenshare://' + this.clientIdMap[socket.id]);
       redisCount('screenShareStarts');
     }
-    // TODO make isScreenShare a dynamic property
-    // const match = this.roster.find((user) => user.id === socket.id);
-    // if (match) {
-    //   match.isScreenShare = true;
-    // }
-    this.io.of(this.roomId).emit('roster', this.roster);
+    this.io.of(this.roomId).emit('roster', this.getRosterForApp());
   };
 
   private leaveScreenSharing = (socket: Socket) => {
-    const sharer = this.roster.find((user) => user.isScreenShare);
+    const sharer = this.getRosterForApp().find((user) => user.isScreenShare);
     if (!sharer || sharer?.id !== socket.id) {
       return;
     }
-    sharer.isScreenShare = false;
     this.cmdHost(socket, '');
-    this.io.of(this.roomId).emit('roster', this.roster);
+    this.io.of(this.roomId).emit('roster', this.getRosterForApp);
   };
 
   private startVBrowser = async (
@@ -1072,7 +1085,6 @@ export class Room {
     }
     const fromClientId = this.roster.find((p) => p.id === socket.id)?.clientId;
     const toId = this.roster.find((p) => p.clientId === data.to)?.id;
-    console.log(fromClientId, toId);
     this.io
       .of(this.roomId)
       .to(toId ?? '')
@@ -1086,8 +1098,9 @@ export class Room {
   private disconnectUser = (socket: Socket) => {
     let index = this.roster.findIndex((user) => user.id === socket.id);
     const removed = this.roster.splice(index, 1)[0];
-    this.io.of(this.roomId).emit('roster', this.roster);
-    if (removed.isScreenShare) {
+    this.io.of(this.roomId).emit('roster', this.getRosterForApp());
+    const wasSharer = removed.clientId === this.getSharerId();
+    if (wasSharer) {
       // Reset the room state since we lost the screen sharer
       this.cmdHost(socket, '');
     }

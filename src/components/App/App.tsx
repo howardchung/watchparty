@@ -626,6 +626,7 @@ export default class App extends React.Component<AppProps, AppState> {
       this.setState({ playlist: data });
     });
     socket.on('signalSS', async (data: any) => {
+      process.env.NODE_ENV === 'development' && console.log(data);
       // Handle messages received from signaling server
       const msg = data.msg;
       const from = data.from;
@@ -1289,14 +1290,12 @@ export default class App extends React.Component<AppProps, AppState> {
       return input;
     }
     if (input.startsWith('screenshare://')) {
-      // TODO need to switch to handle clientID
-      let id = input.slice('screenshare://'.length);
-      return this.state.nameMap[id] + "'s screen";
+      const sharer = this.state.participants.find((user) => user.isScreenShare);
+      return this.state.nameMap[sharer?.id ?? ''] + "'s screen";
     }
     if (input.startsWith('fileshare://')) {
-      // TODO need to switch to handle clientID
-      let id = input.slice('fileshare://'.length);
-      return this.state.nameMap[id] + "'s file";
+      const sharer = this.state.participants.find((user) => user.isScreenShare);
+      return this.state.nameMap[sharer?.id ?? ''] + "'s file";
     }
     if (input.startsWith('vbrowser://')) {
       return 'Virtual Browser' + (this.state.isVBrowserLarge ? '+' : '');
