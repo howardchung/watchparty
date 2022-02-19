@@ -695,7 +695,6 @@ export default class App extends React.Component<AppProps, AppState> {
   };
 
   setupScreenShare = async () => {
-    //@ts-ignore
     if (navigator.mediaDevices.getDisplayMedia) {
       const stream = await navigator.mediaDevices.getDisplayMedia({
         //@ts-ignore
