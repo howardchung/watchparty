@@ -34,6 +34,7 @@
     "react-scripts": "5.0.0",
     "react-secure-link": "^3.0.3",
     "react-semantic-ui-range": "^0.7.1",
+    "react-tenor": "^2.2.0",
     "recharts": "^2.1.9",
     "s3-client": "^4.4.2",
     "semantic-ui-react": "^2.1.2",

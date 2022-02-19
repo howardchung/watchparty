@@ -17,6 +17,9 @@ import { UserMenu } from '../UserMenu/UserMenu';
 import { Socket } from 'socket.io-client';
 import firebase from 'firebase/compat/app';
 import classes from './Chat.module.css';
+import Tenor from 'react-tenor';
+
+import 'react-tenor/dist/styles.css';
 
 interface ChatProps {
   chat: ChatMessage[];
@@ -234,6 +237,10 @@ export class Chat extends React.Component<ChatProps> {
           </Icon>
           {/* <Icon onClick={this.sendChatMsg} name="send" inverted circular link /> */}
         </Input>
+        <Tenor
+          token={process.env.REACT_APP_TENOR_API_KEY ?? ''}
+          onSelect={(result) => console.log(result)}
+        />
       </div>
     );
   }
