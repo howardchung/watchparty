@@ -2,7 +2,6 @@ import config from '../config';
 import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import { VMManager, VM } from './base';
-import { cloudInit, imageName } from './utils';
 import fs from 'fs';
 
 const HETZNER_TOKEN = config.HETZNER_TOKEN;
