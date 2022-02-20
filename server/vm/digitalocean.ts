@@ -2,7 +2,6 @@ import config from '../config';
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
 import { VMManager, VM } from './base';
-import { cloudInit, imageName } from './utils';
 
 const DO_TOKEN = config.DO_TOKEN;
 const region = 'sfo3';
@@ -30,10 +29,10 @@ export class DigitalOcean extends VMManager {
         image: imageId,
         ssh_keys: sshKeys,
         private_networking: true,
-        user_data: cloudInit(
-          imageName,
-          this.isLarge ? '1920x1080@30' : undefined
-        ),
+        // user_data: cloudInit(
+        //   imageName,
+        //   this.isLarge ? '1920x1080@30' : undefined
+        // ),
         tags: [this.getTag()],
       },
     });
