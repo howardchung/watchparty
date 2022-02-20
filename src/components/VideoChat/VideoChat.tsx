@@ -4,6 +4,7 @@ import { Socket } from 'socket.io-client';
 
 import {
   formatTimestamp,
+  getAndSaveClientId,
   getColorForStringHex,
   getDefaultPicture,
   iceServers,
@@ -150,18 +151,29 @@ export class VideoChat extends React.Component<VideoChatProps> {
       // We haven't started video chat, exit
       return;
     }
-    this.props.participants.forEach((user) => {
-      const id = user.id;
-      if (!user.isVideoChat && videoPCs[id]) {
-        // User isn't in video chat but we have a connection, close it
-        videoPCs[id].close();
-        delete videoPCs[id];
+    const selfId = getAndSaveClientId();
+
+    // Delete and close any connections that aren't in the current member list (maybe someone disconnected)
+    // This allows them to rejoin later
+    const clientIds = new Set(
+      this.props.participants
+        .filter((p) => p.isVideoChat)
+        .map((p) => p.clientId)
+    );
+    Object.entries(videoPCs).forEach(([key, value]) => {
+      if (!clientIds.has(key)) {
+        value.close();
+        delete videoPCs[key];
       }
+    });
+
+    this.props.participants.forEach((user) => {
+      const id = user.clientId;
       if (!user.isVideoChat || videoPCs[id]) {
         // User isn't in video chat, or we already have a connection to them
         return;
       }
-      if (id === this.socket.id) {
+      if (id === selfId) {
         videoPCs[id] = new RTCPeerConnection();
         videoRefs[id].srcObject = ourStream;
       } else {
@@ -185,7 +197,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
           videoRefs[id].srcObject = event.streams[0];
         };
         // For each pair, have the lexicographically smaller ID be the offerer
-        const isOfferer = this.socket.id < id;
+        const isOfferer = selfId < id;
         if (isOfferer) {
           pc.onnegotiationneeded = async () => {
             // Start connection for peer's video
@@ -213,6 +225,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
       borderRadius: '4px',
       objectFit: 'contain',
     };
+    const selfId = getAndSaveClientId();
     return (
       <div
         style={{
@@ -345,7 +358,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
                       <video
                         ref={(el) => {
                           if (el) {
-                            videoRefs[p.id] = el;
+                            videoRefs[p.clientId] = el;
                           }
                         }}
                         style={{
@@ -353,11 +366,11 @@ export class VideoChat extends React.Component<VideoChatProps> {
                           // mirror the video if it's our stream. this style mimics Zoom where your
                           // video is mirrored only for you)
                           transform: `scaleX(${
-                            p.id === socket.id ? '-1' : '1'
+                            p.clientId === selfId ? '-1' : '1'
                           })`,
                         }}
                         autoPlay
-                        muted={p.id === socket.id}
+                        muted={p.clientId === selfId}
                         data-id={p.id}
                       />
                     ) : (

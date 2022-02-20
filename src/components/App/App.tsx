@@ -626,6 +626,7 @@ export default class App extends React.Component<AppProps, AppState> {
       this.setState({ playlist: data });
     });
     socket.on('signalSS', async (data: any) => {
+      process.env.NODE_ENV === 'development' && console.log(data);
       // Handle messages received from signaling server
       const msg = data.msg;
       const from = data.from;
@@ -740,13 +741,24 @@ export default class App extends React.Component<AppProps, AppState> {
     if (!this.isScreenShare() && !this.isFileShare()) {
       return;
     }
-    // TODO teardown for those who leave
     const sharer = this.state.participants.find((p) => p.isScreenShare);
-    if (sharer && sharer.id === this.socket.id) {
+    const selfId = getAndSaveClientId();
+    if (sharer && sharer.clientId === selfId) {
       // We're the sharer, create a connection to each other member
+
+      // Delete and close any connections that aren't in the current member list (maybe someone disconnected)
+      // This allows them to rejoin later
+      const clientIds = new Set(this.state.participants.map((p) => p.clientId));
+      Object.entries(this.screenHostPC).forEach(([key, value]) => {
+        if (!clientIds.has(key)) {
+          value.close();
+          delete this.screenHostPC[key];
+        }
+      });
+
       this.state.participants.forEach((user) => {
-        const id = user.id;
-        if (id === this.socket.id && this.state.isScreenSharingFile) {
+        const id = user.clientId;
+        if (id === selfId && this.state.isScreenSharingFile) {
           // Don't set up a connection to ourselves if sharing file
           return;
         }
@@ -783,7 +795,7 @@ export default class App extends React.Component<AppProps, AppState> {
       pc.onicecandidate = (event) => {
         // We generated an ICE candidate, send it to peer
         if (event.candidate) {
-          this.sendSignalSS(sharer.id, { ice: event.candidate });
+          this.sendSignalSS(sharer.clientId, { ice: event.candidate });
         }
       };
       pc.ontrack = (event: RTCTrackEvent) => {
@@ -1288,12 +1300,12 @@ export default class App extends React.Component<AppProps, AppState> {
       return input;
     }
     if (input.startsWith('screenshare://')) {
-      let id = input.slice('screenshare://'.length);
-      return this.state.nameMap[id] + "'s screen";
+      const sharer = this.state.participants.find((user) => user.isScreenShare);
+      return this.state.nameMap[sharer?.id ?? ''] + "'s screen";
     }
     if (input.startsWith('fileshare://')) {
-      let id = input.slice('fileshare://'.length);
-      return this.state.nameMap[id] + "'s file";
+      const sharer = this.state.participants.find((user) => user.isScreenShare);
+      return this.state.nameMap[sharer?.id ?? ''] + "'s file";
     }
     if (input.startsWith('vbrowser://')) {
       return 'Virtual Browser' + (this.state.isVBrowserLarge ? '+' : '');
