@@ -245,7 +245,7 @@ app.post('/createRoom', async (req, res) => {
   if (postgres) {
     const roomObj: any = {
       roomId: newRoom.roomId,
-      creationTime: newRoom.creationTime,
+      creationTime: new Date(),
     };
     await insertObject(postgres, 'room', roomObj);
   }
@@ -551,7 +551,7 @@ async function getStats() {
 
   const dbRoomData = (
     await postgres?.query(
-      `SELECT "roomId", "creationTime", "lastUpdateTime", vanity, "isSubRoom", owner, password from room WHERE "lastUpdateTime" > NOW() - INTERVAL '30 day' ORDER BY "creationTime" DESC`
+      `SELECT "roomId", "creationTime", "lastUpdateTime", vanity, "isSubRoom", "roomTitle", "roomDescription", "mediaPath", owner, password from room WHERE "lastUpdateTime" > NOW() - INTERVAL '30 day' ORDER BY "creationTime" DESC`
     )
   )?.rows;
   const currentRoomData = dbRoomData
@@ -562,14 +562,17 @@ async function getStats() {
       }
       const obj = {
         roomId: room.roomId,
-        creationTime: room.creationTime,
-        lastUpdateTime: room.lastUpdateTime,
         video: room.video || undefined,
         videoTS: room.videoTS || undefined,
+        creationTime: dbRoom.creationTime || undefined,
+        lastUpdateTime: dbRoom.lastUpdateTime || undefined,
         vanity: dbRoom.vanity || undefined,
         isSubRoom: dbRoom.isSubRoom || undefined,
         owner: dbRoom.owner || undefined,
         password: dbRoom.password || undefined,
+        roomTitle: dbRoom.roomTitle || undefined,
+        roomDescription: dbRoom.roomDescription || undefined,
+        mediaPath: dbRoom.mediaPath || undefined,
         rosterLength: room.roster.length,
         roster: room.getRosterForStats(),
         vBrowser: room.vBrowser,

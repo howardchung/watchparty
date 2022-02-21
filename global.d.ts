@@ -67,12 +67,10 @@ interface HostState {
 
 interface PersistentRoom {
   roomId: string;
-  creationTime: string;
   password: string;
   owner: string;
   vanity: string;
   isChatDisabled: boolean;
   isSubRoom: boolean;
-  lastUpdateTime: string;
   data: any;
 }

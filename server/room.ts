@@ -36,7 +36,6 @@ export class Room {
   private nameMap: StringDict = {};
   private pictureMap: StringDict = {};
   public vBrowser: AssignedVM | undefined = undefined;
-  public creationTime: Date = new Date();
   public lastUpdateTime: Date = new Date();
   public creator: string | undefined = undefined;
   public lock: string | undefined = undefined; // uid of the user who locked the room
@@ -188,8 +187,6 @@ export class Room {
       nameMap: abbrNameMap,
       pictureMap: abbrPictureMap,
       vBrowser: this.vBrowser,
-      creationTime: this.creationTime,
-      lastUpdateTime: this.lastUpdateTime,
       lock: this.lock,
       creator: this.creator,
       playlist: this.playlist,
@@ -217,12 +214,6 @@ export class Room {
     }
     if (roomObj.vBrowser) {
       this.vBrowser = roomObj.vBrowser;
-    }
-    if (roomObj.creationTime) {
-      this.creationTime = new Date(roomObj.creationTime);
-    }
-    if (roomObj.lastUpdateTime) {
-      this.lastUpdateTime = new Date(roomObj.lastUpdateTime);
     }
     if (roomObj.lock) {
       this.lock = roomObj.lock;
@@ -901,10 +892,8 @@ export class Room {
         );
         return;
       }
-      // Only keep the rows for which we have a postgres column
       const roomObj: any = {
         roomId: this.roomId,
-        creationTime: this.creationTime,
         owner: owner,
         isSubRoom: isSubscriber,
       };
