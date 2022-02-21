@@ -36,7 +36,6 @@ export class Room {
   private nameMap: StringDict = {};
   private pictureMap: StringDict = {};
   public vBrowser: AssignedVM | undefined = undefined;
-  public lastUpdateTime: Date = new Date();
   public creator: string | undefined = undefined;
   public lock: string | undefined = undefined; // uid of the user who locked the room
   public playlist: PlaylistVideo[] = [];
@@ -51,6 +50,7 @@ export class Room {
   private uidMap: StringDict = {};
   private tsInterval: NodeJS.Timeout | undefined = undefined;
   public isChatDisabled: boolean | undefined = undefined;
+  public lastUpdateTime: Date = new Date();
 
   constructor(
     io: Server,
@@ -252,7 +252,8 @@ export class Room {
       name: this.nameMap[p.id] || p.id,
       uid: this.uidMap[p.id],
       ts: this.tsMap[p.id],
-      ip: this.io.of(this.roomId).sockets.get(p.id)?.request?.connection
+      clientId: this.clientIdMap[p.id],
+      ip: this.io.of(this.roomId).sockets.get(p.id)?.request?.socket
         ?.remoteAddress,
     }));
   };
