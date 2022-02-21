@@ -28,7 +28,7 @@ if (config.DATABASE_URL) {
 
 export class Room {
   // Serialized state
-  public video = '';
+  public video: string | null = '';
   public videoTS = 0;
   public subtitle = '';
   private paused = false;
@@ -268,10 +268,10 @@ export class Room {
 
   protected getSharerId = (): string => {
     let sharerId = '';
-    if (this.video.startsWith('screenshare://')) {
-      sharerId = this.video.slice('screenshare://'.length);
-    } else if (this.video.startsWith('fileshare://')) {
-      sharerId = this.video.slice('fileshare://'.length);
+    if (this.video?.startsWith('screenshare://')) {
+      sharerId = this.video?.slice('screenshare://'.length);
+    } else if (this.video?.startsWith('fileshare://')) {
+      sharerId = this.video?.slice('fileshare://'.length);
     }
     return sharerId;
   };
@@ -291,7 +291,7 @@ export class Room {
       (user) => this.clientIdMap[user.id] === this.vBrowser?.controllerClient
     );
     return {
-      video: this.video,
+      video: this.video ?? '',
       videoTS: this.videoTS,
       subtitle: this.subtitle,
       paused: this.paused,
