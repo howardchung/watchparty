@@ -12,7 +12,7 @@ const sshKeys = config.DO_SSH_KEYS.split(',');
 export class DigitalOcean extends VMManager {
   size = 's-2vcpu-2gb'; // s-1vcpu-1gb, s-1vcpu-2gb, s-2vcpu-2gb, s-4vcpu-8gb, c-2
   largeSize = 's-2vcpu-2gb';
-  minRetries = 10;
+  minRetries = 20;
   id = 'DO';
   startVM = async (name: string) => {
     const response = await axios({

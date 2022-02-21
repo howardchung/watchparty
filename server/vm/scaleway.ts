@@ -12,7 +12,7 @@ const imageId = config.SCW_IMAGE;
 export class Scaleway extends VMManager {
   size = 'DEV1-S'; // DEV1-S, DEV1-M, DEV1-L, GP1-XS
   largeSize = 'DEV1-M';
-  minRetries = 10;
+  minRetries = 20;
   id = 'Scaleway';
   startVM = async (name: string) => {
     const response = await axios({
