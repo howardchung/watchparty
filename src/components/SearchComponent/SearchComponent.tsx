@@ -62,7 +62,7 @@ export class SearchComponent extends React.Component<SearchComponentProps> {
 
   render() {
     const setMedia = this.setMedia;
-    let placeholder = '[SECRET] Search streams';
+    let placeholder = '[BETA] Search streams';
     let icon = 'film';
     if (this.props.type === 'youtube') {
       placeholder = 'Search YouTube';
