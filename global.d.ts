@@ -33,9 +33,7 @@ interface ChatMessage extends ChatMessageBase {
 }
 
 interface Settings {
-  streamPath?: string;
   disableChatSound?: boolean;
-  beta?: boolean;
 }
 
 interface PlaylistVideo {
