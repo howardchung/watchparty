@@ -252,16 +252,6 @@ app.post('/createRoom', async (req, res) => {
   res.json({ name: name.slice(1) });
 });
 
-app.get('/settings', (req, res) => {
-  if (req.hostname === config.CUSTOM_SETTINGS_HOSTNAME) {
-    return res.json({
-      streamPath: config.STREAM_PATH,
-      beta: true,
-    });
-  }
-  return res.json({});
-});
-
 app.post('/manageSub', async (req, res) => {
   const decoded = await validateUserToken(req.body?.uid, req.body?.token);
   if (!decoded) {
@@ -317,7 +307,19 @@ app.get('/metadata', async (req, res) => {
   } catch (e) {
     console.warn(e);
   }
-  return res.json({ isSubscriber, isCustomer, isVMPoolFull });
+  const beta =
+    decoded?.email != null &&
+    Boolean(config.BETA_USER_EMAILS.split(',').includes(decoded?.email));
+  const streamPath = beta ? config.STREAM_PATH : undefined;
+  const isCustomDomain = req.hostname === config.CUSTOM_SETTINGS_HOSTNAME;
+  return res.json({
+    isSubscriber,
+    isCustomer,
+    isVMPoolFull,
+    beta,
+    streamPath,
+    isCustomDomain,
+  });
 });
 
 app.get('/resolveRoom/:vanity', async (req, res) => {
