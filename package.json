@@ -25,6 +25,7 @@
     "pg": "^8.7.3",
     "pm2": "^5.2.0",
     "react": "^17.0.2",
+    "react-colorful": "^5.5.1",
     "react-dom": "^17.0.2",
     "react-google-recaptcha-v3": "^1.9.7",
     "react-linkify": "^1.0.0-alpha",
@@ -107,7 +108,6 @@
     "husky": "^4.3.8",
     "lint-staged": "^12.3.4",
     "prettier": "2.5.1",
-    "react-colorful": "^5.5.1",
     "ts-node-dev": "^1.1.8",
     "typescript": "^4.5.5"
   }
