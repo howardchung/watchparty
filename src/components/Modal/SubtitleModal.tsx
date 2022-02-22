@@ -80,7 +80,7 @@ export class SubtitleModal extends React.Component<{
                       disabled={!this.props.haveLock()}
                     >
                       <Icon name="closed captioning" />
-                      Upload Subtitle
+                      Upload Subtitles
                     </Button>
                   }
                 />

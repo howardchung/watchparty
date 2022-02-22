@@ -81,6 +81,8 @@ interface AppProps {
   user?: firebase.User;
   isSubscriber: boolean;
   isCustomer: boolean;
+  beta: boolean;
+  streamPath: string | undefined;
 }
 
 interface AppState {
@@ -263,10 +265,8 @@ export default class App extends React.Component<AppProps, AppState> {
   }
 
   loadSettings = async () => {
-    // Load settings from localstorage and remote
-    const customSettingsData = await fetch(serverPath + '/settings');
-    const customSettings = await customSettingsData.json();
-    let settings = { ...getCurrentSettings(), ...customSettings };
+    // Load settings from localstorage
+    let settings = getCurrentSettings();
     this.setState({ settings });
   };
 
@@ -1572,7 +1572,7 @@ export default class App extends React.Component<AppProps, AppState> {
             closeModal={() => this.setState({ isVBrowserModalOpen: false })}
             startVBrowser={this.startVBrowser}
             user={this.props.user}
-            beta={this.state.settings.beta}
+            beta={this.props.beta}
           />
         )}
         {this.state.isScreenShareModalOpen && (
@@ -1665,7 +1665,7 @@ export default class App extends React.Component<AppProps, AppState> {
                         currentMedia={this.state.currentMedia}
                         getMediaDisplayName={this.getMediaDisplayName}
                         launchMultiSelect={this.launchMultiSelect}
-                        streamPath={this.state.settings.streamPath}
+                        streamPath={this.props.streamPath}
                         mediaPath={this.state.mediaPath}
                         disabled={!this.haveLock()}
                         playlist={this.state.playlist}
@@ -1846,16 +1846,16 @@ export default class App extends React.Component<AppProps, AppState> {
                             setMedia={this.setMedia}
                             playlistAdd={this.playlistAdd}
                             type={'youtube'}
-                            streamPath={this.state.settings.streamPath}
+                            streamPath={this.props.streamPath}
                             disabled={!this.haveLock()}
                           />
                         )}
-                        {Boolean(this.state.settings.streamPath) && (
+                        {Boolean(this.props.streamPath) && (
                           <SearchComponent
                             setMedia={this.setMedia}
                             playlistAdd={this.playlistAdd}
                             type={'stream'}
-                            streamPath={this.state.settings.streamPath}
+                            streamPath={this.props.streamPath}
                             launchMultiSelect={this.launchMultiSelect}
                             disabled={!this.haveLock()}
                           />

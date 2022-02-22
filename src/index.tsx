@@ -13,6 +13,7 @@ import * as serviceWorker from './serviceWorker';
 import firebase from 'firebase/compat/app';
 import 'firebase/auth';
 import { serverPath } from './utils';
+import { Modal } from 'semantic-ui-react';
 
 const Debug = lazy(() => import('./components/Debug/Debug'));
 
@@ -26,6 +27,9 @@ class WatchParty extends React.Component {
     user: undefined as firebase.User | undefined,
     isSubscriber: false,
     isCustomer: false,
+    streamPath: undefined as string | undefined,
+    beta: false,
+    isCustomDomain: false,
   };
   async componentDidMount() {
     if (firebaseConfig) {
@@ -41,6 +45,9 @@ class WatchParty extends React.Component {
           this.setState({
             isSubscriber: data.isSubscriber,
             isCustomer: data.isCustomer,
+            streamPath: data.streamPath,
+            beta: data.beta,
+            isCustomDomain: data.isCustomDomain,
           });
         }
       });
@@ -49,6 +56,13 @@ class WatchParty extends React.Component {
   render() {
     return (
       <React.StrictMode>
+        {this.state.isCustomDomain && (
+          <Modal inverted basic open>
+            <Modal.Header>
+              Please contact Howard for access to beta/testing mode.
+            </Modal.Header>
+          </Modal>
+        )}
         <BrowserRouter>
           <Route
             path="/"
@@ -60,6 +74,8 @@ class WatchParty extends React.Component {
                     user={this.state.user}
                     isSubscriber={this.state.isSubscriber}
                     isCustomer={this.state.isCustomer}
+                    streamPath={this.state.streamPath}
+                    beta={this.state.beta}
                   />
                 );
               }
@@ -87,6 +103,8 @@ class WatchParty extends React.Component {
                   isSubscriber={this.state.isSubscriber}
                   isCustomer={this.state.isCustomer}
                   vanity={props.match.params.vanity}
+                  streamPath={this.state.streamPath}
+                  beta={this.state.beta}
                 />
               );
             }}
