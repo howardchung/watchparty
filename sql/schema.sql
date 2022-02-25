@@ -25,6 +25,13 @@ CREATE TABLE subscriber(
   PRIMARY KEY(uid)
 );
 
+CREATE TABLE discord(
+  username text,
+  discriminator text,
+  "customerId" text,
+  PRIMARY KEY("customerId")
+);
+
 CREATE UNIQUE INDEX on room (LOWER(vanity)) WHERE vanity IS NOT NULL;
 CREATE INDEX on room(owner) WHERE owner IS NOT NULL;
 CREATE INDEX on room("creationTime");

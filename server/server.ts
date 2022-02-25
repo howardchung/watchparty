@@ -24,11 +24,13 @@ import { Client } from 'pg';
 import { getStartOfDay } from './utils/time';
 import { getBgVMManagers, getSessionLimitSeconds } from './vm/utils';
 import { hashString } from './utils/string';
-import { insertObject } from './utils/postgres';
+import { insertObject, upsertObject } from './utils/postgres';
 import axios from 'axios';
 import crypto from 'crypto';
 import zlib from 'zlib';
 import util from 'util';
+import { Intents } from 'discord.js';
+import { DiscordBot } from './utils/discord';
 
 const gzip = util.promisify(zlib.gzip);
 
@@ -55,6 +57,23 @@ if (config.DATABASE_URL) {
     ssl: { rejectUnauthorized: false },
   });
   postgres.connect();
+}
+
+let discordBot: DiscordBot;
+if (
+  config.DISCORD_BOT_TOKEN &&
+  config.DISCORD_SERVER_ID &&
+  config.DISCORD_SUB_ROLE_ID
+) {
+  discordBot = new DiscordBot({
+    intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MEMBERS],
+  });
+  discordBot.once('ready', () => {
+    console.log(`Discord Bot "${discordBot?.user?.username}" ready`);
+  });
+  if (!discordBot.isReady()) {
+    discordBot.login(config.DISCORD_BOT_TOKEN);
+  }
 }
 
 const names = Moniker.generator([
@@ -106,6 +125,101 @@ app.use(bodyParser.raw({ type: 'text/plain', limit: 1000000 }));
 app.get('/ping', (_req, res) => {
   res.json('pong');
 });
+
+app
+  .post('/discordRole', async (req, res) => {
+    const decoded = await validateUserToken(req.body?.uid, req.body?.token);
+    if (!decoded) {
+      return res.status(400).json({ error: 'invalid user token' });
+    }
+    const customer = await getCustomerByEmail(decoded.email as string);
+    const isSubscriber = Boolean(
+      customer?.subscriptions?.data?.find((sub) => sub?.status === 'active')
+    );
+    if (!isSubscriber) {
+      return res
+        .status(400)
+        .json({ error: 'You are not a WatchParty Plus subscriber.' });
+    }
+    if (!postgres || !discordBot) {
+      return res.status(500);
+    }
+    try {
+      if (req?.body.undo) {
+        const user = await discordBot.assignRole(
+          req.body?.username,
+          req.body?.discriminator,
+          true
+        );
+        if (user) {
+          await postgres?.query('DELETE FROM discord WHERE "customerId" = $1', [
+            customer?.id,
+          ]);
+        }
+      } else {
+        const user = await discordBot.assignRole(
+          req.body?.username,
+          req.body?.discriminator,
+          false
+        );
+        if (!user) {
+          return res.status(400).json({ error: 'Discord account not found' });
+        }
+        // Check if this customer already has a discord account with a role. If so remove that role.
+        const result = await postgres?.query(
+          'SELECT * FROM discord WHERE "customerId" = $1',
+          [customer?.id]
+        );
+        if (result.rowCount) {
+          await discordBot.assignRole(
+            result.rows[0].username,
+            result.rows[0].discriminator,
+            true
+          );
+        }
+        await upsertObject(
+          postgres,
+          'discord',
+          {
+            username: req.body?.username,
+            discriminator: req.body?.discriminator,
+            customerId: customer?.id,
+          },
+          { customerId: customer?.id }
+        );
+      }
+    } catch (e) {
+      console.error(e);
+      return res.status(500);
+    }
+    return res.status(200).json({});
+  })
+  .get('/discordRole', async (req, res) => {
+    const decoded = await validateUserToken(
+      req.query?.uid as string,
+      req.query?.token as string
+    );
+    if (!decoded) {
+      return res.status(400).json({ error: 'invalid user token' });
+    }
+    const customer = await getCustomerByEmail(decoded.email as string);
+    const isSubscriber = Boolean(
+      customer?.subscriptions?.data?.find((sub) => sub?.status === 'active')
+    );
+    if (!isSubscriber) {
+      return res
+        .status(400)
+        .json({ error: 'You are not a WatchParty Plus subscriber.' });
+    }
+    if (!postgres || !discordBot) {
+      return res.status(500);
+    }
+    const result = await postgres?.query(
+      'SELECT username, discriminator FROM discord WHERE "customerId" = $1',
+      [customer?.id]
+    );
+    return res.json(result?.rows[0] ?? {});
+  });
 
 // Data's already compressed so go before the compression middleware
 app.get('/subtitle/:hash', async (req, res) => {
