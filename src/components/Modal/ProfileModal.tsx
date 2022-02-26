@@ -9,39 +9,37 @@ export class ProfileModal extends React.Component<{
   user: firebase.User;
   userImage: string | null;
   isSubscriber?: boolean;
+  discordUsername?: string;
+  discordDiscriminator?: string;
 }> {
   public state = {
     resetDisabled: false,
     deleteConfirmOpen: false,
-    discordOpen: false,
-    discordUsername: '',
-    discordDiscriminator: '',
-    fetchedDiscordUsername: '',
-    fetchedDiscordDiscriminator: '',
-    discordError: '',
   };
 
-  openDiscord = async () => {
-    await this.getDiscord();
-    this.setState({ discordOpen: true });
+  authDiscord = () => {
+    const url = process.env.REACT_APP_DISCORD_AUTH_URL;
+    window.open(
+      url,
+      '_blank',
+      'toolbar=0,location=0,menubar=0,width=450,height=900'
+    );
   };
 
-  closeDiscord = async () => {
-    this.setState({
-      discordOpen: false,
-      discordUsername: '',
-      discordDiscriminator: '',
-      discordError: '',
+  deleteDiscord = async () => {
+    const token = await this.props.user.getIdToken();
+    await window.fetch(serverPath + '/discord/auth', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        uid: this.props.user.uid,
+        token,
+      }),
     });
+    window.location.reload();
   };
-
-  setDiscordUsername(value: string) {
-    this.setState({ discordUsername: value });
-  }
-
-  setDiscordDiscriminator(value: string) {
-    this.setState({ discordDiscriminator: value });
-  }
 
   onSignOut = () => {
     firebase.auth().signOut();
@@ -85,53 +83,8 @@ export class ProfileModal extends React.Component<{
     window.location.reload();
   };
 
-  assignRole = async (
-    username: string,
-    discriminator: string,
-    undo: boolean = false
-  ) => {
-    const token = await this.props.user.getIdToken();
-    const response = await window.fetch(serverPath + '/discordRole', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        uid: this.props.user.uid,
-        token,
-        username,
-        discriminator,
-        undo,
-      }),
-    });
-    if (response.status !== 200) {
-      const body = await response.json();
-      this.setState({ discordError: body.error });
-    } else {
-      this.setState({ discordError: '' });
-    }
-  };
-
-  getDiscord = async () => {
-    const token = await this.props.user.getIdToken();
-    const response = await window.fetch(
-      serverPath + `/discordRole?uid=${this.props.user?.uid}&token=${token}`
-    );
-    const data = await response.json();
-    this.setState({
-      fetchedDiscordUsername: data.username,
-      fetchedDiscordDiscriminator: data.discriminator,
-    });
-  };
-
   render() {
     const { close, userImage } = this.props;
-    const {
-      discordUsername,
-      discordDiscriminator,
-      fetchedDiscordUsername,
-      fetchedDiscordDiscriminator,
-    } = this.state;
     return (
       <Modal open={true} onClose={close as any} size="tiny">
         <Modal
@@ -167,110 +120,6 @@ export class ProfileModal extends React.Component<{
             </Button>
           </Modal.Actions>
         </Modal>
-        <Modal
-          open={this.state.discordOpen}
-          onClose={() => {
-            this.setState({ discordInputOpen: false });
-          }}
-          size="tiny"
-        >
-          <Label attached="top" color="orange">
-            Subscriber only
-          </Label>
-          <Modal.Header>
-            Enter your Discord account name to to be assigned your subscriber
-            role on our Discord server
-          </Modal.Header>
-          <Modal.Content>
-            <p>
-              <a href="https://discord.gg/3rYj5HV">
-                https://discord.gg/3rYj5HV
-              </a>
-            </p>
-            <p style={{ color: 'blue', fontWeight: 'bold' }}>
-              Make sure you have joined our Discord server before continuing.
-            </p>
-            <p>
-              Your full Discord account consists of your username and a
-              numerical tag seperated by a <i>#</i>.
-            </p>
-            {fetchedDiscordUsername && fetchedDiscordDiscriminator && (
-              <p>
-                You currently have assigned a role to:{' '}
-                <b>
-                  {fetchedDiscordUsername}#{fetchedDiscordDiscriminator}
-                </b>
-              </p>
-            )}
-            <div style={{ display: 'flex' }}>
-              <Input
-                attached
-                style={{ borderRadius: 0 }}
-                type="text"
-                placeholder="Username"
-                value={this.state.discordUsername}
-                onChange={(e) => {
-                  this.setDiscordUsername(e.target.value);
-                }}
-              />
-              <Label style={{ margin: 0, borderRadius: 0 }} size="big">
-                #
-              </Label>
-              <Input
-                style={{ width: 65 }}
-                type="text"
-                placeholder="Tag"
-                maxLength="4"
-                value={this.state.discordDiscriminator}
-                onChange={(e) => {
-                  this.setDiscordDiscriminator(e.target.value);
-                }}
-              />
-            </div>
-            {this.state.discordError && (
-              <div
-                style={{
-                  marginTop: 15,
-                  fontSize: 15,
-                  fontWeight: 'bold',
-                  color: 'red',
-                }}
-              >
-                {this.state.discordError}
-              </div>
-            )}
-          </Modal.Content>
-          <Modal.Actions>
-            <Button
-              positive
-              onClick={async () => {
-                await this.assignRole(discordUsername, discordDiscriminator);
-                if (!this.state.discordError) {
-                  this.closeDiscord();
-                }
-              }}
-            >
-              Confirm
-            </Button>
-            <Button
-              color="black"
-              disabled={!fetchedDiscordUsername || !fetchedDiscordDiscriminator}
-              onClick={async () => {
-                await this.assignRole(
-                  fetchedDiscordUsername,
-                  fetchedDiscordDiscriminator,
-                  true
-                );
-                this.closeDiscord();
-              }}
-            >
-              Remove assigned role
-            </Button>
-            <Button negative onClick={this.closeDiscord}>
-              Cancel
-            </Button>
-          </Modal.Actions>
-        </Modal>
         <Modal.Header>
           <Image avatar src={userImage} />
           {this.props.user.email}
@@ -292,18 +141,33 @@ export class ProfileModal extends React.Component<{
               gap: '10px',
             }}
           >
-            <Button
-              icon
-              labelPosition="left"
-              fluid
-              color="orange"
-              onClick={() => this.openDiscord()}
-              animated="fade"
-              disabled={!this.props.isSubscriber}
-            >
-              <Icon name="star" />
-              Get Discord Role
-            </Button>
+            {this.props.discordUsername && this.props.discordDiscriminator ? (
+              <Button
+                icon
+                labelPosition="left"
+                fluid
+                color="red"
+                animated="fade"
+                onClick={this.deleteDiscord}
+              >
+                <Icon name="discord" />
+                <Button.Content visible>Unlink Discord Account</Button.Content>
+                <Button.Content
+                  hidden
+                >{`${this.props.discordUsername}#${this.props.discordDiscriminator}`}</Button.Content>
+              </Button>
+            ) : (
+              <Button
+                icon
+                labelPosition="left"
+                fluid
+                color="orange"
+                onClick={this.authDiscord}
+              >
+                <Icon name="discord" />
+                Link Discord Account
+              </Button>
+            )}
             <Button
               icon
               labelPosition="left"

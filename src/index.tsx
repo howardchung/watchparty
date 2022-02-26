@@ -13,6 +13,7 @@ import * as serviceWorker from './serviceWorker';
 import firebase from 'firebase/compat/app';
 import 'firebase/auth';
 import { serverPath } from './utils';
+import { Discord } from './components/Discord/Discord';
 
 const Debug = lazy(() => import('./components/Debug/Debug'));
 
@@ -26,6 +27,8 @@ class WatchParty extends React.Component {
     user: undefined as firebase.User | undefined,
     isSubscriber: false,
     isCustomer: false,
+    discordUsername: undefined,
+    discordDiscriminator: undefined,
   };
   async componentDidMount() {
     if (firebaseConfig) {
@@ -41,6 +44,8 @@ class WatchParty extends React.Component {
           this.setState({
             isSubscriber: data.isSubscriber,
             isCustomer: data.isCustomer,
+            discordUsername: data.discordUsername,
+            discordDiscriminator: data.discordDiscriminator,
           });
         }
       });
@@ -69,6 +74,8 @@ class WatchParty extends React.Component {
                     user={this.state.user}
                     isSubscriber={this.state.isSubscriber}
                     isCustomer={this.state.isCustomer}
+                    discordUsername={this.state.discordUsername}
+                    discordDiscriminator={this.state.discordDiscriminator}
                     hideNewRoom
                   />
                   <Home user={this.state.user} />
@@ -91,11 +98,16 @@ class WatchParty extends React.Component {
               );
             }}
           />
+          <Route path="/discord/auth" exact>
+            <Discord user={this.state.user} />
+          </Route>
           <Route path="/terms">
             <TopBar
               user={this.state.user}
               isSubscriber={this.state.isSubscriber}
               isCustomer={this.state.isCustomer}
+              discordUsername={this.state.discordUsername}
+              discordDiscriminator={this.state.discordDiscriminator}
             />
             <Terms />
             <Footer />
@@ -105,6 +117,8 @@ class WatchParty extends React.Component {
               user={this.state.user}
               isSubscriber={this.state.isSubscriber}
               isCustomer={this.state.isCustomer}
+              discordUsername={this.state.discordUsername}
+              discordDiscriminator={this.state.discordDiscriminator}
             />
             <Privacy />
             <Footer />
@@ -114,6 +128,8 @@ class WatchParty extends React.Component {
               user={this.state.user}
               isSubscriber={this.state.isSubscriber}
               isCustomer={this.state.isCustomer}
+              discordUsername={this.state.discordUsername}
+              discordDiscriminator={this.state.discordDiscriminator}
             />
             <FAQ />
             <Footer />
@@ -123,6 +139,8 @@ class WatchParty extends React.Component {
               user={this.state.user}
               isSubscriber={this.state.isSubscriber}
               isCustomer={this.state.isCustomer}
+              discordUsername={this.state.discordUsername}
+              discordDiscriminator={this.state.discordDiscriminator}
             />
             <Suspense fallback={null}>
               <Debug />

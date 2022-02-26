@@ -1,20 +1,11 @@
-import { Client as DiscordClient, GuildMember, Role } from 'discord.js';
-import { Client as PostgresClient } from 'pg';
+import { Client, GuildMember, Role } from 'discord.js';
 import config from '../config';
 
-let postgres: PostgresClient | undefined = undefined;
-if (config.DATABASE_URL) {
-  postgres = new PostgresClient({
-    connectionString: config.DATABASE_URL,
-  });
-  postgres.connect();
-}
-
-export class DiscordBot extends DiscordClient {
+export class DiscordBot extends Client {
   async assignRole(
     username: string,
     discriminator: string,
-    undo: boolean | undefined
+    undo: boolean | undefined = false
   ): Promise<GuildMember | undefined> {
     const guild = this.guilds.cache.get(config.DISCORD_SERVER_ID);
     const role = guild?.roles.cache.get(config.DISCORD_SUB_ROLE_ID);
