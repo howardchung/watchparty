@@ -132,7 +132,7 @@ async function syncSubscribers() {
     const nullResult = await postgres2?.query(
       'SELECT * FROM discord WHERE email IS NULL'
     );
-    for (const row of nullResult.rows ?? []) {
+    for (const row of nullResult.rows) {
       await client.assignRole(row.username, row.discriminator, true);
     }
     await postgres2?.query('DELETE FROM discord WHERE email IS NULL');
