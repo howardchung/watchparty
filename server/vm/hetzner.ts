@@ -2,7 +2,6 @@ import config from '../config';
 import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import { VMManager, VM } from './base';
-import { cloudInit, imageName } from './utils';
 import fs from 'fs';
 
 const HETZNER_TOKEN = config.HETZNER_TOKEN;
@@ -12,7 +11,7 @@ const imageId = Number(config.HETZNER_IMAGE);
 export class Hetzner extends VMManager {
   size = 'cpx11'; // cx11, cpx11, cpx21, cpx31, ccx11
   largeSize = 'cpx31';
-  minRetries = 10;
+  minRetries = 20;
   id = 'Hetzner';
   gateway = config.HETZNER_GATEWAY;
   datacenters = this.region === 'US' ? ['ash'] : ['nbg1', 'fsn1', 'hel1'];

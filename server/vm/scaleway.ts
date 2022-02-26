@@ -2,7 +2,6 @@ import config from '../config';
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
 import { VMManager, VM } from './base';
-import { cloudInit, imageName } from './utils';
 
 const SCW_SECRET_KEY = config.SCW_SECRET_KEY;
 const SCW_ORGANIZATION_ID = config.SCW_ORGANIZATION_ID;
@@ -13,7 +12,7 @@ const imageId = config.SCW_IMAGE;
 export class Scaleway extends VMManager {
   size = 'DEV1-S'; // DEV1-S, DEV1-M, DEV1-L, GP1-XS
   largeSize = 'DEV1-M';
-  minRetries = 10;
+  minRetries = 20;
   id = 'Scaleway';
   startVM = async (name: string) => {
     const response = await axios({
@@ -43,7 +42,7 @@ export class Scaleway extends VMManager {
         'Content-Type': 'text/plain',
       },
       // set userdata for boot action
-      data: cloudInit(imageName, this.isLarge ? '1920x1080@30' : undefined),
+      //data: cloudInit(imageName, this.isLarge ? '1920x1080@30' : undefined),
     });
     // console.log(response2.data);
     // boot the instance

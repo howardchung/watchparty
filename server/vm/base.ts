@@ -72,7 +72,7 @@ export abstract class VMManager {
     if (isRampDown) {
       minBuffer /= 2;
     } else if (isRampUp) {
-      minBuffer *= 2;
+      minBuffer *= 1.5;
     }
     return [Math.ceil(minBuffer), Math.ceil(minBuffer * 1.5)];
   };
@@ -351,7 +351,10 @@ export abstract class VMManager {
                 this.getRedisHostCacheKey() + ':' + id
               );
               vm = cached ? JSON.parse(cached) : null;
-              if (!vm && (retryCount === 1 || retryCount % 10 === 0)) {
+              if (
+                !vm &&
+                (retryCount === this.minRetries + 1 || retryCount % 20 === 0)
+              ) {
                 vm = await this.getVM(id);
                 if (vm?.host) {
                   console.log(
@@ -395,7 +398,7 @@ export abstract class VMManager {
                 await this.redis.ltrim('vBrowserStageRetries', 0, 24);
               }
             } else {
-              if (retryCount >= 80) {
+              if (retryCount >= 240) {
                 console.log('[CHECKSTAGING]', 'giving up:', id);
                 await this.redis
                   .multi()
@@ -408,7 +411,7 @@ export abstract class VMManager {
                 await this.resetVM(id);
                 //await this.terminateVMWrapper(id);
               } else {
-                if (retryCount % 45 === 0) {
+                if (retryCount % 150 === 0) {
                   console.log(
                     '[CHECKSTAGING] %s attempt to poweron, attach to network',
                     id
@@ -416,7 +419,7 @@ export abstract class VMManager {
                   this.powerOn(id);
                   //this.attachToNetwork(id);
                 }
-                if (retryCount % 10 === 0) {
+                if (retryCount % 30 === 0) {
                   console.log(
                     '[CHECKSTAGING]',
                     'not ready:',
@@ -461,7 +464,7 @@ export abstract class VMManager {
       }
     });
 
-    const checkStagingInterval = 3000;
+    const checkStagingInterval = 1000;
     while (true) {
       await new Promise((resolve) => setTimeout(resolve, checkStagingInterval));
       await checkStaging();

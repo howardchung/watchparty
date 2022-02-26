@@ -28,7 +28,7 @@ if (config.DATABASE_URL) {
 
 export class Room {
   // Serialized state
-  public video = '';
+  public video: string | null = '';
   public videoTS = 0;
   public subtitle = '';
   private paused = false;
@@ -36,8 +36,6 @@ export class Room {
   private nameMap: StringDict = {};
   private pictureMap: StringDict = {};
   public vBrowser: AssignedVM | undefined = undefined;
-  public creationTime: Date = new Date();
-  public lastUpdateTime: Date = new Date();
   public creator: string | undefined = undefined;
   public lock: string | undefined = undefined; // uid of the user who locked the room
   public playlist: PlaylistVideo[] = [];
@@ -52,6 +50,7 @@ export class Room {
   private uidMap: StringDict = {};
   private tsInterval: NodeJS.Timeout | undefined = undefined;
   public isChatDisabled: boolean | undefined = undefined;
+  public lastUpdateTime: Date = new Date();
 
   constructor(
     io: Server,
@@ -99,8 +98,8 @@ export class Room {
     });
     io.of(roomId).on('connection', (socket: Socket) => {
       const clientId = socket.handshake.query?.clientId as string;
-      this.roster.push({ id: socket.id });
       this.clientIdMap[socket.id] = clientId;
+      this.roster.push({ id: socket.id, clientId });
       redisCount('connectStarts');
       redisCountDistinct('connectStartsDistinct', clientId);
 
@@ -112,7 +111,7 @@ export class Room {
       socket.emit('chatinit', this.chat);
       socket.emit('playlist', this.playlist);
       this.getRoomState(socket);
-      io.of(roomId).emit('roster', this.roster);
+      io.of(roomId).emit('roster', this.getRosterForApp());
 
       socket.on('CMD:name', (data) => this.changeUserName(socket, data));
       socket.on('CMD:picture', (data) => this.changeUserPicture(socket, data));
@@ -188,8 +187,6 @@ export class Room {
       nameMap: abbrNameMap,
       pictureMap: abbrPictureMap,
       vBrowser: this.vBrowser,
-      creationTime: this.creationTime,
-      lastUpdateTime: this.lastUpdateTime,
       lock: this.lock,
       creator: this.creator,
       playlist: this.playlist,
@@ -217,12 +214,6 @@ export class Room {
     }
     if (roomObj.vBrowser) {
       this.vBrowser = roomObj.vBrowser;
-    }
-    if (roomObj.creationTime) {
-      this.creationTime = new Date(roomObj.creationTime);
-    }
-    if (roomObj.lastUpdateTime) {
-      this.lastUpdateTime = new Date(roomObj.lastUpdateTime);
     }
     if (roomObj.lock) {
       this.lock = roomObj.lock;
@@ -261,9 +252,29 @@ export class Room {
       name: this.nameMap[p.id] || p.id,
       uid: this.uidMap[p.id],
       ts: this.tsMap[p.id],
-      ip: this.io.of(this.roomId).sockets.get(p.id)?.request?.connection
+      clientId: this.clientIdMap[p.id],
+      ip: this.io.of(this.roomId).sockets.get(p.id)?.request?.socket
         ?.remoteAddress,
     }));
+  };
+
+  protected getSharerId = (): string => {
+    let sharerId = '';
+    if (this.video?.startsWith('screenshare://')) {
+      sharerId = this.video?.slice('screenshare://'.length);
+    } else if (this.video?.startsWith('fileshare://')) {
+      sharerId = this.video?.slice('fileshare://'.length);
+    }
+    return sharerId;
+  };
+
+  protected getRosterForApp = (): User[] => {
+    return this.roster.map((p) => {
+      return {
+        ...p,
+        isScreenShare: p.clientId === this.getSharerId(),
+      };
+    });
   };
 
   private getHostState = (): HostState => {
@@ -272,7 +283,7 @@ export class Room {
       (user) => this.clientIdMap[user.id] === this.vBrowser?.controllerClient
     );
     return {
-      video: this.video,
+      video: this.video ?? '',
       videoTS: this.videoTS,
       subtitle: this.subtitle,
       paused: this.paused,
@@ -420,7 +431,7 @@ export class Room {
     if (!this.validateLock(socket.id)) {
       return;
     }
-    const sharer = this.roster.find((user) => user.isScreenShare);
+    const sharer = this.getRosterForApp().find((user) => user.isScreenShare);
     if (sharer || this.vBrowser) {
       // Can't update the video while someone is screensharing/filesharing or vbrowser is running
       return;
@@ -559,7 +570,7 @@ export class Room {
       match.isVideoChat = true;
       redisCount('videoChatStarts');
     }
-    this.io.of(this.roomId).emit('roster', this.roster);
+    this.io.of(this.roomId).emit('roster', this.getRosterForApp());
   };
 
   private leaveVideo = (socket: Socket) => {
@@ -567,40 +578,35 @@ export class Room {
     if (match) {
       match.isVideoChat = false;
     }
-    this.io.of(this.roomId).emit('roster', this.roster);
+    this.io.of(this.roomId).emit('roster', this.getRosterForApp());
   };
 
   private joinScreenSharing = (socket: Socket, data: { file: boolean }) => {
     if (!this.validateLock(socket.id)) {
       return;
     }
-    const sharer = this.roster.find((user) => user.isScreenShare);
+    const sharer = this.getRosterForApp().find((user) => user.isScreenShare);
     if (sharer) {
       // Someone's already sharing
       return;
     }
     if (data && data.file) {
-      this.cmdHost(socket, 'fileshare://' + socket.id);
+      this.cmdHost(socket, 'fileshare://' + this.clientIdMap[socket.id]);
       redisCount('fileShareStarts');
     } else {
-      this.cmdHost(socket, 'screenshare://' + socket.id);
+      this.cmdHost(socket, 'screenshare://' + this.clientIdMap[socket.id]);
       redisCount('screenShareStarts');
     }
-    const match = this.roster.find((user) => user.id === socket.id);
-    if (match) {
-      match.isScreenShare = true;
-    }
-    this.io.of(this.roomId).emit('roster', this.roster);
+    this.io.of(this.roomId).emit('roster', this.getRosterForApp());
   };
 
   private leaveScreenSharing = (socket: Socket) => {
-    const sharer = this.roster.find((user) => user.isScreenShare);
+    const sharer = this.getRosterForApp().find((user) => user.isScreenShare);
     if (!sharer || sharer?.id !== socket.id) {
       return;
     }
-    sharer.isScreenShare = false;
     this.cmdHost(socket, '');
-    this.io.of(this.roomId).emit('roster', this.roster);
+    this.io.of(this.roomId).emit('roster', this.getRosterForApp());
   };
 
   private startVBrowser = async (
@@ -887,10 +893,8 @@ export class Room {
         );
         return;
       }
-      // Only keep the rows for which we have a postgres column
       const roomObj: any = {
         roomId: this.roomId,
-        creationTime: this.creationTime,
         owner: owner,
         isSubRoom: isSubscriber,
       };
@@ -1054,10 +1058,12 @@ export class Room {
     if (!data) {
       return;
     }
+    const fromClientId = this.clientIdMap[socket.id];
+    const toId = this.roster.find((p) => p.clientId === data.to)?.id;
     this.io
       .of(this.roomId)
-      .to(data.to)
-      .emit('signal', { from: socket.id, msg: data.msg });
+      .to(toId ?? '')
+      .emit('signal', { from: fromClientId, msg: data.msg });
   };
 
   private signalSS = (
@@ -1067,18 +1073,24 @@ export class Room {
     if (!data) {
       return;
     }
-    this.io.of(this.roomId).to(data.to).emit('signalSS', {
-      from: socket.id,
-      sharer: data.sharer,
-      msg: data.msg,
-    });
+    const fromClientId = this.clientIdMap[socket.id];
+    const toId = this.roster.find((p) => p.clientId === data.to)?.id;
+    this.io
+      .of(this.roomId)
+      .to(toId ?? '')
+      .emit('signalSS', {
+        from: fromClientId,
+        sharer: data.sharer,
+        msg: data.msg,
+      });
   };
 
   private disconnectUser = (socket: Socket) => {
     let index = this.roster.findIndex((user) => user.id === socket.id);
     const removed = this.roster.splice(index, 1)[0];
-    this.io.of(this.roomId).emit('roster', this.roster);
-    if (removed.isScreenShare) {
+    this.io.of(this.roomId).emit('roster', this.getRosterForApp());
+    const wasSharer = removed.clientId === this.getSharerId();
+    if (wasSharer) {
       // Reset the room state since we lost the screen sharer
       this.cmdHost(socket, '');
     }

@@ -14,6 +14,7 @@ import firebase from 'firebase/compat/app';
 import 'firebase/auth';
 import { serverPath } from './utils';
 import { Discord } from './components/Discord/Discord';
+import { Modal } from 'semantic-ui-react';
 
 const Debug = lazy(() => import('./components/Debug/Debug'));
 
@@ -29,6 +30,9 @@ class WatchParty extends React.Component {
     isCustomer: false,
     discordUsername: undefined,
     discordDiscriminator: undefined,
+    streamPath: undefined as string | undefined,
+    beta: false,
+    isCustomDomain: false,
   };
   async componentDidMount() {
     if (firebaseConfig) {
@@ -46,6 +50,9 @@ class WatchParty extends React.Component {
             isCustomer: data.isCustomer,
             discordUsername: data.discordUsername,
             discordDiscriminator: data.discordDiscriminator,
+            streamPath: data.streamPath,
+            beta: data.beta,
+            isCustomDomain: data.isCustomDomain,
           });
         }
       });
@@ -54,6 +61,13 @@ class WatchParty extends React.Component {
   render() {
     return (
       <React.StrictMode>
+        {this.state.isCustomDomain && (
+          <Modal inverted basic open>
+            <Modal.Header>
+              Please contact Howard for access to beta/testing mode.
+            </Modal.Header>
+          </Modal>
+        )}
         <BrowserRouter>
           <Route
             path="/"
@@ -65,6 +79,8 @@ class WatchParty extends React.Component {
                     user={this.state.user}
                     isSubscriber={this.state.isSubscriber}
                     isCustomer={this.state.isCustomer}
+                    streamPath={this.state.streamPath}
+                    beta={this.state.beta}
                   />
                 );
               }
@@ -94,6 +110,8 @@ class WatchParty extends React.Component {
                   isSubscriber={this.state.isSubscriber}
                   isCustomer={this.state.isCustomer}
                   vanity={props.match.params.vanity}
+                  streamPath={this.state.streamPath}
+                  beta={this.state.beta}
                 />
               );
             }}

@@ -6,14 +6,6 @@ import { Hetzner } from './hetzner';
 import { DigitalOcean } from './digitalocean';
 import { Docker } from './docker';
 
-export const cloudInit = (
-  imageName: string,
-  resolution = '1280x720@30'
-) => `#!/bin/bash
-PASSWORD=$(hostname)
-docker run -d --rm --name=vbrowser --log-opt max-size=1g --net=host --shm-size=1g --cap-add="SYS_ADMIN" -e DISPLAY=":99.0" -e NEKO_SCREEN="${resolution}" -e NEKO_PASSWORD=$PASSWORD -e NEKO_PASSWORD_ADMIN=$PASSWORD -e NEKO_BIND=":5000" -e NEKO_EPR=":59000-59100" -e NEKO_H264="1" ${imageName}
-`;
-
 export const imageName = 'howardc93/vbrowser';
 
 export const assignVM = async (

@@ -16,6 +16,7 @@ interface User {
   isVideoChat?: boolean;
   isScreenShare?: boolean;
   isSub?: boolean;
+  clientId: string;
 }
 
 interface ChatMessageBase {
@@ -32,9 +33,7 @@ interface ChatMessage extends ChatMessageBase {
 }
 
 interface Settings {
-  streamPath?: string;
   disableChatSound?: boolean;
-  beta?: boolean;
 }
 
 interface PlaylistVideo {
@@ -66,12 +65,10 @@ interface HostState {
 
 interface PersistentRoom {
   roomId: string;
-  creationTime: string;
   password: string;
   owner: string;
   vanity: string;
   isChatDisabled: boolean;
   isSubRoom: boolean;
-  lastUpdateTime: string;
   data: any;
 }

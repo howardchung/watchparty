@@ -273,21 +273,11 @@ app.post('/createRoom', async (req, res) => {
   if (postgres) {
     const roomObj: any = {
       roomId: newRoom.roomId,
-      creationTime: newRoom.creationTime,
+      creationTime: new Date(),
     };
     await insertObject(postgres, 'room', roomObj);
   }
   res.json({ name: name.slice(1) });
-});
-
-app.get('/settings', (req, res) => {
-  if (req.hostname === config.CUSTOM_SETTINGS_HOSTNAME) {
-    return res.json({
-      streamPath: config.STREAM_PATH,
-      beta: true,
-    });
-  }
-  return res.json({});
 });
 
 app.post('/manageSub', async (req, res) => {
@@ -359,12 +349,22 @@ app.get('/metadata', async (req, res) => {
   } catch (e) {
     console.warn(e);
   }
+
+  const beta =
+    decoded?.email != null &&
+    Boolean(config.BETA_USER_EMAILS.split(',').includes(decoded?.email));
+  const streamPath = beta ? config.STREAM_PATH : undefined;
+  const isCustomDomain = req.hostname === config.CUSTOM_SETTINGS_HOSTNAME;
+
   return res.json({
     isSubscriber,
     isCustomer,
     isVMPoolFull,
     discordUsername,
     discordDiscriminator,
+    beta,
+    streamPath,
+    isCustomDomain,
   });
 });
 
@@ -599,7 +599,7 @@ async function getStats() {
 
   const dbRoomData = (
     await postgres?.query(
-      `SELECT "roomId", "creationTime", "lastUpdateTime", vanity, "isSubRoom", owner, password from room WHERE "lastUpdateTime" > NOW() - INTERVAL '30 day' ORDER BY "creationTime" DESC`
+      `SELECT "roomId", "creationTime", "lastUpdateTime", vanity, "isSubRoom", "roomTitle", "roomDescription", "mediaPath", owner, password from room WHERE "lastUpdateTime" > NOW() - INTERVAL '30 day' ORDER BY "creationTime" DESC`
     )
   )?.rows;
   const currentRoomData = dbRoomData
@@ -610,14 +610,17 @@ async function getStats() {
       }
       const obj = {
         roomId: room.roomId,
-        creationTime: room.creationTime,
-        lastUpdateTime: room.lastUpdateTime,
         video: room.video || undefined,
         videoTS: room.videoTS || undefined,
+        creationTime: dbRoom.creationTime || undefined,
+        lastUpdateTime: dbRoom.lastUpdateTime || undefined,
         vanity: dbRoom.vanity || undefined,
         isSubRoom: dbRoom.isSubRoom || undefined,
         owner: dbRoom.owner || undefined,
         password: dbRoom.password || undefined,
+        roomTitle: dbRoom.roomTitle || undefined,
+        roomDescription: dbRoom.roomDescription || undefined,
+        mediaPath: dbRoom.mediaPath || undefined,
         rosterLength: room.roster.length,
         roster: room.getRosterForStats(),
         vBrowser: room.vBrowser,

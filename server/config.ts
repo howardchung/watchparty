@@ -37,9 +37,9 @@ const defaults = {
   PORT: 8080, // Port to use for server
   HOST: '0.0.0.0', // Host interface to bind server to
   STATS_KEY: '', // Secret string to validate viewing stats
+  BETA_USER_EMAILS: '', // Comma-delimited list of user emails to include in the beta
   CUSTOM_SETTINGS_HOSTNAME: '', // Hostname to send different config settings to client
   STREAM_PATH: '', // Path of server that supports additional video streams
-  KV_KEY: '', // Secret string to validate use of KV endpoint (unused)
   ROOM_CAPACITY: 0, // Maximum capacity of a standard room. Set to 0 for unlimited.
   ROOM_CAPACITY_SUB: 0, // Maximum capacity of a sub room. Set to 0 for unlimited.
   BUILD_DIRECTORY: 'build', // Name of the directory where the built React UI is served from
@@ -48,10 +48,10 @@ const defaults = {
   SHARD: undefined, // Shard ID of the web server (configure in ecosystem.config.js)
   SUBSCRIBER_ROOM_LIMIT: 20, // The maximum number of rooms a subscriber can have
   VMWORKER_PORT: 3100, // Port to use for the vmWorker HTTP server
-  VM_ASSIGNMENT_TIMEOUT: 75, // Number of seconds to wait for a VM before failing
   DISCORD_BOT_TOKEN: '', // Optional
   DISCORD_SERVER_ID: '', // Optional, ID of the discord server
-  DISCORD_SUB_ROLE_ID: '' // optional, ID of subscriber role
+  DISCORD_SUB_ROLE_ID: '', // optional, ID of subscriber role
+  VM_ASSIGNMENT_TIMEOUT: 120, // Number of seconds to wait for a VM before failing
 };
 
 export default {
