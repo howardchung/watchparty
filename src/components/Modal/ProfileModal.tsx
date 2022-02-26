@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, Button, Icon, Image, Input, Label } from 'semantic-ui-react';
+import { Modal, Button, Icon, Image } from 'semantic-ui-react';
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
 import { serverPath } from '../../utils';
