@@ -1,4 +1,4 @@
-import { useEffect } from 'react'; // we need this to make JSX compile
+import { useEffect } from 'react';
 import firebase from 'firebase/compat/app';
 import { serverPath } from '../../utils';
 
