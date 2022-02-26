@@ -114,17 +114,16 @@ async function syncSubscribers() {
     // go through all users on server without a sub role,
     // if they are a sub, assign them sub role
     for (const member of membersWithoutRole ?? []) {
-      // check if they linked their discord and get their email
-      const row = discordResult.rows.find(
+      // check if they linked their discord
+      // (they might have linked their discord account with multiple emails)
+      const rows = discordResult.rows.filter(
         (row) =>
           row.username === member.username &&
           row.discriminator === member.discriminator
       );
-      if (row) {
-        //check if they are a sub
-        const sub = result.find((sub) => sub.email === row.email);
-        if (sub) {
-          // assign role
+      // if sub exists for email assign role
+      for (const row of rows) {
+        if (result.some((sub) => sub.email === row.email)) {
           await client.assignRole(row.username, row.discriminator);
         }
       }
