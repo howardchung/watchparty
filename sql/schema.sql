@@ -25,9 +25,9 @@ CREATE TABLE subscriber(
   PRIMARY KEY(uid)
 );
 
-CREATE TABLE discord(
-  username text,
-  discriminator text,
+CREATE TABLE account(
+  "discordUsername" text,
+  "discordDiscriminator" text,
   email text,
   PRIMARY KEY(email)
 );
