@@ -384,10 +384,19 @@ app.delete('/deleteAccount', async (req, res) => {
   }
   if (postgres) {
     await postgres?.query('DELETE FROM room WHERE owner = $1', [decoded.uid]);
-    // set email to null to tell background process to clean it up.
-    await postgres?.query('UPDATE discord SET email = null WHERE email = $1', [
-      decoded.email,
-    ]);
+    const result = await postgres?.query(
+      'SELECT * FROM discord WHERE email = $1',
+      [decoded.email]
+    );
+    await discordBot.assignRole(
+      result.rows[0].username,
+      result.rows[0].discriminator,
+      true
+    );
+    await postgres?.query(
+      'DELETE FROM discord WHERE email = $1',
+      [decoded.email]
+    );
   }
   await deleteUser(decoded.uid);
   return res.json({});
