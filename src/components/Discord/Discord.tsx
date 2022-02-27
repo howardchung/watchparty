@@ -7,7 +7,7 @@ type DiscordProps = {
 };
 
 export const Discord = ({ user }: DiscordProps) => {
-  const [errorMsg, setErrorMsg] = useState('0');
+  const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
     async function auth() {
