@@ -304,7 +304,7 @@ export const SettingsTab = ({
               <div style={{ display: 'flex', marginBottom: 2 }}>
                 <Input
                   style={{ marginRight: 3, flexGrow: 1 }}
-                  value={roomTitleInput || roomTitle}
+                  value={roomTitleInput ?? roomTitle}
                   disabled={!isSubscriber}
                   maxLength={roomTitleMaxCharLength}
                   onChange={(e) => {
@@ -358,7 +358,7 @@ export const SettingsTab = ({
               </div>
               <Input
                 style={{ marginBottom: 2 }}
-                value={roomDescriptionInput || roomDescription}
+                value={roomDescriptionInput ?? roomDescription}
                 disabled={!isSubscriber}
                 maxLength={roomDescriptionMaxCharLength}
                 onChange={(e) => {
@@ -393,8 +393,8 @@ export const SettingsTab = ({
               vanity: vanity,
               password: password,
               isChatDisabled: isChatDisabled,
-              roomTitle: roomTitleInput || roomTitle,
-              roomDescription: roomDescriptionInput || roomDescription,
+              roomTitle: roomTitleInput ?? roomTitle,
+              roomDescription: roomDescriptionInput ?? roomDescription,
               roomTitleColor:
                 roomTitleColorInput || roomTitleColor || defaultRoomTitleColor,
               mediaPath: mediaPath,
