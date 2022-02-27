@@ -150,30 +150,18 @@ app.post('/discord/auth', async (req, res) => {
       return res.status(400).json({
         error: 'Discord account not found. Please join our Discord server.',
       });
-    }
-    // Allow only one Discord account with role per email.
-    // Check if this customer already has a discord account with a role. If so remove that role.
-    const result = await postgres?.query(
-      'SELECT * FROM discord WHERE email = $1',
-      [decoded.email]
-    );
-    if (result.rowCount) {
-      await discordBot.assignRole(
-        result.rows[0].username,
-        result.rows[0].discriminator,
-        true
+    } else {
+      await upsertObject(
+        postgres,
+        'account',
+        {
+          discordUsername: req.body?.username,
+          discordDiscriminator: req.body?.discriminator,
+          email: decoded.email,
+        },
+        { email: decoded.email }
       );
     }
-    await upsertObject(
-      postgres,
-      'discord',
-      {
-        username: req.body?.username,
-        discriminator: req.body?.discriminator,
-        email: decoded.email,
-      },
-      { email: decoded.email }
-    );
   } catch (e) {
     console.error(e);
     return res.sendStatus(500);
@@ -194,17 +182,16 @@ app.delete('/discord/delete', async (req, res) => {
   }
   try {
     const result = await postgres?.query(
-      'SELECT * FROM discord WHERE email = $1',
+      `UPDATE account 
+        SET "discordUsername" = null, "discordDiscriminator" = null 
+        WHERE email = $1 RETURNING "discordUsername","discordDiscriminator"
+      `,
       [decoded.email]
     );
     await discordBot.assignRole(
-      result.rows[0].username,
-      result.rows[0].discriminator,
+      result.rows[0].discordUsername,
+      result.rows[0].discordDiscriminator,
       true
-    );
-    await postgres?.query(
-      'DELETE FROM discord WHERE email = $1',
-      [decoded.email]
     );
   } catch (e) {
     console.error(e);
@@ -384,19 +371,9 @@ app.delete('/deleteAccount', async (req, res) => {
   }
   if (postgres) {
     await postgres?.query('DELETE FROM room WHERE owner = $1', [decoded.uid]);
-    const result = await postgres?.query(
-      'SELECT * FROM discord WHERE email = $1',
-      [decoded.email]
-    );
-    await discordBot.assignRole(
-      result.rows[0].username,
-      result.rows[0].discriminator,
-      true
-    );
-    await postgres?.query(
-      'DELETE FROM discord WHERE email = $1',
-      [decoded.email]
-    );
+    await postgres?.query('DELETE FROM account WHERE email = $1', [
+      decoded.email,
+    ]);
   }
   await deleteUser(decoded.uid);
   return res.json({});
@@ -419,11 +396,11 @@ app.get('/metadata', async (req, res) => {
     isCustomer = Boolean(customer);
     if (postgres) {
       const result = await postgres?.query(
-        'SELECT username, discriminator FROM discord WHERE email = $1',
+        'SELECT "discordUsername", "discordDiscriminator" FROM account WHERE email = $1',
         [decoded?.email]
       );
-      discordUsername = result?.rows[0]?.username;
-      discordDiscriminator = result?.rows[0]?.discriminator;
+      discordUsername = result?.rows[0]?.discordUsername;
+      discordDiscriminator = result?.rows[0]?.discordDiscriminator;
     }
   }
   let isVMPoolFull = null;
