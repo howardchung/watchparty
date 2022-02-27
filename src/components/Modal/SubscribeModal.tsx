@@ -121,7 +121,7 @@ export class SubscribeModal extends React.Component<{
                   </Table.Cell>
                 </Table.Row>
                 <Table.Row>
-                  <Table.Cell>Discord Subscriber Role (on request)</Table.Cell>
+                  <Table.Cell>Discord Subscriber Role (with linked account)</Table.Cell>
                   <Table.Cell></Table.Cell>
                   <Table.Cell>
                     <Icon name="check" />
