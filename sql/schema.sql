@@ -28,7 +28,8 @@ CREATE TABLE subscriber(
 CREATE TABLE discord(
   username text,
   discriminator text,
-  email text
+  email text,
+  PRIMARY KEY(email)
 );
 
 CREATE UNIQUE INDEX on room (LOWER(vanity)) WHERE vanity IS NOT NULL;

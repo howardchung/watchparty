@@ -28,8 +28,8 @@ export class ProfileModal extends React.Component<{
 
   deleteDiscord = async () => {
     const token = await this.props.user.getIdToken();
-    await window.fetch(serverPath + '/discord/auth', {
-      method: 'POST',
+    await window.fetch(serverPath + '/discord/delete', {
+      method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
       },

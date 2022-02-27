@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import firebase from 'firebase/compat/app';
 import { serverPath } from '../../utils';
 
@@ -7,6 +7,8 @@ type DiscordProps = {
 };
 
 export const Discord = ({ user }: DiscordProps) => {
+  const [errorMsg, setErrorMsg] = useState('0');
+
   useEffect(() => {
     async function auth() {
       const fragment = new URLSearchParams(window.location.hash.slice(1));
@@ -23,7 +25,7 @@ export const Discord = ({ user }: DiscordProps) => {
       const { username, discriminator } = response;
 
       const token = await user?.getIdToken();
-      await window.fetch(serverPath + '/discord/auth', {
+      const authResponse = await window.fetch(serverPath + '/discord/auth', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -35,13 +37,21 @@ export const Discord = ({ user }: DiscordProps) => {
           discriminator,
         }),
       });
-      window.opener.location.reload(false);
-      window.close();
+      if (authResponse.status !== 200) {
+        const body = await authResponse.json();
+        setErrorMsg(body.error);
+      } else {
+        window.opener.location.reload(false);
+        window.close();
+      }
     }
     if (user) {
       auth();
     }
   }, [user]);
 
+  if (errorMsg) {
+    return <div style={{ color: 'red', fontSize: 20 }}>{errorMsg}</div>;
+  }
   return null;
 };

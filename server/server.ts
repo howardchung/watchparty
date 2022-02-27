@@ -24,11 +24,13 @@ import { Client } from 'pg';
 import { getStartOfDay } from './utils/time';
 import { getBgVMManagers, getSessionLimitSeconds } from './vm/utils';
 import { hashString } from './utils/string';
-import { insertObject } from './utils/postgres';
+import { insertObject, upsertObject } from './utils/postgres';
 import axios from 'axios';
 import crypto from 'crypto';
 import zlib from 'zlib';
 import util from 'util';
+import { Intents } from 'discord.js';
+import { DiscordBot } from './utils/discord';
 
 const gzip = util.promisify(zlib.gzip);
 
@@ -55,6 +57,23 @@ if (config.DATABASE_URL) {
     ssl: { rejectUnauthorized: false },
   });
   postgres.connect();
+}
+
+let discordBot: DiscordBot;
+if (
+  config.DISCORD_BOT_TOKEN &&
+  config.DISCORD_SERVER_ID &&
+  config.DISCORD_SUB_ROLE_ID
+) {
+  discordBot = new DiscordBot({
+    intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MEMBERS],
+  });
+  discordBot.once('ready', () => {
+    console.log(`Discord Bot "${discordBot?.user?.username}" ready`);
+  });
+  if (!discordBot.isReady()) {
+    discordBot.login(config.DISCORD_BOT_TOKEN);
+  }
 }
 
 const names = Moniker.generator([
@@ -112,22 +131,81 @@ app.post('/discord/auth', async (req, res) => {
   if (!decoded) {
     return res.status(400).json({ error: 'invalid user token' });
   }
-  if (!postgres) {
+  const customer = await getCustomerByEmail(decoded.email as string);
+  const isSubscriber = Boolean(
+    customer?.subscriptions?.data?.find((sub) => sub?.status === 'active')
+  );
+  if (!isSubscriber) {
+    return res.status(400).json({ error: 'not subscribed' });
+  }
+  if (!postgres || !discordBot) {
     return res.sendStatus(500);
   }
   try {
-    // users should only have one account max. with a sub role per email,
-    // set email to null to tell background process to clean it up.
-    await postgres?.query('UPDATE discord SET email = null WHERE email = $1', [
-      decoded.email,
-    ]);
-    if (req.body?.username && req.body?.discriminator) {
-      await insertObject(postgres, 'discord', {
+    const user = await discordBot.assignRole(
+      req.body?.username,
+      req.body?.discriminator
+    );
+    if (!user) {
+      return res.status(400).json({
+        error: 'Discord account not found. Please join our Discord server.',
+      });
+    }
+    // Allow only one Discord account with role per email.
+    // Check if this customer already has a discord account with a role. If so remove that role.
+    const result = await postgres?.query(
+      'SELECT * FROM discord WHERE email = $1',
+      [decoded.email]
+    );
+    if (result.rowCount) {
+      await discordBot.assignRole(
+        result.rows[0].username,
+        result.rows[0].discriminator,
+        true
+      );
+    }
+    await upsertObject(
+      postgres,
+      'discord',
+      {
         username: req.body?.username,
         discriminator: req.body?.discriminator,
         email: decoded.email,
-      });
-    }
+      },
+      { email: decoded.email }
+    );
+  } catch (e) {
+    console.error(e);
+    return res.sendStatus(500);
+  }
+  return res.status(200).json({});
+});
+
+app.delete('/discord/delete', async (req, res) => {
+  const decoded = await validateUserToken(
+    req.body?.uid as string,
+    req.body?.token as string
+  );
+  if (!decoded) {
+    return res.status(400).json({ error: 'invalid user token' });
+  }
+  if (!postgres || !discordBot) {
+    return res.sendStatus(500);
+  }
+  try {
+    const result = await postgres?.query(
+      'SELECT * FROM discord WHERE email = $1',
+      [decoded.email]
+    );
+    await discordBot.assignRole(
+      result.rows[0].username,
+      result.rows[0].discriminator,
+      true
+    );
+    await postgres?.query(
+      'DELETE FROM discord WHERE email = $1',
+      [decoded.email]
+    );
   } catch (e) {
     console.error(e);
     return res.sendStatus(500);
