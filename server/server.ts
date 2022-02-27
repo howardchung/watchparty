@@ -150,18 +150,17 @@ app.post('/discord/auth', async (req, res) => {
       return res.status(400).json({
         error: 'Discord account not found. Please join our Discord server.',
       });
-    } else {
-      await upsertObject(
-        postgres,
-        'account',
-        {
-          discordUsername: req.body?.username,
-          discordDiscriminator: req.body?.discriminator,
-          email: decoded.email,
-        },
-        { email: decoded.email }
-      );
     }
+    await upsertObject(
+      postgres,
+      'account',
+      {
+        discordUsername: req.body?.username,
+        discordDiscriminator: req.body?.discriminator,
+        email: decoded.email,
+      },
+      { email: decoded.email }
+    );
   } catch (e) {
     console.error(e);
     return res.sendStatus(500);
