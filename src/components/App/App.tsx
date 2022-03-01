@@ -1780,7 +1780,7 @@ export default class App extends React.Component<AppProps, AppState> {
                             selection
                             options={[
                               {
-                                text: '1080p (WatchParty Plus)',
+                                text: '1080p (Plus only)',
                                 value: '1920x1080@30',
                                 disabled: !this.state.isVBrowserLarge,
                               },

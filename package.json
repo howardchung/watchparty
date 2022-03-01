@@ -48,7 +48,7 @@
     "youtube-api": "^2.0.10"
   },
   "scripts": {
-    "start": "BROWSER=false react-scripts start",
+    "start": "react-scripts start",
     "build": "react-scripts build && npm run buildServer",
     "buildServer": "tsc --project server/tsconfig.json",
     "test": "react-scripts test",
