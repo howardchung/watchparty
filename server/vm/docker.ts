@@ -34,7 +34,7 @@ export class Docker extends VMManager {
         UDP_END=$((59099+$INDEX*100))
         docker run -d --rm --name=${name} --net=host --memory="2g" --cpus="2" -v /etc/letsencrypt:/etc/letsencrypt -l ${this.getTag()} -l index=$INDEX --log-opt max-size=1g --shm-size=1g --cap-add="SYS_ADMIN" -e NEKO_KEY="/etc/letsencrypt/live/${gatewayHost}/privkey.pem" -e NEKO_CERT="/etc/letsencrypt/live/${gatewayHost}/fullchain.pem" -e DISPLAY=":99.0" -e NEKO_SCREEN="${
           this.isLarge ? '1920x1080@30' : ''
-        }" -e NEKO_PASSWORD=${name} -e NEKO_PASSWORD_ADMIN=${name} -e NEKO_BIND=":$PORT" -e NEKO_EPR=":$UDP_START-$UDP_END" -e NEKO_H264="1" -e NEKO_VIDEO_BITRATE=9000 ${imageName}
+        }" -e NEKO_PASSWORD=${name} -e NEKO_PASSWORD_ADMIN=${name} -e NEKO_BIND=":$PORT" -e NEKO_EPR=":$UDP_START-$UDP_END" -e NEKO_H264="1" ${imageName}
         `,
         sshConfig,
         (err: string, stdout: string) => {

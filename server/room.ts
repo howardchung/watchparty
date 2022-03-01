@@ -815,7 +815,7 @@ export class Room {
     if (!decoded) {
       return;
     }
-    if (!this.validateLock(socket.id)) {
+    if (!this.validateLock(socket.id) && !this.validateOwner(decoded.uid)) {
       return;
     }
     this.lock = data.locked ? decoded.uid : '';
