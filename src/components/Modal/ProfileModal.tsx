@@ -141,9 +141,7 @@ export class ProfileModal extends React.Component<{
               gap: '10px',
             }}
           >
-            {this.props.discordUsername &&
-            this.props.discordDiscriminator &&
-            process.env.REACT_APP_DISCORD_AUTH_URL ? (
+            {this.props.discordUsername && this.props.discordDiscriminator ? (
               <Button
                 icon
                 labelPosition="left"
@@ -159,22 +157,26 @@ export class ProfileModal extends React.Component<{
                 >{`${this.props.discordUsername}#${this.props.discordDiscriminator}`}</Button.Content>
               </Button>
             ) : (
-              <Popup
-                content="Link your Discord account to get assigned a subscriber role on our Discord server."
-                trigger={
-                  <Button
-                    icon
-                    labelPosition="left"
-                    fluid
-                    color="orange"
-                    onClick={this.authDiscord}
-                    disabled={!this.props.isSubscriber}
-                  >
-                    <Icon name="discord" />
-                    Get Subscriber Role
-                  </Button>
-                }
-              />
+              <React.Fragment>
+                {process.env.REACT_APP_DISCORD_AUTH_URL && (
+                  <Popup
+                    content="Link your Discord account to get assigned a subscriber role on our Discord server."
+                    trigger={
+                      <Button
+                        icon
+                        labelPosition="left"
+                        fluid
+                        color="orange"
+                        onClick={this.authDiscord}
+                        disabled={!this.props.isSubscriber}
+                      >
+                        <Icon name="discord" />
+                        Get Subscriber Role
+                      </Button>
+                    }
+                  />
+                )}
+              </React.Fragment>
             )}
             <Button
               icon
