@@ -160,7 +160,7 @@ export class ProfileModal extends React.Component<{
               </Button>
             ) : (
               <Popup
-                content="Link your Discord account to get assigned a subscriber role on your Discord server."
+                content="Link your Discord account to get assigned a subscriber role on our Discord server."
                 trigger={
                   <Button
                     icon
@@ -168,6 +168,7 @@ export class ProfileModal extends React.Component<{
                     fluid
                     color="orange"
                     onClick={this.authDiscord}
+                    disabled={!this.props.isSubscriber}
                   >
                     <Icon name="discord" />
                     Get Subscriber Role
