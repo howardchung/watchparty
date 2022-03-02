@@ -238,10 +238,6 @@ app.post('/createRoom', async (req, res) => {
   }
   console.log('createRoom: ', name);
   const newRoom = new Room(io, name);
-  const decoded = await validateUserToken(req.body?.uid, req.body?.token);
-  newRoom.creator = decoded?.email;
-  newRoom.video = req.body?.video || '';
-  rooms.set(name, newRoom);
   if (postgres) {
     const roomObj: any = {
       roomId: newRoom.roomId,
@@ -249,6 +245,10 @@ app.post('/createRoom', async (req, res) => {
     };
     await insertObject(postgres, 'room', roomObj);
   }
+  const decoded = await validateUserToken(req.body?.uid, req.body?.token);
+  newRoom.creator = decoded?.email;
+  newRoom.video = req.body?.video || '';
+  rooms.set(name, newRoom);
   res.json({ name: name.slice(1) });
 });
 
