@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, Button, Icon, Image } from 'semantic-ui-react';
+import { Modal, Button, Icon, Image, Popup } from 'semantic-ui-react';
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
 import { serverPath } from '../../utils';
@@ -141,7 +141,9 @@ export class ProfileModal extends React.Component<{
               gap: '10px',
             }}
           >
-            {this.props.discordUsername && this.props.discordDiscriminator ? (
+            {this.props.discordUsername &&
+            this.props.discordDiscriminator &&
+            process.env.REACT_APP_DISCORD_AUTH_URL ? (
               <Button
                 icon
                 labelPosition="left"
@@ -157,16 +159,21 @@ export class ProfileModal extends React.Component<{
                 >{`${this.props.discordUsername}#${this.props.discordDiscriminator}`}</Button.Content>
               </Button>
             ) : (
-              <Button
-                icon
-                labelPosition="left"
-                fluid
-                color="orange"
-                onClick={this.authDiscord}
-              >
-                <Icon name="discord" />
-                Link Discord Account
-              </Button>
+              <Popup
+                content="Link your Discord account to get assigned a subscriber role on your Discord server."
+                trigger={
+                  <Button
+                    icon
+                    labelPosition="left"
+                    fluid
+                    color="orange"
+                    onClick={this.authDiscord}
+                  >
+                    <Icon name="discord" />
+                    Get Subscriber Role
+                  </Button>
+                }
+              />
             )}
             <Button
               icon
