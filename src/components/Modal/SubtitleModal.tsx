@@ -9,6 +9,8 @@ export class SubtitleModal extends React.Component<{
   haveLock: Function;
   src: string;
   socket: Socket;
+  getMediaDisplayName: Function;
+  beta: boolean;
 }> {
   state = {
     loading: false,
@@ -85,28 +87,56 @@ export class SubtitleModal extends React.Component<{
                   }
                 />
               </Grid.Column>
-              <Grid.Column>
-                <Button
-                  loading={this.state.loading}
-                  color="green"
-                  disabled={!this.props.haveLock()}
-                  icon
-                  labelPosition="left"
-                  fluid
-                  onClick={async () => {
-                    this.setState({ loading: true });
-                    const resp = await window.fetch(
-                      serverPath + '/searchSubtitles?url=' + this.props.src
-                    );
-                    const json = await resp.json();
-                    this.setState({ searchResults: json });
-                    this.setState({ loading: false });
-                  }}
-                >
-                  <Icon name="search" />
-                  Search OpenSubtitles
-                </Button>
-              </Grid.Column>
+              {this.props.src.startsWith('http') && (
+                <Grid.Column>
+                  <div style={{ display: 'flex' }}>
+                    <Button
+                      loading={this.state.loading}
+                      color="green"
+                      disabled={!this.props.haveLock()}
+                      icon
+                      labelPosition="left"
+                      fluid
+                      onClick={async () => {
+                        this.setState({ loading: true });
+                        const resp = await window.fetch(
+                          serverPath + '/searchSubtitles?url=' + this.props.src
+                        );
+                        const json = await resp.json();
+                        this.setState({ searchResults: json });
+                        this.setState({ loading: false });
+                      }}
+                    >
+                      <Icon name="search" />
+                      Search OpenSubtitles
+                    </Button>
+                    {this.props.beta && (
+                      <Button
+                        loading={this.state.loading}
+                        color="green"
+                        disabled={!this.props.haveLock()}
+                        icon
+                        labelPosition="left"
+                        fluid
+                        onClick={async () => {
+                          this.setState({ loading: true });
+                          const resp = await window.fetch(
+                            serverPath +
+                              '/searchSubtitles?title=' +
+                              this.props.getMediaDisplayName(this.props.src)
+                          );
+                          const json = await resp.json();
+                          this.setState({ searchResults: json });
+                          this.setState({ loading: false });
+                        }}
+                      >
+                        <Icon name="search" />
+                        Search by Title
+                      </Button>
+                    )}
+                  </div>
+                </Grid.Column>
+              )}
             </Grid>
             <div>
               {this.state.searchResults.map((result: any) => (
