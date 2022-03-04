@@ -1594,6 +1594,8 @@ export default class App extends React.Component<AppProps, AppState> {
             currentSubtitle={this.state.currentSubtitle}
             src={this.state.currentMedia}
             haveLock={this.haveLock}
+            getMediaDisplayName={this.getMediaDisplayName}
+            beta={this.props.beta}
           />
         )}
         {this.state.error && <ErrorModal error={this.state.error} />}

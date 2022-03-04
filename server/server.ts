@@ -148,31 +148,39 @@ app.get('/downloadSubtitles', async (req, res) => {
 
 app.get('/searchSubtitles', async (req, res) => {
   try {
-    const url = req.query.url;
-    const startResp = await axios({
-      method: 'get',
-      url: url as string,
-      headers: {
-        Range: 'bytes=0-65535',
-      },
-      responseType: 'arraybuffer',
-    });
-    const start = startResp.data;
-    const size = Number(startResp.headers['content-range'].split('/')[1]);
-    const endResp = await axios({
-      method: 'get',
-      url: url as string,
-      headers: {
-        Range: `bytes=${size - 65536}-`,
-      },
-      responseType: 'arraybuffer',
-    });
-    const end = endResp.data;
-    // console.log(start, end, size);
-    let hash = computeOpenSubtitlesHash(start, end, size);
-    // hash = 'f65334e75574f00f';
-    // Search API for subtitles by hash
-    const subUrl = `https://rest.opensubtitles.org/search/moviebytesize-${size}/moviehash-${hash}/sublanguageid-eng`;
+    const title = req.query.title as string;
+    const url = req.query.url as string;
+    let subUrl = '';
+    if (url) {
+      const startResp = await axios({
+        method: 'get',
+        url: url,
+        headers: {
+          Range: 'bytes=0-65535',
+        },
+        responseType: 'arraybuffer',
+      });
+      const start = startResp.data;
+      const size = Number(startResp.headers['content-range'].split('/')[1]);
+      const endResp = await axios({
+        method: 'get',
+        url: url,
+        headers: {
+          Range: `bytes=${size - 65536}-`,
+        },
+        responseType: 'arraybuffer',
+      });
+      const end = endResp.data;
+      // console.log(start, end, size);
+      let hash = computeOpenSubtitlesHash(start, end, size);
+      // hash = 'f65334e75574f00f';
+      // Search API for subtitles by hash
+      subUrl = `https://rest.opensubtitles.org/search/moviebytesize-${size}/moviehash-${hash}/sublanguageid-eng`;
+    } else if (title) {
+      subUrl = `https://rest.opensubtitles.org/search/query-${encodeURIComponent(
+        title
+      )}/sublanguageid-eng`;
+    }
     console.log(subUrl);
     const response = await axios.get(subUrl, {
       headers: { 'User-Agent': 'VLSub 0.10.2' },
