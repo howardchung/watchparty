@@ -48,9 +48,9 @@ const defaults = {
   SHARD: undefined, // Shard ID of the web server (configure in ecosystem.config.js)
   SUBSCRIBER_ROOM_LIMIT: 20, // The maximum number of rooms a subscriber can have
   VMWORKER_PORT: 3100, // Port to use for the vmWorker HTTP server
-  DISCORD_BOT_TOKEN: '', // Optional
+  DISCORD_BOT_TOKEN: '', // Optional, for Discord bot
   DISCORD_SERVER_ID: '', // Optional, ID of the discord server
-  DISCORD_SUB_ROLE_ID: '', // optional, ID of subscriber role
+  DISCORD_SUB_ROLE_ID: '', // Optional, ID of subscriber role
   VM_ASSIGNMENT_TIMEOUT: 120, // Number of seconds to wait for a VM before failing
 };
 
