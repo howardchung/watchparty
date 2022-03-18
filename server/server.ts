@@ -476,9 +476,6 @@ async function minuteMetrics() {
 async function freeUnusedRooms() {
   // Clean up rooms that are no longer persisted and empty
   // Frees up some JS memory space when process is long-running
-  if (!redis) {
-    return;
-  }
   const persistedRooms = await getAllRooms();
   const persistedSet = new Set(persistedRooms.map((room) => room.roomId));
   rooms.forEach(async (room, key) => {
