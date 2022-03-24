@@ -9,7 +9,11 @@ export class ProfileModal extends React.Component<{
   user: firebase.User;
   userImage: string | null;
 }> {
-  public state = { resetDisabled: false, deleteConfirmOpen: false };
+  public state = {
+    resetDisabled: false,
+    verifyDisabled: false,
+    deleteConfirmOpen: false,
+  };
 
   onSignOut = () => {
     firebase.auth().signOut();
@@ -31,6 +35,7 @@ export class ProfileModal extends React.Component<{
     try {
       if (this.props.user) {
         await this.props.user.sendEmailVerification();
+        this.setState({ verifyDisabled: true });
       }
     } catch (e) {
       console.warn(e);
@@ -123,7 +128,9 @@ export class ProfileModal extends React.Component<{
               Edit Gravatar
             </Button>
             <Button
-              disabled={this.props.user.emailVerified}
+              disabled={
+                this.props.user.emailVerified || this.state.verifyDisabled
+              }
               icon
               labelPosition="left"
               fluid
