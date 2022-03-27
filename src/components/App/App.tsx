@@ -598,6 +598,25 @@ export default class App extends React.Component<AppProps, AppState> {
             : this.state.unreadCount + 1,
       });
     });
+    socket.on('REC:reaction', (data: Reaction, undo: boolean) => {
+      const { chat } = this.state;
+      const msg = chat.find(
+        (m) => m.id === data.msgId && m.timestamp === data.msgTimestamp
+      );
+      if (!msg) {
+        return;
+      }
+      msg.reactions = msg.reactions || {};
+      msg.reactions[data.value] = msg.reactions[data.value] || [];
+      if (undo) {
+        msg.reactions[data.value] = msg.reactions[data.value].filter(
+          (id) => id !== data.user
+        );
+      } else {
+        msg.reactions[data.value].push(data.user);
+      }
+      this.setState({ chat });
+    });
     socket.on('REC:tsMap', (data: NumberDict) => {
       this.setState({ tsMap: data });
       this.syncSubtitle();

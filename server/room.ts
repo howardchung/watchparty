@@ -122,6 +122,7 @@ export class Room {
       socket.on('CMD:seek', (data) => this.seekVideo(socket, data));
       socket.on('CMD:ts', (data) => this.setTimestamp(socket, data));
       socket.on('CMD:chat', (data) => this.sendChatMessage(socket, data));
+      socket.on('CMD:reaction', (data) => this.addReaction(socket, data));
       socket.on('CMD:joinVideo', () => this.joinVideo(socket));
       socket.on('CMD:leaveVideo', () => this.leaveVideo(socket));
       socket.on('CMD:joinScreenShare', (data) =>
@@ -562,6 +563,31 @@ export class Room {
     redisCount('chatMessages');
     const chatMsg = { id: socket.id, msg: data };
     this.addChatMessage(socket, chatMsg);
+  };
+
+  private addReaction = (
+    socket: Socket,
+    data: { value: number; msgId: string; msgTimestamp: string }
+  ) => {
+    const msg = this.chat.find(
+      (m) => m.id === data.msgId && m.timestamp === data.msgTimestamp
+    );
+    if (!msg) {
+      return;
+    }
+    msg.reactions = msg.reactions || {};
+    msg.reactions[data.value] = msg.reactions[data.value] || [];
+
+    const reaction: Reaction = { user: socket.id, ...data };
+    if (msg.reactions[data.value].includes(socket.id)) {
+      msg.reactions[data.value] = msg.reactions[data.value].filter(
+        (id) => id !== socket.id
+      );
+      this.io.of(this.roomId).emit('REC:reaction', reaction, true);
+    } else {
+      msg.reactions[data.value].push(socket.id);
+      this.io.of(this.roomId).emit('REC:reaction', reaction);
+    }
   };
 
   private joinVideo = (socket: Socket) => {
