@@ -360,7 +360,19 @@ const ChatMessage = ({
         <Comment.Text className="light system">
           {cmd && formatMessage(cmd, msg)}
         </Comment.Text>
-        <Comment.Text className="light">{!cmd && msg}</Comment.Text>
+        <Linkify
+          componentDecorator={(
+            decoratedHref: string,
+            decoratedText: string,
+            key: string
+          ) => (
+            <SecureLink href={decoratedHref} key={key}>
+              {decoratedText}
+            </SecureLink>
+          )}
+        >
+          <Comment.Text className="light">{!cmd && msg}</Comment.Text>
+        </Linkify>
         <div className={classes.commentMenu}>
           <Icon
             onClick={(e: MouseEvent) => {
