@@ -21,7 +21,7 @@ interface User {
 
 interface Reaction {
   user: string;
-  value: number;
+  value: string;
   msgId: string;
   msgTimestamp: string;
 }
@@ -37,7 +37,7 @@ interface ChatMessageBase {
 interface ChatMessage extends ChatMessageBase {
   timestamp: string;
   videoTS?: number;
-  reactions?: { [value: number]: string[] };
+  reactions?: { [value: string]: string[] };
 }
 
 interface Settings {
