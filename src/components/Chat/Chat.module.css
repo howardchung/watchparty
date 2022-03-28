@@ -44,7 +44,7 @@
   display: none;
   justify-content: center;
   position: absolute;
-  right: 0px;
+  right: 5px;
   top: -13px;
   padding: 4px !important;
   border-radius: 3px;
@@ -72,7 +72,7 @@
   flex-wrap: wrap;
   border-radius: 5px;
   position: fixed;
-  right: 70px;
+  right: 75px;
   font-size: 24px;
   overflow: hidden;
   background: rgba(255, 255, 255, 0.91);
