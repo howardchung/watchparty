@@ -600,7 +600,7 @@ export default class App extends React.Component<AppProps, AppState> {
             : this.state.unreadCount + 1,
       });
     });
-    socket.on('REC:addReaction', (data: Reaction, undo: boolean) => {
+    socket.on('REC:addReaction', (data: Reaction) => {
       const { chat } = this.state;
       const msgIndex = chat.findIndex(
         (m) => m.id === data.msgId && m.timestamp === data.msgTimestamp
@@ -611,13 +611,7 @@ export default class App extends React.Component<AppProps, AppState> {
       const msg = chat[msgIndex];
       msg.reactions = msg.reactions || {};
       msg.reactions[data.value] = msg.reactions[data.value] || [];
-      if (undo) {
-        msg.reactions[data.value] = msg.reactions[data.value].filter(
-          (id) => id !== data.user
-        );
-      } else {
-        msg.reactions[data.value].push(data.user);
-      }
+      msg.reactions[data.value].push(data.user);
       this.setState({ chat }, () => {
         // if we add a reaction to the last message we need to scroll down
         // or else the reaction icon might be hidden
@@ -626,8 +620,7 @@ export default class App extends React.Component<AppProps, AppState> {
         }
       });
     });
-    socket.on('REC:removeReaction', (data: Reaction, undo: boolean) => {
-      console.log(data);
+    socket.on('REC:removeReaction', (data: Reaction) => {
       const { chat } = this.state;
       const msg = chat.find(
         (m) => m.id === data.msgId && m.timestamp === data.msgTimestamp

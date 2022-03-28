@@ -570,6 +570,9 @@ export class Room {
     socket: Socket,
     data: { value: string; msgId: string; msgTimestamp: string }
   ) => {
+    if(data.value.length > 2) {
+      return;
+    }
     const msg = this.chat.find(
       (m) => m.id === data.msgId && m.timestamp === data.msgTimestamp
     );
@@ -590,6 +593,9 @@ export class Room {
     socket: Socket,
     data: { value: string; msgId: string; msgTimestamp: string }
   ) => {
+    if(data.value.length > 2) {
+      return;
+    }
     const msg = this.chat.find(
       (m) => m.id === data.msgId && m.timestamp === data.msgTimestamp
     );
