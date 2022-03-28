@@ -468,7 +468,7 @@ class ReactionMenuInner extends React.Component<{
     return (
       <div
         className={classes.reactionMenuContainer}
-        style={{ top: this.props.yPosition + 30 }}
+        style={{ top: this.props.yPosition - 9 }}
       >
         {reactionEmojis.map((reaction) => (
           <div
