@@ -363,7 +363,6 @@ const ChatMessage = ({
         <Comment.Text className="light">{!cmd && msg}</Comment.Text>
         <div className={classes.commentMenu}>
           <Icon
-            // style={{ right: '40px' }}
             onClick={(e: MouseEvent) => {
               const viewportOffset = (e.target as any).getBoundingClientRect();
               setReactionMenu(true, id, timestamp, viewportOffset.top);
