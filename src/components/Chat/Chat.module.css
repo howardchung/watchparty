@@ -53,7 +53,7 @@
   cursor: pointer;
 }
 
-.comment .commentMenu:hover {
+.comment .commentMenu:hover, .comment.selected .commentMenu {
   background: rgb(46, 137, 212);
   transition: background 0.2s ease-in-out;
 }
@@ -69,10 +69,9 @@
 
 .reactionMenuContainer {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   border-radius: 5px;
   position: fixed;
-  right: 75px;
   font-size: 24px;
   overflow: hidden;
   background: rgba(255, 255, 255, 0.91);

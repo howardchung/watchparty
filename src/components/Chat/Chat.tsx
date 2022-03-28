@@ -44,7 +44,8 @@ export class Chat extends React.Component<ChatProps> {
       isOpen: false,
       selectedMsgId: '',
       selectedMsgTimestamp: '',
-      yPosition: 200,
+      yPosition: 0,
+      xPosition: 0,
     },
   };
   messagesRef = React.createRef<HTMLDivElement>();
@@ -69,10 +70,17 @@ export class Chat extends React.Component<ChatProps> {
     isOpen: boolean,
     selectedMsgId?: string,
     selectedMsgTimestamp?: string,
-    yPosition?: number
+    yPosition?: number,
+    xPosition?: number
   ) => {
     this.setState({
-      reactionMenu: { isOpen, selectedMsgId, selectedMsgTimestamp, yPosition },
+      reactionMenu: {
+        isOpen,
+        selectedMsgId,
+        selectedMsgTimestamp,
+        yPosition,
+        xPosition,
+      },
     });
   };
 
@@ -256,6 +264,7 @@ export class Chat extends React.Component<ChatProps> {
             handleReactionClick={this.handleReactionClick}
             closeMenu={() => this.setReactionMenu(false)}
             yPosition={this.state.reactionMenu.yPosition}
+            xPosition={this.state.reactionMenu.xPosition}
           />
         )}
         <Input
@@ -377,7 +386,13 @@ const ChatMessage = ({
           <Icon
             onClick={(e: MouseEvent) => {
               const viewportOffset = (e.target as any).getBoundingClientRect();
-              setReactionMenu(true, id, timestamp, viewportOffset.top);
+              setReactionMenu(
+                true,
+                id,
+                timestamp,
+                viewportOffset.top,
+                viewportOffset.right
+              );
             }}
             name={'' as any}
             inverted
@@ -472,15 +487,27 @@ class ReactionMenuInner extends React.Component<{
   handleReactionClick: Function;
   closeMenu: Function;
   yPosition: number;
+  xPosition: number;
 }> {
+  state = {
+    containerWidth: 0,
+  };
   handleClickOutside = () => {
     this.props.closeMenu();
   };
+  containerRef = React.createRef<HTMLDivElement>();
+  componentDidMount() {
+    this.setState({ containerWidth: this.containerRef.current?.offsetWidth });
+  }
   render() {
     return (
       <div
+        ref={this.containerRef}
         className={classes.reactionMenuContainer}
-        style={{ top: this.props.yPosition - 9 }}
+        style={{
+          top: this.props.yPosition - 9,
+          left: this.props.xPosition - this.state.containerWidth - 35,
+        }}
       >
         {reactionEmojis.map((reaction) => (
           <div
