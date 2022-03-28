@@ -422,7 +422,7 @@ const ChatMessage = ({
               reactions[key as any].length ? (
                 <Popup
                   content={reactions[key as any]
-                    .map((id) => nameMap[id])
+                    .map((id) => nameMap[id] || 'Unknown')
                     .join(', ')}
                   trigger={
                     <div
