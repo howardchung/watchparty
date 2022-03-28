@@ -42,10 +42,11 @@
 
 .comment .commentMenu {
   display: none;
+  justify-content: center;
   position: absolute;
   right: 80px;
-  top: -10px;
-  padding: 2px !important;
+  top: -13px;
+  padding: 4px !important;
   border-radius: 3px;
   background: rgb(146, 146, 146);
   z-index: 100;
@@ -57,28 +58,29 @@
   transition: background 0.2s ease-in-out;
 }
 
-.comment:hover {
+.comment:hover, .comment.selected {
   border-radius: 5px;
   background: radial-gradient(at top right, #7eaee02a, transparent 70%) !important;
 }
 
-.comment:hover .commentMenu{
-  display: block;
+.comment:hover .commentMenu, .comment.selected .commentMenu {
+  display: flex;
 }
 
 .reactionMenuContainer {
   display: flex;
+  flex-wrap: wrap;
   border-radius: 5px;
-  position: absolute;
-  bottom: 80px;
+  position: fixed;
+  right: 40px;
   font-size: 24px;
   overflow: hidden;
+  background: rgba(255, 255, 255, 0.91);
 }
 
 .reactionMenuContainer div {
   line-height: 30px;
   padding: 5px;
-  background: rgba(255, 255, 255, 0.91);
 }
 
 .reactionMenuContainer div:hover {

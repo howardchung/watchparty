@@ -216,6 +216,8 @@ export default class App extends React.Component<AppProps, AppState> {
   progressUpdater?: number;
   heartbeat: number | undefined = undefined;
 
+  chatRef = React.createRef<Chat>();
+
   async componentDidMount() {
     document.onfullscreenchange = this.onFullScreenChange;
     document.onkeydown = this.onKeydown;
@@ -598,14 +600,15 @@ export default class App extends React.Component<AppProps, AppState> {
             : this.state.unreadCount + 1,
       });
     });
-    socket.on('REC:reaction', (data: Reaction, undo: boolean) => {
+    socket.on('REC:addReaction', (data: Reaction, undo: boolean) => {
       const { chat } = this.state;
-      const msg = chat.find(
+      const msgIndex = chat.findIndex(
         (m) => m.id === data.msgId && m.timestamp === data.msgTimestamp
       );
-      if (!msg) {
+      if (msgIndex === -1) {
         return;
       }
+      const msg = chat[msgIndex];
       msg.reactions = msg.reactions || {};
       msg.reactions[data.value] = msg.reactions[data.value] || [];
       if (undo) {
@@ -615,6 +618,26 @@ export default class App extends React.Component<AppProps, AppState> {
       } else {
         msg.reactions[data.value].push(data.user);
       }
+      this.setState({ chat }, () => {
+        // if we add a reaction to the last message we need to scroll down
+        // or else the reaction icon might be hidden
+        if (msgIndex === chat.length - 1) {
+          this.chatRef.current?.scrollToBottom();
+        }
+      });
+    });
+    socket.on('REC:removeReaction', (data: Reaction, undo: boolean) => {
+      console.log(data);
+      const { chat } = this.state;
+      const msg = chat.find(
+        (m) => m.id === data.msgId && m.timestamp === data.msgTimestamp
+      );
+      if (!msg || !msg.reactions?.[data.value]) {
+        return;
+      }
+      msg.reactions[data.value] = msg.reactions[data.value].filter(
+        (id) => id !== data.user
+      );
       this.setState({ chat });
     });
     socket.on('REC:tsMap', (data: NumberDict) => {
@@ -1512,6 +1535,7 @@ export default class App extends React.Component<AppProps, AppState> {
           isChatDisabled={this.state.isChatDisabled}
           owner={this.state.owner}
           user={this.props.user}
+          ref={this.chatRef}
         />
         {this.state.state === 'connected' && (
           <VideoChat
