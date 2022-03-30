@@ -17,6 +17,11 @@ import { UserMenu } from '../UserMenu/UserMenu';
 import { Socket } from 'socket.io-client';
 import firebase from 'firebase/compat/app';
 import classes from './Chat.module.css';
+import {
+  CSSTransition,
+  SwitchTransition,
+  TransitionGroup,
+} from 'react-transition-group';
 
 const reactionEmojis = Array.from('👍🧡😂😯😢😡');
 
@@ -232,7 +237,7 @@ export class Chat extends React.Component<ChatProps> {
                 socket={this.props.socket}
                 isChatDisabled={this.props.isChatDisabled}
                 setReactionMenu={this.setReactionMenu}
-                addReaction={this.handleReactionClick}
+                handleReactionClick={this.handleReactionClick}
               />
             ))}
             {/* <div ref={this.messagesEndRef} /> */}
@@ -259,14 +264,24 @@ export class Chat extends React.Component<ChatProps> {
             closeMenu={() => this.setState({ isPickerOpen: false })}
           />
         )}
-        {this.state.reactionMenu.isOpen && (
+        <CSSTransition
+          in={this.state.reactionMenu.isOpen}
+          timeout={300}
+          classNames={{
+            enter: classes['reactionMenu-enter'],
+            enterActive: classes['reactionMenu-enter-active'],
+            exit: classes['reactionMenu-exit'],
+            exitActive: classes['reactionMenu-exit-active'],
+          }}
+          unmountOnExit
+        >
           <ReactionMenu
             handleReactionClick={this.handleReactionClick}
             closeMenu={() => this.setReactionMenu(false)}
             yPosition={this.state.reactionMenu.yPosition}
             xPosition={this.state.reactionMenu.xPosition}
           />
-        )}
+        </CSSTransition>
         <Input
           inverted
           fluid
@@ -314,7 +329,7 @@ const ChatMessage = ({
   owner,
   isChatDisabled,
   setReactionMenu,
-  addReaction: handleReactionClick,
+  handleReactionClick,
   className,
 }: {
   message: ChatMessage;
@@ -326,7 +341,7 @@ const ChatMessage = ({
   owner: string | undefined;
   isChatDisabled: boolean | undefined;
   setReactionMenu: Function;
-  addReaction: Function;
+  handleReactionClick: Function;
   className: string;
 }) => {
   const { id, timestamp, cmd, msg, system, isSub, reactions } = message;
@@ -416,45 +431,90 @@ const ChatMessage = ({
             </span>
           </Icon>
         </div>
-        {reactions && (
-          <div>
-            {Object.keys(reactions as any).map((key) =>
-              reactions[key as any].length ? (
+        <TransitionGroup>
+          {Object.keys(reactions ?? ([] as any)).map((key) =>
+            reactions?.[key as any].length ? (
+              <CSSTransition
+                key={key}
+                timeout={200}
+                classNames={{
+                  enter: classes['reaction-enter'],
+                  enterActive: classes['reaction-enter-active'],
+                  exit: classes['reaction-exit'],
+                  exitActive: classes['reaction-exit-active'],
+                }}
+                unmountOnExit
+              >
                 <Popup
                   content={reactions[key as any]
                     .map((id) => nameMap[id] || 'Unknown')
                     .join(', ')}
                   trigger={
-                    <div
-                      className={classes.reactionContainer}
-                      onClick={() => handleReactionClick(key, id, timestamp)}
-                    >
-                      <span
-                        style={{
-                          fontSize: 17,
-                          position: 'relative',
-                          bottom: 1,
-                        }}
-                      >
-                        {key}
-                      </span>
-                      <span
-                        style={{
-                          color: 'rgba(255, 255, 255, 0.85)',
-                          marginLeft: 2,
-                        }}
-                      >
-                        {reactions[key as any].length}
-                      </span>
-                    </div>
+                    <Reaction
+                      counter={reactions[key as any].length}
+                      handleReactionClick={handleReactionClick}
+                      reactionKey={key}
+                      msgId={message.id}
+                      msgTimestamp={message.timestamp}
+                    />
                   }
                 />
-              ) : null
-            )}
-          </div>
-        )}
+              </CSSTransition>
+            ) : null
+          )}
+        </TransitionGroup>
       </Comment.Content>
     </Comment>
+  );
+};
+
+const Reaction: React.FC<{
+  counter: number;
+  handleReactionClick: Function;
+  reactionKey: string;
+  msgId: string;
+  msgTimestamp: string;
+}> = ({ counter, handleReactionClick, reactionKey, msgId, msgTimestamp }) => {
+  return (
+    <div
+      className={classes.reactionContainer}
+      onClick={() => handleReactionClick(reactionKey, msgId, msgTimestamp)}
+    >
+      <span
+        style={{
+          fontSize: 17,
+          position: 'relative',
+          bottom: 1,
+        }}
+      >
+        {reactionKey}
+      </span>
+      <SwitchTransition>
+        <CSSTransition
+          key={reactionKey + '-' + counter}
+          classNames={{
+            enter: classes['reactionCounter-enter'],
+            enterActive: classes['reactionCounter-enter-active'],
+            exit: classes['reactionCounter-exit'],
+            exitActive: classes['reactionCounter-exit-active'],
+          }}
+          addEndListener={(node, done) =>
+            node.addEventListener('transitionend', done, false)
+          }
+          unmountOnExit
+        >
+          <span
+            className={classes.reactionCounter}
+            style={{
+              color: 'rgba(255, 255, 255, 0.85)',
+              marginLeft: 3,
+            }}
+          >
+            {counter}
+          </span>
+        </CSSTransition>
+      </SwitchTransition>
+    </div>
   );
 };
 
