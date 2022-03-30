@@ -83,8 +83,8 @@
 }
 
 .reactionMenuContainer div:hover {
-  background: rgb(46, 137, 212);
-  transition: background 0.2s ease-in-out;
+  background-color: rgb(46, 137, 212);
+  transition: background-color 0.2s ease-in-out;
 }
 
 .reactionContainer {
@@ -100,6 +100,53 @@
 }
 
 .reactionContainer:hover {
-  background: rgb(46, 137, 212);
-  transition: background 0.2s ease-in-out;
+  background-color: rgb(46, 137, 212);
+  transition: background-color 0.2s ease-in-out;
+}
+
+.reaction-enter   {
+  transform: scale(0);
+}
+.reaction-enter-active  {
+  transform: scale(1);
+  transition: all 200ms ease-in !important;
+}
+.reaction-exit  {
+    transform: scale(1);
+}
+.reaction-exit-active {
+  transform: scale(0);
+  transition: all 200ms ease-in !important;
+}
+
+.reactionCounter-enter   {
+  transform: scale(0);
+  color: rgb(255, 136, 0) !important;
+}
+.reactionCounter-enter-active  {
+  transform: scale(1);
+  transition: all 200ms ease-in !important;
+}
+.reactionCounter-exit  {
+    transform: scale(1);
+    color: rgb(255, 136, 0) !important;
+}
+.reactionCounter-exit-active {
+  transform: scale(0);
+  transition: all 200ms ease-in !important;
+}
+
+.reactionMenu-enter   {
+  transform: scale(0);
+}
+.reactionMenu-enter-active  {
+  transform: scale(1);
+  transition: all 100ms ease-out !important;
+}
+.reactionMenu-exit  {
+    transform: scale(1);
+}
+.reactionMenu-exit-active {
+  transform: scale(0);
+  transition: all 100ms ease-out !important;
 }
