@@ -432,8 +432,8 @@ const ChatMessage = ({
           </Icon>
         </div>
         <TransitionGroup>
-          {Object.keys(reactions ?? ([] as any)).map((key) =>
-            reactions?.[key as any].length ? (
+          {Object.keys(reactions ?? []).map((key) =>
+            reactions?.[key].length ? (
               <CSSTransition
                 key={key}
                 timeout={200}
@@ -446,7 +446,7 @@ const ChatMessage = ({
                 unmountOnExit
               >
                 <Popup
-                  content={reactions[key as any]
+                  content={reactions[key]
                     .map((id) => nameMap[id] || 'Unknown')
                     .join(', ')}
                   offset={[0, 6]}
@@ -468,7 +468,7 @@ const ChatMessage = ({
                       </span>
                       <SwitchTransition>
                         <CSSTransition
-                          key={key + '-' + reactions[key as any].length}
+                          key={key + '-' + reactions[key].length}
                           classNames={{
                             enter: classes['reactionCounter-enter'],
                             enterActive:
@@ -488,7 +488,7 @@ const ChatMessage = ({
                               marginLeft: 3,
                             }}
                           >
-                            {reactions[key as any].length}
+                            {reactions[key].length}
                           </span>
                         </CSSTransition>
                       </SwitchTransition>
