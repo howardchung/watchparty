@@ -449,14 +449,50 @@ const ChatMessage = ({
                   content={reactions[key as any]
                     .map((id) => nameMap[id] || 'Unknown')
                     .join(', ')}
+                  offset={[0, 6]}
                   trigger={
-                    <Reaction
-                      counter={reactions[key as any].length}
-                      handleReactionClick={handleReactionClick}
-                      reactionKey={key}
-                      msgId={message.id}
-                      msgTimestamp={message.timestamp}
-                    />
+                    <div
+                      className={classes.reactionContainer}
+                      onClick={() =>
+                        handleReactionClick(key, message.id, message.timestamp)
+                      }
+                    >
+                      <span
+                        style={{
+                          fontSize: 17,
+                          position: 'relative',
+                          bottom: 1,
+                        }}
+                      >
+                        {key}
+                      </span>
+                      <SwitchTransition>
+                        <CSSTransition
+                          key={key + '-' + reactions[key as any].length}
+                          classNames={{
+                            enter: classes['reactionCounter-enter'],
+                            enterActive:
+                              classes['reactionCounter-enter-active'],
+                            exit: classes['reactionCounter-exit'],
+                            exitActive: classes['reactionCounter-exit-active'],
+                          }}
+                          addEndListener={(node, done) =>
+                            node.addEventListener('transitionend', done, false)
+                          }
+                          unmountOnExit
+                        >
+                          <span
+                            className={classes.reactionCounter}
+                            style={{
+                              color: 'rgba(255, 255, 255, 0.85)',
+                              marginLeft: 3,
+                            }}
+                          >
+                            {reactions[key as any].length}
+                          </span>
+                        </CSSTransition>
+                      </SwitchTransition>
+                    </div>
                   }
                 />
               </CSSTransition>
@@ -465,56 +501,6 @@ const ChatMessage = ({
         </TransitionGroup>
       </Comment.Content>
     </Comment>
-  );
-};
-
-const Reaction: React.FC<{
-  counter: number;
-  handleReactionClick: Function;
-  reactionKey: string;
-  msgId: string;
-  msgTimestamp: string;
-}> = ({ counter, handleReactionClick, reactionKey, msgId, msgTimestamp }) => {
-  return (
-    <div
-      className={classes.reactionContainer}
-      onClick={() => handleReactionClick(reactionKey, msgId, msgTimestamp)}
-    >
-      <span
-        style={{
-          fontSize: 17,
-          position: 'relative',
-          bottom: 1,
-        }}
-      >
-        {reactionKey}
-      </span>
-      <SwitchTransition>
-        <CSSTransition
-          key={reactionKey + '-' + counter}
-          classNames={{
-            enter: classes['reactionCounter-enter'],
-            enterActive: classes['reactionCounter-enter-active'],
-            exit: classes['reactionCounter-exit'],
-            exitActive: classes['reactionCounter-exit-active'],
-          }}
-          addEndListener={(node, done) =>
-            node.addEventListener('transitionend', done, false)
-          }
-          unmountOnExit
-        >
-          <span
-            className={classes.reactionCounter}
-            style={{
-              color: 'rgba(255, 255, 255, 0.85)',
-              marginLeft: 3,
-            }}
-          >
-            {counter}
-          </span>
-        </CSSTransition>
-      </SwitchTransition>
-    </div>
   );
 };
 
