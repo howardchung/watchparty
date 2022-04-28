@@ -615,7 +615,10 @@ export default class App extends React.Component<AppProps, AppState> {
       this.setState({ chat }, () => {
         // if we add a reaction to the last message we need to scroll down
         // or else the reaction icon might be hidden
-        if (msgIndex === chat.length - 1) {
+        if (
+          msgIndex === chat.length - 1 &&
+          this.chatRef.current?.state.isNearBottom
+        ) {
           this.chatRef.current?.scrollToBottom();
         }
       });
