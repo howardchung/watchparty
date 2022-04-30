@@ -122,6 +122,8 @@ export class Room {
       socket.on('CMD:seek', (data) => this.seekVideo(socket, data));
       socket.on('CMD:ts', (data) => this.setTimestamp(socket, data));
       socket.on('CMD:chat', (data) => this.sendChatMessage(socket, data));
+      socket.on('CMD:addReaction', (data) => this.addReaction(socket, data));
+      socket.on('CMD:removeReaction', (data) => this.removeReaction(socket, data));
       socket.on('CMD:joinVideo', () => this.joinVideo(socket));
       socket.on('CMD:leaveVideo', () => this.leaveVideo(socket));
       socket.on('CMD:joinScreenShare', (data) =>
@@ -562,6 +564,49 @@ export class Room {
     redisCount('chatMessages');
     const chatMsg = { id: socket.id, msg: data };
     this.addChatMessage(socket, chatMsg);
+  };
+
+  private addReaction = (
+    socket: Socket,
+    data: { value: string; msgId: string; msgTimestamp: string }
+  ) => {
+    if(data.value.length > 2) {
+      return;
+    }
+    const msg = this.chat.find(
+      (m) => m.id === data.msgId && m.timestamp === data.msgTimestamp
+    );
+    if (!msg) {
+      return;
+    }
+    msg.reactions = msg.reactions || {};
+    msg.reactions[data.value] = msg.reactions[data.value] || [];
+
+    if (!msg.reactions[data.value].includes(socket.id)) {
+      msg.reactions[data.value].push(socket.id);
+      const reaction: Reaction = { user: socket.id, ...data };
+      this.io.of(this.roomId).emit('REC:addReaction', reaction);
+    }
+  };
+
+  private removeReaction = (
+    socket: Socket,
+    data: { value: string; msgId: string; msgTimestamp: string }
+  ) => {
+    if(data.value.length > 2) {
+      return;
+    }
+    const msg = this.chat.find(
+      (m) => m.id === data.msgId && m.timestamp === data.msgTimestamp
+    );
+    if (!msg || !msg.reactions?.[data.value]) {
+      return;
+    }
+    msg.reactions[data.value] = msg.reactions[data.value].filter(
+      (id) => id !== socket.id
+    );
+    const reaction: Reaction = { user: socket.id, ...data };
+    this.io.of(this.roomId).emit('REC:removeReaction', reaction);
   };
 
   private joinVideo = (socket: Socket) => {
