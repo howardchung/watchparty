@@ -345,7 +345,7 @@ const ChatMessage = ({
   className: string;
 }) => {
   const { id, timestamp, cmd, msg, system, isSub, reactions } = message;
-  const spellFull = 10; // the number of people whose names should be written out in full in the reaction popup
+  const spellFull = 5; // the number of people whose names should be written out in full in the reaction popup
   return (
     <Comment className={`${classes.comment} ${className}`}>
       {id ? (
