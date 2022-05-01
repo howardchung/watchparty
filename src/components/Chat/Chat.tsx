@@ -345,6 +345,7 @@ const ChatMessage = ({
   className: string;
 }) => {
   const { id, timestamp, cmd, msg, system, isSub, reactions } = message;
+  const spellFull = 5; // the number of people whose names should be written out in full in the reaction popup
   return (
     <Comment className={`${classes.comment} ${className}`}>
       {id ? (
@@ -446,9 +447,18 @@ const ChatMessage = ({
                 unmountOnExit
               >
                 <Popup
-                  content={reactions[key]
+                  content={`${reactions[key]
+                    .slice(0, spellFull)
                     .map((id) => nameMap[id] || 'Unknown')
-                    .join(', ')}
+                    .concat(
+                      reactions[key].length > spellFull
+                        ? [`${reactions[key].length - spellFull} more`]
+                        : []
+                    )
+                    .reduce(
+                      (text, value, i, array) =>
+                        text + (i < array.length - 1 ? ', ' : ' and ') + value
+                    )} reacted.`}
                   offset={[0, 6]}
                   trigger={
                     <div
