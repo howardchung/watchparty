@@ -288,6 +288,7 @@ app.delete('/deleteAccount', async (req, res) => {
     await postgres?.query('DELETE FROM room WHERE owner = $1', [decoded.uid]);
   }
   await deleteUser(decoded.uid);
+  redisCount('deleteAccount');
   return res.json({});
 });
 
@@ -612,7 +613,9 @@ async function getStats() {
   )?.rows[0].count;
   const numSubs = (await postgres?.query('SELECT count(1) from subscriber'))
     ?.rows[0].count;
+  const deleteAccounts = await getRedisCountDay('deleteAccount');
   const chatMessages = await getRedisCountDay('chatMessages');
+  const addReactions = await getRedisCountDay('addReaction');
   const hetznerApiRemaining = await redis?.get('hetznerApiRemaining');
   const vBrowserStarts = await getRedisCountDay('vBrowserStarts');
   const vBrowserLaunches = await getRedisCountDay('vBrowserLaunches');
@@ -716,7 +719,9 @@ async function getStats() {
     currentVBrowserUIDCounts,
     numPermaRooms,
     numSubs,
+    deleteAccounts,
     chatMessages,
+    addReactions,
     urlStarts,
     playlistAdds,
     screenShareStarts,
