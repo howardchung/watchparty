@@ -462,7 +462,11 @@ const ChatMessage = ({
                   offset={[0, 6]}
                   trigger={
                     <div
-                      className={classes.reactionContainer}
+                      className={`${classes.reactionContainer} ${
+                        reactions[key].includes(socket.id)
+                          ? classes.highlighted
+                          : ''
+                      }`}
                       onClick={() =>
                         handleReactionClick(key, message.id, message.timestamp)
                       }
