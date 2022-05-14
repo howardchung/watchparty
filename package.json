@@ -60,7 +60,8 @@
     "deploy": "git fetch && git reset --hard origin/release && pm2 flush && pm2 reload buildServer/ecosystem.config.js",
     "prettier": "prettier --write .",
     "typecheck": "tsc --project server/tsconfig.json --noEmit",
-    "ncu": "ncu --semverLevel major -u"
+    "ncu": "ncu --semverLevel major -u",
+    "updateSnapshot": "curl -X POST http://localhost:3100/updateSnapshot -H 'Content-Type: application/json' -d '{\"provider\":\"Hetzner\",\"isLarge\":false,\"region\":\"US\"}'"
   },
   "husky": {
     "hooks": {
