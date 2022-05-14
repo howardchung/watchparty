@@ -93,9 +93,13 @@ async function init() {
   setInterval(freeUnusedRooms, 5 * 60 * 1000);
   saveRooms();
   if (process.env.NODE_ENV === 'development') {
-    require('./vmWorker');
-    require('./syncSubs');
-    require('./timeSeries');
+    try {
+      require('./vmWorker');
+      require('./syncSubs');
+      require('./timeSeries');
+    } catch (e) {
+      console.error(e);
+    }
   }
 }
 
