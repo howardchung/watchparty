@@ -99,6 +99,10 @@
   cursor: pointer;
 }
 
+.reactionContainer.highlighted {
+  background: rgb(66, 111, 129);
+}
+
 .reactionContainer:hover {
   background-color: rgb(46, 137, 212);
   transition: background-color 0.2s ease-in-out;
