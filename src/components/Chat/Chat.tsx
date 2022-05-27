@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { RefObject } from 'react';
 import { Button, Comment, Icon, Input, Popup } from 'semantic-ui-react';
 import 'emoji-mart/css/emoji-mart.css';
 import { EmojiData, Picker } from 'emoji-mart';
@@ -17,6 +17,13 @@ import { UserMenu } from '../UserMenu/UserMenu';
 import { Socket } from 'socket.io-client';
 import firebase from 'firebase/compat/app';
 import classes from './Chat.module.css';
+import {
+  CSSTransition,
+  SwitchTransition,
+  TransitionGroup,
+} from 'react-transition-group';
+
+const reactionEmojis = Array.from('👍🧡😂😯😢😡');
 
 interface ChatProps {
   chat: ChatMessage[];
@@ -30,10 +37,22 @@ interface ChatProps {
   isChatDisabled?: boolean;
   user: firebase.User | undefined;
   owner: string | undefined;
+  ref: RefObject<Chat>;
 }
 
 export class Chat extends React.Component<ChatProps> {
-  public state = { chatMsg: '', isNearBottom: true, isPickerOpen: false };
+  public state = {
+    chatMsg: '',
+    isNearBottom: true,
+    isPickerOpen: false,
+    reactionMenu: {
+      isOpen: false,
+      selectedMsgId: '',
+      selectedMsgTimestamp: '',
+      yPosition: 0,
+      xPosition: 0,
+    },
+  };
   messagesRef = React.createRef<HTMLDivElement>();
 
   componentDidMount() {
@@ -51,6 +70,40 @@ export class Chat extends React.Component<ChatProps> {
       this.scrollToBottom();
     }
   }
+
+  setReactionMenu = (
+    isOpen: boolean,
+    selectedMsgId?: string,
+    selectedMsgTimestamp?: string,
+    yPosition?: number,
+    xPosition?: number
+  ) => {
+    this.setState({
+      reactionMenu: {
+        isOpen,
+        selectedMsgId,
+        selectedMsgTimestamp,
+        yPosition,
+        xPosition,
+      },
+    });
+  };
+
+  handleReactionClick = (value: string, id: string, timestamp: string) => {
+    const msg = this.props.chat.find(
+      (m) => m.id === id && m.timestamp === timestamp
+    );
+    const data = {
+      value,
+      msgId: id || this.state.reactionMenu.selectedMsgId,
+      msgTimestamp: timestamp || this.state.reactionMenu.selectedMsgTimestamp,
+    };
+    if (msg?.reactions?.[value].includes(this.props.socket.id)) {
+      this.props.socket.emit('CMD:removeReaction', data);
+    } else {
+      this.props.socket.emit('CMD:addReaction', data);
+    }
+  };
 
   updateChatMsg = (_e: any, data: { value: string }) => {
     // console.log(e.target.selectionStart);
@@ -163,12 +216,18 @@ export class Chat extends React.Component<ChatProps> {
         <div
           className="chatContainer"
           ref={this.messagesRef}
-          style={{ position: 'relative' }}
+          style={{ position: 'relative', paddingTop: 13 }}
         >
           <Comment.Group>
             {this.props.chat.map((msg) => (
               <ChatMessage
                 key={msg.timestamp + msg.id}
+                className={
+                  msg.id === this.state.reactionMenu.selectedMsgId &&
+                  msg.timestamp === this.state.reactionMenu.selectedMsgTimestamp
+                    ? classes.selected
+                    : ''
+                }
                 message={msg}
                 pictureMap={this.props.pictureMap}
                 nameMap={this.props.nameMap}
@@ -176,6 +235,9 @@ export class Chat extends React.Component<ChatProps> {
                 owner={this.props.owner}
                 user={this.props.user}
                 socket={this.props.socket}
+                isChatDisabled={this.props.isChatDisabled}
+                setReactionMenu={this.setReactionMenu}
+                handleReactionClick={this.handleReactionClick}
               />
             ))}
             {/* <div ref={this.messagesEndRef} /> */}
@@ -202,6 +264,24 @@ export class Chat extends React.Component<ChatProps> {
             closeMenu={() => this.setState({ isPickerOpen: false })}
           />
         )}
+        <CSSTransition
+          in={this.state.reactionMenu.isOpen}
+          timeout={300}
+          classNames={{
+            enter: classes['reactionMenu-enter'],
+            enterActive: classes['reactionMenu-enter-active'],
+            exit: classes['reactionMenu-exit'],
+            exitActive: classes['reactionMenu-exit-active'],
+          }}
+          unmountOnExit
+        >
+          <ReactionMenu
+            handleReactionClick={this.handleReactionClick}
+            closeMenu={() => this.setReactionMenu(false)}
+            yPosition={this.state.reactionMenu.yPosition}
+            xPosition={this.state.reactionMenu.xPosition}
+          />
+        </CSSTransition>
         <Input
           inverted
           fluid
@@ -247,6 +327,10 @@ const ChatMessage = ({
   user,
   socket,
   owner,
+  isChatDisabled,
+  setReactionMenu,
+  handleReactionClick,
+  className,
 }: {
   message: ChatMessage;
   nameMap: StringDict;
@@ -255,10 +339,15 @@ const ChatMessage = ({
   user: firebase.User | undefined;
   socket: Socket;
   owner: string | undefined;
+  isChatDisabled: boolean | undefined;
+  setReactionMenu: Function;
+  handleReactionClick: Function;
+  className: string;
 }) => {
-  const { id, timestamp, cmd, msg, system, isSub } = message;
+  const { id, timestamp, cmd, msg, system, isSub, reactions } = message;
+  const spellFull = 5; // the number of people whose names should be written out in full in the reaction popup
   return (
-    <Comment>
+    <Comment className={`${classes.comment} ${className}`}>
       {id ? (
         <Popup
           content="WatchParty Plus subscriber"
@@ -309,6 +398,121 @@ const ChatMessage = ({
         >
           <Comment.Text className="light">{!cmd && msg}</Comment.Text>
         </Linkify>
+        <div className={classes.commentMenu}>
+          <Icon
+            onClick={(e: MouseEvent) => {
+              const viewportOffset = (e.target as any).getBoundingClientRect();
+              setReactionMenu(
+                true,
+                id,
+                timestamp,
+                viewportOffset.top,
+                viewportOffset.right
+              );
+            }}
+            name={'' as any}
+            inverted
+            link
+            disabled={isChatDisabled}
+            style={{
+              opacity: 1,
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              padding: 10,
+              margin: 0,
+            }}
+          >
+            <span
+              role="img"
+              aria-label="React"
+              style={{ margin: 0, fontSize: 18 }}
+            >
+              😀
+            </span>
+          </Icon>
+        </div>
+        <TransitionGroup>
+          {Object.keys(reactions ?? []).map((key) =>
+            reactions?.[key].length ? (
+              <CSSTransition
+                key={key}
+                timeout={200}
+                classNames={{
+                  enter: classes['reaction-enter'],
+                  enterActive: classes['reaction-enter-active'],
+                  exit: classes['reaction-exit'],
+                  exitActive: classes['reaction-exit-active'],
+                }}
+                unmountOnExit
+              >
+                <Popup
+                  content={`${reactions[key]
+                    .slice(0, spellFull)
+                    .map((id) => nameMap[id] || 'Unknown')
+                    .concat(
+                      reactions[key].length > spellFull
+                        ? [`${reactions[key].length - spellFull} more`]
+                        : []
+                    )
+                    .reduce(
+                      (text, value, i, array) =>
+                        text + (i < array.length - 1 ? ', ' : ' and ') + value
+                    )} reacted.`}
+                  offset={[0, 6]}
+                  trigger={
+                    <div
+                      className={`${classes.reactionContainer} ${
+                        reactions[key].includes(socket.id)
+                          ? classes.highlighted
+                          : ''
+                      }`}
+                      onClick={() =>
+                        handleReactionClick(key, message.id, message.timestamp)
+                      }
+                    >
+                      <span
+                        style={{
+                          fontSize: 17,
+                          position: 'relative',
+                          bottom: 1,
+                        }}
+                      >
+                        {key}
+                      </span>
+                      <SwitchTransition>
+                        <CSSTransition
+                          key={key + '-' + reactions[key].length}
+                          classNames={{
+                            enter: classes['reactionCounter-enter'],
+                            enterActive:
+                              classes['reactionCounter-enter-active'],
+                            exit: classes['reactionCounter-exit'],
+                            exitActive: classes['reactionCounter-exit-active'],
+                          }}
+                          addEndListener={(node, done) =>
+                            node.addEventListener('transitionend', done, false)
+                          }
+                          unmountOnExit
+                        >
+                          <span
+                            className={classes.reactionCounter}
+                            style={{
+                              color: 'rgba(255, 255, 255, 0.85)',
+                              marginLeft: 3,
+                            }}
+                          >
+                            {reactions[key].length}
+                          </span>
+                        </CSSTransition>
+                      </SwitchTransition>
+                    </div>
+                  }
+                />
+              </CSSTransition>
+            ) : null
+          )}
+        </TransitionGroup>
       </Comment.Content>
     </Comment>
   );
@@ -338,3 +542,46 @@ class PickerMenuInner extends React.Component<{
 }
 
 const PickerMenu = onClickOutside(PickerMenuInner);
+
+class ReactionMenuInner extends React.Component<{
+  handleReactionClick: Function;
+  closeMenu: Function;
+  yPosition: number;
+  xPosition: number;
+}> {
+  state = {
+    containerWidth: 0,
+  };
+  handleClickOutside = () => {
+    this.props.closeMenu();
+  };
+  containerRef = React.createRef<HTMLDivElement>();
+  componentDidMount() {
+    this.setState({ containerWidth: this.containerRef.current?.offsetWidth });
+  }
+  render() {
+    return (
+      <div
+        ref={this.containerRef}
+        className={classes.reactionMenuContainer}
+        style={{
+          top: this.props.yPosition - 9,
+          left: this.props.xPosition - this.state.containerWidth - 35,
+        }}
+      >
+        {reactionEmojis.map((reaction) => (
+          <div
+            onClick={() => {
+              this.props.handleReactionClick(reaction);
+              this.props.closeMenu();
+            }}
+            style={{ cursor: 'pointer' }}
+          >
+            {reaction}
+          </div>
+        ))}
+      </div>
+    );
+  }
+}
+const ReactionMenu = onClickOutside(ReactionMenuInner);

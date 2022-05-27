@@ -78,10 +78,10 @@ export const SettingsTab = ({
   const [validVanity, setValidVanity] = useState(true);
   const [validVanityLoading, setValidVanityLoading] = useState(false);
   const [adminSettingsChanged, setAdminSettingsChanged] = useState(false);
-  const [roomTitleInput, setRoomTitleInput] = useState<string | undefined>('');
+  const [roomTitleInput, setRoomTitleInput] = useState<string | undefined>(undefined);
   const [roomDescriptionInput, setRoomDescriptionInput] = useState<
     string | undefined
-  >('');
+  >(undefined);
   const [roomTitleColorInput, setRoomTitleColorInput] = useState<
     string | undefined
   >('');
@@ -132,10 +132,9 @@ export const SettingsTab = ({
     },
     [setValidVanity, roomLink]
   );
-  const lockDisabled =
+  const disableLocking =
     !Boolean(user) || Boolean(roomLock && roomLock !== user?.uid);
-  const permanentDisabled =
-    !Boolean(user) || Boolean(owner && owner !== user?.uid);
+  const disableOwning = !Boolean(user) || Boolean(owner && owner !== user?.uid);
 
   return (
     <div
@@ -162,7 +161,7 @@ export const SettingsTab = ({
         name={`Lock Room`}
         description="Only the person who locked the room can control the video."
         checked={Boolean(roomLock)}
-        disabled={lockDisabled}
+        disabled={disableLocking && disableOwning}
         onChange={(_e, data) => setRoomLock(data.checked)}
       />
       {
@@ -180,7 +179,7 @@ export const SettingsTab = ({
             ></Icon>
           }
           checked={Boolean(owner)}
-          disabled={permanentDisabled}
+          disabled={disableOwning}
           onChange={(_e, data) => setRoomOwner({ undo: !data.checked })}
         />
       }
@@ -304,7 +303,7 @@ export const SettingsTab = ({
               <div style={{ display: 'flex', marginBottom: 2 }}>
                 <Input
                   style={{ marginRight: 3, flexGrow: 1 }}
-                  value={roomTitleInput || roomTitle}
+                  value={roomTitleInput ?? roomTitle}
                   disabled={!isSubscriber}
                   maxLength={roomTitleMaxCharLength}
                   onChange={(e) => {
@@ -358,7 +357,7 @@ export const SettingsTab = ({
               </div>
               <Input
                 style={{ marginBottom: 2 }}
-                value={roomDescriptionInput || roomDescription}
+                value={roomDescriptionInput ?? roomDescription}
                 disabled={!isSubscriber}
                 maxLength={roomDescriptionMaxCharLength}
                 onChange={(e) => {
@@ -393,8 +392,8 @@ export const SettingsTab = ({
               vanity: vanity,
               password: password,
               isChatDisabled: isChatDisabled,
-              roomTitle: roomTitleInput || roomTitle,
-              roomDescription: roomDescriptionInput || roomDescription,
+              roomTitle: roomTitleInput ?? roomTitle,
+              roomDescription: roomDescriptionInput ?? roomDescription,
               roomTitleColor:
                 roomTitleColorInput || roomTitleColor || defaultRoomTitleColor,
               mediaPath: mediaPath,

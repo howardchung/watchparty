@@ -216,6 +216,8 @@ export default class App extends React.Component<AppProps, AppState> {
   progressUpdater?: number;
   heartbeat: number | undefined = undefined;
 
+  chatRef = React.createRef<Chat>();
+
   async componentDidMount() {
     document.onfullscreenchange = this.onFullScreenChange;
     document.onkeydown = this.onKeydown;
@@ -597,6 +599,42 @@ export default class App extends React.Component<AppProps, AppState> {
             ? this.state.unreadCount
             : this.state.unreadCount + 1,
       });
+    });
+    socket.on('REC:addReaction', (data: Reaction) => {
+      const { chat } = this.state;
+      const msgIndex = chat.findIndex(
+        (m) => m.id === data.msgId && m.timestamp === data.msgTimestamp
+      );
+      if (msgIndex === -1) {
+        return;
+      }
+      const msg = chat[msgIndex];
+      msg.reactions = msg.reactions || {};
+      msg.reactions[data.value] = msg.reactions[data.value] || [];
+      msg.reactions[data.value].push(data.user);
+      this.setState({ chat }, () => {
+        // if we add a reaction to the last message we need to scroll down
+        // or else the reaction icon might be hidden
+        if (
+          msgIndex === chat.length - 1 &&
+          this.chatRef.current?.state.isNearBottom
+        ) {
+          this.chatRef.current?.scrollToBottom();
+        }
+      });
+    });
+    socket.on('REC:removeReaction', (data: Reaction) => {
+      const { chat } = this.state;
+      const msg = chat.find(
+        (m) => m.id === data.msgId && m.timestamp === data.msgTimestamp
+      );
+      if (!msg || !msg.reactions?.[data.value]) {
+        return;
+      }
+      msg.reactions[data.value] = msg.reactions[data.value].filter(
+        (id) => id !== data.user
+      );
+      this.setState({ chat });
     });
     socket.on('REC:tsMap', (data: NumberDict) => {
       this.setState({ tsMap: data });
@@ -1493,6 +1531,7 @@ export default class App extends React.Component<AppProps, AppState> {
           isChatDisabled={this.state.isChatDisabled}
           owner={this.state.owner}
           user={this.props.user}
+          ref={this.chatRef}
         />
         {this.state.state === 'connected' && (
           <VideoChat
@@ -1594,6 +1633,8 @@ export default class App extends React.Component<AppProps, AppState> {
             currentSubtitle={this.state.currentSubtitle}
             src={this.state.currentMedia}
             haveLock={this.haveLock}
+            getMediaDisplayName={this.getMediaDisplayName}
+            beta={this.props.beta}
           />
         )}
         {this.state.error && <ErrorModal error={this.state.error} />}
@@ -1780,7 +1821,7 @@ export default class App extends React.Component<AppProps, AppState> {
                             selection
                             options={[
                               {
-                                text: '1080p (WatchParty Plus)',
+                                text: '1080p (Plus only)',
                                 value: '1920x1080@30',
                                 disabled: !this.state.isVBrowserLarge,
                               },

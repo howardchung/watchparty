@@ -14,6 +14,7 @@ export class ProfileModal extends React.Component<{
 }> {
   public state = {
     resetDisabled: false,
+    verifyDisabled: false,
     deleteConfirmOpen: false,
   };
 
@@ -61,6 +62,7 @@ export class ProfileModal extends React.Component<{
     try {
       if (this.props.user) {
         await this.props.user.sendEmailVerification();
+        this.setState({ verifyDisabled: true });
       }
     } catch (e) {
       console.warn(e);
@@ -190,7 +192,9 @@ export class ProfileModal extends React.Component<{
               Edit Gravatar
             </Button>
             <Button
-              disabled={this.props.user.emailVerified}
+              disabled={
+                this.props.user.emailVerified || this.state.verifyDisabled
+              }
               icon
               labelPosition="left"
               fluid

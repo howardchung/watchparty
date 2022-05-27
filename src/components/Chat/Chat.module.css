@@ -39,3 +39,118 @@
     background-position: 0% 50%;
   }
 }
+
+.comment .commentMenu {
+  display: none;
+  justify-content: center;
+  position: absolute;
+  right: 5px;
+  top: -13px;
+  padding: 4px !important;
+  border-radius: 3px;
+  background: rgb(146, 146, 146);
+  z-index: 100;
+  cursor: pointer;
+}
+
+.comment .commentMenu:hover, .comment.selected .commentMenu {
+  background: rgb(46, 137, 212);
+  transition: background 0.2s ease-in-out;
+}
+
+.comment:hover, .comment.selected {
+  border-radius: 5px;
+  background: radial-gradient(at top right, #7eaee02a, transparent 70%) !important;
+}
+
+.comment:hover .commentMenu, .comment.selected .commentMenu {
+  display: flex;
+}
+
+.reactionMenuContainer {
+  display: flex;
+  flex-wrap: nowrap;
+  border-radius: 5px;
+  position: fixed;
+  font-size: 24px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.91);
+}
+
+.reactionMenuContainer div {
+  line-height: 30px;
+  padding: 5px;
+}
+
+.reactionMenuContainer div:hover {
+  background-color: rgb(46, 137, 212);
+  transition: background-color 0.2s ease-in-out;
+}
+
+.reactionContainer {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.16);
+  margin-right: 3px;
+  margin-top: 1px;
+  min-width: 39px;
+  cursor: pointer;
+}
+
+.reactionContainer.highlighted {
+  background: rgb(66, 111, 129);
+}
+
+.reactionContainer:hover {
+  background-color: rgb(46, 137, 212);
+  transition: background-color 0.2s ease-in-out;
+}
+
+.reaction-enter   {
+  transform: scale(0);
+}
+.reaction-enter-active  {
+  transform: scale(1);
+  transition: all 200ms ease-in !important;
+}
+.reaction-exit  {
+    transform: scale(1);
+}
+.reaction-exit-active {
+  transform: scale(0);
+  transition: all 200ms ease-in !important;
+}
+
+.reactionCounter-enter   {
+  transform: scale(0);
+  color: rgb(255, 136, 0) !important;
+}
+.reactionCounter-enter-active  {
+  transform: scale(1);
+  transition: all 200ms ease-in !important;
+}
+.reactionCounter-exit  {
+    transform: scale(1);
+    color: rgb(255, 136, 0) !important;
+}
+.reactionCounter-exit-active {
+  transform: scale(0);
+  transition: all 200ms ease-in !important;
+}
+
+.reactionMenu-enter   {
+  transform: scale(0);
+}
+.reactionMenu-enter-active  {
+  transform: scale(1);
+  transition: all 100ms ease-out !important;
+}
+.reactionMenu-exit  {
+    transform: scale(1);
+}
+.reactionMenu-exit-active {
+  transform: scale(0);
+  transition: all 100ms ease-out !important;
+}

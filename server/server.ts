@@ -112,9 +112,13 @@ async function init() {
   setInterval(freeUnusedRooms, 5 * 60 * 1000);
   saveRooms();
   if (process.env.NODE_ENV === 'development') {
-    require('./vmWorker');
-    require('./syncSubs');
-    require('./timeSeries');
+    try {
+      require('./vmWorker');
+      require('./syncSubs');
+      require('./timeSeries');
+    } catch (e) {
+      console.error(e);
+    }
   }
 }
 
@@ -240,31 +244,39 @@ app.get('/downloadSubtitles', async (req, res) => {
 
 app.get('/searchSubtitles', async (req, res) => {
   try {
-    const url = req.query.url;
-    const startResp = await axios({
-      method: 'get',
-      url: url as string,
-      headers: {
-        Range: 'bytes=0-65535',
-      },
-      responseType: 'arraybuffer',
-    });
-    const start = startResp.data;
-    const size = Number(startResp.headers['content-range'].split('/')[1]);
-    const endResp = await axios({
-      method: 'get',
-      url: url as string,
-      headers: {
-        Range: `bytes=${size - 65536}-`,
-      },
-      responseType: 'arraybuffer',
-    });
-    const end = endResp.data;
-    // console.log(start, end, size);
-    let hash = computeOpenSubtitlesHash(start, end, size);
-    // hash = 'f65334e75574f00f';
-    // Search API for subtitles by hash
-    const subUrl = `https://rest.opensubtitles.org/search/moviebytesize-${size}/moviehash-${hash}/sublanguageid-eng`;
+    const title = req.query.title as string;
+    const url = req.query.url as string;
+    let subUrl = '';
+    if (url) {
+      const startResp = await axios({
+        method: 'get',
+        url: url,
+        headers: {
+          Range: 'bytes=0-65535',
+        },
+        responseType: 'arraybuffer',
+      });
+      const start = startResp.data;
+      const size = Number(startResp.headers['content-range'].split('/')[1]);
+      const endResp = await axios({
+        method: 'get',
+        url: url,
+        headers: {
+          Range: `bytes=${size - 65536}-`,
+        },
+        responseType: 'arraybuffer',
+      });
+      const end = endResp.data;
+      // console.log(start, end, size);
+      let hash = computeOpenSubtitlesHash(start, end, size);
+      // hash = 'f65334e75574f00f';
+      // Search API for subtitles by hash
+      subUrl = `https://rest.opensubtitles.org/search/moviebytesize-${size}/moviehash-${hash}/sublanguageid-eng`;
+    } else if (title) {
+      subUrl = `https://rest.opensubtitles.org/search/query-${encodeURIComponent(
+        title
+      )}/sublanguageid-eng`;
+    }
     console.log(subUrl);
     const response = await axios.get(subUrl, {
       headers: { 'User-Agent': 'VLSub 0.10.2' },
@@ -330,10 +342,6 @@ app.post('/createRoom', async (req, res) => {
   }
   console.log('createRoom: ', name);
   const newRoom = new Room(io, name);
-  const decoded = await validateUserToken(req.body?.uid, req.body?.token);
-  newRoom.creator = decoded?.email;
-  newRoom.video = req.body?.video || '';
-  rooms.set(name, newRoom);
   if (postgres) {
     const roomObj: any = {
       roomId: newRoom.roomId,
@@ -341,6 +349,10 @@ app.post('/createRoom', async (req, res) => {
     };
     await insertObject(postgres, 'room', roomObj);
   }
+  const decoded = await validateUserToken(req.body?.uid, req.body?.token);
+  newRoom.creator = decoded?.email;
+  newRoom.video = req.body?.video || '';
+  rooms.set(name, newRoom);
   res.json({ name: name.slice(1) });
 });
 
@@ -375,6 +387,7 @@ app.delete('/deleteAccount', async (req, res) => {
     ]);
   }
   await deleteUser(decoded.uid);
+  redisCount('deleteAccount');
   return res.json({});
 });
 
@@ -577,9 +590,6 @@ async function minuteMetrics() {
 async function freeUnusedRooms() {
   // Clean up rooms that are no longer persisted and empty
   // Frees up some JS memory space when process is long-running
-  if (!redis) {
-    return;
-  }
   const persistedRooms = await getAllRooms();
   const persistedSet = new Set(persistedRooms.map((room) => room.roomId));
   rooms.forEach(async (room, key) => {
@@ -716,7 +726,9 @@ async function getStats() {
   )?.rows[0].count;
   const numSubs = (await postgres?.query('SELECT count(1) from subscriber'))
     ?.rows[0].count;
+  const deleteAccounts = await getRedisCountDay('deleteAccount');
   const chatMessages = await getRedisCountDay('chatMessages');
+  const addReactions = await getRedisCountDay('addReaction');
   const hetznerApiRemaining = await redis?.get('hetznerApiRemaining');
   const vBrowserStarts = await getRedisCountDay('vBrowserStarts');
   const vBrowserLaunches = await getRedisCountDay('vBrowserLaunches');
@@ -820,7 +832,9 @@ async function getStats() {
     currentVBrowserUIDCounts,
     numPermaRooms,
     numSubs,
+    deleteAccounts,
     chatMessages,
+    addReactions,
     urlStarts,
     playlistAdds,
     screenShareStarts,
