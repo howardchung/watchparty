@@ -83,7 +83,6 @@ async function syncSubscribers() {
       await postgres2?.query('COMMIT');
     } catch (e) {
       console.error(e);
-      process.exit(1);
     }
   }
   lastSubs = currentSubs;
