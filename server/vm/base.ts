@@ -345,7 +345,7 @@ export abstract class VMManager {
               return resolve(id + ', ' + retryCount + ', ' + false);
             }
             let ready = false;
-            let vm = null;
+            let vm: VM | null = null;
             try {
               const cached = await this.redis.get(
                 this.getRedisHostCacheKey() + ':' + id
@@ -378,7 +378,7 @@ export abstract class VMManager {
                 return reject();
               }
             }
-            ready = await checkVMReady(vm?.host ?? '');
+            ready = await checkVMReady(vm?.host ?? '', vm?.pass);
             //ready = retryCount > 100;
             if (ready) {
               console.log('[CHECKSTAGING] ready:', id, vm?.host, retryCount);
@@ -486,23 +486,23 @@ export abstract class VMManager {
   public abstract updateSnapshot: () => Promise<string>;
 }
 
-async function checkVMReady(host: string) {
+async function checkVMReady(host: string, pass: string | undefined) {
   const url = 'https://' + host.replace('/', '/health');
   try {
     // const out = execSync(`curl -i -L -v --ipv4 '${host}'`);
     // if (!out.toString().startsWith('OK') && !out.toString().startsWith('404 page not found')) {
     //   throw new Error('mismatched response from health');
     // }
-    await axios({
+    const resp = await axios({
       method: 'GET',
       url,
       timeout: 1000,
     });
+    return process.env.NODE_ENV === 'production' ? resp.data === pass : true;
   } catch (e) {
     // console.log(url, e.message, e.response?.status);
     return false;
   }
-  return true;
 }
 
 function pointInInterval24(x: number, a: number, b: number) {
