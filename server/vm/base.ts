@@ -498,7 +498,7 @@ async function checkVMReady(host: string, pass: string | undefined) {
       url,
       timeout: 1000,
     });
-    const timeSinceBoot = Date.now() * 1000 - Number(resp.data);
+    const timeSinceBoot = Date.now() / 1000 - Number(resp.data);
     console.log(timeSinceBoot);
     return process.env.NODE_ENV === 'production'
       ? timeSinceBoot < 60 * 1000
