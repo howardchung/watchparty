@@ -11,7 +11,7 @@ const imageId = Number(config.HETZNER_IMAGE);
 export class Hetzner extends VMManager {
   size = 'cpx11'; // cx11, cpx11, cpx21, cpx31, ccx11
   largeSize = 'cpx31';
-  minRetries = 20;
+  minRetries = 30;
   id = 'Hetzner';
   gateway = config.HETZNER_GATEWAY;
   datacenters = this.region === 'US' ? ['ash'] : ['nbg1', 'fsn1', 'hel1'];
