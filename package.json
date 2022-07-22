@@ -9,7 +9,7 @@
     "@testing-library/user-event": "^13.5.0",
     "axios": "^0.26.0",
     "blueimp-md5": "^2.19.0",
-    "body-parser": "^1.19.2",
+    "body-parser": "^1.20.0",
     "can-autoplay": "^3.0.2",
     "compression": "^1.7.4",
     "cors": "^2.8.5",
@@ -61,7 +61,8 @@
     "prettier": "prettier --write .",
     "typecheck": "tsc --project server/tsconfig.json --noEmit",
     "ncu": "ncu --semverLevel major -u",
-    "updateSnapshot": "curl -X POST http://localhost:3100/updateSnapshot -H 'Content-Type: application/json' -d '{\"provider\":\"Hetzner\",\"isLarge\":false,\"region\":\"US\"}'"
+    "updateSnapshot": "curl -X POST http://localhost:3100/updateSnapshot -H 'Content-Type: application/json' -d '{\"provider\":\"Hetzner\",\"isLarge\":false,\"region\":\"US\"}'",
+    "testvBrowser": "docker run -d --rm --name=vbrowser --log-opt max-size=1g --net=host --shm-size=1g --cap-add=\"SYS_ADMIN\" -e DISPLAY=\":99.0\" -e NEKO_PASSWORD=user -e NEKO_PASSWORD_ADMIN=admin -e NEKO_BIND=\":5100\" -e NEKO_EPR=\":59000-59100\" -e NEKO_H264=\"1\" howardc93/vbrowser"
   },
   "husky": {
     "hooks": {
