@@ -1,4 +1,3 @@
 {
-  "typescript.tsdk": "node_modules/typescript/lib",
-  "githubPullRequests.ignoredPullRequestBranches": ["master"]
+  "typescript.tsdk": "node_modules/typescript/lib"
 }
