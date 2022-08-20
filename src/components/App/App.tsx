@@ -54,6 +54,7 @@ import { ScreenShareModal } from '../Modal/ScreenShareModal';
 import { FileShareModal } from '../Modal/FileShareModal';
 import firebase from 'firebase/compat/app';
 import { SubtitleModal } from '../Modal/SubtitleModal';
+import userEvent from '@testing-library/user-event';
 
 declare global {
   interface Window {
@@ -751,7 +752,10 @@ export default class App extends React.Component<AppProps, AppState> {
       stream.getVideoTracks()[0].onended = this.stopScreenShare;
       this.screenShareStream = stream;
       this.socket.emit('CMD:joinScreenShare');
-      this.toggleMute();
+      const sharer = this.state.participants.find((p) => p.isScreenShare);
+      if (sharer) {
+        this.toggleMute();
+      }
       this.setState({ isScreenSharing: true });
     }
   };
