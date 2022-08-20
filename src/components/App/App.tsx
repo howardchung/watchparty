@@ -54,7 +54,6 @@ import { ScreenShareModal } from '../Modal/ScreenShareModal';
 import { FileShareModal } from '../Modal/FileShareModal';
 import firebase from 'firebase/compat/app';
 import { SubtitleModal } from '../Modal/SubtitleModal';
-import userEvent from '@testing-library/user-event';
 
 declare global {
   interface Window {
