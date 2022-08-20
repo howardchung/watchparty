@@ -751,6 +751,7 @@ export default class App extends React.Component<AppProps, AppState> {
       stream.getVideoTracks()[0].onended = this.stopScreenShare;
       this.screenShareStream = stream;
       this.socket.emit('CMD:joinScreenShare');
+      this.toggleMute();
       this.setState({ isScreenSharing: true });
     }
   };
