@@ -1,6 +1,7 @@
 import React from 'react';
 import { Button, Icon } from 'semantic-ui-react';
 import { Socket } from 'socket.io-client';
+import { debounce } from '../../utils';
 
 import {
   formatTimestamp,
@@ -93,7 +94,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
     }
     window.watchparty.ourStream = stream;
     // alert server we've joined video chat
-    this.socket.emit('CMD:joinVideo');
+    this.socket.emit('CMD:joinVideo', { isMuted: !this.getAudioWebRTC() });
   };
 
   stopWebRTC = () => {
@@ -131,8 +132,13 @@ export class VideoChat extends React.Component<VideoChatProps> {
       ourStream.getAudioTracks()[0].enabled =
         !ourStream.getAudioTracks()[0]?.enabled;
     }
+    this.debouncedEmitUserMute();
     this.forceUpdate();
   };
+
+  debouncedEmitUserMute = debounce(() => {
+    this.socket.emit('CMD:userMute', { isMuted: !this.getAudioWebRTC() });
+  }, 1000);
 
   getAudioWebRTC = () => {
     const ourStream = window.watchparty.ourStream;
@@ -413,6 +419,13 @@ export class VideoChat extends React.Component<VideoChatProps> {
                         }}
                       >
                         {p.isVideoChat && <Icon size="small" name="video" />}
+                        {p.isMuted && (
+                          <Icon
+                            size="large"
+                            name="microphone slash"
+                            color="red"
+                          />
+                        )}
                         {nameMap[p.id] || p.id}
                       </div>
                       <div
