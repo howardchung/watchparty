@@ -126,11 +126,12 @@ export class Room {
       socket.on('CMD:removeReaction', (data) =>
         this.removeReaction(socket, data)
       );
-      socket.on('CMD:joinVideo', () => this.joinVideo(socket));
+      socket.on('CMD:joinVideo', (data) => this.joinVideo(socket, data));
       socket.on('CMD:leaveVideo', () => this.leaveVideo(socket));
       socket.on('CMD:joinScreenShare', (data) =>
         this.joinScreenSharing(socket, data)
       );
+      socket.on('CMD:userMute', (data) => this.setUserMute(socket, data));
       socket.on('CMD:leaveScreenShare', () => this.leaveScreenSharing(socket));
       socket.on('CMD:startVBrowser', (data) =>
         this.startVBrowser(socket, data)
@@ -612,10 +613,11 @@ export class Room {
     this.io.of(this.roomId).emit('REC:removeReaction', reaction);
   };
 
-  private joinVideo = (socket: Socket) => {
+  private joinVideo = (socket: Socket, data: { isMuted: boolean }) => {
     const match = this.roster.find((user) => user.id === socket.id);
     if (match) {
       match.isVideoChat = true;
+      match.isMuted = data.isMuted;
       redisCount('videoChatStarts');
     }
     this.io.of(this.roomId).emit('roster', this.getRosterForApp());
@@ -625,6 +627,14 @@ export class Room {
     const match = this.roster.find((user) => user.id === socket.id);
     if (match) {
       match.isVideoChat = false;
+    }
+    this.io.of(this.roomId).emit('roster', this.getRosterForApp());
+  };
+
+  private setUserMute = (socket: Socket, data: { isMuted: boolean }) => {
+    const match = this.roster.find((user) => user.id === socket.id);
+    if (match) {
+      match.isMuted = data.isMuted;
     }
     this.io.of(this.roomId).emit('roster', this.getRosterForApp());
   };
