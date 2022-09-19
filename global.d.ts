@@ -14,6 +14,7 @@ type MediaType = 'vbrowser' | 'screenshare' | 'video' | 'youtube';
 interface User {
   id: string;
   isVideoChat?: boolean;
+  isMuted?: boolean;
   isScreenShare?: boolean;
   isSub?: boolean;
   clientId: string;
