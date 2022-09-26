@@ -41,6 +41,10 @@ export class VideoChat extends React.Component<VideoChatProps> {
     }
   }
 
+  emitUserMute = () => {
+    this.socket.emit('CMD:userMute', { isMuted: !this.getAudioWebRTC() });
+  };
+
   handleSignal = async (data: any) => {
     // Handle messages received from signaling server
     const msg = data.msg;
@@ -94,6 +98,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
     window.watchparty.ourStream = stream;
     // alert server we've joined video chat
     this.socket.emit('CMD:joinVideo');
+    this.emitUserMute();
   };
 
   stopWebRTC = () => {
@@ -131,6 +136,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
       ourStream.getAudioTracks()[0].enabled =
         !ourStream.getAudioTracks()[0]?.enabled;
     }
+    this.emitUserMute();
     this.forceUpdate();
   };
 
@@ -413,6 +419,13 @@ export class VideoChat extends React.Component<VideoChatProps> {
                         }}
                       >
                         {p.isVideoChat && <Icon size="small" name="video" />}
+                        {p.isMuted && (
+                          <Icon
+                            size="large"
+                            name="microphone slash"
+                            color="red"
+                          />
+                        )}
                         {nameMap[p.id] || p.id}
                       </div>
                       <div
