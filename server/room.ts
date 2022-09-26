@@ -131,6 +131,7 @@ export class Room {
       socket.on('CMD:joinScreenShare', (data) =>
         this.joinScreenSharing(socket, data)
       );
+      socket.on('CMD:userMute', (data) => this.setUserMute(socket, data));
       socket.on('CMD:leaveScreenShare', () => this.leaveScreenSharing(socket));
       socket.on('CMD:startVBrowser', (data) =>
         this.startVBrowser(socket, data)
@@ -625,6 +626,14 @@ export class Room {
     const match = this.roster.find((user) => user.id === socket.id);
     if (match) {
       match.isVideoChat = false;
+    }
+    this.io.of(this.roomId).emit('roster', this.getRosterForApp());
+  };
+
+  private setUserMute = (socket: Socket, data: { isMuted: boolean }) => {
+    const match = this.roster.find((user) => user.id === socket.id);
+    if (match) {
+      match.isMuted = data.isMuted;
     }
     this.io.of(this.roomId).emit('roster', this.getRosterForApp());
   };
