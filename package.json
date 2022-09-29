@@ -36,7 +36,7 @@
     "react-secure-link": "^3.0.3",
     "react-semantic-ui-range": "^0.7.1",
     "react-transition-group": "^4.4.2",
-    "recharts": "^2.1.9",
+    "recharts": "^2.1.14",
     "s3-client": "^4.4.2",
     "semantic-ui-react": "^2.1.2",
     "socket.io": "^4.4.1",
