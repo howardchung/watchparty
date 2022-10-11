@@ -98,7 +98,7 @@
     "@types/firebase": "^3.2.1",
     "@types/ioredis": "^4.28.8",
     "@types/jest": "^27.4.0",
-    "@types/node": "^14.18.3",
+    "@types/node": "^18.8.4",
     "@types/pg": "^8.6.4",
     "@types/react": "^17.0.39",
     "@types/react-dom": "^17.0.11",
