@@ -46,7 +46,7 @@
     "stripe": "^8.203.0",
     "url-exist": "^3.0.0",
     "uuid": "^8.3.2",
-    "youtube-api": "^2.0.10"
+    "youtube-api": "^3.0.1"
   },
   "scripts": {
     "start": "react-scripts start",
