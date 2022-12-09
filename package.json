@@ -45,6 +45,8 @@
     "stripe": "^8.203.0",
     "url-exist": "^3.0.0",
     "uuid": "^8.3.2",
+    "video.js": "^7.20.1",
+    "videojs-youtube": "^2.6.1",
     "youtube-api": "^2.0.10"
   },
   "scripts": {
