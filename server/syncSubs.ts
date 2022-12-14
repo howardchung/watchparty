@@ -25,7 +25,7 @@ async function syncSubscribers() {
     emailMap.set(cust.id, cust.email);
   });
 
-  console.log('% subs in Stripe', subs.length);
+  console.log('%s subs in Stripe', subs.length);
 
   const uidMap = new Map();
   for (let i = 0; i < subs.length; i += 50) {
@@ -45,16 +45,31 @@ async function syncSubscribers() {
     });
   }
 
+  let noUID = 0;
   // Create sub objects
-  const result = subs
-    .map((sub) => ({
-      customerId: sub.customer,
-      email: emailMap.get(sub.customer),
-      status: sub.status,
-      uid: uidMap.get(emailMap.get(sub.customer)),
-    }))
+  let result = subs
+    .map((sub) => {
+      let uid = uidMap.get(emailMap.get(sub.customer));
+      if (!uid) {
+        uid = emailMap.get(sub.customer);
+        noUID += 1;
+      }
+      return {
+        customerId: sub.customer,
+        email: emailMap.get(sub.customer),
+        status: sub.status,
+        uid,
+      };
+    })
     .filter((sub) => sub.uid);
-  console.log('%s subs with UIDs', result.length);
+  console.log('%s subs to insert', result.length);
+  console.log('%s subs do not have UID, using email', noUID);
+
+  result = result.filter(
+    (sub, index) => index === result.findIndex((other) => sub.uid === other.uid)
+  );
+  console.log('%s deduped subs to insert', result.length);
+
   currentSubs = result
     .map((sub) => sub.uid)
     .sort()
