@@ -4,14 +4,8 @@ import { getUserByEmail } from './utils/firebase';
 import { insertObject, updateObject } from './utils/postgres';
 import { getAllActiveSubscriptions, getAllCustomers } from './utils/stripe';
 
-let lastSubs: String;
-let currentSubs: String;
-
-const postgres2 = new Client({
-  connectionString: config.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
-});
-postgres2.connect();
+let lastSubs = '';
+let currentSubs = '';
 
 setInterval(syncSubscribers, 60 * 1000);
 
@@ -30,6 +24,8 @@ async function syncSubscribers() {
   customers.forEach((cust) => {
     emailMap.set(cust.id, cust.email);
   });
+
+  console.log('% subs in Stripe', subs.length);
 
   const uidMap = new Map();
   for (let i = 0; i < subs.length; i += 50) {
@@ -58,11 +54,17 @@ async function syncSubscribers() {
       uid: uidMap.get(emailMap.get(sub.customer)),
     }))
     .filter((sub) => sub.uid);
+  console.log('%s subs with UIDs', result.length);
   currentSubs = result
     .map((sub) => sub.uid)
     .sort()
     .join();
 
+  const postgres2 = new Client({
+    connectionString: config.DATABASE_URL,
+    ssl: { rejectUnauthorized: false },
+  });
+  postgres2.connect();
   // Upsert to DB
   // console.log(result);
   if (currentSubs !== lastSubs) {
@@ -81,11 +83,12 @@ async function syncSubscribers() {
         );
       }
       await postgres2?.query('COMMIT');
+      lastSubs = currentSubs;
     } catch (e) {
       console.error(e);
+      await postgres2?.query('ROLLBACK');
     }
+    await postgres2?.end();
   }
-  lastSubs = currentSubs;
-  console.log('%s subscribers', result.length);
   console.timeEnd('syncSubscribers');
 }
