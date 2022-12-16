@@ -7,6 +7,12 @@ import { getAllActiveSubscriptions, getAllCustomers } from './utils/stripe';
 let lastSubs = '';
 let currentSubs = '';
 
+const postgres2 = new Client({
+  connectionString: config.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
+});
+postgres2.connect();
+
 setInterval(syncSubscribers, 60 * 1000);
 
 async function syncSubscribers() {
@@ -75,11 +81,6 @@ async function syncSubscribers() {
     .sort()
     .join();
 
-  const postgres2 = new Client({
-    connectionString: config.DATABASE_URL,
-    ssl: { rejectUnauthorized: false },
-  });
-  postgres2.connect();
   // Upsert to DB
   // console.log(result);
   if (currentSubs !== lastSubs) {
@@ -103,7 +104,6 @@ async function syncSubscribers() {
       console.error(e);
       await postgres2?.query('ROLLBACK');
     }
-    await postgres2?.end();
   }
   console.timeEnd('syncSubscribers');
 }
