@@ -511,12 +511,13 @@ async function getAllRooms() {
     const selection = [];
     for (let i = 97; i < 123; i++) {
       const letterShard = (i % numShards) + 1;
-      if (letterShard === config.SHARD) {
+      if (letterShard === Number(config.SHARD)) {
         selection.push(String.fromCharCode(i));
       }
     }
     range = `/(${selection.join('|')})%`;
   }
+  console.log(config.SHARD);
   console.log(range);
   return (
     await postgres.query<PersistentRoom>(
