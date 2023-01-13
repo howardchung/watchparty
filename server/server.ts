@@ -351,7 +351,7 @@ app.get('/resolveShard/:roomId', async (req, res) => {
   const roomId = req.params.roomId;
   const letter = roomId.slice(1);
   const charCode = letter.charCodeAt(0);
-  return res.send(config.SHARD ? (charCode % numShards) + 1 : '');
+  return res.send(String(config.SHARD ? (charCode % numShards) + 1 : ''));
 });
 
 app.get('/listRooms', async (req, res) => {
