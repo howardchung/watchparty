@@ -29,6 +29,7 @@ import axios from 'axios';
 import crypto from 'crypto';
 import zlib from 'zlib';
 import util from 'util';
+import ecosystem from './ecosystem.config';
 
 const gzip = util.promisify(zlib.gzip);
 
@@ -241,8 +242,7 @@ app.get('/youtube', async (req, res) => {
 });
 
 app.post('/createRoom', async (req, res) => {
-  const genName = () =>
-    '/' + (config.SHARD ? `${config.SHARD}@` : '') + names.choose();
+  const genName = () => '/' + names.choose();
   let name = genName();
   // Keep retrying until no collision
   while (rooms.has(name)) {
@@ -344,6 +344,14 @@ app.get('/resolveRoom/:vanity', async (req, res) => {
   // console.log(vanity, result.rows);
   // We also use this for checking name availability, so just return empty response if it doesn't exist (http 200)
   return res.json(result?.rows[0]);
+});
+
+app.get('/resolveShard/:roomId', async (req, res) => {
+  const numShards = ecosystem.apps.filter((app) => app.env?.SHARD).length;
+  const roomId = req.params.roomId;
+  const letter = roomId.slice(1);
+  const charCode = letter.charCodeAt(0);
+  return res.send(config.SHARD ? (charCode % numShards) + 1 : '');
 });
 
 app.get('/listRooms', async (req, res) => {
@@ -497,11 +505,22 @@ async function getAllRooms() {
   if (!postgres) {
     return [];
   }
+  let range = '/%';
+  if (config.SHARD) {
+    const numShards = ecosystem.apps.filter((app) => app.env?.SHARD).length;
+    const selection = [];
+    for (let i = 97; i < 123; i++) {
+      const letterShard = (i % numShards) + 1;
+      if (letterShard === config.SHARD) {
+        selection.push(String.fromCharCode(i));
+      }
+    }
+    range = `/(${selection.join('|')})%`;
+  }
+  console.log(range);
   return (
     await postgres.query<PersistentRoom>(
-      `SELECT * from room where "roomId" LIKE '${
-        config.SHARD ? `/${config.SHARD}@%` : '/%'
-      }'`
+      `SELECT * from room where "roomId" SIMILAR TO '${range}'`
     )
   ).rows;
 }
@@ -512,7 +531,9 @@ async function getStats() {
   let currentHttp = 0;
   let currentVBrowser = 0;
   let currentVBrowserLarge = 0;
-  let currentVBrowserWaiting = await redis?.get('currentVBrowserWaiting');
+  let currentVBrowserWaiting = Number(
+    await redis?.get('currentVBrowserWaiting')
+  );
   let currentScreenShare = 0;
   let currentFileShare = 0;
   let currentVideoChat = 0;
@@ -604,19 +625,24 @@ async function getStats() {
   const uptime = Number(new Date()) - launchTime;
   const cpuUsage = os.loadavg();
   const memUsage = process.memoryUsage().rss;
-  const redisUsage = (await redis?.info())
-    ?.split('\n')
-    .find((line) => line.startsWith('used_memory:'))
-    ?.split(':')[1]
-    .trim();
-  const postgresUsage = (
-    await postgres?.query(`SELECT pg_database_size('postgres');`)
-  )?.rows[0].pg_database_size;
-  const numPermaRooms = (
-    await postgres?.query('SELECT count(1) from room WHERE owner IS NOT NULL')
-  )?.rows[0].count;
-  const numSubs = (await postgres?.query('SELECT count(1) from subscriber'))
-    ?.rows[0].count;
+  const redisUsage = Number(
+    (await redis?.info())
+      ?.split('\n')
+      .find((line) => line.startsWith('used_memory:'))
+      ?.split(':')[1]
+      .trim()
+  );
+  const postgresUsage = Number(
+    (await postgres?.query(`SELECT pg_database_size('postgres');`))?.rows[0]
+      .pg_database_size
+  );
+  const numPermaRooms = Number(
+    (await postgres?.query('SELECT count(1) from room WHERE owner IS NOT NULL'))
+      ?.rows[0].count
+  );
+  const numSubs = Number(
+    (await postgres?.query('SELECT count(1) from subscriber'))?.rows[0].count
+  );
   const deleteAccounts = await getRedisCountDay('deleteAccount');
   const chatMessages = await getRedisCountDay('chatMessages');
   const addReactions = await getRedisCountDay('addReaction');

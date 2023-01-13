@@ -1,13 +1,13 @@
 module.exports = {
   apps: [
-    {
-      name: 'server',
-      script: './buildServer/server.js',
-      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
-      env: {
-        PORT: 80,
-      },
-    },
+    // {
+    //   name: 'server',
+    //   script: './buildServer/server.js',
+    //   log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+    //   env: {
+    //     PORT: 80,
+    //   },
+    // },
     {
       name: 'shard1',
       script: './buildServer/server.js',
@@ -17,15 +17,15 @@ module.exports = {
         PORT: 3001,
       },
     },
-    // {
-    //   name: 'shard2',
-    //   script: './buildServer/server.js',
-    //   log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
-    //   env: {
-    //     SHARD: 2,
-    //     PORT: 3002,
-    //   },
-    // },
+    {
+      name: 'shard2',
+      script: './buildServer/server.js',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      env: {
+        SHARD: 2,
+        PORT: 3002,
+      },
+    },
     // {
     //   name: 'shard3',
     //   script: './buildServer/server.js',

@@ -410,11 +410,8 @@ export default class App extends React.Component<AppProps, AppState> {
     } catch (e) {
       console.warn('[ALERT] Could not parse saved passwords');
     }
-    let shard = '';
-    if (/^\d/.test(roomId.slice(1))) {
-      // Rooms assigned to shards start with a number
-      shard = /^\d+/.exec(roomId.slice(1))?.[0] ?? '';
-    }
+    const response = await axios.get(serverPath + '/resolveShard' + roomId);
+    const shard = Number(response.data) ?? '';
     const socket = io(serverPath + roomId, {
       transports: ['websocket'],
       query: {
