@@ -244,8 +244,9 @@ app.get('/youtube', async (req, res) => {
 app.post('/createRoom', async (req, res) => {
   const genName = () => '/' + names.choose();
   let name = genName();
-  // Keep retrying until no collision
-  while (rooms.has(name)) {
+  // Keep retrying until correct name generated
+  // TODO improve name generator so we can request specific names
+  while (config.SHARD && resolveShard(name.slice(1)) !== Number(config.SHARD)) {
     name = genName();
   }
   console.log('createRoom: ', name);
@@ -255,7 +256,11 @@ app.post('/createRoom', async (req, res) => {
       roomId: newRoom.roomId,
       creationTime: new Date(),
     };
-    await insertObject(postgres, 'room', roomObj);
+    try {
+      await insertObject(postgres, 'room', roomObj);
+    } catch (e) {
+      redisCount('createRoomError');
+    }
   }
   const decoded = await validateUserToken(req.body?.uid, req.body?.token);
   newRoom.creator = decoded?.email;
@@ -346,12 +351,16 @@ app.get('/resolveRoom/:vanity', async (req, res) => {
   return res.json(result?.rows[0]);
 });
 
-app.get('/resolveShard/:roomId', async (req, res) => {
+function resolveShard(roomId: string): number {
   const numShards = ecosystem.apps.filter((app) => app.env?.SHARD).length;
-  const roomId = req.params.roomId;
   const letter = roomId[0];
   const charCode = letter.charCodeAt(0);
-  return res.send(String(config.SHARD ? (charCode % numShards) + 1 : ''));
+  return Number((charCode % numShards) + 1);
+}
+
+app.get('/resolveShard/:roomId', async (req, res) => {
+  const shardNum = resolveShard(req.params.roomId);
+  return res.send(String(config.SHARD ? shardNum : ''));
 });
 
 app.get('/listRooms', async (req, res) => {
@@ -644,6 +653,7 @@ async function getStats() {
   const numSubs = Number(
     (await postgres?.query('SELECT count(1) from subscriber'))?.rows[0].count
   );
+  const createRoomErrors = await getRedisCountDay('createRoomError');
   const deleteAccounts = await getRedisCountDay('deleteAccount');
   const chatMessages = await getRedisCountDay('chatMessages');
   const addReactions = await getRedisCountDay('addReaction');
@@ -750,6 +760,7 @@ async function getStats() {
     currentVBrowserUIDCounts,
     numPermaRooms,
     numSubs,
+    createRoomErrors,
     deleteAccounts,
     chatMessages,
     addReactions,
