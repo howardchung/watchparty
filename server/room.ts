@@ -258,6 +258,8 @@ export class Room {
       uid: this.uidMap[p.id],
       ts: this.tsMap[p.id],
       clientId: this.clientIdMap[p.id],
+      // TODO this will not work behind nginx reverse proxy, pass it and read from X-Real-IP instead
+      // socket.handshake.headers["x-real-ip"]
       ip: this.io.of(this.roomId).sockets.get(p.id)?.request?.socket
         ?.remoteAddress,
     }));
