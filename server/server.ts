@@ -349,7 +349,7 @@ app.get('/resolveRoom/:vanity', async (req, res) => {
 app.get('/resolveShard/:roomId', async (req, res) => {
   const numShards = ecosystem.apps.filter((app) => app.env?.SHARD).length;
   const roomId = req.params.roomId;
-  const letter = roomId.slice(1);
+  const letter = roomId[0];
   const charCode = letter.charCodeAt(0);
   return res.send(String(config.SHARD ? (charCode % numShards) + 1 : ''));
 });
