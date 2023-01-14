@@ -10,7 +10,8 @@ ufw enable
 apt install -y nginx
 apt install -y bind9
 
-echo 'events {
+echo 'worker_rlimit_nofile 4096;
+events {
   worker_connections  4096;
 }
 http {
