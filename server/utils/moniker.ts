@@ -1,17 +1,16 @@
 import fs from 'fs';
-import path from 'path';
 import { resolveShard } from './resolveShard';
 
 let adjectives = fs
-  .readFileSync(path.resolve(__dirname, './adjectives.txt'))
+  .readFileSync(process.env.PWD + '/adjectives.txt')
   .toString()
   .split('\n');
 const nouns = fs
-  .readFileSync(path.resolve(__dirname, './nouns.txt'))
+  .readFileSync(process.env.PWD + '/nouns.txt')
   .toString()
   .split('\n');
 const verbs = fs
-  .readFileSync(path.resolve(__dirname, './verbs.txt'))
+  .readFileSync(process.env.PWD + '/verbs.txt')
   .toString()
   .split('\n');
 const randomElement = (array: Array<string>) =>
