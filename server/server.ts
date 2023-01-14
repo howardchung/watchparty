@@ -3,7 +3,6 @@ import fs from 'fs';
 import express from 'express';
 import bodyParser from 'body-parser';
 import compression from 'compression';
-import Moniker from 'moniker';
 import os from 'os';
 import cors from 'cors';
 import Redis from 'ioredis';
@@ -31,6 +30,8 @@ import zlib from 'zlib';
 import util from 'util';
 import ecosystem from './ecosystem.config';
 import { statsAgg } from './utils/statsAgg';
+import { resolveShard } from './utils/resolveShard';
+import { makeName } from './utils/moniker';
 
 const gzip = util.promisify(zlib.gzip);
 
@@ -59,11 +60,6 @@ if (config.DATABASE_URL) {
   postgres.connect();
 }
 
-const names = Moniker.generator([
-  Moniker.adjective,
-  Moniker.noun,
-  Moniker.verb,
-]);
 const launchTime = Number(new Date());
 const rooms = new Map<string, Room>();
 init();
@@ -252,13 +248,8 @@ app.get('/youtube', async (req, res) => {
 });
 
 app.post('/createRoom', async (req, res) => {
-  const genName = () => '/' + names.choose();
+  const genName = () => '/' + makeName(config.SHARD);
   let name = genName();
-  // Keep retrying until correct name generated
-  // TODO improve name generator so we can request specific names
-  while (config.SHARD && resolveShard(name.slice(1)) !== Number(config.SHARD)) {
-    name = genName();
-  }
   console.log('createRoom: ', name);
   const newRoom = new Room(io, name);
   if (postgres) {
@@ -360,13 +351,6 @@ app.get('/resolveRoom/:vanity', async (req, res) => {
   // We also use this for checking name availability, so just return empty response if it doesn't exist (http 200)
   return res.json(result?.rows[0]);
 });
-
-function resolveShard(roomId: string): number {
-  const numShards = ecosystem.apps.filter((app) => app.env?.SHARD).length;
-  const letter = roomId[0];
-  const charCode = letter.charCodeAt(0);
-  return Number((charCode % numShards) + 1);
-}
 
 app.get('/resolveShard/:roomId', async (req, res) => {
   const shardNum = resolveShard(req.params.roomId);
