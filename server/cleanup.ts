@@ -7,6 +7,7 @@ const postgres = new Client({
 });
 postgres.connect();
 
+cleanupPostgres();
 setInterval(cleanupPostgres, 5 * 60 * 1000);
 
 async function cleanupPostgres() {
@@ -14,8 +15,9 @@ async function cleanupPostgres() {
     return;
   }
   console.time('[CLEANUP]');
-  await postgres?.query(
+  const result = await postgres?.query(
     `DELETE FROM room WHERE owner IS NULL AND "lastUpdateTime" < NOW() - INTERVAL '1 day'`
   );
+  console.log(result.command, result.rowCount);
   console.timeEnd('[CLEANUP]');
 }
