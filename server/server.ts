@@ -30,6 +30,7 @@ import crypto from 'crypto';
 import zlib from 'zlib';
 import util from 'util';
 import ecosystem from './ecosystem.config';
+import { statsAgg } from './utils/statsAgg';
 
 const gzip = util.promisify(zlib.gzip);
 
@@ -203,6 +204,15 @@ app.get('/searchSubtitles', async (req, res) => {
 app.get('/stats', async (req, res) => {
   if (req.query.key && req.query.key === config.STATS_KEY) {
     const stats = await getStats();
+    res.json(stats);
+  } else {
+    return res.status(403).json({ error: 'Access Denied' });
+  }
+});
+
+app.get('/statsAgg', async (req, res) => {
+  if (req.query.key && req.query.key === config.STATS_KEY) {
+    const stats = await statsAgg();
     res.json(stats);
   } else {
     return res.status(403).json({ error: 'Access Denied' });
@@ -536,14 +546,12 @@ async function getAllRooms() {
 }
 
 async function getStats() {
+  // Per-shard data is prefixed with "current"
   const now = Number(new Date());
   let currentUsers = 0;
   let currentHttp = 0;
   let currentVBrowser = 0;
   let currentVBrowserLarge = 0;
-  let currentVBrowserWaiting = Number(
-    await redis?.get('currentVBrowserWaiting')
-  );
   let currentScreenShare = 0;
   let currentFileShare = 0;
   let currentVideoChat = 0;
@@ -632,9 +640,13 @@ async function getStats() {
     })
     .filter(Boolean);
 
-  const uptime = Number(new Date()) - launchTime;
+  // Per-shard data that we want to see in an array
+  const currentUptime = [Number(new Date()) - launchTime];
+  const currentMemUsage = [process.memoryUsage().rss];
+
+  // Singleton stats below (same for all shards so don't combine)
+  let vBrowserWaiting = Number(await redis?.get('currentVBrowserWaiting'));
   const cpuUsage = os.loadavg();
-  const memUsage = process.memoryUsage().rss;
   const redisUsage = Number(
     (await redis?.info())
       ?.split('\n')
@@ -742,22 +754,22 @@ async function getStats() {
   }
 
   return {
-    uptime,
-    cpuUsage,
-    memUsage,
-    redisUsage,
-    postgresUsage,
     currentRoomCount,
     currentRoomSizeCounts,
     currentUsers,
     currentVBrowser,
     currentVBrowserLarge,
-    currentVBrowserWaiting,
     currentHttp,
     currentScreenShare,
     currentFileShare,
     currentVideoChat,
     currentVBrowserUIDCounts,
+    currentUptime,
+    currentMemUsage,
+    cpuUsage,
+    redisUsage,
+    postgresUsage,
+    vBrowserWaiting,
     numPermaRooms,
     numSubs,
     createRoomErrors,

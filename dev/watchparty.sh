@@ -10,7 +10,9 @@ ufw enable
 apt install -y nginx
 apt install -y bind9
 
-echo 'events {}
+echo 'events {
+  worker_connections  4096;
+}
 http {
 
   upstream rr {
@@ -49,7 +51,6 @@ http {
       proxy_http_version 1.1;
       proxy_set_header Upgrade $http_upgrade;
       proxy_set_header Connection "upgrade";
-      proxy_set_header Host $host;
     }
   }
 }' > /etc/nginx/nginx.conf
