@@ -1,7 +1,6 @@
 import config from './config';
 import Redis from 'ioredis';
-import axios from 'axios';
-import ecosystem from './ecosystem.config';
+import { statsAgg } from './utils/statsAgg';
 
 let redis: Redis.Redis | undefined = undefined;
 if (config.REDIS_URL) {
@@ -14,25 +13,8 @@ setInterval(statsTimeSeries, 5 * 60 * 1000);
 async function statsTimeSeries() {
   if (redis) {
     console.time('timeSeries');
-    const ports =
-      process.env.NODE_ENV === 'development'
-        ? [8080]
-        : ecosystem.apps.map((app) => app.env?.PORT).filter(Boolean);
-
-    const shardReqs = ports.map((port) =>
-      axios({
-        url: `http://localhost:${port}/stats?key=${config.STATS_KEY}`,
-        validateStatus: () => true,
-      })
-    );
-
-    let stats: any = {};
     try {
-      const shardData = await Promise.all(shardReqs);
-      shardData.forEach((shard) => {
-        const data = shard.data;
-        stats = combine(stats, data);
-      });
+      const stats = await statsAgg();
       const datapoint: any = {
         time: new Date(),
         currentUsers: stats.currentUsers,
@@ -70,24 +52,4 @@ async function statsTimeSeries() {
     }
     console.timeEnd('timeSeries');
   }
-}
-
-function combine(a: any, b: any) {
-  const result = { ...a };
-  Object.keys(b).forEach((key) => {
-    if (key.startsWith('current')) {
-      if (typeof b[key] === 'number') {
-        result[key] = (result[key] || 0) + b[key];
-      } else if (typeof b[key] === 'string') {
-        result[key] = (result[key] || '') + b[key];
-      } else if (Array.isArray(b[key])) {
-        result[key] = [...(result[key] || []), ...b[key]];
-      } else if (typeof b[key] === 'object') {
-        result[key] = combine(result[key] || {}, b[key]);
-      }
-    } else {
-      result[key] = a[key] || b[key];
-    }
-  });
-  return result;
 }
