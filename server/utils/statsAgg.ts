@@ -24,10 +24,10 @@ export async function statsAgg() {
   return stats;
 }
 
-function combine(a: any, b: any) {
+function combine(a: any, b: any, forceCombine: boolean) {
   const result = { ...a };
   Object.keys(b).forEach((key) => {
-    if (key.startsWith('current')) {
+    if (key.startsWith('current') || forceCombine) {
       if (typeof b[key] === 'number') {
         result[key] = (result[key] || 0) + b[key];
       } else if (typeof b[key] === 'string') {
@@ -35,7 +35,7 @@ function combine(a: any, b: any) {
       } else if (Array.isArray(b[key])) {
         result[key] = [...(result[key] || []), ...b[key]];
       } else if (typeof b[key] === 'object') {
-        result[key] = combine(result[key] || {}, b[key]);
+        result[key] = combine(result[key] || {}, b[key], true);
       }
     } else {
       result[key] = a[key] || b[key];
