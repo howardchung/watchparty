@@ -253,9 +253,11 @@ app.post('/createRoom', async (req, res) => {
   console.log('createRoom: ', name);
   const newRoom = new Room(io, name);
   if (postgres) {
+    const now = new Date();
     const roomObj: any = {
       roomId: newRoom.roomId,
-      creationTime: new Date(),
+      lastUpdateTime: now,
+      creationTime: now,
     };
     try {
       await insertObject(postgres, 'room', roomObj);
