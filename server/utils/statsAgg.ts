@@ -24,7 +24,7 @@ export async function statsAgg() {
   return stats;
 }
 
-function combine(a: any, b: any, forceCombine: boolean) {
+function combine(a: any, b: any, forceCombine = false) {
   const result = { ...a };
   Object.keys(b).forEach((key) => {
     if (key.startsWith('current') || forceCombine) {
