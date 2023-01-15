@@ -16,7 +16,7 @@ async function cleanupPostgres() {
   }
   console.time('[CLEANUP]');
   const result = await postgres?.query(
-    `DELETE FROM room WHERE owner IS NULL AND "lastUpdateTime" < NOW() - INTERVAL '1 day'`
+    `DELETE FROM room WHERE owner IS NULL AND ("lastUpdateTime" < NOW() - INTERVAL '1 day' OR "lastUpdateTime" IS NULL)`
   );
   console.log(result.command, result.rowCount);
   console.timeEnd('[CLEANUP]');
