@@ -58,7 +58,7 @@ For server verification of accounts you'll also need `FIREBASE_ADMIN_SDK_CONFIG`
 
 ### Virtual Browser Setup
 
-This project supports creating virtual browsers using several cloud providers, or by spawning Docker containers on the development server. For local development, the Docker on local approach is preferred.
+This project supports creating virtual browsers (using https://github.com/m1k1o/neko) either on a cloud provider, or by spawning Docker containers on the development server. For local development, the Docker on local approach is preferred.
 
 - Install Docker: `curl -fsSL https://get.docker.com | sh`
 - Make sure you have an SSH key pair set up on the server (`id_rsa` in `~/.ssh` directory)
