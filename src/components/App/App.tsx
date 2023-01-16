@@ -428,13 +428,13 @@ export default class App extends React.Component<AppProps, AppState> {
       this.updateName(null, { value: userName || generateName() });
       this.loadSignInData();
     });
-    socket.on('error', (err: any) => {
+    socket.on('connect_error', (err: any) => {
       console.error(err);
-      if (err === 'Invalid namespace') {
-        this.setState({ error: "There's no room with this name." });
-      } else if (err === 'not authorized') {
+      if (err.message === 'Invalid namespace') {
+        this.setState({ error: "Couldn't load this room." });
+      } else if (err.message === 'not authorized') {
         this.setState({ isErrorAuth: true });
-      } else if (err === 'room full') {
+      } else if (err.message === 'room full') {
         this.setState({ error: 'This room is full.' });
       } else {
         this.setState({ error: 'An error occurred.' });
