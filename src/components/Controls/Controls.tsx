@@ -13,12 +13,14 @@ interface ControlsProps {
   jumpToLeader: Function;
   paused: boolean;
   muted: boolean;
+  volume: number;
   subtitled: boolean;
   currentTime: number;
   setVolume: Function;
   disabled?: boolean;
   leaderTime?: number;
   isPauseDisabled?: boolean;
+  refreshControls: Function;
 }
 
 export class Controls extends React.Component<ControlsProps> {
@@ -26,8 +28,6 @@ export class Controls extends React.Component<ControlsProps> {
     showTimestamp: false,
     currTimestamp: 0,
     posTimestamp: 0,
-    volume: 1,
-    muted: this.props.muted,
   };
 
   onMouseOver = () => {
@@ -68,8 +68,10 @@ export class Controls extends React.Component<ControlsProps> {
       disabled,
       subtitled,
       paused,
+      muted,
+      volume,
+      refreshControls,
     } = this.props;
-    const { muted, volume } = this.state;
     const isBehind = leaderTime && leaderTime - currentTime > 5;
     return (
       <div className="controls">
@@ -164,7 +166,7 @@ export class Controls extends React.Component<ControlsProps> {
           size="large"
           onClick={() => {
             toggleMute();
-            this.setState({ muted: !this.state.muted });
+            refreshControls();
           }}
           className="control action"
           name={muted ? 'volume off' : 'volume up'}
@@ -173,14 +175,15 @@ export class Controls extends React.Component<ControlsProps> {
         <div style={{ width: '100px', marginRight: '10px' }}>
           <Slider
             value={volume}
-            color="blue"
+            color={'blue'}
+            disabled={muted}
             settings={{
               min: 0,
               max: 1,
               step: 0.01,
               onChange: (value: number) => {
-                this.setState({ volume: value });
                 this.props.setVolume(value);
+                refreshControls();
               },
             }}
           />
