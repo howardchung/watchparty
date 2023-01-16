@@ -768,6 +768,8 @@ export default class App extends React.Component<AppProps, AppState> {
     this.screenHostPC = {};
     if (this.state.isScreenSharing) {
       this.socket.emit('CMD:leaveScreenShare');
+      // We don't actually need to unmute if it's a fileshare but this is fine
+      this.setMute(false);
     }
     this.setState({ isScreenSharing: false, isScreenSharingFile: false });
   };
@@ -1018,10 +1020,10 @@ export default class App extends React.Component<AppProps, AppState> {
             hls.attachMedia(leftVideo);
           }
           try {
-            if (this.state.isAutoPlayable) {
-              this.setMute(false);
-            } else {
+            if (!this.state.isAutoPlayable || this.state.isScreenSharing) {
               this.setMute(true);
+            } else {
+              this.setMute(false);
             }
             await leftVideo?.play();
           } catch (e: any) {
@@ -1201,7 +1203,7 @@ export default class App extends React.Component<AppProps, AppState> {
     }
   };
 
-  getVolume = () => {
+  getVolume = (): number => {
     if (this.isVideo()) {
       const leftVideo = document.getElementById(
         'leftVideo'
@@ -1212,6 +1214,7 @@ export default class App extends React.Component<AppProps, AppState> {
       const volume = this.watchPartyYTPlayer?.getVolume();
       return volume / 100;
     }
+    return 1;
   };
 
   loadSubtitles = async () => {
@@ -1419,12 +1422,16 @@ export default class App extends React.Component<AppProps, AppState> {
         jumpToLeader={this.jumpToLeader}
         paused={this.state.currentMediaPaused}
         muted={this.isMuted()}
+        volume={this.getVolume()}
         subtitled={this.isSubtitled()}
         currentTime={this.getCurrentTime()}
         duration={this.getDuration()}
         disabled={!this.haveLock()}
         leaderTime={this.isHttp() ? this.getLeaderTime() : undefined}
         isPauseDisabled={this.isPauseDisabled()}
+        refreshControls={() =>
+          this.setState({ controlsTimestamp: Number(new Date()) })
+        }
       />
     );
     const subscribeButton = (
