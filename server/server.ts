@@ -93,8 +93,8 @@ async function init() {
   if (process.env.NODE_ENV === 'development') {
     try {
       require('./vmWorker');
-      require('./syncSubs');
-      require('./timeSeries');
+      // require('./syncSubs');
+      // require('./timeSeries');
     } catch (e) {
       console.error(e);
     }
