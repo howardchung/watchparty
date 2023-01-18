@@ -54,6 +54,9 @@ import { ScreenShareModal } from '../Modal/ScreenShareModal';
 import { FileShareModal } from '../Modal/FileShareModal';
 import firebase from 'firebase/compat/app';
 import { SubtitleModal } from '../Modal/SubtitleModal';
+import videojs from 'video.js';
+
+import 'video.js/dist/video-js.min.css';
 
 declare global {
   interface Window {
@@ -143,6 +146,7 @@ interface AppState {
   roomDescription: string | undefined;
   roomTitleColor: string | undefined;
   mediaPath: string | undefined;
+  player: videojs.Player | undefined;
 }
 
 export default class App extends React.Component<AppProps, AppState> {
@@ -206,10 +210,11 @@ export default class App extends React.Component<AppProps, AppState> {
     roomDescription: '',
     roomTitleColor: '',
     mediaPath: undefined,
+    player: undefined,
   };
   socket: Socket = null as any;
-  watchPartyYTPlayer: any = null;
-  ytDebounce = true;
+  // watchPartyYTPlayer: any = null;
+  // ytDebounce = true;
   screenShareStream?: MediaStream;
   screenHostPC: PCDict = {};
   screenSharePC?: RTCPeerConnection;
@@ -230,6 +235,10 @@ export default class App extends React.Component<AppProps, AppState> {
     const canAutoplay = await testAutoplay();
     this.setState({ isAutoPlayable: canAutoplay });
     this.loadSettings();
+    this.state.player = videojs('leftVideo', {
+      autoplay: 'any',
+      controls: true,
+    });
     // this.loadYouTube();
     this.init();
   }
@@ -466,7 +475,7 @@ export default class App extends React.Component<AppProps, AppState> {
     });
     socket.on('REC:subtitle', (data: string) => {
       this.setState({ currentSubtitle: data }, () => {
-        this.loadSubtitles();
+        // this.loadSubtitles();
       });
     });
     socket.on('REC:changeController', (data: string) => {
@@ -519,8 +528,8 @@ export default class App extends React.Component<AppProps, AppState> {
           const leftVideo = document.getElementById(
             'leftVideo'
           ) as HTMLMediaElement;
-          leftVideo?.pause();
-          this.watchPartyYTPlayer?.stopVideo();
+          // leftVideo?.pause();
+          // this.watchPartyYTPlayer?.stopVideo();
 
           // if (this.isYouTube() && !this.watchPartyYTPlayer) {
           //   console.log(
@@ -538,7 +547,7 @@ export default class App extends React.Component<AppProps, AppState> {
               this.doPlay();
             }
             if (data.subtitle) {
-              this.loadSubtitles();
+              // this.loadSubtitles();
             }
             // else if (this.isHttp() && !this.isYouTube()) {
             //   const src = data.video;
@@ -550,13 +559,14 @@ export default class App extends React.Component<AppProps, AppState> {
             //   });
             // }
             // One time, when we're ready to play
-            leftVideo?.addEventListener(
+            this.state.player?.on(
+              this.state.player,
               'canplay',
               () => {
                 this.setLoadingFalse();
                 this.jumpToLeader();
-              },
-              { once: true }
+              }
+              // { once: true }
             );
 
             // Progress updater
@@ -711,9 +721,9 @@ export default class App extends React.Component<AppProps, AppState> {
     const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
     leftVideo.srcObject = null;
     leftVideo.src = URL.createObjectURL(file);
-    leftVideo.play();
+    leftVideo?.play();
     //@ts-ignore
-    const stream = leftVideo.captureStream ? leftVideo.captureStream() : {};
+    const stream = leftVideo?.captureStream ? leftVideo.captureStream() : {};
     // Can render video to a canvas to resize it, reduce size
     stream.onaddtrack = () => {
       console.log(stream, stream.getVideoTracks(), stream.getAudioTracks());
@@ -975,18 +985,19 @@ export default class App extends React.Component<AppProps, AppState> {
       // No-op as we'll set video when WebRTC completes
       return;
     }
-    if (this.isVideo()) {
-      const leftVideo = document.getElementById(
-        'leftVideo'
-      ) as HTMLMediaElement;
-      if (leftVideo) {
-        leftVideo.srcObject = null;
-        leftVideo.src = src;
-        leftVideo.currentTime = time;
-        // Clear subtitles
-        leftVideo.innerHTML = '';
-      }
-    }
+    this.state.player!.src([{ src: src, type: 'video/mp4' }]);
+    // if (this.isVideo()) {
+    //   const leftVideo = document.getElementById(
+    //     'leftVideo'
+    //   ) as HTMLMediaElement;
+    //   if (leftVideo) {
+    //     leftVideo.srcObject = null;
+    //     leftVideo.src = src;
+    //     leftVideo.currentTime = time;
+    //     // Clear subtitles
+    //     leftVideo.innerHTML = '';
+    //   }
+    // }
     // if (this.isYouTube()) {
     //   let url = new window.URL(src);
     //   // Standard link https://www.youtube.com/watch?v=ID
@@ -1046,7 +1057,7 @@ export default class App extends React.Component<AppProps, AppState> {
         const leftVideo = document.getElementById(
           'leftVideo'
         ) as HTMLMediaElement;
-        leftVideo.pause();
+        leftVideo?.pause();
       }
       // if (this.isYouTube()) {
       //   console.log('pause');
@@ -1978,21 +1989,25 @@ export default class App extends React.Component<AppProps, AppState> {
                           }
                         />
                       ) : (
-                        <video
-                          style={{
-                            display:
-                              (this.isVideo() && !this.state.loading) ||
-                              this.state.fullScreen
-                                ? 'block'
-                                : 'none',
-                            width: '100%',
-                            maxHeight:
-                              'calc(100vh - 62px - 36px - 36px - 8px - 41px - 16px)',
-                          }}
-                          id="leftVideo"
-                          onEnded={this.onVideoEnded}
-                          playsInline
-                        ></video>
+                        <div data-vjs-player>
+                          <video
+                            // style={{
+                            //   display:
+                            //     (this.isVideo() && !this.state.loading) ||
+                            //     this.state.fullScreen
+                            //       ? 'block'
+                            //       : 'none',
+                            //   width: '100%',
+                            //   maxHeight:
+                            //     'calc(100vh - 62px - 36px - 36px - 8px - 41px - 16px)',
+                            // }}
+                            className="video-js"
+                            style={{ width: '100%' }}
+                            id="leftVideo"
+                            onEnded={this.onVideoEnded}
+                            playsInline
+                          ></video>
+                        </div>
                       )}
                     </div>
                   </div>
