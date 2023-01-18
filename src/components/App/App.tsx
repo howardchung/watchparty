@@ -54,14 +54,18 @@ import { ScreenShareModal } from '../Modal/ScreenShareModal';
 import { FileShareModal } from '../Modal/FileShareModal';
 import firebase from 'firebase/compat/app';
 import { SubtitleModal } from '../Modal/SubtitleModal';
+import videojs from 'video.js';
+import 'videojs-youtube/dist/Youtube.js';
+
+import 'video.js/dist/video-js.min.css';
 
 declare global {
   interface Window {
-    onYouTubeIframeAPIReady: any;
-    YT: any;
+    // onYouTubeIframeAPIReady: any;
+    // YT: any;
     FB: any;
     fbAsyncInit: Function;
-    Hls: any;
+    // Hls: any;
     watchparty: {
       ourStream: MediaStream | undefined;
       videoRefs: HTMLVideoElementDict;
@@ -103,12 +107,12 @@ interface AppState {
   scrollTimestamp: number;
   unreadCount: number;
   fullScreen: boolean;
-  controlsTimestamp: number;
+  // controlsTimestamp: number;
   watchOptions: SearchResult[];
   isScreenSharing: boolean;
   isScreenSharingFile: boolean;
   isVBrowser: boolean;
-  isYouTubeReady: boolean;
+  // isYouTubeReady: boolean;
   isAutoPlayable: boolean;
   downloaded: number;
   total: number;
@@ -143,6 +147,7 @@ interface AppState {
   roomDescription: string | undefined;
   roomTitleColor: string | undefined;
   mediaPath: string | undefined;
+  player: videojs.Player | undefined;
 }
 
 export default class App extends React.Component<AppProps, AppState> {
@@ -164,12 +169,12 @@ export default class App extends React.Component<AppProps, AppState> {
     scrollTimestamp: 0,
     unreadCount: 0,
     fullScreen: false,
-    controlsTimestamp: 0,
+    // controlsTimestamp: 0,
     watchOptions: [],
     isScreenSharing: false,
     isScreenSharingFile: false,
     isVBrowser: false,
-    isYouTubeReady: false,
+    // isYouTubeReady: false,
     isAutoPlayable: true,
     downloaded: 0,
     total: 0,
@@ -206,10 +211,11 @@ export default class App extends React.Component<AppProps, AppState> {
     roomDescription: '',
     roomTitleColor: '',
     mediaPath: undefined,
+    player: undefined,
   };
   socket: Socket = null as any;
-  watchPartyYTPlayer: any = null;
-  ytDebounce = true;
+  // watchPartyYTPlayer: any = null;
+  // ytDebounce = true;
   screenShareStream?: MediaStream;
   screenHostPC: PCDict = {};
   screenSharePC?: RTCPeerConnection;
@@ -230,7 +236,12 @@ export default class App extends React.Component<AppProps, AppState> {
     const canAutoplay = await testAutoplay();
     this.setState({ isAutoPlayable: canAutoplay });
     this.loadSettings();
-    this.loadYouTube();
+    this.state.player = videojs('leftVideo', {
+      autoplay: 'any',
+      controls: true,
+      techOrder: ['html5', 'youtube'],
+    });
+    // this.loadYouTube();
     this.init();
   }
 
@@ -290,59 +301,59 @@ export default class App extends React.Component<AppProps, AppState> {
     }
   };
 
-  loadYouTube = () => {
-    // This code loads the IFrame Player API code asynchronously.
-    const tag = document.createElement('script');
-    tag.src = 'https://www.youtube.com/iframe_api';
-    document.body.append(tag);
-    window.onYouTubeIframeAPIReady = () => {
-      // Note: this fails silently if the element is not available
-      const ytPlayer = new window.YT.Player('leftYt', {
-        events: {
-          onReady: () => {
-            this.watchPartyYTPlayer = ytPlayer;
-            this.setState({ isYouTubeReady: true, loading: false });
-            // We might have failed to play YT originally, ask for the current video again
-            if (this.isYouTube()) {
-              this.socket.emit('CMD:askHost');
-            }
-          },
-          onStateChange: (e: any) => {
-            if (
-              getMediaType(this.state.currentMedia) === 'youtube' &&
-              e.data === window.YT?.PlayerState?.CUED
-            ) {
-              this.setState({ loading: false });
-            }
-            if (
-              getMediaType(this.state.currentMedia) === 'youtube' &&
-              e.data === window.YT?.PlayerState?.ENDED
-            ) {
-              this.onVideoEnded();
-            }
-            // console.log(this.ytDebounce, e.data, this.watchPartyYTPlayer?.getVideoUrl());
-            if (
-              this.ytDebounce &&
-              ((e.data === window.YT?.PlayerState?.PLAYING &&
-                this.state.currentMediaPaused) ||
-                (e.data === window.YT?.PlayerState?.PAUSED &&
-                  !this.state.currentMediaPaused))
-            ) {
-              this.ytDebounce = false;
-              if (e.data === window.YT?.PlayerState?.PLAYING) {
-                this.socket.emit('CMD:play');
-                this.doPlay();
-              } else {
-                this.socket.emit('CMD:pause');
-                this.doPause();
-              }
-              window.setTimeout(() => (this.ytDebounce = true), 500);
-            }
-          },
-        },
-      });
-    };
-  };
+  // loadYouTube = () => {
+  //   // This code loads the IFrame Player API code asynchronously.
+  //   const tag = document.createElement('script');
+  //   tag.src = 'https://www.youtube.com/iframe_api';
+  //   document.body.append(tag);
+  //   window.onYouTubeIframeAPIReady = () => {
+  //     // Note: this fails silently if the element is not available
+  //     const ytPlayer = new window.YT.Player('leftYt', {
+  //       events: {
+  //         onReady: () => {
+  //           this.watchPartyYTPlayer = ytPlayer;
+  //           this.setState({ isYouTubeReady: true, loading: false });
+  //           // We might have failed to play YT originally, ask for the current video again
+  //           if (this.isYouTube()) {
+  //             this.socket.emit('CMD:askHost');
+  //           }
+  //         },
+  //         onStateChange: (e: any) => {
+  //           if (
+  //             getMediaType(this.state.currentMedia) === 'youtube' &&
+  //             e.data === window.YT?.PlayerState?.CUED
+  //           ) {
+  //             this.setState({ loading: false });
+  //           }
+  //           if (
+  //             getMediaType(this.state.currentMedia) === 'youtube' &&
+  //             e.data === window.YT?.PlayerState?.ENDED
+  //           ) {
+  //             this.onVideoEnded();
+  //           }
+  //           // console.log(this.ytDebounce, e.data, this.watchPartyYTPlayer?.getVideoUrl());
+  //           if (
+  //             this.ytDebounce &&
+  //             ((e.data === window.YT?.PlayerState?.PLAYING &&
+  //               this.state.currentMediaPaused) ||
+  //               (e.data === window.YT?.PlayerState?.PAUSED &&
+  //                 !this.state.currentMediaPaused))
+  //           ) {
+  //             this.ytDebounce = false;
+  //             if (e.data === window.YT?.PlayerState?.PLAYING) {
+  //               this.socket.emit('CMD:play');
+  //               this.doPlay();
+  //             } else {
+  //               this.socket.emit('CMD:pause');
+  //               this.doPause();
+  //             }
+  //             window.setTimeout(() => (this.ytDebounce = true), 500);
+  //           }
+  //         },
+  //       },
+  //     });
+  //   };
+  // };
 
   setOwner = (owner: string) => {
     this.setState({ owner });
@@ -466,7 +477,7 @@ export default class App extends React.Component<AppProps, AppState> {
     });
     socket.on('REC:subtitle', (data: string) => {
       this.setState({ currentSubtitle: data }, () => {
-        this.loadSubtitles();
+        // this.loadSubtitles();
       });
     });
     socket.on('REC:changeController', (data: string) => {
@@ -519,14 +530,15 @@ export default class App extends React.Component<AppProps, AppState> {
           const leftVideo = document.getElementById(
             'leftVideo'
           ) as HTMLMediaElement;
-          leftVideo?.pause();
-          this.watchPartyYTPlayer?.stopVideo();
+          // leftVideo?.pause();
+          // this.watchPartyYTPlayer?.stopVideo();
 
-          if (this.isYouTube() && !this.watchPartyYTPlayer) {
-            console.log(
-              'YT player not ready, onReady callback will retry when it is'
-            );
-          } else if (this.isVBrowser()) {
+          // if (this.isYouTube() && !this.watchPartyYTPlayer) {
+          //   console.log(
+          //     'YT player not ready, onReady callback will retry when it is'
+          //   );
+          // } else
+          if (this.isVBrowser()) {
             console.log(
               'not playing video as this is a vbrowser:// placeholder'
             );
@@ -537,7 +549,7 @@ export default class App extends React.Component<AppProps, AppState> {
               this.doPlay();
             }
             if (data.subtitle) {
-              this.loadSubtitles();
+              // this.loadSubtitles();
             }
             // else if (this.isHttp() && !this.isYouTube()) {
             //   const src = data.video;
@@ -549,14 +561,19 @@ export default class App extends React.Component<AppProps, AppState> {
             //   });
             // }
             // One time, when we're ready to play
-            leftVideo?.addEventListener(
+            // TODO this event does not fire when using videojs-youtube
+            // TODO we only want to fire this event once
+            this.state.player?.on(
+              this.state.player,
               'canplay',
               () => {
                 this.setLoadingFalse();
                 this.jumpToLeader();
-              },
-              { once: true }
+              }
+              // { once: true }
             );
+            this.setLoadingFalse();
+            this.jumpToLeader();
 
             // Progress updater
             window.clearInterval(this.progressUpdater);
@@ -710,9 +727,9 @@ export default class App extends React.Component<AppProps, AppState> {
     const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
     leftVideo.srcObject = null;
     leftVideo.src = URL.createObjectURL(file);
-    leftVideo.play();
+    leftVideo?.play();
     //@ts-ignore
-    const stream = leftVideo.captureStream ? leftVideo.captureStream() : {};
+    const stream = leftVideo?.captureStream ? leftVideo.captureStream() : {};
     // Can render video to a canvas to resize it, reduce size
     stream.onaddtrack = () => {
       console.log(stream, stream.getVideoTracks(), stream.getAudioTracks());
@@ -873,9 +890,9 @@ export default class App extends React.Component<AppProps, AppState> {
     this.socket.emit('signalSS', { to, msg: data, sharer });
   };
 
-  isYouTube = () => {
-    return getMediaType(this.state.currentMedia) === 'youtube';
-  };
+  // isYouTube = () => {
+  //   return getMediaType(this.state.currentMedia) === 'youtube';
+  // };
 
   isVideo = () => {
     return getMediaType(this.state.currentMedia) === 'video';
@@ -906,15 +923,11 @@ export default class App extends React.Component<AppProps, AppState> {
   };
 
   getCurrentTime = () => {
-    if (this.isVideo()) {
-      const leftVideo = document.getElementById(
-        'leftVideo'
-      ) as HTMLMediaElement;
-      return leftVideo?.currentTime;
-    }
-    if (this.isYouTube()) {
-      return this.watchPartyYTPlayer?.getCurrentTime();
-    }
+    const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
+    return leftVideo?.currentTime;
+    // if (this.isYouTube()) {
+    //   return this.watchPartyYTPlayer?.getCurrentTime();
+    // }
   };
 
   getDuration = () => {
@@ -924,9 +937,9 @@ export default class App extends React.Component<AppProps, AppState> {
       ) as HTMLMediaElement;
       return leftVideo.duration;
     }
-    if (this.isYouTube()) {
-      return this.watchPartyYTPlayer?.getDuration();
-    }
+    // if (this.isYouTube()) {
+    //   return this.watchPartyYTPlayer?.getDuration();
+    // }
     return 0;
   };
 
@@ -941,9 +954,9 @@ export default class App extends React.Component<AppProps, AppState> {
       ) as HTMLMediaElement;
       return leftVideo?.muted;
     }
-    if (this.isYouTube()) {
-      return this.watchPartyYTPlayer?.isMuted();
-    }
+    // if (this.isYouTube()) {
+    //   return this.watchPartyYTPlayer?.isMuted();
+    // }
     return false;
   };
 
@@ -951,15 +964,15 @@ export default class App extends React.Component<AppProps, AppState> {
     if (this.isVideo()) {
       return Boolean(this.state.currentSubtitle);
     }
-    if (this.isYouTube()) {
-      try {
-        const current = this.watchPartyYTPlayer?.getOption('captions', 'track');
-        return Boolean(current && current.languageCode);
-      } catch (e) {
-        console.warn(e);
-        return false;
-      }
-    }
+    // if (this.isYouTube()) {
+    //   try {
+    //     const current = this.watchPartyYTPlayer?.getOption('captions', 'track');
+    //     return Boolean(current && current.languageCode);
+    //   } catch (e) {
+    //     console.warn(e);
+    //     return false;
+    //   }
+    // }
     return false;
   };
 
@@ -978,26 +991,29 @@ export default class App extends React.Component<AppProps, AppState> {
       // No-op as we'll set video when WebRTC completes
       return;
     }
-    if (this.isVideo()) {
-      const leftVideo = document.getElementById(
-        'leftVideo'
-      ) as HTMLMediaElement;
-      if (leftVideo) {
-        leftVideo.srcObject = null;
-        leftVideo.src = src;
-        leftVideo.currentTime = time;
-        // Clear subtitles
-        leftVideo.innerHTML = '';
-      }
-    }
-    if (this.isYouTube()) {
-      let url = new window.URL(src);
-      // Standard link https://www.youtube.com/watch?v=ID
-      let videoId = querystring.parse(url.search.substring(1))['v'];
-      // Link shortener https://youtu.be/ID
-      let altVideoId = src.split('/').slice(-1)[0];
-      this.watchPartyYTPlayer?.cueVideoById(videoId || altVideoId, time);
-    }
+    // const type = 'video/mp4';
+    const type = 'video/youtube';
+    this.state.player!.src([{ src: src, type: type }]);
+    // if (this.isVideo()) {
+    //   const leftVideo = document.getElementById(
+    //     'leftVideo'
+    //   ) as HTMLMediaElement;
+    //   if (leftVideo) {
+    //     leftVideo.srcObject = null;
+    //     leftVideo.src = src;
+    //     leftVideo.currentTime = time;
+    //     // Clear subtitles
+    //     leftVideo.innerHTML = '';
+    //   }
+    // }
+    // if (this.isYouTube()) {
+    //   let url = new window.URL(src);
+    //   // Standard link https://www.youtube.com/watch?v=ID
+    //   let videoId = querystring.parse(url.search.substring(1))['v'];
+    //   // Link shortener https://youtu.be/ID
+    //   let altVideoId = src.split('/').slice(-1)[0];
+    //   this.watchPartyYTPlayer?.cueVideoById(videoId || altVideoId, time);
+    // }
   };
 
   doPlay = async () => {
@@ -1010,15 +1026,15 @@ export default class App extends React.Component<AppProps, AppState> {
             'leftVideo'
           ) as HTMLMediaElement;
           //check for HLS
-          let lv = leftVideo?.src.split('.');
-          if (
-            lv[lv.length - 1] === 'm3u8' &&
-            !leftVideo?.canPlayType('application/vnd.apple.mpegurl')
-          ) {
-            let hls = new window.Hls();
-            hls.loadSource(leftVideo.src);
-            hls.attachMedia(leftVideo);
-          }
+          // let lv = leftVideo?.src.split('.');
+          // if (
+          //   lv[lv.length - 1] === 'm3u8' &&
+          //   !leftVideo?.canPlayType('application/vnd.apple.mpegurl')
+          // ) {
+          //   let hls = new window.Hls();
+          //   hls.loadSource(leftVideo.src);
+          //   hls.attachMedia(leftVideo);
+          // }
           try {
             if (!this.state.isAutoPlayable || this.state.isScreenSharing) {
               this.setMute(true);
@@ -1033,12 +1049,12 @@ export default class App extends React.Component<AppProps, AppState> {
             }
           }
         }
-        if (this.isYouTube()) {
-          setTimeout(() => {
-            console.log('play yt');
-            this.watchPartyYTPlayer?.playVideo();
-          }, 200);
-        }
+        // if (this.isYouTube()) {
+        //   setTimeout(() => {
+        //     console.log('play yt');
+        //     this.watchPartyYTPlayer?.playVideo();
+        //   }, 200);
+        // }
       }
     );
   };
@@ -1049,12 +1065,12 @@ export default class App extends React.Component<AppProps, AppState> {
         const leftVideo = document.getElementById(
           'leftVideo'
         ) as HTMLMediaElement;
-        leftVideo.pause();
+        leftVideo?.pause();
       }
-      if (this.isYouTube()) {
-        console.log('pause');
-        this.watchPartyYTPlayer?.pauseVideo();
-      }
+      // if (this.isYouTube()) {
+      //   console.log('pause');
+      //   this.watchPartyYTPlayer?.pauseVideo();
+      // }
     });
   };
 
@@ -1065,9 +1081,9 @@ export default class App extends React.Component<AppProps, AppState> {
       ) as HTMLMediaElement;
       leftVideo.currentTime = time;
     }
-    if (this.isYouTube()) {
-      this.watchPartyYTPlayer?.seekTo(time, true);
-    }
+    // if (this.isYouTube()) {
+    //   this.watchPartyYTPlayer?.seekTo(time, true);
+    // }
   };
 
   togglePlay = () => {
@@ -1080,12 +1096,13 @@ export default class App extends React.Component<AppProps, AppState> {
         'leftVideo'
       ) as HTMLMediaElement;
       shouldPlay = leftVideo.paused || leftVideo.ended;
-    } else if (this.isYouTube()) {
-      shouldPlay =
-        this.watchPartyYTPlayer?.getPlayerState() ===
-          window.YT?.PlayerState.PAUSED ||
-        this.getCurrentTime() === this.getDuration();
     }
+    //  else if (this.isYouTube()) {
+    //   shouldPlay =
+    //     this.watchPartyYTPlayer?.getPlayerState() ===
+    //       window.YT?.PlayerState.PAUSED ||
+    //     this.getCurrentTime() === this.getDuration();
+    // }
     if (shouldPlay) {
       this.socket.emit('CMD:play');
       this.doPlay();
@@ -1141,9 +1158,7 @@ export default class App extends React.Component<AppProps, AppState> {
         // https://github.com/howardchung/watchparty/issues/208
         container = document.getElementById('leftVideoParent') as HTMLElement;
       } else {
-        container = document.getElementById(
-          this.isYouTube() ? 'leftYt' : 'leftVideo'
-        ) as HTMLElement;
+        container = document.getElementById('leftVideo') as HTMLElement;
       }
     }
     if (
@@ -1182,13 +1197,13 @@ export default class App extends React.Component<AppProps, AppState> {
         audio.muted = muted;
       }
     }
-    if (this.isYouTube()) {
-      if (muted) {
-        this.watchPartyYTPlayer?.mute();
-      } else {
-        this.watchPartyYTPlayer?.unMute();
-      }
-    }
+    // if (this.isYouTube()) {
+    //   if (muted) {
+    //     this.watchPartyYTPlayer?.mute();
+    //   } else {
+    //     this.watchPartyYTPlayer?.unMute();
+    //   }
+    // }
   };
 
   setVolume = (volume: number) => {
@@ -1198,9 +1213,9 @@ export default class App extends React.Component<AppProps, AppState> {
       ) as HTMLMediaElement;
       leftVideo.volume = volume;
     }
-    if (this.isYouTube()) {
-      this.watchPartyYTPlayer?.setVolume(volume * 100);
-    }
+    // if (this.isYouTube()) {
+    //   this.watchPartyYTPlayer?.setVolume(volume * 100);
+    // }
   };
 
   getVolume = (): number => {
@@ -1210,10 +1225,10 @@ export default class App extends React.Component<AppProps, AppState> {
       ) as HTMLMediaElement;
       return leftVideo.volume;
     }
-    if (this.isYouTube()) {
-      const volume = this.watchPartyYTPlayer?.getVolume();
-      return volume / 100;
-    }
+    // if (this.isYouTube()) {
+    //   const volume = this.watchPartyYTPlayer?.getVolume();
+    //   return volume / 100;
+    // }
     return 1;
   };
 
@@ -1271,21 +1286,21 @@ export default class App extends React.Component<AppProps, AppState> {
     if (this.isVideo()) {
       this.setState({ isSubtitleModalOpen: true });
     }
-    if (this.isYouTube()) {
-      const isSubtitled = this.isSubtitled();
-      // console.log(isSubtitled);
-      if (isSubtitled) {
-        // BUG this doesn't actually set the value so subtitles can't be toggled off
-        this.watchPartyYTPlayer?.setOption('captions', 'track', {});
-      } else {
-        this.watchPartyYTPlayer?.setOption('captions', 'reload', true);
-        const tracks = this.watchPartyYTPlayer?.getOption(
-          'captions',
-          'tracklist'
-        );
-        this.watchPartyYTPlayer?.setOption('captions', 'track', tracks?.[0]);
-      }
-    }
+    // if (this.isYouTube()) {
+    //   const isSubtitled = this.isSubtitled();
+    //   // console.log(isSubtitled);
+    //   if (isSubtitled) {
+    //     // BUG this doesn't actually set the value so subtitles can't be toggled off
+    //     this.watchPartyYTPlayer?.setOption('captions', 'track', {});
+    //   } else {
+    //     this.watchPartyYTPlayer?.setOption('captions', 'reload', true);
+    //     const tracks = this.watchPartyYTPlayer?.getOption(
+    //       'captions',
+    //       'tracklist'
+    //     );
+    //     this.watchPartyYTPlayer?.setOption('captions', 'track', tracks?.[0]);
+    //   }
+    // }
   };
 
   setMedia = (_e: any, data: DropdownProps) => {
@@ -1410,30 +1425,30 @@ export default class App extends React.Component<AppProps, AppState> {
 
   render() {
     const sharer = this.state.participants.find((p) => p.isScreenShare);
-    const controls = (
-      <Controls
-        key={this.state.controlsTimestamp}
-        togglePlay={this.togglePlay}
-        onSeek={this.onSeek}
-        fullScreen={this.fullScreen}
-        toggleMute={this.toggleMute}
-        toggleSubtitle={this.toggleSubtitle}
-        setVolume={this.setVolume}
-        jumpToLeader={this.jumpToLeader}
-        paused={this.state.currentMediaPaused}
-        muted={this.isMuted()}
-        volume={this.getVolume()}
-        subtitled={this.isSubtitled()}
-        currentTime={this.getCurrentTime()}
-        duration={this.getDuration()}
-        disabled={!this.haveLock()}
-        leaderTime={this.isHttp() ? this.getLeaderTime() : undefined}
-        isPauseDisabled={this.isPauseDisabled()}
-        refreshControls={() =>
-          this.setState({ controlsTimestamp: Number(new Date()) })
-        }
-      />
-    );
+    // const controls = (
+    //   <Controls
+    //     key={this.state.controlsTimestamp}
+    //     togglePlay={this.togglePlay}
+    //     onSeek={this.onSeek}
+    //     fullScreen={this.fullScreen}
+    //     toggleMute={this.toggleMute}
+    //     toggleSubtitle={this.toggleSubtitle}
+    //     setVolume={this.setVolume}
+    //     jumpToLeader={this.jumpToLeader}
+    //     paused={this.state.currentMediaPaused}
+    //     muted={this.isMuted()}
+    //     volume={this.getVolume()}
+    //     subtitled={this.isSubtitled()}
+    //     currentTime={this.getCurrentTime()}
+    //     duration={this.getDuration()}
+    //     disabled={!this.haveLock()}
+    //     leaderTime={this.isHttp() ? this.getLeaderTime() : undefined}
+    //     isPauseDisabled={this.isPauseDisabled()}
+    //     refreshControls={() =>
+    //       this.setState({ controlsTimestamp: Number(new Date()) })
+    //     }
+    //   />
+    // );
     const subscribeButton = (
       <SubscribeButton
         user={this.props.user}
@@ -1951,7 +1966,7 @@ export default class App extends React.Component<AppProps, AppState> {
                             )}
                         </div>
                       )}
-                      <iframe
+                      {/* <iframe
                         style={{
                           display:
                             this.isYouTube() && !this.state.loading
@@ -1965,7 +1980,7 @@ export default class App extends React.Component<AppProps, AppState> {
                         frameBorder="0"
                         allow="autoplay"
                         src="https://www.youtube.com/embed/?enablejsapi=1&controls=0&rel=0"
-                      />
+                      /> */}
                       {this.isVBrowser() &&
                       this.getVBrowserPass() &&
                       this.getVBrowserHost() ? (
@@ -1982,25 +1997,29 @@ export default class App extends React.Component<AppProps, AppState> {
                           }
                         />
                       ) : (
-                        <video
-                          style={{
-                            display:
-                              (this.isVideo() && !this.state.loading) ||
-                              this.state.fullScreen
-                                ? 'block'
-                                : 'none',
-                            width: '100%',
-                            maxHeight:
-                              'calc(100vh - 62px - 36px - 36px - 8px - 41px - 16px)',
-                          }}
-                          id="leftVideo"
-                          onEnded={this.onVideoEnded}
-                          playsInline
-                        ></video>
+                        <div data-vjs-player>
+                          <video
+                            // style={{
+                            //   display:
+                            //     (this.isVideo() && !this.state.loading) ||
+                            //     this.state.fullScreen
+                            //       ? 'block'
+                            //       : 'none',
+                            //   width: '100%',
+                            //   maxHeight:
+                            //     'calc(100vh - 62px - 36px - 36px - 8px - 41px - 16px)',
+                            // }}
+                            className="video-js"
+                            style={{ width: '100%' }}
+                            id="leftVideo"
+                            onEnded={this.onVideoEnded}
+                            playsInline
+                          ></video>
+                        </div>
                       )}
                     </div>
                   </div>
-                  {this.state.currentMedia && controls}
+                  {/* {this.state.currentMedia && controls} */}
                   {Boolean(this.state.total) && (
                     <div>
                       <Progress
