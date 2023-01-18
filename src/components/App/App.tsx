@@ -55,6 +55,7 @@ import { FileShareModal } from '../Modal/FileShareModal';
 import firebase from 'firebase/compat/app';
 import { SubtitleModal } from '../Modal/SubtitleModal';
 import videojs from 'video.js';
+import 'videojs-youtube/dist/Youtube.js';
 
 import 'video.js/dist/video-js.min.css';
 
@@ -238,6 +239,7 @@ export default class App extends React.Component<AppProps, AppState> {
     this.state.player = videojs('leftVideo', {
       autoplay: 'any',
       controls: true,
+      techOrder: ['html5', 'youtube'],
     });
     // this.loadYouTube();
     this.init();
@@ -559,6 +561,8 @@ export default class App extends React.Component<AppProps, AppState> {
             //   });
             // }
             // One time, when we're ready to play
+            // TODO this event does not fire when using videojs-youtube
+            // TODO we only want to fire this event once
             this.state.player?.on(
               this.state.player,
               'canplay',
@@ -568,6 +572,8 @@ export default class App extends React.Component<AppProps, AppState> {
               }
               // { once: true }
             );
+            this.setLoadingFalse();
+            this.jumpToLeader();
 
             // Progress updater
             window.clearInterval(this.progressUpdater);
@@ -985,7 +991,9 @@ export default class App extends React.Component<AppProps, AppState> {
       // No-op as we'll set video when WebRTC completes
       return;
     }
-    this.state.player!.src([{ src: src, type: 'video/mp4' }]);
+    // const type = 'video/mp4';
+    const type = 'video/youtube';
+    this.state.player!.src([{ src: src, type: type }]);
     // if (this.isVideo()) {
     //   const leftVideo = document.getElementById(
     //     'leftVideo'
