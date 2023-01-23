@@ -1005,6 +1005,12 @@ export default class App extends React.Component<AppProps, AppState> {
     this.setState(
       { currentMediaPaused: false, isAutoPlayable: canAutoplay },
       async () => {
+        if (!this.state.isAutoPlayable || this.state.isScreenSharing) {
+          console.log('auto-muting to allow autoplay or screenshare host');
+          this.setMute(true);
+        } else {
+          this.setMute(false);
+        }
         if (this.isVideo()) {
           const leftVideo = document.getElementById(
             'leftVideo'
@@ -1020,11 +1026,6 @@ export default class App extends React.Component<AppProps, AppState> {
             hls.attachMedia(leftVideo);
           }
           try {
-            if (!this.state.isAutoPlayable || this.state.isScreenSharing) {
-              this.setMute(true);
-            } else {
-              this.setMute(false);
-            }
             await leftVideo?.play();
           } catch (e: any) {
             console.warn(e);
@@ -1189,6 +1190,7 @@ export default class App extends React.Component<AppProps, AppState> {
         this.watchPartyYTPlayer?.unMute();
       }
     }
+    this.refreshControls();
   };
 
   setVolume = (volume: number) => {
@@ -1201,6 +1203,7 @@ export default class App extends React.Component<AppProps, AppState> {
     if (this.isYouTube()) {
       this.watchPartyYTPlayer?.setVolume(volume * 100);
     }
+    this.refreshControls();
   };
 
   getVolume = (): number => {
@@ -1408,6 +1411,10 @@ export default class App extends React.Component<AppProps, AppState> {
     }
   };
 
+  refreshControls = () => {
+    this.setState({ controlsTimestamp: Number(new Date()) });
+  };
+
   render() {
     const sharer = this.state.participants.find((p) => p.isScreenShare);
     const controls = (
@@ -1429,9 +1436,6 @@ export default class App extends React.Component<AppProps, AppState> {
         disabled={!this.haveLock()}
         leaderTime={this.isHttp() ? this.getLeaderTime() : undefined}
         isPauseDisabled={this.isPauseDisabled()}
-        refreshControls={() =>
-          this.setState({ controlsTimestamp: Number(new Date()) })
-        }
       />
     );
     const subscribeButton = (

@@ -20,7 +20,6 @@ interface ControlsProps {
   disabled?: boolean;
   leaderTime?: number;
   isPauseDisabled?: boolean;
-  refreshControls: Function;
 }
 
 export class Controls extends React.Component<ControlsProps> {
@@ -70,7 +69,6 @@ export class Controls extends React.Component<ControlsProps> {
       paused,
       muted,
       volume,
-      refreshControls,
     } = this.props;
     const isBehind = leaderTime && leaderTime - currentTime > 5;
     return (
@@ -166,7 +164,6 @@ export class Controls extends React.Component<ControlsProps> {
           size="large"
           onClick={() => {
             toggleMute();
-            refreshControls();
           }}
           className="control action"
           name={muted ? 'volume off' : 'volume up'}
@@ -182,8 +179,9 @@ export class Controls extends React.Component<ControlsProps> {
               max: 1,
               step: 0.01,
               onChange: (value: number) => {
-                this.props.setVolume(value);
-                refreshControls();
+                if (value !== this.props.volume) {
+                  this.props.setVolume(value);
+                }
               },
             }}
           />
