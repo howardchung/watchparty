@@ -744,7 +744,7 @@ async function getStats() {
   } catch (e) {
     console.warn(e);
   }
-  const createRoomPreloads = await redisCount('createRoomPreload');
+  const createRoomPreloads = await getRedisCountDay('createRoomPreload');
 
   return {
     currentRoomCount,

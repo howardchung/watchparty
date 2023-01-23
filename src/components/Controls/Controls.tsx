@@ -179,7 +179,7 @@ export class Controls extends React.Component<ControlsProps> {
               max: 1,
               step: 0.01,
               onChange: (value: number) => {
-                if (value !== this.props.volume) {
+                if (value !== this.props.volume && !isNaN(value)) {
                   this.props.setVolume(value);
                 }
               },
