@@ -2000,6 +2000,7 @@ export default class App extends React.Component<AppProps, AppState> {
                           id="leftVideo"
                           onEnded={this.onVideoEnded}
                           playsInline
+                          onClick={this.togglePlay}
                         ></video>
                       )}
                     </div>
