@@ -300,6 +300,7 @@ export default class App extends React.Component<AppProps, AppState> {
       const ytPlayer = new window.YT.Player('leftYt', {
         events: {
           onReady: () => {
+            console.log('yt onReady');
             this.watchPartyYTPlayer = ytPlayer;
             this.setState({ isYouTubeReady: true, loading: false });
             // We might have failed to play YT originally, ask for the current video again
