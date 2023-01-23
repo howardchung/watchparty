@@ -31,7 +31,7 @@ export class Room {
   public video: string | null = '';
   public videoTS = 0;
   public subtitle = '';
-  private paused = false;
+  public paused = false;
   private chat: ChatMessage[] = [];
   private nameMap: StringDict = {};
   private pictureMap: StringDict = {};

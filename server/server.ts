@@ -267,7 +267,13 @@ app.post('/createRoom', async (req, res) => {
   }
   const decoded = await validateUserToken(req.body?.uid, req.body?.token);
   newRoom.creator = decoded?.email;
-  newRoom.video = req.body?.video || '';
+  const preload = (req.body?.video || '').slice(0, 20000);
+  if (preload) {
+    redisCount('createRoomPreload');
+    newRoom.video = preload;
+    newRoom.paused = true;
+    await newRoom.saveRoom();
+  }
   rooms.set(name, newRoom);
   res.json({ name: name.slice(1) });
 });
@@ -738,6 +744,7 @@ async function getStats() {
   } catch (e) {
     console.warn(e);
   }
+  const createRoomPreloads = await redisCount('createRoomPreload');
 
   return {
     currentRoomCount,
@@ -774,6 +781,7 @@ async function getStats() {
     connectStarts,
     connectStartsDistinct,
     hetznerApiRemaining,
+    createRoomPreloads,
     vBrowserStarts,
     vBrowserLaunches,
     vBrowserFails,

@@ -8,31 +8,40 @@ import axios from 'axios';
 import { SubscribeButton } from '../SubscribeButton/SubscribeButton';
 import { ProfileModal } from '../Modal/ProfileModal';
 
+export async function createRoom(
+  user: firebase.User | undefined,
+  openNewTab: boolean | undefined,
+  video: string = ''
+) {
+  const uid = user?.uid;
+  const token = await user?.getIdToken();
+  const response = await window.fetch(serverPath + '/createRoom', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      uid,
+      token,
+      video,
+    }),
+  });
+  const data = await response.json();
+  const { name } = data;
+  if (openNewTab) {
+    window.open('/#' + name);
+  } else {
+    window.location.assign('/#' + name);
+  }
+}
+
 export class NewRoomButton extends React.Component<{
   user: firebase.User | undefined;
   size?: string;
   openNewTab?: boolean;
 }> {
   createRoom = async () => {
-    const uid = this.props.user?.uid;
-    const token = await this.props.user?.getIdToken();
-    const response = await window.fetch(serverPath + '/createRoom', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        uid,
-        token,
-      }),
-    });
-    const data = await response.json();
-    const { name } = data;
-    if (this.props.openNewTab) {
-      window.open('/#' + name);
-    } else {
-      window.location.assign('/#' + name);
-    }
+    await createRoom(this.props.user, this.props.openNewTab);
   };
   render() {
     return (
