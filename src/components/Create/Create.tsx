@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useRef } from 'react';
 import firebase from 'firebase/compat/app';
 import { createRoom } from '../TopBar/TopBar';
 import querystring from 'querystring';
