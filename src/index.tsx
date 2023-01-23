@@ -14,6 +14,7 @@ import firebase from 'firebase/compat/app';
 import 'firebase/auth';
 import { serverPath } from './utils';
 import { Modal } from 'semantic-ui-react';
+import { Create } from './components/Create/Create';
 
 const Debug = lazy(() => import('./components/Debug/Debug'));
 
@@ -91,6 +92,13 @@ class WatchParty extends React.Component {
                   <Footer />
                 </React.Fragment>
               );
+            }}
+          />
+          <Route
+            path="/create"
+            exact
+            render={() => {
+              return <Create user={this.state.user} />;
             }}
           />
           <Route
