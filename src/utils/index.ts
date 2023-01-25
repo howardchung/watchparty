@@ -215,6 +215,7 @@ export async function getMediaPathResults(
     const parser = new XMLParser();
     const data = parser.parse(xml);
     let filtered = data.ListBucketResult.Contents.filter(
+      // Exclude subdirectories
       (file: any) => !file.Key.includes('/')
     );
     results = filtered.map((file: any) => ({
@@ -231,8 +232,11 @@ export async function getMediaPathResults(
         name: mediaPath + '/' + file.name,
       }));
   }
-  results = results.filter((option: SearchResult) =>
-    option.name.toLowerCase().includes(query.toLowerCase())
+  results = results.filter(
+    (option: SearchResult) =>
+      // Exclude subtitles
+      !option.url.endsWith('.srt') &&
+      option.name.toLowerCase().includes(query.toLowerCase())
   );
   return results;
 }
