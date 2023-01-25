@@ -16,5 +16,10 @@
     "noEmit": true,
     "jsx": "react-jsx"
   },
-  "include": ["src", "global.d.ts"]
+  "include": ["src", "global.d.ts"],
+  "ts-node": {
+    "compilerOptions": {
+      "module": "commonjs"
+    }
+  }
 }
