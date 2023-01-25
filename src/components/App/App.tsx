@@ -1120,9 +1120,9 @@ export default class App extends React.Component<AppProps, AppState> {
         e.preventDefault();
         this.togglePlay();
       } else if (e.key === 'ArrowRight') {
-        this.onSeek(null, this.getCurrentTime() + 10);
+        this.onSeek(null, this.getCurrentTime() + 15);
       } else if (e.key === 'ArrowLeft') {
-        this.onSeek(null, this.getCurrentTime() - 10);
+        this.onSeek(null, this.getCurrentTime() - 15);
       } else if (e.key === 'c') {
         this.showSubtitle();
       } else if (e.key === 't') {

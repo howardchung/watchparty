@@ -6,6 +6,7 @@ import {
   Radio,
   Checkbox,
   Header,
+  Input,
 } from 'semantic-ui-react';
 import { Socket } from 'socket.io-client';
 import { openFileSelector, serverPath } from '../../utils';
@@ -56,9 +57,6 @@ export class SubtitleModal extends React.Component<{
         <Modal.Header>Subtitles</Modal.Header>
         <Modal.Content image>
           <Modal.Description>
-            {process.env.NODE_ENV === 'development' && (
-              <p>{this.props.currentSubtitle}</p>
-            )}
             <Checkbox
               toggle
               checked={this.props.getSubtitleMode() === 'hidden'}
@@ -72,6 +70,9 @@ export class SubtitleModal extends React.Component<{
               style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}
             >
               <Header>Room subtitle settings</Header>
+              {process.env.NODE_ENV === 'development' && (
+                <Input value={this.props.currentSubtitle} />
+              )}
               <div>
                 <Radio
                   disabled={!this.props.haveLock()}
@@ -109,6 +110,24 @@ export class SubtitleModal extends React.Component<{
                   Upload (.srt)
                 </Button>
               </div>
+              {this.props.beta && (
+                <div>
+                  <Radio
+                    disabled={!this.props.haveLock()}
+                    name="radioGroup"
+                    label=".srt extension appended to current video URL"
+                    value=""
+                    checked={Boolean(
+                      this.props.currentSubtitle &&
+                        this.props.currentSubtitle?.startsWith(this.props.src)
+                    )}
+                    onChange={(e, data) => {
+                      const subValue = this.props.src + '.srt';
+                      this.props.socket.emit('CMD:subtitle', subValue);
+                    }}
+                  />
+                </div>
+              )}
               {!this.state.searchResults.length && (
                 <div>
                   <Radio
@@ -122,26 +141,6 @@ export class SubtitleModal extends React.Component<{
                       )
                     }
                   />
-                  {/* <Button
-                      style={{ marginLeft: '10px' }}
-                      loading={this.state.loading}
-                      color="green"
-                      disabled={!this.props.haveLock()}
-                      icon
-                      labelPosition="left"
-                      onClick={async () => {
-                        this.setState({ loading: true });
-                        const resp = await window.fetch(
-                          serverPath + '/searchSubtitles?url=' + this.props.src
-                        );
-                        const json = await resp.json();
-                        this.setState({ searchResults: json });
-                        this.setState({ loading: false });
-                      }}
-                    >
-                      <Icon name="search" />
-                      Search by Hash
-                    </Button> */}
                   <Button
                     style={{ marginLeft: '8px' }}
                     loading={this.state.loading}
@@ -168,6 +167,29 @@ export class SubtitleModal extends React.Component<{
                     <Icon name="search" />
                     Search by Title
                   </Button>
+                  {this.props.beta && (
+                    <Button
+                      style={{ marginLeft: '8px' }}
+                      loading={this.state.loading}
+                      color="green"
+                      disabled={!this.props.haveLock()}
+                      icon
+                      labelPosition="left"
+                      size="mini"
+                      onClick={async () => {
+                        this.setState({ loading: true });
+                        const resp = await window.fetch(
+                          serverPath + '/searchSubtitles?url=' + this.props.src
+                        );
+                        const json = await resp.json();
+                        this.setState({ searchResults: json });
+                        this.setState({ loading: false });
+                      }}
+                    >
+                      <Icon name="search" />
+                      Search by Hash
+                    </Button>
+                  )}
                 </div>
               )}
               {this.state.searchResults.map((result: any) => (
