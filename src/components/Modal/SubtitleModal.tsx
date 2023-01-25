@@ -2,7 +2,6 @@ import React from 'react';
 import {
   Modal,
   Button,
-  Popup,
   Icon,
   Radio,
   Checkbox,
