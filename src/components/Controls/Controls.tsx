@@ -9,7 +9,7 @@ interface ControlsProps {
   onSeek: Function;
   fullScreen: Function;
   toggleMute: Function;
-  toggleSubtitle: Function;
+  showSubtitle: Function;
   jumpToLeader: Function;
   paused: boolean;
   muted: boolean;
@@ -58,7 +58,7 @@ export class Controls extends React.Component<ControlsProps> {
       onSeek,
       fullScreen,
       toggleMute,
-      toggleSubtitle,
+      showSubtitle,
       jumpToLeader,
       currentTime,
       duration,
@@ -139,7 +139,7 @@ export class Controls extends React.Component<ControlsProps> {
         <Icon
           size="large"
           onClick={() => {
-            toggleSubtitle();
+            showSubtitle();
           }}
           className="control action"
           name={subtitled ? 'closed captioning' : 'closed captioning outline'}
