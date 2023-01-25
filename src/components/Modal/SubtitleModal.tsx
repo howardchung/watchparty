@@ -69,7 +69,9 @@ export class SubtitleModal extends React.Component<{
               }}
             />
             <hr />
-            <div>
+            <div
+              style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}
+            >
               <Header>Room subtitle settings</Header>
               <div>
                 <Radio
@@ -87,7 +89,7 @@ export class SubtitleModal extends React.Component<{
                 <Radio
                   disabled={!this.props.haveLock()}
                   name="radioGroup"
-                  label="Uploaded subtitles"
+                  label=""
                   value=""
                   checked={
                     Boolean(this.props.currentSubtitle) &&
@@ -96,29 +98,23 @@ export class SubtitleModal extends React.Component<{
                     )
                   }
                 />
-                <Popup
-                  content="Upload a .srt subtitle file for this video"
-                  trigger={
-                    <Button
-                      style={{ marginLeft: '10px' }}
-                      color="violet"
-                      icon
-                      labelPosition="left"
-                      onClick={() => this.uploadSubtitle()}
-                      disabled={!this.props.haveLock()}
-                      size="mini"
-                    >
-                      <Icon name="upload" />
-                      Upload (.srt)
-                    </Button>
-                  }
-                />
+                <Button
+                  color="violet"
+                  icon
+                  labelPosition="left"
+                  onClick={() => this.uploadSubtitle()}
+                  disabled={!this.props.haveLock()}
+                  size="mini"
+                >
+                  <Icon name="upload" />
+                  Upload (.srt)
+                </Button>
               </div>
               {!this.state.searchResults.length && (
                 <div>
                   <Radio
-                    name="radioGroup"
                     disabled={!this.props.haveLock()}
+                    name="radioGroup"
                     value=""
                     checked={
                       Boolean(this.props.currentSubtitle) &&
@@ -148,7 +144,7 @@ export class SubtitleModal extends React.Component<{
                       Search by Hash
                     </Button> */}
                   <Button
-                    style={{ marginLeft: '10px' }}
+                    style={{ marginLeft: '8px' }}
                     loading={this.state.loading}
                     color="green"
                     disabled={!this.props.haveLock()}
