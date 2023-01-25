@@ -53,17 +53,24 @@
   cursor: pointer;
 }
 
-.comment .commentMenu:hover, .comment.selected .commentMenu {
+.comment .commentMenu:hover,
+.comment.selected .commentMenu {
   background: rgb(46, 137, 212);
   transition: background 0.2s ease-in-out;
 }
 
-.comment:hover, .comment.selected {
+.comment:hover,
+.comment.selected {
   border-radius: 5px;
-  background: radial-gradient(at top right, #7eaee02a, transparent 70%) !important;
+  background: radial-gradient(
+    at top right,
+    #7eaee02a,
+    transparent 70%
+  ) !important;
 }
 
-.comment:hover .commentMenu, .comment.selected .commentMenu {
+.comment:hover .commentMenu,
+.comment.selected .commentMenu {
   display: flex;
 }
 
@@ -108,47 +115,47 @@
   transition: background-color 0.2s ease-in-out;
 }
 
-.reaction-enter   {
+.reaction-enter {
   transform: scale(0);
 }
-.reaction-enter-active  {
+.reaction-enter-active {
   transform: scale(1);
   transition: all 200ms ease-in !important;
 }
-.reaction-exit  {
-    transform: scale(1);
+.reaction-exit {
+  transform: scale(1);
 }
 .reaction-exit-active {
   transform: scale(0);
   transition: all 200ms ease-in !important;
 }
 
-.reactionCounter-enter   {
+.reactionCounter-enter {
   transform: scale(0);
   color: rgb(255, 136, 0) !important;
 }
-.reactionCounter-enter-active  {
+.reactionCounter-enter-active {
   transform: scale(1);
   transition: all 200ms ease-in !important;
 }
-.reactionCounter-exit  {
-    transform: scale(1);
-    color: rgb(255, 136, 0) !important;
+.reactionCounter-exit {
+  transform: scale(1);
+  color: rgb(255, 136, 0) !important;
 }
 .reactionCounter-exit-active {
   transform: scale(0);
   transition: all 200ms ease-in !important;
 }
 
-.reactionMenu-enter   {
+.reactionMenu-enter {
   transform: scale(0);
 }
-.reactionMenu-enter-active  {
+.reactionMenu-enter-active {
   transform: scale(1);
   transition: all 100ms ease-out !important;
 }
-.reactionMenu-exit  {
-    transform: scale(1);
+.reactionMenu-exit {
+  transform: scale(1);
 }
 .reactionMenu-exit-active {
   transform: scale(0);

@@ -78,7 +78,9 @@ export const SettingsTab = ({
   const [validVanity, setValidVanity] = useState(true);
   const [validVanityLoading, setValidVanityLoading] = useState(false);
   const [adminSettingsChanged, setAdminSettingsChanged] = useState(false);
-  const [roomTitleInput, setRoomTitleInput] = useState<string | undefined>(undefined);
+  const [roomTitleInput, setRoomTitleInput] = useState<string | undefined>(
+    undefined
+  );
   const [roomDescriptionInput, setRoomDescriptionInput] = useState<
     string | undefined
   >(undefined);
