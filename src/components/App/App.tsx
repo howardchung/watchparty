@@ -988,6 +988,9 @@ export default class App extends React.Component<AppProps, AppState> {
         leftVideo.src = src;
         leftVideo.currentTime = time;
         // Clear subtitles
+        for (var i = 0; i < leftVideo.textTracks.length; i++) {
+          leftVideo.textTracks[i].mode = 'hidden';
+        }
         leftVideo.innerHTML = '';
       }
     }
