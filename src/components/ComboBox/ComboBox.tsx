@@ -118,7 +118,7 @@ export class ComboBox extends React.Component<ComboBoxProps> {
             focus
             disabled={this.props.disabled}
             onChange={this.doSearch}
-            onFocus={async (e: any) => {
+            onFocus={(e: any) => {
               e.persist();
               this.setState(
                 {
