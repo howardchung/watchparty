@@ -987,10 +987,7 @@ export default class App extends React.Component<AppProps, AppState> {
         leftVideo.srcObject = null;
         leftVideo.src = src;
         leftVideo.currentTime = time;
-        // Clear subtitles
-        for (var i = 0; i < leftVideo.textTracks.length; i++) {
-          leftVideo.textTracks[i].mode = 'hidden';
-        }
+        this.setSubtitleMode('hidden');
         leftVideo.innerHTML = '';
       }
     }
@@ -1127,7 +1124,7 @@ export default class App extends React.Component<AppProps, AppState> {
       } else if (e.key === 'ArrowLeft') {
         this.onSeek(null, this.getCurrentTime() - 10);
       } else if (e.key === 'c') {
-        this.toggleSubtitle();
+        this.showSubtitle();
       } else if (e.key === 't') {
         this.fullScreen(false);
       } else if (e.key === 'f') {
@@ -1274,7 +1271,7 @@ export default class App extends React.Component<AppProps, AppState> {
     }
   };
 
-  toggleSubtitle = () => {
+  showSubtitle = () => {
     if (this.isVideo()) {
       this.setState({ isSubtitleModalOpen: true });
     }
@@ -1293,6 +1290,20 @@ export default class App extends React.Component<AppProps, AppState> {
         this.watchPartyYTPlayer?.setOption('captions', 'track', tracks?.[0]);
       }
     }
+  };
+
+  setSubtitleMode = (mode?: TextTrackMode) => {
+    const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
+    for (var i = 0; i < leftVideo.textTracks.length; i++) {
+      leftVideo.textTracks[i].mode =
+        mode ??
+        (leftVideo.textTracks[i].mode === 'hidden' ? 'showing' : 'hidden');
+    }
+  };
+
+  getSubtitleMode = () => {
+    const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
+    return leftVideo.textTracks[0]?.mode;
   };
 
   setMedia = (_e: any, data: DropdownProps) => {
@@ -1428,7 +1439,7 @@ export default class App extends React.Component<AppProps, AppState> {
         onSeek={this.onSeek}
         fullScreen={this.fullScreen}
         toggleMute={this.toggleMute}
-        toggleSubtitle={this.toggleSubtitle}
+        showSubtitle={this.showSubtitle}
         setVolume={this.setVolume}
         jumpToLeader={this.jumpToLeader}
         paused={this.state.currentMediaPaused}
@@ -1647,6 +1658,8 @@ export default class App extends React.Component<AppProps, AppState> {
             haveLock={this.haveLock}
             getMediaDisplayName={this.getMediaDisplayName}
             beta={this.props.beta}
+            setSubtitleMode={this.setSubtitleMode}
+            getSubtitleMode={this.getSubtitleMode}
           />
         )}
         {this.state.error && <ErrorModal error={this.state.error} />}

@@ -177,83 +177,126 @@ export abstract class VMManager {
   };
 
   public runBackgroundJobs = async () => {
-    console.log(
-      '[VMWORKER] starting background jobs for %s',
-      this.getRedisQueueKey()
-    );
-    const resizeVMGroupIncr = async () => {
-      const availableCount = await this.redis.llen(this.getRedisQueueKey());
-      const stagingCount = await this.redis.llen(this.getRedisStagingKey());
-      let launch = false;
-      launch =
-        availableCount + stagingCount < this.getAdjustedBuffer()[0] &&
-        this.getCurrentSize() != null &&
-        this.getCurrentSize() < (this.getLimitSize() || Infinity);
-      if (launch) {
-        console.log(
-          '[RESIZE-LAUNCH]',
-          'minimum:',
-          this.getAdjustedBuffer()[0],
-          'available:',
-          availableCount,
-          'staging:',
-          stagingCount,
-          'currentSize:',
-          this.getCurrentSize(),
-          'limit:',
-          this.getLimitSize()
-        );
-        this.startVMWrapper();
-      }
-    };
+    try {
+      console.log(
+        '[VMWORKER] starting background jobs for %s',
+        this.getRedisQueueKey()
+      );
+      const resizeVMGroupIncr = async () => {
+        const availableCount = await this.redis.llen(this.getRedisQueueKey());
+        const stagingCount = await this.redis.llen(this.getRedisStagingKey());
+        let launch = false;
+        launch =
+          availableCount + stagingCount < this.getAdjustedBuffer()[0] &&
+          this.getCurrentSize() != null &&
+          this.getCurrentSize() < (this.getLimitSize() || Infinity);
+        if (launch) {
+          console.log(
+            '[RESIZE-LAUNCH]',
+            'minimum:',
+            this.getAdjustedBuffer()[0],
+            'available:',
+            availableCount,
+            'staging:',
+            stagingCount,
+            'currentSize:',
+            this.getCurrentSize(),
+            'limit:',
+            this.getLimitSize()
+          );
+          this.startVMWrapper();
+        }
+      };
 
-    const resizeVMGroupDecr = async () => {
-      let unlaunch = false;
-      const availableCount = await this.redis.llen(this.getRedisQueueKey());
-      unlaunch = availableCount > this.getAdjustedBuffer()[1];
-      if (unlaunch) {
-        const ids = await this.redis.smembers(this.getRedisTerminationKey());
-        // Remove the first available VM
-        let first = null;
-        let rem = 0;
-        while (ids.length && !rem) {
-          first = ids.shift();
-          rem = first
-            ? await this.redis.lrem(this.getRedisQueueKey(), 1, first)
-            : 0;
-          if (first && rem) {
-            console.log('[RESIZE-UNLAUNCH]', first);
-            await this.terminateVMWrapper(first);
+      const resizeVMGroupDecr = async () => {
+        let unlaunch = false;
+        const availableCount = await this.redis.llen(this.getRedisQueueKey());
+        unlaunch = availableCount > this.getAdjustedBuffer()[1];
+        if (unlaunch) {
+          const ids = await this.redis.smembers(this.getRedisTerminationKey());
+          // Remove the first available VM
+          let first = null;
+          let rem = 0;
+          while (ids.length && !rem) {
+            first = ids.shift();
+            rem = first
+              ? await this.redis.lrem(this.getRedisQueueKey(), 1, first)
+              : 0;
+            if (first && rem) {
+              console.log('[RESIZE-UNLAUNCH]', first);
+              await this.terminateVMWrapper(first);
+            }
           }
         }
-      }
-    };
+      };
 
-    const updateSize = async () => {
-      const allVMs = await this.listVMs(this.getTag());
-      const now = Date.now();
-      this.currentSize = allVMs.length;
-      await this.redis.setex(this.getRedisPoolSizeKey(), 2 * 60, allVMs.length);
-      let sortedVMs = allVMs
-        // Sort newest first (decreasing alphabetically)
-        .sort((a, b) => -a.creation_date?.localeCompare(b.creation_date))
-        // Remove the minimum number of VMs to keep
-        .slice(0, -this.getMinSize() || undefined)
-        // Consider only VMs that have been up for most of an hour
-        .filter(
-          (vm) =>
-            (now - Number(new Date(vm.creation_date))) % (60 * 60 * 1000) >
-            config.VM_MIN_UPTIME_MINUTES * 60 * 1000
+      const updateSize = async () => {
+        const allVMs = await this.listVMs(this.getTag());
+        const now = Date.now();
+        this.currentSize = allVMs.length;
+        await this.redis.setex(
+          this.getRedisPoolSizeKey(),
+          2 * 60,
+          allVMs.length
         );
-      const cmd = this.redis.multi().del(this.getRedisTerminationKey());
-      if (sortedVMs.length) {
-        cmd.sadd(
-          this.getRedisTerminationKey(),
-          sortedVMs.map((vm) => vm.id)
-        );
-      }
-      await cmd.exec();
-      if (allVMs.length) {
+        let sortedVMs = allVMs
+          // Sort newest first (decreasing alphabetically)
+          .sort((a, b) => -a.creation_date?.localeCompare(b.creation_date))
+          // Remove the minimum number of VMs to keep
+          .slice(0, -this.getMinSize() || undefined)
+          // Consider only VMs that have been up for most of an hour
+          .filter(
+            (vm) =>
+              (now - Number(new Date(vm.creation_date))) % (60 * 60 * 1000) >
+              config.VM_MIN_UPTIME_MINUTES * 60 * 1000
+          );
+        const cmd = this.redis.multi().del(this.getRedisTerminationKey());
+        if (sortedVMs.length) {
+          cmd.sadd(
+            this.getRedisTerminationKey(),
+            sortedVMs.map((vm) => vm.id)
+          );
+        }
+        await cmd.exec();
+        if (allVMs.length) {
+          const availableKeys = await this.redis.lrange(
+            this.getRedisQueueKey(),
+            0,
+            -1
+          );
+          const stagingKeys = await this.redis.lrange(
+            this.getRedisStagingKey(),
+            0,
+            -1
+          );
+          console.log(
+            '[STATS] %s: currentSize %s, available %s, staging %s, buffer %s',
+            this.getRedisQueueKey(),
+            allVMs.length,
+            availableKeys.length,
+            stagingKeys.length,
+            this.getAdjustedBuffer()
+          );
+        }
+      };
+
+      const cleanupVMGroup = async () => {
+        // Clean up hanging VMs
+        // It's possible we created a VM but lost track of it in redis
+        // Take the list of VMs from API, subtract VMs that have a lock in redis or are in the available or staging pool, delete the rest
+        let allVMs = [];
+        try {
+          allVMs = await this.listVMs(this.getTag());
+        } catch (e) {
+          console.log('cleanupVMGroup: failed to fetch VM list');
+          return;
+        }
+        const usedKeys: string[] = [];
+        for (let i = 0; i < allVMs.length; i++) {
+          if (await this.redis.get(`lock:${this.id}:${allVMs[i].id}`)) {
+            usedKeys.push(allVMs[i].id);
+          }
+        }
         const availableKeys = await this.redis.lrange(
           this.getRedisQueueKey(),
           0,
@@ -264,210 +307,185 @@ export abstract class VMManager {
           0,
           -1
         );
+        const dontDelete = new Set([
+          ...usedKeys,
+          ...availableKeys,
+          ...stagingKeys,
+        ]);
         console.log(
-          '[STATS] %s: currentSize %s, available %s, staging %s, buffer %s',
+          '[CLEANUP] %s: cleanup %s VMs',
           this.getRedisQueueKey(),
-          allVMs.length,
-          availableKeys.length,
-          stagingKeys.length,
-          this.getAdjustedBuffer()
+          allVMs.length - dontDelete.size
         );
-      }
-    };
-
-    const cleanupVMGroup = async () => {
-      // Clean up hanging VMs
-      // It's possible we created a VM but lost track of it in redis
-      // Take the list of VMs from API, subtract VMs that have a lock in redis or are in the available or staging pool, delete the rest
-      const allVMs = await this.listVMs(this.getTag());
-      const usedKeys: string[] = [];
-      for (let i = 0; i < allVMs.length; i++) {
-        if (await this.redis.get(`lock:${this.id}:${allVMs[i].id}`)) {
-          usedKeys.push(allVMs[i].id);
-        }
-      }
-      const availableKeys = await this.redis.lrange(
-        this.getRedisQueueKey(),
-        0,
-        -1
-      );
-      const stagingKeys = await this.redis.lrange(
-        this.getRedisStagingKey(),
-        0,
-        -1
-      );
-      const dontDelete = new Set([
-        ...usedKeys,
-        ...availableKeys,
-        ...stagingKeys,
-      ]);
-      console.log(
-        '[CLEANUP] %s: cleanup %s VMs',
-        this.getRedisQueueKey(),
-        allVMs.length - dontDelete.size
-      );
-      for (let i = 0; i < allVMs.length; i++) {
-        const server = allVMs[i];
-        if (!dontDelete.has(server.id)) {
-          console.log('[CLEANUP]', server.id);
-          try {
-            await this.resetVM(server.id);
-          } catch (e: any) {
-            console.warn(e.response?.data);
-          }
-          //this.terminateVMWrapper(server.id);
-          await new Promise((resolve) => setTimeout(resolve, 2000));
-        }
-      }
-    };
-
-    const checkStaging = async () => {
-      try {
-        // const checkStagingStart = this.isLarge
-        //   ? 0
-        //   : Math.floor(Date.now() / 1000);
-        // if (checkStagingStart) {
-        //   console.log('[CHECKSTAGING]', checkStagingStart);
-        // }
-        // Loop through staging list and check if VM is ready
-        const stagingKeys = await this.redis.lrange(
-          this.getRedisStagingKey(),
-          0,
-          -1
-        );
-        const stagingPromises = stagingKeys.map((id) => {
-          return new Promise<string>(async (resolve, reject) => {
-            const retryCount = await this.redis.incr(
-              this.getRedisStagingKey() + ':' + id
-            );
-            if (retryCount < this.minRetries) {
-              // Do a minimum # of retries to give reboot time
-              return resolve(id + ', ' + retryCount + ', ' + false);
-            }
-            let ready = false;
-            let vm: VM | null = null;
+        for (let i = 0; i < allVMs.length; i++) {
+          const server = allVMs[i];
+          if (!dontDelete.has(server.id)) {
+            console.log('[CLEANUP]', server.id);
             try {
-              const cached = await this.redis.get(
-                this.getRedisHostCacheKey() + ':' + id
-              );
-              vm = cached ? JSON.parse(cached) : null;
-              if (
-                !vm &&
-                (retryCount === this.minRetries + 1 || retryCount % 20 === 0)
-              ) {
-                vm = await this.getVM(id);
-                if (vm?.host) {
-                  console.log(
-                    '[CHECKSTAGING] caching host %s for id %s',
-                    vm?.host,
-                    id
-                  );
-                  await this.redis.setex(
-                    this.getRedisHostCacheKey() + ':' + id,
-                    2 * 3600,
-                    JSON.stringify(vm)
-                  );
-                }
-              }
+              await this.resetVM(server.id);
             } catch (e: any) {
               console.warn(e.response?.data);
-              if (e.response?.status === 404) {
-                await this.redis.lrem(this.getRedisQueueKey(), 0, id);
-                await this.redis.lrem(this.getRedisStagingKey(), 0, id);
-                await this.redis.del(this.getRedisStagingKey() + ':' + id);
-                return reject();
-              }
             }
-            ready = await checkVMReady(vm?.host ?? '', vm?.pass);
-            //ready = retryCount > 100;
-            if (ready) {
-              console.log('[CHECKSTAGING] ready:', id, vm?.host, retryCount);
-              // If it is, move it to available list
-              const rem = await this.redis.lrem(
-                this.getRedisStagingKey(),
-                1,
-                id
-              );
-              if (rem) {
-                await this.redis
-                  .multi()
-                  .rpush(this.getRedisQueueKey(), id)
-                  .del(this.getRedisStagingKey() + ':' + id)
-                  .exec();
-                await this.redis.lpush('vBrowserStageRetries', retryCount);
-                await this.redis.ltrim('vBrowserStageRetries', 0, 24);
-              }
-            } else {
-              if (retryCount >= 240) {
-                console.log('[CHECKSTAGING]', 'giving up:', id);
-                await this.redis
-                  .multi()
-                  .lrem(this.getRedisStagingKey(), 0, id)
-                  .del(this.getRedisStagingKey() + ':' + id)
-                  .exec();
-                redisCount('vBrowserStagingFails');
-                await this.redis.lpush('vBrowserStageFails', id);
-                await this.redis.ltrim('vBrowserStageFails', 0, 24);
-                await this.resetVM(id);
-                //await this.terminateVMWrapper(id);
-              } else {
-                if (retryCount % 150 === 0) {
-                  console.log(
-                    '[CHECKSTAGING] %s attempt to poweron, attach to network',
-                    id
-                  );
-                  this.powerOn(id);
-                  //this.attachToNetwork(id);
-                }
-                if (retryCount % 30 === 0) {
-                  console.log(
-                    '[CHECKSTAGING]',
-                    'not ready:',
-                    id,
-                    vm?.host,
-                    retryCount
-                  );
-                }
-              }
-            }
-            resolve(id + ', ' + retryCount + ', ' + ready);
-          });
-        });
-        const result = await Promise.race([
-          Promise.allSettled(stagingPromises),
-          new Promise((resolve) => setTimeout(resolve, 30000)),
-        ]);
-        // if (checkStagingStart) {
-        //   console.log('[CHECKSTAGING-DONE]', checkStagingStart, result);
-        // }
-        return result;
-      } catch (e) {
-        console.warn('[CHECKSTAGING-ERROR]', e);
-        return [];
-      }
-    };
-
-    setInterval(resizeVMGroupIncr, incrInterval);
-    setInterval(resizeVMGroupDecr, decrInterval);
-
-    updateSize();
-    setInterval(updateSize, updateSizeInterval);
-
-    setImmediate(async () => {
-      while (true) {
-        try {
-          await cleanupVMGroup();
-        } catch (e: any) {
-          console.warn(e.response?.data);
+            //this.terminateVMWrapper(server.id);
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+          }
         }
-        await new Promise((resolve) => setTimeout(resolve, cleanupInterval));
-      }
-    });
+      };
 
-    const checkStagingInterval = 1000;
-    while (true) {
-      await new Promise((resolve) => setTimeout(resolve, checkStagingInterval));
-      await checkStaging();
+      const checkStaging = async () => {
+        try {
+          // const checkStagingStart = this.isLarge
+          //   ? 0
+          //   : Math.floor(Date.now() / 1000);
+          // if (checkStagingStart) {
+          //   console.log('[CHECKSTAGING]', checkStagingStart);
+          // }
+          // Loop through staging list and check if VM is ready
+          const stagingKeys = await this.redis.lrange(
+            this.getRedisStagingKey(),
+            0,
+            -1
+          );
+          const stagingPromises = stagingKeys.map((id) => {
+            return new Promise<string>(async (resolve, reject) => {
+              const retryCount = await this.redis.incr(
+                this.getRedisStagingKey() + ':' + id
+              );
+              if (retryCount < this.minRetries) {
+                // Do a minimum # of retries to give reboot time
+                return resolve(id + ', ' + retryCount + ', ' + false);
+              }
+              let ready = false;
+              let vm: VM | null = null;
+              try {
+                const cached = await this.redis.get(
+                  this.getRedisHostCacheKey() + ':' + id
+                );
+                vm = cached ? JSON.parse(cached) : null;
+                if (
+                  !vm &&
+                  (retryCount === this.minRetries + 1 || retryCount % 20 === 0)
+                ) {
+                  vm = await this.getVM(id);
+                  if (vm?.host) {
+                    console.log(
+                      '[CHECKSTAGING] caching host %s for id %s',
+                      vm?.host,
+                      id
+                    );
+                    await this.redis.setex(
+                      this.getRedisHostCacheKey() + ':' + id,
+                      2 * 3600,
+                      JSON.stringify(vm)
+                    );
+                  }
+                }
+              } catch (e: any) {
+                console.warn(e.response?.data);
+                if (e.response?.status === 404) {
+                  await this.redis.lrem(this.getRedisQueueKey(), 0, id);
+                  await this.redis.lrem(this.getRedisStagingKey(), 0, id);
+                  await this.redis.del(this.getRedisStagingKey() + ':' + id);
+                  return reject();
+                }
+              }
+              ready = await checkVMReady(vm?.host ?? '', vm?.pass);
+              //ready = retryCount > 100;
+              if (ready) {
+                console.log('[CHECKSTAGING] ready:', id, vm?.host, retryCount);
+                // If it is, move it to available list
+                const rem = await this.redis.lrem(
+                  this.getRedisStagingKey(),
+                  1,
+                  id
+                );
+                if (rem) {
+                  await this.redis
+                    .multi()
+                    .rpush(this.getRedisQueueKey(), id)
+                    .del(this.getRedisStagingKey() + ':' + id)
+                    .exec();
+                  await this.redis.lpush('vBrowserStageRetries', retryCount);
+                  await this.redis.ltrim('vBrowserStageRetries', 0, 24);
+                }
+              } else {
+                if (retryCount >= 240) {
+                  console.log('[CHECKSTAGING]', 'giving up:', id);
+                  await this.redis
+                    .multi()
+                    .lrem(this.getRedisStagingKey(), 0, id)
+                    .del(this.getRedisStagingKey() + ':' + id)
+                    .exec();
+                  redisCount('vBrowserStagingFails');
+                  await this.redis.lpush('vBrowserStageFails', id);
+                  await this.redis.ltrim('vBrowserStageFails', 0, 24);
+                  await this.resetVM(id);
+                  //await this.terminateVMWrapper(id);
+                } else {
+                  if (retryCount % 150 === 0) {
+                    console.log(
+                      '[CHECKSTAGING] %s attempt to poweron, attach to network',
+                      id
+                    );
+                    this.powerOn(id);
+                    //this.attachToNetwork(id);
+                  }
+                  if (retryCount % 30 === 0) {
+                    console.log(
+                      '[CHECKSTAGING]',
+                      'not ready:',
+                      id,
+                      vm?.host,
+                      retryCount
+                    );
+                  }
+                }
+              }
+              resolve(id + ', ' + retryCount + ', ' + ready);
+            });
+          });
+          const result = await Promise.race([
+            Promise.allSettled(stagingPromises),
+            new Promise((resolve) => setTimeout(resolve, 30000)),
+          ]);
+          // if (checkStagingStart) {
+          //   console.log('[CHECKSTAGING-DONE]', checkStagingStart, result);
+          // }
+          return result;
+        } catch (e) {
+          console.warn('[CHECKSTAGING-ERROR]', e);
+          return [];
+        }
+      };
+
+      setInterval(resizeVMGroupIncr, incrInterval);
+      setInterval(resizeVMGroupDecr, decrInterval);
+
+      updateSize();
+      setInterval(updateSize, updateSizeInterval);
+
+      setImmediate(async () => {
+        while (true) {
+          try {
+            await cleanupVMGroup();
+          } catch (e: any) {
+            console.log('error in cleanupVMGroup');
+            console.warn(e.response?.data);
+          }
+          await new Promise((resolve) => setTimeout(resolve, cleanupInterval));
+        }
+      });
+
+      const checkStagingInterval = 1000;
+      while (true) {
+        await new Promise((resolve) =>
+          setTimeout(resolve, checkStagingInterval)
+        );
+        await checkStaging();
+      }
+    } catch (e) {
+      console.log('error in runBackgroundJobs');
+      console.log(e);
     }
   };
 

@@ -1,16 +1,26 @@
 import React from 'react';
-import { Modal, Button, Popup, Icon, Grid, Radio } from 'semantic-ui-react';
+import {
+  Modal,
+  Button,
+  Popup,
+  Icon,
+  Radio,
+  Checkbox,
+  Header,
+} from 'semantic-ui-react';
 import { Socket } from 'socket.io-client';
 import { openFileSelector, serverPath } from '../../utils';
 
 export class SubtitleModal extends React.Component<{
   closeModal: Function;
-  currentSubtitle: string;
+  currentSubtitle: string | undefined;
   haveLock: Function;
   src: string;
   socket: Socket;
   getMediaDisplayName: Function;
   beta: boolean;
+  setSubtitleMode: Function;
+  getSubtitleMode: Function;
 }> {
   state = {
     loading: false,
@@ -44,59 +54,86 @@ export class SubtitleModal extends React.Component<{
     const { closeModal } = this.props;
     return (
       <Modal open={true} onClose={closeModal as any}>
-        <Modal.Header>
-          Subtitles are {Boolean(this.props.currentSubtitle) ? 'on' : 'off'}
-          <Button
-            style={{ float: 'right' }}
-            color="red"
-            title="Remove Subtitles"
-            disabled={
-              !Boolean(this.props.currentSubtitle) || !this.props.haveLock()
-            }
-            icon
-            onClick={() => {
-              this.props.socket.emit('CMD:subtitle', null);
-            }}
-          >
-            <Icon name="trash" />
-          </Button>
-        </Modal.Header>
+        <Modal.Header>Subtitles</Modal.Header>
         <Modal.Content image>
           <Modal.Description>
             {process.env.NODE_ENV === 'development' && (
-              <div style={{ maxWidth: '600px' }}>
-                {this.props.currentSubtitle}
-              </div>
+              <p>{this.props.currentSubtitle}</p>
             )}
-            <Grid columns={2}>
-              <Grid.Column>
+            <Checkbox
+              toggle
+              checked={this.props.getSubtitleMode() === 'hidden'}
+              label="Hide subtitles for myself"
+              onClick={(e, data) => {
+                this.props.setSubtitleMode();
+              }}
+            />
+            <hr />
+            <div>
+              <Header>Room subtitle settings</Header>
+              <div>
+                <Radio
+                  disabled={!this.props.haveLock()}
+                  name="radioGroup"
+                  label="No subtitles"
+                  value=""
+                  checked={!this.props.currentSubtitle}
+                  onChange={(e, { value }) => {
+                    this.props.socket.emit('CMD:subtitle', null);
+                  }}
+                />
+              </div>
+              <div>
+                <Radio
+                  disabled={!this.props.haveLock()}
+                  name="radioGroup"
+                  label="Uploaded subtitles"
+                  value=""
+                  checked={
+                    Boolean(this.props.currentSubtitle) &&
+                    this.props.currentSubtitle?.startsWith(
+                      serverPath + '/subtitle'
+                    )
+                  }
+                />
                 <Popup
                   content="Upload a .srt subtitle file for this video"
                   trigger={
                     <Button
+                      style={{ marginLeft: '10px' }}
                       color="violet"
                       icon
                       labelPosition="left"
-                      fluid
                       onClick={() => this.uploadSubtitle()}
                       disabled={!this.props.haveLock()}
+                      size="mini"
                     >
-                      <Icon name="closed captioning" />
-                      Upload Subtitles
+                      <Icon name="upload" />
+                      Upload (.srt)
                     </Button>
                   }
                 />
-              </Grid.Column>
-              {this.props.src.startsWith('http') && (
-                <Grid.Column>
-                  <div style={{ display: 'flex' }}>
-                    <Button
+              </div>
+              {!this.state.searchResults.length && (
+                <div>
+                  <Radio
+                    name="radioGroup"
+                    disabled={!this.props.haveLock()}
+                    value=""
+                    checked={
+                      Boolean(this.props.currentSubtitle) &&
+                      this.props.currentSubtitle?.startsWith(
+                        serverPath + '/downloadSubtitle'
+                      )
+                    }
+                  />
+                  {/* <Button
+                      style={{ marginLeft: '10px' }}
                       loading={this.state.loading}
                       color="green"
                       disabled={!this.props.haveLock()}
                       icon
                       labelPosition="left"
-                      fluid
                       onClick={async () => {
                         this.setState({ loading: true });
                         const resp = await window.fetch(
@@ -108,40 +145,40 @@ export class SubtitleModal extends React.Component<{
                       }}
                     >
                       <Icon name="search" />
-                      Search OpenSubtitles
-                    </Button>
-                    {this.props.beta && (
-                      <Button
-                        loading={this.state.loading}
-                        color="green"
-                        disabled={!this.props.haveLock()}
-                        icon
-                        labelPosition="left"
-                        fluid
-                        onClick={async () => {
-                          this.setState({ loading: true });
-                          const resp = await window.fetch(
-                            serverPath +
-                              '/searchSubtitles?title=' +
-                              this.props.getMediaDisplayName(this.props.src)
-                          );
-                          const json = await resp.json();
-                          this.setState({ searchResults: json });
-                          this.setState({ loading: false });
-                        }}
-                      >
-                        <Icon name="search" />
-                        Search by Title
-                      </Button>
-                    )}
-                  </div>
-                </Grid.Column>
+                      Search by Hash
+                    </Button> */}
+                  <Button
+                    style={{ marginLeft: '10px' }}
+                    loading={this.state.loading}
+                    color="green"
+                    disabled={!this.props.haveLock()}
+                    icon
+                    labelPosition="left"
+                    size="mini"
+                    onClick={async () => {
+                      this.setState({ loading: true });
+                      const resp = await window.fetch(
+                        serverPath +
+                          '/searchSubtitles?title=' +
+                          this.props
+                            .getMediaDisplayName(this.props.src)
+                            .split('/')
+                            .slice(-1)
+                      );
+                      const json = await resp.json();
+                      this.setState({ searchResults: json });
+                      this.setState({ loading: false });
+                    }}
+                  >
+                    <Icon name="search" />
+                    Search by Title
+                  </Button>
+                </div>
               )}
-            </Grid>
-            <div>
               {this.state.searchResults.map((result: any) => (
                 <div>
                   <Radio
+                    disabled={!this.props.haveLock()}
                     label={result.SubFileName}
                     name="radioGroup"
                     value={result.SubDownloadLink}
@@ -158,7 +195,6 @@ export class SubtitleModal extends React.Component<{
                 </div>
               ))}
             </div>
-            {/* TODO add a spinner */}
           </Modal.Description>
         </Modal.Content>
       </Modal>
