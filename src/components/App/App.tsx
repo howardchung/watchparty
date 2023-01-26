@@ -386,11 +386,11 @@ export default class App extends React.Component<AppProps, AppState> {
         if (response.data.roomId) {
           roomId = response.data.roomId;
         } else {
-          throw new Error('failed to resolve room name');
+          this.setState({ error: "Couldn't load this room." });
         }
       } catch (e) {
         console.error(e);
-        this.setState({ error: "There's no room with this name." });
+        this.setState({ error: "Couldn't load this room." });
         return;
       }
     }
@@ -423,7 +423,7 @@ export default class App extends React.Component<AppProps, AppState> {
     });
     this.socket = socket;
     socket.on('connect', async () => {
-      this.setState({ state: 'connected' });
+      this.setState({ state: 'connected', error: '' });
       // Load username from localstorage
       let userName = window.localStorage.getItem('watchparty-username');
       this.updateName(null, { value: userName || generateName() });
@@ -437,8 +437,15 @@ export default class App extends React.Component<AppProps, AppState> {
         this.setState({ isErrorAuth: true });
       } else if (err.message === 'room full') {
         this.setState({ error: 'This room is full.' });
+      }
+    });
+    socket.on('disconnect', (reason) => {
+      if (reason === 'io server disconnect') {
+        // the disconnection was initiated by the server, you need to reconnect manually
+        this.setState({ error: 'Disconnected from server.' });
       } else {
-        this.setState({ error: 'An error occurred.' });
+        // else the socket will automatically try to reconnect
+        this.setState({ error: 'Attempting to reconnect...' });
       }
     });
     socket.on('errorMessage', (err: string) => {
