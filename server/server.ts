@@ -324,13 +324,13 @@ app.get('/metadata', async (req, res) => {
     );
     isCustomer = Boolean(customer);
   }
-  let isVMPoolFull = null;
+  let isFreePoolFull = false;
   try {
-    isVMPoolFull = (
+    isFreePoolFull = (
       await axios.get(
-        'http://localhost:' + config.VMWORKER_PORT + '/isVMPoolFull'
+        'http://localhost:' + config.VMWORKER_PORT + '/isFreePoolFull'
       )
-    ).data;
+    ).data.isFull;
   } catch (e) {
     console.warn(e);
   }
@@ -342,7 +342,9 @@ app.get('/metadata', async (req, res) => {
   return res.json({
     isSubscriber,
     isCustomer,
-    isVMPoolFull,
+    // TODO Deprecated, remove
+    isVMPoolFull: {},
+    isFreePoolFull,
     beta,
     streamPath,
     isCustomDomain,

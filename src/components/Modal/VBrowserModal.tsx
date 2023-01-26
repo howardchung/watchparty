@@ -9,15 +9,24 @@ import { serverPath } from '../../utils';
 import firebase from 'firebase/compat/app';
 
 const regionOptions = [
-  { key: 'US', text: 'USA', value: 'US', icon: 'flag' },
-  { key: 'EU', text: 'Europe', value: 'EU', icon: 'flag' },
-];
-
-const providerOptions = [
-  { key: 'Hetzner', text: 'Hetzner', value: 'Hetzner' },
-  { key: 'DO', text: 'DigitalOcean', value: 'DO' },
-  { key: 'Scaleway', text: 'Scaleway', value: 'Scaleway' },
-  { key: 'Docker', text: 'Docker', value: 'Docker' },
+  {
+    key: 'US',
+    text: 'US East',
+    value: 'US',
+    image: { avatar: false, src: './flag-united-states.png' },
+  },
+  {
+    key: 'USW',
+    text: 'US West',
+    value: 'USW',
+    image: { avatar: false, src: './flag-united-states.png' },
+  },
+  {
+    key: 'EU',
+    text: 'Europe',
+    value: 'EU',
+    image: { avatar: false, src: './flag-european-union.png' },
+  },
 ];
 
 export class VBrowserModal extends React.Component<{
@@ -29,14 +38,13 @@ export class VBrowserModal extends React.Component<{
   beta?: boolean;
 }> {
   state = {
-    isVMPoolFull: {} as BooleanDict,
+    isFreePoolFull: false,
     region: 'US',
-    provider: process.env.NODE_ENV === 'development' ? 'Docker' : 'Hetzner',
   };
   async componentDidMount() {
     const resp = await window.fetch(serverPath + '/metadata');
     const metadata = await resp.json();
-    this.setState({ isVMPoolFull: metadata.isVMPoolFull });
+    this.setState({ isFreePoolFull: metadata.isFreePoolFull });
   }
   render() {
     const { closeModal, startVBrowser } = this.props;
@@ -51,8 +59,7 @@ export class VBrowserModal extends React.Component<{
             ).executeRecaptcha('launchVBrowser');
             startVBrowser(rcToken, {
               size: large ? 'large' : '',
-              region: this.state.region,
-              provider: this.state.provider,
+              region: large ? this.state.region : 'US',
             });
             closeModal();
           }}
@@ -103,7 +110,7 @@ export class VBrowserModal extends React.Component<{
 
                 <Table.Body>
                   <Table.Row>
-                    <Table.Cell>VBrowser Resolution</Table.Cell>
+                    <Table.Cell>VBrowser Max Resolution</Table.Cell>
                     <Table.Cell>720p</Table.Cell>
                     <Table.Cell>1080p</Table.Cell>
                   </Table.Row>
@@ -117,44 +124,25 @@ export class VBrowserModal extends React.Component<{
                     <Table.Cell>3 hours</Table.Cell>
                     <Table.Cell>24 hours</Table.Cell>
                   </Table.Row>
-                  {this.props.beta && (
-                    <Table.Row>
-                      <Table.Cell>Region</Table.Cell>
-                      <Table.Cell colspan={2}>
-                        <Dropdown
-                          selection
-                          onChange={(e, { value }) =>
-                            this.setState({ region: value })
-                          }
-                          value={this.state.region}
-                          options={regionOptions}
-                        ></Dropdown>
-                      </Table.Cell>
-                    </Table.Row>
-                  )}
-                  {this.props.beta && (
-                    <Table.Row>
-                      <Table.Cell>Provider</Table.Cell>
-                      <Table.Cell colspan={2}>
-                        <Dropdown
-                          placeholder="Select provider"
-                          selection
-                          onChange={(e, { value }) =>
-                            this.setState({ provider: value })
-                          }
-                          value={this.state.provider}
-                          options={providerOptions}
-                        ></Dropdown>
-                      </Table.Cell>
-                    </Table.Row>
-                  )}
+                  <Table.Row>
+                    <Table.Cell>Region</Table.Cell>
+                    <Table.Cell>Where available </Table.Cell>
+                    <Table.Cell>
+                      <Dropdown
+                        selection
+                        onChange={(e, { value }) =>
+                          this.setState({ region: value })
+                        }
+                        value={this.state.region}
+                        options={regionOptions}
+                      ></Dropdown>
+                    </Table.Cell>
+                  </Table.Row>
                   <Table.Row>
                     <Table.Cell></Table.Cell>
                     <Table.Cell>
                       {this.props.user ? (
-                        this.state.isVMPoolFull[
-                          this.state.provider + '' + this.state.region
-                        ] ? (
+                        this.state.isFreePoolFull ? (
                           vmPoolFullMessage
                         ) : (
                           <LaunchButton />

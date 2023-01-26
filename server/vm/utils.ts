@@ -106,24 +106,26 @@ function createVMManager(poolConfig: PoolConfig): VMManager | null {
   return vmManager;
 }
 
+export function getVMManagerConfig(): Array<PoolConfig> {
+  return config.VM_MANAGER_CONFIG.split(',').map((c) => {
+    const split = c.split(':');
+    return {
+      provider: split[0],
+      isLarge: split[1] === 'large',
+      region: split[2] as PoolRegion,
+      minSize: Number(split[3]),
+      limitSize: Number(split[4]),
+    };
+  });
+}
+
 export function getBgVMManagers(): { [key: string]: VMManager | null } {
   const result: { [key: string]: VMManager | null } = {};
-  const conf: Array<PoolConfig> = config.VM_MANAGER_CONFIG.split(',').map(
-    (c) => {
-      const split = c.split(':');
-      return {
-        provider: split[0],
-        isLarge: split[1] === 'large',
-        region: split[2] as PoolRegion,
-        minSize: Number(split[3]),
-        limitSize: Number(split[4]),
-      };
-    }
-  );
+  const conf = getVMManagerConfig();
   conf.forEach((c) => {
     const mgr = createVMManager(c);
     if (mgr) {
-      result[c.provider + (c.isLarge ? 'Large' : '') + c.region] = mgr;
+      result[mgr.getPoolName()] = mgr;
     }
   });
   return result;
