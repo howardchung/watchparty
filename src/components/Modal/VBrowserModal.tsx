@@ -13,19 +13,19 @@ const regionOptions = [
     key: 'US',
     text: 'US East',
     value: 'US',
-    image: { avatar: false, src: './flag-united-states.png' },
+    image: { avatar: false, src: '/flag-united-states.png' },
   },
   {
     key: 'USW',
     text: 'US West',
     value: 'USW',
-    image: { avatar: false, src: './flag-united-states.png' },
+    image: { avatar: false, src: '/flag-united-states.png' },
   },
   {
     key: 'EU',
     text: 'Europe',
     value: 'EU',
-    image: { avatar: false, src: './flag-european-union.png' },
+    image: { avatar: false, src: '/flag-european-union.png' },
   },
 ];
 
