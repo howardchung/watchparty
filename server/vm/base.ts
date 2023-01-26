@@ -187,7 +187,7 @@ export abstract class VMManager {
     try {
       console.log(
         '[VMWORKER] starting background jobs for %s',
-        this.getRedisQueueKey()
+        this.getPoolName()
       );
       const resizeVMGroupIncr = async () => {
         const availableCount = await this.redis.llen(this.getRedisQueueKey());
@@ -278,7 +278,7 @@ export abstract class VMManager {
           );
           console.log(
             '[STATS] %s: currentSize %s, available %s, staging %s, buffer %s',
-            this.getRedisQueueKey(),
+            this.getPoolName(),
             allVMs.length,
             availableKeys.length,
             stagingKeys.length,
@@ -321,7 +321,7 @@ export abstract class VMManager {
         ]);
         console.log(
           '[CLEANUP] %s: cleanup %s VMs',
-          this.getRedisQueueKey(),
+          this.getPoolName(),
           allVMs.length - dontDelete.size
         );
         for (let i = 0; i < allVMs.length; i++) {
