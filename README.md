@@ -1,5 +1,8 @@
 # WatchParty
 
+File changes
+export const serverPath = `${window.location.origin}`.replace('3000', '8080');
+
 ![screenshot](https://github.com/howardchung/watchparty/raw/master/public/screenshot_full.png)
 
 An website for watching videos together.
