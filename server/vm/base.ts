@@ -34,6 +34,14 @@ export abstract class VMManager {
     this.redis = redis;
   }
 
+  public getIsLarge = () => {
+    return this.isLarge;
+  };
+
+  public getRegion = () => {
+    return this.region;
+  };
+
   public getMinSize = () => {
     return this.minSize;
   };
@@ -48,6 +56,10 @@ export abstract class VMManager {
 
   public getCurrentSize = () => {
     return this.currentSize;
+  };
+
+  public getPoolName = () => {
+    return this.id + (this.isLarge ? 'Large' : '') + this.region;
   };
 
   public getAdjustedBuffer = () => {
