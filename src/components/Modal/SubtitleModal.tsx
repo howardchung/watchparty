@@ -85,6 +85,24 @@ export class SubtitleModal extends React.Component<{
                   }}
                 />
               </div>
+              {this.props.beta && (
+                <div>
+                  <Radio
+                    disabled={!this.props.haveLock()}
+                    name="radioGroup"
+                    label=".srt extension appended to current video URL"
+                    value=""
+                    checked={Boolean(
+                      this.props.currentSubtitle &&
+                        this.props.currentSubtitle?.startsWith(this.props.src)
+                    )}
+                    onChange={(e, data) => {
+                      const subValue = this.props.src + '.srt';
+                      this.props.socket.emit('CMD:subtitle', subValue);
+                    }}
+                  />
+                </div>
+              )}
               <div>
                 <Radio
                   disabled={!this.props.haveLock()}
@@ -110,24 +128,6 @@ export class SubtitleModal extends React.Component<{
                   Upload (.srt)
                 </Button>
               </div>
-              {this.props.beta && (
-                <div>
-                  <Radio
-                    disabled={!this.props.haveLock()}
-                    name="radioGroup"
-                    label=".srt extension appended to current video URL"
-                    value=""
-                    checked={Boolean(
-                      this.props.currentSubtitle &&
-                        this.props.currentSubtitle?.startsWith(this.props.src)
-                    )}
-                    onChange={(e, data) => {
-                      const subValue = this.props.src + '.srt';
-                      this.props.socket.emit('CMD:subtitle', subValue);
-                    }}
-                  />
-                </div>
-              )}
               {!this.state.searchResults.length && (
                 <div>
                   <Radio
