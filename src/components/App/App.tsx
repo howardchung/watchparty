@@ -1759,7 +1759,7 @@ export default class App extends React.Component<AppProps, AppState> {
                           !sharer &&
                           !this.isVBrowser() && (
                             <Popup
-                              content={`Share a tab or an application. Make sure to check "Share audio" for best results.`}
+                              content={`Share a tab or an application.`}
                               trigger={
                                 <Button
                                   fluid

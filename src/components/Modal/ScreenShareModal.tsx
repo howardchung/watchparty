@@ -16,8 +16,8 @@ export class ScreenShareModal extends React.Component<{
             <ul>
               <li>This feature is only supported on Chrome and Edge.</li>
               <li>
-                To share audio, you need to check the "Share audio" checkbox in
-                the screen selection dialog.
+                To share audio, the "Share audio" checkbox needs to be checked
+                in the screen selection dialog.
               </li>
               <li>
                 Audio sharing is only supported if sharing your entire screen or
