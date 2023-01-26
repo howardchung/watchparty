@@ -30,7 +30,6 @@ class WatchParty extends React.Component {
     isCustomer: false,
     streamPath: undefined as string | undefined,
     beta: false,
-    isCustomDomain: false,
   };
   async componentDidMount() {
     if (firebaseConfig) {
@@ -48,7 +47,6 @@ class WatchParty extends React.Component {
             isCustomer: data.isCustomer,
             streamPath: data.streamPath,
             beta: data.beta,
-            isCustomDomain: data.isCustomDomain,
           });
         }
       });
@@ -57,13 +55,6 @@ class WatchParty extends React.Component {
   render() {
     return (
       <React.StrictMode>
-        {this.state.isCustomDomain && (
-          <Modal inverted basic open>
-            <Modal.Header>
-              Please contact Howard for access to beta/testing mode.
-            </Modal.Header>
-          </Modal>
-        )}
         <BrowserRouter>
           <Route
             path="/"
