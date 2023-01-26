@@ -3,7 +3,7 @@ import Redis from 'ioredis';
 import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import { redisCount } from '../utils/redis';
-import { execSync } from 'child_process';
+import { PoolConfig, PoolRegion } from './utils';
 
 let redis: Redis.Redis | undefined = undefined;
 if (config.REDIS_URL) {
@@ -17,19 +17,14 @@ const updateSizeInterval = 60 * 1000;
 
 export abstract class VMManager {
   protected isLarge = false;
-  protected region = '';
+  protected region: PoolRegion = 'US';
   protected redis: Redis.Redis;
   private currentSize = 0;
   private limitSize = 0;
   private minSize = 0;
 
-  constructor(
-    large: boolean,
-    region: string,
-    limitSize: number,
-    minSize: number
-  ) {
-    this.isLarge = Boolean(large);
+  constructor({ isLarge, region, limitSize, minSize }: PoolConfig) {
+    this.isLarge = isLarge;
     this.region = region;
     this.limitSize = Number(limitSize);
     this.minSize = Number(minSize);
