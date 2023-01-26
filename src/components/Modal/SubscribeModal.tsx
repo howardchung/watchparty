@@ -104,13 +104,6 @@ export class SubscribeModal extends React.Component<{
                   <Table.Cell>24 hours</Table.Cell>
                 </Table.Row>
                 <Table.Row>
-                  <Table.Cell>VBrowser Region Selection</Table.Cell>
-                  <Table.Cell></Table.Cell>
-                  <Table.Cell>
-                    <Icon name="check" />
-                  </Table.Cell>
-                </Table.Row>
-                <Table.Row>
                   <Table.Cell>Number of Permanent Rooms</Table.Cell>
                   <Table.Cell>1</Table.Cell>
                   <Table.Cell>20</Table.Cell>

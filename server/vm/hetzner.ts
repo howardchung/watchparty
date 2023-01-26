@@ -14,17 +14,7 @@ export class Hetzner extends VMManager {
   minRetries = 30;
   id = 'Hetzner';
   gateway = config.HETZNER_GATEWAY;
-
-  private getRandomDatacenter() {
-    // US
-    let datacenters = ['ash'];
-    if (this.region === 'USW') {
-      datacenters = ['hil'];
-    } else if (this.region === 'EU') {
-      datacenters = ['nbg1', 'fsn1', 'hel1'];
-    }
-    return datacenters[Math.floor(Math.random() * datacenters.length)];
-  }
+  datacenters = this.region === 'US' ? ['ash'] : ['nbg1', 'fsn1', 'hel1'];
 
   startVM = async (name: string) => {
     const response = await axios({
@@ -51,7 +41,8 @@ export class Hetzner extends VMManager {
           [this.getTag()]: '1',
           originalName: name,
         },
-        location: this.getRandomDatacenter(),
+        location:
+          this.datacenters[Math.floor(Math.random() * this.datacenters.length)],
       },
     });
     const id = response.data.server.id;
@@ -220,7 +211,8 @@ export class Hetzner extends VMManager {
         user_data: fs
           .readFileSync(__dirname + '/../../dev/vbrowser.sh')
           .toString(),
-        location: this.getRandomDatacenter(),
+        location:
+          this.datacenters[Math.floor(Math.random() * this.datacenters.length)],
       },
     });
     const id = response.data.server.id;

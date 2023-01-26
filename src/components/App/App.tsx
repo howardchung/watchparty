@@ -197,7 +197,7 @@ export default class App extends React.Component<AppProps, AppState> {
     errorMessage: '',
     successMessage: '',
     isChatDisabled: false,
-    showRightBar: true,
+    showRightBar: false,
     owner: undefined,
     vanity: undefined,
     password: undefined,
@@ -386,11 +386,11 @@ export default class App extends React.Component<AppProps, AppState> {
         if (response.data.roomId) {
           roomId = response.data.roomId;
         } else {
-          this.setState({ error: "Couldn't load this room." });
+          throw new Error('failed to resolve room name');
         }
       } catch (e) {
         console.error(e);
-        this.setState({ error: "Couldn't load this room." });
+        this.setState({ error: "There's no room with this name." });
         return;
       }
     }
@@ -423,7 +423,7 @@ export default class App extends React.Component<AppProps, AppState> {
     });
     this.socket = socket;
     socket.on('connect', async () => {
-      this.setState({ state: 'connected', error: '' });
+      this.setState({ state: 'connected' });
       // Load username from localstorage
       let userName = window.localStorage.getItem('watchparty-username');
       this.updateName(null, { value: userName || generateName() });
@@ -437,15 +437,8 @@ export default class App extends React.Component<AppProps, AppState> {
         this.setState({ isErrorAuth: true });
       } else if (err.message === 'room full') {
         this.setState({ error: 'This room is full.' });
-      }
-    });
-    socket.on('disconnect', (reason) => {
-      if (reason === 'io server disconnect') {
-        // the disconnection was initiated by the server, you need to reconnect manually
-        this.setState({ error: 'Disconnected from server.' });
       } else {
-        // else the socket will automatically try to reconnect
-        this.setState({ error: 'Attempting to reconnect...' });
+        this.setState({ error: 'An error occurred.' });
       }
     });
     socket.on('errorMessage', (err: string) => {
@@ -1714,7 +1707,7 @@ export default class App extends React.Component<AppProps, AppState> {
           <Grid stackable celled="internally">
             <Grid.Row id="theaterContainer">
               <Grid.Column
-                width={this.state.showRightBar ? 12 : 15}
+                width={this.state.showRightBar ? 12 : 16}
                 className={
                   this.state.fullScreen
                     ? 'fullHeightColumnFullscreen'
@@ -1762,56 +1755,56 @@ export default class App extends React.Component<AppProps, AppState> {
                             Stop Share
                           </Button>
                         )}
-                        {!this.screenShareStream &&
-                          !sharer &&
-                          !this.isVBrowser() && (
-                            <Popup
-                              content={`Share a tab or an application.`}
-                              trigger={
-                                <Button
-                                  fluid
-                                  className="toolButton"
-                                  disabled={!this.haveLock()}
-                                  icon
-                                  labelPosition="left"
-                                  color={'instagram'}
-                                  onClick={() => {
-                                    this.setState({
-                                      isScreenShareModalOpen: true,
-                                    });
-                                  }}
-                                >
-                                  <Icon name={'slideshare'} />
-                                  Screenshare
-                                </Button>
-                              }
-                            />
-                          )}
-                        {!this.screenShareStream &&
-                          !sharer &&
-                          !this.isVBrowser() && (
-                            <Popup
-                              content="Launch a shared virtual browser"
-                              trigger={
-                                <Button
-                                  fluid
-                                  className="toolButton"
-                                  disabled={!this.haveLock()}
-                                  icon
-                                  labelPosition="left"
-                                  color="green"
-                                  onClick={() => {
-                                    this.setState({
-                                      isVBrowserModalOpen: true,
-                                    });
-                                  }}
-                                >
-                                  <Icon name="desktop" />
-                                  VBrowser
-                                </Button>
-                              }
-                            />
-                          )}
+                        {/*{!this.screenShareStream &&*/}
+                        {/*  !sharer &&*/}
+                        {/*  !this.isVBrowser() && (*/}
+                        {/*    <Popup*/}
+                        {/*      content={`Share a tab or an application.`}*/}
+                        {/*      trigger={*/}
+                        {/*        <Button*/}
+                        {/*          fluid*/}
+                        {/*          className="toolButton"*/}
+                        {/*          disabled={!this.haveLock()}*/}
+                        {/*          icon*/}
+                        {/*          labelPosition="left"*/}
+                        {/*          color={'instagram'}*/}
+                        {/*          onClick={() => {*/}
+                        {/*            this.setState({*/}
+                        {/*              isScreenShareModalOpen: true,*/}
+                        {/*            });*/}
+                        {/*          }}*/}
+                        {/*        >*/}
+                        {/*          <Icon name={'slideshare'} />*/}
+                        {/*          Screenshare*/}
+                        {/*        </Button>*/}
+                        {/*      }*/}
+                        {/*    />*/}
+                        {/*  )}*/}
+                        {/*{!this.screenShareStream &&*/}
+                        {/*  !sharer &&*/}
+                        {/*  !this.isVBrowser() && (*/}
+                        {/*    <Popup*/}
+                        {/*      content="Launch a shared virtual browser"*/}
+                        {/*      trigger={*/}
+                        {/*        <Button*/}
+                        {/*          fluid*/}
+                        {/*          className="toolButton"*/}
+                        {/*          disabled={!this.haveLock()}*/}
+                        {/*          icon*/}
+                        {/*          labelPosition="left"*/}
+                        {/*          color="green"*/}
+                        {/*          onClick={() => {*/}
+                        {/*            this.setState({*/}
+                        {/*              isVBrowserModalOpen: true,*/}
+                        {/*            });*/}
+                        {/*          }}*/}
+                        {/*        >*/}
+                        {/*          <Icon name="desktop" />*/}
+                        {/*          VBrowsers*/}
+                        {/*        </Button>*/}
+                        {/*      }*/}
+                        {/*    />*/}
+                        {/*  )}*/}
                         {this.isVBrowser() && (
                           <Popup
                             content="Choose the person controlling the VBrowser"
@@ -1890,39 +1883,30 @@ export default class App extends React.Component<AppProps, AppState> {
                             Stop VBrowser
                           </Button>
                         )}
-                        {!this.screenShareStream &&
-                          !sharer &&
-                          !this.isVBrowser() && (
-                            <Popup
-                              content="Stream your own video file"
-                              trigger={
-                                <Button
-                                  fluid
-                                  className="toolButton"
-                                  disabled={!this.haveLock()}
-                                  icon
-                                  labelPosition="left"
-                                  onClick={() => {
-                                    this.setState({
-                                      isFileShareModalOpen: true,
-                                    });
-                                  }}
-                                >
-                                  <Icon name="file" />
-                                  File
-                                </Button>
-                              }
-                            />
-                          )}
-                        {false && (
-                          <SearchComponent
-                            setMedia={this.setMedia}
-                            playlistAdd={this.playlistAdd}
-                            type={'youtube'}
-                            streamPath={this.props.streamPath}
-                            disabled={!this.haveLock()}
-                          />
-                        )}
+                        {/*{!this.screenShareStream &&*/}
+                        {/*  !sharer &&*/}
+                        {/*  !this.isVBrowser() && (*/}
+                        {/*    <Popup*/}
+                        {/*      content="Stream your own video file"*/}
+                        {/*      trigger={*/}
+                        {/*        <Button*/}
+                        {/*          fluid*/}
+                        {/*          className="toolButton"*/}
+                        {/*          disabled={!this.haveLock()}*/}
+                        {/*          icon*/}
+                        {/*          labelPosition="left"*/}
+                        {/*          onClick={() => {*/}
+                        {/*            this.setState({*/}
+                        {/*              isFileShareModalOpen: true,*/}
+                        {/*            });*/}
+                        {/*          }}*/}
+                        {/*        >*/}
+                        {/*          <Icon name="file" />*/}
+                        {/*          File*/}
+                        {/*        </Button>*/}
+                        {/*      }*/}
+                        {/*    />*/}
+                        {/*  )}*/}
                         {Boolean(this.props.streamPath) && (
                           <SearchComponent
                             setMedia={this.setMedia}
@@ -1937,7 +1921,7 @@ export default class App extends React.Component<AppProps, AppState> {
                       <Separator />
                     </React.Fragment>
                   )}
-                  <div style={{ flexGrow: 1 }}>
+                  <div style={{ flexGrow: 2 }}>
                     <div id="playerContainer">
                       {(this.state.loading ||
                         !this.state.currentMedia ||
@@ -1960,23 +1944,23 @@ export default class App extends React.Component<AppProps, AppState> {
                               </Loader>
                             </Dimmer>
                           )}
-                          {!this.state.loading && !this.state.currentMedia && (
-                            <Message
-                              color="yellow"
-                              icon="hand point up"
-                              header="You're not watching anything!"
-                              content="Pick something to watch above."
-                            />
-                          )}
-                          {!this.state.loading &&
-                            this.state.nonPlayableMedia && (
-                              <Message
-                                color="red"
-                                icon="frown"
-                                header="It doesn't look like this is a media file!"
-                                content="Maybe you meant to launch a VBrowser if you're trying to visit a web page?"
-                              />
-                            )}
+                          {/*{!this.state.loading && !this.state.currentMedia && (*/}
+                          {/*  <Message*/}
+                          {/*    color="yellow"*/}
+                          {/*    icon="hand point up"*/}
+                          {/*    header="You're not watching anything!"*/}
+                          {/*    content="Pick something to watch above."*/}
+                          {/*  />*/}
+                          {/*)}*/}
+                          {/*{!this.state.loading &&*/}
+                          {/*  this.state.nonPlayableMedia && (*/}
+                          {/*    <Message*/}
+                          {/*      color="red"*/}
+                          {/*      icon="frown"*/}
+                          {/*      header="It doesn't look like this is a media file!"*/}
+                          {/*      content="Maybe you meant to launch a VBrowser if you're trying to visit a web page?"*/}
+                          {/*    />*/}
+                          {/*  )}*/}
                         </div>
                       )}
                       <iframe
@@ -2054,22 +2038,22 @@ export default class App extends React.Component<AppProps, AppState> {
                     </div>
                   )}
                 </div>
-                <Button
-                  style={{
-                    position: 'absolute',
-                    top: '50%',
-                    right: 'calc(0% - 18px)',
-                    zIndex: 900,
-                  }}
-                  circular
-                  size="mini"
-                  icon={this.state.showRightBar ? 'angle right' : 'angle left'}
-                  onClick={() =>
-                    this.setState({ showRightBar: !this.state.showRightBar })
-                  }
-                />
+                {/*<Button*/}
+                {/*  style={{*/}
+                {/*    position: 'absolute',*/}
+                {/*    top: '50%',*/}
+                {/*    right: 'calc(0% - 18px)',*/}
+                {/*    zIndex: 900,*/}
+                {/*  }}*/}
+                {/*  circular*/}
+                {/*  size="mini"*/}
+                {/*  icon={this.state.showRightBar ? 'angle right' : 'angle left'}*/}
+                {/*  onClick={() =>*/}
+                {/*    this.setState({ showRightBar: !this.state.showRightBar })*/}
+                {/*  }*/}
+                {/*/>*/}
               </Grid.Column>
-              {rightBar}
+              {/*{rightBar}*/}
             </Grid.Row>
           </Grid>
         }

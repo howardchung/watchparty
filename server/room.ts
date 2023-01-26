@@ -748,7 +748,8 @@ export class Room {
       }
     }
     let isLarge = false;
-    let region = config.DEFAULT_VM_REGION;
+    let region = 'US';
+    let provider = data.options?.provider ?? config.VM_MANAGER_ID;
     if (config.STRIPE_SECRET_KEY && data && data.uid && data.token) {
       const decoded = await validateUserToken(data.uid, data.token);
       // Check if user is subscriber, if so allow isLarge
@@ -797,6 +798,7 @@ export class Room {
     const assignmentResp = await axios.post(
       'http://localhost:' + config.VMWORKER_PORT + '/assignVM',
       {
+        provider,
         isLarge,
         region,
         uid,

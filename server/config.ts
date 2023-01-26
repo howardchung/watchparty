@@ -21,7 +21,8 @@ const defaults = {
   HETZNER_GATEWAY: '', // Gateway handling SSL termination
   HETZNER_SSH_KEYS: '', // IDs of Hetzner SSH keys to access vbrowsers
   HETZNER_IMAGE: '', // ID of Hetzner snapshot image to use for vbrowser
-  VM_MANAGER_CONFIG: 'Docker:large:US:0:0,Docker:standard:US:0:0', // Comma-separated list of the pools of VMs to run (provider:size:region:minSize:limitSize)
+  HETZNER_POOL_SIZE: '', // Comma separated min/max instances to keep in pool (0 to disable)
+  HETZNER_POOL_SIZE_LARGE: '', // Comma separated min/max large instances to keep in pool (0 to disable)
   SCW_SECRET_KEY: '', // Optional, for Scaleway VMs
   SCW_ORGANIZATION_ID: '', // Optional, for Scaleway VMs
   SCW_GATEWAY: '', // Gateway handling SSL termination
@@ -42,12 +43,12 @@ const defaults = {
   ROOM_CAPACITY: 0, // Maximum capacity of a standard room. Set to 0 for unlimited.
   ROOM_CAPACITY_SUB: 0, // Maximum capacity of a sub room. Set to 0 for unlimited.
   BUILD_DIRECTORY: 'build', // Name of the directory where the built React UI is served from
+  VM_MANAGER_ID: 'Docker', // ID value of the default VM Manager implementation to use (see vm directory)
   VM_MIN_UPTIME_MINUTES: 0, // Number of minutes of the hour VMs must exist for before being eligible for termination
   SHARD: undefined, // Shard ID of the web server (configure in ecosystem.config.js)
   SUBSCRIBER_ROOM_LIMIT: 20, // The maximum number of rooms a subscriber can have
   VMWORKER_PORT: 3100, // Port to use for the vmWorker HTTP server
   VM_ASSIGNMENT_TIMEOUT: 75, // Number of seconds to wait for a VM before failing
-  DEFAULT_VM_REGION: 'US', // The default region to use for free VM/pool selection
 };
 
 export default {

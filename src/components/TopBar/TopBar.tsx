@@ -43,6 +43,7 @@ export class NewRoomButton extends React.Component<{
   createRoom = async () => {
     await createRoom(this.props.user, this.props.openNewTab);
   };
+
   render() {
     return (
       <Popup
@@ -282,133 +283,60 @@ export class TopBar extends React.Component<{
         <div
           style={{
             display: 'flex',
-            flexWrap: 'wrap',
+            // flexWrap: 'wrap',
             padding: '1em',
             paddingBottom: '0px',
           }}
         >
           <a href="/" style={{ display: 'flex' }}>
-            <div
+            <img
+              src={'logo192.png'}
+              // name="film"
+              // size="large"
               style={{
-                height: '48px',
-                width: '48px',
-                marginRight: '10px',
-                borderRadius: '50%',
-                position: 'relative',
-                backgroundColor: '#' + colorMappings.blue,
+                // position: 'absolute',
+                top: 24,
+                width: '80px',
+                // margin: '0 auto',
               }}
-            >
-              <Icon
-                inverted
-                name="film"
-                size="large"
-                style={{
-                  position: 'absolute',
-                  top: 8,
-                  width: '100%',
-                  margin: '0 auto',
-                }}
-              />
-              <Icon
-                inverted
-                name="group"
-                size="large"
-                color="green"
-                style={{
-                  position: 'absolute',
-                  bottom: 8,
-                  width: '100%',
-                  margin: '0 auto',
-                }}
-              />
-            </div>
+              alt={'Logo'}
+            />
           </a>
-          {this.props.roomTitle || this.props.roomDescription ? (
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                marginRight: 10,
-                marginLeft: 10,
-              }}
-            >
+          <React.Fragment>
+            <a href="/" style={{ display: 'flex' }}>
               <div
                 style={{
-                  fontSize: 30,
-                  color: this.props.roomTitleColor || 'white',
-                  fontWeight: 'bold',
-                  letterSpacing: 1,
+                  display: 'flex',
+                  alignItems: 'center',
                 }}
               >
-                {this.props.roomTitle?.toUpperCase()}
-              </div>
-              <div style={{ marginTop: 4, color: 'rgb(255 255 255 / 63%)' }}>
-                {this.props.roomDescription}
-              </div>
-            </div>
-          ) : (
-            <React.Fragment>
-              <a href="/" style={{ display: 'flex' }}>
                 <div
                   style={{
-                    display: 'flex',
-                    alignItems: 'center',
+                    textTransform: 'uppercase',
+                    fontWeight: 700,
+                    color: '#9765d3',
+                    fontSize: '30px',
+                    lineHeight: '30px',
                   }}
                 >
-                  <div
-                    style={{
-                      textTransform: 'uppercase',
-                      fontWeight: 700,
-                      color: '#2185d0',
-                      fontSize: '30px',
-                      lineHeight: '30px',
-                    }}
-                  >
-                    Watch
-                  </div>
-                  <div
-                    style={{
-                      textTransform: 'uppercase',
-                      fontWeight: 700,
-                      color: '#21ba45',
-                      fontSize: '30px',
-                      lineHeight: '30px',
-                      marginLeft: 'auto',
-                    }}
-                  >
-                    Party
-                  </div>
+                  Meta
                 </div>
-              </a>
-            </React.Fragment>
-          )}
-          <div
-            style={{
-              display: 'flex',
-              marginLeft: '10px',
-              alignItems: 'center',
-            }}
-          >
-            <a
-              href="https://discord.gg/3rYj5HV"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="footerIcon"
-              title="Discord"
-            >
-              <Icon name="discord" size="big" link />
+                <div
+                  style={{
+                    textTransform: 'uppercase',
+                    fontWeight: 700,
+                    color: '#217fba',
+                    fontSize: '30px',
+                    lineHeight: '30px',
+                    marginLeft: 'auto',
+                  }}
+                >
+                  Wood
+                </div>
+              </div>
             </a>
-            <a
-              href="https://github.com/howardchung/watchparty"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="footerIcon"
-              title="GitHub"
-            >
-              <Icon name="github" size="big" link />
-            </a>
-          </div>
+          </React.Fragment>
+
           <div
             className="mobileStack"
             style={{
@@ -416,16 +344,7 @@ export class TopBar extends React.Component<{
               marginLeft: 'auto',
               gap: '4px',
             }}
-          >
-            {!this.props.hideNewRoom && (
-              <NewRoomButton user={this.props.user} openNewTab />
-            )}
-            {!this.props.hideMyRooms && this.props.user && (
-              <ListRoomsButton user={this.props.user} />
-            )}
-            {subscribeButton}
-            {!this.props.hideSignin && <SignInButton user={this.props.user} />}
-          </div>
+          ></div>
         </div>
       </React.Fragment>
     );

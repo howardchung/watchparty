@@ -66,67 +66,122 @@ export const assignVM = async (
   }
 };
 
-export type PoolRegion = 'US' | 'USW' | 'EU';
-export type PoolConfig = {
+function getVMManager({
+  provider,
+  isLarge,
+  region,
+  limitSize,
+  minSize,
+}: {
   provider: string;
   isLarge: boolean;
-  region: PoolRegion;
+  region: string;
   limitSize: number;
   minSize: number;
-};
-
-function createVMManager(poolConfig: PoolConfig): VMManager | null {
+}): VMManager | null {
   let vmManager: VMManager | null = null;
   if (
     config.REDIS_URL &&
     config.SCW_SECRET_KEY &&
     config.SCW_ORGANIZATION_ID &&
-    poolConfig.provider === 'Scaleway'
+    provider === 'Scaleway'
   ) {
-    vmManager = new Scaleway(poolConfig);
+    vmManager = new Scaleway(isLarge, region, limitSize, minSize);
   } else if (
     config.REDIS_URL &&
     config.HETZNER_TOKEN &&
-    poolConfig.provider === 'Hetzner'
+    provider === 'Hetzner'
   ) {
-    vmManager = new Hetzner(poolConfig);
-  } else if (
-    config.REDIS_URL &&
-    config.DO_TOKEN &&
-    poolConfig.provider === 'DO'
-  ) {
-    vmManager = new DigitalOcean(poolConfig);
+    vmManager = new Hetzner(isLarge, region, limitSize, minSize);
+  } else if (config.REDIS_URL && config.DO_TOKEN && provider === 'DO') {
+    vmManager = new DigitalOcean(isLarge, region, limitSize, minSize);
   } else if (
     config.REDIS_URL &&
     config.DOCKER_VM_HOST &&
-    poolConfig.provider === 'Docker'
+    provider === 'Docker'
   ) {
-    vmManager = new Docker(poolConfig);
+    vmManager = new Docker(isLarge, region, limitSize, minSize);
   }
   return vmManager;
 }
 
-export function getVMManagerConfig(): Array<PoolConfig> {
-  return config.VM_MANAGER_CONFIG.split(',').map((c) => {
-    const split = c.split(':');
-    return {
-      provider: split[0],
-      isLarge: split[1] === 'large',
-      region: split[2] as PoolRegion,
-      minSize: Number(split[3]),
-      limitSize: Number(split[4]),
-    };
-  });
-}
-
 export function getBgVMManagers(): { [key: string]: VMManager | null } {
+  const conf = [
+    {
+      provider: 'Hetzner',
+      isLarge: true,
+      region: 'US',
+      limitSize: Number(config.HETZNER_POOL_SIZE_LARGE.split(',')[1]),
+      minSize: Number(config.HETZNER_POOL_SIZE_LARGE.split(',')[0]),
+    },
+    {
+      provider: 'Hetzner',
+      isLarge: false,
+      region: 'US',
+      limitSize: Number(config.HETZNER_POOL_SIZE.split(',')[1]),
+      minSize: Number(config.HETZNER_POOL_SIZE.split(',')[0]),
+    },
+    {
+      provider: 'Hetzner',
+      isLarge: true,
+      region: 'EU',
+      limitSize: 0,
+      minSize: 0,
+    },
+    {
+      provider: 'Hetzner',
+      isLarge: false,
+      region: 'EU',
+      limitSize: 0,
+      minSize: 0,
+    },
+    {
+      provider: 'Scaleway',
+      isLarge: true,
+      region: 'EU',
+      limitSize: 0,
+      minSize: 0,
+    },
+    {
+      provider: 'Scaleway',
+      isLarge: false,
+      region: 'EU',
+      limitSize: 0,
+      minSize: 0,
+    },
+    {
+      provider: 'DO',
+      isLarge: true,
+      region: 'US',
+      limitSize: 0,
+      minSize: 0,
+    },
+    {
+      provider: 'DO',
+      isLarge: false,
+      region: 'US',
+      limitSize: 0,
+      minSize: 0,
+    },
+    {
+      provider: 'Docker',
+      isLarge: true,
+      region: 'US',
+      limitSize: 0,
+      minSize: 0,
+    },
+    {
+      provider: 'Docker',
+      isLarge: false,
+      region: 'US',
+      limitSize: 0,
+      minSize: 0,
+    },
+  ];
   const result: { [key: string]: VMManager | null } = {};
-  const conf = getVMManagerConfig();
   conf.forEach((c) => {
-    const mgr = createVMManager(c);
-    if (mgr) {
-      result[mgr.getPoolName()] = mgr;
-    }
+    result[c.provider + (c.isLarge ? 'Large' : '') + c.region] =
+      getVMManager(c);
   });
   return result;
 }
