@@ -71,10 +71,15 @@ async function syncSubscribers() {
   console.log('%s subs to insert', result.length);
   console.log('%s subs do not have UID, using email', noUID);
 
-  result = result.filter(
+  const newResult = result.filter(
     (sub, index) => index === result.findIndex((other) => sub.uid === other.uid)
   );
   console.log('%s deduped subs to insert', result.length);
+  if (result.length !== newResult.length) {
+    // Log the difference
+    console.log(result.filter((x) => !newResult.includes(x)));
+  }
+  result = newResult;
 
   currentSubs = result
     .map((sub) => sub.uid)
