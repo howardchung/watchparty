@@ -157,7 +157,7 @@ export class SubtitleModal extends React.Component<{
                           this.props
                             .getMediaDisplayName(this.props.src)
                             .split('/')
-                            .slice(-1)
+                            .slice(-1)[0]
                       );
                       const json = await resp.json();
                       this.setState({ searchResults: json });
