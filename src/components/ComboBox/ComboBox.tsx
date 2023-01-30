@@ -122,7 +122,9 @@ export class ComboBox extends React.Component<ComboBoxProps> {
               e.persist();
               this.setState(
                 {
-                  inputMedia: getMediaDisplayName(currentMedia),
+                  inputMedia: currentMedia.startsWith('http')
+                    ? currentMedia
+                    : getMediaDisplayName(currentMedia),
                 },
                 () => {
                   if (

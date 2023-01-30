@@ -1369,7 +1369,8 @@ export default class App extends React.Component<AppProps, AppState> {
       const magnetUrl = querystring.parse(search.substring(1))
         .torrent as string;
       const magnetParsed = querystring.parse(magnetUrl);
-      return magnetParsed.dn;
+      const index = querystring.parse(search.substring(1)).fileIndex;
+      return magnetParsed.dn + (index != null ? ` (file ${index})` : '');
     }
     // Get the filename out of the URL
     return input;
