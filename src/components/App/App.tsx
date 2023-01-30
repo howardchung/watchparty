@@ -62,6 +62,11 @@ declare global {
     YT: any;
     FB: any;
     fbAsyncInit: Function;
+<<<<<<< HEAD
+=======
+    Hls: any;
+    WebTorrent: any;
+>>>>>>> test adding webtorrent
     watchparty: {
       ourStream: MediaStream | undefined;
       videoRefs: HTMLVideoElementDict;
@@ -1007,6 +1012,27 @@ export default class App extends React.Component<AppProps, AppState> {
           let hls = new Hls();
           hls.loadSource(src);
           hls.attachMedia(leftVideo);
+        } else if (src.startsWith('magnet:')) {
+          // WebTorrent
+          await new Promise((resolve) => {
+            const client = new window.WebTorrent();
+            client.add(this.state.currentMedia, (torrent: any) => {
+              // Got torrent metadata!
+              console.log('Client is downloading:', torrent.infoHash);
+
+              // Torrents can contain many files. Let's use the biggest file
+              // TODO add some kind of selector
+              const files = [...torrent.files];
+              files.sort((a, b) => b.length - a.length);
+              const file = files[0];
+              // Display the file by adding it to the DOM. Supports video, audio, image, etc. files
+              file.renderTo('video#leftVideo', {
+                autoplay: false,
+                muted: false,
+              });
+              resolve(null);
+            });
+          });
         } else {
           leftVideo.src = src;
         }
