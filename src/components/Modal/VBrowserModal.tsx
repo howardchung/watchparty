@@ -8,27 +8,6 @@ import { SignInButton } from '../TopBar/TopBar';
 import { serverPath } from '../../utils';
 import firebase from 'firebase/compat/app';
 
-const regionOptions = [
-  {
-    key: 'US',
-    text: 'US East',
-    value: 'US',
-    image: { avatar: false, src: '/flag-united-states.png' },
-  },
-  {
-    key: 'USW',
-    text: 'US West',
-    value: 'USW',
-    image: { avatar: false, src: '/flag-united-states.png' },
-  },
-  {
-    key: 'EU',
-    text: 'Europe',
-    value: 'EU',
-    image: { avatar: false, src: '/flag-european-union.png' },
-  },
-];
-
 export class VBrowserModal extends React.Component<{
   closeModal: Function;
   startVBrowser: Function;
@@ -41,12 +20,35 @@ export class VBrowserModal extends React.Component<{
     isFreePoolFull: false,
     region: 'US',
   };
+
   async componentDidMount() {
     const resp = await window.fetch(serverPath + '/metadata');
     const metadata = await resp.json();
     this.setState({ isFreePoolFull: metadata.isFreePoolFull });
   }
   render() {
+    const regionOptions = [
+      {
+        key: 'US',
+        text: 'US East',
+        value: 'US',
+        image: { avatar: false, src: '/flag-united-states.png' },
+      },
+      {
+        key: 'EU',
+        text: 'Europe',
+        value: 'EU',
+        image: { avatar: false, src: '/flag-european-union.png' },
+      },
+    ];
+    if (this.props.beta) {
+      regionOptions.push({
+        key: 'USW',
+        text: 'US West',
+        value: 'USW',
+        image: { avatar: false, src: '/flag-united-states.png' },
+      });
+    }
     const { closeModal, startVBrowser } = this.props;
     const LaunchButton = withGoogleReCaptcha(
       ({ googleReCaptchaProps, large }: any) => (
