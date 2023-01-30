@@ -1004,7 +1004,10 @@ export default class App extends React.Component<AppProps, AppState> {
     this.setState(
       { currentMediaPaused: false, isAutoPlayable: canAutoplay },
       async () => {
-        if (!this.state.isAutoPlayable || this.state.isScreenSharing) {
+        if (
+          !this.state.isAutoPlayable ||
+          (this.state.isScreenSharing && !this.state.isScreenSharingFile)
+        ) {
           console.log('auto-muting to allow autoplay or screenshare host');
           this.setMute(true);
         } else {
