@@ -167,7 +167,7 @@ export class ComboBox extends React.Component<ComboBoxProps> {
             }
             loading={this.state.loading}
             label={'Now Watching:'}
-            placeholder="Enter video file URL, YouTube link, or YouTube search term"
+            placeholder="Enter video file URL, magnet link, YouTube link, or YouTube search term"
             value={
               this.state.inputMedia !== undefined
                 ? this.state.inputMedia
