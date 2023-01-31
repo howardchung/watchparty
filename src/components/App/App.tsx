@@ -68,6 +68,7 @@ declare global {
     FB: any;
     fbAsyncInit: Function;
     WebTorrent: any;
+    watchparty: {
       ourStream: MediaStream | undefined;
       videoRefs: HTMLVideoElementDict;
       videoPCs: PCDict;
