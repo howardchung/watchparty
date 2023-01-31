@@ -54,12 +54,8 @@ import { ScreenShareModal } from '../Modal/ScreenShareModal';
 import { FileShareModal } from '../Modal/FileShareModal';
 import firebase from 'firebase/compat/app';
 import { SubtitleModal } from '../Modal/SubtitleModal';
-import Hls from 'hls.js';
 
-//@ts-ignore
-import WebTorrent from 'webtorrent/dist/webtorrent.min.js';
-
-let client = new WebTorrent();
+import('hls.js');
 
 declare global {
   interface Window {
@@ -67,6 +63,7 @@ declare global {
     YT: any;
     FB: any;
     fbAsyncInit: Function;
+    Hls: any;
     WebTorrent: any;
     watchparty: {
       ourStream: MediaStream | undefined;
@@ -75,6 +72,8 @@ declare global {
     };
   }
 }
+
+let client: any = null;
 
 window.watchparty = {
   ourStream: undefined,
@@ -237,6 +236,10 @@ export default class App extends React.Component<AppProps, AppState> {
     this.heartbeat = window.setInterval(() => {
       window.fetch(serverPath + '/ping');
     }, 10 * 60 * 1000);
+
+    //@ts-ignore
+    await import('webtorrent/dist/webtorrent.min.js');
+    client = new window.WebTorrent();
 
     const canAutoplay = await testAutoplay();
     this.setState({ isAutoPlayable: canAutoplay });
@@ -1020,20 +1023,21 @@ export default class App extends React.Component<AppProps, AppState> {
         this.setSubtitleMode('hidden');
         leftVideo.innerHTML = '';
         // Check for HLS
+        // https://moctobpltc-i.akamaihd.net/hls/live/571329/eight/playlist.m3u8
         let spl = src.split('.');
         if (
           spl[spl.length - 1] === 'm3u8' &&
           !leftVideo?.canPlayType('application/vnd.apple.mpegurl')
         ) {
-          let hls = new Hls();
+          let hls = new window.Hls();
           hls.loadSource(src);
           hls.attachMedia(leftVideo);
         } else if (src.startsWith('magnet:')) {
           // WebTorrent
           // magnet:?xt=urn:btih:08ada5a7a6183aae1e09d831df6748d566095a10&dn=Sintel
-          client._server?.close();
-          client.destroy();
-          client = new WebTorrent();
+          client?._server?.close();
+          client?.destroy();
+          client = new window.WebTorrent();
           navigator.serviceWorker?.register('sw.min.js');
           const controller = await navigator.serviceWorker.ready;
           await new Promise((resolve) => setTimeout(resolve, 500));
