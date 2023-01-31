@@ -55,8 +55,6 @@ import { FileShareModal } from '../Modal/FileShareModal';
 import firebase from 'firebase/compat/app';
 import { SubtitleModal } from '../Modal/SubtitleModal';
 
-import('hls.js');
-
 declare global {
   interface Window {
     onYouTubeIframeAPIReady: any;
@@ -237,8 +235,11 @@ export default class App extends React.Component<AppProps, AppState> {
       window.fetch(serverPath + '/ping');
     }, 10 * 60 * 1000);
 
+    window.Hls = (await import('hls.js')).default;
     //@ts-ignore
-    await import('webtorrent/dist/webtorrent.min.js');
+    window.WebTorrent = (
+      await import('webtorrent/dist/webtorrent.min.js')
+    ).default;
     client = new window.WebTorrent();
 
     const canAutoplay = await testAutoplay();
