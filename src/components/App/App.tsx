@@ -54,6 +54,7 @@ import { ScreenShareModal } from '../Modal/ScreenShareModal';
 import { FileShareModal } from '../Modal/FileShareModal';
 import firebase from 'firebase/compat/app';
 import { SubtitleModal } from '../Modal/SubtitleModal';
+import Hls from 'hls.js';
 
 declare global {
   interface Window {
@@ -61,7 +62,6 @@ declare global {
     YT: any;
     FB: any;
     fbAsyncInit: Function;
-    Hls: any;
     watchparty: {
       ourStream: MediaStream | undefined;
       videoRefs: HTMLVideoElementDict;
@@ -995,10 +995,21 @@ export default class App extends React.Component<AppProps, AppState> {
       ) as HTMLMediaElement;
       if (leftVideo) {
         leftVideo.srcObject = null;
-        leftVideo.src = src;
         leftVideo.currentTime = time;
         this.setSubtitleMode('hidden');
         leftVideo.innerHTML = '';
+        // Check for HLS
+        let spl = src.split('.');
+        if (
+          spl[spl.length - 1] === 'm3u8' &&
+          !leftVideo?.canPlayType('application/vnd.apple.mpegurl')
+        ) {
+          let hls = new Hls();
+          hls.loadSource(src);
+          hls.attachMedia(leftVideo);
+        } else {
+          leftVideo.src = src;
+        }
       }
     }
     if (this.isYouTube()) {
@@ -1029,16 +1040,6 @@ export default class App extends React.Component<AppProps, AppState> {
           const leftVideo = document.getElementById(
             'leftVideo'
           ) as HTMLMediaElement;
-          //check for HLS
-          let lv = leftVideo?.src.split('.');
-          if (
-            lv[lv.length - 1] === 'm3u8' &&
-            !leftVideo?.canPlayType('application/vnd.apple.mpegurl')
-          ) {
-            let hls = new window.Hls();
-            hls.loadSource(leftVideo.src);
-            hls.attachMedia(leftVideo);
-          }
           try {
             await leftVideo?.play();
           } catch (e: any) {
