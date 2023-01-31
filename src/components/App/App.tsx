@@ -1033,9 +1033,10 @@ export default class App extends React.Component<AppProps, AppState> {
           client._server?.close();
           client.destroy();
           client = new WebTorrent();
-          navigator.serviceWorker?.register('sw.min.js', { scope: './' });
-          const controller = await navigator.serviceWorker.getRegistration();
-          console.log(controller);
+          navigator.serviceWorker?.register('sw.min.js');
+          const controller = await navigator.serviceWorker.ready;
+          await new Promise((resolve) => setTimeout(resolve, 500));
+          console.log(controller, controller.active?.state);
           const server = await client.createServer({ controller });
           console.log(server);
           await new Promise((resolve) => {
