@@ -579,6 +579,16 @@ export default class App extends React.Component<AppProps, AppState> {
                 });
               }, 1000);
             }
+            if (currentMedia.startsWith('magnet:')) {
+              this.progressUpdater = window.setInterval(async () => {
+                this.setState({
+                  downloaded: client.torrents[0]?.downloaded,
+                  total: client.torrents[0]?.length,
+                  speed: client.torrents[0]?.downloadSpeed,
+                  connections: client.torrents[0]?.numPeers,
+                });
+              }, 1000);
+            }
           }
         }
       );
