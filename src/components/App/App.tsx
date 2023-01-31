@@ -236,10 +236,8 @@ export default class App extends React.Component<AppProps, AppState> {
     }, 10 * 60 * 1000);
 
     window.Hls = (await import('hls.js')).default;
-    //@ts-ignore
-    window.WebTorrent = (
-      await import('webtorrent/dist/webtorrent.min.js')
-    ).default;
+    window.WebTorrent = //@ts-ignore
+    (await import('webtorrent/dist/webtorrent.min.js')).default;
     client = new window.WebTorrent();
 
     const canAutoplay = await testAutoplay();
