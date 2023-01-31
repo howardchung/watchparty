@@ -46,6 +46,7 @@
     "stripe": "^8.222.0",
     "url-exist": "^3.0.1",
     "uuid": "^8.3.2",
+    "webtorrent": "^2.0.4",
     "youtube-api": "^2.0.10"
   },
   "scripts": {
@@ -109,6 +110,7 @@
     "@types/socket.io": "^3.0.2",
     "@types/socket.io-client": "^3.0.0",
     "@types/uuid": "^8.3.4",
+    "@types/webtorrent": "^0.109.3",
     "husky": "^4.3.8",
     "lint-staged": "^12.5.0",
     "prettier": "2.8.3",
