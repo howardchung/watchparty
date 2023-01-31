@@ -25,6 +25,10 @@ export class SubtitleModal extends React.Component<{
   state = {
     loading: false,
     searchResults: [],
+    titleQuery: this.props
+      .getMediaDisplayName(this.props.src)
+      .split('/')
+      .slice(-1)[0],
   };
   uploadSubtitle = async () => {
     const files = await openFileSelector('.srt');
@@ -141,6 +145,14 @@ export class SubtitleModal extends React.Component<{
                       )
                     }
                   />
+                  {this.props.beta && (
+                    <Input
+                      value={this.state.titleQuery}
+                      onChange={(e, { value }) =>
+                        this.setState({ titleQuery: value })
+                      }
+                    />
+                  )}
                   <Button
                     style={{ marginLeft: '8px' }}
                     loading={this.state.loading}
@@ -154,10 +166,7 @@ export class SubtitleModal extends React.Component<{
                       const resp = await window.fetch(
                         serverPath +
                           '/searchSubtitles?title=' +
-                          this.props
-                            .getMediaDisplayName(this.props.src)
-                            .split('/')
-                            .slice(-1)[0]
+                          this.state.titleQuery
                       );
                       const json = await resp.json();
                       this.setState({ searchResults: json });
