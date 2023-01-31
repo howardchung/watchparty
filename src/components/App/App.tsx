@@ -56,18 +56,18 @@ import firebase from 'firebase/compat/app';
 import { SubtitleModal } from '../Modal/SubtitleModal';
 import Hls from 'hls.js';
 
+//@ts-ignore
+import WebTorrent from 'webtorrent/dist/webtorrent.min.js';
+
+let client = new WebTorrent();
+
 declare global {
   interface Window {
     onYouTubeIframeAPIReady: any;
     YT: any;
     FB: any;
     fbAsyncInit: Function;
-<<<<<<< HEAD
-=======
-    Hls: any;
     WebTorrent: any;
->>>>>>> test adding webtorrent
-    watchparty: {
       ourStream: MediaStream | undefined;
       videoRefs: HTMLVideoElementDict;
       videoPCs: PCDict;
@@ -1014,9 +1014,17 @@ export default class App extends React.Component<AppProps, AppState> {
           hls.attachMedia(leftVideo);
         } else if (src.startsWith('magnet:')) {
           // WebTorrent
+          // magnet:?xt=urn:btih:08ada5a7a6183aae1e09d831df6748d566095a10&dn=Sintel&tr=udp%3A%2F%2Fexplodie.org%3A6969&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Ftracker.empire-js.us%3A1337&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=wss%3A%2F%2Ftracker.btorrent.xyz&tr=wss%3A%2F%2Ftracker.fastcast.nz&tr=wss%3A%2F%2Ftracker.openwebtorrent.com&ws=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2F&xs=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2Fsintel.torrent
+          client._server?.close();
+          client.destroy();
+          client = new WebTorrent();
+          navigator.serviceWorker?.register('sw.min.js', { scope: './' });
+          const controller = await navigator.serviceWorker.getRegistration();
+          console.log(controller);
+          const server = await client.createServer({ controller });
+          console.log(server);
           await new Promise((resolve) => {
-            const client = new window.WebTorrent();
-            client.add(this.state.currentMedia, (torrent: any) => {
+            client.add(this.state.currentMedia, async (torrent: any) => {
               // Got torrent metadata!
               console.log('Client is downloading:', torrent.infoHash);
 
@@ -1025,11 +1033,7 @@ export default class App extends React.Component<AppProps, AppState> {
               const files = [...torrent.files];
               files.sort((a, b) => b.length - a.length);
               const file = files[0];
-              // Display the file by adding it to the DOM. Supports video, audio, image, etc. files
-              file.renderTo('video#leftVideo', {
-                autoplay: false,
-                muted: false,
-              });
+              file.streamTo(leftVideo);
               resolve(null);
             });
           });
