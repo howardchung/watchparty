@@ -56,12 +56,18 @@ import firebase from 'firebase/compat/app';
 import { SubtitleModal } from '../Modal/SubtitleModal';
 import Hls from 'hls.js';
 
+//@ts-ignore
+import WebTorrent from 'webtorrent/dist/webtorrent.min.js';
+
+let client = new WebTorrent();
+
 declare global {
   interface Window {
     onYouTubeIframeAPIReady: any;
     YT: any;
     FB: any;
     fbAsyncInit: Function;
+    WebTorrent: any;
     watchparty: {
       ourStream: MediaStream | undefined;
       videoRefs: HTMLVideoElementDict;
@@ -114,7 +120,12 @@ interface AppState {
   total: number;
   speed: number;
   connections: number;
-  multiStreamSelection?: any[];
+  multiStreamSelection?: {
+    name: string;
+    url: string;
+    length: number;
+    playFn?: Function;
+  }[];
   error: string;
   isErrorAuth: boolean;
   settings: Settings;
@@ -574,6 +585,16 @@ export default class App extends React.Component<AppProps, AppState> {
                 });
               }, 1000);
             }
+            if (currentMedia.startsWith('magnet:')) {
+              this.progressUpdater = window.setInterval(async () => {
+                this.setState({
+                  downloaded: client.torrents[0]?.downloaded,
+                  total: client.torrents[0]?.length,
+                  speed: client.torrents[0]?.downloadSpeed,
+                  connections: client.torrents[0]?.numPeers,
+                });
+              }, 1000);
+            }
           }
         }
       );
@@ -1007,6 +1028,61 @@ export default class App extends React.Component<AppProps, AppState> {
           let hls = new Hls();
           hls.loadSource(src);
           hls.attachMedia(leftVideo);
+        } else if (src.startsWith('magnet:')) {
+          // WebTorrent
+          // magnet:?xt=urn:btih:08ada5a7a6183aae1e09d831df6748d566095a10&dn=Sintel
+          client._server?.close();
+          client.destroy();
+          client = new WebTorrent();
+          navigator.serviceWorker?.register('sw.min.js');
+          const controller = await navigator.serviceWorker.ready;
+          await new Promise((resolve) => setTimeout(resolve, 500));
+          console.log(controller, controller.active?.state);
+          const server = await client.createServer({ controller });
+          console.log(server);
+          await new Promise((resolve) => {
+            client.add(
+              this.state.currentMedia,
+              {
+                announce: [
+                  'wss://tracker.btorrent.xyz',
+                  'wss://tracker.openwebtorrent.com',
+                ],
+                destroyStoreOnDestroy: true,
+                maxWebConns: 4,
+                path: '/tmp/webtorrent/',
+                storeCacheSlots: 20,
+                strategy: 'sequential',
+                noPeersIntervalTime: 30,
+              },
+              async (torrent: any) => {
+                // Got torrent metadata!
+                console.log('Client is downloading:', torrent.infoHash);
+
+                // Torrents can contain many files. Let's use the biggest file
+                const files = torrent.files;
+                const filtered = files.filter(
+                  (f: any) => f.length >= 10 * 1024 * 1024
+                );
+                if (filtered.length > 1) {
+                  // Open the selector
+                  this.setState({
+                    multiStreamSelection: files.map((f: any, i: number) => ({
+                      name: f.name as string,
+                      url: i.toString(),
+                      length: f.length as number,
+                      playFn: () => {
+                        f.streamTo(leftVideo);
+                      },
+                    })),
+                  });
+                } else {
+                  filtered[0].streamTo(leftVideo);
+                }
+                resolve(null);
+              }
+            );
+          });
         } else {
           leftVideo.src = src;
         }
@@ -1336,7 +1412,9 @@ export default class App extends React.Component<AppProps, AppState> {
     this.socket.emit('CMD:playlistDelete', index);
   };
 
-  launchMultiSelect = (data: any) => {
+  launchMultiSelect = (
+    data: { name: string; url: string; length: number; playFn?: Function }[]
+  ) => {
     this.setState({ multiStreamSelection: data });
   };
 
