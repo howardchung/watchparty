@@ -682,10 +682,22 @@ export default class App extends React.Component<AppProps, AppState> {
         msg.sdp.sdp = _sdp;
         await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
         const answer = await pc.createAnswer();
+        // Allow stereo audio
         answer.sdp = answer.sdp?.replace(
           'useinbandfec=1',
           'useinbandfec=1; stereo=1; maxaveragebitrate=510000'
         );
+        // console.log(answer.sdp);
+        // Allow multichannel audio if Chromium
+        const isChromium = Boolean((window as any).chrome);
+        if (isChromium) {
+          answer.sdp = answer.sdp
+            ?.replace('opus/48000/2', 'multiopus/48000/6')
+            .replace(
+              'useinbandfec=1',
+              'channel_mapping=0,4,1,2,3,5; num_streams=4; coupled_streams=2;maxaveragebitrate=510000;minptime=10;useinbandfec=1'
+            );
+        }
         await pc.setLocalDescription(answer);
         this.sendSignalSS(from, { sdp: pc.localDescription }, !data.sharer);
       } else if (msg.sdp && msg.sdp.type === 'answer') {
