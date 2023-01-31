@@ -119,7 +119,12 @@ interface AppState {
   total: number;
   speed: number;
   connections: number;
-  multiStreamSelection?: any[];
+  multiStreamSelection?: {
+    name: string;
+    url: string;
+    length: number;
+    playFn?: Function;
+  }[];
   error: string;
   isErrorAuth: boolean;
   settings: Settings;
@@ -1024,7 +1029,7 @@ export default class App extends React.Component<AppProps, AppState> {
           hls.attachMedia(leftVideo);
         } else if (src.startsWith('magnet:')) {
           // WebTorrent
-          // magnet:?xt=urn:btih:08ada5a7a6183aae1e09d831df6748d566095a10&dn=Sintel&tr=udp%3A%2F%2Fexplodie.org%3A6969&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Ftracker.empire-js.us%3A1337&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=wss%3A%2F%2Ftracker.btorrent.xyz&tr=wss%3A%2F%2Ftracker.fastcast.nz&tr=wss%3A%2F%2Ftracker.openwebtorrent.com&ws=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2F&xs=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2Fsintel.torrent
+          // magnet:?xt=urn:btih:08ada5a7a6183aae1e09d831df6748d566095a10&dn=Sintel
           client._server?.close();
           client.destroy();
           client = new WebTorrent();
@@ -1034,18 +1039,47 @@ export default class App extends React.Component<AppProps, AppState> {
           const server = await client.createServer({ controller });
           console.log(server);
           await new Promise((resolve) => {
-            client.add(this.state.currentMedia, async (torrent: any) => {
-              // Got torrent metadata!
-              console.log('Client is downloading:', torrent.infoHash);
+            client.add(
+              this.state.currentMedia,
+              {
+                announce: [
+                  'wss://tracker.btorrent.xyz',
+                  'wss://tracker.openwebtorrent.com',
+                ],
+                destroyStoreOnDestroy: true,
+                maxWebConns: 4,
+                path: '/tmp/webtorrent/',
+                storeCacheSlots: 20,
+                strategy: 'sequential',
+                noPeersIntervalTime: 30,
+              },
+              async (torrent: any) => {
+                // Got torrent metadata!
+                console.log('Client is downloading:', torrent.infoHash);
 
-              // Torrents can contain many files. Let's use the biggest file
-              // TODO add some kind of selector
-              const files = [...torrent.files];
-              files.sort((a, b) => b.length - a.length);
-              const file = files[0];
-              file.streamTo(leftVideo);
-              resolve(null);
-            });
+                // Torrents can contain many files. Let's use the biggest file
+                const files = torrent.files;
+                const filtered = files.filter(
+                  (f: any) => f.length >= 10 * 1024 * 1024
+                );
+                if (filtered.length > 1) {
+                  // Open the selector
+                  this.setState({
+                    multiStreamSelection: files.map((f: any, i: number) => ({
+                      name: f.name as string,
+                      url: i.toString(),
+                      length: f.length as number,
+                      playFn: () => {
+                        f.streamTo(leftVideo);
+                      },
+                    })),
+                  });
+                } else {
+                  filtered[0].streamTo(leftVideo);
+                }
+                resolve(null);
+              }
+            );
           });
         } else {
           leftVideo.src = src;
@@ -1376,7 +1410,9 @@ export default class App extends React.Component<AppProps, AppState> {
     this.socket.emit('CMD:playlistDelete', index);
   };
 
-  launchMultiSelect = (data: any) => {
+  launchMultiSelect = (
+    data: { name: string; url: string; length: number; playFn?: Function }[]
+  ) => {
     this.setState({ multiStreamSelection: data });
   };
 

@@ -6,7 +6,7 @@ export const MultiStreamModal = ({
   setMedia,
   resetMultiSelect,
 }: {
-  streams: any[];
+  streams: { name: string; url: string; length: number; playFn?: Function }[];
   setMedia: Function;
   resetMultiSelect: Function;
 }) => (
@@ -16,14 +16,18 @@ export const MultiStreamModal = ({
       {streams.length === 0 && <Loader />}
       {streams && (
         <List inverted>
-          {streams.map((file: any) => (
+          {streams.map((file) => (
             <List.Item>
               <List.Icon name="file" />
               <List.Content>
                 <List.Header
                   as="a"
                   onClick={() => {
-                    setMedia(null, { value: file.url });
+                    if (file.playFn) {
+                      file.playFn();
+                    } else {
+                      setMedia(null, { value: file.url });
+                    }
                     resetMultiSelect();
                   }}
                 >
