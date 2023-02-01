@@ -561,6 +561,11 @@ export class Room {
       this.videoTS = data;
     }
     this.tsMap[socket.id] = data;
+    // Calculate the zero time for each person (wall time - reported ts)
+    // The lowest zero time is the leader
+    // Compute the delta between each client and the leader
+    // Set leader pbr to 1
+    // Set everyone else's pbr to a scaled value between 1 and 1.2 depending on where delta is in range 0 to 2
   };
 
   private sendChatMessage = (socket: Socket, data: string) => {
