@@ -20,11 +20,11 @@ export class FileShareModal extends React.Component<{
                 locally with your browser to see if it will play properly.
               </li>
               <li>
-                Certain codecs, such as HEVC, AC3, and H265 will not play in
-                Chrome (they may work in Edge)
+                Certain codecs, such as HEVC, AC3, and H265 may not play in
+                Chrome (they may work in Edge due to licensing)
               </li>
               <li>
-                There is a Chrome issue where the sharer needs to{' '}
+                There is a known Chrome issue where the sharer may need to{' '}
                 <a
                   target="_blank"
                   rel="noreferrer"
