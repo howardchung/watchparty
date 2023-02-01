@@ -83,17 +83,20 @@ export class Controls extends React.Component<ControlsProps> {
           name={paused ? 'play' : 'pause'}
         />
         <Popup
-          content={
-            (isBehind ? "We've detected that your stream is behind. " : '') +
-            'Click to sync to leader.'
-          }
+          content={'Skip to the live stream position'}
           trigger={
-            <Icon
-              size="large"
-              onClick={jumpToLeader}
-              className={`control action ${isBehind ? 'glowing' : ''}`}
-              name={'angle double right'}
-            />
+            <div
+              onClick={() => jumpToLeader()}
+              className="control action"
+              style={{
+                color: isBehind ? 'gray' : 'red',
+                fontSize: 10,
+                fontWeight: 700,
+              }}
+            >
+              <Icon size="small" name={'circle'} />
+              LIVE
+            </div>
           }
         />
         <div className="control">{formatTimestamp(currentTime)}</div>
