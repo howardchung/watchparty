@@ -28,6 +28,7 @@ export const mapYoutubeSearchResult = (
     name: video.snippet.title,
     img: video.snippet.thumbnails.default.url,
     duration: 0,
+    type: 'youtube',
   };
 };
 
@@ -41,6 +42,7 @@ export const mapYoutubeListResult = (
     img: video.snippet.thumbnails.default.url,
     channel: video.snippet.channelTitle,
     duration: getVideoDuration(video.contentDetails.duration) ?? 0,
+    type: 'youtube',
   };
 };
 
