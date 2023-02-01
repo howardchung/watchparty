@@ -1,6 +1,11 @@
 import React from 'react';
 import { DropdownProps, Menu, Input, Icon, Dropdown } from 'semantic-ui-react';
-import { debounce, getMediaPathResults, getYouTubeResults } from '../../utils';
+import {
+  debounce,
+  getMediaPathResults,
+  getMediaType,
+  getYouTubeResults,
+} from '../../utils';
 import { examples } from '../../utils/examples';
 import ChatVideoCard from '../Playlist/ChatVideoCard';
 
@@ -44,16 +49,26 @@ export class ComboBox extends React.Component<ComboBoxProps> {
           const query: string = this.state.inputMedia || '';
           let timestamp = Number(new Date());
           let results: JSX.Element[] | undefined = undefined;
-          if (query === '' || (query && query.startsWith('http'))) {
+          if (
+            query === '' ||
+            (query && (query.startsWith('http') || query.startsWith('magnet:')))
+          ) {
             let items = examples;
             if (!this.state.inputMedia && this.props.mediaPath) {
               items = await getMediaPathResults(this.props.mediaPath, '');
             }
             if (query) {
+              let type = 'file';
+              if (getMediaType(query) === 'youtube') {
+                type = 'youtube';
+              }
+              if (query.startsWith('magnet:')) {
+                type = 'magnet';
+              }
               items = [
                 {
                   name: query,
-                  type: 'file',
+                  type,
                   url: query,
                   duration: 0,
                 },
@@ -76,21 +91,22 @@ export class ComboBox extends React.Component<ComboBoxProps> {
             ));
           } else {
             const data = await getYouTubeResults(query);
-            results = data.map((result, index) => (
-              <Menu.Item
-                key={result.url}
-                onClick={(e: any) =>
-                  this.setMediaAndClose(e, { value: result.url })
-                }
-              >
-                <ChatVideoCard
-                  video={result}
-                  index={index}
-                  onPlaylistAdd={this.props.playlistAdd}
-                  isYoutube
-                />
-              </Menu.Item>
-            ));
+            results = data.map((result, index) => {
+              return (
+                <Menu.Item
+                  key={result.url}
+                  onClick={(e: any) =>
+                    this.setMediaAndClose(e, { value: result.url })
+                  }
+                >
+                  <ChatVideoCard
+                    video={result}
+                    index={index}
+                    onPlaylistAdd={this.props.playlistAdd}
+                  />
+                </Menu.Item>
+              );
+            });
           }
           if (timestamp > this.state.lastResultTimestamp) {
             this.setState({
@@ -122,15 +138,18 @@ export class ComboBox extends React.Component<ComboBoxProps> {
               e.persist();
               this.setState(
                 {
-                  inputMedia: currentMedia.startsWith('http')
-                    ? currentMedia
-                    : getMediaDisplayName(currentMedia),
+                  inputMedia:
+                    currentMedia.startsWith('http') ||
+                    currentMedia.startsWith('magnet:')
+                      ? currentMedia
+                      : getMediaDisplayName(currentMedia),
                 },
                 () => {
                   if (
                     !this.state.inputMedia ||
                     (this.state.inputMedia &&
-                      this.state.inputMedia.startsWith('http'))
+                      (this.state.inputMedia.startsWith('http') ||
+                        this.state.inputMedia.startsWith('magnet:')))
                   ) {
                     this.doSearch(e);
                   }
@@ -189,6 +208,9 @@ export class ComboBox extends React.Component<ComboBoxProps> {
                 </Dropdown.Item>
               )}
               {this.props.playlist.map((item: PlaylistVideo, index: number) => {
+                if (Boolean(item.img)) {
+                  item.type = 'youtube';
+                }
                 return (
                   <Dropdown.Item>
                     <div style={{ maxWidth: '500px' }}>
@@ -209,7 +231,6 @@ export class ComboBox extends React.Component<ComboBoxProps> {
                           this.props.playlistDelete(index);
                         }}
                         disabled={this.props.disabled}
-                        isYoutube={Boolean(item.img)}
                       />
                     </div>
                   </Dropdown.Item>
