@@ -1062,25 +1062,28 @@ export default class App extends React.Component<AppProps, AppState> {
                 // Got torrent metadata!
                 console.log('Client is downloading:', torrent.infoHash);
 
-                // Torrents can contain many files. Let's use the biggest file
+                // Torrents can contain many files.
                 const files = torrent.files;
                 const filtered = files.filter(
                   (f: any) => f.length >= 10 * 1024 * 1024
                 );
-                if (filtered.length > 1) {
+                const fileIndex = querystring.parse(src)
+                  .fileIndex as unknown as number;
+                // Try to find a single large file to play
+                const target =
+                  files[fileIndex] ??
+                  (filtered.length > 1 ? null : filtered[0]);
+                if (!target) {
                   // Open the selector
                   this.setState({
                     multiStreamSelection: files.map((f: any, i: number) => ({
                       name: f.name as string,
-                      url: i.toString(),
+                      url: src + `&fileIndex=${i}`,
                       length: f.length as number,
-                      playFn: () => {
-                        f.streamTo(leftVideo);
-                      },
                     })),
                   });
                 } else {
-                  filtered[0].streamTo(leftVideo);
+                  target.streamTo(leftVideo);
                 }
                 resolve(null);
               }
@@ -1517,13 +1520,16 @@ export default class App extends React.Component<AppProps, AppState> {
   onVideoEnded = () => {
     this.socket.emit('CMD:playlistNext', this.state.currentMedia);
     // Play next
-    if (this.state.currentMedia?.includes('/stream?torrent=magnet')) {
-      const url = new URL(this.state.currentMedia);
-      const fileIndex = url.searchParams.get('fileIndex');
-      if (fileIndex != null) {
-        url.searchParams.set('fileIndex', (Number(fileIndex) + 1).toString());
-        this.setMedia(null, { value: url.toString() });
-      }
+    const re = /&fileIndex=(\d+)$/;
+    const match = re.exec(this.state.currentMedia);
+    if (match) {
+      const fileIndex = match[1];
+      const nextNum = Number(fileIndex) + 1;
+      const nextUrl = this.state.currentMedia.replace(
+        /&fileIndex=(\d+)$/,
+        `&fileIndex=${nextNum}`
+      );
+      this.setMedia(null, { value: nextUrl });
     }
   };
 

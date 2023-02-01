@@ -23,11 +23,7 @@ export const MultiStreamModal = ({
                 <List.Header
                   as="a"
                   onClick={() => {
-                    if (file.playFn) {
-                      file.playFn();
-                    } else {
-                      setMedia(null, { value: file.url });
-                    }
+                    setMedia(null, { value: file.url });
                     resetMultiSelect();
                   }}
                 >
