@@ -479,6 +479,7 @@ export class Room {
         channel: 'Video URL',
         duration: 0,
         url: data,
+        type: data.startsWith('magnet:') ? 'magnet' : 'file',
       });
     }
     this.io.of(this.roomId).emit('playlist', this.playlist);
