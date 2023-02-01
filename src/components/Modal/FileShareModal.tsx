@@ -4,6 +4,7 @@ import { Modal, Button } from 'semantic-ui-react';
 export class FileShareModal extends React.Component<{
   closeModal: Function;
   startFileShare: Function;
+  startFileShareV2: Function;
 }> {
   render() {
     const { closeModal } = this.props;
@@ -42,6 +43,14 @@ export class FileShareModal extends React.Component<{
               }}
             >
               Start Fileshare
+            </Button>
+            <Button
+              onClick={() => {
+                this.props.startFileShareV2();
+                this.props.closeModal();
+              }}
+            >
+              Start Fileshare V2
             </Button>
           </Modal.Description>
         </Modal.Content>
