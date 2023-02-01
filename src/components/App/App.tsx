@@ -735,6 +735,30 @@ export default class App extends React.Component<AppProps, AppState> {
     }, 1000);
   };
 
+  setupWebTorrent = async () => {
+    const files = await openFileSelector();
+    if (!files) {
+      return;
+    }
+    const file = files[0];
+    // const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
+    // leftVideo.srcObject = null;
+    // leftVideo.src = URL.createObjectURL(file);
+    // leftVideo.play();
+
+    // Seed the file using WebTorrent
+    const seeder = new window.WebTorrent();
+    seeder.seed(file, (torrent: any) => {
+      console.log(torrent);
+      // Set the room to the magnet link
+      this.setMedia(null, { value: torrent.magnetURI });
+    });
+    seeder.on('error', (e: any) => {
+      console.warn(e);
+    });
+    // TODO destroy the seeder on video change
+  };
+
   setupFileShare = async () => {
     const files = await openFileSelector();
     if (!files) {
@@ -1743,6 +1767,7 @@ export default class App extends React.Component<AppProps, AppState> {
           <FileShareModal
             closeModal={() => this.setState({ isFileShareModalOpen: false })}
             startFileShare={this.setupFileShare}
+            startFileShareV2={this.setupWebTorrent}
           />
         )}
         {this.state.isSubtitleModalOpen && (
