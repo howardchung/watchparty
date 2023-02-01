@@ -13,7 +13,6 @@ const ChatVideoCard: React.FC<{
   onPlayNext?: (index: number) => void;
   onSetMedia?: (e: any, data: DropdownProps) => void;
   onPlaylistAdd?: (e: any, data: DropdownProps) => void;
-  isYoutube?: boolean;
   disabled?: boolean;
 }> = (props) => {
   const {
@@ -26,7 +25,6 @@ const ChatVideoCard: React.FC<{
     onSetMedia,
     disabled,
     onPlaylistAdd,
-    isYoutube,
   } = props;
 
   const handlePlayClick = React.useCallback(
@@ -89,11 +87,15 @@ const ChatVideoCard: React.FC<{
             />
           )}
         </div>
-        <Icon
-          color={isYoutube ? 'red' : 'black'}
-          size="large"
-          name={isYoutube ? 'youtube' : 'linkify'}
-        />
+        {video.type === 'youtube' && (
+          <Icon color="red" size="large" name="youtube" />
+        )}
+        {video.type === 'file' && (
+          <Icon color="black" size="large" name="linkify" />
+        )}
+        {video.type === 'magnet' && (
+          <Icon color="red" size="large" name="magnet" />
+        )}
         <div className={classes.Content}>
           <div className={classes.Title}>{decodeEntities(video.name)}</div>
           <div className={classes.ChannelName}>{video.channel}</div>

@@ -50,6 +50,7 @@ interface PlaylistVideo {
   img?: string;
   channel?: string;
   duration: number;
+  type: string;
 }
 
 interface SearchResult extends PlaylistVideo {

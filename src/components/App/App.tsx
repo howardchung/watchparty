@@ -1461,6 +1461,11 @@ export default class App extends React.Component<AppProps, AppState> {
     if (input.startsWith('vbrowser://')) {
       return 'Virtual Browser' + (this.state.isVBrowserLarge ? '+' : '');
     }
+    if (input.startsWith('magnet:')) {
+      const magnetParsed = querystring.parse(input);
+      const index = magnetParsed.fileIndex;
+      return magnetParsed.dn + (index != null ? ` (file ${index})` : '');
+    }
     if (input.includes('/stream?torrent=magnet')) {
       const search = new URL(input).search;
       const magnetUrl = querystring.parse(search.substring(1))

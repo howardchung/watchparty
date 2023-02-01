@@ -259,7 +259,7 @@ export async function getYouTubeResults(
     serverPath + '/youtube?q=' + encodeURIComponent(query)
   );
   const data = await response.json();
-  return data;
+  return data.map((d: any) => ({ ...d, type: 'youtube' }));
 }
 
 export async function openFileSelector(accept?: string) {
