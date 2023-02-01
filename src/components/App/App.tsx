@@ -997,6 +997,31 @@ export default class App extends React.Component<AppProps, AppState> {
     return false;
   };
 
+  getPlaybackRate = (): number => {
+    if (this.isVideo()) {
+      const leftVideo = document.getElementById(
+        'leftVideo'
+      ) as HTMLMediaElement;
+      return leftVideo.playbackRate;
+    }
+    if (this.isYouTube()) {
+      return this.watchPartyYTPlayer?.getPlaybackRate();
+    }
+    return 1;
+  };
+
+  setPlaybackRate = (rate: number) => {
+    if (this.isVideo()) {
+      const leftVideo = document.getElementById(
+        'leftVideo'
+      ) as HTMLMediaElement;
+      leftVideo.playbackRate = rate;
+    }
+    if (this.isYouTube()) {
+      this.watchPartyYTPlayer?.setPlaybackRate(rate);
+    }
+  };
+
   jumpToLeader = () => {
     // Jump to the leader's position
     const maxTS = this.getLeaderTime();
@@ -1558,6 +1583,9 @@ export default class App extends React.Component<AppProps, AppState> {
         disabled={!this.haveLock()}
         leaderTime={this.isHttp() ? this.getLeaderTime() : undefined}
         isPauseDisabled={this.isPauseDisabled()}
+        playbackRate={this.getPlaybackRate()}
+        setPlaybackRate={this.setPlaybackRate}
+        beta={this.props.beta}
       />
     );
     const subscribeButton = (
