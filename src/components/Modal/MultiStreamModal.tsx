@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, Loader, List } from 'semantic-ui-react';
+import { Modal, Loader, List, DropdownProps } from 'semantic-ui-react';
 
 export const MultiStreamModal = ({
   streams,
@@ -7,7 +7,7 @@ export const MultiStreamModal = ({
   resetMultiSelect,
 }: {
   streams: { name: string; url: string; length: number; playFn?: () => void }[];
-  setMedia: Function;
+  setMedia: (_e: any, data: DropdownProps) => void;
   resetMultiSelect: () => void;
 }) => (
   <Modal inverted basic open closeIcon onClose={resetMultiSelect as any}>

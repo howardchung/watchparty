@@ -7,8 +7,8 @@ import {
 } from '../SearchResult/SearchResult';
 
 interface SearchComponentProps {
-  setMedia: Function;
-  playlistAdd: Function;
+  setMedia: (_e: any, data: DropdownProps) => void;
+  playlistAdd: (_e: any, data: DropdownProps) => void;
   type?: 'youtube' | 'media' | 'stream';
   launchMultiSelect?: (multi?: []) => void;
   streamPath: string | undefined;
