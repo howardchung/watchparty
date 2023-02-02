@@ -346,7 +346,8 @@ const ChatMessage = ({
   handleReactionClick: Function;
   className: string;
 }) => {
-  const { id, timestamp, cmd, msg, system, isSub, reactions } = message;
+  const { id, timestamp, cmd, msg, system, isSub, reactions, videoTS } =
+    message;
   const spellFull = 5; // the number of people whose names should be written out in full in the reaction popup
   return (
     <Comment className={`${classes.comment} ${className}`}>
@@ -382,7 +383,10 @@ const ChatMessage = ({
           }
         />
         <Comment.Metadata className="dark">
-          <div>{new Date(timestamp).toLocaleTimeString()}</div>
+          <div title={new Date(timestamp).toLocaleDateString()}>
+            {new Date(timestamp).toLocaleTimeString()} @{' '}
+            {formatTimestamp(videoTS)}
+          </div>
         </Comment.Metadata>
         <Comment.Text className="light system">
           {cmd && formatMessage(cmd, msg)}
