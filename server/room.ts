@@ -99,9 +99,10 @@ export class Room {
             // Set leader pbr to 1
             let pbr = 1;
             if (delta > 100) {
-              // Instruct the client to play at between 1 and 1.1 depending on where delta is in range 0 to 1000
-              const cappedDelta = Math.min(1000, delta);
-              pbr = 1 + cappedDelta / 10000;
+              // Instruct the client to play at between 1.00 and 1.15 depending on where delta is in range 0 to 1000
+              const cap = 1500;
+              const cappedDelta = Math.min(cap, delta);
+              pbr = 1 + (0.15 / cap) * cappedDelta;
             }
             this.pbrMap[p.id] = pbr;
             socket?.emit('REC:autoPlaybackRate', pbr);

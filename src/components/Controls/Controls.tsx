@@ -144,12 +144,19 @@ export class Controls extends React.Component<ControlsProps> {
         </Progress>
         <div className="control">{formatTimestamp(duration)}</div>
         <div style={{ fontSize: '10px', fontWeight: 700 }}>
-          {this.props.roomPlaybackRate === 0 && (
-            <Popup
-              content="WatchParty is using a dynamic rate to keep you in sync"
-              trigger={<Icon name="cog" loading />}
-            />
-          )}
+          <Popup
+            content={
+              this.props.roomPlaybackRate === 0
+                ? 'Playing at a dynamic rate to keep you in sync'
+                : 'Playing at a manually selected rate'
+            }
+            trigger={
+              <Icon
+                name="sync alternate"
+                loading={this.props.roomPlaybackRate === 0}
+              />
+            }
+          />
           {this.props.playbackRate?.toFixed(2)}x
         </div>
         {
