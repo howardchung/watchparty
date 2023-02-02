@@ -946,7 +946,11 @@ export default class App extends React.Component<AppProps, AppState> {
   };
 
   isHttp = () => {
-    return this.state.currentMedia.startsWith('http');
+    // Youtube, link, or magnet
+    return (
+      this.state.currentMedia.startsWith('http') ||
+      this.state.currentMedia.startsWith('magnet:')
+    );
   };
 
   getVBrowserPass = () => {
