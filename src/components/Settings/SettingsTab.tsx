@@ -27,28 +27,28 @@ interface SettingsTabProps {
   hide: boolean;
   user: firebase.User | undefined;
   roomLock: string;
-  setRoomLock: Function;
+  setRoomLock: (lock: boolean) => Promise<void>;
   socket: Socket;
   isSubscriber: boolean;
   roomId: string;
   owner: string | undefined;
-  setOwner: Function;
+  setOwner: (owner: string) => void;
   vanity: string | undefined;
-  setVanity: Function;
+  setVanity: (vanity: string) => void;
   roomLink: string;
   password: string | undefined;
-  setPassword: Function;
+  setPassword: (password: string) => void;
   isChatDisabled: boolean;
-  setIsChatDisabled: Function;
-  clearChat: Function;
+  setIsChatDisabled: (disabled: boolean) => void;
+  clearChat: () => void;
   roomTitle: string | undefined;
-  setRoomTitle: Function;
+  setRoomTitle: (title: string) => void;
   roomDescription: string | undefined;
-  setRoomDescription: Function;
+  setRoomDescription: (desc: string) => void;
   roomTitleColor: string | undefined;
-  setRoomTitleColor: Function;
+  setRoomTitleColor: (color: string) => void;
   mediaPath: string | undefined;
-  setMediaPath: Function;
+  setMediaPath: (path: string) => void;
 }
 
 export const SettingsTab = ({
@@ -164,7 +164,7 @@ export const SettingsTab = ({
         description="Only the person who locked the room can control the video."
         checked={Boolean(roomLock)}
         disabled={disableLocking && disableOwning}
-        onChange={(_e, data) => setRoomLock(data.checked)}
+        onChange={(_e, data) => setRoomLock(Boolean(data.checked))}
       />
       {
         <SettingRow

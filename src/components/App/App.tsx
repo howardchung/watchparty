@@ -1885,7 +1885,6 @@ export default class App extends React.Component<AppProps, AppState> {
                           password={this.getVBrowserPass()}
                           hostname={this.getVBrowserHost()}
                           controlling={this.state.controller === this.socket.id}
-                          setLoadingFalse={this.setLoadingFalse}
                           resolution={this.state.vBrowserResolution}
                           doPlay={this.doPlay}
                           setResolution={(data: string) =>
