@@ -1507,7 +1507,7 @@ export default class App extends React.Component<AppProps, AppState> {
     return (
       <React.Fragment>
         {!this.state.isAutoPlayable && (
-          <Modal inverted basic open>
+          <Modal inverted="true" basic open>
             <div style={{ display: 'flex', justifyContent: 'center' }}>
               <Button
                 primary

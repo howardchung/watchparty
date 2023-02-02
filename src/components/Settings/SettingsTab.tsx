@@ -195,7 +195,7 @@ export const SettingsTab = ({
           description="Users must know this password in order to join the room."
           content={
             <Input
-              value={password}
+              value={password ?? ''}
               size="mini"
               onChange={(e) => {
                 setAdminSettingsChanged(true);
@@ -214,7 +214,7 @@ export const SettingsTab = ({
           description="Set a media source URL with files to replace the default examples. Supports S3 buckets and nginx file servers."
           content={
             <Input
-              value={mediaPath}
+              value={mediaPath ?? ''}
               size="mini"
               onChange={(e) => {
                 setAdminSettingsChanged(true);
@@ -241,7 +241,7 @@ export const SettingsTab = ({
       )}
       {owner && owner === user?.uid && (
         <SettingRow
-          icon={'i delete'}
+          icon={'delete'}
           name={`Clear Chat`}
           description="Delete all existing chat messages"
           disabled={false}
@@ -269,7 +269,7 @@ export const SettingsTab = ({
           content={
             <React.Fragment>
               <Input
-                value={vanity}
+                value={vanity ?? ''}
                 disabled={!isSubscriber}
                 onChange={(e) => {
                   setAdminSettingsChanged(true);
@@ -305,7 +305,7 @@ export const SettingsTab = ({
               <div style={{ display: 'flex', marginBottom: 2 }}>
                 <Input
                   style={{ marginRight: 3, flexGrow: 1 }}
-                  value={roomTitleInput ?? roomTitle}
+                  value={roomTitleInput ?? roomTitle ?? ''}
                   disabled={!isSubscriber}
                   maxLength={roomTitleMaxCharLength}
                   onChange={(e) => {
@@ -359,7 +359,7 @@ export const SettingsTab = ({
               </div>
               <Input
                 style={{ marginBottom: 2 }}
-                value={roomDescriptionInput ?? roomDescription}
+                value={roomDescriptionInput ?? roomDescription ?? ''}
                 disabled={!isSubscriber}
                 maxLength={roomDescriptionMaxCharLength}
                 onChange={(e) => {
