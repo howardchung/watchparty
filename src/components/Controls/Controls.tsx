@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-  Icon,
-  Progress,
-  Label,
-  Popup,
-  Dropdown,
-  Form,
-} from 'semantic-ui-react';
+import { Icon, Progress, Label, Popup, Dropdown } from 'semantic-ui-react';
 import { Slider } from 'react-semantic-ui-range';
 import { formatTimestamp } from '../../utils';
 
