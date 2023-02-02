@@ -112,7 +112,6 @@ interface AppState {
   isScreenSharing: boolean;
   isScreenSharingFile: boolean;
   isVBrowser: boolean;
-  isYouTubeReady: boolean;
   isAutoPlayable: boolean;
   downloaded: number;
   total: number;
@@ -179,7 +178,6 @@ export default class App extends React.Component<AppProps, AppState> {
     isScreenSharing: false,
     isScreenSharingFile: false,
     isVBrowser: false,
-    isYouTubeReady: false,
     isAutoPlayable: true,
     downloaded: 0,
     total: 0,
@@ -337,9 +335,10 @@ export default class App extends React.Component<AppProps, AppState> {
           onReady: () => {
             console.log('yt onReady');
             this.YouTubeInterface = new YouTube(ytPlayer);
-            this.setState({ isYouTubeReady: true, loading: false });
+            this.setState({ loading: false });
             // We might have failed to play YT originally, ask for the current video again
             if (this.isYouTube()) {
+              console.log('requesting host data again after ytReady');
               this.socket.emit('CMD:askHost');
             }
           },
@@ -691,7 +690,11 @@ export default class App extends React.Component<AppProps, AppState> {
     socket.on('REC:tsMap', (data: NumberDict) => {
       this.setState({ tsMap: data });
       this.syncSubtitle();
-      if (!this.state.currentMediaPaused && this.state.roomPlaybackRate === 0) {
+      if (
+        !this.state.currentMediaPaused &&
+        !this.state.currentMedia.includes('.m3u8') &&
+        this.state.roomPlaybackRate === 0
+      ) {
         const leader = Math.max(...Object.values(data));
         const delta = leader - data[this.socket.id];
         // Set leader pbr to 1
@@ -959,6 +962,7 @@ export default class App extends React.Component<AppProps, AppState> {
   };
 
   isVideo = () => {
+    // Anything that uses HTML Video (e.g. not YouTube)
     return getMediaType(this.state.currentMedia) === 'video';
   };
 
@@ -1032,8 +1036,8 @@ export default class App extends React.Component<AppProps, AppState> {
         try {
           await this.Player().playVideo();
         } catch (e: any) {
-          console.warn(e);
-          if (e.name === 'NotSupportedError') {
+          console.warn(e, e.name);
+          if (e.name === 'NotSupportedError' && this.isHttp()) {
             this.setState({ loading: false, nonPlayableMedia: true });
           }
         }
