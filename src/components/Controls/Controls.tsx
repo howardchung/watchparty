@@ -146,7 +146,7 @@ export class Controls extends React.Component<ControlsProps> {
         <div style={{ fontSize: '10px', fontWeight: 700 }}>
           {this.props.roomPlaybackRate === 0 && (
             <Popup
-              content="WatchParty is adjusting the rate to keep you in sync"
+              content="WatchParty is using a dynamic rate to keep you in sync"
               trigger={<Icon name="cog" loading />}
             />
           )}

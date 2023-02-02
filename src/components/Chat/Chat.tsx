@@ -172,7 +172,7 @@ export class Chat extends React.Component<ChatProps> {
     } else if (cmd === 'pause') {
       return `paused the video at ${formatTimestamp(msg)}`;
     } else if (cmd === 'playbackRate') {
-      return `set the playback rate to ${msg}x`;
+      return `set the playback rate to ${msg === '0' ? 'auto' : `${msg}x`}`;
     } else if (cmd === 'lock') {
       return `locked the room`;
     } else if (cmd === 'unlock') {
