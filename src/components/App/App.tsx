@@ -507,8 +507,10 @@ export default class App extends React.Component<AppProps, AppState> {
       this.Player().seekVideo(data);
     });
     socket.on('REC:playbackRate', (data: number) => {
-      this.Player().setPlaybackRate(data);
       this.setState({ roomPlaybackRate: data });
+      if (data > 0) {
+        this.Player().setPlaybackRate(data);
+      }
     });
     socket.on('REC:autoPlaybackRate', (data: number) => {
       this.Player().setPlaybackRate(data);
