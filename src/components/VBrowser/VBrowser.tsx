@@ -11,9 +11,8 @@ export default class VBrowser extends React.Component<{
   password: string;
   hostname: string;
   controlling: boolean;
-  setLoadingFalse: Function;
   resolution: string;
-  setResolution: Function;
+  setResolution: (resolution: string) => void;
   doPlay: () => Promise<void>;
 }> {
   // private observer = new ResizeObserver(this.onResize);
