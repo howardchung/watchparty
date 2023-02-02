@@ -226,8 +226,19 @@ export default class App extends React.Component<AppProps, AppState> {
   screenSharePC?: RTCPeerConnection;
   progressUpdater?: number;
   heartbeat: number | undefined = undefined;
+
+  launchMultiSelect = (
+    data: { name: string; url: string; length: number; playFn?: Function }[]
+  ) => {
+    this.setState({ multiStreamSelection: data });
+  };
+
+  resetMultiSelect = () => {
+    this.setState({ multiStreamSelection: undefined });
+  };
+
   YouTubeInterface: YouTube = new YouTube(null);
-  HTMLInterface: HTML = new HTML(null, () => {});
+  HTMLInterface: HTML = new HTML('leftVideo', this.launchMultiSelect);
   Player = () => {
     if (this.isYouTube()) {
       return this.YouTubeInterface;
@@ -256,10 +267,6 @@ export default class App extends React.Component<AppProps, AppState> {
     this.setState({ isAutoPlayable: canAutoplay });
     this.loadSettings();
     this.loadYouTube();
-    this.HTMLInterface = new HTML(
-      document.getElementById('leftVideo') as HTMLMediaElement,
-      this.launchMultiSelect
-    );
     this.init();
   }
 
@@ -991,6 +998,9 @@ export default class App extends React.Component<AppProps, AppState> {
   };
 
   doPlay = async () => {
+    if (!this.state.currentMedia) {
+      return;
+    }
     const canAutoplay = this.state.isAutoPlayable || (await testAutoplay());
     this.setState(
       { currentMediaPaused: false, isAutoPlayable: canAutoplay },
@@ -1196,16 +1206,6 @@ export default class App extends React.Component<AppProps, AppState> {
 
   playlistDelete = (index: number) => {
     this.socket.emit('CMD:playlistDelete', index);
-  };
-
-  launchMultiSelect = (
-    data: { name: string; url: string; length: number; playFn?: Function }[]
-  ) => {
-    this.setState({ multiStreamSelection: data });
-  };
-
-  resetMultiSelect = () => {
-    this.setState({ multiStreamSelection: undefined });
   };
 
   updateName = (_e: any, data: { value: string }) => {

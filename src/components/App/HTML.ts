@@ -2,22 +2,27 @@ import { Player } from './Player';
 import querystring from 'querystring';
 
 export class HTML implements Player {
-  leftVideo: HTMLMediaElement | null;
+  elId: string;
   launchMultiSelect: Function;
-  constructor(videoEl: HTMLMediaElement | null, launchMultiSelect: Function) {
-    this.leftVideo = videoEl;
+  constructor(elId: string, launchMultiSelect: Function) {
+    this.elId = elId;
     this.launchMultiSelect = launchMultiSelect;
   }
+
+  getVideoEl = (): HTMLMediaElement => {
+    return document.getElementById(this.elId) as HTMLMediaElement;
+  };
+
   getCurrentTime = () => {
-    return this.leftVideo?.currentTime ?? 0;
+    return this.getVideoEl()?.currentTime ?? 0;
   };
 
   getDuration = () => {
-    return this.leftVideo?.duration ?? 0;
+    return this.getVideoEl()?.duration ?? 0;
   };
 
   isMuted = () => {
-    return this.leftVideo?.muted ?? false;
+    return this.getVideoEl()?.muted ?? false;
   };
 
   isSubtitled = () => {
@@ -25,17 +30,17 @@ export class HTML implements Player {
   };
 
   getPlaybackRate = (): number => {
-    return this.leftVideo?.playbackRate ?? 1;
+    return this.getVideoEl()?.playbackRate ?? 1;
   };
 
   setPlaybackRate = (rate: number) => {
-    if (this.leftVideo) {
-      this.leftVideo.playbackRate = rate;
+    if (this.getVideoEl()) {
+      this.getVideoEl().playbackRate = rate;
     }
   };
 
   setSrcAndTime = async (src: string, time: number) => {
-    const leftVideo = this.leftVideo;
+    const leftVideo = this.getVideoEl();
     if (leftVideo) {
       leftVideo.srcObject = null;
       leftVideo.currentTime = time;
@@ -118,30 +123,30 @@ export class HTML implements Player {
   };
 
   playVideo = async () => {
-    if (this.leftVideo) {
-      await this.leftVideo.play();
+    if (this.getVideoEl()) {
+      await this.getVideoEl().play();
     }
   };
 
   pauseVideo = () => {
-    if (this.leftVideo) {
-      this.leftVideo.pause();
+    if (this.getVideoEl()) {
+      this.getVideoEl().pause();
     }
   };
 
   seekVideo = (time: number) => {
-    if (this.leftVideo) {
-      this.leftVideo.currentTime = time;
+    if (this.getVideoEl()) {
+      this.getVideoEl().currentTime = time;
     }
   };
 
   shouldPlay = () => {
-    const leftVideo = this.leftVideo;
+    const leftVideo = this.getVideoEl();
     return Boolean(leftVideo?.paused || leftVideo?.ended);
   };
 
   setMute = (muted: boolean) => {
-    const leftVideo = this.leftVideo;
+    const leftVideo = this.getVideoEl();
     if (leftVideo) {
       leftVideo.muted = muted;
     }
@@ -152,13 +157,13 @@ export class HTML implements Player {
   };
 
   setVolume = (volume: number) => {
-    if (this.leftVideo) {
-      this.leftVideo.volume = volume;
+    if (this.getVideoEl()) {
+      this.getVideoEl().volume = volume;
     }
   };
 
   getVolume = (): number => {
-    return this.leftVideo?.volume ?? 1;
+    return this.getVideoEl()?.volume ?? 1;
   };
 
   showSubtitle = () => {
@@ -167,11 +172,11 @@ export class HTML implements Player {
   };
 
   setSubtitleMode = (mode?: TextTrackMode) => {
-    if (this.leftVideo) {
-      for (var i = 0; i < this.leftVideo.textTracks.length; i++) {
-        this.leftVideo.textTracks[i].mode =
+    if (this.getVideoEl()) {
+      for (var i = 0; i < this.getVideoEl().textTracks.length; i++) {
+        this.getVideoEl().textTracks[i].mode =
           mode ??
-          (this.leftVideo.textTracks[i].mode === 'hidden'
+          (this.getVideoEl().textTracks[i].mode === 'hidden'
             ? 'showing'
             : 'hidden');
       }
@@ -179,10 +184,10 @@ export class HTML implements Player {
   };
 
   getSubtitleMode = () => {
-    return this.leftVideo?.textTracks[0]?.mode ?? 'hidden';
+    return this.getVideoEl()?.textTracks[0]?.mode ?? 'hidden';
   };
 
   isReady = () => {
-    return Boolean(this.leftVideo);
+    return Boolean(this.getVideoEl());
   };
 }

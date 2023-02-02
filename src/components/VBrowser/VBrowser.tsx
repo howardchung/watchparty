@@ -59,7 +59,7 @@ export default class VBrowser extends React.Component<{
       // Update our state with the resolution sent from server
       this.props.setResolution(`${this.width}x${this.height}@${this.rate}`);
     });
-    this.$client.on(EVENT.TRACK, (track: MediaStreamTrack, stream) => {
+    this.$client.on(EVENT.TRACK, async (track: MediaStreamTrack, stream) => {
       // console.log(track, streams);
       const video = document.getElementById('leftVideo') as HTMLVideoElement;
       video.src = '';
@@ -72,7 +72,7 @@ export default class VBrowser extends React.Component<{
         audio.srcObject = new MediaStream([track]);
         audio.play();
       }
-      this.props.doPlay();
+      await this.props.doPlay();
     });
     this.$client.on(EVENT.CONTROL.CLIPBOARD, this.onClipboardChanged);
 
