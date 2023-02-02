@@ -32,7 +32,7 @@ interface ChatProps {
   socket: Socket;
   scrollTimestamp: number;
   className?: string;
-  getMediaDisplayName: Function;
+  getMediaDisplayName: (input: string) => string;
   hide?: boolean;
   isChatDisabled?: boolean;
   user: firebase.User | undefined;
@@ -89,7 +89,7 @@ export class Chat extends React.Component<ChatProps> {
     });
   };
 
-  handleReactionClick = (value: string, id: string, timestamp: string) => {
+  handleReactionClick = (value: string, id?: string, timestamp?: string) => {
     const msg = this.props.chat.find(
       (m) => m.id === id && m.timestamp === timestamp
     );
@@ -342,8 +342,14 @@ const ChatMessage = ({
   socket: Socket;
   owner: string | undefined;
   isChatDisabled: boolean | undefined;
-  setReactionMenu: Function;
-  handleReactionClick: Function;
+  setReactionMenu: (
+    isOpen: boolean,
+    selectedMsgId?: string,
+    selectedMsgTimestamp?: string,
+    yPosition?: number,
+    xPosition?: number
+  ) => void;
+  handleReactionClick: (value: string, id?: string, timestamp?: string) => void;
   className: string;
 }) => {
   const { id, timestamp, cmd, msg, system, isSub, reactions, videoTS } =
@@ -526,7 +532,7 @@ const ChatMessage = ({
 
 class PickerMenuInner extends React.Component<{
   addEmoji: (emoji: EmojiData) => void;
-  closeMenu: Function;
+  closeMenu: () => void;
 }> {
   handleClickOutside = () => {
     this.props.closeMenu();
@@ -550,8 +556,8 @@ class PickerMenuInner extends React.Component<{
 const PickerMenu = onClickOutside(PickerMenuInner);
 
 class ReactionMenuInner extends React.Component<{
-  handleReactionClick: Function;
-  closeMenu: Function;
+  handleReactionClick: (value: string, id?: string, timestamp?: string) => void;
+  closeMenu: () => void;
   yPosition: number;
   xPosition: number;
 }> {

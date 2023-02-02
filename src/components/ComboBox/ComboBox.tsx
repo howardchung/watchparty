@@ -15,8 +15,8 @@ interface ComboBoxProps {
   playlistMove: (index: number, toIndex: number) => void;
   playlistDelete: (index: number) => void;
   currentMedia: string;
-  getMediaDisplayName: Function;
-  launchMultiSelect: Function;
+  getMediaDisplayName: (input: string) => string;
+  launchMultiSelect: (multi: []) => void;
   mediaPath: string | undefined;
   streamPath: string | undefined;
   disabled?: boolean;

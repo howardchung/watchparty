@@ -2,8 +2,8 @@ import React from 'react';
 import { Modal, Button } from 'semantic-ui-react';
 
 export class FileShareModal extends React.Component<{
-  closeModal: Function;
-  startFileShare: Function;
+  closeModal: () => void;
+  startFileShare: () => void;
 }> {
   render() {
     const { closeModal } = this.props;

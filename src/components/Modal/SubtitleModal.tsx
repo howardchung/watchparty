@@ -12,15 +12,15 @@ import { Socket } from 'socket.io-client';
 import { openFileSelector, serverPath } from '../../utils';
 
 export class SubtitleModal extends React.Component<{
-  closeModal: Function;
+  closeModal: () => void;
   currentSubtitle: string | undefined;
-  haveLock: Function;
+  haveLock: () => boolean;
   src: string;
   socket: Socket;
-  getMediaDisplayName: Function;
+  getMediaDisplayName: (input: string) => string;
   beta: boolean;
-  setSubtitleMode: Function;
-  getSubtitleMode: Function;
+  setSubtitleMode: (mode?: TextTrackMode) => void;
+  getSubtitleMode: () => TextTrackMode;
 }> {
   state = {
     loading: false,

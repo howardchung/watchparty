@@ -2,7 +2,7 @@ import React from 'react';
 import { Modal, Table, Icon } from 'semantic-ui-react';
 
 export class PermanentRoomModal extends React.Component<{
-  closeModal: Function;
+  closeModal: () => void;
 }> {
   render() {
     const { closeModal } = this.props;

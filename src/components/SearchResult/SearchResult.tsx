@@ -55,7 +55,7 @@ export const MediaPathSearchResult = (
 export class StreamPathSearchResult extends React.Component<
   SearchResult & {
     setMedia: Function;
-    launchMultiSelect: Function;
+    launchMultiSelect?: (multi?: []) => void;
     streamPath: string;
   }
 > {
@@ -66,7 +66,9 @@ export class StreamPathSearchResult extends React.Component<
       <React.Fragment>
         <Menu.Item
           onClick={async (e) => {
-            this.props.launchMultiSelect([]);
+            if (this.props.launchMultiSelect) {
+              this.props.launchMultiSelect([]);
+            }
             let response = await window.fetch(
               this.props.streamPath +
                 '/data?torrent=' +
@@ -94,9 +96,13 @@ export class StreamPathSearchResult extends React.Component<
               multiStreamSelection.sort((a: any, b: any) =>
                 a.name.localeCompare(b.name)
               );
-              this.props.launchMultiSelect(multiStreamSelection);
+              if (this.props.launchMultiSelect) {
+                this.props.launchMultiSelect(multiStreamSelection);
+              }
             } else {
-              this.props.launchMultiSelect(undefined);
+              if (this.props.launchMultiSelect) {
+                this.props.launchMultiSelect(undefined);
+              }
               setMedia(e, {
                 value:
                   this.props.streamPath +

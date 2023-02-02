@@ -5,7 +5,7 @@ import { formatTimestamp } from '../../utils';
 
 interface ControlsProps {
   duration: number;
-  togglePlay: Function;
+  togglePlay: () => void;
   onSeek: Function;
   fullScreen: Function;
   toggleMute: Function;

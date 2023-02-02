@@ -2,8 +2,8 @@ import React from 'react';
 import { Modal, Button } from 'semantic-ui-react';
 
 export class ScreenShareModal extends React.Component<{
-  closeModal: Function;
-  startScreenShare: Function;
+  closeModal: () => void;
+  startScreenShare: () => void;
 }> {
   render() {
     const { closeModal } = this.props;

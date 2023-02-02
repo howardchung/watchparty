@@ -9,8 +9,11 @@ import { serverPath } from '../../utils';
 import firebase from 'firebase/compat/app';
 
 export class VBrowserModal extends React.Component<{
-  closeModal: Function;
-  startVBrowser: Function;
+  closeModal: () => void;
+  startVBrowser: (
+    rcToken: string,
+    options: { size: string; region: string }
+  ) => void;
   isSubscriber: boolean;
   subscribeButton: JSX.Element;
   user?: firebase.User;

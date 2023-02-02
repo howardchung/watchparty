@@ -14,7 +14,7 @@ export default class VBrowser extends React.Component<{
   setLoadingFalse: Function;
   resolution: string;
   setResolution: Function;
-  doPlay: Function;
+  doPlay: () => Promise<void>;
 }> {
   // private observer = new ResizeObserver(this.onResize);
   private keyboard = GuacamoleKeyboard();
