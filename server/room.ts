@@ -31,6 +31,7 @@ export class Room {
   public video: string | null = '';
   public videoTS = 0;
   public subtitle = '';
+  public playbackRate = 1;
   public paused = false;
   private chat: ChatMessage[] = [];
   private nameMap: StringDict = {};
@@ -120,6 +121,9 @@ export class Room {
       socket.on('CMD:play', () => this.playVideo(socket));
       socket.on('CMD:pause', () => this.pauseVideo(socket));
       socket.on('CMD:seek', (data) => this.seekVideo(socket, data));
+      socket.on('CMD:playbackRate', (data) =>
+        this.setPlaybackRate(socket, data)
+      );
       socket.on('CMD:ts', (data) => this.setTimestamp(socket, data));
       socket.on('CMD:chat', (data) => this.sendChatMessage(socket, data));
       socket.on('CMD:addReaction', (data) => this.addReaction(socket, data));
@@ -187,6 +191,7 @@ export class Room {
       video: this.video,
       videoTS: this.videoTS,
       subtitle: this.subtitle,
+      playbackRate: this.playbackRate,
       paused: this.paused,
       chat: this.chat,
       nameMap: abbrNameMap,
@@ -228,6 +233,9 @@ export class Room {
     }
     if (roomObj.playlist) {
       this.playlist = roomObj.playlist;
+    }
+    if (roomObj.playbackRate) {
+      this.playbackRate = roomObj.playbackRate;
     }
   };
 
@@ -293,6 +301,7 @@ export class Room {
       video: this.video ?? '',
       videoTS: this.videoTS,
       subtitle: this.subtitle,
+      playbackRate: this.playbackRate,
       paused: this.paused,
       isVBrowserLarge: Boolean(this.vBrowser && this.vBrowser.large),
       controller: match?.id,
@@ -550,6 +559,23 @@ export class Room {
     this.videoTS = data;
     socket.broadcast.emit('REC:seek', data);
     const chatMsg = { id: socket.id, cmd: 'seek', msg: data?.toString() };
+    this.addChatMessage(socket, chatMsg);
+  };
+
+  private setPlaybackRate = (socket: Socket, data: number) => {
+    if (String(data).length > 100) {
+      return;
+    }
+    if (!this.validateLock(socket.id)) {
+      return;
+    }
+    this.playbackRate = Number(data);
+    socket.broadcast.emit('REC:playbackRate', Number(data));
+    const chatMsg = {
+      id: socket.id,
+      cmd: 'playbackRate',
+      msg: data?.toString(),
+    };
     this.addChatMessage(socket, chatMsg);
   };
 

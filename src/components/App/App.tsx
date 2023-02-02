@@ -498,6 +498,9 @@ export default class App extends React.Component<AppProps, AppState> {
     socket.on('REC:seek', (data: any) => {
       this.Player().seekVideo(data);
     });
+    socket.on('REC:playbackRate', (data: number) => {
+      this.Player().setPlaybackRate(data);
+    });
     socket.on('REC:subtitle', (data: string) => {
       this.setState({ currentSubtitle: data }, () => {
         this.loadSubtitles();
@@ -569,6 +572,9 @@ export default class App extends React.Component<AppProps, AppState> {
             }
             if (data.subtitle) {
               this.loadSubtitles();
+            }
+            if (data.playbackRate && data.playbackRate !== 1) {
+              this.Player().setPlaybackRate(data.playbackRate);
             }
             // One time, when we're ready to play
             const leftVideo = document.getElementById('leftVideo');
@@ -1023,7 +1029,8 @@ export default class App extends React.Component<AppProps, AppState> {
   };
 
   doSetPlaybackRate = (rate: number) => {
-    // TODO emit an event to the server
+    // emit an event to the server
+    this.socket.emit('CMD:playbackRate', rate);
     this.Player().setPlaybackRate(rate);
   };
 

@@ -1,5 +1,13 @@
 import React from 'react';
-import { Icon, Progress, Label, Popup, Dropdown } from 'semantic-ui-react';
+import {
+  Icon,
+  Progress,
+  Label,
+  Popup,
+  Dropdown,
+  Button,
+  Form,
+} from 'semantic-ui-react';
 import { Slider } from 'react-semantic-ui-range';
 import { formatTimestamp } from '../../utils';
 
@@ -143,23 +151,25 @@ export class Controls extends React.Component<ControlsProps> {
         </Progress>
         <div className="control">{formatTimestamp(duration)}</div>
         {this.props.beta && (
-          <Dropdown
-            className="control action"
-            placeholder={this.props.playbackRate.toString() + 'x'}
-            compact
-            selection
-            value={this.props.playbackRate}
-            onChange={(_e: any, { value }: any) =>
-              this.props.setPlaybackRate(value)
-            }
-            options={[
-              { key: '0.25', text: '0.25x', value: 0.25 },
-              { key: '0.5', text: '0.5x', value: 0.5 },
-              { key: '1', text: '1x', value: 1 },
-              { key: '1.5', text: '1.5x', value: 1.5 },
-              { key: '2', text: '2x', value: 2 },
-            ]}
-          />
+          <Form size="tiny">
+            <Dropdown
+              className="control action"
+              placeholder={this.props.playbackRate.toString() + 'x'}
+              selection
+              compact
+              value={this.props.playbackRate}
+              onChange={(_e: any, { value }: any) =>
+                this.props.setPlaybackRate(value)
+              }
+              options={[
+                { key: '0.25', text: '0.25x', value: 0.25 },
+                { key: '0.5', text: '0.5x', value: 0.5 },
+                { key: '1', text: '1x', value: 1 },
+                { key: '1.5', text: '1.5x', value: 1.5 },
+                { key: '2', text: '2x', value: 2 },
+              ]}
+            />
+          </Form>
         )}
         <Icon
           size="large"
