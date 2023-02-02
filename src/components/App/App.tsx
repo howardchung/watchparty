@@ -512,9 +512,9 @@ export default class App extends React.Component<AppProps, AppState> {
         this.Player().setPlaybackRate(data);
       }
     });
-    socket.on('REC:autoPlaybackRate', (data: number) => {
-      this.Player().setPlaybackRate(data);
-    });
+    // socket.on('REC:autoPlaybackRate', (data: number) => {
+    //   this.Player().setPlaybackRate(data);
+    // });
     socket.on('REC:subtitle', (data: string) => {
       this.setState({ currentSubtitle: data }, () => {
         this.loadSubtitles();
@@ -691,6 +691,20 @@ export default class App extends React.Component<AppProps, AppState> {
     socket.on('REC:tsMap', (data: NumberDict) => {
       this.setState({ tsMap: data });
       this.syncSubtitle();
+      if (!this.state.currentMediaPaused && this.state.roomPlaybackRate === 0) {
+        const leader = Math.max(...Object.values(data));
+        const delta = leader - data[this.socket.id];
+        // Set leader pbr to 1
+        let pbr = 1;
+        if (delta > 0.1) {
+          // Speed up between 1.00 and 1.15 depending on delta
+          const cap = 1.5;
+          const cappedDelta = Math.min(cap, delta);
+          pbr = 1 + (0.15 / cap) * cappedDelta;
+        }
+        // console.log(delta, pbr);
+        this.Player().setPlaybackRate(pbr);
+      }
     });
     socket.on('REC:nameMap', (data: StringDict) => {
       this.setState({ nameMap: data });

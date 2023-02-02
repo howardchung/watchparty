@@ -44,9 +44,8 @@ export class Room {
   // Non-serialized state
   public roomId: string;
   public roster: User[] = [];
+  private lastTsMap = Date.now();
   private tsMap: NumberDict = {};
-  private zeroTimeMap: NumberDict = {};
-  private pbrMap: NumberDict = {};
   private nextVotes: StringDict = {};
   private io: Server;
   private clientIdMap: StringDict = {};
@@ -76,39 +75,9 @@ export class Room {
           delete this.tsMap[key];
         }
       });
-      Object.keys(this.zeroTimeMap).forEach((key) => {
-        if (!memberIds.includes(key)) {
-          delete this.zeroTimeMap[key];
-        }
-      });
-      Object.keys(this.pbrMap).forEach((key) => {
-        if (!memberIds.includes(key)) {
-          delete this.pbrMap[key];
-        }
-      });
       if (this.video) {
+        this.lastTsMap = Date.now();
         io.of(roomId).emit('REC:tsMap', this.tsMap);
-        if (this.playbackRate === 0) {
-          this.roster.forEach((p) => {
-            const socket = this.io.of(this.roomId).sockets.get(p.id);
-            const zeroTimeMs = this.zeroTimeMap[p.id];
-            // The lowest zero time is the leader
-            const lowest = Math.min(...Object.values(this.zeroTimeMap));
-            // Compute the delta between each client and the leader
-            const delta = zeroTimeMs - lowest;
-            // Set leader pbr to 1
-            let pbr = 1;
-            if (delta > 100) {
-              // Instruct the client to play at between 1.00 and 1.15 depending on where delta is in range 0 to 1000
-              const cap = 1500;
-              const cappedDelta = Math.min(cap, delta);
-              pbr = 1 + (0.15 / cap) * cappedDelta;
-            }
-            this.pbrMap[p.id] = pbr;
-            socket?.emit('REC:autoPlaybackRate', pbr);
-            // console.log(p.id, delta, pbr);
-          });
-        }
       }
     }, 1000);
 
@@ -389,8 +358,6 @@ export class Room {
     this.subtitle = '';
     this.tsMap = {};
     this.nextVotes = {};
-    this.zeroTimeMap = {};
-    this.pbrMap = {};
     this.playbackRate = 0;
     this.io.of(this.roomId).emit('REC:tsMap', this.tsMap);
     this.io.of(this.roomId).emit('REC:host', this.getHostState());
@@ -629,11 +596,16 @@ export class Room {
     if (data > this.videoTS) {
       this.videoTS = data;
     }
-    this.tsMap[socket.id] = data;
+    // Normalize the received TS based on how long since the last tsMap emit
+    // Later sends will have higher values so subtract the difference
+    // Add 1 as we will emit 1 second from the last one
+    const timeSinceTsMap = Date.now() - this.lastTsMap;
+    // console.log(socket.id, 'offset', offset, 'ms');
+    this.tsMap[socket.id] = data - timeSinceTsMap / 1000 + 1;
 
     // Calculate and update the zero time for each person (wall time - reported ts)
-    const zeroTimeMs = Date.now() - Math.floor(data * 1000);
-    this.zeroTimeMap[socket.id] = zeroTimeMs;
+    // const zeroTimeMs = Date.now() - Math.floor(data * 1000);
+    // this.zeroTimeMap[socket.id] = zeroTimeMs;
   };
 
   private sendChatMessage = (socket: Socket, data: string) => {
