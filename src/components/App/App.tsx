@@ -153,6 +153,7 @@ interface AppState {
   roomDescription: string | undefined;
   roomTitleColor: string | undefined;
   mediaPath: string | undefined;
+  roomPlaybackRate: number;
 }
 
 export default class App extends React.Component<AppProps, AppState> {
@@ -216,6 +217,7 @@ export default class App extends React.Component<AppProps, AppState> {
     roomDescription: '',
     roomTitleColor: '',
     mediaPath: undefined,
+    roomPlaybackRate: 0,
   };
   socket: Socket = null as any;
   ytDebounce = true;
@@ -500,6 +502,10 @@ export default class App extends React.Component<AppProps, AppState> {
     });
     socket.on('REC:playbackRate', (data: number) => {
       this.Player().setPlaybackRate(data);
+      this.setState({ roomPlaybackRate: data });
+    });
+    socket.on('REC:autoPlaybackRate', (data: number) => {
+      this.Player().setPlaybackRate(data);
     });
     socket.on('REC:subtitle', (data: string) => {
       this.setState({ currentSubtitle: data }, () => {
@@ -573,7 +579,8 @@ export default class App extends React.Component<AppProps, AppState> {
             if (data.subtitle) {
               this.loadSubtitles();
             }
-            if (data.playbackRate && data.playbackRate !== 1) {
+            if (data.playbackRate) {
+              this.setState({ roomPlaybackRate: data.playbackRate });
               this.Player().setPlaybackRate(data.playbackRate);
             }
             // One time, when we're ready to play
@@ -1035,7 +1042,6 @@ export default class App extends React.Component<AppProps, AppState> {
   doSetPlaybackRate = (rate: number) => {
     // emit an event to the server
     this.socket.emit('CMD:playbackRate', rate);
-    this.Player().setPlaybackRate(rate);
   };
 
   togglePlay = () => {
@@ -1335,6 +1341,7 @@ export default class App extends React.Component<AppProps, AppState> {
         playbackRate={this.Player().getPlaybackRate()}
         setPlaybackRate={this.doSetPlaybackRate}
         beta={this.props.beta}
+        roomPlaybackRate={this.state.roomPlaybackRate}
       />
     );
     const subscribeButton = (

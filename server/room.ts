@@ -31,7 +31,7 @@ export class Room {
   public video: string | null = '';
   public videoTS = 0;
   public subtitle = '';
-  public playbackRate = 1;
+  public playbackRate = 0;
   public paused = false;
   private chat: ChatMessage[] = [];
   private nameMap: StringDict = {};
@@ -45,6 +45,8 @@ export class Room {
   public roomId: string;
   public roster: User[] = [];
   private tsMap: NumberDict = {};
+  private zeroTimeMap: NumberDict = {};
+  private pbrMap: NumberDict = {};
   private nextVotes: StringDict = {};
   private io: Server;
   private clientIdMap: StringDict = {};
@@ -67,8 +69,45 @@ export class Room {
 
     this.tsInterval = setInterval(() => {
       // console.log(roomId, this.video, this.roster, this.tsMap, this.nameMap);
+      // Clean up the data of users who aren't in the room anymore
+      const memberIds = this.roster.map((p) => p.id);
+      Object.keys(this.tsMap).forEach((key) => {
+        if (!memberIds.includes(key)) {
+          delete this.tsMap[key];
+        }
+      });
+      Object.keys(this.zeroTimeMap).forEach((key) => {
+        if (!memberIds.includes(key)) {
+          delete this.zeroTimeMap[key];
+        }
+      });
+      Object.keys(this.pbrMap).forEach((key) => {
+        if (!memberIds.includes(key)) {
+          delete this.pbrMap[key];
+        }
+      });
       if (this.video) {
         io.of(roomId).emit('REC:tsMap', this.tsMap);
+        if (this.playbackRate === 0) {
+          this.roster.forEach((p) => {
+            const socket = this.io.of(this.roomId).sockets.get(p.id);
+            const zeroTimeMs = this.zeroTimeMap[p.id];
+            // The lowest zero time is the leader
+            const lowest = Math.min(...Object.values(this.zeroTimeMap));
+            // Compute the delta between each client and the leader
+            const delta = zeroTimeMs - lowest;
+            // Set leader pbr to 1
+            let pbr = 1;
+            if (delta > 100) {
+              // Instruct the client to play at between 1 and 1.1 depending on where delta is in range 0 to 1000
+              const cappedDelta = Math.min(1000, delta);
+              pbr = 1 + cappedDelta / 10000;
+            }
+            this.pbrMap[p.id] = pbr;
+            socket?.emit('REC:autoPlaybackRate', pbr);
+            // console.log(p.id, delta, pbr);
+          });
+        }
       }
     }, 1000);
 
@@ -349,6 +388,9 @@ export class Room {
     this.subtitle = '';
     this.tsMap = {};
     this.nextVotes = {};
+    this.zeroTimeMap = {};
+    this.pbrMap = {};
+    this.playbackRate = 0;
     this.io.of(this.roomId).emit('REC:tsMap', this.tsMap);
     this.io.of(this.roomId).emit('REC:host', this.getHostState());
     if (socket && data) {
@@ -570,7 +612,7 @@ export class Room {
       return;
     }
     this.playbackRate = Number(data);
-    socket.broadcast.emit('REC:playbackRate', Number(data));
+    this.io.of(this.roomId).emit('REC:playbackRate', Number(data));
     const chatMsg = {
       id: socket.id,
       cmd: 'playbackRate',
@@ -587,11 +629,10 @@ export class Room {
       this.videoTS = data;
     }
     this.tsMap[socket.id] = data;
-    // Calculate the zero time for each person (wall time - reported ts)
-    // The lowest zero time is the leader
-    // Compute the delta between each client and the leader
-    // Set leader pbr to 1
-    // Set everyone else's pbr to a scaled value between 1 and 1.2 depending on where delta is in range 0 to 2
+
+    // Calculate and update the zero time for each person (wall time - reported ts)
+    const zeroTimeMs = Date.now() - Math.floor(data * 1000);
+    this.zeroTimeMap[socket.id] = zeroTimeMs;
   };
 
   private sendChatMessage = (socket: Socket, data: string) => {

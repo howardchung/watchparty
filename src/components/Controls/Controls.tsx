@@ -30,6 +30,7 @@ interface ControlsProps {
   playbackRate: number;
   setPlaybackRate: Function;
   beta: boolean;
+  roomPlaybackRate: number;
 }
 
 export class Controls extends React.Component<ControlsProps> {
@@ -149,19 +150,20 @@ export class Controls extends React.Component<ControlsProps> {
           )}
         </Progress>
         <div className="control">{formatTimestamp(duration)}</div>
+        <div style={{ fontSize: '10px', fontWeight: 700 }}>
+          {this.props.roomPlaybackRate === 0 && (
+            <Popup
+              content="WatchParty is adjusting the rate to keep you in sync"
+              trigger={<Icon name="cog" loading />}
+            />
+          )}
+          {this.props.playbackRate?.toFixed(2)}x
+        </div>
         {
-          <Form size="tiny" style={{ fontSize: '10px' }}>
-            <Dropdown
-              style={{ width: '60px' }}
-              className="control"
-              placeholder={this.props.playbackRate.toString() + 'x'}
-              selection
-              compact
-              value={this.props.playbackRate}
-              onChange={(_e: any, { value }: any) =>
-                this.props.setPlaybackRate(value)
-              }
-              options={[
+          <Dropdown className="control" compact>
+            <Dropdown.Menu>
+              {[
+                { key: 'Auto', text: 'Auto', value: 0 },
                 { key: '0.25', text: '0.25x', value: 0.25 },
                 { key: '0.5', text: '0.5x', value: 0.5 },
                 { key: '0.75', text: '0.75x', value: 0.75 },
@@ -170,9 +172,15 @@ export class Controls extends React.Component<ControlsProps> {
                 { key: '1.5', text: '1.5x', value: 1.5 },
                 { key: '1.75', text: '1.75x', value: 1.75 },
                 { key: '2', text: '2x', value: 2 },
-              ]}
-            />
-          </Form>
+              ].map((item) => (
+                <Dropdown.Item
+                  key={item.key}
+                  text={item.text}
+                  onClick={() => this.props.setPlaybackRate(item.value)}
+                />
+              ))}
+            </Dropdown.Menu>
+          </Dropdown>
         }
         <Icon
           size="large"
