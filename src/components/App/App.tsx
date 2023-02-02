@@ -54,6 +54,8 @@ import { ScreenShareModal } from '../Modal/ScreenShareModal';
 import { FileShareModal } from '../Modal/FileShareModal';
 import firebase from 'firebase/compat/app';
 import { SubtitleModal } from '../Modal/SubtitleModal';
+import { HTML } from './HTML';
+import { YouTube } from './YouTube';
 
 declare global {
   interface Window {
@@ -67,16 +69,16 @@ declare global {
       ourStream: MediaStream | undefined;
       videoRefs: HTMLVideoElementDict;
       videoPCs: PCDict;
+      webtorrent: any;
     };
   }
 }
-
-let client: any = null;
 
 window.watchparty = {
   ourStream: undefined,
   videoRefs: {},
   videoPCs: {},
+  webtorrent: null,
 };
 
 interface AppProps {
@@ -216,13 +218,21 @@ export default class App extends React.Component<AppProps, AppState> {
     mediaPath: undefined,
   };
   socket: Socket = null as any;
-  watchPartyYTPlayer: any = null;
   ytDebounce = true;
   screenShareStream?: MediaStream;
   screenHostPC: PCDict = {};
   screenSharePC?: RTCPeerConnection;
   progressUpdater?: number;
   heartbeat: number | undefined = undefined;
+  YouTubeInterface: YouTube = new YouTube(null);
+  HTMLInterface: HTML = new HTML(null, () => {});
+  Player = () => {
+    if (this.isYouTube()) {
+      return this.YouTubeInterface;
+    } else {
+      return this.HTMLInterface;
+    }
+  };
 
   chatRef = React.createRef<Chat>();
 
@@ -244,6 +254,10 @@ export default class App extends React.Component<AppProps, AppState> {
     this.setState({ isAutoPlayable: canAutoplay });
     this.loadSettings();
     this.loadYouTube();
+    this.HTMLInterface = new HTML(
+      document.getElementById('leftVideo') as HTMLMediaElement,
+      this.launchMultiSelect
+    );
     this.init();
   }
 
@@ -314,7 +328,7 @@ export default class App extends React.Component<AppProps, AppState> {
         events: {
           onReady: () => {
             console.log('yt onReady');
-            this.watchPartyYTPlayer = ytPlayer;
+            this.YouTubeInterface = new YouTube(ytPlayer);
             this.setState({ isYouTubeReady: true, loading: false });
             // We might have failed to play YT originally, ask for the current video again
             if (this.isYouTube()) {
@@ -334,7 +348,6 @@ export default class App extends React.Component<AppProps, AppState> {
             ) {
               this.onVideoEnded();
             }
-            // console.log(this.ytDebounce, e.data, this.watchPartyYTPlayer?.getVideoUrl());
             if (
               this.ytDebounce &&
               ((e.data === window.YT?.PlayerState?.PLAYING &&
@@ -483,7 +496,7 @@ export default class App extends React.Component<AppProps, AppState> {
       this.doPause();
     });
     socket.on('REC:seek', (data: any) => {
-      this.doSeek(data);
+      this.Player().seekVideo(data);
     });
     socket.on('REC:subtitle', (data: string) => {
       this.setState({ currentSubtitle: data }, () => {
@@ -537,13 +550,10 @@ export default class App extends React.Component<AppProps, AppState> {
             return;
           }
           // Stop all players
-          const leftVideo = document.getElementById(
-            'leftVideo'
-          ) as HTMLMediaElement;
-          leftVideo?.pause();
-          this.watchPartyYTPlayer?.stopVideo();
+          this.HTMLInterface.pauseVideo();
+          this.YouTubeInterface.stopVideo();
 
-          if (this.isYouTube() && !this.watchPartyYTPlayer) {
+          if (this.isYouTube() && !this.YouTubeInterface.isReady()) {
             console.log(
               'YT player not ready, onReady callback will retry when it is'
             );
@@ -561,6 +571,7 @@ export default class App extends React.Component<AppProps, AppState> {
               this.loadSubtitles();
             }
             // One time, when we're ready to play
+            const leftVideo = document.getElementById('leftVideo');
             leftVideo?.addEventListener(
               'canplay',
               () => {
@@ -589,11 +600,12 @@ export default class App extends React.Component<AppProps, AppState> {
             }
             if (currentMedia.startsWith('magnet:')) {
               this.progressUpdater = window.setInterval(async () => {
+                const client = window.watchparty.webtorrent;
                 this.setState({
-                  downloaded: client.torrents[0]?.downloaded,
-                  total: client.torrents[0]?.length,
-                  speed: client.torrents[0]?.downloadSpeed,
-                  connections: client.torrents[0]?.numPeers,
+                  downloaded: client?.torrents[0]?.downloaded,
+                  total: client?.torrents[0]?.length,
+                  speed: client?.torrents[0]?.downloadSpeed,
+                  connections: client?.torrents[0]?.numPeers,
                 });
               }, 1000);
             }
@@ -730,7 +742,7 @@ export default class App extends React.Component<AppProps, AppState> {
     socket.on('REC:getRoomState', this.handleRoomState);
     window.setInterval(() => {
       if (this.state.currentMedia) {
-        this.socket.emit('CMD:ts', this.getCurrentTime());
+        this.socket.emit('CMD:ts', this.Player().getCurrentTime());
       }
     }, 1000);
   };
@@ -803,7 +815,7 @@ export default class App extends React.Component<AppProps, AppState> {
     if (this.state.isScreenSharing) {
       this.socket.emit('CMD:leaveScreenShare');
       // We don't actually need to unmute if it's a fileshare but this is fine
-      this.setMute(false);
+      this.doSetMute(false);
     }
     this.setState({ isScreenSharing: false, isScreenSharingFile: false });
   };
@@ -939,87 +951,8 @@ export default class App extends React.Component<AppProps, AppState> {
     return this.state.currentMedia.replace('vbrowser://', '').split('@')[1];
   };
 
-  getCurrentTime = () => {
-    if (this.isVideo()) {
-      const leftVideo = document.getElementById(
-        'leftVideo'
-      ) as HTMLMediaElement;
-      return leftVideo?.currentTime;
-    }
-    if (this.isYouTube()) {
-      return this.watchPartyYTPlayer?.getCurrentTime();
-    }
-  };
-
-  getDuration = () => {
-    if (this.isVideo()) {
-      const leftVideo = document.getElementById(
-        'leftVideo'
-      ) as HTMLMediaElement;
-      return leftVideo.duration;
-    }
-    if (this.isYouTube()) {
-      return this.watchPartyYTPlayer?.getDuration();
-    }
-    return 0;
-  };
-
   isPauseDisabled = () => {
     return this.isScreenShare() || this.isVBrowser();
-  };
-
-  isMuted = () => {
-    if (this.isVideo()) {
-      const leftVideo = document.getElementById(
-        'leftVideo'
-      ) as HTMLMediaElement;
-      return leftVideo?.muted;
-    }
-    if (this.isYouTube()) {
-      return this.watchPartyYTPlayer?.isMuted();
-    }
-    return false;
-  };
-
-  isSubtitled = () => {
-    if (this.isVideo()) {
-      return Boolean(this.state.currentSubtitle);
-    }
-    if (this.isYouTube()) {
-      try {
-        const current = this.watchPartyYTPlayer?.getOption('captions', 'track');
-        return Boolean(current && current.languageCode);
-      } catch (e) {
-        console.warn(e);
-        return false;
-      }
-    }
-    return false;
-  };
-
-  getPlaybackRate = (): number => {
-    if (this.isVideo()) {
-      const leftVideo = document.getElementById(
-        'leftVideo'
-      ) as HTMLMediaElement;
-      return leftVideo.playbackRate;
-    }
-    if (this.isYouTube()) {
-      return this.watchPartyYTPlayer?.getPlaybackRate();
-    }
-    return 1;
-  };
-
-  setPlaybackRate = (rate: number) => {
-    if (this.isVideo()) {
-      const leftVideo = document.getElementById(
-        'leftVideo'
-      ) as HTMLMediaElement;
-      leftVideo.playbackRate = rate;
-    }
-    if (this.isYouTube()) {
-      this.watchPartyYTPlayer?.setPlaybackRate(rate);
-    }
   };
 
   jumpToLeader = () => {
@@ -1027,7 +960,7 @@ export default class App extends React.Component<AppProps, AppState> {
     const maxTS = this.getLeaderTime();
     if (maxTS > 0) {
       console.log('jump to leader at ', maxTS);
-      this.doSeek(maxTS);
+      this.Player().seekVideo(maxTS);
     }
   };
 
@@ -1037,96 +970,7 @@ export default class App extends React.Component<AppProps, AppState> {
       // No-op as we'll set video when WebRTC completes
       return;
     }
-    if (this.isVideo()) {
-      const leftVideo = document.getElementById(
-        'leftVideo'
-      ) as HTMLMediaElement;
-      if (leftVideo) {
-        leftVideo.srcObject = null;
-        leftVideo.currentTime = time;
-        this.setSubtitleMode('hidden');
-        leftVideo.innerHTML = '';
-        // Check for HLS
-        // https://moctobpltc-i.akamaihd.net/hls/live/571329/eight/playlist.m3u8
-        let spl = src.split('.');
-        if (
-          spl[spl.length - 1] === 'm3u8' &&
-          !leftVideo?.canPlayType('application/vnd.apple.mpegurl')
-        ) {
-          let hls = new window.Hls();
-          hls.loadSource(src);
-          hls.attachMedia(leftVideo);
-        } else if (src.startsWith('magnet:')) {
-          // WebTorrent
-          // magnet:?xt=urn:btih:08ada5a7a6183aae1e09d831df6748d566095a10&dn=Sintel&tr=udp%3A%2F%2Fexplodie.org%3A6969&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Ftracker.empire-js.us%3A1337&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=wss%3A%2F%2Ftracker.btorrent.xyz&tr=wss%3A%2F%2Ftracker.fastcast.nz&tr=wss%3A%2F%2Ftracker.openwebtorrent.com&ws=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2F&xs=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2Fsintel.torrent
-          client?._server?.close();
-          client?.destroy();
-          client = new window.WebTorrent();
-          await navigator.serviceWorker?.register('sw.min.js');
-          const controller = await navigator.serviceWorker.ready;
-          await new Promise((resolve) => setTimeout(resolve, 500));
-          console.log(controller, controller.active?.state);
-          const server = await client.createServer({ controller });
-          console.log(server);
-          await new Promise((resolve) => {
-            client.add(
-              this.state.currentMedia,
-              {
-                announce: [
-                  'wss://tracker.btorrent.xyz',
-                  'wss://tracker.openwebtorrent.com',
-                ],
-                destroyStoreOnDestroy: true,
-                maxWebConns: 4,
-                path: '/tmp/webtorrent/',
-                storeCacheSlots: 20,
-                strategy: 'sequential',
-                noPeersIntervalTime: 30,
-              },
-              async (torrent: any) => {
-                // Got torrent metadata!
-                console.log('Client is downloading:', torrent.infoHash);
-
-                // Torrents can contain many files.
-                const files = torrent.files;
-                const filtered = files.filter(
-                  (f: any) => f.length >= 10 * 1024 * 1024
-                );
-                const fileIndex = querystring.parse(src)
-                  .fileIndex as unknown as number;
-                // Try to find a single large file to play
-                const target =
-                  files[fileIndex] ??
-                  (filtered.length > 1 ? null : filtered[0]);
-                if (!target) {
-                  // Open the selector
-                  this.setState({
-                    multiStreamSelection: files.map((f: any, i: number) => ({
-                      name: f.name as string,
-                      url: src + `&fileIndex=${i}`,
-                      length: f.length as number,
-                    })),
-                  });
-                } else {
-                  target.streamTo(leftVideo);
-                }
-                resolve(null);
-              }
-            );
-          });
-        } else {
-          leftVideo.src = src;
-        }
-      }
-    }
-    if (this.isYouTube()) {
-      let url = new window.URL(src);
-      // Standard link https://www.youtube.com/watch?v=ID
-      let videoId = querystring.parse(url.search.substring(1))['v'];
-      // Link shortener https://youtu.be/ID
-      let altVideoId = src.split('/').slice(-1)[0];
-      this.watchPartyYTPlayer?.cueVideoById(videoId || altVideoId, time);
-    }
+    await this.Player().setSrcAndTime(src, time);
   };
 
   doPlay = async () => {
@@ -1139,28 +983,17 @@ export default class App extends React.Component<AppProps, AppState> {
           (this.state.isScreenSharing && !this.state.isScreenSharingFile)
         ) {
           console.log('auto-muting to allow autoplay or screenshare host');
-          this.setMute(true);
+          this.doSetMute(true);
         } else {
-          this.setMute(false);
+          this.doSetMute(false);
         }
-        if (this.isVideo()) {
-          const leftVideo = document.getElementById(
-            'leftVideo'
-          ) as HTMLMediaElement;
-          try {
-            await leftVideo?.play();
-          } catch (e: any) {
-            console.warn(e);
-            if (e.name === 'NotSupportedError') {
-              this.setState({ loading: false, nonPlayableMedia: true });
-            }
+        try {
+          await this.Player().playVideo();
+        } catch (e: any) {
+          console.warn(e);
+          if (e.name === 'NotSupportedError') {
+            this.setState({ loading: false, nonPlayableMedia: true });
           }
-        }
-        if (this.isYouTube()) {
-          setTimeout(() => {
-            console.log('play yt');
-            this.watchPartyYTPlayer?.playVideo();
-          }, 200);
         }
       }
     );
@@ -1168,47 +1001,37 @@ export default class App extends React.Component<AppProps, AppState> {
 
   doPause = () => {
     this.setState({ currentMediaPaused: true }, async () => {
-      if (this.isVideo()) {
-        const leftVideo = document.getElementById(
-          'leftVideo'
-        ) as HTMLMediaElement;
-        leftVideo.pause();
-      }
-      if (this.isYouTube()) {
-        console.log('pause');
-        this.watchPartyYTPlayer?.pauseVideo();
-      }
+      this.Player().pauseVideo();
     });
   };
 
-  doSeek = (time: number) => {
+  doSetMute = (muted: boolean) => {
+    this.Player().setMute(muted);
+    this.refreshControls();
+  };
+
+  doSetVolume = (volume: number) => {
+    this.Player().setVolume(volume);
+    this.refreshControls();
+  };
+
+  doSubtitle = () => {
     if (this.isVideo()) {
-      const leftVideo = document.getElementById(
-        'leftVideo'
-      ) as HTMLMediaElement;
-      leftVideo.currentTime = time;
+      this.setState({ isSubtitleModalOpen: true });
     }
-    if (this.isYouTube()) {
-      this.watchPartyYTPlayer?.seekTo(time, true);
-    }
+    this.Player().showSubtitle();
+  };
+
+  doSetPlaybackRate = (rate: number) => {
+    // TODO emit an event to the server
+    this.Player().setPlaybackRate(rate);
   };
 
   togglePlay = () => {
     if (this.isPauseDisabled()) {
       return;
     }
-    let shouldPlay = true;
-    if (this.isVideo()) {
-      const leftVideo = document.getElementById(
-        'leftVideo'
-      ) as HTMLMediaElement;
-      shouldPlay = leftVideo.paused || leftVideo.ended;
-    } else if (this.isYouTube()) {
-      shouldPlay =
-        this.watchPartyYTPlayer?.getPlayerState() ===
-          window.YT?.PlayerState.PAUSED ||
-        this.getCurrentTime() === this.getDuration();
-    }
+    const shouldPlay = this.Player().shouldPlay();
     if (shouldPlay) {
       this.socket.emit('CMD:play');
       this.doPlay();
@@ -1224,10 +1047,10 @@ export default class App extends React.Component<AppProps, AppState> {
       const rect = e.target.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const max = rect.width;
-      target = (x / max) * this.getDuration();
+      target = (x / max) * this.Player().getDuration();
     }
     target = Math.max(target, 0);
-    this.doSeek(target);
+    this.Player().seekVideo(target);
     this.socket.emit('CMD:seek', target);
   };
 
@@ -1241,11 +1064,11 @@ export default class App extends React.Component<AppProps, AppState> {
         e.preventDefault();
         this.togglePlay();
       } else if (e.key === 'ArrowRight') {
-        this.onSeek(null, this.getCurrentTime() + 15);
+        this.onSeek(null, this.Player().getCurrentTime() + 15);
       } else if (e.key === 'ArrowLeft') {
-        this.onSeek(null, this.getCurrentTime() - 15);
+        this.onSeek(null, this.Player().getCurrentTime() - 15);
       } else if (e.key === 'c') {
-        this.showSubtitle();
+        this.Player().showSubtitle();
       } else if (e.key === 't') {
         this.fullScreen(false);
       } else if (e.key === 'f') {
@@ -1289,62 +1112,12 @@ export default class App extends React.Component<AppProps, AppState> {
   };
 
   toggleMute = () => {
-    this.setMute(!this.isMuted());
-  };
-
-  setMute = (muted: boolean) => {
-    if (this.isVideo()) {
-      const leftVideo = document.getElementById(
-        'leftVideo'
-      ) as HTMLMediaElement;
-      if (leftVideo) {
-        leftVideo.muted = muted;
-      }
-      const audio = document.getElementById('iPhoneAudio') as HTMLAudioElement;
-      if (audio) {
-        audio.muted = muted;
-      }
-    }
-    if (this.isYouTube()) {
-      if (muted) {
-        this.watchPartyYTPlayer?.mute();
-      } else {
-        this.watchPartyYTPlayer?.unMute();
-      }
-    }
-    this.refreshControls();
-  };
-
-  setVolume = (volume: number) => {
-    if (this.isVideo()) {
-      const leftVideo = document.getElementById(
-        'leftVideo'
-      ) as HTMLMediaElement;
-      leftVideo.volume = volume;
-    }
-    if (this.isYouTube()) {
-      this.watchPartyYTPlayer?.setVolume(volume * 100);
-    }
-    this.refreshControls();
-  };
-
-  getVolume = (): number => {
-    if (this.isVideo()) {
-      const leftVideo = document.getElementById(
-        'leftVideo'
-      ) as HTMLMediaElement;
-      return leftVideo.volume;
-    }
-    if (this.isYouTube()) {
-      const volume = this.watchPartyYTPlayer?.getVolume();
-      return volume / 100;
-    }
-    return 1;
+    this.doSetMute(!this.Player().isMuted());
   };
 
   loadSubtitles = async () => {
     const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
-    if (!this.isSubtitled()) {
+    if (!Boolean(this.state.currentSubtitle)) {
       leftVideo.innerHTML = '';
     } else {
       // Clear subtitles and put new ones in
@@ -1390,41 +1163,6 @@ export default class App extends React.Component<AppProps, AppState> {
         cue.endTime = (cue as any).origEnd + offset;
       }
     }
-  };
-
-  showSubtitle = () => {
-    if (this.isVideo()) {
-      this.setState({ isSubtitleModalOpen: true });
-    }
-    if (this.isYouTube()) {
-      const isSubtitled = this.isSubtitled();
-      // console.log(isSubtitled);
-      if (isSubtitled) {
-        // BUG this doesn't actually set the value so subtitles can't be toggled off
-        this.watchPartyYTPlayer?.setOption('captions', 'track', {});
-      } else {
-        this.watchPartyYTPlayer?.setOption('captions', 'reload', true);
-        const tracks = this.watchPartyYTPlayer?.getOption(
-          'captions',
-          'tracklist'
-        );
-        this.watchPartyYTPlayer?.setOption('captions', 'track', tracks?.[0]);
-      }
-    }
-  };
-
-  setSubtitleMode = (mode?: TextTrackMode) => {
-    const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
-    for (var i = 0; i < leftVideo.textTracks.length; i++) {
-      leftVideo.textTracks[i].mode =
-        mode ??
-        (leftVideo.textTracks[i].mode === 'hidden' ? 'showing' : 'hidden');
-    }
-  };
-
-  getSubtitleMode = () => {
-    const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
-    return leftVideo.textTracks[0]?.mode;
   };
 
   setMedia = (_e: any, data: DropdownProps) => {
@@ -1571,20 +1309,20 @@ export default class App extends React.Component<AppProps, AppState> {
         onSeek={this.onSeek}
         fullScreen={this.fullScreen}
         toggleMute={this.toggleMute}
-        showSubtitle={this.showSubtitle}
-        setVolume={this.setVolume}
+        showSubtitle={this.doSubtitle}
+        setVolume={this.doSetVolume}
         jumpToLeader={this.jumpToLeader}
         paused={this.state.currentMediaPaused}
-        muted={this.isMuted()}
-        volume={this.getVolume()}
-        subtitled={this.isSubtitled()}
-        currentTime={this.getCurrentTime()}
-        duration={this.getDuration()}
+        muted={this.Player().isMuted()}
+        volume={this.Player().getVolume()}
+        subtitled={this.Player().isSubtitled()}
+        currentTime={this.Player().getCurrentTime()}
+        duration={this.Player().getDuration()}
         disabled={!this.haveLock()}
         leaderTime={this.isHttp() ? this.getLeaderTime() : undefined}
         isPauseDisabled={this.isPauseDisabled()}
-        playbackRate={this.getPlaybackRate()}
-        setPlaybackRate={this.setPlaybackRate}
+        playbackRate={this.Player().getPlaybackRate()}
+        setPlaybackRate={this.doSetPlaybackRate}
         beta={this.props.beta}
       />
     );
@@ -1743,8 +1481,8 @@ export default class App extends React.Component<AppProps, AppState> {
                 size="large"
                 onClick={() => {
                   this.setState({ isAutoPlayable: true });
-                  this.setMute(false);
-                  this.setVolume(1);
+                  this.doSetMute(false);
+                  this.doSetVolume(1);
                 }}
                 icon
                 labelPosition="left"
@@ -1793,8 +1531,8 @@ export default class App extends React.Component<AppProps, AppState> {
             haveLock={this.haveLock}
             getMediaDisplayName={this.getMediaDisplayName}
             beta={this.props.beta}
-            setSubtitleMode={this.setSubtitleMode}
-            getSubtitleMode={this.getSubtitleMode}
+            setSubtitleMode={this.Player().setSubtitleMode}
+            getSubtitleMode={this.Player().getSubtitleMode}
           />
         )}
         {this.state.error && <ErrorModal error={this.state.error} />}
