@@ -150,10 +150,11 @@ export class Controls extends React.Component<ControlsProps> {
           )}
         </Progress>
         <div className="control">{formatTimestamp(duration)}</div>
-        {this.props.beta && (
-          <Form size="tiny">
+        {
+          <Form size="tiny" style={{ fontSize: '10px' }}>
             <Dropdown
-              className="control action"
+              style={{ width: '60px' }}
+              className="control"
               placeholder={this.props.playbackRate.toString() + 'x'}
               selection
               compact
@@ -164,13 +165,16 @@ export class Controls extends React.Component<ControlsProps> {
               options={[
                 { key: '0.25', text: '0.25x', value: 0.25 },
                 { key: '0.5', text: '0.5x', value: 0.5 },
+                { key: '0.75', text: '0.75x', value: 0.75 },
                 { key: '1', text: '1x', value: 1 },
+                { key: '1.25', text: '1.25x', value: 1.25 },
                 { key: '1.5', text: '1.5x', value: 1.5 },
+                { key: '1.75', text: '1.75x', value: 1.75 },
                 { key: '2', text: '2x', value: 2 },
               ]}
             />
           </Form>
-        )}
+        }
         <Icon
           size="large"
           onClick={() => {
