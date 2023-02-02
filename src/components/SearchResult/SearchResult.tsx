@@ -1,9 +1,12 @@
 import React from 'react';
-import { Menu, Icon, Label, Button } from 'semantic-ui-react';
+import { Menu, Icon, Label, Button, DropdownProps } from 'semantic-ui-react';
 import { decodeEntities } from '../../utils';
 
 export const YouTubeSearchResult = (
-  props: SearchResult & { setMedia: Function; playlistAdd: Function }
+  props: SearchResult & {
+    setMedia: (_e: any, data: DropdownProps) => void;
+    playlistAdd: (_e: any, data: DropdownProps) => void;
+  }
 ) => {
   const result = props;
   const setMedia = props.setMedia;
@@ -34,7 +37,7 @@ export const YouTubeSearchResult = (
 };
 
 export const MediaPathSearchResult = (
-  props: SearchResult & { setMedia: Function }
+  props: SearchResult & { setMedia: (_e: any, data: DropdownProps) => void }
 ) => {
   const result = props;
   const setMedia = props.setMedia;
@@ -54,7 +57,7 @@ export const MediaPathSearchResult = (
 
 export class StreamPathSearchResult extends React.Component<
   SearchResult & {
-    setMedia: Function;
+    setMedia: (_e: any, data: DropdownProps) => void;
     launchMultiSelect?: (multi?: []) => void;
     streamPath: string;
   }
