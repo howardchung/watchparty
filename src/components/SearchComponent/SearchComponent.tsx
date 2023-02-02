@@ -10,7 +10,7 @@ interface SearchComponentProps {
   setMedia: Function;
   playlistAdd: Function;
   type?: 'youtube' | 'media' | 'stream';
-  launchMultiSelect?: Function;
+  launchMultiSelect?: (multi?: []) => void;
   streamPath: string | undefined;
   disabled?: boolean;
 }
@@ -108,7 +108,7 @@ export class SearchComponent extends React.Component<SearchComponentProps> {
                     key={result.url}
                     {...result}
                     setMedia={setMedia}
-                    launchMultiSelect={this.props.launchMultiSelect as Function}
+                    launchMultiSelect={this.props.launchMultiSelect}
                     streamPath={this.props.streamPath || ''}
                   />
                 );

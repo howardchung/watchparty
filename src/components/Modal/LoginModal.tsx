@@ -4,7 +4,7 @@ import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
 
 export class LoginModal extends React.Component<{
-  closeLogin: Function;
+  closeLogin: () => void;
 }> {
   public state = { email: '', password: '', isCreateMode: false, error: '' };
 

@@ -6,9 +6,9 @@ export const MultiStreamModal = ({
   setMedia,
   resetMultiSelect,
 }: {
-  streams: { name: string; url: string; length: number; playFn?: Function }[];
+  streams: { name: string; url: string; length: number; playFn?: () => void }[];
   setMedia: Function;
-  resetMultiSelect: Function;
+  resetMultiSelect: () => void;
 }) => (
   <Modal inverted basic open closeIcon onClose={resetMultiSelect as any}>
     <Modal.Header>Select a file</Modal.Header>

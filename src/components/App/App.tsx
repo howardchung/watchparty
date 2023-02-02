@@ -62,7 +62,6 @@ declare global {
     onYouTubeIframeAPIReady: any;
     YT: any;
     FB: any;
-    fbAsyncInit: Function;
     Hls: any;
     WebTorrent: any;
     watchparty: {
@@ -123,7 +122,7 @@ interface AppState {
     name: string;
     url: string;
     length: number;
-    playFn?: Function;
+    playFn?: () => void;
   }[];
   error: string;
   isErrorAuth: boolean;
@@ -228,7 +227,7 @@ export default class App extends React.Component<AppProps, AppState> {
   heartbeat: number | undefined = undefined;
 
   launchMultiSelect = (
-    data: { name: string; url: string; length: number; playFn?: Function }[]
+    data?: { name: string; url: string; length: number; playFn?: () => void }[]
   ) => {
     this.setState({ multiStreamSelection: data });
   };

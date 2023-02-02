@@ -5,7 +5,7 @@ import 'firebase/compat/auth';
 import { serverPath } from '../../utils';
 
 export class ProfileModal extends React.Component<{
-  close: Function;
+  close: () => void;
   user: firebase.User;
   userImage: string | null;
 }> {

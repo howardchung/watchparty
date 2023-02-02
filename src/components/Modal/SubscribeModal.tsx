@@ -11,7 +11,7 @@ const stripePromise = process.env.REACT_APP_STRIPE_PUBLIC_KEY
   : null;
 
 export class SubscribeModal extends React.Component<{
-  closeSubscribe: Function;
+  closeSubscribe: () => void;
   user?: firebase.User;
   isSubscriber: boolean;
 }> {

@@ -3,8 +3,8 @@ import querystring from 'querystring';
 
 export class HTML implements Player {
   elId: string;
-  launchMultiSelect: Function;
-  constructor(elId: string, launchMultiSelect: Function) {
+  launchMultiSelect: (multi: []) => void;
+  constructor(elId: string, launchMultiSelect: (multi: []) => void) {
     this.elId = elId;
     this.launchMultiSelect = launchMultiSelect;
   }
