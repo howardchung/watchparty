@@ -217,7 +217,8 @@ export class ListRoomsButton extends React.Component<{
           {this.state.rooms.map((room: any) => {
             return (
               <Dropdown.Item
-                link
+                key={room.roomId}
+                link="true"
                 href={
                   room.vanity
                     ? '/r/' + room.vanity
