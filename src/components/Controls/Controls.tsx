@@ -5,7 +5,6 @@ import {
   Label,
   Popup,
   Dropdown,
-  Button,
   Form,
 } from 'semantic-ui-react';
 import { Slider } from 'react-semantic-ui-range';
