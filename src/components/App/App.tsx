@@ -267,26 +267,6 @@ export default class App extends React.Component<AppProps, AppState> {
     this.init();
   }
 
-  getRoomLink = (vanity: string) => {
-    if (vanity) {
-      return `${window.location.origin}/r/${vanity}`;
-    }
-    return `${window.location.origin}${this.state.roomId.replace('/', '#')}`;
-  };
-
-  handleRoomState = (data: any) => {
-    this.setOwner(data.owner);
-    this.setVanity(data.vanity);
-    this.setPassword(data.password);
-    this.setRoomLink(this.getRoomLink(data.vanity));
-    this.setIsChatDisabled(data.isChatDisabled);
-    this.setRoomTitle(data.roomTitle);
-    this.setRoomDescription(data.roomDescription);
-    this.setRoomTitleColor(data.roomTitleColor);
-    this.setMediaPath(data.mediaPath);
-    window.history.replaceState('', '', this.getRoomLink(data.vanity));
-  };
-
   componentWillUnmount() {
     document.removeEventListener('fullscreenchange', this.onFullScreenChange);
     document.removeEventListener('keydown', this.onKeydown);
@@ -378,6 +358,27 @@ export default class App extends React.Component<AppProps, AppState> {
     };
   };
 
+  // Functions for managing room settings
+  getRoomLink = (vanity: string) => {
+    if (vanity) {
+      return `${window.location.origin}/r/${vanity}`;
+    }
+    return `${window.location.origin}${this.state.roomId.replace('/', '#')}`;
+  };
+
+  handleRoomState = (data: any) => {
+    this.setOwner(data.owner);
+    this.setVanity(data.vanity);
+    this.setPassword(data.password);
+    this.setRoomLink(this.getRoomLink(data.vanity));
+    this.setIsChatDisabled(data.isChatDisabled);
+    this.setRoomTitle(data.roomTitle);
+    this.setRoomDescription(data.roomDescription);
+    this.setRoomTitleColor(data.roomTitleColor);
+    this.setMediaPath(data.mediaPath);
+    window.history.replaceState('', '', this.getRoomLink(data.vanity));
+  };
+
   setOwner = (owner: string) => {
     this.setState({ owner });
   };
@@ -401,6 +402,27 @@ export default class App extends React.Component<AppProps, AppState> {
   };
   setMediaPath = (mediaPath: string | undefined) => {
     this.setState({ mediaPath });
+  };
+
+  setRoomLock = async (locked: boolean) => {
+    const uid = this.props.user?.uid;
+    const token = await this.props.user?.getIdToken();
+    this.socket.emit('CMD:lock', { uid, token, locked });
+  };
+
+  haveLock = () => {
+    if (!this.state.roomLock) {
+      return true;
+    }
+    return this.props.user?.uid === this.state.roomLock;
+  };
+
+  setIsChatDisabled = (val: boolean) => this.setState({ isChatDisabled: val });
+
+  clearChat = async () => {
+    const uid = this.props.user?.uid;
+    const token = await this.props.user?.getIdToken();
+    this.socket.emit('CMD:deleteChatMessages', { uid, token });
   };
 
   init = async () => {
@@ -1280,33 +1302,8 @@ export default class App extends React.Component<AppProps, AppState> {
     return input;
   };
 
-  getFileName = (input: string) => {
-    return input.split('/').slice(-1)[0];
-  };
-
   setLoadingFalse = () => {
     this.setState({ loading: false });
-  };
-
-  setRoomLock = async (locked: boolean) => {
-    const uid = this.props.user?.uid;
-    const token = await this.props.user?.getIdToken();
-    this.socket.emit('CMD:lock', { uid, token, locked });
-  };
-
-  haveLock = () => {
-    if (!this.state.roomLock) {
-      return true;
-    }
-    return this.props.user?.uid === this.state.roomLock;
-  };
-
-  setIsChatDisabled = (val: boolean) => this.setState({ isChatDisabled: val });
-
-  clearChat = async () => {
-    const uid = this.props.user?.uid;
-    const token = await this.props.user?.getIdToken();
-    this.socket.emit('CMD:deleteChatMessages', { uid, token });
   };
 
   getLeaderTime = () => {

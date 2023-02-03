@@ -335,3 +335,7 @@ export async function getUserImage(
   }
   return `https://www.gravatar.com/avatar/${hash}?d=identicon`;
 }
+
+export const getFileName = (input: string) => {
+  return input.split('/').slice(-1)[0];
+};
