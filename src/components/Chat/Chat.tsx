@@ -390,7 +390,8 @@ const ChatMessage = ({
         />
         <Comment.Metadata className="dark">
           <div title={new Date(timestamp).toLocaleDateString()}>
-            {new Date(timestamp).toLocaleTimeString()} @{' '}
+            {new Date(timestamp).toLocaleTimeString()}
+            {Boolean(videoTS) && ' @ '}
             {formatTimestamp(videoTS)}
           </div>
         </Comment.Metadata>
