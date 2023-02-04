@@ -48,6 +48,7 @@ const defaults = {
   VMWORKER_PORT: 3100, // Port to use for the vmWorker HTTP server
   VM_ASSIGNMENT_TIMEOUT: 75, // Number of seconds to wait for a VM before failing
   DEFAULT_VM_REGION: 'US', // The default region to use for free VM/pool selection
+  DISCORD_BOT_TOKEN: '', // Token for the Discord bot that generates WatchParty links
 };
 
 export default {

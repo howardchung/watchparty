@@ -65,5 +65,10 @@ module.exports = {
       script: './buildServer/cleanup.js',
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
     },
+    {
+      name: 'discordBot',
+      script: './buildServer/discordBot.js',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+    },
   ],
 };
