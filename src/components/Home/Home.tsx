@@ -10,53 +10,14 @@ export const Home = ({ user }: { user: firebase.User | undefined }) => {
     <div>
       <div className={styles.container}>
         <Hero
-          heroText={'Watch videos in-sync with friends far away.'}
+          heroText={'Watch together with friends anywhere.'}
           subText={'No registration or download required.'}
           action={
-            <div style={{ marginTop: '8px', width: '160px' }}>
-              <NewRoomButton user={user} />
+            <div style={{ marginTop: '8px', width: '300px' }}>
+              <NewRoomButton size="huge" user={user} />
             </div>
           }
           image={'/screenshot4.png'}
-        />
-        <Divider horizontal>
-          <Header inverted as="h4">
-            <Icon name="film" />
-            Multiple ways to watch
-          </Header>
-        </Divider>
-        <div className={styles.featureSection}>
-          <Feature
-            icon="slideshare"
-            title={`Screensharing`}
-            text="Share a browser tab or an application."
-          />
-          <Feature
-            icon="desktop"
-            title={`VBrowser`}
-            text="Launch a virtual browser in the cloud that all room members can view and control. No need to worry about slow upload speeds!"
-          />
-          <Feature
-            icon="file"
-            title={`File`}
-            text="Upload and stream your own file."
-          />
-          <Feature
-            icon="linkify"
-            title={`URL`}
-            text="Paste in a URL for everyone to watch from."
-          />
-          <Feature
-            icon="youtube"
-            title={`YouTube`}
-            text="Watch videos in-sync from YouTube."
-          />
-        </div>
-        <Hero
-          heroText={'React to moments together.'}
-          subText={"Find moments of shared joy even when you're apart."}
-          image={'/screenshot18.png'}
-          color="green"
         />
         <Divider horizontal>
           <Header inverted as="h4">
@@ -76,9 +37,53 @@ export const Home = ({ user }: { user: firebase.User | undefined }) => {
             text="Chat with others in your room. Memes and inside jokes encouraged."
           />
           <Feature
+            icon="list"
+            title="Playlists"
+            text="Set up a whole list of videos to play next, and rearrange to your heart's content."
+          />
+          <Feature
             icon="video"
             title="Video chat"
-            text="Jump into video chat if there's something that you just can't express with text."
+            text="Jump into video chat if you'd rather be face-to-face."
+          />
+        </div>
+        <Hero
+          heroText={'React to moments together.'}
+          subText={"Find moments of shared joy even when you're apart."}
+          image={'/screenshot18.png'}
+          color="green"
+        />
+        <Divider horizontal>
+          <Header inverted as="h4">
+            <Icon name="film" />
+            Watch anything together
+          </Header>
+        </Divider>
+        <div className={styles.featureSection}>
+          <Feature
+            icon="desktop"
+            title={`VBrowser`}
+            text="Launch a virtual browser that room members can view and control."
+          />
+          <Feature
+            icon="youtube"
+            title={`YouTube`}
+            text="Watch videos together from YouTube."
+          />
+          <Feature
+            icon="slideshare"
+            title={`Screensharing`}
+            text="Share a browser tab or your desktop."
+          />
+          <Feature
+            icon="file"
+            title={`File`}
+            text="Upload and stream your own file."
+          />
+          <Feature
+            icon="linkify"
+            title={`URL`}
+            text="Paste in a video URL for everyone to watch from."
           />
         </div>
         <Hero
