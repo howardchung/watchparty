@@ -1,6 +1,13 @@
 import React from 'react';
 import { serverPath, colorMappings, getUserImage } from '../../utils';
-import { Icon, Popup, Button, Dropdown, Image } from 'semantic-ui-react';
+import {
+  Icon,
+  Popup,
+  Button,
+  Dropdown,
+  Image,
+  SemanticSIZES,
+} from 'semantic-ui-react';
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
 import { LoginModal } from '../Modal/LoginModal';
@@ -37,7 +44,7 @@ export async function createRoom(
 
 export class NewRoomButton extends React.Component<{
   user: firebase.User | undefined;
-  size?: string;
+  size?: SemanticSIZES;
   openNewTab?: boolean;
 }> {
   createRoom = async () => {
@@ -50,7 +57,7 @@ export class NewRoomButton extends React.Component<{
         trigger={
           <Button
             color="blue"
-            size={this.props.size as any}
+            size={this.props.size}
             icon
             labelPosition="left"
             onClick={this.createRoom}

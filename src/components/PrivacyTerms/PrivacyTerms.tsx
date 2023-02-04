@@ -92,15 +92,20 @@ No, only the person who created the VBrowser needs to be.
 
 How do I access sites that have a "not available" message in the VBrowser?
 ----
-Some sites may block traffic that's detected as coming from certain geographic regions. You may need to install an extension like Hola VPN inside the virtual browser.
+Some sites may block traffic that's detected as coming from the cloud. You may need to install a VPN extension inside the virtual browser.
 
 How come I'm not getting any audio when screensharing?
 ----
-To share audio, you must be using Chrome or Edge, sharing a tab (not application), and check a small checkbox at the bottom-left of the share screen dialog.
+To share audio, you must be using Chrome/Edge and sharing a tab or desktop.
 
 Is there a limit to how many people can be in a room?
 ----
 Currently there isn't a hard limit, although the service hasn't been tested with more than 15 people or so. Screensharing and filesharing rely on one person uploading to everyone else, so it may not work well with large room sizes.
+
+I own a website and I'd like to have a link that generates a WatchParty room with a specific video already set. How do I do this?
+----
+You can link to https://www.watchparty.me/create?video=URL_HERE to do this!
+
 `}
       </ReactMarkdown>
     </div>
