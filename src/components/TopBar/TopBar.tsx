@@ -61,7 +61,7 @@ export class NewRoomButton extends React.Component<{
             icon
             labelPosition="left"
             onClick={this.createRoom}
-            className="toolButton"
+            className={this.props.size ? '' : 'toolButton'}
             fluid
           >
             <Icon name="certificate" />
