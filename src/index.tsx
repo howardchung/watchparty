@@ -6,7 +6,7 @@ import { BrowserRouter, Route } from 'react-router-dom';
 
 import App from './components/App';
 import { Home } from './components/Home';
-import { Privacy, Terms, FAQ } from './components/PrivacyTerms/PrivacyTerms';
+import { Privacy, Terms, FAQ, DiscordBot } from './components/Pages/Pages';
 import { TopBar } from './components/TopBar/TopBar';
 import { Footer } from './components/Footer/Footer';
 import * as serviceWorker from './serviceWorker';
@@ -132,6 +132,15 @@ class WatchParty extends React.Component {
               isCustomer={this.state.isCustomer}
             />
             <FAQ />
+            <Footer />
+          </Route>
+          <Route path="/discordBot">
+            <TopBar
+              user={this.state.user}
+              isSubscriber={this.state.isSubscriber}
+              isCustomer={this.state.isCustomer}
+            />
+            <DiscordBot />
             <Footer />
           </Route>
           <Route path="/debug">

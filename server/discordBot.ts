@@ -1,6 +1,7 @@
 import { Client, IntentsBitField, Events } from 'discord.js';
 import config from './config';
 import axios from 'axios';
+import { redisCount } from './utils/redis';
 
 // URL to invite bot: https://discord.com/api/oauth2/authorize?client_id=1071394728513380372&permissions=2147485696&scope=bot
 
@@ -18,13 +19,20 @@ client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
 
   if (interaction.commandName === 'watch') {
-    console.log(interaction.options);
+    const preload = interaction.options.get('video')?.value;
     // Call the watchparty API to make a room
     const response = await axios.post(HOST_NAME + '/createRoom', {
-      video: interaction.options.get('video')?.value,
+      video: preload,
     });
+    redisCount('discordBotWatch');
     // Return the generated room URL
-    await interaction.reply({ content: HOST_NAME + '#' + response.data.name });
+    await interaction.reply({
+      content: `Created a new WatchParty${
+        preload ? ` with video ${preload}` : ''
+      }!
+${HOST_NAME + '#' + response.data.name}
+`,
+    });
   }
 });
 

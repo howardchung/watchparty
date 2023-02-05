@@ -657,6 +657,7 @@ async function getStats() {
   const numSubs = Number(
     (await postgres?.query('SELECT count(1) from subscriber'))?.rows[0].count
   );
+  const discordBotWatch = await getRedisCountDay('discordBotWatch');
   const createRoomErrors = await getRedisCountDay('createRoomError');
   const deleteAccounts = await getRedisCountDay('deleteAccount');
   const chatMessages = await getRedisCountDay('chatMessages');
@@ -765,6 +766,7 @@ async function getStats() {
     vBrowserWaiting,
     numPermaRooms,
     numSubs,
+    discordBotWatch,
     createRoomErrors,
     createRoomPreloads,
     deleteAccounts,
