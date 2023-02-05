@@ -143,6 +143,7 @@ class WatchParty extends React.Component {
             <DiscordBot />
             <Footer />
           </Route>
+          <Route path="/discord/auth" exact></Route>
           <Route path="/debug">
             <TopBar
               user={this.state.user}

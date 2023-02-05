@@ -23,7 +23,7 @@ import { Client } from 'pg';
 import { getStartOfDay } from './utils/time';
 import { getBgVMManagers, getSessionLimitSeconds } from './vm/utils';
 import { hashString } from './utils/string';
-import { insertObject } from './utils/postgres';
+import { insertObject, upsertObject } from './utils/postgres';
 import axios from 'axios';
 import crypto from 'crypto';
 import zlib from 'zlib';
@@ -303,7 +303,12 @@ app.delete('/deleteAccount', async (req, res) => {
     return res.status(400).json({ error: 'invalid user token' });
   }
   if (postgres) {
+    // Delete rooms
     await postgres?.query('DELETE FROM room WHERE owner = $1', [decoded.uid]);
+    // Delete linked accounts
+    await postgres?.query('DELETE FROM account WHERE email = $1', [
+      decoded.email,
+    ]);
   }
   await deleteUser(decoded.uid);
   redisCount('deleteAccount');
@@ -393,6 +398,73 @@ app.delete('/deleteRoom', async (req, res) => {
     [decoded.uid, req.query.roomId]
   );
   return res.json(result?.rows);
+});
+
+app.get('/linkedAccount', async (req, res) => {
+  const decoded = await validateUserToken(
+    req.query?.uid as string,
+    req.query?.token as string
+  );
+  if (!decoded) {
+    return res.status(400).json({ error: 'invalid user token' });
+  }
+  // TODO Get the linked accounts for the user
+  let linkAccounts = [];
+  if (postgres && decoded?.email) {
+    const result = await postgres?.query(
+      'SELECT type, userid, username, discriminator FROM account WHERE email = $1',
+      [decoded?.email]
+    );
+    linkAccounts = result.rows;
+  }
+  return res.json(linkAccounts);
+});
+
+app.post('/linkedAccount', async (req, res) => {
+  const decoded = await validateUserToken(
+    req.query?.uid as string,
+    req.query?.token as string
+  );
+  if (!decoded) {
+    return res.status(400).json({ error: 'invalid user token' });
+  }
+  const linkType = req.body?.linkType;
+  if (linkType === 'discord') {
+    const tokenType = req.body?.tokenType;
+    const accessToken = req.body.accessToken;
+    // Get the token and verify the user
+    const response = await axios.get('https://discord.com/api/users/@me', {
+      headers: {
+        authorization: `${tokenType} ${accessToken}`,
+      },
+    });
+    const username = response.data.username;
+    const discriminator = response.data.discriminator;
+    const userid = response.data.id;
+    // TODO Store the user id, username, discriminator
+    await upsertObject(
+      postgres,
+      'account',
+      {
+        id: userid,
+        userName: username,
+        discriminator: discriminator,
+        email: decoded.email,
+      },
+      { email: decoded.email }
+    );
+  }
+});
+
+app.delete('/linkedAccount', async (req, res) => {
+  const decoded = await validateUserToken(
+    req.query?.uid as string,
+    req.query?.token as string
+  );
+  if (!decoded) {
+    return res.status(400).json({ error: 'invalid user token' });
+  }
+  // TODO delete from postgres
 });
 
 app.use(express.static(config.BUILD_DIRECTORY));
