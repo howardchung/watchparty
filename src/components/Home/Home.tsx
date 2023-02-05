@@ -174,15 +174,17 @@ const Feature = ({
   );
 };
 
-const Hero = ({
+export const Hero = ({
   heroText,
   subText,
+  subText2,
   action,
   image,
   color,
 }: {
   heroText?: string;
   subText?: string;
+  subText2?: string;
   action?: React.ReactNode;
   image?: string;
   color?: string;
@@ -193,6 +195,7 @@ const Hero = ({
         <div style={{ padding: '30px', flex: '1 1 0' }}>
           <div className={styles.heroText}>{heroText}</div>
           <div className={styles.subText}>{subText}</div>
+          <div className={styles.subText}>{subText2}</div>
           {action}
         </div>
         <div

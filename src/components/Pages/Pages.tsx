@@ -1,5 +1,7 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
+import { Button } from 'semantic-ui-react';
+import { Hero } from '../Home/Home';
 
 const mdStyle = { color: 'white', margin: '50px', maxWidth: '800px' };
 
@@ -108,6 +110,32 @@ You can link to https://www.watchparty.me/create?video=URL_HERE to do this!
 
 `}
       </ReactMarkdown>
+    </div>
+  );
+};
+
+export const DiscordBot = () => {
+  return (
+    <div>
+      <Hero
+        heroText={
+          'Add the WatchParty Discord bot to your server to easily generate WatchParty links.'
+        }
+        subText={'/watch to generate a new empty room'}
+        subText2={'/watch video <URL_HERE> to create a room with a video'}
+        action={
+          <Button
+            style={{ marginTop: '1em' }}
+            color="blue"
+            size="big"
+            target="_blank"
+            href="https://discord.com/api/oauth2/authorize?client_id=1071394728513380372&permissions=2147485696&scope=bot"
+          >
+            Add to Discord
+          </Button>
+        }
+        image={'/screenshot5.png'}
+      />
     </div>
   );
 };
