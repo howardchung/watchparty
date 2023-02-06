@@ -119,8 +119,8 @@ app.get('/isFreePoolFull', async (req, res) => {
     const limitSize = freePool?.getLimitSize() ?? 0;
     const currentSize = await redis?.get(freePool.getRedisPoolSizeKey());
     isFull = Boolean(
-      limitSize > 0 &&
-        Number(currentSize) - Number(availableCount) > limitSize * 0.95
+      limitSize > 0 &&  Number(availableCount) === 0
+        // Number(currentSize) - Number(availableCount) > limitSize * 0.95
     );
   }
   return res.json({ isFull });
