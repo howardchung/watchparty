@@ -24,6 +24,8 @@ interface ControlsProps {
   setPlaybackRate: (rate: number) => void;
   beta: boolean;
   roomPlaybackRate: number;
+  isYouTube: boolean;
+  setSubtitleMode: (mode: TextTrackMode, lang?: string) => void;
 }
 
 export class Controls extends React.Component<ControlsProps> {
@@ -160,7 +162,7 @@ export class Controls extends React.Component<ControlsProps> {
           {this.props.playbackRate?.toFixed(2)}x
         </div>
         {
-          <Dropdown className="control" compact>
+          <Dropdown style={{ marginLeft: -8 }} className="control">
             <Dropdown.Menu>
               {[
                 { key: 'Auto', text: 'Auto', value: 0 },
@@ -177,20 +179,44 @@ export class Controls extends React.Component<ControlsProps> {
                   key={item.key}
                   text={item.text}
                   onClick={() => this.props.setPlaybackRate(item.value)}
+                  active={this.props.roomPlaybackRate === item.value}
                 />
               ))}
             </Dropdown.Menu>
           </Dropdown>
         }
-        <Icon
-          size="large"
-          onClick={() => {
-            showSubtitle();
-          }}
-          className="control action"
-          name={subtitled ? 'closed captioning' : 'closed captioning outline'}
-          title="Captions"
-        />
+        {this.props.isYouTube ? (
+          <Dropdown icon="closed captioning outline large" className="control">
+            <Dropdown.Menu>
+              {[
+                { key: 'hidden', text: 'Off', value: 'hidden' },
+                { key: 'en', text: 'English', value: 'showing' },
+                { key: 'es', text: 'Spanish', value: 'showing' },
+              ].map((item) => (
+                <Dropdown.Item
+                  key={item.key}
+                  text={item.text}
+                  onClick={() =>
+                    this.props.setSubtitleMode(
+                      item.value as TextTrackMode,
+                      item.key
+                    )
+                  }
+                />
+              ))}
+            </Dropdown.Menu>
+          </Dropdown>
+        ) : (
+          <Icon
+            size="large"
+            onClick={() => {
+              showSubtitle();
+            }}
+            className="control action"
+            name={subtitled ? 'closed captioning' : 'closed captioning outline'}
+            title="Captions"
+          />
+        )}
         <Icon
           size="large"
           onClick={() => fullScreen(false)}

@@ -19,13 +19,15 @@ export class YouTube implements Player {
   };
 
   isSubtitled = (): boolean => {
-    try {
-      const current = this.watchPartyYTPlayer?.getOption('captions', 'track');
-      return Boolean(current && current.languageCode);
-    } catch (e) {
-      console.warn(e);
-      return false;
-    }
+    // This actually isn't accurate after subtitles have been toggled off because track doesn't update
+    // try {
+    //   const current = this.watchPartyYTPlayer?.getOption('captions', 'track');
+    //   return Boolean(current && current.languageCode);
+    // } catch (e) {
+    //   console.warn(e);
+    //   return false;
+    // }
+    return false;
   };
 
   getPlaybackRate = (): number => {
@@ -86,23 +88,26 @@ export class YouTube implements Player {
   };
 
   showSubtitle = () => {
-    const isSubtitled = this.isSubtitled();
-    // console.log(isSubtitled);
-    if (isSubtitled) {
-      // BUG this doesn't actually set the value so subtitles can't be toggled off
-      this.watchPartyYTPlayer?.setOption('captions', 'track', {});
-    } else {
-      this.watchPartyYTPlayer?.setOption('captions', 'reload', true);
-      const tracks = this.watchPartyYTPlayer?.getOption(
-        'captions',
-        'tracklist'
-      );
-      this.watchPartyYTPlayer?.setOption('captions', 'track', tracks?.[0]);
-    }
+    // YouTube doesn't use the subtitle modal
+    return;
   };
 
-  setSubtitleMode = (mode?: TextTrackMode) => {
-    return;
+  setSubtitleMode = (mode?: TextTrackMode, lang?: string) => {
+    // Show the available options
+    // console.log(this.watchPartyYTPlayer?.getOptions('captions'));
+    if (mode === 'showing') {
+      console.log(lang);
+      this.watchPartyYTPlayer?.setOption('captions', 'reload', true);
+      this.watchPartyYTPlayer?.setOption('captions', 'track', {
+        languageCode: lang ?? 'en',
+      });
+    }
+    if (mode === 'hidden') {
+      // BUG this doesn't actually set the value of track
+      // so we can't determine if subtitles are on or off
+      // need to provide separate menu options
+      this.watchPartyYTPlayer?.setOption('captions', 'track', {});
+    }
   };
 
   getSubtitleMode = () => {
