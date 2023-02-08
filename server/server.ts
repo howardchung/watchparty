@@ -23,7 +23,7 @@ import { Client } from 'pg';
 import { getStartOfDay } from './utils/time';
 import { getBgVMManagers, getSessionLimitSeconds } from './vm/utils';
 import { hashString } from './utils/string';
-import { insertObject } from './utils/postgres';
+import { insertObject, upsertObject } from './utils/postgres';
 import axios from 'axios';
 import crypto from 'crypto';
 import zlib from 'zlib';
@@ -298,12 +298,18 @@ app.post('/manageSub', async (req, res) => {
 });
 
 app.delete('/deleteAccount', async (req, res) => {
+  // TODO pass this in req.query instead
   const decoded = await validateUserToken(req.body?.uid, req.body?.token);
   if (!decoded) {
     return res.status(400).json({ error: 'invalid user token' });
   }
   if (postgres) {
+    // Delete rooms
     await postgres?.query('DELETE FROM room WHERE owner = $1', [decoded.uid]);
+    // Delete linked accounts
+    await postgres?.query('DELETE FROM link_account WHERE uid = $1', [
+      decoded.uid,
+    ]);
   }
   await deleteUser(decoded.uid);
   redisCount('deleteAccount');
@@ -393,6 +399,89 @@ app.delete('/deleteRoom', async (req, res) => {
     [decoded.uid, req.query.roomId]
   );
   return res.json(result?.rows);
+});
+
+app.get('/linkAccount', async (req, res) => {
+  const decoded = await validateUserToken(
+    req.query?.uid as string,
+    req.query?.token as string
+  );
+  if (!decoded) {
+    return res.status(400).json({ error: 'invalid user token' });
+  }
+  if (!postgres) {
+    return res.status(400).json({ error: 'invalid database client' });
+  }
+  // Get the linked accounts for the user
+  let linkAccounts: LinkAccount[] = [];
+  if (decoded?.uid) {
+    const result = await postgres?.query(
+      'SELECT kind, accountid, accountname, discriminator FROM link_account WHERE uid = $1',
+      [decoded?.uid]
+    );
+    linkAccounts = result.rows;
+  }
+  return res.json(linkAccounts);
+});
+
+app.post('/linkAccount', async (req, res) => {
+  const decoded = await validateUserToken(
+    req.body?.uid as string,
+    req.body?.token as string
+  );
+  if (!decoded) {
+    return res.status(400).json({ error: 'invalid user token' });
+  }
+  if (!postgres) {
+    return res.status(400).json({ error: 'invalid database client' });
+  }
+  const kind = req.body?.kind;
+  if (kind === 'discord') {
+    const tokenType = req.body?.tokenType;
+    const accessToken = req.body.accessToken;
+    // Get the token and verify the user
+    const response = await axios.get('https://discord.com/api/users/@me', {
+      headers: {
+        authorization: `${tokenType} ${accessToken}`,
+      },
+    });
+    const accountid = response.data.id;
+    const accountname = response.data.username;
+    const discriminator = response.data.discriminator;
+    // Store the user id, username, discriminator
+    await upsertObject(
+      postgres,
+      'link_account',
+      {
+        accountid: accountid,
+        accountname: accountname,
+        discriminator: discriminator,
+        uid: decoded.uid,
+        kind: kind,
+      },
+      { uid: decoded.uid, kind }
+    );
+    return res.json({});
+  }
+});
+
+app.delete('/linkAccount', async (req, res) => {
+  // TODO read from req.query instead
+  const decoded = await validateUserToken(
+    req.body?.uid as string,
+    req.body?.token as string
+  );
+  if (!decoded) {
+    return res.status(400).json({ error: 'invalid user token' });
+  }
+  if (!postgres) {
+    return res.status(400).json({ error: 'invalid database client' });
+  }
+  await postgres.query(
+    'DELETE FROM link_account WHERE uid = $1 AND kind = $2',
+    [decoded.uid, req.body.kind]
+  );
+  res.json({});
 });
 
 app.use(express.static(config.BUILD_DIRECTORY));

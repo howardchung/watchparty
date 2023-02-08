@@ -47,7 +47,9 @@ export async function upsertObject(
   const values = Object.values(object);
   let query = `INSERT INTO ${table} (${columns.map((c) => `"${c}"`).join(',')})
     VALUES (${values.map((_, i) => '$' + (i + 1)).join(',')})
-    ON CONFLICT ("${Object.keys(conflict).join(',')}")
+    ON CONFLICT (${Object.keys(conflict)
+      .map((k) => `"${k}"`)
+      .join(',')})
     DO UPDATE SET ${Object.keys(object)
       .map((c) => `"${c}" = EXCLUDED."${c}"`)
       .join(',')}

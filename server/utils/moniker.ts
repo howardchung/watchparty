@@ -13,7 +13,7 @@ const verbs = fs
   .readFileSync(process.env.PWD + '/verbs.txt')
   .toString()
   .split('\n');
-const randomElement = (array: Array<string>) =>
+const randomElement = (array: string[]) =>
   array[Math.floor(Math.random() * array.length)];
 
 export function makeName(shard: number | undefined) {

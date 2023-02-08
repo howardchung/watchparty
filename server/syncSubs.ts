@@ -3,6 +3,7 @@ import config from './config';
 import { getUserByEmail } from './utils/firebase';
 import { insertObject, updateObject } from './utils/postgres';
 import { getAllActiveSubscriptions, getAllCustomers } from './utils/stripe';
+import { Client as DiscordClient, IntentsBitField } from 'discord.js';
 
 let lastSubs = '';
 let currentSubs = '';
@@ -12,6 +13,20 @@ const postgres2 = new Client({
   ssl: { rejectUnauthorized: false },
 });
 postgres2.connect();
+
+// set up the Discord admin bot
+const discordBot = new DiscordClient({
+  intents: [IntentsBitField.Flags.Guilds, IntentsBitField.Flags.GuildMembers],
+});
+if (config.DISCORD_ADMIN_BOT_TOKEN) {
+  discordBot.login(config.DISCORD_ADMIN_BOT_TOKEN);
+  discordBot.once('ready', () => {
+    console.log(`Discord Bot "${discordBot?.user?.username}" ready`);
+  });
+}
+if (process.env.NODE_ENV === 'development') {
+  setTimeout(syncSubscribers, 1000);
+}
 
 setInterval(syncSubscribers, 60 * 1000);
 
@@ -110,5 +125,32 @@ async function syncSubscribers() {
       await postgres2?.query('ROLLBACK');
     }
   }
+  if (
+    discordBot.isReady() &&
+    config.DISCORD_ADMIN_BOT_SERVER_ID &&
+    config.DISCORD_ADMIN_BOT_SUB_ROLE_ID
+  ) {
+    console.log('setting discord roles');
+    // Update the sub status of users in Discord
+    // Join the current subs with linked accounts
+    const guild = discordBot.guilds.cache.get(
+      config.DISCORD_ADMIN_BOT_SERVER_ID
+    );
+    const role = guild?.roles.cache.get(config.DISCORD_ADMIN_BOT_SUB_ROLE_ID);
+    const toUpdate = (
+      await postgres2.query(
+        `SELECT la.accountid from subscriber JOIN link_account la ON subscriber.uid = la.uid WHERE la.kind = 'discord'`
+      )
+    ).rows;
+    console.log('%s users to set sub role', toUpdate.length);
+    for (let i = 0; i < toUpdate.length; i++) {
+      const user = await guild?.members.fetch(toUpdate[i].accountid);
+      if (user && role) {
+        console.log('assigning role %s to user %s', role, user.id);
+        await user.roles.add(role);
+      }
+    }
+  }
+
   console.timeEnd('syncSubscribers');
 }

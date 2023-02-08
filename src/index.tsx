@@ -14,6 +14,7 @@ import firebase from 'firebase/compat/app';
 import 'firebase/auth';
 import { serverPath } from './utils';
 import { Create } from './components/Create/Create';
+import { Discord } from './components/Discord/Discord';
 
 const Debug = lazy(() => import('./components/Debug/Debug'));
 
@@ -142,6 +143,9 @@ class WatchParty extends React.Component {
             />
             <DiscordBot />
             <Footer />
+          </Route>
+          <Route path="/discord/auth" exact>
+            <Discord user={this.state.user} />
           </Route>
           <Route path="/debug">
             <TopBar
