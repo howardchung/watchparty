@@ -1358,6 +1358,8 @@ export default class App extends React.Component<AppProps, AppState> {
         setPlaybackRate={this.doSetPlaybackRate}
         beta={this.props.beta}
         roomPlaybackRate={this.state.roomPlaybackRate}
+        isYouTube={this.isYouTube()}
+        setSubtitleMode={this.Player().setSubtitleMode}
       />
     );
     const subscribeButton = (
