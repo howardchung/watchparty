@@ -10,7 +10,7 @@ export const Home = ({ user }: { user: firebase.User | undefined }) => {
     <div>
       <div className={styles.container}>
         <Hero
-          heroText={'Watch together with friends anywhere.'}
+          heroText={'Watch videos together with friends anywhere.'}
           subText={'No registration or download required.'}
           action={
             <div style={{ marginTop: '8px', width: '300px' }}>
@@ -28,7 +28,7 @@ export const Home = ({ user }: { user: firebase.User | undefined }) => {
         <div className={styles.featureSection}>
           <Feature
             icon="sync"
-            title="Synchronized"
+            title="Synchronized Play"
             text="Starts, stops, and seeks are synchronized to everyone, so take those restroom and snack breaks without worrying about falling behind."
           />
           <Feature
@@ -63,7 +63,7 @@ export const Home = ({ user }: { user: firebase.User | undefined }) => {
           <Feature
             icon="desktop"
             title={`VBrowser`}
-            text="Launch a virtual browser that room members can view and control."
+            text="Watch together on a virtual browser running in the cloud."
           />
           <Feature
             icon="youtube"
