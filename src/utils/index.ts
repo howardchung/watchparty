@@ -296,7 +296,7 @@ export function getAndSaveClientId() {
   return clientId;
 }
 
-export function calculateMedian(array: Array<number>): number {
+export function calculateMedian(array: number[]): number {
   // Check If Data Exists
   if (array.length >= 1) {
     // Sort Array

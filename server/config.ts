@@ -50,8 +50,8 @@ const defaults = {
   DEFAULT_VM_REGION: 'US', // The default region to use for free VM/pool selection
   DISCORD_BOT_TOKEN: '', // Token for the Discord bot that generates WatchParty links
   DISCORD_ADMIN_BOT_TOKEN: '', // Optional, for Discord bot to set subscriber roles
-  DISCORD_ADMIN_BOT_SERVER_ID: '', // Optional, ID of the Discord server
-  DISCORD_ADMIN_BOT_SUB_ROLE_ID: '', // Optional, ID of subscriber role
+  DISCORD_ADMIN_BOT_SERVER_ID: '708181150220156929', // Optional, ID of the Discord server
+  DISCORD_ADMIN_BOT_SUB_ROLE_ID: '722202622345609246', // Optional, ID of subscriber role
 };
 
 export default {

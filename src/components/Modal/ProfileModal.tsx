@@ -1,8 +1,9 @@
 import React from 'react';
-import { Modal, Button, Icon, Image } from 'semantic-ui-react';
+import { Modal, Button, Icon, Image, Popup } from 'semantic-ui-react';
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
 import { serverPath } from '../../utils';
+import axios from 'axios';
 
 export class ProfileModal extends React.Component<{
   close: () => void;
@@ -13,7 +14,24 @@ export class ProfileModal extends React.Component<{
     resetDisabled: false,
     verifyDisabled: false,
     deleteConfirmOpen: false,
+    linkedDiscord: null as null | LinkAccount,
   };
+
+  async componentDidMount() {
+    const token = await this.props.user.getIdToken();
+    const response = await axios.get<LinkAccount[]>(
+      serverPath + '/linkAccount',
+      {
+        params: {
+          uid: this.props.user.uid,
+          token,
+        },
+      }
+    );
+    const data = response.data;
+    const linkedDiscord = data.find((d) => d.kind === 'discord');
+    this.setState({ linkedDiscord });
+  }
 
   onSignOut = () => {
     firebase.auth().signOut();
@@ -59,7 +77,10 @@ export class ProfileModal extends React.Component<{
   };
 
   authDiscord = () => {
-    const url = process.env.REACT_APP_DISCORD_AUTH_URL;
+    const url = `https://discord.com/api/oauth2/authorize?client_id=1071707916719095908&redirect_uri=${encodeURIComponent(
+      process.env.REACT_APP_OAUTH_REDIRECT_HOSTNAME ??
+        'https://www.watchparty.me'
+    )}%2Fdiscord%2Fauth&response_type=token&scope=identify`;
     window.open(
       url,
       '_blank',
@@ -69,7 +90,7 @@ export class ProfileModal extends React.Component<{
 
   deleteDiscord = async () => {
     const token = await this.props.user.getIdToken();
-    await window.fetch(serverPath + '/discord/delete', {
+    await window.fetch(serverPath + '/linkAccount', {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
@@ -77,6 +98,7 @@ export class ProfileModal extends React.Component<{
       body: JSON.stringify({
         uid: this.props.user.uid,
         token,
+        kind: 'discord',
       }),
     });
     window.location.reload();
@@ -164,7 +186,7 @@ export class ProfileModal extends React.Component<{
               <Icon name="check circle" />
               Verify Email
             </Button>
-            {this.props.discordUsername && this.props.discordDiscriminator ? (
+            {this.state.linkedDiscord ? (
               <Button
                 icon
                 labelPosition="left"
@@ -174,31 +196,26 @@ export class ProfileModal extends React.Component<{
                 onClick={this.deleteDiscord}
               >
                 <Icon name="discord" />
-                <Button.Content visible>Unlink Discord Account</Button.Content>
-                <Button.Content
-                  hidden
-                >{`${this.props.discordUsername}#${this.props.discordDiscriminator}`}</Button.Content>
+                Unlink Discord {this.state.linkedDiscord.accountname}#
+                {this.state.linkedDiscord.discriminator}
               </Button>
             ) : (
               <React.Fragment>
-                {process.env.REACT_APP_DISCORD_AUTH_URL && (
-                  <Popup
-                    content="Link your Discord account to get assigned a subscriber role on our Discord server."
-                    trigger={
-                      <Button
-                        icon
-                        labelPosition="left"
-                        fluid
-                        color="orange"
-                        onClick={this.authDiscord}
-                        disabled={!this.props.isSubscriber}
-                      >
-                        <Icon name="discord" />
-                        Get Subscriber Role
-                      </Button>
-                    }
-                  />
-                )}
+                <Popup
+                  content="Link your Discord account to automatically receive your Subscriber role if you're subscribed"
+                  trigger={
+                    <Button
+                      icon
+                      labelPosition="left"
+                      fluid
+                      color="orange"
+                      onClick={this.authDiscord}
+                    >
+                      <Icon name="discord" />
+                      Link Discord Account
+                    </Button>
+                  }
+                />
               </React.Fragment>
             )}
             <Button
