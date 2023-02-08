@@ -1,8 +1,9 @@
 import React from 'react';
-import { Modal, Button, Icon, Image } from 'semantic-ui-react';
+import { Modal, Button, Icon, Image, Popup } from 'semantic-ui-react';
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
 import { serverPath } from '../../utils';
+import axios from 'axios';
 
 export class ProfileModal extends React.Component<{
   close: () => void;
@@ -13,7 +14,24 @@ export class ProfileModal extends React.Component<{
     resetDisabled: false,
     verifyDisabled: false,
     deleteConfirmOpen: false,
+    linkedDiscord: null as null | LinkAccount,
   };
+
+  async componentDidMount() {
+    const token = await this.props.user.getIdToken();
+    const response = await axios.get<LinkAccount[]>(
+      serverPath + '/linkAccount',
+      {
+        params: {
+          uid: this.props.user.uid,
+          token,
+        },
+      }
+    );
+    const data = response.data;
+    const linkedDiscord = data.find((d) => d.kind === 'discord');
+    this.setState({ linkedDiscord });
+  }
 
   onSignOut = () => {
     firebase.auth().signOut();
@@ -54,6 +72,34 @@ export class ProfileModal extends React.Component<{
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ uid: this.props.user.uid, token }),
+    });
+    window.location.reload();
+  };
+
+  authDiscord = () => {
+    const url = `https://discord.com/api/oauth2/authorize?client_id=1071707916719095908&redirect_uri=${encodeURIComponent(
+      process.env.REACT_APP_OAUTH_REDIRECT_HOSTNAME ??
+        'https://www.watchparty.me'
+    )}%2Fdiscord%2Fauth&response_type=token&scope=identify`;
+    window.open(
+      url,
+      '_blank',
+      'toolbar=0,location=0,menubar=0,width=450,height=900'
+    );
+  };
+
+  deleteDiscord = async () => {
+    const token = await this.props.user.getIdToken();
+    await window.fetch(serverPath + '/linkAccount', {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        uid: this.props.user.uid,
+        token,
+        kind: 'discord',
+      }),
     });
     window.location.reload();
   };
@@ -140,6 +186,38 @@ export class ProfileModal extends React.Component<{
               <Icon name="check circle" />
               Verify Email
             </Button>
+            {this.state.linkedDiscord ? (
+              <Button
+                icon
+                labelPosition="left"
+                fluid
+                color="red"
+                animated="fade"
+                onClick={this.deleteDiscord}
+              >
+                <Icon name="discord" />
+                Unlink Discord {this.state.linkedDiscord.accountname}#
+                {this.state.linkedDiscord.discriminator}
+              </Button>
+            ) : (
+              <React.Fragment>
+                <Popup
+                  content="Link your Discord account to automatically receive your Subscriber role if you're subscribed"
+                  trigger={
+                    <Button
+                      icon
+                      labelPosition="left"
+                      fluid
+                      color="orange"
+                      onClick={this.authDiscord}
+                    >
+                      <Icon name="discord" />
+                      Link Discord Account
+                    </Button>
+                  }
+                />
+              </React.Fragment>
+            )}
             <Button
               disabled={this.state.resetDisabled}
               icon
