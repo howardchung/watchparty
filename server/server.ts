@@ -298,6 +298,7 @@ app.post('/manageSub', async (req, res) => {
 });
 
 app.delete('/deleteAccount', async (req, res) => {
+  // TODO pass this in req.query instead
   const decoded = await validateUserToken(req.body?.uid, req.body?.token);
   if (!decoded) {
     return res.status(400).json({ error: 'invalid user token' });
@@ -306,8 +307,8 @@ app.delete('/deleteAccount', async (req, res) => {
     // Delete rooms
     await postgres?.query('DELETE FROM room WHERE owner = $1', [decoded.uid]);
     // Delete linked accounts
-    await postgres?.query('DELETE FROM account WHERE email = $1', [
-      decoded.email,
+    await postgres?.query('DELETE FROM link_account WHERE uid = $1', [
+      decoded.uid,
     ]);
   }
   await deleteUser(decoded.uid);
@@ -400,7 +401,7 @@ app.delete('/deleteRoom', async (req, res) => {
   return res.json(result?.rows);
 });
 
-app.get('/linkedAccount', async (req, res) => {
+app.get('/linkAccount', async (req, res) => {
   const decoded = await validateUserToken(
     req.query?.uid as string,
     req.query?.token as string
@@ -408,28 +409,34 @@ app.get('/linkedAccount', async (req, res) => {
   if (!decoded) {
     return res.status(400).json({ error: 'invalid user token' });
   }
-  // TODO Get the linked accounts for the user
-  let linkAccounts = [];
-  if (postgres && decoded?.email) {
+  if (!postgres) {
+    return res.status(400).json({ error: 'invalid database client' });
+  }
+  // Get the linked accounts for the user
+  let linkAccounts: LinkAccount[] = [];
+  if (decoded?.uid) {
     const result = await postgres?.query(
-      'SELECT type, userid, username, discriminator FROM account WHERE email = $1',
-      [decoded?.email]
+      'SELECT kind, accountid, accountname, discriminator FROM link_account WHERE uid = $1',
+      [decoded?.uid]
     );
     linkAccounts = result.rows;
   }
   return res.json(linkAccounts);
 });
 
-app.post('/linkedAccount', async (req, res) => {
+app.post('/linkAccount', async (req, res) => {
   const decoded = await validateUserToken(
-    req.query?.uid as string,
-    req.query?.token as string
+    req.body?.uid as string,
+    req.body?.token as string
   );
   if (!decoded) {
     return res.status(400).json({ error: 'invalid user token' });
   }
-  const linkType = req.body?.linkType;
-  if (linkType === 'discord') {
+  if (!postgres) {
+    return res.status(400).json({ error: 'invalid database client' });
+  }
+  const kind = req.body?.kind;
+  if (kind === 'discord') {
     const tokenType = req.body?.tokenType;
     const accessToken = req.body.accessToken;
     // Get the token and verify the user
@@ -438,33 +445,43 @@ app.post('/linkedAccount', async (req, res) => {
         authorization: `${tokenType} ${accessToken}`,
       },
     });
-    const username = response.data.username;
+    const accountid = response.data.id;
+    const accountname = response.data.username;
     const discriminator = response.data.discriminator;
-    const userid = response.data.id;
-    // TODO Store the user id, username, discriminator
+    // Store the user id, username, discriminator
     await upsertObject(
       postgres,
-      'account',
+      'link_account',
       {
-        id: userid,
-        userName: username,
+        accountid: accountid,
+        accountname: accountname,
         discriminator: discriminator,
-        email: decoded.email,
+        uid: decoded.uid,
+        kind: kind,
       },
-      { email: decoded.email }
+      { uid: decoded.uid, kind }
     );
+    return res.json({});
   }
 });
 
-app.delete('/linkedAccount', async (req, res) => {
+app.delete('/linkAccount', async (req, res) => {
+  // TODO read from req.query instead
   const decoded = await validateUserToken(
-    req.query?.uid as string,
-    req.query?.token as string
+    req.body?.uid as string,
+    req.body?.token as string
   );
   if (!decoded) {
     return res.status(400).json({ error: 'invalid user token' });
   }
-  // TODO delete from postgres
+  if (!postgres) {
+    return res.status(400).json({ error: 'invalid database client' });
+  }
+  await postgres.query(
+    'DELETE FROM link_account WHERE uid = $1 AND kind = $2',
+    [decoded.uid, req.body.kind]
+  );
+  res.json({});
 });
 
 app.use(express.static(config.BUILD_DIRECTORY));

@@ -9,6 +9,7 @@ type DiscordProps = {
 export const Discord = ({ user }: DiscordProps) => {
   const [errorMsg, setErrorMsg] = useState('');
 
+  console.log(user);
   useEffect(() => {
     async function auth() {
       const fragment = new URLSearchParams(window.location.hash.slice(1));
@@ -16,25 +17,18 @@ export const Discord = ({ user }: DiscordProps) => {
         fragment.get('access_token'),
         fragment.get('token_type'),
       ];
-      const result = await fetch('https://discord.com/api/users/@me', {
-        headers: {
-          authorization: `${tokenType} ${accessToken}`,
-        },
-      });
-      const response = await result.json();
-      const { username, discriminator } = response;
-
       const token = await user?.getIdToken();
-      const authResponse = await window.fetch(serverPath + '/discord/auth', {
+      const authResponse = await window.fetch(serverPath + '/linkAccount', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           uid: user?.uid,
-          token,
-          username,
-          discriminator,
+          kind: 'discord',
+          token: token,
+          tokenType,
+          accessToken,
         }),
       });
       if (authResponse.status !== 200) {

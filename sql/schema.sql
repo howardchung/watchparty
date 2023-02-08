@@ -25,12 +25,13 @@ CREATE TABLE subscriber(
   PRIMARY KEY(uid)
 );
 
-CREATE TABLE account(
-  email text,
-  id string,
-  username string,
-  discriminator string,
-  PRIMARY KEY(email)
+CREATE TABLE link_account(
+  uid text,
+  kind text,
+  accountid text,
+  accountname text,
+  discriminator text,
+  PRIMARY KEY(uid, kind)
 );
 
 CREATE UNIQUE INDEX on room (LOWER(vanity)) WHERE vanity IS NOT NULL;

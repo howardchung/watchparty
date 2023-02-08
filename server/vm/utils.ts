@@ -106,7 +106,7 @@ function createVMManager(poolConfig: PoolConfig): VMManager | null {
   return vmManager;
 }
 
-export function getVMManagerConfig(): Array<PoolConfig> {
+export function getVMManagerConfig(): PoolConfig[] {
   return config.VM_MANAGER_CONFIG.split(',').map((c) => {
     const split = c.split(':');
     return {

@@ -82,3 +82,10 @@ interface PersistentRoom {
   isSubRoom: boolean;
   data: any;
 }
+
+interface LinkAccount {
+  accountname: string;
+  accountid: string;
+  discriminator: string;
+  kind: string;
+}
