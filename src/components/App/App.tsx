@@ -323,16 +323,10 @@ export default class App extends React.Component<AppProps, AppState> {
             }
           },
           onStateChange: (e: any) => {
-            if (
-              getMediaType(this.state.currentMedia) === 'youtube' &&
-              e.data === window.YT?.PlayerState?.CUED
-            ) {
+            if (this.isYouTube() && e.data === window.YT?.PlayerState?.CUED) {
               this.setState({ loading: false });
             }
-            if (
-              getMediaType(this.state.currentMedia) === 'youtube' &&
-              e.data === window.YT?.PlayerState?.ENDED
-            ) {
+            if (this.isYouTube() && e.data === window.YT?.PlayerState?.ENDED) {
               this.onVideoEnded();
             }
             if (
@@ -1271,7 +1265,7 @@ export default class App extends React.Component<AppProps, AppState> {
       return '';
     }
     // Show the whole URL for youtube
-    if (getMediaType(input) === 'youtube') {
+    if (this.isYouTube()) {
       return input;
     }
     if (input.startsWith('screenshare://')) {
@@ -1298,7 +1292,6 @@ export default class App extends React.Component<AppProps, AppState> {
       const index = querystring.parse(search.substring(1)).fileIndex;
       return magnetParsed.dn + (index != null ? ` (file ${index})` : '');
     }
-    // Get the filename out of the URL
     return input;
   };
 
