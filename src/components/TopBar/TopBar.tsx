@@ -36,9 +36,9 @@ export async function createRoom(
   const data = await response.json();
   const { name } = data;
   if (openNewTab) {
-    window.open('/#' + name);
+    window.open('/watch' + name);
   } else {
-    window.location.assign('/#' + name);
+    window.location.assign('/watch' + name);
   }
 }
 
@@ -227,20 +227,11 @@ export class ListRoomsButton extends React.Component<{
                 key={room.roomId}
                 link="true"
                 href={
-                  room.vanity
-                    ? '/r/' + room.vanity
-                    : '/' + room.roomId.replace('/', '#')
+                  room.vanity ? '/r/' + room.vanity : '/watch' + room.roomId
                 }
-                onClick={() => {
-                  if (!room.vanity) {
-                    setTimeout(() => window.location.reload(), 100);
-                  }
-                }}
               >
                 <div style={{ display: 'flex', alignItems: 'center' }}>
-                  {room.vanity
-                    ? `/r/${room.vanity}`
-                    : room.roomId.replace('/', '#')}
+                  {room.vanity ? `/r/${room.vanity}` : room.roomId}
                   <div style={{ marginLeft: 'auto', paddingLeft: '20px' }}>
                     <Button
                       icon
