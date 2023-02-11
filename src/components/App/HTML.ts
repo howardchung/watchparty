@@ -62,7 +62,7 @@ export class HTML implements Player {
         window.watchparty.webtorrent?._server?.close();
         window.watchparty.webtorrent?.destroy();
         window.watchparty.webtorrent = new window.WebTorrent();
-        await navigator.serviceWorker?.register('sw.min.js');
+        await navigator.serviceWorker?.register('/sw.min.js');
         const controller = await navigator.serviceWorker.ready;
         await new Promise((resolve) => setTimeout(resolve, 500));
         console.log(controller, controller.active?.state);
