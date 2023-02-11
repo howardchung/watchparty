@@ -275,7 +275,7 @@ app.post('/createRoom', async (req, res) => {
     await newRoom.saveRoom();
   }
   rooms.set(name, newRoom);
-  res.json({ name: name.slice(1) });
+  res.json({ name });
 });
 
 app.post('/manageSub', async (req, res) => {

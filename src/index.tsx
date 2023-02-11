@@ -23,6 +23,12 @@ if (firebaseConfig) {
   firebase.initializeApp(JSON.parse(firebaseConfig));
 }
 
+// Redirect old-style URLs
+if (window.location.hash) {
+  const hashRoomId = window.location.hash.substring(1);
+  window.location.href = '/watch/' + hashRoomId;
+}
+
 class WatchParty extends React.Component {
   public state = {
     user: undefined as firebase.User | undefined,
@@ -60,17 +66,6 @@ class WatchParty extends React.Component {
             path="/"
             exact
             render={(props) => {
-              if (props.location?.hash) {
-                return (
-                  <App
-                    user={this.state.user}
-                    isSubscriber={this.state.isSubscriber}
-                    isCustomer={this.state.isCustomer}
-                    streamPath={this.state.streamPath}
-                    beta={this.state.beta}
-                  />
-                );
-              }
               return (
                 <React.Fragment>
                   <TopBar
@@ -90,6 +85,22 @@ class WatchParty extends React.Component {
             exact
             render={() => {
               return <Create user={this.state.user} />;
+            }}
+          />
+          <Route
+            path="/watch/:roomId"
+            exact
+            render={(props) => {
+              return (
+                <App
+                  user={this.state.user}
+                  isSubscriber={this.state.isSubscriber}
+                  isCustomer={this.state.isCustomer}
+                  urlRoomId={props.match.params.roomId}
+                  streamPath={this.state.streamPath}
+                  beta={this.state.beta}
+                />
+              );
             }}
           />
           <Route

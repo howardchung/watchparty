@@ -30,7 +30,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
       content: `Created a new WatchParty${
         preload ? ` with video ${preload}` : ''
       }!
-${HOST_NAME + '#' + response.data.name}
+${HOST_NAME + '/watch' + response.data.name}
 `,
     });
   }

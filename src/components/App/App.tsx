@@ -82,6 +82,7 @@ window.watchparty = {
 
 interface AppProps {
   vanity?: string;
+  urlRoomId?: string;
   user?: firebase.User;
   isSubscriber: boolean;
   isCustomer: boolean;
@@ -357,7 +358,7 @@ export default class App extends React.Component<AppProps, AppState> {
     if (vanity) {
       return `${window.location.origin}/r/${vanity}`;
     }
-    return `${window.location.origin}${this.state.roomId.replace('/', '#')}`;
+    return `${window.location.origin}/watch${this.state.roomId}`;
   };
 
   handleRoomState = (data: any) => {
@@ -420,12 +421,7 @@ export default class App extends React.Component<AppProps, AppState> {
   };
 
   init = async () => {
-    // Load room ID from url
-    let roomId = '/default';
-    let query = window.location.hash.substring(1);
-    if (query) {
-      roomId = '/' + query;
-    }
+    let roomId = '/' + this.props.urlRoomId;
     // if a vanity name, resolve the url to a room id
     if (this.props.vanity) {
       try {
