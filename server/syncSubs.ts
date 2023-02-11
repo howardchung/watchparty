@@ -20,9 +20,9 @@ const discordBot = new DiscordClient({
 });
 if (config.DISCORD_ADMIN_BOT_TOKEN) {
   discordBot.login(config.DISCORD_ADMIN_BOT_TOKEN);
-  discordBot.once('ready', () => {
-    console.log(`Discord Bot "${discordBot?.user?.username}" ready`);
-  });
+  // discordBot.once('ready', () => {
+  //   console.log(`Discord Bot "${discordBot?.user?.username}" ready`);
+  // });
 }
 if (process.env.NODE_ENV === 'development') {
   setTimeout(syncSubscribers, 1000);

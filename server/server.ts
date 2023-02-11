@@ -346,6 +346,15 @@ app.get('/metadata', async (req, res) => {
     decoded?.email != null &&
     Boolean(config.BETA_USER_EMAILS.split(',').includes(decoded?.email));
   const streamPath = beta ? config.STREAM_PATH : undefined;
+  // log metrics but don't wait for it
+  if (postgres && decoded?.uid) {
+    upsertObject(
+      postgres,
+      'active_user',
+      { uid: decoded?.uid, lastActiveTime: new Date() },
+      { uid: decoded?.uid }
+    );
+  }
   return res.json({
     isSubscriber,
     isCustomer,
@@ -683,7 +692,7 @@ async function getStats() {
 
   const dbRoomData = (
     await postgres?.query(
-      `SELECT "roomId", "creationTime", "lastUpdateTime", vanity, "isSubRoom", "roomTitle", "roomDescription", "mediaPath", owner, password from room WHERE "lastUpdateTime" > NOW() - INTERVAL '30 day' ORDER BY "creationTime" DESC`
+      `SELECT "roomId", "creationTime", "lastUpdateTime", vanity, "isSubRoom", "roomTitle", "roomDescription", "mediaPath", owner, password from room WHERE "lastUpdateTime" > NOW() - INTERVAL '7 day' ORDER BY "creationTime" DESC`
     )
   )?.rows;
   const currentRoomData = dbRoomData
