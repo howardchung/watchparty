@@ -76,6 +76,7 @@ export class NewRoomButton extends React.Component<{
 type SignInButtonProps = {
   user: firebase.User | undefined;
   fluid?: boolean;
+  isSubscriber: boolean;
 };
 
 export class SignInButton extends React.Component<SignInButtonProps> {
@@ -123,6 +124,7 @@ export class SignInButton extends React.Component<SignInButtonProps> {
               user={this.props.user}
               userImage={this.state.userImage}
               close={() => this.setState({ isProfileOpen: false })}
+              isSubscriber={this.props.isSubscriber}
             />
           )}
         </div>
@@ -269,13 +271,9 @@ export class TopBar extends React.Component<{
   roomTitleColor?: string;
 }> {
   render() {
-    const subscribeButton = (
-      <SubscribeButton
-        user={this.props.user}
-        isSubscriber={this.props.isSubscriber ?? false}
-        isCustomer={this.props.isCustomer ?? false}
-      />
-    );
+    const subscribeButton = !this.props.isSubscriber ? (
+      <SubscribeButton user={this.props.user} />
+    ) : null;
     return (
       <React.Fragment>
         <div
@@ -423,7 +421,12 @@ export class TopBar extends React.Component<{
               <ListRoomsButton user={this.props.user} />
             )}
             {subscribeButton}
-            {!this.props.hideSignin && <SignInButton user={this.props.user} />}
+            {!this.props.hideSignin && (
+              <SignInButton
+                user={this.props.user}
+                isSubscriber={this.props.isSubscriber}
+              />
+            )}
           </div>
         </div>
       </React.Fragment>

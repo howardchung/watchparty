@@ -48,7 +48,6 @@ import { VBrowserModal } from '../Modal/VBrowserModal';
 import { SettingsTab } from '../Settings/SettingsTab';
 import { ErrorModal } from '../Modal/ErrorModal';
 import { PasswordModal } from '../Modal/PasswordModal';
-import { SubscribeButton } from '../SubscribeButton/SubscribeButton';
 import { ScreenShareModal } from '../Modal/ScreenShareModal';
 import { FileShareModal } from '../Modal/FileShareModal';
 import firebase from 'firebase/compat/app';
@@ -1350,13 +1349,6 @@ export default class App extends React.Component<AppProps, AppState> {
         setSubtitleMode={this.Player().setSubtitleMode}
       />
     );
-    const subscribeButton = (
-      <SubscribeButton
-        user={this.props.user}
-        isSubscriber={this.props.isSubscriber}
-        isCustomer={this.props.isCustomer}
-      />
-    );
     const displayRightContent =
       this.state.showRightBar || this.state.fullScreen;
     const rightBar = (
@@ -1527,7 +1519,6 @@ export default class App extends React.Component<AppProps, AppState> {
         {this.state.isVBrowserModalOpen && (
           <VBrowserModal
             isSubscriber={this.props.isSubscriber}
-            subscribeButton={subscribeButton}
             closeModal={() => this.setState({ isVBrowserModalOpen: false })}
             startVBrowser={this.startVBrowser}
             user={this.props.user}

@@ -7,6 +7,7 @@ import {
 import { SignInButton } from '../TopBar/TopBar';
 import { serverPath } from '../../utils';
 import firebase from 'firebase/compat/app';
+import { SubscribeButton } from '../SubscribeButton/SubscribeButton';
 
 export class VBrowserModal extends React.Component<{
   closeModal: () => void;
@@ -15,7 +16,6 @@ export class VBrowserModal extends React.Component<{
     options: { size: string; region: string }
   ) => void;
   isSubscriber: boolean;
-  subscribeButton: JSX.Element;
   user?: firebase.User;
   beta?: boolean;
 }> {
@@ -92,6 +92,10 @@ export class VBrowserModal extends React.Component<{
       />
     );
 
+    const subscribeButton = !this.props.isSubscriber ? (
+      <SubscribeButton user={this.props.user} />
+    ) : null;
+
     return (
       <GoogleReCaptchaProvider
         reCaptchaKey={process.env.REACT_APP_RECAPTCHA_SITE_KEY as string}
@@ -153,14 +157,18 @@ export class VBrowserModal extends React.Component<{
                           <LaunchButton />
                         )
                       ) : (
-                        <SignInButton fluid user={this.props.user} />
+                        <SignInButton
+                          fluid
+                          user={this.props.user}
+                          isSubscriber={this.props.isSubscriber}
+                        />
                       )}
                     </Table.Cell>
                     <Table.Cell>
                       {this.props.isSubscriber ? (
                         <LaunchButton large />
                       ) : (
-                        this.props.subscribeButton
+                        subscribeButton
                       )}
                     </Table.Cell>
                   </Table.Row>
