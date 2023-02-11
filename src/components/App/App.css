@@ -49,17 +49,19 @@ body {
   margin-right: 10px;
 }
 
+.control.text {
+  font-weight: 700;
+  font-size: 11px;
+}
+
 .control.action {
   cursor: pointer;
 }
 
-.control.glowing {
-  text-shadow: 0px 0px 6px yellow;
-}
-
-.progress .bar.bar.bar {
+.controls .progress .bar.bar.bar {
   pointer-events: none;
   min-width: initial;
+  border-radius: 0px;
 }
 
 .videoContent {

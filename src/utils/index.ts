@@ -22,7 +22,7 @@ export function formatTimestamp(input: any) {
   let seconds = Math.floor(Number(input) % 60)
     .toString()
     .padStart(2, '0');
-  return `${hours}:${minutes}:${seconds}`;
+  return `${hours ? `${hours}:` : ''}${minutes}:${seconds}`;
 }
 
 export function formatSpeed(input: number) {

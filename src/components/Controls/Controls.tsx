@@ -1,7 +1,7 @@
 import React from 'react';
 import { Icon, Progress, Label, Popup, Dropdown } from 'semantic-ui-react';
 import { Slider } from 'react-semantic-ui-range';
-import { formatTimestamp } from '../../utils';
+import { colorMappings, formatTimestamp } from '../../utils';
 
 interface ControlsProps {
   duration: number;
@@ -31,8 +31,8 @@ interface ControlsProps {
 export class Controls extends React.Component<ControlsProps> {
   state = {
     showTimestamp: false,
-    currTimestamp: 0,
-    posTimestamp: 0,
+    hoverTimestamp: 0,
+    hoverPos: 0,
   };
 
   onMouseOver = () => {
@@ -54,7 +54,7 @@ export class Controls extends React.Component<ControlsProps> {
     const target = pct * this.props.duration;
     // console.log(pct);
     if (pct >= 0) {
-      this.setState({ currTimestamp: target, posTimestamp: pct });
+      this.setState({ hoverTimestamp: target, hoverPos: pct });
     }
   };
 
@@ -89,15 +89,17 @@ export class Controls extends React.Component<ControlsProps> {
           name={paused ? 'play' : 'pause'}
         />
         <Popup
-          content={'Skip to the live stream position'}
+          content={
+            isBehind
+              ? 'Skip to the live stream position'
+              : "You're at the live stream position"
+          }
           trigger={
             <div
               onClick={() => jumpToLeader()}
-              className="control action"
+              className="control action text"
               style={{
                 color: isBehind ? 'gray' : 'red',
-                fontSize: 10,
-                fontWeight: 700,
               }}
             >
               <Icon size="small" name={'circle'} />
@@ -105,7 +107,7 @@ export class Controls extends React.Component<ControlsProps> {
             </div>
           }
         />
-        <div className="control">{formatTimestamp(currentTime)}</div>
+        <div className="control text">{formatTimestamp(currentTime)}</div>
         <Progress
           size="tiny"
           color="blue"
@@ -127,24 +129,44 @@ export class Controls extends React.Component<ControlsProps> {
           value={currentTime}
           total={duration}
         >
+          {
+            <div
+              style={{
+                position: 'absolute',
+                bottom: '0px',
+                left: `calc(${
+                  (this.props.currentTime / this.props.duration) * 100 +
+                  '% - 6px'
+                })`,
+                pointerEvents: 'none',
+                width: '12px',
+                height: '12px',
+                transform:
+                  duration < Infinity && this.state.showTimestamp
+                    ? 'scale(1, 1)'
+                    : 'scale(0, 0)',
+                transition: '0.25s all',
+                borderRadius: '50%',
+                backgroundColor: '#54c8ff',
+              }}
+            ></div>
+          }
           {duration < Infinity && this.state.showTimestamp && (
             <div
               style={{
                 position: 'absolute',
                 bottom: '0px',
-                left: `calc(${this.state.posTimestamp * 100 + '% - 27px'})`,
+                left: `calc(${this.state.hoverPos * 100 + '% - 27px'})`,
                 pointerEvents: 'none',
               }}
             >
               <Label basic color="blue" pointing="below">
-                <div style={{ width: '34px' }}>
-                  {formatTimestamp(this.state.currTimestamp)}
-                </div>
+                <div>{formatTimestamp(this.state.hoverTimestamp)}</div>
               </Label>
             </div>
           )}
         </Progress>
-        <div className="control">{formatTimestamp(duration)}</div>
+        <div className="control text">{formatTimestamp(duration)}</div>
         <div style={{ fontSize: '10px', fontWeight: 700 }}>
           <Popup
             content={
