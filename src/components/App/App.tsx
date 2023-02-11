@@ -1921,26 +1921,32 @@ export default class App extends React.Component<AppProps, AppState> {
                   </div>
                   {this.state.currentMedia && controls}
                   {Boolean(this.state.total) && (
-                    <div>
-                      <Progress
+                    <div
+                      style={{
+                        color: 'white',
+                        textAlign: 'center',
+                        fontSize: 11,
+                        fontWeight: 700,
+                      }}
+                    >
+                      {/* <Progress
                         size="tiny"
                         color="green"
                         inverted
                         value={this.state.downloaded}
                         total={this.state.total}
                         // indicating
-                        label={
-                          Math.min(
-                            (this.state.downloaded / this.state.total) * 100,
-                            100
-                          ).toFixed(2) +
-                          '% - ' +
-                          formatSpeed(this.state.speed) +
-                          ' - ' +
-                          this.state.connections +
-                          ' connections'
-                        }
-                      ></Progress>
+                        label={}
+                      ></Progress> */}
+                      {Math.min(
+                        (this.state.downloaded / this.state.total) * 100,
+                        100
+                      ).toFixed(2) +
+                        '% - ' +
+                        formatSpeed(this.state.speed) +
+                        ' - ' +
+                        this.state.connections +
+                        ' connections'}
                     </div>
                   )}
                 </div>
