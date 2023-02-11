@@ -6,14 +6,43 @@ import firebase from 'firebase/compat/app';
 
 export const SubscribeButton = ({
   user,
-  isSubscriber,
-  isCustomer,
 }: {
   user: firebase.User | undefined;
-  isSubscriber: boolean;
-  isCustomer: boolean;
 }) => {
   const [isSubscribeModalOpen, setIsSubscribeModalOpen] = useState(false);
+  return (
+    <>
+      {isSubscribeModalOpen && (
+        <SubscribeModal
+          user={user}
+          closeSubscribe={() => setIsSubscribeModalOpen(false)}
+        />
+      )}
+      <Popup
+        content="Subscribe to help support us and enable additional features!"
+        trigger={
+          <Button
+            fluid
+            color="orange"
+            className="toolButton"
+            icon
+            labelPosition="left"
+            onClick={() => setIsSubscribeModalOpen(true)}
+          >
+            <Icon name="plus" />
+            Subscribe
+          </Button>
+        }
+      />
+    </>
+  );
+};
+
+export const ManageSubButton = ({
+  user,
+}: {
+  user: firebase.User | undefined;
+}) => {
   const onManage = useCallback(async () => {
     const resp = await window.fetch(serverPath + '/manageSub', {
       method: 'POST',
@@ -31,50 +60,16 @@ export const SubscribeButton = ({
     window.location.assign(session.url);
   }, [user]);
   return (
-    <>
-      {isSubscribeModalOpen && (
-        <SubscribeModal
-          user={user}
-          isSubscriber={isSubscriber}
-          closeSubscribe={() => setIsSubscribeModalOpen(false)}
-        />
-      )}
-      {!isSubscriber && (
-        <Popup
-          content="Subscribe to help support us and enable additional features!"
-          trigger={
-            <Button
-              fluid
-              color="orange"
-              className="toolButton"
-              icon
-              labelPosition="left"
-              onClick={() => setIsSubscribeModalOpen(true)}
-            >
-              <Icon name="plus" />
-              Subscribe
-            </Button>
-          }
-        />
-      )}
-      {isSubscriber && (
-        <Popup
-          content="Manage your subscription"
-          trigger={
-            <Button
-              fluid
-              color="orange"
-              className="toolButton"
-              icon
-              labelPosition="left"
-              onClick={onManage}
-            >
-              <Icon name="wrench" />
-              Manage
-            </Button>
-          }
-        />
-      )}
-    </>
+    <Button
+      fluid
+      color="orange"
+      className="toolButton"
+      icon
+      labelPosition="left"
+      onClick={onManage}
+    >
+      <Icon name="wrench" />
+      Manage Subscription
+    </Button>
   );
 };

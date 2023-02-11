@@ -13,7 +13,6 @@ const stripePromise = process.env.REACT_APP_STRIPE_PUBLIC_KEY
 export class SubscribeModal extends React.Component<{
   closeSubscribe: () => void;
   user?: firebase.User;
-  isSubscriber: boolean;
 }> {
   onSubscribe = async () => {
     if (!stripePromise) {
@@ -45,10 +44,6 @@ export class SubscribeModal extends React.Component<{
     }
   };
   render() {
-    if (this.props.isSubscriber) {
-      this.props.closeSubscribe();
-      return null;
-    }
     const { closeSubscribe } = this.props;
     return (
       <Modal open={true} onClose={closeSubscribe as any}>
@@ -172,7 +167,8 @@ export class SubscribeModal extends React.Component<{
                 </Button>
               ) : (
                 <div>
-                  Please sign in to subscribe: <SignInButton user={undefined} />
+                  Please sign in to subscribe:{' '}
+                  <SignInButton user={undefined} isSubscriber={false} />
                 </div>
               )}
             </div>
