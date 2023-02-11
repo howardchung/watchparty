@@ -14,7 +14,6 @@ import {
   Loader,
   Message,
   Popup,
-  Progress,
   Menu,
   Modal,
   Label,
