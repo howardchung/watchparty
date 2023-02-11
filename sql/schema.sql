@@ -34,6 +34,12 @@ CREATE TABLE link_account(
   PRIMARY KEY(uid, kind)
 );
 
+CREATE TABLE active_user(
+  uid text,
+  "lastActiveTime" timestamp with time zone,
+  PRIMARY KEY(uid)
+);
+
 CREATE UNIQUE INDEX on room (LOWER(vanity)) WHERE vanity IS NOT NULL;
 CREATE INDEX on room(owner) WHERE owner IS NOT NULL;
 CREATE INDEX on room("creationTime");

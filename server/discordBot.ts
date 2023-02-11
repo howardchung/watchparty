@@ -13,6 +13,7 @@ const client = new Client({
 
 client.on('ready', () => {
   console.log('I am ready!');
+  console.log('bot is in %s guilds', client.guilds.cache.size);
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {
