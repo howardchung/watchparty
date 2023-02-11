@@ -1,7 +1,7 @@
 import React from 'react';
 import { Icon, Progress, Label, Popup, Dropdown } from 'semantic-ui-react';
 import { Slider } from 'react-semantic-ui-range';
-import { colorMappings, formatTimestamp } from '../../utils';
+import { formatTimestamp } from '../../utils';
 
 interface ControlsProps {
   duration: number;
