@@ -491,7 +491,9 @@ export class Room {
     const youtubeVideoId = getYoutubeVideoID(data);
     if (youtubeVideoId) {
       const video = await fetchYoutubeVideo(youtubeVideoId);
-      this.playlist.push(video);
+      if (video) {
+        this.playlist.push(video);
+      }
     } else {
       this.playlist.push({
         name: data,

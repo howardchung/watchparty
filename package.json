@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@googleapis/youtube": "^8.0.2",
     "@stripe/stripe-js": "^1.46.0",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^12.1.5",
@@ -47,8 +48,7 @@
     "stripe": "^8.222.0",
     "url-exist": "^3.0.1",
     "uuid": "^8.3.2",
-    "webtorrent": "^2.0.4",
-    "youtube-api": "^2.0.10"
+    "webtorrent": "^2.0.4"
   },
   "scripts": {
     "start": "react-scripts start",
