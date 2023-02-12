@@ -76,7 +76,7 @@ export class Controls extends React.Component<ControlsProps> {
       muted,
       volume,
     } = this.props;
-    const isBehind = leaderTime && leaderTime - currentTime > 5;
+    const isBehind = leaderTime && leaderTime - currentTime > 3;
     return (
       <div className="controls">
         <Icon
