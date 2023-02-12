@@ -13,7 +13,7 @@ import { getStartOfDay } from './utils/time';
 import { updateObject, upsertObject } from './utils/postgres';
 import { fetchYoutubeVideo, getYoutubeVideoID } from './utils/youtube';
 
-let redis: Redis.Redis | undefined = undefined;
+let redis: Redis | undefined = undefined;
 if (config.REDIS_URL) {
   redis = new Redis(config.REDIS_URL);
 }
@@ -782,9 +782,9 @@ export class Room {
         const uidLock = await redis.set(
           'vBrowserUIDLock:' + uid,
           '1',
-          'NX',
           'EX',
-          120
+          120,
+          'NX'
         );
         if (!uidLock) {
           socket.emit(

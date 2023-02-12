@@ -4,13 +4,13 @@ import express from 'express';
 import Redis from 'ioredis';
 import bodyParser from 'body-parser';
 
-let redis: Redis.Redis | undefined = undefined;
+let redis: Redis | undefined = undefined;
 if (config.REDIS_URL) {
   redis = new Redis(config.REDIS_URL);
 }
 const app = express();
 const vmManagers = getBgVMManagers();
-const redisRefs: { [key: string]: Redis.Redis } = {};
+const redisRefs: { [key: string]: Redis } = {};
 
 app.use(bodyParser.json());
 
@@ -24,7 +24,7 @@ setInterval(() => {
 
 app.post('/assignVM', async (req, res) => {
   try {
-    let redis: Redis.Redis | undefined = undefined;
+    let redis: Redis | undefined = undefined;
     if (config.REDIS_URL) {
       redis = new Redis(config.REDIS_URL);
       redisRefs[req.body.uid] = redis;
@@ -119,7 +119,9 @@ app.get('/isFreePoolFull', async (req, res) => {
     const limitSize = freePool?.getLimitSize() ?? 0;
     const currentSize = await redis?.get(freePool.getRedisPoolSizeKey());
     isFull = Boolean(
-      limitSize > 0 && (Number(availableCount) === 0 || (Number(currentSize) - Number(availableCount)) > limitSize * 0.95)
+      limitSize > 0 &&
+        (Number(availableCount) === 0 ||
+          Number(currentSize) - Number(availableCount) > limitSize * 0.95)
     );
   }
   return res.json({ isFull });
