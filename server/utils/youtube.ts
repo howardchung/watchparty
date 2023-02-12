@@ -1,66 +1,56 @@
 import config from '../config';
-import Youtube from 'youtube-api';
-import {
-  YoutubeAPIVideoResult,
-  YoutubeListResult,
-  YoutubeSearchResult,
-} from '../index.d';
 import {
   PT_HOURS_REGEX,
   PT_MINUTES_REGEX,
   PT_SECONDS_REGEX,
   YOUTUBE_VIDEO_ID_REGEX,
 } from './regex';
+import { youtube, youtube_v3 } from '@googleapis/youtube';
 
-if (config.YOUTUBE_API_KEY) {
-  Youtube.authenticate({
-    type: 'key',
-    key: config.YOUTUBE_API_KEY,
-  });
-}
+let Youtube = config.YOUTUBE_API_KEY
+  ? youtube({
+      version: 'v3',
+      auth: config.YOUTUBE_API_KEY,
+    })
+  : null;
 
 export const mapYoutubeSearchResult = (
-  video: YoutubeSearchResult
+  video: youtube_v3.Schema$SearchResult
 ): PlaylistVideo => {
   return {
-    channel: video.snippet.channelTitle,
-    url: 'https://www.youtube.com/watch?v=' + video.id.videoId,
-    name: video.snippet.title,
-    img: video.snippet.thumbnails.default.url,
+    channel: video.snippet?.channelTitle ?? '',
+    url: 'https://www.youtube.com/watch?v=' + video?.id?.videoId,
+    name: video.snippet?.title ?? '',
+    img: video.snippet?.thumbnails?.default?.url ?? '',
     duration: 0,
     type: 'youtube',
   };
 };
 
 export const mapYoutubeListResult = (
-  video: YoutubeListResult
+  video: youtube_v3.Schema$Video
 ): PlaylistVideo => {
   const videoId = video.id;
   return {
     url: 'https://www.youtube.com/watch?v=' + videoId,
-    name: video.snippet.title,
-    img: video.snippet.thumbnails.default.url,
-    channel: video.snippet.channelTitle,
-    duration: getVideoDuration(video.contentDetails.duration) ?? 0,
+    name: video.snippet?.title ?? '',
+    img: video.snippet?.thumbnails?.default?.url ?? '',
+    channel: video.snippet?.channelTitle ?? '',
+    duration: getVideoDuration(video.contentDetails?.duration ?? ''),
     type: 'youtube',
   };
 };
 
-export const searchYoutube = (query: string): Promise<PlaylistVideo[]> => {
-  return new Promise((resolve, reject) => {
-    Youtube.search.list(
-      { part: 'snippet', type: 'video', maxResults: 25, q: query },
-      (err: any, data: any) => {
-        if (data && data.items) {
-          const response = data.items.map(mapYoutubeSearchResult);
-          resolve(response);
-        } else {
-          console.warn(data);
-          reject();
-        }
-      }
-    );
+export const searchYoutube = async (
+  query: string
+): Promise<PlaylistVideo[]> => {
+  const response = await Youtube?.search.list({
+    part: ['snippet'],
+    type: ['video'],
+    maxResults: 25,
+    q: query,
   });
+  return response?.data?.items?.map(mapYoutubeSearchResult) ?? [];
 };
 
 export const getYoutubeVideoID = (url: string) => {
@@ -77,24 +67,21 @@ export const getYoutubeVideoID = (url: string) => {
   return id;
 };
 
-export const fetchYoutubeVideo = (id: string): Promise<PlaylistVideo> => {
-  return new Promise((resolve, reject) => {
-    Youtube.videos.list(
-      { part: 'snippet,contentDetails', id },
-      (err: any, data: YoutubeAPIVideoResult) => {
-        if (data) {
-          const video = data.items[0];
-          resolve(mapYoutubeListResult(video));
-        } else {
-          console.warn(err);
-          reject('unknown youtube api error');
-        }
-      }
-    );
+export const fetchYoutubeVideo = async (
+  id: string
+): Promise<PlaylistVideo | null> => {
+  const response = await Youtube?.videos.list({
+    part: ['snippet', 'contentDetails'],
+    id: [id],
   });
+  const top = response?.data?.items?.[0];
+  return top ? mapYoutubeListResult(top) : null;
 };
 
-export const getVideoDuration = (string: string) => {
+export const getVideoDuration = (string: string): number => {
+  if (!string) {
+    return 0;
+  }
   const hoursParts = PT_HOURS_REGEX.exec(string);
   const minutesParts = PT_MINUTES_REGEX.exec(string);
   const secondsParts = PT_SECONDS_REGEX.exec(string);
