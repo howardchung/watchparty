@@ -712,7 +712,9 @@ export default class App extends React.Component<AppProps, AppState> {
             pbr = 1.1;
           }
           // console.log(delta, pbr);
-          this.Player().setPlaybackRate(pbr);
+          if (this.Player().getPlaybackRate() !== pbr) {
+            this.Player().setPlaybackRate(pbr);
+          }
         }
         this.syncSubtitle();
       });
