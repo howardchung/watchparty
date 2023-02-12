@@ -2,7 +2,7 @@ import config from './config';
 import Redis from 'ioredis';
 import { statsAgg } from './utils/statsAgg';
 
-let redis: Redis.Redis | undefined = undefined;
+let redis: Redis | undefined = undefined;
 if (config.REDIS_URL) {
   redis = new Redis(config.REDIS_URL);
 }

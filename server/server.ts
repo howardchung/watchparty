@@ -47,7 +47,7 @@ if (config.HTTPS) {
   server = new http.Server(app);
 }
 const io = new Server(server, { cors: {}, transports: ['websocket'] });
-let redis: Redis.Redis | undefined = undefined;
+let redis: Redis | undefined = undefined;
 if (config.REDIS_URL) {
   redis = new Redis(config.REDIS_URL);
 }

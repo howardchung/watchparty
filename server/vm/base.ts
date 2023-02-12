@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { redisCount } from '../utils/redis';
 import { PoolConfig, PoolRegion } from './utils';
 
-let redis: Redis.Redis | undefined = undefined;
+let redis: Redis | undefined = undefined;
 if (config.REDIS_URL) {
   redis = new Redis(config.REDIS_URL);
 }
@@ -18,7 +18,7 @@ const updateSizeInterval = 60 * 1000;
 export abstract class VMManager {
   protected isLarge = false;
   protected region: PoolRegion = 'US';
-  protected redis: Redis.Redis;
+  protected redis: Redis;
   private currentSize = 0;
   private limitSize = 0;
   private minSize = 0;

@@ -9,7 +9,7 @@ import { Docker } from './docker';
 export const imageName = 'howardc93/vbrowser';
 
 export const assignVM = async (
-  redis: Redis.Redis,
+  redis: Redis,
   vmManager: VMManager
 ): Promise<AssignedVM | undefined> => {
   try {
@@ -35,9 +35,9 @@ export const assignVM = async (
       const lock = await redis.set(
         'lock:' + vmManager.id + ':' + id,
         '1',
-        'NX',
         'EX',
-        300
+        300,
+        'NX'
       );
       if (!lock) {
         console.log('failed to acquire lock on VM:', id);
