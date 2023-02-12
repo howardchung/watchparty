@@ -1173,11 +1173,12 @@ export default class App extends React.Component<AppProps, AppState> {
 
   loadSubtitles = async () => {
     const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
-    if (!Boolean(this.state.currentSubtitle)) {
-      leftVideo.innerHTML = '';
-    } else {
-      // Clear subtitles and put new ones in
-      leftVideo.innerHTML = '';
+    if (!leftVideo) {
+      return;
+    }
+    // Clear subtitles and put new ones in
+    leftVideo.innerHTML = '';
+    if (Boolean(this.state.currentSubtitle)) {
       let subtitleSrc = this.state.currentSubtitle;
       if (subtitleSrc) {
         const response = await window.fetch(subtitleSrc);

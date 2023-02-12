@@ -28,7 +28,7 @@ const ChatVideoCard: React.FC<{
   } = props;
 
   const handlePlayClick = React.useCallback(
-    (e) => {
+    (e: any) => {
       if (onPlay) {
         onPlay(index);
       }
@@ -37,7 +37,7 @@ const ChatVideoCard: React.FC<{
   );
 
   const handlePlayNextClick = React.useCallback(
-    (e) => {
+    (e: any) => {
       e.stopPropagation();
       e.nativeEvent.stopImmediatePropagation();
       if (onPlayNext) {
@@ -48,7 +48,7 @@ const ChatVideoCard: React.FC<{
   );
 
   const handleRemoveClick = React.useCallback(
-    (e) => {
+    (e: any) => {
       e.stopPropagation();
       e.nativeEvent.stopImmediatePropagation();
       if (onRemove) {

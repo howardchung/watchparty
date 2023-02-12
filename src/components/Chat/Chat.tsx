@@ -1,7 +1,7 @@
 import React, { RefObject } from 'react';
 import { Button, Comment, Icon, Input, Popup } from 'semantic-ui-react';
-import 'emoji-mart/css/emoji-mart.css';
-import { EmojiData, Picker } from 'emoji-mart';
+import data from '@emoji-mart/data';
+import Picker from '@emoji-mart/react';
 import onClickOutside from 'react-onclickoutside';
 //@ts-ignore
 import Linkify from 'react-linkify';
@@ -197,8 +197,8 @@ export class Chat extends React.Component<ChatProps> {
     return cmd;
   };
 
-  addEmoji = (emoji: EmojiData) => {
-    this.setState({ chatMsg: this.state.chatMsg + (emoji as any).native });
+  addEmoji = (emoji: any) => {
+    this.setState({ chatMsg: this.state.chatMsg + emoji.native });
   };
 
   render() {
@@ -531,8 +531,8 @@ const ChatMessage = ({
   );
 };
 
-class PickerMenuInner extends React.Component<{
-  addEmoji: (emoji: EmojiData) => void;
+class PickerMenu extends React.Component<{
+  addEmoji: (emoji: any) => void;
   closeMenu: () => void;
 }> {
   handleClickOutside = () => {
@@ -542,19 +542,16 @@ class PickerMenuInner extends React.Component<{
     return (
       <div style={{ position: 'absolute', bottom: '60px' }}>
         <Picker
-          set="google"
-          sheetSize={64}
+          data={data}
           theme="dark"
-          showPreview={false}
-          showSkinTones={false}
-          onSelect={this.props.addEmoji}
+          previewPosition="none"
+          onEmojiSelect={this.props.addEmoji}
+          onClickOutside={this.handleClickOutside}
         />
       </div>
     );
   }
 }
-
-const PickerMenu = onClickOutside(PickerMenuInner);
 
 class ReactionMenuInner extends React.Component<{
   handleReactionClick: (value: string, id?: string, timestamp?: string) => void;

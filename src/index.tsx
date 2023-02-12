@@ -1,7 +1,7 @@
 import './index.css';
 
 import React, { lazy, Suspense } from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Route } from 'react-router-dom';
 
 import App from './components/App';
@@ -60,121 +60,123 @@ class WatchParty extends React.Component {
   }
   render() {
     return (
-      <React.StrictMode>
-        <BrowserRouter>
-          <Route
-            path="/"
-            exact
-            render={(props) => {
-              return (
-                <React.Fragment>
-                  <TopBar
-                    user={this.state.user}
-                    isSubscriber={this.state.isSubscriber}
-                    isCustomer={this.state.isCustomer}
-                    hideNewRoom
-                  />
-                  <Home user={this.state.user} />
-                  <Footer />
-                </React.Fragment>
-              );
-            }}
-          />
-          <Route
-            path="/create"
-            exact
-            render={() => {
-              return <Create user={this.state.user} />;
-            }}
-          />
-          <Route
-            path="/watch/:roomId"
-            exact
-            render={(props) => {
-              return (
-                <App
+      // <React.StrictMode>
+      <BrowserRouter>
+        <Route
+          path="/"
+          exact
+          render={(props) => {
+            return (
+              <React.Fragment>
+                <TopBar
                   user={this.state.user}
                   isSubscriber={this.state.isSubscriber}
                   isCustomer={this.state.isCustomer}
-                  urlRoomId={props.match.params.roomId}
-                  streamPath={this.state.streamPath}
-                  beta={this.state.beta}
+                  hideNewRoom
                 />
-              );
-            }}
+                <Home user={this.state.user} />
+                <Footer />
+              </React.Fragment>
+            );
+          }}
+        />
+        <Route
+          path="/create"
+          exact
+          render={() => {
+            return <Create user={this.state.user} />;
+          }}
+        />
+        <Route
+          path="/watch/:roomId"
+          exact
+          render={(props) => {
+            return (
+              <App
+                user={this.state.user}
+                isSubscriber={this.state.isSubscriber}
+                isCustomer={this.state.isCustomer}
+                urlRoomId={props.match.params.roomId}
+                streamPath={this.state.streamPath}
+                beta={this.state.beta}
+              />
+            );
+          }}
+        />
+        <Route
+          path="/r/:vanity"
+          exact
+          render={(props) => {
+            return (
+              <App
+                user={this.state.user}
+                isSubscriber={this.state.isSubscriber}
+                isCustomer={this.state.isCustomer}
+                vanity={props.match.params.vanity}
+                streamPath={this.state.streamPath}
+                beta={this.state.beta}
+              />
+            );
+          }}
+        />
+        <Route path="/terms">
+          <TopBar
+            user={this.state.user}
+            isSubscriber={this.state.isSubscriber}
+            isCustomer={this.state.isCustomer}
           />
-          <Route
-            path="/r/:vanity"
-            exact
-            render={(props) => {
-              return (
-                <App
-                  user={this.state.user}
-                  isSubscriber={this.state.isSubscriber}
-                  isCustomer={this.state.isCustomer}
-                  vanity={props.match.params.vanity}
-                  streamPath={this.state.streamPath}
-                  beta={this.state.beta}
-                />
-              );
-            }}
+          <Terms />
+          <Footer />
+        </Route>
+        <Route path="/privacy">
+          <TopBar
+            user={this.state.user}
+            isSubscriber={this.state.isSubscriber}
+            isCustomer={this.state.isCustomer}
           />
-          <Route path="/terms">
-            <TopBar
-              user={this.state.user}
-              isSubscriber={this.state.isSubscriber}
-              isCustomer={this.state.isCustomer}
-            />
-            <Terms />
-            <Footer />
-          </Route>
-          <Route path="/privacy">
-            <TopBar
-              user={this.state.user}
-              isSubscriber={this.state.isSubscriber}
-              isCustomer={this.state.isCustomer}
-            />
-            <Privacy />
-            <Footer />
-          </Route>
-          <Route path="/faq">
-            <TopBar
-              user={this.state.user}
-              isSubscriber={this.state.isSubscriber}
-              isCustomer={this.state.isCustomer}
-            />
-            <FAQ />
-            <Footer />
-          </Route>
-          <Route path="/discordBot">
-            <TopBar
-              user={this.state.user}
-              isSubscriber={this.state.isSubscriber}
-              isCustomer={this.state.isCustomer}
-            />
-            <DiscordBot />
-            <Footer />
-          </Route>
-          <Route path="/discord/auth" exact>
-            <Discord user={this.state.user} />
-          </Route>
-          <Route path="/debug">
-            <TopBar
-              user={this.state.user}
-              isSubscriber={this.state.isSubscriber}
-              isCustomer={this.state.isCustomer}
-            />
-            <Suspense fallback={null}>
-              <Debug />
-            </Suspense>
-            <Footer />
-          </Route>
-        </BrowserRouter>
-      </React.StrictMode>
+          <Privacy />
+          <Footer />
+        </Route>
+        <Route path="/faq">
+          <TopBar
+            user={this.state.user}
+            isSubscriber={this.state.isSubscriber}
+            isCustomer={this.state.isCustomer}
+          />
+          <FAQ />
+          <Footer />
+        </Route>
+        <Route path="/discordBot">
+          <TopBar
+            user={this.state.user}
+            isSubscriber={this.state.isSubscriber}
+            isCustomer={this.state.isCustomer}
+          />
+          <DiscordBot />
+          <Footer />
+        </Route>
+        <Route path="/discord/auth" exact>
+          <Discord user={this.state.user} />
+        </Route>
+        <Route path="/debug">
+          <TopBar
+            user={this.state.user}
+            isSubscriber={this.state.isSubscriber}
+            isCustomer={this.state.isCustomer}
+          />
+          <Suspense fallback={null}>
+            <Debug />
+          </Suspense>
+          <Footer />
+        </Route>
+      </BrowserRouter>
+      // </React.StrictMode>
     );
   }
 }
-ReactDOM.render(<WatchParty />, document.getElementById('root'));
+const container = document.getElementById('root');
+const root = createRoot(container!);
+root.render(<WatchParty />);
 
 // If you want your app to work offline and load faster, you can change
 // unregister() to register() below. Note this comes with some pitfalls.
