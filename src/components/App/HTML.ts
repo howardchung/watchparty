@@ -48,9 +48,8 @@ export class HTML implements Player {
       leftVideo.innerHTML = '';
       // Check for HLS
       // https://moctobpltc-i.akamaihd.net/hls/live/571329/eight/playlist.m3u8
-      let spl = src.split('.');
       if (
-        spl[spl.length - 1] === 'm3u8' &&
+        src.includes('.m3u8') &&
         !leftVideo?.canPlayType('application/vnd.apple.mpegurl')
       ) {
         let hls = new window.Hls();

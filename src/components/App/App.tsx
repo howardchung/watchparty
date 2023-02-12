@@ -705,18 +705,17 @@ export default class App extends React.Component<AppProps, AppState> {
         !this.state.currentMedia.includes('.m3u8') &&
         this.state.roomPlaybackRate === 0
       ) {
-        const leader = Math.max(...Object.values(data));
+        const leader = this.getLeaderTime();
         const delta = leader - data[this.socket.id];
         // Set leader pbr to 1
         let pbr = 1;
-        if (delta > 0.1) {
-          // Speed up between 1.00 and 1.15 depending on delta
-          const cap = 1.5;
-          const cappedDelta = Math.min(cap, delta);
-          pbr = 1 + (0.15 / cap) * cappedDelta;
+        if (delta > 0.5) {
+          pbr = 1.1;
         }
         // console.log(delta, pbr);
-        this.Player().setPlaybackRate(pbr);
+        if (pbr !== 1) {
+          this.Player().setPlaybackRate(pbr);
+        }
       }
     });
     socket.on('REC:nameMap', (data: StringDict) => {
