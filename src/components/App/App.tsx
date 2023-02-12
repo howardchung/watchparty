@@ -698,25 +698,24 @@ export default class App extends React.Component<AppProps, AppState> {
       this.setState({ chat });
     });
     socket.on('REC:tsMap', (data: NumberDict) => {
-      this.setState({ tsMap: data });
-      this.syncSubtitle();
-      if (
-        !this.state.currentMediaPaused &&
-        !this.state.currentMedia.includes('.m3u8') &&
-        this.state.roomPlaybackRate === 0
-      ) {
-        const leader = this.getLeaderTime();
-        const delta = leader - data[this.socket.id];
-        // Set leader pbr to 1
-        let pbr = 1;
-        if (delta > 0.5) {
-          pbr = 1.1;
-        }
-        // console.log(delta, pbr);
-        if (pbr !== 1) {
+      this.setState({ tsMap: data }, () => {
+        if (
+          !this.state.currentMediaPaused &&
+          !this.state.currentMedia.includes('.m3u8') &&
+          this.state.roomPlaybackRate === 0
+        ) {
+          const leader = this.getLeaderTime();
+          const delta = leader - data[this.socket.id];
+          // Set leader pbr to 1
+          let pbr = 1;
+          if (delta > 0.5) {
+            pbr = 1.1;
+          }
+          // console.log(delta, pbr);
           this.Player().setPlaybackRate(pbr);
         }
-      }
+        this.syncSubtitle();
+      });
     });
     socket.on('REC:nameMap', (data: StringDict) => {
       this.setState({ nameMap: data });
