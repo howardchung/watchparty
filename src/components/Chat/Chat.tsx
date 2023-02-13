@@ -24,8 +24,6 @@ import {
   TransitionGroup,
 } from 'react-transition-group';
 
-const reactionEmojis = Array.from('👍🧡😂😯😢😡');
-
 interface ChatProps {
   chat: ChatMessage[];
   nameMap: StringDict;
