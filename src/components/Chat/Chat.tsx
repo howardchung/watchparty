@@ -2,7 +2,7 @@ import React, { RefObject } from 'react';
 import { Button, Comment, Icon, Input, Popup } from 'semantic-ui-react';
 import data from '@emoji-mart/data';
 import Picker from '@emoji-mart/react';
-import onClickOutside from 'react-onclickoutside';
+// import onClickOutside from 'react-onclickoutside';
 //@ts-ignore
 import Linkify from 'react-linkify';
 import { SecureLink } from 'react-secure-link';
@@ -262,10 +262,16 @@ export class Chat extends React.Component<ChatProps> {
         </div>
         <Separator />
         {this.state.isPickerOpen && (
-          <PickerMenu
-            addEmoji={this.addEmoji}
-            closeMenu={() => this.setState({ isPickerOpen: false })}
-          />
+          <div style={{ position: 'absolute', bottom: '60px' }}>
+            <Picker
+              data={data}
+              theme="dark"
+              previewPosition="none"
+              maxFrequentRows={1}
+              onEmojiSelect={this.addEmoji}
+              onClickOutside={() => this.setState({ isPickerOpen: false })}
+            />
+          </div>
         )}
         <CSSTransition
           in={this.state.reactionMenu.isOpen}
@@ -278,12 +284,34 @@ export class Chat extends React.Component<ChatProps> {
           }}
           unmountOnExit
         >
-          <ReactionMenu
+          <div
+            style={{
+              position: 'fixed',
+              top: Math.min(
+                this.state.reactionMenu.yPosition - 150,
+                window.innerHeight - 450
+              ),
+              left: this.state.reactionMenu.xPosition - 240,
+            }}
+          >
+            <Picker
+              theme="dark"
+              previewPosition="none"
+              maxFrequentRows={1}
+              perLine={6}
+              onClickOutside={() => this.setReactionMenu(false)}
+              onEmojiSelect={(emoji: any) => {
+                this.handleReactionClick(emoji.native);
+                this.setReactionMenu(false);
+              }}
+            />
+          </div>
+          {/* <ReactionMenu
             handleReactionClick={this.handleReactionClick}
             closeMenu={() => this.setReactionMenu(false)}
             yPosition={this.state.reactionMenu.yPosition}
             xPosition={this.state.reactionMenu.xPosition}
-          />
+          /> */}
         </CSSTransition>
         <Input
           autoComplete="off"
@@ -425,13 +453,15 @@ const ChatMessage = ({
           <Icon
             onClick={(e: MouseEvent) => {
               const viewportOffset = (e.target as any).getBoundingClientRect();
-              setReactionMenu(
-                true,
-                id,
-                timestamp,
-                viewportOffset.top,
-                viewportOffset.right
-              );
+              setTimeout(() => {
+                setReactionMenu(
+                  true,
+                  id,
+                  timestamp,
+                  viewportOffset.top,
+                  viewportOffset.right
+                );
+              }, 100);
             }}
             name={'' as any}
             inverted
@@ -541,67 +571,45 @@ const ChatMessage = ({
   );
 };
 
-class PickerMenu extends React.Component<{
-  addEmoji: (emoji: any) => void;
-  closeMenu: () => void;
-}> {
-  handleClickOutside = () => {
-    this.props.closeMenu();
-  };
-  render() {
-    return (
-      <div style={{ position: 'absolute', bottom: '60px' }}>
-        <Picker
-          data={data}
-          theme="dark"
-          previewPosition="none"
-          onEmojiSelect={this.props.addEmoji}
-          onClickOutside={this.handleClickOutside}
-        />
-      </div>
-    );
-  }
-}
-
-class ReactionMenuInner extends React.Component<{
-  handleReactionClick: (value: string, id?: string, timestamp?: string) => void;
-  closeMenu: () => void;
-  yPosition: number;
-  xPosition: number;
-}> {
-  state = {
-    containerWidth: 0,
-  };
-  handleClickOutside = () => {
-    this.props.closeMenu();
-  };
-  containerRef = React.createRef<HTMLDivElement>();
-  componentDidMount() {
-    this.setState({ containerWidth: this.containerRef.current?.offsetWidth });
-  }
-  render() {
-    return (
-      <div
-        ref={this.containerRef}
-        className={classes.reactionMenuContainer}
-        style={{
-          top: this.props.yPosition - 9,
-          left: this.props.xPosition - this.state.containerWidth - 35,
-        }}
-      >
-        {reactionEmojis.map((reaction) => (
-          <div
-            onClick={() => {
-              this.props.handleReactionClick(reaction);
-              this.props.closeMenu();
-            }}
-            style={{ cursor: 'pointer' }}
-          >
-            {reaction}
-          </div>
-        ))}
-      </div>
-    );
-  }
-}
-const ReactionMenu = onClickOutside(ReactionMenuInner);
+// class ReactionMenuInner extends React.Component<{
+//   handleReactionClick: (value: string, id?: string, timestamp?: string) => void;
+//   closeMenu: () => void;
+//   yPosition: number;
+//   xPosition: number;
+// }> {
+//   state = {
+//     containerWidth: 0,
+//   };
+//   handleClickOutside = () => {
+//     this.props.closeMenu();
+//   };
+//   containerRef = React.createRef<HTMLDivElement>();
+//   componentDidMount() {
+//     this.setState({ containerWidth: this.containerRef.current?.offsetWidth });
+//   }
+//   render() {
+//     return (
+//       <div
+//         ref={this.containerRef}
+//         className={classes.reactionMenuContainer}
+//         style={{
+//           top: this.props.yPosition - 9,
+//           left: this.props.xPosition - this.state.containerWidth - 35,
+//         }}
+//       >
+//         {reactionEmojis.map((reaction) => (
+//           <div
+//             onClick={() => {
+//               this.props.handleReactionClick(reaction);
+//               this.props.closeMenu();
+//             }}
+//             style={{ cursor: 'pointer' }}
+//           >
+//             {reaction}
+//           </div>
+//         ))}
+//       </div>
+//     );
+//   }
+// }
+// const ReactionMenu = onClickOutside(ReactionMenuInner);

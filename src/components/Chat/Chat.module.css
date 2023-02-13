@@ -49,7 +49,6 @@
   padding: 4px !important;
   border-radius: 3px;
   background: rgb(146, 146, 146);
-  z-index: 100;
   cursor: pointer;
 }
 
