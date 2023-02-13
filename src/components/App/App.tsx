@@ -18,7 +18,6 @@ import {
   Modal,
   Label,
   SemanticCOLORS,
-  Form,
 } from 'semantic-ui-react';
 import io, { Socket } from 'socket.io-client';
 import { default as toWebVTT } from 'srt-webvtt';
