@@ -1468,6 +1468,8 @@ export default class App extends React.Component<AppProps, AppState> {
             hide={this.state.currentTab !== 'people' || !displayRightContent}
             owner={this.state.owner}
             user={this.props.user}
+            beta={this.props.beta}
+            getLeaderTime={this.getLeaderTime}
           />
         )}
         <SettingsTab
