@@ -341,13 +341,7 @@ export abstract class VMManager {
 
       const checkStaging = async () => {
         try {
-          // const checkStagingStart = this.isLarge
-          //   ? 0
-          //   : Math.floor(Date.now() / 1000);
-          // if (checkStagingStart) {
-          //   console.log('[CHECKSTAGING]', checkStagingStart);
-          // }
-          // Loop through staging list and check if VM is ready
+          // Get staging list and check if VM is ready
           const stagingKeys = await this.redis.lrange(
             this.getRedisStagingKey(),
             0,
@@ -382,7 +376,7 @@ export abstract class VMManager {
                     );
                     await this.redis.setex(
                       this.getRedisHostCacheKey() + ':' + id,
-                      2 * 3600,
+                      3600,
                       JSON.stringify(vm)
                     );
                   }
@@ -396,7 +390,11 @@ export abstract class VMManager {
                   return reject();
                 }
               }
-              ready = await checkVMReady(vm?.host ?? '', vm?.pass);
+              if (!vm?.host) {
+                console.log('[CHECKSTAGING] no host for vm %s', vm?.id);
+                return reject();
+              }
+              ready = await checkVMReady(vm?.host);
               //ready = retryCount > 100;
               if (ready) {
                 console.log('[CHECKSTAGING] ready:', id, vm?.host, retryCount);
@@ -451,13 +449,12 @@ export abstract class VMManager {
               resolve(id + ', ' + retryCount + ', ' + ready);
             });
           });
+          console.time('[CHECKSTAGING] ' + this.getPoolName());
           const result = await Promise.race([
             Promise.allSettled(stagingPromises),
             new Promise((resolve) => setTimeout(resolve, 30000)),
           ]);
-          // if (checkStagingStart) {
-          //   console.log('[CHECKSTAGING-DONE]', checkStagingStart, result);
-          // }
+          console.timeEnd('[CHECKSTAGING] ' + this.getPoolName());
           return result;
         } catch (e) {
           console.warn('[CHECKSTAGING-ERROR]', e);
@@ -511,7 +508,7 @@ export abstract class VMManager {
   public abstract updateSnapshot: () => Promise<string>;
 }
 
-async function checkVMReady(host: string, pass: string | undefined) {
+async function checkVMReady(host: string) {
   const url = 'https://' + host.replace('/', '/health');
   try {
     // const out = execSync(`curl -i -L -v --ipv4 '${host}'`);
@@ -524,7 +521,7 @@ async function checkVMReady(host: string, pass: string | undefined) {
       timeout: 1000,
     });
     const timeSinceBoot = Date.now() / 1000 - Number(resp.data);
-    console.log(timeSinceBoot);
+    // console.log(timeSinceBoot);
     return process.env.NODE_ENV === 'production'
       ? timeSinceBoot < 60 * 1000
       : true;
