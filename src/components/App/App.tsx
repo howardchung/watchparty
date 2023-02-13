@@ -122,7 +122,7 @@ interface AppState {
     length: number;
     playFn?: () => void;
   }[];
-  error: string;
+  overlayMsg: string;
   isErrorAuth: boolean;
   settings: Settings;
   vBrowserResolution: string;
@@ -140,6 +140,7 @@ interface AppState {
   roomId: string;
   errorMessage: string;
   successMessage: string;
+  warningMessage: string;
   isChatDisabled: boolean;
   showRightBar: boolean;
   owner: string | undefined;
@@ -183,7 +184,7 @@ export default class App extends React.Component<AppProps, AppState> {
     speed: 0,
     connections: 0,
     multiStreamSelection: undefined,
-    error: '',
+    overlayMsg: '',
     isErrorAuth: false,
     settings: {},
     vBrowserResolution: '1280x720@30',
@@ -203,6 +204,7 @@ export default class App extends React.Component<AppProps, AppState> {
     savedPasswords: {},
     errorMessage: '',
     successMessage: '',
+    warningMessage: '',
     isChatDisabled: false,
     showRightBar: true,
     owner: undefined,
@@ -429,11 +431,11 @@ export default class App extends React.Component<AppProps, AppState> {
         if (response.data.roomId) {
           roomId = response.data.roomId;
         } else {
-          this.setState({ error: "Couldn't load this room." });
+          this.setState({ overlayMsg: "Couldn't load this room." });
         }
       } catch (e) {
         console.error(e);
-        this.setState({ error: "Couldn't load this room." });
+        this.setState({ overlayMsg: "Couldn't load this room." });
         return;
       }
     }
@@ -466,7 +468,13 @@ export default class App extends React.Component<AppProps, AppState> {
     });
     this.socket = socket;
     socket.on('connect', async () => {
-      this.setState({ state: 'connected', error: '' });
+      this.setState({
+        state: 'connected',
+        overlayMsg: '',
+        errorMessage: '',
+        successMessage: '',
+        warningMessage: '',
+      });
       // Load username from localstorage
       let userName = window.localStorage.getItem('watchparty-username');
       this.updateName(null, { value: userName || generateName() });
@@ -475,20 +483,21 @@ export default class App extends React.Component<AppProps, AppState> {
     socket.on('connect_error', (err: any) => {
       console.error(err);
       if (err.message === 'Invalid namespace') {
-        this.setState({ error: "Couldn't load this room." });
+        this.setState({ overlayMsg: "Couldn't load this room." });
       } else if (err.message === 'not authorized') {
         this.setState({ isErrorAuth: true });
       } else if (err.message === 'room full') {
-        this.setState({ error: 'This room is full.' });
+        this.setState({ overlayMsg: 'This room is full.' });
       }
     });
     socket.on('disconnect', (reason) => {
       if (reason === 'io server disconnect') {
         // the disconnection was initiated by the server, you need to reconnect manually
-        this.setState({ error: 'Disconnected from server.' });
+        this.setState({ overlayMsg: 'Disconnected from server.' });
       } else {
         // else the socket will automatically try to reconnect
-        this.setState({ error: 'Attempting to reconnect...' });
+        // Use the alert pill since it's less disruptive
+        this.setState({ warningMessage: 'Reconnecting...' });
       }
     });
     socket.on('errorMessage', (err: string) => {
@@ -1551,7 +1560,7 @@ export default class App extends React.Component<AppProps, AppState> {
             getSubtitleMode={this.Player().getSubtitleMode}
           />
         )}
-        {this.state.error && <ErrorModal error={this.state.error} />}
+        {this.state.overlayMsg && <ErrorModal error={this.state.overlayMsg} />}
         {this.state.isErrorAuth && (
           <PasswordModal
             savedPasswords={this.state.savedPasswords}
@@ -1580,6 +1589,20 @@ export default class App extends React.Component<AppProps, AppState> {
               position: 'fixed',
               bottom: '10px',
               right: '10px',
+              zIndex: 1000,
+            }}
+          ></Message>
+        )}
+        {this.state.warningMessage && (
+          <Message
+            warning
+            // header={this.state.warningMessage}
+            content={this.state.warningMessage}
+            style={{
+              position: 'fixed',
+              top: '10px',
+              left: '50%',
+              transform: 'translate(-50%, 0)',
               zIndex: 1000,
             }}
           ></Message>
