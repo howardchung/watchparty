@@ -286,6 +286,7 @@ export class Chat extends React.Component<ChatProps> {
           />
         </CSSTransition>
         <Input
+          autoComplete="off"
           inverted
           fluid
           onKeyPress={(e: any) => e.key === 'Enter' && this.sendChatMsg()}
