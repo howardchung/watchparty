@@ -22,6 +22,8 @@ interface VideoChatProps {
   hide?: boolean;
   owner: string | undefined;
   user: firebase.User | undefined;
+  beta: boolean;
+  getLeaderTime: () => number;
 }
 
 export class VideoChat extends React.Component<VideoChatProps> {
@@ -437,7 +439,12 @@ export class VideoChat extends React.Component<VideoChatProps> {
                           justifyContent: 'center',
                         }}
                       >
-                        {formatTimestamp(tsMap[p.id] || 0)}
+                        {formatTimestamp(tsMap[p.id] || 0)}{' '}
+                        {this.props.beta &&
+                          `(${(
+                            (tsMap[p.id] - this.props.getLeaderTime()) *
+                            1000
+                          ).toFixed(0)}ms)`}
                       </div>
                     </div>
                   </div>
