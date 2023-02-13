@@ -127,7 +127,6 @@ app.get('/isFreePoolFull', async (req, res) => {
   return res.json({ isFull });
 });
 
-// curl -X POST http://localhost:3100/updateSnapshot -H 'Content-Type: application/json' -d '{"provider":"Hetzner","region":"US"}'
 app.post('/updateSnapshot', async (req, res) => {
   const pool = vmManagers[req.body.provider + req.body.region];
   const result = await pool?.updateSnapshot();
