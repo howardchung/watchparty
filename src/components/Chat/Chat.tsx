@@ -302,7 +302,11 @@ export class Chat extends React.Component<ChatProps> {
           <input />
           <Icon
             // style={{ right: '40px' }}
-            onClick={() => this.setState({ isPickerOpen: true })}
+            onClick={() => {
+              // Add a delay to prevent the click from triggering onClickOutside
+              const curr = this.state.isPickerOpen;
+              setTimeout(() => this.setState({ isPickerOpen: !curr }), 100);
+            }}
             name={'' as any}
             inverted
             circular
