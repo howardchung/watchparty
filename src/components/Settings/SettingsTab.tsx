@@ -159,6 +159,7 @@ export const SettingsTab = ({
         </Message>
       )}
       <SettingRow
+        toggle
         icon={roomLock ? 'lock' : 'lock open'}
         name={`Lock Room`}
         description="Only the person who locked the room can control the video."
@@ -168,6 +169,7 @@ export const SettingsTab = ({
       />
       {
         <SettingRow
+          toggle
           icon={'clock'}
           name={`Make Room Permanent`}
           description={
@@ -190,6 +192,7 @@ export const SettingsTab = ({
       )}
       {owner && owner === user?.uid && (
         <SettingRow
+          toggle={false}
           icon={'key'}
           name={`Set Room Password`}
           description="Users must know this password in order to join the room."
@@ -209,6 +212,7 @@ export const SettingsTab = ({
       )}
       {owner && owner === user?.uid && (
         <SettingRow
+          toggle={false}
           icon={'folder'}
           name={`Set Room Media Source`}
           description="Set a media source URL with files to replace the default examples. Supports S3 buckets and nginx file servers."
@@ -228,6 +232,7 @@ export const SettingsTab = ({
       )}
       {owner && owner === user?.uid && (
         <SettingRow
+          toggle
           icon={'i cursor'}
           name={`Disable Chat`}
           description="Prevent users from sending messages in chat."
@@ -241,25 +246,22 @@ export const SettingsTab = ({
       )}
       {owner && owner === user?.uid && (
         <SettingRow
-          icon={'delete'}
+          toggle={false}
+          icon={'trash'}
           name={`Clear Chat`}
           description="Delete all existing chat messages"
           disabled={false}
-          content={
-            <Button
-              color="red"
-              icon
-              labelPosition="left"
-              onClick={() => clearChat()}
-            >
-              <Icon name="delete" />
-              Delete Messages
+          content=" "
+          rightContent={
+            <Button color="red" icon size="mini" onClick={() => clearChat()}>
+              <Icon name="trash" />
             </Button>
           }
         />
       )}
       {owner && owner === user?.uid && (
         <SettingRow
+          toggle={false}
           icon={'linkify'}
           name={`Set Custom Room URL`}
           description="Set a custom URL for this room. Inappropriate names may be revoked."
@@ -295,6 +297,7 @@ export const SettingsTab = ({
       )}
       {owner && owner === user?.uid && (
         <SettingRow
+          toggle={false}
           icon={'pencil'}
           name={`Set Room Title, Description & Color`}
           description="Set the room title, description and title color to be displayed in the top bar."
@@ -409,6 +412,7 @@ export const SettingsTab = ({
       )}
       <div className="sectionHeader">Local Settings</div>
       <SettingRow
+        toggle
         updateTS={updateTS}
         icon="bell"
         name="Disable chat notification sound"
@@ -439,6 +443,8 @@ const SettingRow = ({
   content,
   subOnly,
   helpIcon,
+  rightContent,
+  toggle,
 }: {
   icon: string;
   name: string;
@@ -450,6 +456,8 @@ const SettingRow = ({
   content?: React.ReactNode;
   subOnly?: boolean;
   helpIcon?: React.ReactNode;
+  rightContent?: React.ReactNode;
+  toggle: boolean;
 }) => {
   return (
     <React.Fragment>
@@ -465,7 +473,7 @@ const SettingRow = ({
               </Label>
             ) : null}
           </div>
-          {!content && (
+          {toggle && (
             <Radio
               style={{ marginLeft: 'auto' }}
               toggle
@@ -473,6 +481,9 @@ const SettingRow = ({
               disabled={disabled}
               onChange={onChange}
             />
+          )}
+          {rightContent && (
+            <span style={{ marginLeft: 'auto' }}>{rightContent}</span>
           )}
         </div>
         <div className="smallText" style={{ marginBottom: '8px' }}>
