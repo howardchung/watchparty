@@ -218,6 +218,7 @@ export class ListRoomsButton extends React.Component<{
         text="My Rooms"
         onClick={this.refreshRooms}
         scrolling
+        pointing="top right"
       >
         <Dropdown.Menu>
           {this.state.rooms.length === 0 && (
