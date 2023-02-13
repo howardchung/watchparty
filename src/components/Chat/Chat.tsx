@@ -1,7 +1,8 @@
 import React, { RefObject } from 'react';
 import { Button, Comment, Form, Icon, Input, Popup } from 'semantic-ui-react';
-import data from '@emoji-mart/data';
+// import data from '@emoji-mart/data';
 import Picker from '@emoji-mart/react';
+import { init } from 'emoji-mart';
 // import onClickOutside from 'react-onclickoutside';
 //@ts-ignore
 import Linkify from 'react-linkify';
@@ -54,9 +55,10 @@ export class Chat extends React.Component<ChatProps> {
   };
   messagesRef = React.createRef<HTMLDivElement>();
 
-  componentDidMount() {
+  async componentDidMount() {
     this.scrollToBottom();
     this.messagesRef.current?.addEventListener('scroll', this.onScroll);
+    init({});
   }
 
   componentDidUpdate(prevProps: ChatProps) {
@@ -262,7 +264,6 @@ export class Chat extends React.Component<ChatProps> {
         {this.state.isPickerOpen && (
           <div style={{ position: 'absolute', bottom: '60px' }}>
             <Picker
-              data={data}
               theme="dark"
               previewPosition="none"
               maxFrequentRows={1}
