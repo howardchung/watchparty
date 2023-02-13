@@ -339,3 +339,7 @@ export async function getUserImage(
 export const getFileName = (input: string) => {
   return input.split('/').slice(-1)[0];
 };
+
+export const isEmojiString = (input: string): boolean => {
+  return /^\p{Emoji_Presentation}+$/u.test(input);
+};

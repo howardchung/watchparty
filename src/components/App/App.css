@@ -14,6 +14,10 @@ body {
   color: gainsboro;
 }
 
+.comment .light.light.light.emoji {
+  font-size: 20px;
+}
+
 .comment .dark.dark.dark {
   color: gray;
 }

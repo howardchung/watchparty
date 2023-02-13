@@ -11,6 +11,7 @@ import {
   formatTimestamp,
   getColorForStringHex,
   getDefaultPicture,
+  isEmojiString,
 } from '../../utils';
 import { Separator } from '../App/App';
 import { UserMenu } from '../UserMenu/UserMenu';
@@ -413,7 +414,11 @@ const ChatMessage = ({
             </SecureLink>
           )}
         >
-          <Comment.Text className="light">{!cmd && msg}</Comment.Text>
+          <Comment.Text
+            className={`light ${isEmojiString(msg) ? 'emoji' : ''}`}
+          >
+            {!cmd && msg}
+          </Comment.Text>
         </Linkify>
         <div className={classes.commentMenu}>
           <Icon
