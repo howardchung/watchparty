@@ -1,5 +1,5 @@
 import React, { RefObject } from 'react';
-import { Button, Comment, Icon, Input, Popup } from 'semantic-ui-react';
+import { Button, Comment, Form, Icon, Input, Popup } from 'semantic-ui-react';
 import data from '@emoji-mart/data';
 import Picker from '@emoji-mart/react';
 // import onClickOutside from 'react-onclickoutside';
@@ -311,43 +311,44 @@ export class Chat extends React.Component<ChatProps> {
             xPosition={this.state.reactionMenu.xPosition}
           /> */}
         </CSSTransition>
-        <Input
-          autoComplete="off"
-          inverted
-          fluid
-          onKeyPress={(e: any) => e.key === 'Enter' && this.sendChatMsg()}
-          onChange={this.updateChatMsg}
-          value={this.state.chatMsg}
-          error={this.chatTooLong()}
-          icon
-          disabled={this.props.isChatDisabled}
-          placeholder={
-            this.props.isChatDisabled
-              ? 'The chat was disabled by the room owner.'
-              : 'Enter a message...'
-          }
-        >
-          <input />
-          <Icon
-            // style={{ right: '40px' }}
-            onClick={() => {
-              // Add a delay to prevent the click from triggering onClickOutside
-              const curr = this.state.isPickerOpen;
-              setTimeout(() => this.setState({ isPickerOpen: !curr }), 100);
-            }}
-            name={'' as any}
+        <Form autoComplete="off">
+          <Input
             inverted
-            circular
-            link
+            fluid
+            onKeyPress={(e: any) => e.key === 'Enter' && this.sendChatMsg()}
+            onChange={this.updateChatMsg}
+            value={this.state.chatMsg}
+            error={this.chatTooLong()}
+            icon
             disabled={this.props.isChatDisabled}
-            style={{ opacity: 1 }}
+            placeholder={
+              this.props.isChatDisabled
+                ? 'The chat was disabled by the room owner.'
+                : 'Enter a message...'
+            }
           >
-            <span role="img" aria-label="Emoji">
-              😀
-            </span>
-          </Icon>
-          {/* <Icon onClick={this.sendChatMsg} name="send" inverted circular link /> */}
-        </Input>
+            <input />
+            <Icon
+              // style={{ right: '40px' }}
+              onClick={() => {
+                // Add a delay to prevent the click from triggering onClickOutside
+                const curr = this.state.isPickerOpen;
+                setTimeout(() => this.setState({ isPickerOpen: !curr }), 100);
+              }}
+              name={'' as any}
+              inverted
+              circular
+              link
+              disabled={this.props.isChatDisabled}
+              style={{ opacity: 1 }}
+            >
+              <span role="img" aria-label="Emoji">
+                😀
+              </span>
+            </Icon>
+            {/* <Icon onClick={this.sendChatMsg} name="send" inverted circular link /> */}
+          </Input>
+        </Form>
       </div>
     );
   }

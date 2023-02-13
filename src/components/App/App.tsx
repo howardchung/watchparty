@@ -18,6 +18,7 @@ import {
   Modal,
   Label,
   SemanticCOLORS,
+  Form,
 } from 'semantic-ui-react';
 import io, { Socket } from 'socket.io-client';
 import { default as toWebVTT } from 'srt-webvtt';
@@ -1371,25 +1372,25 @@ export default class App extends React.Component<AppProps, AppState> {
             : 'fullHeightColumn'
         }`}
       >
-        <Input
-          autoComplete="off"
-          asdf={1}
-          inverted
-          fluid
-          label={'My name is:'}
-          value={this.state.myName}
-          onChange={this.updateName}
-          style={{ visibility: displayRightContent ? '' : 'hidden' }}
-          icon={
-            <Icon
-              onClick={() => this.updateName(null, { value: generateName() })}
-              name="refresh"
-              inverted
-              circular
-              link
-            />
-          }
-        />
+        <Form autoComplete="off">
+          <Input
+            inverted
+            fluid
+            label={'My name is:'}
+            value={this.state.myName}
+            onChange={this.updateName}
+            style={{ visibility: displayRightContent ? '' : 'hidden' }}
+            icon={
+              <Icon
+                onClick={() => this.updateName(null, { value: generateName() })}
+                name="refresh"
+                inverted
+                circular
+                link
+              />
+            }
+          />
+        </Form>
         {
           <Menu
             inverted
