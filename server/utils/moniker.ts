@@ -16,7 +16,7 @@ const verbs = fs
 const randomElement = (array: string[]) =>
   array[Math.floor(Math.random() * array.length)];
 
-export function makeName(shard: number | undefined) {
+export function makeRoomName(shard: number | undefined) {
   let filteredAdjectives = adjectives;
   if (shard) {
     // Filter the adjective list by shard
@@ -28,4 +28,14 @@ export function makeName(shard: number | undefined) {
   const noun = randomElement(nouns);
   const verb = randomElement(verbs);
   return `${adjective}-${noun}-${verb}`;
+}
+
+export function makeUserName() {
+  return `${capFirst(randomElement(adjectives))} ${capFirst(
+    randomElement(nouns)
+  )}`;
+}
+
+function capFirst(string: string) {
+  return string.charAt(0).toUpperCase() + string.slice(1);
 }

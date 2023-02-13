@@ -478,7 +478,7 @@ export default class App extends React.Component<AppProps, AppState> {
       });
       // Load username from localstorage
       let userName = window.localStorage.getItem('watchparty-username');
-      this.updateName(null, { value: userName || generateName() });
+      this.updateName(null, { value: userName || (await generateName()) });
       this.loadSignInData();
     });
     socket.on('connect_error', (err: any) => {
@@ -1382,11 +1382,14 @@ export default class App extends React.Component<AppProps, AppState> {
             style={{ visibility: displayRightContent ? '' : 'hidden' }}
             icon={
               <Icon
-                onClick={() => this.updateName(null, { value: generateName() })}
-                name="refresh"
+                onClick={async () =>
+                  this.updateName(null, { value: await generateName() })
+                }
+                name="random"
                 inverted
                 circular
                 link
+                title="Generate a random name"
               />
             }
           />
