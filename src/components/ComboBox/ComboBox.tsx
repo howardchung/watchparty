@@ -1,5 +1,12 @@
 import React from 'react';
-import { DropdownProps, Menu, Input, Icon, Dropdown } from 'semantic-ui-react';
+import {
+  DropdownProps,
+  Menu,
+  Input,
+  Icon,
+  Dropdown,
+  Form,
+} from 'semantic-ui-react';
 import {
   debounce,
   getMediaPathResults,
@@ -127,72 +134,76 @@ export class ComboBox extends React.Component<ComboBoxProps> {
     return (
       <div style={{ position: 'relative' }}>
         <div style={{ display: 'flex', gap: '4px' }}>
-          <Input
-            style={{ flexGrow: 1 }}
-            inverted
-            fluid
-            focus
-            disabled={this.props.disabled}
-            onChange={this.doSearch}
-            onFocus={(e: any) => {
-              e.persist();
-              this.setState(
-                {
-                  inputMedia:
-                    currentMedia.startsWith('http') ||
-                    currentMedia.startsWith('magnet:')
-                      ? currentMedia
-                      : getMediaDisplayName(currentMedia),
-                },
-                () => {
-                  if (
-                    !this.state.inputMedia ||
-                    (this.state.inputMedia &&
-                      (this.state.inputMedia.startsWith('http') ||
-                        this.state.inputMedia.startsWith('magnet:')))
-                  ) {
-                    this.doSearch(e);
+          <Form style={{ flexGrow: 1 }} autoComplete="off">
+            <Input
+              inverted
+              fluid
+              focus
+              disabled={this.props.disabled}
+              onChange={this.doSearch}
+              onFocus={(e: any) => {
+                e.persist();
+                this.setState(
+                  {
+                    inputMedia:
+                      currentMedia.startsWith('http') ||
+                      currentMedia.startsWith('magnet:')
+                        ? currentMedia
+                        : getMediaDisplayName(currentMedia),
+                  },
+                  () => {
+                    if (
+                      !this.state.inputMedia ||
+                      (this.state.inputMedia &&
+                        (this.state.inputMedia.startsWith('http') ||
+                          this.state.inputMedia.startsWith('magnet:')))
+                    ) {
+                      this.doSearch(e);
+                    }
                   }
-                }
-              );
-              setTimeout(() => e.target.select(), 100);
-            }}
-            onBlur={() => {
-              setTimeout(
-                () =>
-                  this.setState({ inputMedia: undefined, results: undefined }),
-                200
-              );
-            }}
-            onKeyPress={(e: any) => {
-              if (e.key === 'Enter') {
-                this.setMediaAndClose(e, {
-                  value: this.state.inputMedia,
-                });
-              }
-            }}
-            icon={
-              <Icon
-                onClick={(e: any) =>
+                );
+                setTimeout(() => e.target.select(), 100);
+              }}
+              onBlur={() => {
+                setTimeout(
+                  () =>
+                    this.setState({
+                      inputMedia: undefined,
+                      results: undefined,
+                    }),
+                  200
+                );
+              }}
+              onKeyPress={(e: any) => {
+                if (e.key === 'Enter') {
                   this.setMediaAndClose(e, {
                     value: this.state.inputMedia,
-                  })
+                  });
                 }
-                name="arrow right"
-                link
-                circular
-                //bordered
-              />
-            }
-            loading={this.state.loading}
-            label={'Now Watching:'}
-            placeholder="Enter video file URL, magnet link, YouTube link, or YouTube search term"
-            value={
-              this.state.inputMedia !== undefined
-                ? this.state.inputMedia
-                : getMediaDisplayName(currentMedia)
-            }
-          />
+              }}
+              icon={
+                <Icon
+                  onClick={(e: any) =>
+                    this.setMediaAndClose(e, {
+                      value: this.state.inputMedia,
+                    })
+                  }
+                  name="arrow right"
+                  link
+                  circular
+                  //bordered
+                />
+              }
+              loading={this.state.loading}
+              label={'Now Watching:'}
+              placeholder="Enter video file URL, magnet link, YouTube link, or YouTube search term"
+              value={
+                this.state.inputMedia !== undefined
+                  ? this.state.inputMedia
+                  : getMediaDisplayName(currentMedia)
+              }
+            />
+          </Form>
           <Dropdown
             icon="list"
             labeled
