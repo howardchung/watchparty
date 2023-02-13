@@ -18,6 +18,7 @@ import {
   Modal,
   Label,
   SemanticCOLORS,
+  Form,
 } from 'semantic-ui-react';
 import io, { Socket } from 'socket.io-client';
 import { default as toWebVTT } from 'srt-webvtt';
@@ -1372,6 +1373,8 @@ export default class App extends React.Component<AppProps, AppState> {
         }`}
       >
         <Input
+          autoComplete="off"
+          asdf={1}
           inverted
           fluid
           label={'My name is:'}
@@ -1941,6 +1944,7 @@ export default class App extends React.Component<AppProps, AppState> {
                         textAlign: 'center',
                         fontSize: 11,
                         fontWeight: 700,
+                        marginTop: -4,
                       }}
                     >
                       {/* <Progress
