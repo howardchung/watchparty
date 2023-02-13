@@ -6,6 +6,7 @@ function getRandomInt(min: number, max: number) {
   return Math.floor(Math.random() * (max - min)) + min;
 }
 
+// TODO move to server
 export function generateName() {
   var name1 = [
     'abandoned',
