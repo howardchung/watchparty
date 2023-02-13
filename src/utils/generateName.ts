@@ -2857,9 +2857,6 @@ export function generateName() {
     'wake',
     'wrap',
     'yesterday',
-    'Thomas',
-    'Tom',
-    'Lieuwe',
   ];
 
   var name =
