@@ -391,7 +391,7 @@ export abstract class VMManager {
                 }
               }
               if (!vm?.host) {
-                console.log('[CHECKSTAGING] no host for vm %s', vm?.id);
+                console.log('[CHECKSTAGING] no host for vm %s', id);
                 return reject();
               }
               ready = await checkVMReady(vm?.host);
@@ -449,12 +449,12 @@ export abstract class VMManager {
               resolve(id + ', ' + retryCount + ', ' + ready);
             });
           });
-          console.time('[CHECKSTAGING] ' + this.getPoolName());
+          // console.time('[CHECKSTAGING] ' + this.getPoolName());
           const result = await Promise.race([
             Promise.allSettled(stagingPromises),
             new Promise((resolve) => setTimeout(resolve, 30000)),
           ]);
-          console.timeEnd('[CHECKSTAGING] ' + this.getPoolName());
+          // console.timeEnd('[CHECKSTAGING] ' + this.getPoolName());
           return result;
         } catch (e) {
           console.warn('[CHECKSTAGING-ERROR]', e);
