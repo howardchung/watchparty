@@ -648,7 +648,8 @@ export class Room {
     socket: Socket,
     data: { value: string; msgId: string; msgTimestamp: string }
   ) => {
-    if (data.value.length > 2) {
+    // Emojis can be multiple bytes
+    if (data.value.length > 8) {
       return;
     }
     const msg = this.chat.find(
