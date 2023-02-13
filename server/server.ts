@@ -31,7 +31,7 @@ import util from 'util';
 import ecosystem from './ecosystem.config';
 import { statsAgg } from './utils/statsAgg';
 import { resolveShard } from './utils/resolveShard';
-import { makeName } from './utils/moniker';
+import { makeRoomName, makeUserName } from './utils/moniker';
 
 const gzip = util.promisify(zlib.gzip);
 
@@ -248,7 +248,7 @@ app.get('/youtube', async (req, res) => {
 });
 
 app.post('/createRoom', async (req, res) => {
-  const genName = () => '/' + makeName(config.SHARD);
+  const genName = () => '/' + makeRoomName(config.SHARD);
   let name = genName();
   console.log('createRoom: ', name);
   const newRoom = new Room(io, name);
@@ -491,6 +491,10 @@ app.delete('/linkAccount', async (req, res) => {
     [decoded.uid, req.body.kind]
   );
   res.json({});
+});
+
+app.get('/generateName', async (req, res) => {
+  return res.send(makeUserName());
 });
 
 app.use(express.static(config.BUILD_DIRECTORY));
