@@ -20,7 +20,7 @@ export const PasswordModal = ({
     window.location.reload();
   }, [savedPasswords, roomId]);
   return (
-    <Modal inverted basic open>
+    <Modal inverted="true" basic open>
       <Header as="h1" style={{ textAlign: 'center' }}>
         This room requires a password.
       </Header>
