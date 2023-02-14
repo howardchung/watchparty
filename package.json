@@ -49,7 +49,7 @@
     "stripe": "^8.222.0",
     "url-exist": "^3.0.1",
     "uuid": "^9.0.0",
-    "webtorrent": "^2.0.12"
+    "webtorrent": "^2.0.13"
   },
   "scripts": {
     "start": "react-scripts start",
