@@ -1973,20 +1973,24 @@ export default class App extends React.Component<AppProps, AppState> {
                     </div>
                   )}
                 </div>
-                <Button
-                  style={{
-                    position: 'absolute',
-                    top: '50%',
-                    right: 'calc(0% - 18px)',
-                    zIndex: 900,
-                  }}
-                  circular
-                  size="mini"
-                  icon={this.state.showRightBar ? 'angle right' : 'angle left'}
-                  onClick={() =>
-                    this.setState({ showRightBar: !this.state.showRightBar })
-                  }
-                />
+                {!isMobile() && (
+                  <Button
+                    style={{
+                      position: 'absolute',
+                      top: '50%',
+                      right: 'calc(0% - 18px)',
+                      zIndex: 900,
+                    }}
+                    circular
+                    size="mini"
+                    icon={
+                      this.state.showRightBar ? 'angle right' : 'angle left'
+                    }
+                    onClick={() =>
+                      this.setState({ showRightBar: !this.state.showRightBar })
+                    }
+                  />
+                )}
               </Grid.Column>
               {rightBar}
             </Grid.Row>
