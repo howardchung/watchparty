@@ -3,7 +3,7 @@ import { Modal, Header, Button, Icon } from 'semantic-ui-react';
 
 export const ErrorModal = ({ error }: { error: string }) => {
   return (
-    <Modal inverted basic open>
+    <Modal inverted="true" basic open>
       <Header as="h1" style={{ textAlign: 'center' }}>
         {error}
       </Header>
