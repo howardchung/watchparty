@@ -283,6 +283,7 @@ export class TopBar extends React.Component<{
             flexWrap: 'wrap',
             padding: '1em',
             paddingBottom: '0px',
+            rowGap: '8px',
           }}
         >
           <a href="/" style={{ display: 'flex' }}>
