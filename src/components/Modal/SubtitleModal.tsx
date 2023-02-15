@@ -63,7 +63,10 @@ export class SubtitleModal extends React.Component<{
           <Modal.Description>
             <Checkbox
               toggle
-              checked={this.props.getSubtitleMode() === 'hidden'}
+              checked={
+                Boolean(this.props.currentSubtitle) &&
+                this.props.getSubtitleMode() === 'hidden'
+              }
               label="Hide subtitles for myself"
               onClick={(e, data) => {
                 this.props.setSubtitleMode();
@@ -84,8 +87,8 @@ export class SubtitleModal extends React.Component<{
                   label="No subtitles"
                   value=""
                   checked={!this.props.currentSubtitle}
-                  onChange={(e, { value }) => {
-                    this.props.socket.emit('CMD:subtitle', null);
+                  onClick={(e, { value }) => {
+                    this.props.socket.emit('CMD:subtitle', '');
                   }}
                 />
               </div>
@@ -100,7 +103,7 @@ export class SubtitleModal extends React.Component<{
                       this.props.currentSubtitle &&
                         this.props.currentSubtitle?.startsWith(this.props.src)
                     )}
-                    onChange={(e, data) => {
+                    onClick={(e, data) => {
                       const subValue = this.props.src + '.srt';
                       this.props.socket.emit('CMD:subtitle', subValue);
                     }}
