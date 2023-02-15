@@ -6,29 +6,34 @@ import styles from './Announce.module.css';
 
 const GITHUB_REPO = 'howardchung/watchparty-announcements';
 
+type Issue = {
+  title: string;
+  body: string;
+  number: number;
+  updated_at: string;
+};
 const Announce = () => {
-  const [announcement, setAnnouncement] = useState<{
-    title: string;
-    body: string;
-    number: string;
-  } | null>(null);
+  const [announcement, setAnnouncement] = useState<Issue | null>(null);
   useEffect(() => {
     const fetch = async () => {
-      const response = await axios.get('https://api.github.com/search/issues', {
-        params: {
-          q: `repo:${GITHUB_REPO} label:${
-            process.env.NODE_ENV === 'development' ? 'test' : 'release'
-          }`,
-          order: 'desc',
-          page: 1,
-          per_page: 1,
-        },
-      });
+      const response = await axios.get<{ items: Issue[] }>(
+        'https://api.github.com/search/issues',
+        {
+          params: {
+            q: `repo:${GITHUB_REPO} label:${
+              process.env.NODE_ENV === 'development' ? 'test' : 'release'
+            }`,
+            order: 'desc',
+            page: 1,
+            per_page: 1,
+          },
+        }
+      );
       const data = response.data;
       //   console.log(data);
-      const top = data?.items[0];
+      const top = data?.items?.[0];
       if (
-        top.number > Number(localStorage.getItem('announcement-dismiss')) &&
+        top?.number > Number(localStorage.getItem('announcement-dismiss')) &&
         new Date(top.updated_at) >
           new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
       ) {
@@ -38,8 +43,8 @@ const Announce = () => {
     fetch();
   }, []);
 
-  const onDismiss = useCallback((value: string) => {
-    localStorage.setItem('announcement-dismiss', value);
+  const onDismiss = useCallback((value: number) => {
+    localStorage.setItem('announcement-dismiss', value.toString());
     setAnnouncement(null);
   }, []);
 
