@@ -1,5 +1,4 @@
 import { Player } from './Player';
-import querystring from 'querystring';
 
 export class YouTube implements Player {
   watchPartyYTPlayer: any | null;
@@ -41,7 +40,7 @@ export class YouTube implements Player {
   setSrcAndTime = async (src: string, time: number) => {
     let url = new window.URL(src);
     // Standard link https://www.youtube.com/watch?v=ID
-    let videoId = querystring.parse(url.search.substring(1))['v'];
+    let videoId = new URLSearchParams(url.search).get('v');
     // Link shortener https://youtu.be/ID
     let altVideoId = src.split('/').slice(-1)[0];
     this.watchPartyYTPlayer?.cueVideoById(videoId || altVideoId, time);

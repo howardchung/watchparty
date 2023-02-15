@@ -1,6 +1,5 @@
 import './App.css';
 
-import querystring from 'querystring';
 import axios from 'axios';
 import React from 'react';
 import {
@@ -192,8 +191,7 @@ export default class App extends React.Component<AppProps, AppState> {
     isVBrowserLarge: false,
     nonPlayableMedia: false,
     currentTab:
-      (querystring.parse(window.location.search.substring(1)).tab as string) ||
-      'chat',
+      new URLSearchParams(window.location.search).get('tab') ?? 'chat',
     isSubscribeModalOpen: false,
     isVBrowserModalOpen: false,
     isScreenShareModalOpen: false,
@@ -1285,17 +1283,17 @@ export default class App extends React.Component<AppProps, AppState> {
       return 'Virtual Browser' + (this.state.isVBrowserLarge ? '+' : '');
     }
     if (input.startsWith('magnet:')) {
-      const magnetParsed = querystring.parse(input);
-      const index = magnetParsed.fileIndex;
-      return magnetParsed.dn + (index != null ? ` (file ${index})` : '');
+      const magnetParsed = new URLSearchParams(input);
+      const index = magnetParsed.get('fileIndex');
+      return magnetParsed.get('dn') + (index != null ? ` (file ${index})` : '');
     }
     if (input.includes('/stream?torrent=magnet')) {
       const search = new URL(input).search;
-      const magnetUrl = querystring.parse(search.substring(1))
-        .torrent as string;
-      const magnetParsed = querystring.parse(magnetUrl);
-      const index = querystring.parse(search.substring(1)).fileIndex;
-      return magnetParsed.dn + (index != null ? ` (file ${index})` : '');
+      const searchParsed = new URLSearchParams(search);
+      const magnetUrl = searchParsed.get('torrent') ?? '';
+      const magnetParsed = new URLSearchParams(magnetUrl);
+      const index = searchParsed.get('fileIndex');
+      return magnetParsed.get('dn') + (index != null ? ` (file ${index})` : '');
     }
     return input;
   };
