@@ -45,7 +45,7 @@
     "socket.io-client": "^4.6.0",
     "srt-webvtt": "^2.0.0",
     "ssh-exec": "^2.0.0",
-    "stripe": "^8.222.0",
+    "stripe": "^11.10.0",
     "uuid": "^9.0.0",
     "webtorrent": "^2.0.13"
   },
