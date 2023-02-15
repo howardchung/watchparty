@@ -1949,7 +1949,7 @@ export default class App extends React.Component<AppProps, AppState> {
                         textAlign: 'center',
                         fontSize: 11,
                         fontWeight: 700,
-                        marginTop: -4,
+                        marginTop: -10,
                       }}
                     >
                       {/* <Progress
