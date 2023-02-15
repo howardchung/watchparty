@@ -1,5 +1,4 @@
 import { Player } from './Player';
-import querystring from 'querystring';
 
 export class HTML implements Player {
   elId: string;
@@ -94,8 +93,9 @@ export class HTML implements Player {
               const filtered = files.filter(
                 (f: any) => f.length >= 10 * 1024 * 1024
               );
-              const fileIndex = querystring.parse(src)
-                .fileIndex as unknown as number;
+              const fileIndex = new URLSearchParams(src).get(
+                'fileIndex'
+              ) as unknown as number;
               // Try to find a single large file to play
               const target =
                 files[fileIndex] ?? (filtered.length > 1 ? null : filtered[0]);
