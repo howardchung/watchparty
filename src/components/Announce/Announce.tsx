@@ -25,7 +25,7 @@ const Announce = () => {
         },
       });
       const data = response.data;
-      console.log(data);
+      //   console.log(data);
       const top = data?.items[0];
       if (
         top.number > Number(localStorage.getItem('announcement-dismiss')) &&
