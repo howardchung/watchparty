@@ -144,14 +144,15 @@ async function syncSubscribers() {
     ).rows;
     console.log('%s users to set sub role', toUpdate.length);
     for (let i = 0; i < toUpdate.length; i++) {
-      const user = await guild?.members.fetch(toUpdate[i].accountid);
-      if (user && role) {
-        console.log('assigning role %s to user %s', role, user.id);
-        try {
+      try {
+        const user = await guild?.members.fetch(toUpdate[i].accountid);
+        if (user && role) {
+          console.log('assigning role %s to user %s', role, user.id);
+
           await user.roles.add(role);
-        } catch (e: any) {
-          console.log(e.message);
         }
+      } catch (e: any) {
+        console.log(e.message);
       }
     }
   }
