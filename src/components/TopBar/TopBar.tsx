@@ -14,6 +14,7 @@ import { LoginModal } from '../Modal/LoginModal';
 import axios from 'axios';
 import { SubscribeButton } from '../SubscribeButton/SubscribeButton';
 import { ProfileModal } from '../Modal/ProfileModal';
+import Announce from '../Announce/Announce';
 
 export async function createRoom(
   user: firebase.User | undefined,
@@ -408,6 +409,7 @@ export class TopBar extends React.Component<{
               <Icon name="github" size="big" link />
             </a>
           </div>
+          <Announce />
           <div
             className="mobileStack"
             style={{
