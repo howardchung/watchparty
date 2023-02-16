@@ -764,7 +764,7 @@ async function getStats() {
   const deleteAccounts = await getRedisCountDay('deleteAccount');
   const chatMessages = await getRedisCountDay('chatMessages');
   const addReactions = await getRedisCountDay('addReaction');
-  const hetznerApiRemaining = await redis?.get('hetznerApiRemaining');
+  const hetznerApiRemaining = Number(await redis?.get('hetznerApiRemaining'));
   const vBrowserStarts = await getRedisCountDay('vBrowserStarts');
   const vBrowserLaunches = await getRedisCountDay('vBrowserLaunches');
   const vBrowserFails = await getRedisCountDay('vBrowserFails');
