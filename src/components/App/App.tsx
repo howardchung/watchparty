@@ -1092,6 +1092,9 @@ export default class App extends React.Component<AppProps, AppState> {
   };
 
   togglePlay = () => {
+    if (!this.haveLock()) {
+      return;
+    }
     if (this.isPauseDisabled()) {
       return;
     }
