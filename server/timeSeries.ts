@@ -1,6 +1,7 @@
 import config from './config';
 import Redis from 'ioredis';
 import { statsAgg } from './utils/statsAgg';
+import axios from 'axios';
 
 let redis: Redis | undefined = undefined;
 if (config.REDIS_URL) {
@@ -15,6 +16,11 @@ async function statsTimeSeries() {
     console.time('timeSeries');
     try {
       const stats = await statsAgg();
+      const isFreePoolFull = (
+        await axios.get(
+          'http://localhost:' + config.VMWORKER_PORT + '/isFreePoolFull'
+        )
+      ).data.isFull;
       const datapoint: any = {
         time: new Date(),
         currentUsers: stats.currentUsers,
@@ -38,6 +44,7 @@ async function statsTimeSeries() {
         vBrowserLaunches: stats.vBrowserLaunches,
         vBrowserFails: stats.vBrowserFails,
         vBrowserStagingFails: stats.vBrowserStagingFails,
+        isFreePoolFull: Number(isFreePoolFull),
       };
       Object.keys(stats.vmManagerStats).forEach((key) => {
         if (stats.vmManagerStats[key]) {
