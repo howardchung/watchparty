@@ -716,8 +716,9 @@ export default class App extends React.Component<AppProps, AppState> {
           const delta = leader - data[this.socket.id];
           // Set leader pbr to 1
           let pbr = 1;
+          // Add .01 pbr for each 100ms delay
           if (delta > 0.5) {
-            pbr = 1.1;
+            pbr += Number((delta / 10).toFixed(2));
           }
           // console.log(delta, pbr);
           if (this.Player().getPlaybackRate() !== pbr) {

@@ -89,7 +89,7 @@ async function syncSubscribers() {
   const newResult = result.filter(
     (sub, index) => index === result.findIndex((other) => sub.uid === other.uid)
   );
-  console.log('%s deduped subs to insert', result.length);
+  console.log('%s deduped subs to insert', newResult.length);
   if (result.length !== newResult.length) {
     // Log the difference
     console.log(result.filter((x) => !newResult.includes(x)));
