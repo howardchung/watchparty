@@ -719,6 +719,7 @@ export default class App extends React.Component<AppProps, AppState> {
           // Add .01 pbr for each 100ms delay
           if (delta > 0.5) {
             pbr += Number((delta / 10).toFixed(2));
+            pbr = Math.min(pbr, 1.2);
           }
           // console.log(delta, pbr);
           if (this.Player().getPlaybackRate() !== pbr) {
