@@ -1623,6 +1623,7 @@ export default class App extends React.Component<AppProps, AppState> {
           roomTitle={this.state.roomTitle}
           roomDescription={this.state.roomDescription}
           roomTitleColor={this.state.roomTitleColor}
+          showInviteButton
         />
         {
           <Grid stackable celled="internally">
