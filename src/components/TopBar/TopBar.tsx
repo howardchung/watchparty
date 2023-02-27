@@ -455,10 +455,10 @@ export class TopBar extends React.Component<TopBarProps, TopBarState> {
                   </Button>
                 }
                 content={
-                  <Container fluid textAlign="center">
-                    <Header as="h2">Invite friends and watch together!</Header>
+                  <Container fluid textAlign="left">
+                    <Header as="h3">Invite friends and watch together!</Header>
                     <Divider />
-                    <Header>Copy and share this link:</Header>
+                    <Header as="h5">Copy and share this link:</Header>
                     <Input
                       readOnly
                       action={{
@@ -472,8 +472,9 @@ export class TopBar extends React.Component<TopBarProps, TopBarState> {
                     />
                     {this.state.inviteLinkCopied && (
                       <div style={{ marginTop: 15 }}>
-                        <b style={{ color: 'green' }}>Copied Link: </b>
-                        <b>{window.location.href}</b>
+                        <b style={{ color: 'green' }}>
+                          Link copied to clipboard.
+                        </b>
                       </div>
                     )}
                   </Container>
