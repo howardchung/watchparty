@@ -448,6 +448,7 @@ export class TopBar extends React.Component<TopBarProps, TopBarState> {
                     labelPosition="left"
                     fluid
                     className="toolButton"
+                    style={{ minWidth: '12em' }}
                   >
                     <Icon name="add user" />
                     Invite Friends
