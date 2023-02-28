@@ -24,6 +24,7 @@ interface ComboBoxProps {
   streamPath: string | undefined;
   disabled?: boolean;
   playlist: PlaylistVideo[];
+  toggleIsUploadPress: Function;
 }
 
 export class ComboBox extends React.Component<ComboBoxProps> {
@@ -154,7 +155,8 @@ export class ComboBox extends React.Component<ComboBoxProps> {
   };
 
   render() {
-    const { currentMedia, getMediaDisplayName } = this.props;
+    const { currentMedia, getMediaDisplayName, toggleIsUploadPress } =
+      this.props;
     const { results } = this.state;
     return (
       <div style={{ position: 'relative' }}>
@@ -279,6 +281,7 @@ export class ComboBox extends React.Component<ComboBoxProps> {
             labelPosition="right"
             size="tiny"
             className={styles.UploadButton}
+            onClick={() => toggleIsUploadPress()}
           >
             Upload
             <Icon size="large" name="arrow alternate circle down outline" />

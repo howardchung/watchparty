@@ -54,6 +54,7 @@ import { ScreenShareModal } from '../Modal/ScreenShareModal';
 import { FileShareModal } from '../Modal/FileShareModal';
 import firebase from 'firebase/compat/app';
 import { SubtitleModal } from '../Modal/SubtitleModal';
+import UploadFile from '../Modal/UploadFile';
 
 declare global {
   interface Window {
@@ -143,6 +144,7 @@ interface AppState {
   roomDescription: string | undefined;
   roomTitleColor: string | undefined;
   mediaPath: string | undefined;
+  isUploadPress: boolean;
 }
 
 export default class App extends React.Component<AppProps, AppState> {
@@ -206,6 +208,7 @@ export default class App extends React.Component<AppProps, AppState> {
     roomDescription: '',
     roomTitleColor: '',
     mediaPath: undefined,
+    isUploadPress: false,
   };
   socket: Socket = null as any;
   watchPartyYTPlayer: any = null;
@@ -344,7 +347,9 @@ export default class App extends React.Component<AppProps, AppState> {
       });
     };
   };
-
+  toggleIsUploadPress = () => {
+    this.setState({ isUploadPress: !this.state.isUploadPress });
+  };
   setOwner = (owner: string) => {
     this.setState({ owner });
   };
@@ -1460,6 +1465,8 @@ export default class App extends React.Component<AppProps, AppState> {
         isCustomer={this.props.isCustomer}
       />
     );
+    // console.log({ state: this.state });
+
     // const displayRightContent =
     //   this.state.showRightBar || this.state.fullScreen;
     // const rightBar = (
@@ -1620,6 +1627,25 @@ export default class App extends React.Component<AppProps, AppState> {
             </div>
           </Modal>
         )}
+        {this.state.isUploadPress && (
+          <UploadFile toggleIsUploadPress={this.toggleIsUploadPress} />
+          // <Modal inverted basic open>
+          //   <div style={{ display: 'flex', justifyContent: 'center' }}>
+          //     <Button
+          //       primary
+          //       size="large"
+          //       onClick={() => {
+          //         this.setState({ isUploadPress: false });
+          //       }}
+          //       icon
+          //       labelPosition="left"
+          //     >
+          //       <Icon name="volume up" />
+          //       Upload File
+          //     </Button>
+          //   </div>
+          // </Modal>
+        )}
         {this.state.multiStreamSelection && (
           <MultiStreamModal
             streams={this.state.multiStreamSelection}
@@ -1726,6 +1752,7 @@ export default class App extends React.Component<AppProps, AppState> {
                   {!this.state.fullScreen && (
                     <React.Fragment>
                       <ComboBox
+                        toggleIsUploadPress={this.toggleIsUploadPress}
                         setMedia={this.setMedia}
                         playlistAdd={this.playlistAdd}
                         playlistDelete={this.playlistDelete}
