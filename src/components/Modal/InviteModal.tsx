@@ -14,7 +14,7 @@ export const InviteModal = ({
   };
 
   return (
-    <Modal open centered={false} onClose={closeInviteModal}>
+    <Modal open centered={false} size="tiny" onClose={closeInviteModal}>
       <Modal.Header as="h3">Invite friends and watch together!</Modal.Header>
       <Modal.Content>
         <Header as="h5">Copy and share this link:</Header>
