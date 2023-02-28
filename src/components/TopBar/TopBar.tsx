@@ -7,10 +7,6 @@ import {
   Dropdown,
   Image,
   SemanticSIZES,
-  Header,
-  Container,
-  Divider,
-  Input,
 } from 'semantic-ui-react';
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
@@ -19,6 +15,7 @@ import axios from 'axios';
 import { SubscribeButton } from '../SubscribeButton/SubscribeButton';
 import { ProfileModal } from '../Modal/ProfileModal';
 import Announce from '../Announce/Announce';
+import { InviteButton } from '../InviteButton/InviteButton';
 
 export async function createRoom(
   user: firebase.User | undefined,
@@ -265,7 +262,7 @@ export class ListRoomsButton extends React.Component<{
   }
 }
 
-interface TopBarProps {
+export class TopBar extends React.Component<{
   user?: firebase.User;
   hideNewRoom?: boolean;
   hideSignin?: boolean;
@@ -276,22 +273,7 @@ interface TopBarProps {
   roomDescription?: string;
   roomTitleColor?: string;
   showInviteButton?: boolean;
-}
-
-interface TopBarState {
-  inviteLinkCopied: boolean;
-}
-
-export class TopBar extends React.Component<TopBarProps, TopBarState> {
-  state: TopBarState = {
-    inviteLinkCopied: false,
-  };
-
-  handleCopyInviteLink = () => {
-    navigator.clipboard.writeText(window.location.href);
-    this.setState({ inviteLinkCopied: true });
-  };
-
+}> {
   render() {
     const subscribeButton = !this.props.isSubscriber ? (
       <SubscribeButton user={this.props.user} />
@@ -438,51 +420,7 @@ export class TopBar extends React.Component<TopBarProps, TopBarState> {
               gap: '4px',
             }}
           >
-            {this.props.showInviteButton && (
-              <Popup
-                onClose={() => this.setState({ inviteLinkCopied: false })}
-                trigger={
-                  <Button
-                    color="green"
-                    icon
-                    labelPosition="left"
-                    fluid
-                    className="toolButton"
-                    style={{ minWidth: '12em' }}
-                  >
-                    <Icon name="add user" />
-                    Invite Friends
-                  </Button>
-                }
-                content={
-                  <Container fluid textAlign="left">
-                    <Header as="h3">Invite friends and watch together!</Header>
-                    <Divider />
-                    <Header as="h5">Copy and share this link:</Header>
-                    <Input
-                      readOnly
-                      action={{
-                        color: 'teal',
-                        labelPosition: 'right',
-                        icon: 'copy',
-                        content: 'Copy',
-                        onClick: this.handleCopyInviteLink,
-                      }}
-                      defaultValue={window.location.href}
-                    />
-                    {this.state.inviteLinkCopied && (
-                      <div style={{ marginTop: 15 }}>
-                        <b style={{ color: 'green' }}>
-                          Link copied to clipboard.
-                        </b>
-                      </div>
-                    )}
-                  </Container>
-                }
-                on="click"
-                position="top right"
-              />
-            )}
+            {this.props.showInviteButton && <InviteButton />}
             {!this.props.hideNewRoom && (
               <NewRoomButton user={this.props.user} openNewTab />
             )}
