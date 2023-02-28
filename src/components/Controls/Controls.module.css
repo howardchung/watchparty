@@ -1,0 +1,13 @@
+.ControlsWrapper {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  background-color: #2222;
+  z-index: 1200 !important;
+}
+
+.Btn {
+  color: #fff;
+}

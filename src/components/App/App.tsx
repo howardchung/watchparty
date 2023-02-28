@@ -1460,144 +1460,144 @@ export default class App extends React.Component<AppProps, AppState> {
         isCustomer={this.props.isCustomer}
       />
     );
-    const displayRightContent =
-      this.state.showRightBar || this.state.fullScreen;
-    const rightBar = (
-      <Grid.Column
-        width={displayRightContent ? 4 : 1}
-        style={{ display: 'flex', flexDirection: 'column' }}
-        className={`${
-          this.state.fullScreen
-            ? 'fullHeightColumnFullscreen'
-            : 'fullHeightColumn'
-        }`}
-      >
-        <Input
-          inverted
-          fluid
-          label={'My name is:'}
-          value={this.state.myName}
-          onChange={this.updateName}
-          style={{ visibility: displayRightContent ? '' : 'hidden' }}
-          icon={
-            <Icon
-              onClick={() => this.updateName(null, { value: generateName() })}
-              name="refresh"
-              inverted
-              circular
-              link
-            />
-          }
-        />
-        {
-          <Menu
-            inverted
-            widths={3}
-            style={{
-              marginTop: '4px',
-              marginBottom: '4px',
-              visibility: displayRightContent ? '' : 'hidden',
-            }}
-          >
-            <Menu.Item
-              name="chat"
-              active={this.state.currentTab === 'chat'}
-              onClick={() => {
-                this.setState({ currentTab: 'chat', unreadCount: 0 });
-              }}
-              as="a"
-            >
-              Chat
-              {this.state.unreadCount > 0 && (
-                <Label circular color="red">
-                  {this.state.unreadCount}
-                </Label>
-              )}
-            </Menu.Item>
-            <Menu.Item
-              name="people"
-              active={this.state.currentTab === 'people'}
-              onClick={() => this.setState({ currentTab: 'people' })}
-              as="a"
-            >
-              People
-              <Label
-                circular
-                color={
-                  getColorForString(
-                    this.state.participants.length.toString()
-                  ) as SemanticCOLORS
-                }
-              >
-                {this.state.participants.length}
-              </Label>
-            </Menu.Item>
-            <Menu.Item
-              name="settings"
-              active={this.state.currentTab === 'settings'}
-              onClick={() => this.setState({ currentTab: 'settings' })}
-              as="a"
-            >
-              {/* <Icon name="setting" /> */}
-              Settings
-            </Menu.Item>
-          </Menu>
-        }
-        <Chat
-          chat={this.state.chat}
-          nameMap={this.state.nameMap}
-          pictureMap={this.state.pictureMap}
-          socket={this.socket}
-          scrollTimestamp={this.state.scrollTimestamp}
-          getMediaDisplayName={this.getMediaDisplayName}
-          hide={this.state.currentTab !== 'chat' || !displayRightContent}
-          isChatDisabled={this.state.isChatDisabled}
-          owner={this.state.owner}
-          user={this.props.user}
-          ref={this.chatRef}
-        />
-        {this.state.state === 'connected' && (
-          <VideoChat
-            socket={this.socket}
-            participants={this.state.participants}
-            nameMap={this.state.nameMap}
-            pictureMap={this.state.pictureMap}
-            tsMap={this.state.tsMap}
-            rosterUpdateTS={this.state.rosterUpdateTS}
-            hide={this.state.currentTab !== 'people' || !displayRightContent}
-            owner={this.state.owner}
-            user={this.props.user}
-          />
-        )}
-        <SettingsTab
-          hide={this.state.currentTab !== 'settings' || !displayRightContent}
-          user={this.props.user}
-          roomLock={this.state.roomLock}
-          setRoomLock={this.setRoomLock}
-          socket={this.socket}
-          isSubscriber={this.props.isSubscriber}
-          roomId={this.state.roomId}
-          isChatDisabled={this.state.isChatDisabled}
-          setIsChatDisabled={this.setIsChatDisabled}
-          owner={this.state.owner}
-          setOwner={this.setOwner}
-          vanity={this.state.vanity}
-          setVanity={this.setVanity}
-          roomLink={this.state.roomLink}
-          password={this.state.password}
-          setPassword={this.setPassword}
-          clearChat={this.clearChat}
-          roomTitle={this.state.roomTitle}
-          setRoomTitle={this.setRoomTitle}
-          roomDescription={this.state.roomDescription}
-          setRoomDescription={this.setRoomDescription}
-          roomTitleColor={this.state.roomTitleColor}
-          setRoomTitleColor={this.setRoomTitleColor}
-          mediaPath={this.state.mediaPath}
-          setMediaPath={this.setMediaPath}
-        />
-      </Grid.Column>
-    );
+    // const displayRightContent =
+    //   this.state.showRightBar || this.state.fullScreen;
+    // const rightBar = (
+    //   <Grid.Column
+    //     width={displayRightContent ? 4 : 1}
+    //     style={{ display: 'flex', flexDirection: 'column' }}
+    //     className={`${
+    //       this.state.fullScreen
+    //         ? 'fullHeightColumnFullscreen'
+    //         : 'fullHeightColumn'
+    //     }`}
+    //   >
+    //     <Input
+    //       inverted
+    //       fluid
+    //       label={'My name is:'}
+    //       value={this.state.myName}
+    //       onChange={this.updateName}
+    //       style={{ visibility: displayRightContent ? '' : 'hidden' }}
+    //       icon={
+    //         <Icon
+    //           onClick={() => this.updateName(null, { value: generateName() })}
+    //           name="refresh"
+    //           inverted
+    //           circular
+    //           link
+    //         />
+    //       }
+    //     />
+    //     {
+    //       <Menu
+    //         inverted
+    //         widths={3}
+    //         style={{
+    //           marginTop: '4px',
+    //           marginBottom: '4px',
+    //           visibility: displayRightContent ? '' : 'hidden',
+    //         }}
+    //       >
+    //         <Menu.Item
+    //           name="chat"
+    //           active={this.state.currentTab === 'chat'}
+    //           onClick={() => {
+    //             this.setState({ currentTab: 'chat', unreadCount: 0 });
+    //           }}
+    //           as="a"
+    //         >
+    //           Chat
+    //           {this.state.unreadCount > 0 && (
+    //             <Label circular color="red">
+    //               {this.state.unreadCount}
+    //             </Label>
+    //           )}
+    //         </Menu.Item>
+    //         <Menu.Item
+    //           name="people"
+    //           active={this.state.currentTab === 'people'}
+    //           onClick={() => this.setState({ currentTab: 'people' })}
+    //           as="a"
+    //         >
+    //           People
+    //           <Label
+    //             circular
+    //             color={
+    //               getColorForString(
+    //                 this.state.participants.length.toString()
+    //               ) as SemanticCOLORS
+    //             }
+    //           >
+    //             {this.state.participants.length}
+    //           </Label>
+    //         </Menu.Item>
+    //         <Menu.Item
+    //           name="settings"
+    //           active={this.state.currentTab === 'settings'}
+    //           onClick={() => this.setState({ currentTab: 'settings' })}
+    //           as="a"
+    //         >
+    //           {/* <Icon name="setting" /> */}
+    //           Settings
+    //         </Menu.Item>
+    //       </Menu>
+    //     }
+    //     <Chat
+    //       chat={this.state.chat}
+    //       nameMap={this.state.nameMap}
+    //       pictureMap={this.state.pictureMap}
+    //       socket={this.socket}
+    //       scrollTimestamp={this.state.scrollTimestamp}
+    //       getMediaDisplayName={this.getMediaDisplayName}
+    //       hide={this.state.currentTab !== 'chat' || !displayRightContent}
+    //       isChatDisabled={this.state.isChatDisabled}
+    //       owner={this.state.owner}
+    //       user={this.props.user}
+    //       ref={this.chatRef}
+    //     />
+    //     {this.state.state === 'connected' && (
+    //       <VideoChat
+    //         socket={this.socket}
+    //         participants={this.state.participants}
+    //         nameMap={this.state.nameMap}
+    //         pictureMap={this.state.pictureMap}
+    //         tsMap={this.state.tsMap}
+    //         rosterUpdateTS={this.state.rosterUpdateTS}
+    //         hide={this.state.currentTab !== 'people' || !displayRightContent}
+    //         owner={this.state.owner}
+    //         user={this.props.user}
+    //       />
+    //     )}
+    //     <SettingsTab
+    //       hide={this.state.currentTab !== 'settings' || !displayRightContent}
+    //       user={this.props.user}
+    //       roomLock={this.state.roomLock}
+    //       setRoomLock={this.setRoomLock}
+    //       socket={this.socket}
+    //       isSubscriber={this.props.isSubscriber}
+    //       roomId={this.state.roomId}
+    //       isChatDisabled={this.state.isChatDisabled}
+    //       setIsChatDisabled={this.setIsChatDisabled}
+    //       owner={this.state.owner}
+    //       setOwner={this.setOwner}
+    //       vanity={this.state.vanity}
+    //       setVanity={this.setVanity}
+    //       roomLink={this.state.roomLink}
+    //       password={this.state.password}
+    //       setPassword={this.setPassword}
+    //       clearChat={this.clearChat}
+    //       roomTitle={this.state.roomTitle}
+    //       setRoomTitle={this.setRoomTitle}
+    //       roomDescription={this.state.roomDescription}
+    //       setRoomDescription={this.setRoomDescription}
+    //       roomTitleColor={this.state.roomTitleColor}
+    //       setRoomTitleColor={this.setRoomTitleColor}
+    //       mediaPath={this.state.mediaPath}
+    //       setMediaPath={this.setMediaPath}
+    //     />
+    //   </Grid.Column>
+    // );
     return (
       <React.Fragment>
         {!this.state.isAutoPlayable && (
@@ -1695,14 +1695,16 @@ export default class App extends React.Component<AppProps, AppState> {
             }}
           ></Message>
         )}
-        <TopBar
+        {/* ====================== TOP BAR LOGO SECTION ====================== */}
+        {/* <TopBar
           user={this.props.user}
           isCustomer={this.props.isCustomer}
           isSubscriber={this.props.isSubscriber}
           roomTitle={this.state.roomTitle}
           roomDescription={this.state.roomDescription}
           roomTitleColor={this.state.roomTitleColor}
-        />
+        /> */}
+        {/* ====================== END SECTION ====================== */}
         {
           <Grid stackable celled="internally">
             <Grid.Row id="theaterContainer">

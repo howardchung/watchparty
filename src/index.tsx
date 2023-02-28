@@ -56,7 +56,7 @@ class WatchParty extends React.Component {
   }
   render() {
     return (
-      <React.StrictMode>
+      <>
         {this.state.isCustomDomain && (
           <Modal inverted basic open>
             <Modal.Header>
@@ -156,7 +156,7 @@ class WatchParty extends React.Component {
             <Footer />
           </Route>
         </BrowserRouter>
-      </React.StrictMode>
+      </>
     );
   }
 }

@@ -81,6 +81,10 @@ body {
   min-height: 48vh;
 }
 
+#theaterContainer {
+  background: #070707;
+}
+
 .fullScreenChat.fullScreenChat.fullScreenChat {
   width: 20vw;
 }
@@ -102,7 +106,8 @@ body {
 }
 
 .fullHeightColumn.fullHeightColumn.fullHeightColumn {
-  height: calc(100vh - 62px);
+  /* height: calc(100vh - 62px); */
+  height: calc(100vh);
   transition: width ease-out 0.5s;
 }
 
