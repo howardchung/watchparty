@@ -15,6 +15,7 @@ import axios from 'axios';
 import { SubscribeButton } from '../SubscribeButton/SubscribeButton';
 import { ProfileModal } from '../Modal/ProfileModal';
 import Announce from '../Announce/Announce';
+import { InviteButton } from '../InviteButton/InviteButton';
 
 export async function createRoom(
   user: firebase.User | undefined,
@@ -271,6 +272,7 @@ export class TopBar extends React.Component<{
   roomTitle?: string;
   roomDescription?: string;
   roomTitleColor?: string;
+  showInviteButton?: boolean;
 }> {
   render() {
     const subscribeButton = !this.props.isSubscriber ? (
@@ -418,6 +420,7 @@ export class TopBar extends React.Component<{
               gap: '4px',
             }}
           >
+            {this.props.showInviteButton && <InviteButton />}
             {!this.props.hideNewRoom && (
               <NewRoomButton user={this.props.user} openNewTab />
             )}
