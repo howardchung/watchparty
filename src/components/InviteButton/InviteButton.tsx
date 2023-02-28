@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Modal, Header, Button, Icon, Input, Popup } from 'semantic-ui-react';
+import { Button, Icon, Popup } from 'semantic-ui-react';
 import { InviteModal } from '../Modal/InviteModal';
 
 export const InviteButton = () => {
