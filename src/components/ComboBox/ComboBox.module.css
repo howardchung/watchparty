@@ -18,6 +18,16 @@
 .PlaylistDropdown {
   background-color: #1f1f1f !important;
   color: #f4f4f4 !important;
+  /* width: ; */
+}
+.PlaylistMenu {
+  background: black !important;
+  padding: 0 !important;
+  width: 100% !important;
+}
+.PlaylistItem {
+  background: inherit;
+  padding: 0px !important;
 }
 .UploadButton {
   background-color: #8350f1 !important;
@@ -31,4 +41,7 @@
 .SearchInput input {
   background-color: #222222 !important;
   color: #f4f4f4 !important;
+}
+.PlaylistMenu > .item {
+  padding: 0 !important;
 }

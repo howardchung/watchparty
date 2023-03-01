@@ -38,3 +38,20 @@
   top: 0;
   cursor: pointer;
 }
+.input {
+  margin: 20px 0 20px 40px;
+}
+
+.input input {
+  width: 100%;
+  background-color: inherit !important;
+  border: 1px solid #aeaeae !important;
+  color: #f4f4f4 !important;
+}
+
+.InputAction {
+  background-color: #8350f1 !important;
+  /* background-color: linear-gradient(96.68deg, #8350f1 9.5%, #6824f7 100%); */
+  border-radius: 0px 6px 6px 0px;
+  color: #f4f4f4 !important;
+}

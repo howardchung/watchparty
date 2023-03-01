@@ -11,7 +11,9 @@ body {
   /* fix for scrollbar popping in and out at certain widths, but adds a permanent scrollbar */
   overflow-y: scroll;
 }
-
+.ui.dropdown .menu > .item {
+  padding: 0 !important;
+}
 button.linkButton {
   background: none !important;
   border: none;

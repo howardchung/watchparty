@@ -99,7 +99,9 @@ const ChatVideoCard: React.FC<{
         <div className={classes.Content}>
           <div className={classes.Title}>
             {/* {video.name} */}
-            {decodeEntities(video.name)}
+            {video.name.split('').length > 50
+              ? decodeEntities(video.name.slice(0, 30) + '...')
+              : decodeEntities(video.name)}
           </div>
           {/* <div className={classes.ChannelName}>{video.channel}</div> */}
           {onPlaylistAdd && (
@@ -125,12 +127,13 @@ const ChatVideoCard: React.FC<{
             <ButtonGroup size="mini">
               <Button
                 icon
-                color="green"
+                style={{ color: 'white' }}
+                // color="olive"
                 title="Play now"
                 onClick={handlePlayClick}
                 disabled={disabled}
               >
-                <Icon name="play" />
+                <Icon name="play" color="black" />
               </Button>
               <Button
                 icon

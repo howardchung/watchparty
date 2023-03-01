@@ -11,9 +11,10 @@
 }
 
 .Wrapper {
+  width: 100%;
   display: flex;
   align-items: start;
-  gap: 2px;
+  gap: 8px;
 }
 
 .ThumbnailWrapper {
@@ -53,6 +54,7 @@
   border-radius: 4px;
   font-size: 14px;
   cursor: pointer;
+  z-index: 1000 !important;
 }
 
 .Title {
@@ -90,5 +92,12 @@
 }
 
 .Controls {
+  position: absolute;
+  top: 45%;
+  right: 4%;
   /* margin-left: auto; */
+  /* display: flex; */
+  /* height: 100%;
+  flex-direction: column;
+  justify-content: center; */
 }

@@ -233,10 +233,7 @@ export class ComboBox extends React.Component<ComboBoxProps> {
             text={`Playlist (${this.props.playlist.length})`}
             scrolling
           >
-            <Dropdown.Menu
-              direction="left"
-              style={{ background: 'inherit', padding: '0 !important' }}
-            >
+            <Dropdown.Menu direction="left" className={styles.PlaylistMenu}>
               {this.props.playlist.length === 0 && (
                 <Dropdown.Item disabled style={{ color: 'white' }}>
                   There are no items in the playlist.
@@ -244,10 +241,8 @@ export class ComboBox extends React.Component<ComboBoxProps> {
               )}
               {this.props.playlist.map((item: PlaylistVideo, index: number) => {
                 return (
-                  <Dropdown.Item
-                    style={{ background: 'inherit', padding: '0 !important' }}
-                  >
-                    <div style={{ maxWidth: '500px' }}>
+                  <Dropdown.Item className={styles.PlaylistItem}>
+                    <div style={{ width: '100%' }}>
                       <ChatVideoCard
                         video={item}
                         index={index}
