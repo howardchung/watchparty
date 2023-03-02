@@ -1,9 +1,11 @@
+import { mapYoutubeSearchResult } from './../../server/utils/youtube';
 //@ts-ignore
 import canAutoplay from 'can-autoplay';
 import { v4 as uuidv4 } from 'uuid';
 import md5 from 'blueimp-md5';
 import firebase from 'firebase/compat/app';
 import { XMLParser } from 'fast-xml-parser';
+// import config from './config';
 
 export function formatTimestamp(input: any) {
   if (
@@ -258,6 +260,11 @@ export async function getYouTubeResults(
   const response = await window.fetch(
     serverPath + '/youtube?q=' + encodeURIComponent(query)
   );
+  const data = await response.json();
+  return data;
+}
+export async function getYouTubeTrendings(): Promise<SearchResult[]> {
+  const response = await window.fetch(serverPath + '/youtube-trending');
   const data = await response.json();
   return data;
 }

@@ -9,7 +9,7 @@ import Redis from 'ioredis';
 import https from 'https';
 import http from 'http';
 import { Server } from 'socket.io';
-import { searchYoutube } from './utils/youtube';
+import { getYtTrendings, searchYoutube } from './utils/youtube';
 import { Room } from './room';
 import {
   getRedisCountDay,
@@ -32,6 +32,7 @@ import ecosystem from './ecosystem.config';
 import { statsAgg } from './utils/statsAgg';
 import { resolveShard } from './utils/resolveShard';
 import { makeName } from './utils/moniker';
+import geoip from 'geoip-lite';
 
 const gzip = util.promisify(zlib.gzip);
 
@@ -246,7 +247,20 @@ app.get('/youtube', async (req, res) => {
     return res.status(500).json({ error: 'query must be a string' });
   }
 });
-
+app.get('/youtube-trending', async (req, res) => {
+  try {
+    await redisCount('youtubeTrending');
+    console.log('===> fetching youtube trending ==>>>');
+    const ip =
+      (req.headers['x-forwarded-for'] as string) ||
+      (req.socket.remoteAddress as string);
+    const geo = geoip.lookup(ip === '127.0.0.1' ? '13.127.77.62' : ip); // 13.127.77.62 is prod server
+    const items = await getYtTrendings(geo?.country);
+    res.json(items);
+  } catch {
+    return res.status(500).json({ error: 'youtube error' });
+  }
+});
 app.post('/createRoom', async (req, res) => {
   const genName = () => '/' + makeName(config.SHARD);
   let name = genName();

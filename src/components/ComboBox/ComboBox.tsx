@@ -8,7 +8,12 @@ import {
   Grid,
   Button,
 } from 'semantic-ui-react';
-import { debounce, getMediaPathResults, getYouTubeResults } from '../../utils';
+import {
+  debounce,
+  getMediaPathResults,
+  getYouTubeResults,
+  getYouTubeTrendings,
+} from '../../utils';
 import { examples } from '../../utils/examples';
 import ChatVideoCard from '../Playlist/ChatVideoCard';
 import styles from './ComboBox.module.css';
@@ -54,7 +59,8 @@ export class ComboBox extends React.Component<ComboBoxProps> {
           let timestamp = Number(new Date());
           let results: JSX.Element[] | undefined = undefined;
           if (query === '' || (query && query.startsWith('http'))) {
-            let items = examples;
+            // let items = examples;
+            let items = await getYouTubeTrendings();
             if (!this.state.inputMedia && this.props.mediaPath) {
               items = await getMediaPathResults(this.props.mediaPath, '');
             }
@@ -81,6 +87,7 @@ export class ComboBox extends React.Component<ComboBoxProps> {
                         video={result}
                         index={index}
                         onPlaylistAdd={this.props.playlistAdd}
+                        isYoutube
                       />
                     </Grid.Column>
                   ))

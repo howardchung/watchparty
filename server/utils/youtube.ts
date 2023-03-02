@@ -32,7 +32,7 @@ export const mapYoutubeSearchResult = (
 };
 
 export const mapYoutubeListResult = (
-  video: YoutubeListResult
+  video: YoutubeSearchResult
 ): PlaylistVideo => {
   const videoId = video.id;
   return {
@@ -40,7 +40,7 @@ export const mapYoutubeListResult = (
     name: video.snippet.title,
     img: video.snippet.thumbnails.default.url,
     channel: video.snippet.channelTitle,
-    duration: getVideoDuration(video.contentDetails.duration) ?? 0,
+    duration: 0,
   };
 };
 
@@ -59,6 +59,20 @@ export const searchYoutube = (query: string): Promise<PlaylistVideo[]> => {
       }
     );
   });
+};
+
+export const getYtTrendings = async (
+  region: string | undefined
+): Promise<PlaylistVideo[]> => {
+  const apiKey = config.YOUTUBE_API_KEY;
+  // console.log({ region });
+  const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet&chart=mostPopular&regionCode=${
+    region ?? 'US'
+  }&maxResults=20&key=${apiKey}`;
+  const res = await fetch(url);
+  const data = await res.json();
+  const finalRes = data?.items ? data.items.map(mapYoutubeListResult) : [];
+  return finalRes;
 };
 
 export const getYoutubeVideoID = (url: string) => {
