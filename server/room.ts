@@ -53,6 +53,7 @@ export class Room {
   private tsInterval: NodeJS.Timeout | undefined = undefined;
   public isChatDisabled: boolean | undefined = undefined;
   public lastUpdateTime: Date = new Date();
+  private preventTSUpdate = false;
 
   constructor(
     io: Server,
@@ -359,6 +360,8 @@ export class Room {
     this.tsMap = {};
     this.nextVotes = {};
     this.playbackRate = 0;
+    this.preventTSUpdate = true;
+    setTimeout(() => (this.preventTSUpdate = false), 1000);
     this.io.of(this.roomId).emit('REC:tsMap', this.tsMap);
     this.io.of(this.roomId).emit('REC:host', this.getHostState());
     if (socket && data) {
@@ -593,6 +596,10 @@ export class Room {
 
   private setTimestamp = (socket: Socket, data: number) => {
     if (String(data).length > 100) {
+      return;
+    }
+    // Prevent lagging TS updates from the old video from messing up our timestamps
+    if (this.preventTSUpdate) {
       return;
     }
     if (data > this.videoTS) {
