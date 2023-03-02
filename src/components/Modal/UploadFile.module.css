@@ -1,5 +1,6 @@
 .wrapper {
   z-index: 1200 !important;
+  min-height: 80vh;
 }
 .UploadButton {
   background-color: #8350f1 !important;

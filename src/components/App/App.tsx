@@ -55,6 +55,7 @@ import { FileShareModal } from '../Modal/FileShareModal';
 import firebase from 'firebase/compat/app';
 import { SubtitleModal } from '../Modal/SubtitleModal';
 import UploadFile from '../Modal/UploadFile';
+import { EmptyTheatre } from '../EmptyTheatre/EmptyTheatre';
 
 declare global {
   interface Window {
@@ -1991,6 +1992,11 @@ export default class App extends React.Component<AppProps, AppState> {
                           {/*    />*/}
                           {/*  )}*/}
                         </div>
+                      )}
+                      {!this.isYouTube() && !this.state.loading && (
+                        <EmptyTheatre
+                          toggleIsUploadPress={this.toggleIsUploadPress}
+                        />
                       )}
                       <iframe
                         style={{

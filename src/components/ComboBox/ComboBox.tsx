@@ -14,7 +14,7 @@ import {
   getYouTubeResults,
   getYouTubeTrendings,
 } from '../../utils';
-import { examples } from '../../utils/examples';
+// import { examples } from '../../utils/examples';
 import ChatVideoCard from '../Playlist/ChatVideoCard';
 import styles from './ComboBox.module.css';
 interface ComboBoxProps {
@@ -233,11 +233,11 @@ export class ComboBox extends React.Component<ComboBoxProps> {
 
           {/* ======================  Showing the playlist ====================== */}
           <Dropdown
-            icon="list"
             labeled
             className={`${styles.PlaylistDropdown} icon`}
             button
             text={`Playlist (${this.props.playlist.length})`}
+            icon="list"
             scrolling
           >
             <Dropdown.Menu direction="left" className={styles.PlaylistMenu}>

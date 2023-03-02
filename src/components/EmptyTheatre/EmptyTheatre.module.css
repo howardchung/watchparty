@@ -1,0 +1,25 @@
+.wrapper {
+  z-index: 1200 !important;
+  min-height: 80vh;
+}
+.UploadButton {
+  background-color: #8350f1 !important;
+  color: #f4f4f4 !important;
+  margin: 10px 0 !important;
+}
+.content {
+  margin-top: -30px;
+  display: flex;
+  flex-direction: column;
+  justify-content: start;
+  align-items: center;
+  height: 50vh;
+  background: rgba(0, 0, 0, 0.8);
+}
+.content p {
+  text-align: center;
+  font-size: 15px;
+  margin: 4px;
+  line-height: 1.1rem;
+  color: #fff9f9b5;
+}

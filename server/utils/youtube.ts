@@ -32,7 +32,7 @@ export const mapYoutubeSearchResult = (
 };
 
 export const mapYoutubeListResult = (
-  video: YoutubeSearchResult
+  video: YoutubeListResult
 ): PlaylistVideo => {
   const videoId = video.id;
   return {
