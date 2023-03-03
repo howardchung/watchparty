@@ -23,6 +23,7 @@
     "fast-xml-parser": "^4.1.2",
     "firebase": "^9.17.1",
     "firebase-admin": "^11.5.0",
+    "fix-webm-duration": "^1.0.5",
     "hls.js": "^1.3.3",
     "ioredis": "^5.3.1",
     "pg": "^8.9.0",
@@ -47,6 +48,7 @@
     "ssh-exec": "^2.0.0",
     "stripe": "^8.222.0",
     "uuid": "^9.0.0",
+    "webm-duration-fix": "^1.0.4",
     "webtorrent": "^2.0.13"
   },
   "scripts": {

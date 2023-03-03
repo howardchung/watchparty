@@ -176,6 +176,21 @@ export class Room {
       socket.on('CMD:deleteChatMessages', (data) =>
         this.deleteChatMessages(socket, data)
       );
+      socket.on('CMD:relayClear', () => {
+        // Empty the Redis stream
+        redis?.del('relay:' + this.roomId);
+      });
+      socket.on('CMD:relay', async (data) => {
+        // Expire the stream after some time
+        // TODO add NX option in redis 7
+        redis?.expire(
+          'relay:' + this.roomId,
+          Math.floor(Date.now() / 1000) + 3600 * 3
+        );
+        // Add the chunk to Redis
+        const tot = await redis?.append('relay:' + this.roomId, data);
+        console.log('WRITE chunk', data.length, tot);
+      });
 
       socket.on('disconnect', () => this.disconnectUser(socket));
     });

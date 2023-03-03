@@ -54,6 +54,7 @@ import firebase from 'firebase/compat/app';
 import { SubtitleModal } from '../Modal/SubtitleModal';
 import { HTML } from './HTML';
 import { YouTube } from './YouTube';
+import fixWebmDuration from 'fix-webm-duration';
 
 declare global {
   interface Window {
@@ -834,6 +835,40 @@ export default class App extends React.Component<AppProps, AppState> {
     };
   };
 
+  screenShareWithRelay = async () => {
+    if (navigator.mediaDevices.getDisplayMedia) {
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        //@ts-ignore
+        video: { height: 720, logicalSurface: true },
+        audio: {
+          autoGainControl: false,
+          channelCount: 2,
+          echoCancellation: false,
+          latency: 0,
+          noiseSuppression: false,
+          sampleRate: 48000,
+          sampleSize: 16,
+        },
+      });
+      const options = { mimeType: 'video/webm;codecs="vp9"' };
+      const mediaRecorder = new MediaRecorder(stream, options);
+      this.socket.emit('CMD:relayClear');
+      mediaRecorder.ondataavailable = async (blob) => {
+        // const fixed = await fixWebmDuration(blob.data, 10800);
+        this.socket.emit('CMD:relay', fixed);
+      };
+      mediaRecorder.start(2000);
+      setTimeout(
+        () =>
+          this.setMedia(null, {
+            value: serverPath + '/relay' + this.state.roomId,
+          }),
+        3000
+      );
+      // stream.getVideoTracks()[0].onended = this.stopScreenShare;
+    }
+  };
+
   setupScreenShare = async () => {
     if (navigator.mediaDevices.getDisplayMedia) {
       const stream = await navigator.mediaDevices.getDisplayMedia({
@@ -1550,6 +1585,7 @@ export default class App extends React.Component<AppProps, AppState> {
           <ScreenShareModal
             closeModal={() => this.setState({ isScreenShareModalOpen: false })}
             startScreenShare={this.setupScreenShare}
+            startScreenShareWithRelay={this.screenShareWithRelay}
           />
         )}
         {this.state.isFileShareModalOpen && (

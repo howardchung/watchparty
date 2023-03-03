@@ -32,6 +32,8 @@ import ecosystem from './ecosystem.config';
 import { statsAgg } from './utils/statsAgg';
 import { resolveShard } from './utils/resolveShard';
 import { makeRoomName, makeUserName } from './utils/moniker';
+import fixWebmDuration from 'webm-duration-fix';
+import { Blob } from 'node:buffer';
 
 const gzip = util.promisify(zlib.gzip);
 
@@ -495,6 +497,23 @@ app.delete('/linkAccount', async (req, res) => {
 
 app.get('/generateName', async (req, res) => {
   return res.send(makeUserName());
+});
+
+app.get('/relay/:roomId', async (req, res) => {
+  // TODO support Range headers
+  res.append('Content-Type', 'video/webm');
+
+  // Read from Redis
+  let ret =
+    (await redis?.getBuffer('relay:/' + req.params.roomId)) ?? Buffer.from([]);
+  console.log('PREREAD', ret?.length);
+  // fix up the webm duration
+  // const fixed = await fixWebmDuration(new Blob([ret], { type: 'video/webm;codecs="vp9"'}), 10800);
+  // const length = 1000000000;
+  // res.append('Content-Length', length.toString());
+  // res.append('Content-Range', `bytes ${0}-${fixed?.length}/${length}`);
+  // console.log('READ', fixed?.length);
+  res.send(ret);
 });
 
 app.use(express.static(config.BUILD_DIRECTORY));
