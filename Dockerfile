@@ -8,9 +8,9 @@ WORKDIR /app
 COPY . .
 
 # Install the dependencies
-RUN npm install
+RUN npm install && npm run build
 
 EXPOSE 8080
 
 # Run the application
-CMD ["npm run dev"]
+CMD ["npm", "run", "server"]

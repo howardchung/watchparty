@@ -1993,11 +1993,15 @@ export default class App extends React.Component<AppProps, AppState> {
                           {/*  )}*/}
                         </div>
                       )}
-                      {!this.isYouTube() && !this.state.loading && (
-                        <EmptyTheatre
-                          toggleIsUploadPress={this.toggleIsUploadPress}
-                        />
-                      )}
+                      {!this.isYouTube() &&
+                        !this.state.loading &&
+                        !this.isVBrowser() &&
+                        !this.getVBrowserPass() &&
+                        !this.getVBrowserHost() && (
+                          <EmptyTheatre
+                            toggleIsUploadPress={this.toggleIsUploadPress}
+                          />
+                        )}
                       <iframe
                         style={{
                           display:

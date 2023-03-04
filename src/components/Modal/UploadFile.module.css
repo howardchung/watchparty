@@ -39,8 +39,13 @@
   top: 0;
   cursor: pointer;
 }
+.inputWrapper {
+  margin: 0 auto;
+}
 .input {
-  margin: 20px 0 20px 40px;
+  /* margin: 20px 0 20px 40px; */
+  margin-top: 20px;
+  margin-left: -60px;
 }
 
 .input input {

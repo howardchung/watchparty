@@ -135,7 +135,7 @@ export default function UploadFile(props: IUploadFileProps) {
             muted
           />
           <h3>{File.name}</h3>
-          <div style={{ width: '60vw', margin: '10px 0' }}>
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
             {/* <Progress className="control action"
             color='violet'
             value='4' total='5' progress='percent' size="medium"
