@@ -53,7 +53,7 @@ interface PlaylistVideo {
 }
 
 interface SearchResult extends PlaylistVideo {
-  size?: string;
+  size?: string | number;
   seeders?: string;
   magnet?: string;
   type: string;
