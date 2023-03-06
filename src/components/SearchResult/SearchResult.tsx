@@ -1,6 +1,6 @@
 import React from 'react';
 import { Menu, Icon, Label, Button, DropdownProps } from 'semantic-ui-react';
-import { decodeEntities } from '../../utils';
+import { decodeEntities, formatSize } from '../../utils';
 
 export const YouTubeSearchResult = (
   props: SearchResult & {
@@ -123,7 +123,9 @@ export class StreamPathSearchResult extends React.Component<
           <Icon name="film" />
           {result.name +
             ' - ' +
-            result.size +
+            (typeof result.size === 'number'
+              ? formatSize(result.size)
+              : result.size) +
             ' - ' +
             result.seeders +
             ' peers'}

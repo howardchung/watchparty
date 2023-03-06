@@ -35,6 +35,19 @@ export function formatSpeed(input: number) {
   return input + ' B/s';
 }
 
+export function formatSize(input: number) {
+  if (input >= 1000000000) {
+    return (input / 1000000000).toFixed(2) + ' GiB';
+  }
+  if (input >= 1000000) {
+    return (input / 1000000).toFixed(2) + ' MiB';
+  }
+  if (input >= 1000) {
+    return (input / 1000).toFixed(0) + ' KiB';
+  }
+  return input + ' B';
+}
+
 export function hashString(input: string) {
   var hash = 0;
   for (var i = 0; i < input.length; i++) {
