@@ -4,6 +4,7 @@ import { Modal, Button } from 'semantic-ui-react';
 export class ScreenShareModal extends React.Component<{
   closeModal: () => void;
   startScreenShare: () => void;
+  startScreenShareWithRelay: () => void;
 }> {
   render() {
     const { closeModal } = this.props;
@@ -31,6 +32,14 @@ export class ScreenShareModal extends React.Component<{
               }}
             >
               Start Screenshare
+            </Button>
+            <Button
+              onClick={() => {
+                this.props.startScreenShareWithRelay();
+                this.props.closeModal();
+              }}
+            >
+              Start Screenshare w/Relay
             </Button>
           </Modal.Description>
         </Modal.Content>
