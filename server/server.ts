@@ -250,12 +250,23 @@ app.get('/youtube', async (req, res) => {
 app.get('/youtube-trending', async (req, res) => {
   try {
     await redisCount('youtubeTrending');
-    console.log('===> fetching youtube trending ==>>>');
     const ip =
       (req.headers['x-forwarded-for'] as string) ||
       (req.socket.remoteAddress as string);
-    const geo = geoip.lookup(ip === '127.0.0.1' ? '13.127.77.62' : ip); // 13.127.77.62 is prod server
-    const items = await getYtTrendings(geo?.country);
+    console.log(
+      'headers IP::::',
+      req.headers['x-forwarded-for'],
+      req.socket.remoteAddress
+    );
+    console.log('===> fetching youtube trending ==>>>', ip);
+    let geo: {} | any = null;
+    try {
+      geo = geoip.lookup(ip); // 13.127.77.62 is prod server
+      console.log('===> geo.country ==>>>', geo);
+    } catch (error) {
+      console.log('GEO LOOK UP ERROR: ', { error });
+    }
+    const items = await getYtTrendings(geo ? geo?.country : 'US');
     res.json(items);
   } catch {
     return res.status(500).json({ error: 'youtube error' });

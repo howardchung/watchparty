@@ -165,7 +165,7 @@ export class Controls extends React.Component<ControlsProps> {
                 name={muted ? 'volume off' : 'volume up'}
                 title="Mute"
               />
-              <div style={{ width: '150px', marginRight: '0px' }}>
+              <div style={{ width: '120px', marginRight: '0px' }}>
                 <Slider
                   value={volume}
                   color={'blue'}

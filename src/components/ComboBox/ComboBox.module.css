@@ -18,7 +18,7 @@
 .PlaylistDropdown {
   background-color: #1f1f1f !important;
   color: #f4f4f4 !important;
-  /* width: ; */
+  width: 150px;
 }
 .PlaylistMenu {
   background: black !important;

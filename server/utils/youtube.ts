@@ -53,6 +53,7 @@ export const searchYoutube = (query: string): Promise<PlaylistVideo[]> => {
           const response = data.items.map(mapYoutubeSearchResult);
           resolve(response);
         } else {
+          console.log({ query });
           console.warn(data);
           reject();
         }
@@ -64,15 +65,35 @@ export const searchYoutube = (query: string): Promise<PlaylistVideo[]> => {
 export const getYtTrendings = async (
   region: string | undefined
 ): Promise<PlaylistVideo[]> => {
-  const apiKey = config.YOUTUBE_API_KEY;
-  // console.log({ region });
-  const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet&chart=mostPopular&regionCode=${
-    region ?? 'US'
-  }&maxResults=20&key=${apiKey}`;
-  const res = await fetch(url);
-  const data = await res.json();
-  const finalRes = data?.items ? data.items.map(mapYoutubeListResult) : [];
-  return finalRes;
+  // const apiKey = config.YOUTUBE_API_KEY;
+  // const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet&chart=mostPopular&regionCode=${
+  //   region ? region : 'US'
+  // }&maxResults=20&key=${apiKey}`;
+  // console.log('trending yt URL', { url });
+  // const data: any = await axios.get(url);
+  // console.log('Trending data: ', { items: data.items[0] });
+  // const finalRes = data?.items ? data.items.map(mapYoutubeListResult) : [];
+  // return finalRes;
+  return new Promise((resolve, reject) => {
+    Youtube.videos.list(
+      {
+        part: 'snippet,statistics',
+        chart: 'mostPopular',
+        maxResults: 25,
+        regionCode: region ? region : 'US',
+      },
+      (err: any, data: any) => {
+        if (data && data.items) {
+          const response = data.items.map(mapYoutubeListResult);
+          resolve(response);
+        } else {
+          // console.log({ query });
+          console.warn(data);
+          reject();
+        }
+      }
+    );
+  });
 };
 
 export const getYoutubeVideoID = (url: string) => {

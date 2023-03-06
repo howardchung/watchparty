@@ -1,15 +1,9 @@
 // import * as React from 'react';
+import axios, { AxiosRequestConfig } from 'axios';
 import React from 'react';
-import {
-  Button,
-  Dimmer,
-  Icon,
-  Input,
-  Loader,
-  Modal,
-  Progress,
-} from 'semantic-ui-react';
+import { Button, Icon, Input, Modal, Progress } from 'semantic-ui-react';
 import classes from './UploadFile.module.css';
+
 export interface IUploadFileProps {
   toggleIsUploadPress: Function;
 }
@@ -19,6 +13,7 @@ export default function UploadFile(props: IUploadFileProps) {
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [File, setFile] = React.useState<File | null>(null);
   const [video, setVideo] = React.useState<string | null>(null);
+  const [progress, setProgress] = React.useState<number>(0);
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
   const handleFileClick = () => {
     inputRef?.current?.click();
@@ -31,27 +26,35 @@ export default function UploadFile(props: IUploadFileProps) {
     }
   };
   // {/* ====================== VIEO CONTENT UPLOADING TO BUNNY====================== */ }
+
   const handleUpload = async (file: File) => {
     if (!file) return;
     console.log('File: uploading file=>>', { file });
     const reader = new FileReader();
     reader.onload = async () => {
       const blob = new Blob([new Uint8Array(reader.result as ArrayBuffer)]);
-      let url = `https://sg.storage.bunnycdn.com/asia-metawood/${file.name}`;
-      let options = {
+      const uniqueID = new Date().getTime();
+      const fileName = `${uniqueID + '_' + file.name}`;
+      let config: AxiosRequestConfig = {
         method: 'PUT',
+        url: `https://sg.storage.bunnycdn.com/asia-metawood/${fileName}`,
         headers: {
           'content-type': 'application/octet-stream',
           AccessKey: 'f24b834e-9408-417b-a712aaf9bbe0-dcb6-40b2',
         },
-        body: blob,
+        data: blob,
+        onUploadProgress: async (event: any) => {
+          const progress = await Math.round(
+            (event.loaded / event?.total) * 100
+          );
+          setProgress(progress);
+          // console.log(`Upload progress: ${progress}%`);
+        },
       };
       try {
-        const res = await window.fetch(url, options);
-        const data = await res.json();
-        console.log('data: ', { data });
-        data.HttpCode === 201 &&
-          setVideo(`https://metawood.b-cdn.net/${file.name}`);
+        const data = await axios(config);
+        data.data.HttpCode === 201 &&
+          setVideo(`https://metawood.b-cdn.net/${fileName}`);
         // console.log(data);
         setIsLoading(false);
       } catch (error) {
@@ -120,45 +123,65 @@ export default function UploadFile(props: IUploadFileProps) {
           </div>
         </div>
       )}
-      <Dimmer active={isLoading}>
+      {/* <Dimmer active={isLoading}>
         <Loader indeterminate>Uploading Files</Loader>
-      </Dimmer>
+      </Dimmer> */}
       {/* ====================== UI AFTER FILE SELECTION ====================== */}
-      {File && video && (
+      {File && (
         <div className={classes.content}>
           {/* <Image src={DemoImage} size='small' centered /> */}
           <video
-            src={video}
-            width="150px"
-            height="150px"
+            src={video ?? 'Uploading...'}
+            width="170px"
+            height="120px"
             autoPlay={false}
             muted
           />
-          <h3>{File.name}</h3>
-          <div style={{ display: 'flex', justifyContent: 'center' }}>
-            {/* <Progress className="control action"
-            color='violet'
-            value='4' total='5' progress='percent' size="medium"
+          <h3 style={{ margin: '10px' }}>{File.name}</h3>
+          <div
             style={{
-              flexGrow: 1,
-              marginTop: 0,
-              background: "#4B4B4B",
-              marginBottom: 0,
-              position: 'relative',
-              width: '100%',
-              minWidth: '450px',
-            }} /> */}
-            <Input
-              inverted={true}
-              action={{
-                content: 'Copy Link',
-                className: classes.InputAction,
-                onClick: copyToClipboard,
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+          >
+            <Progress
+              className="control action "
+              color="violet"
+              value={Math.floor(progress)}
+              total={100}
+              progress="percent"
+              size="medium"
+              style={{
+                flexGrow: 1,
+                marginTop: 0,
+                background: '#4B4B4B',
+                marginBottom: 0,
+                position: 'relative',
+                width: '100%',
+                minWidth: '400px',
+                marginLeft: '40px',
               }}
-              placeholder=""
-              value={video}
-              className={classes.input}
             />
+            {isLoading && (
+              <h5 style={{ margin: '10px', color: 'white' }}>
+                {isLoading ? 'Uploading File...' : ''}
+              </h5>
+            )}
+            {video && (
+              <Input
+                inverted={true}
+                action={{
+                  content: 'Copy Link',
+                  className: classes.InputAction,
+                  onClick: copyToClipboard,
+                }}
+                placeholder=""
+                value={video}
+                className={classes.input}
+              />
+            )}
           </div>
         </div>
       )}
