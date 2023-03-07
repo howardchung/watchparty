@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, Button } from 'semantic-ui-react';
+import { Modal, Button, Table } from 'semantic-ui-react';
 
 export class ScreenShareModal extends React.Component<{
   closeModal: () => void;
@@ -16,22 +16,42 @@ export class ScreenShareModal extends React.Component<{
             <ul>
               <li>This feature is only supported on Chrome and Edge.</li>
               <li>
-                To share audio, the "Share audio" checkbox needs to be checked
-                in the screen selection dialog.
-              </li>
-              <li>
-                Audio sharing is only supported if sharing your entire screen or
-                a browser tab, not an application.
+                Audio sharing only works if sharing your entire screen or a
+                browser tab, not an application.
               </li>
             </ul>
-            <Button
-              onClick={() => {
-                this.props.startScreenShare();
-                this.props.closeModal();
-              }}
-            >
-              Start Screenshare
-            </Button>
+            <Table definition unstackable striped celled>
+              <Table.Header>
+                <Table.Row>
+                  <Table.HeaderCell />
+                  <Table.HeaderCell>WatchParty Free</Table.HeaderCell>
+                </Table.Row>
+              </Table.Header>
+
+              <Table.Body>
+                <Table.Row>
+                  <Table.Cell>Recommended Max Viewers</Table.Cell>
+                  <Table.Cell>5</Table.Cell>
+                </Table.Row>
+                <Table.Row>
+                  <Table.Cell>Recommended Upload Speed</Table.Cell>
+                  <Table.Cell>5 Mbps per viewer</Table.Cell>
+                </Table.Row>
+                <Table.Row>
+                  <Table.Cell></Table.Cell>
+                  <Table.Cell>
+                    <Button
+                      onClick={() => {
+                        this.props.startScreenShare();
+                        this.props.closeModal();
+                      }}
+                    >
+                      Start Screenshare
+                    </Button>
+                  </Table.Cell>
+                </Table.Row>
+              </Table.Body>
+            </Table>
           </Modal.Description>
         </Modal.Content>
       </Modal>

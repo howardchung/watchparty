@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, Button } from 'semantic-ui-react';
+import { Modal, Button, Table } from 'semantic-ui-react';
 
 export class FileShareModal extends React.Component<{
   closeModal: () => void;
@@ -16,33 +16,42 @@ export class FileShareModal extends React.Component<{
             <ul>
               <li>This feature is only supported on Chrome and Edge.</li>
               <li>
-                To test whether the file can be shared, you can try opening it
-                locally with your browser to see if it will play properly.
-              </li>
-              <li>
-                Certain codecs, such as HEVC, AC3, and H265 may not play in
-                Chrome (they may work in Edge due to licensing)
-              </li>
-              <li>
-                There is a known Chrome issue where the sharer may need to{' '}
-                <a
-                  target="_blank"
-                  rel="noreferrer"
-                  href="https://www.howtogeek.com/412738/how-to-turn-hardware-acceleration-on-and-off-in-chrome/"
-                >
-                  disable hardware acceleration
-                </a>{' '}
-                in order for others to receive video.
+                Certain codecs such as AC3 aren't supported in Chrome (they work
+                in Edge due to licensing)
               </li>
             </ul>
-            <Button
-              onClick={() => {
-                this.props.startFileShare();
-                this.props.closeModal();
-              }}
-            >
-              Start Fileshare
-            </Button>
+            <Table definition unstackable striped celled>
+              <Table.Header>
+                <Table.Row>
+                  <Table.HeaderCell />
+                  <Table.HeaderCell>WatchParty Free</Table.HeaderCell>
+                </Table.Row>
+              </Table.Header>
+
+              <Table.Body>
+                <Table.Row>
+                  <Table.Cell>Recommended Max Viewers</Table.Cell>
+                  <Table.Cell>5</Table.Cell>
+                </Table.Row>
+                <Table.Row>
+                  <Table.Cell>Recommended Upload Speed</Table.Cell>
+                  <Table.Cell>5 Mbps per viewer</Table.Cell>
+                </Table.Row>
+                <Table.Row>
+                  <Table.Cell></Table.Cell>
+                  <Table.Cell>
+                    <Button
+                      onClick={() => {
+                        this.props.startFileShare();
+                        this.props.closeModal();
+                      }}
+                    >
+                      Start Fileshare
+                    </Button>
+                  </Table.Cell>
+                </Table.Row>
+              </Table.Body>
+            </Table>
           </Modal.Description>
         </Modal.Content>
       </Modal>
