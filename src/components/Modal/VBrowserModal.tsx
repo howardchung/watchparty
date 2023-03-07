@@ -56,7 +56,6 @@ export class VBrowserModal extends React.Component<{
     const LaunchButton = withGoogleReCaptcha(
       ({ googleReCaptchaProps, large }: any) => (
         <Button
-          size="large"
           color={large ? 'orange' : undefined}
           onClick={async () => {
             const rcToken = await (
@@ -134,6 +133,11 @@ export class VBrowserModal extends React.Component<{
                     <Table.Cell>24 hours</Table.Cell>
                   </Table.Row>
                   <Table.Row>
+                    <Table.Cell>Recommended Max Viewers</Table.Cell>
+                    <Table.Cell>15</Table.Cell>
+                    <Table.Cell>30</Table.Cell>
+                  </Table.Row>
+                  <Table.Row>
                     <Table.Cell>Region</Table.Cell>
                     <Table.Cell>Where available </Table.Cell>
                     <Table.Cell>
@@ -166,7 +170,7 @@ export class VBrowserModal extends React.Component<{
                     </Table.Cell>
                     <Table.Cell>
                       {this.props.isSubscriber ? (
-                        <LaunchButton large />
+                        <LaunchButton />
                       ) : (
                         subscribeButton
                       )}
