@@ -259,7 +259,7 @@ export async function getStreamPathResults(
   query: string
 ): Promise<SearchResult[]> {
   const response = await window.fetch(
-    streamPath + '/search?q=' + encodeURIComponent(query)
+    streamPath + `/${query ? 'search' : 'top'}?q=` + encodeURIComponent(query)
   );
   const data = await response.json();
   return data;
