@@ -172,6 +172,7 @@ export class ComboBox extends React.Component<ComboBoxProps> {
             style={{ flexGrow: 1 }}
             fluid
             focus
+            size="massive"
             disabled={this.props.disabled}
             onChange={this.doSearch}
             onFocus={(e: any) => {
@@ -242,7 +243,10 @@ export class ComboBox extends React.Component<ComboBoxProps> {
           >
             <Dropdown.Menu direction="left" className={styles.PlaylistMenu}>
               {this.props.playlist.length === 0 && (
-                <Dropdown.Item disabled style={{ color: 'white' }}>
+                <Dropdown.Item
+                  disabled
+                  style={{ color: 'white', fontSize: '1.2vw' }}
+                >
                   There are no items in the playlist.
                 </Dropdown.Item>
               )}
@@ -281,7 +285,7 @@ export class ComboBox extends React.Component<ComboBoxProps> {
           <Button
             icon
             labelPosition="right"
-            size="tiny"
+            size="big"
             className={styles.UploadButton}
             onClick={() => toggleIsUploadPress()}
           >

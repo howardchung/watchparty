@@ -10,13 +10,13 @@ export function EmptyTheatre(props: IEmptyTheatreProps) {
   return (
     <div className={classes.content}>
       <div className={classes.header}>
-        <Image src="logo192.png" size="small" centered />
+        <Image src="logo192.png" size="medium" centered />
       </div>
-      <div>
+      <div className={classes.btncontainer}>
         <Button
           icon
           labelPosition="right"
-          size="tiny"
+          size="massive"
           className={classes.UploadButton}
           // onClick={handleFileClick}
           onClick={() => toggleIsUploadPress()}
@@ -24,23 +24,18 @@ export function EmptyTheatre(props: IEmptyTheatreProps) {
           Upload
           <Icon size="large" name="arrow alternate circle down outline" />
         </Button>
-        {/* <input
-                    ref={inputRef}
-                    type="file"
-                    onChange={handleFileChange}
-                    className={classes.fileInput}
-                    accept="video/*"
-                /> */}
       </div>
 
-      <p>
-        Psst! Did you know you can upload content from your computer and watch
-        in metawood?
-      </p>
-      <p>Click on the upload button above.</p>
-      <p>
-        Alternatively, you can use the search link to look for YouTube URLs.
-      </p>
+      <div>
+        <p>
+          Psst! Did you know you can upload content from your computer and watch
+          in metawood?
+        </p>
+        <p>Click on the upload button above.</p>
+        <p>
+          Alternatively, you can use the search link to look for YouTube URLs.
+        </p>
+      </div>
     </div>
   );
 }

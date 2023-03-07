@@ -273,10 +273,12 @@ app.get('/youtube-trending', async (req, res) => {
   }
 });
 app.post('/createRoom', async (req, res) => {
+  const roomData = req.body;
+
   const genName = () => '/' + makeName(config.SHARD);
   let name = genName();
   console.log('createRoom: ', name);
-  const newRoom = new Room(io, name);
+  const newRoom = new Room(io, name, JSON.stringify(roomData));
   if (postgres) {
     const now = new Date();
     const roomObj: any = {
@@ -290,6 +292,7 @@ app.post('/createRoom', async (req, res) => {
       redisCount('createRoomError');
     }
   }
+
   const decoded = await validateUserToken(req.body?.uid, req.body?.token);
   newRoom.creator = decoded?.email;
   const preload = (req.body?.video || '').slice(0, 20000);
@@ -302,6 +305,36 @@ app.post('/createRoom', async (req, res) => {
   rooms.set(name, newRoom);
   res.json({ name: name.slice(1) });
 });
+// app.post('/createRoom', async (req, res) => {
+//   const genName = () => '/' + makeName(config.SHARD);
+//   let name = genName();
+//   console.log('createRoom: ', name);
+//   const newRoom = new Room(io, name);
+//   if (postgres) {
+//     const now = new Date();
+//     const roomObj: any = {
+//       roomId: newRoom.roomId,
+//       lastUpdateTime: now,
+//       creationTime: now,
+//     };
+//     try {
+//       await insertObject(postgres, 'room', roomObj);
+//     } catch (e) {
+//       redisCount('createRoomError');
+//     }
+//   }
+//   const decoded = await validateUserToken(req.body?.uid, req.body?.token);
+//   newRoom.creator = decoded?.email;
+//   const preload = (req.body?.video || '').slice(0, 20000);
+//   if (preload) {
+//     redisCount('createRoomPreload');
+//     newRoom.video = preload;
+//     newRoom.paused = true;
+//     await newRoom.saveRoom();
+//   }
+//   rooms.set(name, newRoom);
+//   res.json({ name: name.slice(1) });
+// });
 
 app.post('/manageSub', async (req, res) => {
   const decoded = await validateUserToken(req.body?.uid, req.body?.token);

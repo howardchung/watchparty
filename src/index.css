@@ -11,8 +11,16 @@ body {
   /* fix for scrollbar popping in and out at certain widths, but adds a permanent scrollbar */
   overflow-y: scroll;
 }
+.ui.dropdown .scrolling.menu,
+.ui.scrolling.dropdown .menu {
+  max-height: 80vh !important;
+}
 .ui.dropdown .menu > .item {
   padding: 0 !important;
+}
+.ui.dropdown > .text {
+  font-size: 1vw !important;
+  height: 18px;
 }
 button.linkButton {
   background: none !important;

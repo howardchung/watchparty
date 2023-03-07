@@ -7,7 +7,7 @@
   width: 100vw;
   position: absolute;
   top: 18px;
-  max-height: 65vh;
+  max-height: 80vh;
   overflow: auto;
   z-index: 900;
 }
@@ -18,7 +18,13 @@
 .PlaylistDropdown {
   background-color: #1f1f1f !important;
   color: #f4f4f4 !important;
-  width: 150px;
+  width: 180px;
+
+  display: flex !important;
+  align-items: center !important;
+}
+.PlaylistDropdown > .text {
+  font-size: 1.3wv !important;
 }
 .PlaylistMenu {
   background: black !important;

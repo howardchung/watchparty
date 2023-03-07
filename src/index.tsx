@@ -1,5 +1,5 @@
 import './index.css';
-
+import 'rc-slider/assets/index.css';
 import React, { lazy, Suspense } from 'react';
 import ReactDOM from 'react-dom';
 import { BrowserRouter, Route } from 'react-router-dom';

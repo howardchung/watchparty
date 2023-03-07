@@ -10,7 +10,6 @@ import {
   DropdownProps,
   Grid,
   Icon,
-  Input,
   Loader,
   Message,
   Popup,
@@ -1608,7 +1607,7 @@ export default class App extends React.Component<AppProps, AppState> {
     // );
     return (
       <React.Fragment>
-        {!this.state.isAutoPlayable && (
+        {/* {!this.state.isAutoPlayable && (
           <Modal inverted basic open>
             <div style={{ display: 'flex', justifyContent: 'center' }}>
               <Button
@@ -1627,7 +1626,7 @@ export default class App extends React.Component<AppProps, AppState> {
               </Button>
             </div>
           </Modal>
-        )}
+        )} */}
         {this.state.isUploadPress && (
           <UploadFile toggleIsUploadPress={this.toggleIsUploadPress} />
           // <Modal inverted basic open>

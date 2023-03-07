@@ -19,8 +19,8 @@
 
 .ThumbnailWrapper {
   flex: 0 0 auto;
-  width: 150px;
-  height: 86px;
+  width: 250px;
+  height: 186px;
   overflow: hidden;
   position: relative;
   background: rgba(0, 0, 0, 0.1);
@@ -52,8 +52,9 @@
   margin-top: 5px;
   padding: 6px 10px;
   border-radius: 4px;
-  font-size: 14px;
+  font-size: 1.4vw;
   cursor: pointer;
+  margin-top: 20px;
   z-index: 1000 !important;
 }
 
@@ -62,9 +63,9 @@
   line-height: 1.2;
   overflow: hidden;
   font-weight: 700;
-  font-size: 18px;
-  /* white-space: nowrap; */
-  /* text-overflow: ellipsis; */
+  font-size: 1.4vw;
+  white-space: nowrap;
+  text-overflow: ellipsis;
   width: 100%;
   display: block;
 }

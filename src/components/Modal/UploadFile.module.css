@@ -11,17 +11,17 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  height: 80vh;
+  min-height: 60vh;
   background: rgba(0, 0, 0, 0.8);
 }
 .header h5 {
   text-align: center;
-  font-size: 20px;
+  font-size: 1.7vw;
 }
 
 .header ol {
   margin: 10 10px;
-  font-size: 14px;
+  font-size: 1.2vw;
   /* text-align: center; */
 }
 
@@ -60,4 +60,31 @@
   /* background-color: linear-gradient(96.68deg, #8350f1 9.5%, #6824f7 100%); */
   border-radius: 0px 6px 6px 0px;
   color: #f4f4f4 !important;
+}
+
+.copiedBox {
+  background: linear-gradient(
+    281.22deg,
+    rgba(104, 36, 247, 0.15) -18.42%,
+    rgba(142, 106, 220, 0.15) 117.47%
+  );
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 51px;
+  gap: 10px;
+}
+.copiedBox .copiedImage {
+  height: 50px;
+  width: 50px;
+  text-align: center;
+  align-items: center;
+}
+.copiedBox h5 {
+  font-size: 1.8vw;
+  margin: 0;
+}
+.copiedBox h4 {
+  font-size: 1.5vw;
 }

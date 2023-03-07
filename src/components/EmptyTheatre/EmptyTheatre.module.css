@@ -18,8 +18,10 @@
 }
 .content p {
   text-align: center;
-  font-size: 15px;
+  font-size: 1.8vw;
   margin: 4px;
-  line-height: 1.1rem;
   color: #fff9f9b5;
+}
+.btncontainer {
+  margin: 20px 0px;
 }

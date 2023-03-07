@@ -1,8 +1,9 @@
 import React from 'react';
 import { Icon, Progress, Label, Popup } from 'semantic-ui-react';
-import { Slider } from 'react-semantic-ui-range';
+// import { Slider } from 'react-semantic-ui-range';
 import { formatTimestamp } from '../../utils';
 import styles from './Controls.module.css';
+import Slider from 'rc-slider';
 interface ControlsProps {
   duration: number;
   togglePlay: Function;
@@ -84,7 +85,7 @@ export class Controls extends React.Component<ControlsProps> {
             }}
           >
             <Icon
-              size="big"
+              size="huge"
               onClick={() => onSeek(null, currentTime - 10)}
               className={styles.Btn}
               name="angle double left"
@@ -92,7 +93,7 @@ export class Controls extends React.Component<ControlsProps> {
               title="Backward 10 seconds"
             />
             <Icon
-              size="big"
+              size="huge"
               onClick={() => {
                 togglePlay();
               }}
@@ -101,7 +102,7 @@ export class Controls extends React.Component<ControlsProps> {
               name={paused ? 'play circle outline' : 'pause circle outline'}
             />
             <Icon
-              size="big"
+              size="huge"
               onClick={() => onSeek(null, currentTime + 10)}
               className={styles.Btn}
               name="angle double right"
@@ -119,7 +120,7 @@ export class Controls extends React.Component<ControlsProps> {
                 }
                 trigger={
                   <Icon
-                    size="large"
+                    size="huge"
                     onClick={jumpToLeader}
                     disabled={!isBehind}
                     className={`${styles.Btn} control action ${
@@ -139,14 +140,14 @@ export class Controls extends React.Component<ControlsProps> {
                 title="Theater Mode"
               /> */}
               <Icon
-                size="big"
+                size="huge"
                 onClick={() => fullScreen(true)}
                 className="control action"
                 name="expand"
                 title="Fullscreen"
               />
               <Icon
-                size="big"
+                size="huge"
                 onClick={() => {
                   showSubtitle();
                 }}
@@ -157,7 +158,7 @@ export class Controls extends React.Component<ControlsProps> {
                 title="Captions"
               />
               <Icon
-                size="big"
+                size="huge"
                 onClick={() => {
                   toggleMute();
                 }}
@@ -165,21 +166,36 @@ export class Controls extends React.Component<ControlsProps> {
                 name={muted ? 'volume off' : 'volume up'}
                 title="Mute"
               />
-              <div style={{ width: '120px', marginRight: '0px' }}>
+              <div style={{ width: '150px', marginRight: '0px' }}>
                 <Slider
                   value={volume}
-                  color={'blue'}
-                  disabled={muted}
-                  settings={{
-                    min: 0,
-                    max: 1,
-                    step: 0.01,
-                    onChange: (value: number) => {
-                      if (value !== this.props.volume && !isNaN(value)) {
-                        this.props.setVolume(value);
-                      }
-                    },
+                  railStyle={{ height: 15 }}
+                  trackStyle={{ height: 15 }}
+                  handleStyle={{
+                    height: 32,
+                    width: 32,
+                    marginLeft: -14,
+                    marginTop: -9,
                   }}
+                  min={0}
+                  max={1}
+                  step={0.01}
+                  disabled={muted}
+                  onChange={(value: any) => {
+                    if (value !== this.props.volume && !isNaN(value)) {
+                      this.props.setVolume(value);
+                    }
+                  }}
+                  // settings={{
+                  //   min: 0,
+                  //   max: 1,
+                  //   step: 0.01,
+                  //   onChange: (value: number) => {
+                  //     if (value !== this.props.volume && !isNaN(value)) {
+                  //       this.props.setVolume(value);
+                  //     }
+                  //   },
+                  // }}
                 />
               </div>
             </div>
@@ -190,7 +206,7 @@ export class Controls extends React.Component<ControlsProps> {
           {/* ====================== Progress ====================== */}
           <div className="control">{formatTimestamp(currentTime)}</div>
           <Progress
-            size="tiny"
+            size="small"
             color="blue"
             onClick={
               duration < Infinity && !this.props.disabled ? onSeek : undefined
@@ -227,7 +243,7 @@ export class Controls extends React.Component<ControlsProps> {
               </div>
             )}
           </Progress>
-          <div className="control">{formatTimestamp(duration)}</div>
+          <div className={`control `}>{formatTimestamp(duration)}</div>
           {/* ====================== Progress END ====================== */}
         </div>
       </>

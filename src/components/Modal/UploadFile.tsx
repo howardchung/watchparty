@@ -3,7 +3,8 @@ import axios, { AxiosRequestConfig } from 'axios';
 import React from 'react';
 import { Button, Icon, Input, Modal, Progress } from 'semantic-ui-react';
 import classes from './UploadFile.module.css';
-
+import placeholderImage from '../../assets/placeholder/placeholder-image.webp';
+import copiedImage from '../../assets/upload/copied.svg';
 export interface IUploadFileProps {
   toggleIsUploadPress: Function;
 }
@@ -15,6 +16,7 @@ export default function UploadFile(props: IUploadFileProps) {
   const [video, setVideo] = React.useState<string | null>(null);
   const [progress, setProgress] = React.useState<number>(0);
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
+  const [isCopied, setIsCopied] = React.useState<boolean>(false);
   const handleFileClick = () => {
     inputRef?.current?.click();
   };
@@ -71,7 +73,7 @@ export default function UploadFile(props: IUploadFileProps) {
       navigator.clipboard.writeText(video).then(
         function () {
           console.log('Copying to clipboard was successful!');
-          alert('Copied to clipboard!');
+          setIsCopied(true);
         },
         function (err) {
           console.error(' Could not copy text: ', err);
@@ -81,11 +83,7 @@ export default function UploadFile(props: IUploadFileProps) {
   return (
     <Modal inverted basic open className={classes.wrapper}>
       <div className={classes.cancelbtn}>
-        <Icon
-          size="large"
-          name="cancel"
-          onClick={() => toggleIsUploadPress()}
-        />
+        <Icon size="big" name="cancel" onClick={() => toggleIsUploadPress()} />
       </div>
 
       {/* ====================== UPLOAD FILE UI ====================== */}
@@ -105,7 +103,7 @@ export default function UploadFile(props: IUploadFileProps) {
             <Button
               icon
               labelPosition="right"
-              size="tiny"
+              size="big"
               className={classes.UploadButton}
               onClick={handleFileClick}
               // onClick={() => toggleIsUploadPress()}
@@ -127,17 +125,26 @@ export default function UploadFile(props: IUploadFileProps) {
         <Loader indeterminate>Uploading Files</Loader>
       </Dimmer> */}
       {/* ====================== UI AFTER FILE SELECTION ====================== */}
-      {File && (
+      {File && !isCopied && (
         <div className={classes.content}>
           {/* <Image src={DemoImage} size='small' centered /> */}
-          <video
-            src={video ?? 'Uploading...'}
-            width="170px"
-            height="120px"
-            autoPlay={false}
-            muted
-          />
-          <h3 style={{ margin: '10px' }}>{File.name}</h3>
+          {video ? (
+            <video
+              src={video ?? 'Uploading...'}
+              width="220px"
+              height="150px"
+              autoPlay={false}
+              muted
+            />
+          ) : (
+            <img
+              src={placeholderImage}
+              width="220px"
+              height="150"
+              alt="loading..."
+            />
+          )}
+          <h1 style={{ margin: '10px' }}>{File.name}</h1>
           <div
             style={{
               display: 'flex',
@@ -160,7 +167,7 @@ export default function UploadFile(props: IUploadFileProps) {
                 marginBottom: 0,
                 position: 'relative',
                 width: '100%',
-                minWidth: '400px',
+                minWidth: '420px',
                 marginLeft: '40px',
               }}
             />
@@ -179,9 +186,24 @@ export default function UploadFile(props: IUploadFileProps) {
                 }}
                 placeholder=""
                 value={video}
+                size="large"
                 className={classes.input}
               />
             )}
+          </div>
+        </div>
+      )}
+
+      {isCopied && (
+        <div className={classes.content}>
+          <div className={classes.copiedBox}>
+            <img
+              src={copiedImage}
+              className={classes.copiedImage}
+              alt="copied"
+            />
+            <h5>Link copied successfully</h5>
+            <h4>Paste your generated link in Metawood application</h4>
           </div>
         </div>
       )}
