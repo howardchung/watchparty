@@ -1,5 +1,6 @@
 import './App.css';
 
+import { v4 as uuidv4 } from 'uuid';
 import * as MediasoupClient from 'mediasoup-client';
 import axios from 'axios';
 import React from 'react';
@@ -967,6 +968,7 @@ export default class App extends React.Component<AppProps, AppState> {
     let videoProducer: any = null;
     let audioProducer: any = null;
     let socket: Socket | null = null;
+    const randomId = uuidv4();
 
     // =========== socket.io ==========
     const connectSocket = () => {
@@ -977,14 +979,9 @@ export default class App extends React.Component<AppProps, AppState> {
       }
 
       return new Promise<void>((resolve, reject) => {
-        // TODO generate a random ID to use here
-        socket = io(
-          'https://azure.howardchung.net/mediasoup/' + this.state.roomId,
-          {
-            transports: ['websocket'],
-            query: { shard: '0' },
-          }
-        );
+        socket = io(process.env.REACT_APP_MEDIASOUP_SERVER + '/' + randomId, {
+          transports: ['websocket'],
+        });
 
         socket?.on('connect', function () {
           console.log('socket.io connected()');
@@ -1151,6 +1148,7 @@ export default class App extends React.Component<AppProps, AppState> {
     }
 
     localStream = await startMedia();
+    this.setMedia(null, { value: 'mediasoup://' + randomId });
     await publish();
   };
 
@@ -1176,12 +1174,12 @@ export default class App extends React.Component<AppProps, AppState> {
       }
 
       return new Promise<void>((resolve, reject) => {
-        // TODO generate a random ID to use here
         socket = io(
-          'https://azure.howardchung.net/mediasoup/' + this.state.roomId,
+          process.env.REACT_APP_MEDIASOUP_SERVER +
+            '/' +
+            this.state.currentMedia.slice('mediasoup://'.length),
           {
             transports: ['websocket'],
-            query: { shard: '0' },
           }
         );
 
