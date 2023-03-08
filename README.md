@@ -14,6 +14,8 @@ An website for watching videos together.
   - Stream-your-own-file
   - Video files on the Internet (anything accessible via HTTP)
   - YouTube videos
+  - Magnet links (via WebTorrent)
+  - .m3u8 streams (HLS)
 - Create separate rooms for users on demand
 - Text chat
 - Video chat
