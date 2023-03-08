@@ -4,6 +4,7 @@ import { Modal, Button, Table } from 'semantic-ui-react';
 export class ScreenShareModal extends React.Component<{
   closeModal: () => void;
   startScreenShare: () => void;
+  startMediasoup: () => void;
 }> {
   render() {
     const { closeModal } = this.props;
@@ -25,6 +26,7 @@ export class ScreenShareModal extends React.Component<{
                 <Table.Row>
                   <Table.HeaderCell />
                   <Table.HeaderCell>WatchParty Free</Table.HeaderCell>
+                  <Table.HeaderCell>WatchParty Plus</Table.HeaderCell>
                 </Table.Row>
               </Table.Header>
 
@@ -32,10 +34,12 @@ export class ScreenShareModal extends React.Component<{
                 <Table.Row>
                   <Table.Cell>Recommended Max Viewers</Table.Cell>
                   <Table.Cell>5</Table.Cell>
+                  <Table.Cell>20</Table.Cell>
                 </Table.Row>
                 <Table.Row>
                   <Table.Cell>Recommended Upload Speed</Table.Cell>
                   <Table.Cell>5 Mbps per viewer</Table.Cell>
+                  <Table.Cell>5 Mbps</Table.Cell>
                 </Table.Row>
                 <Table.Row>
                   <Table.Cell></Table.Cell>
@@ -47,6 +51,16 @@ export class ScreenShareModal extends React.Component<{
                       }}
                     >
                       Start Screenshare
+                    </Button>
+                  </Table.Cell>
+                  <Table.Cell>
+                    <Button
+                      onClick={() => {
+                        this.props.startMediasoup();
+                        this.props.closeModal();
+                      }}
+                    >
+                      Start Screenshare w/Relay
                     </Button>
                   </Table.Cell>
                 </Table.Row>
