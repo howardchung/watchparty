@@ -5,6 +5,11 @@ import { Button, Icon, Input, Modal, Progress } from 'semantic-ui-react';
 import classes from './UploadFile.module.css';
 import placeholderImage from '../../assets/placeholder/placeholder-image.webp';
 import copiedImage from '../../assets/upload/copied.svg';
+declare global {
+  interface Window {
+    vuplex: any;
+  }
+}
 export interface IUploadFileProps {
   toggleIsUploadPress: Function;
 }
@@ -69,6 +74,24 @@ export default function UploadFile(props: IUploadFileProps) {
   };
 
   const copyToClipboard = () => {
+    try {
+      if (window?.vuplex) {
+        // console.log('vuplex: ', { vuplex });
+        window?.vuplex.postMessage({ type: 'videoURL', message: video });
+        // The window.vuplex object already exists, so go ahead and send the message.
+        // sendMessageToCSharp();
+      } else {
+        // The window.vuplex object hasn't been initialized yet because the page is still
+        // loading, so add an event listener to send the message once it's initialized.
+        window.addEventListener(
+          'vuplexready',
+          window?.vuplex.postMessage({ type: 'videoURL', message: video })
+        );
+      }
+    } catch (error) {
+      console.error('Something went wrong!');
+    }
+
     video &&
       navigator.clipboard.writeText(video).then(
         function () {
@@ -203,7 +226,7 @@ export default function UploadFile(props: IUploadFileProps) {
               alt="copied"
             />
             <h5>Link copied successfully</h5>
-            <h4>Paste your generated link in Metawood application</h4>
+            <h4>Paste it in the search box to start viewing</h4>
           </div>
         </div>
       )}
