@@ -580,7 +580,7 @@ export default class App extends React.Component<AppProps, AppState> {
 
           if (this.isScreenShare() || this.isFileShare() || this.isVBrowser()) {
             console.log(
-              'skipping REC:host video update since we are using webRTC (fileshare, screenshare, or vbrowser). Check setupScreenshareConnections()'
+              'skipping REC:host video update since we are using webRTC (fileshare, screenshare, or vbrowser). Check setupRTCConnections()'
             );
             if (!(this.isVBrowser() && !this.getVBrowserHost())) {
               // Remove the loader unless we're waiting for a vbrowser
@@ -739,7 +739,7 @@ export default class App extends React.Component<AppProps, AppState> {
       this.setState(
         { participants: data, rosterUpdateTS: Number(new Date()) },
         () => {
-          this.setupScreenShareConnections();
+          this.setupRTCConnections();
         }
       );
     });
@@ -1296,11 +1296,10 @@ export default class App extends React.Component<AppProps, AppState> {
     this.isLocalStreamAFile = false;
   };
 
-  setupScreenShareConnections = async () => {
+  setupRTCConnections = async () => {
     if (!this.isScreenShare() && !this.isFileShare()) {
       return;
     } else if (this.state.currentMedia.includes('@')) {
-      this.setLoadingFalse();
       let prefix = 'screenshare://';
       if (this.isFileShare()) {
         prefix = 'fileshare://';
