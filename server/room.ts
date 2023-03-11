@@ -286,9 +286,9 @@ export class Room {
   protected getSharerId = (): string => {
     let sharerId = '';
     if (this.video?.startsWith('screenshare://')) {
-      sharerId = this.video?.slice('screenshare://'.length);
+      sharerId = this.video?.slice('screenshare://'.length).split('@')[0];
     } else if (this.video?.startsWith('fileshare://')) {
-      sharerId = this.video?.slice('fileshare://'.length);
+      sharerId = this.video?.slice('fileshare://'.length).split('@')[0];
     }
     return sharerId;
   };
@@ -697,7 +697,10 @@ export class Room {
     this.io.of(this.roomId).emit('roster', this.getRosterForApp());
   };
 
-  private joinScreenSharing = (socket: Socket, data: { file: boolean }) => {
+  private joinScreenSharing = (
+    socket: Socket,
+    data: { file: boolean; mediasoup?: string }
+  ) => {
     if (!this.validateLock(socket.id)) {
       return;
     }
@@ -707,11 +710,27 @@ export class Room {
       return;
     }
     if (data && data.file) {
-      this.cmdHost(socket, 'fileshare://' + this.clientIdMap[socket.id]);
-      redisCount('fileShareStarts');
+      if (data?.mediasoup) {
+        this.cmdHost(
+          socket,
+          `fileshare://${this.clientIdMap[socket.id]}@${data.mediasoup}`
+        );
+        redisCount('mediasoupStarts');
+      } else {
+        this.cmdHost(socket, 'fileshare://' + this.clientIdMap[socket.id]);
+        redisCount('fileShareStarts');
+      }
     } else {
-      this.cmdHost(socket, 'screenshare://' + this.clientIdMap[socket.id]);
-      redisCount('screenShareStarts');
+      if (data?.mediasoup) {
+        this.cmdHost(
+          socket,
+          `screenshare://${this.clientIdMap[socket.id]}@${data.mediasoup}`
+        );
+        redisCount('mediasoupStarts');
+      } else {
+        this.cmdHost(socket, 'screenshare://' + this.clientIdMap[socket.id]);
+        redisCount('screenShareStarts');
+      }
     }
     this.io.of(this.roomId).emit('roster', this.getRosterForApp());
   };

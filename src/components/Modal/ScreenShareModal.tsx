@@ -2,9 +2,9 @@ import React from 'react';
 import { Modal, Button, Table } from 'semantic-ui-react';
 
 export class ScreenShareModal extends React.Component<{
+  beta: boolean;
   closeModal: () => void;
-  startScreenShare: () => void;
-  startMediasoup: () => void;
+  startScreenShare: (useMediaSoup: boolean) => void;
 }> {
   render() {
     const { closeModal } = this.props;
@@ -46,7 +46,7 @@ export class ScreenShareModal extends React.Component<{
                   <Table.Cell>
                     <Button
                       onClick={() => {
-                        this.props.startScreenShare();
+                        this.props.startScreenShare(false);
                         this.props.closeModal();
                       }}
                     >
@@ -55,12 +55,16 @@ export class ScreenShareModal extends React.Component<{
                   </Table.Cell>
                   <Table.Cell>
                     <Button
+                      color="orange"
+                      disabled={!this.props.beta}
                       onClick={() => {
-                        this.props.startMediasoup();
+                        this.props.startScreenShare(true);
                         this.props.closeModal();
                       }}
                     >
-                      Start Screenshare w/Relay
+                      {this.props.beta
+                        ? 'Start Screenshare w/Relay'
+                        : 'Coming soon'}
                     </Button>
                   </Table.Cell>
                 </Table.Row>
