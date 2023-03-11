@@ -1894,6 +1894,8 @@ export default class App extends React.Component<AppProps, AppState> {
         {this.state.isScreenShareModalOpen && (
           <ScreenShareModal
             beta={this.props.beta}
+            isSubscriber={this.props.isSubscriber}
+            user={this.props.user}
             closeModal={() => this.setState({ isScreenShareModalOpen: false })}
             startScreenShare={this.startScreenShare}
           />
@@ -1901,6 +1903,8 @@ export default class App extends React.Component<AppProps, AppState> {
         {this.state.isFileShareModalOpen && (
           <FileShareModal
             beta={this.props.beta}
+            isSubscriber={this.props.isSubscriber}
+            user={this.props.user}
             closeModal={() => this.setState({ isFileShareModalOpen: false })}
             startFileShare={this.startFileShare}
           />

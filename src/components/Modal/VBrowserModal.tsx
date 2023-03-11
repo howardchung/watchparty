@@ -16,7 +16,7 @@ export class VBrowserModal extends React.Component<{
     options: { size: string; region: string }
   ) => void;
   isSubscriber: boolean;
-  user?: firebase.User;
+  user: firebase.User | undefined;
   beta?: boolean;
 }> {
   state = {
