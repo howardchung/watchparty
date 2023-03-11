@@ -542,14 +542,6 @@ export default class App extends React.Component<AppProps, AppState> {
     });
     socket.on('REC:host', async (data: HostState) => {
       let currentMedia = data.video || '';
-      if (this.mediasoupPubSocket) {
-        this.mediasoupPubSocket.close();
-        this.mediasoupPubSocket = null;
-      }
-      if (this.mediasoupSubSocket) {
-        this.mediasoupSubSocket.close();
-        this.mediasoupSubSocket = null;
-      }
       if (this.isScreenShare() && !currentMedia.startsWith('screenshare://')) {
         this.stopPublishingLocalStream();
       }
@@ -862,8 +854,6 @@ export default class App extends React.Component<AppProps, AppState> {
     const localStream = this.localStreamToPublish;
     let device: MediasoupClient.types.Device | null = null;
     let producerTransport: any = null;
-    let videoProducer: any = null;
-    let audioProducer: any = null;
 
     // =========== socket.io ==========
     const connectSocket = (mediasoupURL: string) => {
@@ -874,34 +864,12 @@ export default class App extends React.Component<AppProps, AppState> {
 
         const socket = this.mediasoupPubSocket;
         socket?.on('connect', function () {
-          console.log('socket.io connected()');
+          console.log('PUBLISH: connected to socket.io');
+          resolve();
         });
         socket?.on('error', function (err) {
-          console.error('socket.io ERROR:', err);
+          console.error('PUBLISH: socket.io ERROR:', err);
           reject(err);
-        });
-        socket?.on('disconnect', function (evt) {
-          console.log('socket.io disconnect:', evt);
-        });
-        socket?.on('message', function (message) {
-          console.log('socket.io message:', message);
-          if (message.type === 'welcome') {
-            if (socket?.id !== message.id) {
-              console.warn(
-                'WARN: something wrong with clientID',
-                socket?.id,
-                message.id
-              );
-            }
-
-            console.log('connected to server.');
-            resolve();
-          } else {
-            console.error('UNKNOWN message from server:', message);
-          }
-        });
-        socket?.on('newProducer', async function (message) {
-          console.warn('IGNORE socket.io newProducer:', message);
         });
       });
     };
@@ -922,17 +890,17 @@ export default class App extends React.Component<AppProps, AppState> {
 
     async function publish() {
       // --- get transport info ---
-      console.log('--- createProducerTransport --');
+      console.log('PUBLISH: --- createProducerTransport --');
       const params = await sendRequest('createProducerTransport', {});
-      console.log('transport params:', params);
+      console.log('PUBLISH: transport params:', params);
       producerTransport = device?.createSendTransport(params);
-      console.log('createSendTransport:', producerTransport);
+      console.log('PUBLISH: createSendTransport:', producerTransport);
 
       // --- join & start publish --
       producerTransport.on(
         'connect',
         async ({ dtlsParameters }: any, callback: any, errback: any) => {
-          console.log('--trasnport connect');
+          console.log('PUBLISH: --transport connect');
           sendRequest('connectProducerTransport', {
             dtlsParameters: dtlsParameters,
           })
@@ -944,7 +912,7 @@ export default class App extends React.Component<AppProps, AppState> {
       producerTransport.on(
         'produce',
         async ({ kind, rtpParameters }: any, callback: any, errback: any) => {
-          console.log('--trasnport produce');
+          console.log('PUBLISH: --transport produce');
           try {
             const { id } = await sendRequest('produce', {
               transportId: producerTransport.id,
@@ -958,37 +926,35 @@ export default class App extends React.Component<AppProps, AppState> {
         }
       );
 
-      producerTransport.on('connectionstatechange', (state: any) => {
-        switch (state) {
-          case 'connecting':
-            console.log('publishing...');
-            break;
+      // producerTransport.on('connectionstatechange', (state: any) => {
+      //   switch (state) {
+      //     case 'connecting':
+      //       console.log('PUBLISH: connecting');
+      //       break;
 
-          case 'connected':
-            console.log('published');
-            break;
+      //     case 'connected':
+      //       console.log('PUBLISH: connected');
+      //       break;
 
-          case 'failed':
-            console.log('failed');
-            producerTransport.close();
-            break;
+      //     case 'failed':
+      //       console.log('PUBLISH: failed');
+      //       producerTransport.close();
+      //       break;
 
-          default:
-            break;
-        }
-      });
+      //     default:
+      //       break;
+      //   }
+      // });
 
       const videoTrack = localStream?.getVideoTracks()[0];
       if (videoTrack) {
         const trackParams = { track: videoTrack };
-        videoProducer = await producerTransport.produce(trackParams);
-        console.log(videoProducer);
+        await producerTransport.produce(trackParams);
       }
       const audioTrack = localStream?.getAudioTracks()[0];
       if (audioTrack) {
         const trackParams = { track: audioTrack };
-        audioProducer = await producerTransport.produce(trackParams);
-        console.log(audioProducer);
+        await producerTransport.produce(trackParams);
       }
     }
 
@@ -1000,7 +966,7 @@ export default class App extends React.Component<AppProps, AppState> {
     await connectSocket(mediasoupURL);
     // --- get capabilities --
     const data = await sendRequest('getRouterRtpCapabilities', {});
-    console.log('getRouterRtpCapabilities:', data);
+    console.log('PUBLISH: getRouterRtpCapabilities:', data);
     await loadDevice(data);
     await publish();
   };
@@ -1009,8 +975,6 @@ export default class App extends React.Component<AppProps, AppState> {
   consumeMediasoup = async (mediaSoupURL: string) => {
     let device: any = null;
     let consumerTransport: any = null;
-    let videoConsumer: any = null;
-    let audioConsumer: any = null;
 
     // =========== socket.io ==========
     const connectSocket = () => {
@@ -1020,48 +984,21 @@ export default class App extends React.Component<AppProps, AppState> {
         });
         const socket = this.mediasoupSubSocket;
         socket?.on('connect', function () {
-          console.log('socket.io connected()');
+          console.log('CONSUME: connected to socket.io');
+          resolve();
         });
         socket?.on('error', function (err) {
-          console.error('socket.io ERROR:', err);
+          console.error('CONSUME: socket.io ERROR:', err);
           reject(err);
         });
-        socket?.on('disconnect', function (evt) {
-          console.log('socket.io disconnect:', evt);
-        });
-        socket?.on('message', function (message) {
-          console.log('socket.io message:', message);
-          if (message.type === 'welcome') {
-            if (socket?.id !== message.id) {
-              console.warn(
-                'WARN: something wrong with clientID',
-                socket?.id,
-                message.id
-              );
-            }
-
-            console.log('connected to server.');
-            resolve();
-          } else {
-            console.error('UNKNOWN message from server:', message);
-          }
-        });
         socket?.on('newProducer', async function (message) {
-          console.log('socket.io newProducer:', message);
+          console.log('CONSUME: socket.io newProducer:', message);
           if (consumerTransport) {
             // start consume
             if (message.kind === 'video') {
-              videoConsumer = await consumeAndResume(
-                consumerTransport,
-                message.kind
-              );
-              console.log(videoConsumer);
+              await consumeAndResume(message.kind);
             } else if (message.kind === 'audio') {
-              audioConsumer = await consumeAndResume(
-                consumerTransport,
-                message.kind
-              );
-              console.log(audioConsumer);
+              await consumeAndResume(message.kind);
             }
           }
         });
@@ -1071,14 +1008,6 @@ export default class App extends React.Component<AppProps, AppState> {
         //   const localId = message.localId;
         //   const remoteId = message.remoteId;
         //   const kind = message.kind;
-        //   console.log(
-        //     '--try removeConsumer remoteId=' +
-        //       remoteId +
-        //       ', localId=' +
-        //       localId +
-        //       ', kind=' +
-        //       kind
-        //   );
         //   if (kind === 'video') {
         //     if (videoConsumer) {
         //       videoConsumer.close();
@@ -1109,9 +1038,8 @@ export default class App extends React.Component<AppProps, AppState> {
     };
 
     // =========== media handling ==========
-    const addRemoteTrack = (id: string | null, track: MediaStreamTrack) => {
+    const addRemoteTrack = (track: MediaStreamTrack) => {
       let video = document.getElementById('leftVideo') as HTMLMediaElement;
-      console.log(track, video.srcObject);
       if (video.srcObject) {
         // Track already exists, add it
         (video.srcObject as MediaStream).addTrack(track);
@@ -1123,26 +1051,26 @@ export default class App extends React.Component<AppProps, AppState> {
       this.doPlay();
     };
 
-    async function consumeAndResume(transport: any, kind: any) {
+    async function consumeAndResume(kind: any) {
       const consumer = await consume(consumerTransport, kind);
       if (consumer) {
-        console.log('-- track exist, consumer ready. kind=' + kind);
+        console.log('CONSUME: -- track exist, consumer ready. kind=' + kind);
         if (kind === 'video') {
-          console.log('-- resume kind=' + kind);
+          console.log('CONSUME: -- resume kind=' + kind);
           sendRequest('resume', { kind: kind })
             .then(() => {
-              console.log('resume OK');
+              console.log('CONSUME: resume OK');
               return consumer;
             })
             .catch((err) => {
-              console.error('resume ERROR:', err);
+              console.error('CONSUME: resume ERROR:', err);
               return consumer;
             });
         } else {
-          console.log('-- do not resume kind=' + kind);
+          console.log('CONSUME: -- do not resume kind=' + kind);
         }
       } else {
-        console.log('-- no consumer yet. kind=' + kind);
+        console.log('CONSUME: -- no consumer yet. kind=' + kind);
         return null;
       }
     }
@@ -1150,23 +1078,22 @@ export default class App extends React.Component<AppProps, AppState> {
     async function loadDevice(routerRtpCapabilities: any) {
       try {
         device = new MediasoupClient.Device();
+        await device.load({ routerRtpCapabilities });
       } catch (error: any) {
         if (error.name === 'UnsupportedError') {
           console.error('browser not supported');
         }
       }
-      await device.load({ routerRtpCapabilities });
     }
 
     async function consume(transport: any, trackKind: any) {
-      console.log('--start of consume --kind=' + trackKind);
+      console.log('CONSUME: --start of consume --kind=' + trackKind);
       const { rtpCapabilities } = device;
-      //const data = await socket.request('consume', { rtpCapabilities });
       const data = await sendRequest('consume', {
         rtpCapabilities: rtpCapabilities,
         kind: trackKind,
       }).catch((err) => {
-        console.error('consume ERROR:', err);
+        console.error('CONSUME: ERROR:', err);
       });
       const { producerId, id, kind, rtpParameters } = data;
 
@@ -1180,59 +1107,57 @@ export default class App extends React.Component<AppProps, AppState> {
           codecOptions,
         });
 
-        addRemoteTrack(null, consumer.track);
-        console.log('--end of consume');
+        addRemoteTrack(consumer.track);
+        console.log('CONSUME: --end of consume');
         return consumer;
       } else {
-        console.warn('--- remote producer NOT READY');
+        console.warn('CONSUME: ---remote producer NOT READY');
         return null;
       }
     }
 
     async function subscribe() {
-      // --- prepare transport ---
-      console.log('--- createConsumerTransport --');
+      console.log('CONSUME: ---createConsumerTransport --');
       const params = await sendRequest('createConsumerTransport', {});
-      console.log('transport params:', params);
+      console.log('CONSUME: transport params:', params);
       consumerTransport = device.createRecvTransport(params);
-      console.log('createConsumerTransport:', consumerTransport);
+      console.log('CONSUME: createConsumerTransport:', consumerTransport);
 
-      // --- join & start publish --
+      // --- join & start watching
       consumerTransport.on(
         'connect',
         async ({ dtlsParameters }: any, callback: any, errback: any) => {
-          console.log('--consumer trasnport connect');
+          console.log('CONSUME: ---consumer transport connect');
           sendRequest('connectConsumerTransport', {
             dtlsParameters: dtlsParameters,
           })
             .then(callback)
             .catch(errback);
-
-          //consumer = await consumeAndResume(consumerTransport);
         }
       );
 
-      consumerTransport.on('connectionstatechange', (state: string) => {
-        switch (state) {
-          case 'connecting':
-            console.log('subscribing...');
-            break;
+      // consumerTransport.on('connectionstatechange', (state: string) => {
+      //   switch (state) {
+      //     case 'connecting':
+      //       console.log('CONSUME: connecting');
+      //       break;
 
-          case 'connected':
-            console.log('subscribed');
-            break;
+      //     case 'connected':
+      //       console.log('CONSUME: connected');
+      //       break;
 
-          case 'failed':
-            console.log('failed');
-            break;
+      //     case 'failed':
+      //       console.log('CONSUME: failed');
+      //       consumerTransport.close();
+      //       break;
 
-          default:
-            break;
-        }
-      });
+      //     default:
+      //       break;
+      //   }
+      // });
 
-      videoConsumer = await consumeAndResume(consumerTransport, 'video');
-      audioConsumer = await consumeAndResume(consumerTransport, 'audio');
+      await consumeAndResume('video');
+      await consumeAndResume('audio');
     }
 
     // Clear the srcobject so we load our stream when received
@@ -1266,6 +1191,14 @@ export default class App extends React.Component<AppProps, AppState> {
     });
     this.publisherConns = {};
     this.isLocalStreamAFile = false;
+    if (this.mediasoupPubSocket) {
+      this.mediasoupPubSocket.close();
+      this.mediasoupPubSocket = null;
+    }
+    if (this.mediasoupSubSocket) {
+      this.mediasoupSubSocket.close();
+      this.mediasoupSubSocket = null;
+    }
   };
 
   setupRTCConnections = async () => {
