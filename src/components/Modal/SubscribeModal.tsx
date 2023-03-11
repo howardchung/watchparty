@@ -79,6 +79,16 @@ export class SubscribeModal extends React.Component<{
                   </Table.Cell>
                 </Table.Row>
                 <Table.Row>
+                  <Table.Cell>Number of Permanent Rooms</Table.Cell>
+                  <Table.Cell>1</Table.Cell>
+                  <Table.Cell>20</Table.Cell>
+                </Table.Row>
+                {/* <Table.Row>
+                  <Table.Cell>Max Room Capacity</Table.Cell>
+                  <Table.Cell>20</Table.Cell>
+                  <Table.Cell>100</Table.Cell>
+                </Table.Row> */}
+                <Table.Row>
                   <Table.Cell>VBrowser Access</Table.Cell>
                   <Table.Cell>When capacity allows</Table.Cell>
                   <Table.Cell>Anytime</Table.Cell>
@@ -106,15 +116,14 @@ export class SubscribeModal extends React.Component<{
                   </Table.Cell>
                 </Table.Row>
                 <Table.Row>
-                  <Table.Cell>Number of Permanent Rooms</Table.Cell>
-                  <Table.Cell>1</Table.Cell>
-                  <Table.Cell>20</Table.Cell>
+                  <Table.Cell>
+                    Share your screen/file to more viewers with Relay
+                  </Table.Cell>
+                  <Table.Cell></Table.Cell>
+                  <Table.Cell>
+                    <Icon name="check" />
+                  </Table.Cell>
                 </Table.Row>
-                {/* <Table.Row>
-                  <Table.Cell>Max Room Capacity</Table.Cell>
-                  <Table.Cell>20</Table.Cell>
-                  <Table.Cell>100</Table.Cell>
-                </Table.Row> */}
                 <Table.Row>
                   <Table.Cell>Custom Room URLs</Table.Cell>
                   <Table.Cell></Table.Cell>

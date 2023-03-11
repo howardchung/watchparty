@@ -1,13 +1,20 @@
 import React from 'react';
 import { Modal, Button, Table } from 'semantic-ui-react';
+import firebase from 'firebase/compat/app';
+import { SubscribeButton } from '../SubscribeButton/SubscribeButton';
 
 export class FileShareModal extends React.Component<{
-  beta: boolean;
   closeModal: () => void;
   startFileShare: (useMediaSoup: boolean) => void;
+  isSubscriber: boolean;
+  user: firebase.User | undefined;
+  beta?: boolean;
 }> {
   render() {
     const { closeModal } = this.props;
+    const subscribeButton = !this.props.isSubscriber ? (
+      <SubscribeButton user={this.props.user} />
+    ) : null;
     return (
       <Modal open={true} onClose={closeModal as any}>
         <Modal.Header>Share A File</Modal.Header>
@@ -70,18 +77,19 @@ export class FileShareModal extends React.Component<{
                     </Button>
                   </Table.Cell>
                   <Table.Cell>
-                    <Button
-                      color="orange"
-                      disabled={!this.props.beta}
-                      onClick={() => {
-                        this.props.startFileShare(true);
-                        this.props.closeModal();
-                      }}
-                    >
-                      {this.props.beta
-                        ? 'Start Fileshare w/Relay'
-                        : 'Coming soon'}
-                    </Button>
+                    {this.props.isSubscriber ? (
+                      <Button
+                        color="orange"
+                        onClick={() => {
+                          this.props.startFileShare(true);
+                          this.props.closeModal();
+                        }}
+                      >
+                        Start Fileshare w/Relay
+                      </Button>
+                    ) : (
+                      subscribeButton
+                    )}
                   </Table.Cell>
                 </Table.Row>
               </Table.Body>
