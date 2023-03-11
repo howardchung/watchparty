@@ -519,7 +519,7 @@ export default class App extends React.Component<AppProps, AppState> {
     socket.on('REC:pause', () => {
       this.doPause();
     });
-    socket.on('REC:seek', (data: any) => {
+    socket.on('REC:seek', (data: number) => {
       this.Player().seekVideo(data);
     });
     socket.on('REC:playbackRate', (data: number) => {
@@ -756,51 +756,58 @@ export default class App extends React.Component<AppProps, AppState> {
     socket.on('playlist', (data: PlaylistVideo[]) => {
       this.setState({ playlist: data });
     });
-    socket.on('signalSS', async (data: any) => {
-      process.env.NODE_ENV === 'development' && console.log(data);
-      // Handle messages received from signaling server
-      const msg = data.msg;
-      const from = data.from;
-      // Determine whether the message came from the sharer or the sharee
-      const pc = (
-        data.sharer ? this.consumerConn : this.publisherConns[from]
-      ) as RTCPeerConnection;
-      if (msg.ice !== undefined) {
-        pc.addIceCandidate(new RTCIceCandidate(msg.ice));
-      } else if (msg.sdp && msg.sdp.type === 'offer') {
-        // console.log('offer');
-        // TODO Currently ios/Safari cannot handle this property, so remove it from the offer
-        const _sdp = msg.sdp.sdp
-          .split('\n')
-          .filter((line: string) => {
-            return line.trim() !== 'a=extmap-allow-mixed';
-          })
-          .join('\n');
-        msg.sdp.sdp = _sdp;
-        await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
-        const answer = await pc.createAnswer();
-        // Allow stereo audio
-        answer.sdp = answer.sdp?.replace(
-          'useinbandfec=1',
-          'useinbandfec=1; stereo=1; maxaveragebitrate=510000'
-        );
-        // console.log(answer.sdp);
-        // Allow multichannel audio if Chromium
-        const isChromium = Boolean((window as any).chrome);
-        if (isChromium) {
-          answer.sdp = answer.sdp
-            ?.replace('opus/48000/2', 'multiopus/48000/6')
-            .replace(
-              'useinbandfec=1',
-              'channel_mapping=0,4,1,2,3,5; num_streams=4; coupled_streams=2;maxaveragebitrate=510000;minptime=10;useinbandfec=1'
-            );
+    socket.on(
+      'signalSS',
+      async (data: {
+        msg: { ice: any; sdp: any };
+        from: string;
+        sharer: boolean;
+      }) => {
+        process.env.NODE_ENV === 'development' && console.log(data);
+        // Handle messages received from signaling server
+        const msg = data.msg;
+        const from = data.from;
+        // Determine whether the message came from the sharer or the sharee
+        const pc = (
+          data.sharer ? this.consumerConn : this.publisherConns[from]
+        ) as RTCPeerConnection;
+        if (msg.ice !== undefined) {
+          pc.addIceCandidate(new RTCIceCandidate(msg.ice));
+        } else if (msg.sdp && msg.sdp.type === 'offer') {
+          // console.log('offer');
+          // TODO Currently ios/Safari cannot handle this property, so remove it from the offer
+          const _sdp = msg.sdp.sdp
+            .split('\n')
+            .filter((line: string) => {
+              return line.trim() !== 'a=extmap-allow-mixed';
+            })
+            .join('\n');
+          msg.sdp.sdp = _sdp;
+          await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
+          const answer = await pc.createAnswer();
+          // Allow stereo audio
+          answer.sdp = answer.sdp?.replace(
+            'useinbandfec=1',
+            'useinbandfec=1; stereo=1; maxaveragebitrate=510000'
+          );
+          // console.log(answer.sdp);
+          // Allow multichannel audio if Chromium
+          const isChromium = Boolean((window as any).chrome);
+          if (isChromium) {
+            answer.sdp = answer.sdp
+              ?.replace('opus/48000/2', 'multiopus/48000/6')
+              .replace(
+                'useinbandfec=1',
+                'channel_mapping=0,4,1,2,3,5; num_streams=4; coupled_streams=2;maxaveragebitrate=510000;minptime=10;useinbandfec=1'
+              );
+          }
+          await pc.setLocalDescription(answer);
+          this.sendSignalSS(from, { sdp: pc.localDescription }, !data.sharer);
+        } else if (msg.sdp && msg.sdp.type === 'answer') {
+          pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
         }
-        await pc.setLocalDescription(answer);
-        this.sendSignalSS(from, { sdp: pc.localDescription }, !data.sharer);
-      } else if (msg.sdp && msg.sdp.type === 'answer') {
-        pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
       }
-    });
+    );
     socket.on('REC:getRoomState', this.handleRoomState);
     window.setInterval(() => {
       if (this.state.currentMedia) {
@@ -857,8 +864,8 @@ export default class App extends React.Component<AppProps, AppState> {
   // Share the video to mediasoup
   publishMediasoup = async (mediasoupURL: string) => {
     const localStream = this.localStreamToPublish;
-    let device: MediasoupClient.types.Device | null = null;
-    let producerTransport: any = null;
+    let device: MediasoupClient.types.Device = null as any;
+    let producerTransport: MediasoupClient.types.Transport = null as any;
 
     // =========== socket.io ==========
     const connectSocket = (mediasoupURL: string) => {
@@ -879,7 +886,7 @@ export default class App extends React.Component<AppProps, AppState> {
       });
     };
 
-    const sendRequest = (type: any, data: any) => {
+    const sendRequest = (type: string, data: any) => {
       return new Promise<any>((resolve, reject) => {
         const socket = this.mediasoupPubSocket;
         socket?.emit(type, data, (err: any, response: any) => {
@@ -898,13 +905,19 @@ export default class App extends React.Component<AppProps, AppState> {
       console.log('PUBLISH: --- createProducerTransport --');
       const params = await sendRequest('createProducerTransport', {});
       console.log('PUBLISH: transport params:', params);
-      producerTransport = device?.createSendTransport(params);
+      producerTransport = device.createSendTransport(params);
       console.log('PUBLISH: createSendTransport:', producerTransport);
 
       // --- join & start publish --
       producerTransport.on(
         'connect',
-        async ({ dtlsParameters }: any, callback: any, errback: any) => {
+        async (
+          {
+            dtlsParameters,
+          }: { dtlsParameters: MediasoupClient.types.DtlsParameters },
+          callback: () => void,
+          errback: (error: Error) => void
+        ) => {
           console.log('PUBLISH: --transport connect');
           sendRequest('connectProducerTransport', {
             dtlsParameters: dtlsParameters,
@@ -916,7 +929,17 @@ export default class App extends React.Component<AppProps, AppState> {
 
       producerTransport.on(
         'produce',
-        async ({ kind, rtpParameters }: any, callback: any, errback: any) => {
+        async (
+          {
+            kind,
+            rtpParameters,
+          }: {
+            kind: string;
+            rtpParameters: MediasoupClient.types.RtpParameters;
+          },
+          callback: ({ id }: { id: string }) => void,
+          errback: (error: Error) => void
+        ) => {
           console.log('PUBLISH: --transport produce');
           try {
             const { id } = await sendRequest('produce', {
@@ -925,13 +948,13 @@ export default class App extends React.Component<AppProps, AppState> {
               rtpParameters,
             });
             callback({ id });
-          } catch (err) {
+          } catch (err: any) {
             errback(err);
           }
         }
       );
 
-      // producerTransport.on('connectionstatechange', (state: any) => {
+      // producerTransport.on('connectionstatechange', (state: string) => {
       //   switch (state) {
       //     case 'connecting':
       //       console.log('PUBLISH: connecting');
@@ -963,7 +986,9 @@ export default class App extends React.Component<AppProps, AppState> {
       }
     }
 
-    async function loadDevice(routerRtpCapabilities: any) {
+    async function loadDevice(
+      routerRtpCapabilities: MediasoupClient.types.RtpCapabilities
+    ) {
       device = new MediasoupClient.Device();
       await device.load({ routerRtpCapabilities });
     }
@@ -978,8 +1003,8 @@ export default class App extends React.Component<AppProps, AppState> {
 
   // Play the video from MediaSoup
   subscribeMediasoup = async (mediaSoupURL: string) => {
-    let device: any = null;
-    let consumerTransport: any = null;
+    let device: MediasoupClient.types.Device = null as any;
+    let consumerTransport: MediasoupClient.types.Transport = null as any;
 
     // =========== socket.io ==========
     const connectSocket = () => {
@@ -1028,10 +1053,10 @@ export default class App extends React.Component<AppProps, AppState> {
       });
     };
 
-    const sendRequest = (type: any, data: any) => {
+    const sendRequest = (type: string, data: any) => {
       return new Promise<any>((resolve, reject) => {
         const socket = this.mediasoupSubSocket;
-        socket?.emit(type, data, (err: any, response: any) => {
+        socket?.emit(type, data, (err: Error, response: any) => {
           if (!err) {
             // Success response, so pass the mediasoup response to the local Room.
             resolve(response);
@@ -1056,7 +1081,7 @@ export default class App extends React.Component<AppProps, AppState> {
       this.doPlay();
     };
 
-    async function consumeAndResume(kind: any) {
+    async function consumeAndResume(kind: string) {
       const consumer = await consume(consumerTransport, kind);
       if (consumer) {
         console.log('SUBSCRIBE: -- track exist, consumer ready. kind=' + kind);
@@ -1080,7 +1105,9 @@ export default class App extends React.Component<AppProps, AppState> {
       }
     }
 
-    async function loadDevice(routerRtpCapabilities: any) {
+    async function loadDevice(
+      routerRtpCapabilities: MediasoupClient.types.RtpCapabilities
+    ) {
       try {
         device = new MediasoupClient.Device();
         await device.load({ routerRtpCapabilities });
@@ -1091,7 +1118,10 @@ export default class App extends React.Component<AppProps, AppState> {
       }
     }
 
-    async function consume(transport: any, trackKind: any) {
+    async function consume(
+      transport: MediasoupClient.types.Transport,
+      trackKind: string
+    ) {
       console.log('SUBSCRIBE: --start of consume --kind=' + trackKind);
       const { rtpCapabilities } = device;
       const data = await sendRequest('consume', {
@@ -1109,6 +1139,7 @@ export default class App extends React.Component<AppProps, AppState> {
           producerId,
           kind,
           rtpParameters,
+          //@ts-ignore
           codecOptions,
         });
 
@@ -1131,7 +1162,13 @@ export default class App extends React.Component<AppProps, AppState> {
       // --- join & start watching
       consumerTransport.on(
         'connect',
-        async ({ dtlsParameters }: any, callback: any, errback: any) => {
+        async (
+          {
+            dtlsParameters,
+          }: { dtlsParameters: MediasoupClient.types.DtlsParameters },
+          callback: () => void,
+          errback: (err: Error) => void
+        ) => {
           console.log('SUBSCRIBE: ---consumer transport connect');
           sendRequest('connectConsumerTransport', {
             dtlsParameters: dtlsParameters,
