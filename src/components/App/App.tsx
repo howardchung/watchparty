@@ -579,9 +579,17 @@ export default class App extends React.Component<AppProps, AppState> {
           }
           this.YouTubeInterface.stopVideo();
 
+          if (data.subtitle) {
+            this.loadSubtitles();
+          }
+          if (data.playbackRate) {
+            this.setState({ roomPlaybackRate: data.playbackRate });
+            this.Player().setPlaybackRate(data.playbackRate);
+          }
+
           if (this.isScreenShare() || this.isFileShare() || this.isVBrowser()) {
             console.log(
-              'skipping REC:host video update since we are using webRTC (fileshare, screenshare, or vbrowser). Check setupRTCConnections()'
+              'exiting REC:host since we are using webRTC (fileshare, screenshare, or vbrowser). Check setupRTCConnections()'
             );
             if (!(this.isVBrowser() && !this.getVBrowserHost())) {
               // Remove the loader unless we're waiting for a vbrowser
@@ -599,13 +607,6 @@ export default class App extends React.Component<AppProps, AppState> {
           await this.doSrc(data.video, data.videoTS);
           if (!data.paused) {
             this.doPlay();
-          }
-          if (data.subtitle) {
-            this.loadSubtitles();
-          }
-          if (data.playbackRate) {
-            this.setState({ roomPlaybackRate: data.playbackRate });
-            this.Player().setPlaybackRate(data.playbackRate);
           }
           // One time, when we're ready to play
           const leftVideo = document.getElementById('leftVideo');
@@ -705,9 +706,14 @@ export default class App extends React.Component<AppProps, AppState> {
     });
     socket.on('REC:tsMap', (data: NumberDict) => {
       this.setState({ tsMap: data }, () => {
+        // Dynamic playback rate based on timestamps
+        // Disable for sharing types where the users can have different timestamps
+        // Also not necessary for WebRTC sharing since it should be close to realtime
+        // e.g. screenshare, fileshare, .m3u8 HLS streams
         if (
           !this.state.currentMediaPaused &&
           !this.state.currentMedia.includes('.m3u8') &&
+          this.isHttp() &&
           this.state.roomPlaybackRate === 0
         ) {
           const leader = this.getLeaderTime();
@@ -1373,10 +1379,6 @@ export default class App extends React.Component<AppProps, AppState> {
 
   doSrc = async (src: string, time: number) => {
     console.log('doSrc', src, time);
-    if (this.isScreenShare() || this.isFileShare() || this.isVBrowser()) {
-      // No-op as we'll set video when WebRTC completes
-      return;
-    }
     await this.Player().setSrcAndTime(src, time);
   };
 
