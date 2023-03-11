@@ -1,6 +1,5 @@
 import './App.css';
 
-import { v4 as uuidv4 } from 'uuid';
 import * as MediasoupClient from 'mediasoup-client';
 import axios from 'axios';
 import React from 'react';
@@ -110,8 +109,7 @@ interface AppState {
   fullScreen: boolean;
   controlsTimestamp: number;
   watchOptions: SearchResult[];
-  isScreenSharing: boolean;
-  isScreenSharingFile: boolean;
+  isLocalStreamAFile: boolean;
   isVBrowser: boolean;
   isAutoPlayable: boolean;
   downloaded: number;
@@ -177,8 +175,7 @@ export default class App extends React.Component<AppProps, AppState> {
     fullScreen: false,
     controlsTimestamp: 0,
     watchOptions: [],
-    isScreenSharing: false,
-    isScreenSharingFile: false,
+    isLocalStreamAFile: false,
     isVBrowser: false,
     isAutoPlayable: true,
     downloaded: 0,
@@ -220,7 +217,7 @@ export default class App extends React.Component<AppProps, AppState> {
   };
   socket: Socket = null as any;
   ytDebounce = true;
-  screenShareStream?: MediaStream;
+  localStreamToPublish?: MediaStream;
   screenHostPC: PCDict = {};
   screenSharePC?: RTCPeerConnection;
   progressUpdater?: number;
@@ -545,10 +542,10 @@ export default class App extends React.Component<AppProps, AppState> {
     socket.on('REC:host', async (data: HostState) => {
       let currentMedia = data.video || '';
       if (this.isScreenShare() && !currentMedia.startsWith('screenshare://')) {
-        this.stopScreenShare();
+        this.stopPublishingLocalStream();
       }
       if (this.isFileShare() && !currentMedia.startsWith('fileshare://')) {
-        this.stopScreenShare();
+        this.stopPublishingLocalStream();
       }
       if (this.isScreenShare() && currentMedia.startsWith('screenshare://')) {
         // Ignore, it's probably a reconnection
@@ -575,83 +572,79 @@ export default class App extends React.Component<AppProps, AppState> {
           controller: data.controller,
         },
         async () => {
-          if (
-            this.state.isScreenSharingFile ||
-            (this.isVBrowser() && this.getVBrowserHost())
-          ) {
-            console.log(
-              'skipping REC:host video since fileshare is using leftVideo or this is a vbrowser'
-            );
-            this.setLoadingFalse();
-            return;
-          }
           // Stop all players
-          this.HTMLInterface.pauseVideo();
+          // Unless the user is sharing a file otherwise it interferes
+          if (!this.state.isLocalStreamAFile) {
+            this.HTMLInterface.pauseVideo();
+          }
           this.YouTubeInterface.stopVideo();
 
+          if (this.isScreenShare() || this.isFileShare() || this.isVBrowser()) {
+            console.log(
+              'skipping REC:host video update since we are using webRTC (fileshare, screenshare, or vbrowser). Check setupScreenshareConnections()'
+            );
+            if (!(this.isVBrowser() && !this.getVBrowserHost())) {
+              // Remove the loader unless we're waiting for a vbrowser
+              this.setLoadingFalse();
+            }
+            return;
+          }
           if (this.isYouTube() && !this.YouTubeInterface.isReady()) {
             console.log(
               'YT player not ready, onReady callback will retry when it is'
             );
-          } else if (this.isVBrowser()) {
-            console.log(
-              'not playing video as this is a vbrowser:// placeholder'
-            );
-          } else if (currentMedia.startsWith('mediasoup://')) {
-            this.setLoadingFalse();
-            this.consumeMediasoup();
-          } else {
-            // Start this video
-            await this.doSrc(data.video, data.videoTS);
-            if (!data.paused) {
-              this.doPlay();
-            }
-            if (data.subtitle) {
-              this.loadSubtitles();
-            }
-            if (data.playbackRate) {
-              this.setState({ roomPlaybackRate: data.playbackRate });
-              this.Player().setPlaybackRate(data.playbackRate);
-            }
-            // One time, when we're ready to play
-            const leftVideo = document.getElementById('leftVideo');
-            leftVideo?.addEventListener(
-              'canplay',
-              () => {
-                this.setLoadingFalse();
-                this.jumpToLeader();
-              },
-              { once: true }
-            );
+            return;
+          }
+          // Start this video
+          await this.doSrc(data.video, data.videoTS);
+          if (!data.paused) {
+            this.doPlay();
+          }
+          if (data.subtitle) {
+            this.loadSubtitles();
+          }
+          if (data.playbackRate) {
+            this.setState({ roomPlaybackRate: data.playbackRate });
+            this.Player().setPlaybackRate(data.playbackRate);
+          }
+          // One time, when we're ready to play
+          const leftVideo = document.getElementById('leftVideo');
+          leftVideo?.addEventListener(
+            'canplay',
+            () => {
+              this.setLoadingFalse();
+              this.jumpToLeader();
+            },
+            { once: true }
+          );
 
-            // Progress updater
-            window.clearInterval(this.progressUpdater);
-            this.setState({ downloaded: 0, total: 0, speed: 0 });
-            if (currentMedia.includes('/stream?torrent=magnet')) {
-              this.progressUpdater = window.setInterval(async () => {
-                const response = await window.fetch(
-                  currentMedia.replace('/stream', '/progress')
-                );
-                const data = await response.json();
-                this.setState({
-                  downloaded: data.downloaded,
-                  total: data.total,
-                  speed: data.speed,
-                  connections: data.connections,
-                });
-              }, 1000);
-            }
-            if (currentMedia.startsWith('magnet:')) {
-              this.progressUpdater = window.setInterval(async () => {
-                const client = window.watchparty.webtorrent;
-                this.setState({
-                  downloaded: client?.torrents[0]?.downloaded,
-                  total: client?.torrents[0]?.length,
-                  speed: client?.torrents[0]?.downloadSpeed,
-                  connections: client?.torrents[0]?.numPeers,
-                });
-              }, 1000);
-            }
+          // Progress updater
+          window.clearInterval(this.progressUpdater);
+          this.setState({ downloaded: 0, total: 0, speed: 0 });
+          if (currentMedia.includes('/stream?torrent=magnet')) {
+            this.progressUpdater = window.setInterval(async () => {
+              const response = await window.fetch(
+                currentMedia.replace('/stream', '/progress')
+              );
+              const data = await response.json();
+              this.setState({
+                downloaded: data.downloaded,
+                total: data.total,
+                speed: data.speed,
+                connections: data.connections,
+              });
+            }, 1000);
+          }
+          if (currentMedia.startsWith('magnet:')) {
+            this.progressUpdater = window.setInterval(async () => {
+              const client = window.watchparty.webtorrent;
+              this.setState({
+                downloaded: client?.torrents[0]?.downloaded,
+                total: client?.torrents[0]?.length,
+                speed: client?.torrents[0]?.downloadSpeed,
+                connections: client?.torrents[0]?.numPeers,
+              });
+            }, 1000);
           }
         }
       );
@@ -747,7 +740,7 @@ export default class App extends React.Component<AppProps, AppState> {
       this.setState(
         { participants: data, rosterUpdateTS: Number(new Date()) },
         () => {
-          this.updateScreenShare();
+          this.setupScreenShareConnections();
         }
       );
     });
@@ -810,7 +803,7 @@ export default class App extends React.Component<AppProps, AppState> {
     }, 1000);
   };
 
-  setupFileShare = async () => {
+  startFileShare = async (useMediaSoup: boolean) => {
     const files = await openFileSelector();
     if (!files) {
       return;
@@ -821,25 +814,32 @@ export default class App extends React.Component<AppProps, AppState> {
     leftVideo.src = URL.createObjectURL(file);
     leftVideo.play();
     //@ts-ignore
-    const stream = leftVideo.captureStream ? leftVideo.captureStream() : {};
-    // Can render video to a canvas to resize it, reduce size
-    stream.onaddtrack = () => {
-      console.log(stream, stream.getVideoTracks(), stream.getAudioTracks());
-      if (
-        !this.screenShareStream &&
-        stream.getVideoTracks().length &&
-        stream.getAudioTracks().length
-      ) {
-        stream.getVideoTracks()[0].onended = this.stopScreenShare;
-        this.screenShareStream = stream;
-        this.socket.emit('CMD:joinScreenShare', { file: true });
-        this.setState({ isScreenSharing: true, isScreenSharingFile: true });
-        stream.onaddtrack = undefined;
+    this.localStreamToPublish = leftVideo?.captureStream();
+    if (this.localStreamToPublish) {
+      if (useMediaSoup) {
+        this.startMediasoup(true);
+      } else {
+        const stream = this.localStreamToPublish;
+        // Can render video to a canvas to resize it, reduce size
+        let hasStartedFileShare = false;
+        stream.onaddtrack = () => {
+          console.log(stream, stream.getVideoTracks(), stream.getAudioTracks());
+          if (
+            !hasStartedFileShare &&
+            stream.getVideoTracks().length &&
+            stream.getAudioTracks().length
+          ) {
+            hasStartedFileShare = true;
+            stream.getVideoTracks()[0].onended = this.stopPublishingLocalStream;
+            this.socket.emit('CMD:joinScreenShare', { file: true });
+            this.setState({ isLocalStreamAFile: true });
+          }
+        };
       }
-    };
+    }
   };
 
-  setupScreenShare = async () => {
+  startScreenShare = async (useMediaSoup: boolean) => {
     if (navigator.mediaDevices.getDisplayMedia) {
       const stream = await navigator.mediaDevices.getDisplayMedia({
         //@ts-ignore
@@ -854,124 +854,28 @@ export default class App extends React.Component<AppProps, AppState> {
           sampleSize: 16,
         },
       });
-      stream.getVideoTracks()[0].onended = this.stopScreenShare;
-      this.screenShareStream = stream;
-      this.socket.emit('CMD:joinScreenShare');
-      this.setState({ isScreenSharing: true });
-    }
-  };
-
-  stopScreenShare = async () => {
-    this.screenShareStream &&
-      this.screenShareStream.getTracks().forEach((track) => {
-        track.stop();
-      });
-    this.screenShareStream = undefined;
-    if (this.screenSharePC) {
-      this.screenSharePC.close();
-      this.screenSharePC = undefined;
-    }
-    Object.values(this.screenHostPC).forEach((pc) => {
-      pc.close();
-    });
-    this.screenHostPC = {};
-    if (this.state.isScreenSharing) {
-      this.socket.emit('CMD:leaveScreenShare');
-      // We don't actually need to unmute if it's a fileshare but this is fine
-      this.doSetMute(false);
-    }
-    this.setState({ isScreenSharing: false, isScreenSharingFile: false });
-  };
-
-  updateScreenShare = async () => {
-    if (!this.isScreenShare() && !this.isFileShare()) {
-      return;
-    }
-    const sharer = this.state.participants.find((p) => p.isScreenShare);
-    const selfId = getAndSaveClientId();
-    if (sharer && sharer.clientId === selfId) {
-      // We're the sharer, create a connection to each other member
-
-      // Delete and close any connections that aren't in the current member list (maybe someone disconnected)
-      // This allows them to rejoin later
-      const clientIds = new Set(this.state.participants.map((p) => p.clientId));
-      Object.entries(this.screenHostPC).forEach(([key, value]) => {
-        if (!clientIds.has(key)) {
-          value.close();
-          delete this.screenHostPC[key];
-        }
-      });
-
-      this.state.participants.forEach((user) => {
-        const id = user.clientId;
-        if (id === selfId && this.state.isScreenSharingFile) {
-          // Don't set up a connection to ourselves if sharing file
-          return;
-        }
-        if (!this.screenHostPC[id]) {
-          // Set up the RTCPeerConnection for sharing media to each member
-          const pc = new RTCPeerConnection({ iceServers: iceServers() });
-          this.screenHostPC[id] = pc;
-          this.screenShareStream?.getTracks().forEach((track) => {
-            if (this.screenShareStream != null) {
-              pc.addTrack(track, this.screenShareStream);
-            }
-          });
-          pc.onicecandidate = (event) => {
-            // We generated an ICE candidate, send it to peer
-            if (event.candidate) {
-              this.sendSignalSS(id, { ice: event.candidate }, true);
-            }
-          };
-          pc.onnegotiationneeded = async () => {
-            // Start connection for peer's video
-            const offer = await pc.createOffer();
-            await pc.setLocalDescription(offer);
-            this.sendSignalSS(id, { sdp: pc.localDescription }, true);
-          };
-        }
-      });
-    }
-    // We're a watcher, establish connection to sharer
-    // If screensharing, sharer also does this
-    // If filesharing, sharer does not do this since we use leftVideo
-    if (sharer && !this.screenSharePC && !this.state.isScreenSharingFile) {
-      const pc = new RTCPeerConnection({ iceServers: iceServers() });
-      this.screenSharePC = pc;
-      pc.onicecandidate = (event) => {
-        // We generated an ICE candidate, send it to peer
-        if (event.candidate) {
-          this.sendSignalSS(sharer.clientId, { ice: event.candidate });
-        }
-      };
-      pc.ontrack = (event: RTCTrackEvent) => {
-        // Mount the stream from peer
-        // console.log(stream);
-        const leftVideo = document.getElementById(
-          'leftVideo'
-        ) as HTMLMediaElement;
-        if (leftVideo) {
-          leftVideo.src = '';
-          leftVideo.srcObject = event.streams[0];
-          this.doPlay();
-        }
-      };
+      stream.getVideoTracks()[0].onended = this.stopPublishingLocalStream;
+      this.localStreamToPublish = stream;
+      if (useMediaSoup) {
+        this.startMediasoup(false);
+      } else {
+        this.socket.emit('CMD:joinScreenShare');
+      }
     }
   };
 
   // Share the video to mediasoup
-  startMediasoup = async () => {
-    let localStream: any = null;
+  startMediasoup = async (isFile: boolean) => {
+    const localStream = this.localStreamToPublish;
     let clientId = null;
     let device: MediasoupClient.types.Device | null = null;
     let producerTransport: any = null;
     let videoProducer: any = null;
     let audioProducer: any = null;
     let socket: Socket | null = null;
-    const randomId = uuidv4();
 
     // =========== socket.io ==========
-    const connectSocket = () => {
+    const connectSocket = (mediasoupURL: string) => {
       if (socket) {
         socket.close();
         socket = null;
@@ -979,7 +883,7 @@ export default class App extends React.Component<AppProps, AppState> {
       }
 
       return new Promise<void>((resolve, reject) => {
-        socket = io(process.env.REACT_APP_MEDIASOUP_SERVER + '/' + randomId, {
+        socket = io(mediasoupURL, {
           transports: ['websocket'],
         });
 
@@ -1017,14 +921,6 @@ export default class App extends React.Component<AppProps, AppState> {
       });
     };
 
-    function isSocketConnected() {
-      if (socket) {
-        return true;
-      } else {
-        return false;
-      }
-    }
-
     function sendRequest(type: any, data: any) {
       return new Promise<any>((resolve, reject) => {
         socket?.emit(type, data, (err: any, response: any) => {
@@ -1038,41 +934,7 @@ export default class App extends React.Component<AppProps, AppState> {
       });
     }
 
-    async function startMedia() {
-      // Screenshare instead
-      // const media = navigator.mediaDevices.getUserMedia({ audio: useAudio, video: useVideo });
-      const media = navigator.mediaDevices.getDisplayMedia({
-        //@ts-ignore
-        video: { height: 720, logicalSurface: true },
-        audio: {
-          autoGainControl: false,
-          channelCount: 2,
-          echoCancellation: false,
-          latency: 0,
-          noiseSuppression: false,
-          sampleRate: 48000,
-          sampleSize: 16,
-        },
-      });
-
-      const stream = await media;
-      return stream;
-    }
-
     async function publish() {
-      // --- connect socket.io ---
-      if (!isSocketConnected()) {
-        await connectSocket().catch((err) => {
-          console.error(err);
-          return;
-        });
-
-        // --- get capabilities --
-        const data = await sendRequest('getRouterRtpCapabilities', {});
-        console.log('getRouterRtpCapabilities:', data);
-        await loadDevice(data);
-      }
-
       // --- get transport info ---
       console.log('--- createProducerTransport --');
       const params = await sendRequest('createProducerTransport', {});
@@ -1130,15 +992,17 @@ export default class App extends React.Component<AppProps, AppState> {
         }
       });
 
-      const videoTrack = localStream.getVideoTracks()[0];
+      const videoTrack = localStream?.getVideoTracks()[0];
       if (videoTrack) {
         const trackParams = { track: videoTrack };
         videoProducer = await producerTransport.produce(trackParams);
+        console.log(videoProducer);
       }
-      const audioTrack = localStream.getAudioTracks()[0];
+      const audioTrack = localStream?.getAudioTracks()[0];
       if (audioTrack) {
         const trackParams = { track: audioTrack };
         audioProducer = await producerTransport.produce(trackParams);
+        console.log(audioProducer);
       }
     }
 
@@ -1147,23 +1011,28 @@ export default class App extends React.Component<AppProps, AppState> {
       await device.load({ routerRtpCapabilities });
     }
 
-    localStream = await startMedia();
-    this.setMedia(null, { value: 'mediasoup://' + randomId });
+    const resp = await axios.get(serverPath + '/requestMediasoup');
+    await connectSocket(resp.data);
+    // --- get capabilities --
+    const data = await sendRequest('getRouterRtpCapabilities', {});
+    console.log('getRouterRtpCapabilities:', data);
+    await loadDevice(data);
+    // joinScreenShare to set room video value
+    this.socket.emit('CMD:joinScreenShare', {
+      file: isFile,
+      mediasoup: resp.data,
+    });
     await publish();
   };
 
   // Play the video from MediaSoup
-  consumeMediasoup = async () => {
+  consumeMediasoup = async (mediaSoupURL: string) => {
     let clientId: any = null;
     let device: any = null;
     let consumerTransport: any = null;
     let videoConsumer: any = null;
     let audioConsumer: any = null;
     let socket: Socket | null = null;
-
-    // Clear the srcobject so we load our stream when received
-    const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
-    leftVideo.srcObject = null;
 
     // =========== socket.io ==========
     const connectSocket = () => {
@@ -1174,14 +1043,9 @@ export default class App extends React.Component<AppProps, AppState> {
       }
 
       return new Promise<void>((resolve, reject) => {
-        socket = io(
-          process.env.REACT_APP_MEDIASOUP_SERVER +
-            '/' +
-            this.state.currentMedia.slice('mediasoup://'.length),
-          {
-            transports: ['websocket'],
-          }
-        );
+        socket = io(mediaSoupURL, {
+          transports: ['websocket'],
+        });
 
         socket?.on('connect', function () {
           console.log('socket.io connected()');
@@ -1253,24 +1117,9 @@ export default class App extends React.Component<AppProps, AppState> {
               audioConsumer = null;
             }
           }
-          // TODO stop the leftVideo?
-          // if (remoteId) {
-          //   removeRemoteVideo(remoteId);
-          // }
-          // else {
-          //   removeAllRemoteVideo();
-          // }
         });
       });
     };
-
-    function isSocketConnected() {
-      if (socket) {
-        return true;
-      } else {
-        return false;
-      }
-    }
 
     function sendRequest(type: any, data: any) {
       return new Promise<any>((resolve, reject) => {
@@ -1367,18 +1216,6 @@ export default class App extends React.Component<AppProps, AppState> {
     }
 
     async function subscribe() {
-      if (!isSocketConnected()) {
-        await connectSocket().catch((err) => {
-          console.error(err);
-          return;
-        });
-
-        // --- get capabilities --
-        const data = await sendRequest('getRouterRtpCapabilities', {});
-        console.log('getRouterRtpCapabilities:', data);
-        await loadDevice(data);
-      }
-
       // --- prepare transport ---
       console.log('--- createConsumerTransport --');
       const params = await sendRequest('createConsumerTransport', {});
@@ -1424,7 +1261,126 @@ export default class App extends React.Component<AppProps, AppState> {
       audioConsumer = await consumeAndResume(consumerTransport, 'audio');
     }
 
+    // Clear the srcobject so we load our stream when received
+    const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
+    leftVideo.srcObject = null;
+
+    await connectSocket();
+
+    // --- get capabilities --
+    const data = await sendRequest('getRouterRtpCapabilities', {});
+    console.log('getRouterRtpCapabilities:', data);
+    await loadDevice(data);
+
     await subscribe();
+  };
+
+  stopPublishingLocalStream = async () => {
+    if (this.localStreamToPublish) {
+      this.socket.emit('CMD:leaveScreenShare');
+      // We don't actually need to unmute if it's a fileshare but this is fine
+      this.doSetMute(false);
+    }
+    this.localStreamToPublish &&
+      this.localStreamToPublish.getTracks().forEach((track) => {
+        track.stop();
+      });
+    this.localStreamToPublish = undefined;
+    if (this.screenSharePC) {
+      this.screenSharePC.close();
+      this.screenSharePC = undefined;
+    }
+    Object.values(this.screenHostPC).forEach((pc) => {
+      pc.close();
+    });
+    this.screenHostPC = {};
+    this.setState({ isLocalStreamAFile: false });
+  };
+
+  setupScreenShareConnections = async () => {
+    if (!this.isScreenShare() && !this.isFileShare()) {
+      return;
+    } else if (this.state.currentMedia.includes('@')) {
+      this.setLoadingFalse();
+      let prefix = 'screenshare://';
+      if (this.isFileShare()) {
+        prefix = 'fileshare://';
+      }
+      const unprefixed = this.state.currentMedia.replace(prefix, '');
+      const mediasoupURL = unprefixed.split('@')[1];
+      this.consumeMediasoup(mediasoupURL);
+      return;
+    }
+    const sharer = this.state.participants.find((p) => p.isScreenShare);
+    const selfId = getAndSaveClientId();
+    if (sharer && sharer.clientId === selfId) {
+      // We're the sharer, create a connection to each other member
+
+      // Delete and close any connections that aren't in the current member list (maybe someone disconnected)
+      // This allows them to rejoin later
+      const clientIds = new Set(this.state.participants.map((p) => p.clientId));
+      Object.entries(this.screenHostPC).forEach(([key, value]) => {
+        if (!clientIds.has(key)) {
+          value.close();
+          delete this.screenHostPC[key];
+        }
+      });
+
+      this.state.participants.forEach((user) => {
+        const id = user.clientId;
+        if (id === selfId && this.state.isLocalStreamAFile) {
+          // Don't set up a connection to ourselves if sharing file
+          return;
+        }
+        if (!this.screenHostPC[id]) {
+          // Set up the RTCPeerConnection for sharing media to each member
+          const pc = new RTCPeerConnection({ iceServers: iceServers() });
+          this.screenHostPC[id] = pc;
+          this.localStreamToPublish?.getTracks().forEach((track) => {
+            if (this.localStreamToPublish != null) {
+              pc.addTrack(track, this.localStreamToPublish);
+            }
+          });
+          pc.onicecandidate = (event) => {
+            // We generated an ICE candidate, send it to peer
+            if (event.candidate) {
+              this.sendSignalSS(id, { ice: event.candidate }, true);
+            }
+          };
+          pc.onnegotiationneeded = async () => {
+            // Start connection for peer's video
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+            this.sendSignalSS(id, { sdp: pc.localDescription }, true);
+          };
+        }
+      });
+    }
+    // We're a watcher, establish connection to sharer
+    // If screensharing, sharer also does this
+    // If filesharing, sharer does not do this since we use leftVideo
+    if (sharer && !this.screenSharePC && !this.state.isLocalStreamAFile) {
+      const pc = new RTCPeerConnection({ iceServers: iceServers() });
+      this.screenSharePC = pc;
+      pc.onicecandidate = (event) => {
+        // We generated an ICE candidate, send it to peer
+        if (event.candidate) {
+          this.sendSignalSS(sharer.clientId, { ice: event.candidate });
+        }
+      };
+      pc.ontrack = (event: RTCTrackEvent) => {
+        // Mount the stream from peer
+        // console.log(stream);
+        const leftVideo = document.getElementById(
+          'leftVideo'
+        ) as HTMLMediaElement;
+        if (leftVideo) {
+          leftVideo.src = '';
+          leftVideo.srcObject = event.streams[0];
+          this.doPlay();
+        }
+      };
+    }
   };
 
   startVBrowser = async (rcToken: string, options: { size: string }) => {
@@ -1519,7 +1475,7 @@ export default class App extends React.Component<AppProps, AppState> {
       async () => {
         if (
           !this.state.isAutoPlayable ||
-          (this.state.isScreenSharing && !this.state.isScreenSharingFile)
+          (this.localStreamToPublish && !this.state.isLocalStreamAFile)
         ) {
           console.log('auto-muting to allow autoplay or screenshare host');
           this.doSetMute(true);
@@ -2021,15 +1977,16 @@ export default class App extends React.Component<AppProps, AppState> {
         )}
         {this.state.isScreenShareModalOpen && (
           <ScreenShareModal
+            beta={this.props.beta}
             closeModal={() => this.setState({ isScreenShareModalOpen: false })}
-            startScreenShare={this.setupScreenShare}
-            startMediasoup={this.startMediasoup}
+            startScreenShare={this.startScreenShare}
           />
         )}
         {this.state.isFileShareModalOpen && (
           <FileShareModal
+            beta={this.props.beta}
             closeModal={() => this.setState({ isFileShareModalOpen: false })}
-            startFileShare={this.setupFileShare}
+            startFileShare={this.startFileShare}
           />
         )}
         {this.state.isSubtitleModalOpen && (
@@ -2139,21 +2096,21 @@ export default class App extends React.Component<AppProps, AppState> {
                         className="mobileStack"
                         style={{ display: 'flex', gap: '4px' }}
                       >
-                        {this.screenShareStream && (
+                        {this.localStreamToPublish && (
                           <Button
                             fluid
                             className="toolButton"
                             icon
                             labelPosition="left"
                             color="red"
-                            onClick={this.stopScreenShare}
+                            onClick={this.stopPublishingLocalStream}
                             disabled={sharer?.id !== this.socket?.id}
                           >
                             <Icon name="cancel" />
                             Stop Share
                           </Button>
                         )}
-                        {!this.screenShareStream &&
+                        {!this.localStreamToPublish &&
                           !sharer &&
                           !this.isVBrowser() && (
                             <Popup
@@ -2178,7 +2135,7 @@ export default class App extends React.Component<AppProps, AppState> {
                               }
                             />
                           )}
-                        {!this.screenShareStream &&
+                        {!this.localStreamToPublish &&
                           !sharer &&
                           !this.isVBrowser() && (
                             <Popup
@@ -2281,7 +2238,7 @@ export default class App extends React.Component<AppProps, AppState> {
                             Stop VBrowser
                           </Button>
                         )}
-                        {!this.screenShareStream &&
+                        {!this.localStreamToPublish &&
                           !sharer &&
                           !this.isVBrowser() && (
                             <Popup

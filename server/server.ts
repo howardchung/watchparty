@@ -32,6 +32,7 @@ import ecosystem from './ecosystem.config';
 import { statsAgg } from './utils/statsAgg';
 import { resolveShard } from './utils/resolveShard';
 import { makeRoomName, makeUserName } from './utils/moniker';
+import { v4 as uuidv4 } from 'uuid';
 
 const gzip = util.promisify(zlib.gzip);
 
@@ -495,6 +496,12 @@ app.delete('/linkAccount', async (req, res) => {
 
 app.get('/generateName', async (req, res) => {
   return res.send(makeUserName());
+});
+
+app.get('/requestMediasoup', async (req, res) => {
+  // TODO validate the user has permissions to ask for a mediasoup
+  // TODO set up the room on the remote server rather than letting the remote server create
+  return res.send(config.MEDIASOUP_SERVER + '/' + uuidv4());
 });
 
 app.use(express.static(config.BUILD_DIRECTORY));
