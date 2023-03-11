@@ -71,7 +71,6 @@ class WatchParty extends React.Component {
                 <TopBar
                   user={this.state.user}
                   isSubscriber={this.state.isSubscriber}
-                  isCustomer={this.state.isCustomer}
                   hideNewRoom
                 />
                 <Home user={this.state.user} />
@@ -95,7 +94,6 @@ class WatchParty extends React.Component {
               <App
                 user={this.state.user}
                 isSubscriber={this.state.isSubscriber}
-                isCustomer={this.state.isCustomer}
                 urlRoomId={props.match.params.roomId}
                 streamPath={this.state.streamPath}
                 beta={this.state.beta}
@@ -111,7 +109,6 @@ class WatchParty extends React.Component {
               <App
                 user={this.state.user}
                 isSubscriber={this.state.isSubscriber}
-                isCustomer={this.state.isCustomer}
                 vanity={props.match.params.vanity}
                 streamPath={this.state.streamPath}
                 beta={this.state.beta}
@@ -123,7 +120,6 @@ class WatchParty extends React.Component {
           <TopBar
             user={this.state.user}
             isSubscriber={this.state.isSubscriber}
-            isCustomer={this.state.isCustomer}
           />
           <Terms />
           <Footer />
@@ -132,7 +128,6 @@ class WatchParty extends React.Component {
           <TopBar
             user={this.state.user}
             isSubscriber={this.state.isSubscriber}
-            isCustomer={this.state.isCustomer}
           />
           <Privacy />
           <Footer />
@@ -141,7 +136,6 @@ class WatchParty extends React.Component {
           <TopBar
             user={this.state.user}
             isSubscriber={this.state.isSubscriber}
-            isCustomer={this.state.isCustomer}
           />
           <FAQ />
           <Footer />
@@ -150,7 +144,6 @@ class WatchParty extends React.Component {
           <TopBar
             user={this.state.user}
             isSubscriber={this.state.isSubscriber}
-            isCustomer={this.state.isCustomer}
           />
           <DiscordBot />
           <Footer />
@@ -162,7 +155,6 @@ class WatchParty extends React.Component {
           <TopBar
             user={this.state.user}
             isSubscriber={this.state.isSubscriber}
-            isCustomer={this.state.isCustomer}
           />
           <Suspense fallback={null}>
             <Debug />

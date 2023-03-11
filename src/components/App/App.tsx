@@ -84,7 +84,6 @@ interface AppProps {
   urlRoomId?: string;
   user?: firebase.User;
   isSubscriber: boolean;
-  isCustomer: boolean;
   beta: boolean;
   streamPath: string | undefined;
 }
@@ -1971,7 +1970,6 @@ export default class App extends React.Component<AppProps, AppState> {
         )}
         <TopBar
           user={this.props.user}
-          isCustomer={this.props.isCustomer}
           isSubscriber={this.props.isSubscriber}
           roomTitle={this.state.roomTitle}
           roomDescription={this.state.roomDescription}
