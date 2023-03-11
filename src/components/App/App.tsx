@@ -109,7 +109,6 @@ interface AppState {
   fullScreen: boolean;
   controlsTimestamp: number;
   watchOptions: SearchResult[];
-  isLocalStreamAFile: boolean;
   isVBrowser: boolean;
   isAutoPlayable: boolean;
   downloaded: number;
@@ -175,7 +174,6 @@ export default class App extends React.Component<AppProps, AppState> {
     fullScreen: false,
     controlsTimestamp: 0,
     watchOptions: [],
-    isLocalStreamAFile: false,
     isVBrowser: false,
     isAutoPlayable: true,
     downloaded: 0,
@@ -218,6 +216,7 @@ export default class App extends React.Component<AppProps, AppState> {
   socket: Socket = null as any;
   ytDebounce = true;
   localStreamToPublish?: MediaStream;
+  isLocalStreamAFile = false;
   screenHostPC: PCDict = {};
   screenSharePC?: RTCPeerConnection;
   progressUpdater?: number;
@@ -574,7 +573,7 @@ export default class App extends React.Component<AppProps, AppState> {
         async () => {
           // Stop all players
           // Unless the user is sharing a file otherwise it interferes
-          if (!this.state.isLocalStreamAFile) {
+          if (!this.isLocalStreamAFile) {
             this.HTMLInterface.pauseVideo();
           }
           this.YouTubeInterface.stopVideo();
@@ -815,6 +814,7 @@ export default class App extends React.Component<AppProps, AppState> {
     leftVideo.play();
     //@ts-ignore
     this.localStreamToPublish = leftVideo?.captureStream();
+    this.isLocalStreamAFile = true;
     if (this.localStreamToPublish) {
       if (useMediaSoup) {
         this.startMediasoup(true);
@@ -832,7 +832,6 @@ export default class App extends React.Component<AppProps, AppState> {
             hasStartedFileShare = true;
             stream.getVideoTracks()[0].onended = this.stopPublishingLocalStream;
             this.socket.emit('CMD:joinScreenShare', { file: true });
-            this.setState({ isLocalStreamAFile: true });
           }
         };
       }
@@ -1294,7 +1293,7 @@ export default class App extends React.Component<AppProps, AppState> {
       pc.close();
     });
     this.screenHostPC = {};
-    this.setState({ isLocalStreamAFile: false });
+    this.isLocalStreamAFile = false;
   };
 
   setupScreenShareConnections = async () => {
@@ -1328,7 +1327,7 @@ export default class App extends React.Component<AppProps, AppState> {
 
       this.state.participants.forEach((user) => {
         const id = user.clientId;
-        if (id === selfId && this.state.isLocalStreamAFile) {
+        if (id === selfId && this.isLocalStreamAFile) {
           // Don't set up a connection to ourselves if sharing file
           return;
         }
@@ -1359,7 +1358,7 @@ export default class App extends React.Component<AppProps, AppState> {
     // We're a watcher, establish connection to sharer
     // If screensharing, sharer also does this
     // If filesharing, sharer does not do this since we use leftVideo
-    if (sharer && !this.screenSharePC && !this.state.isLocalStreamAFile) {
+    if (sharer && !this.screenSharePC && !this.isLocalStreamAFile) {
       const pc = new RTCPeerConnection({ iceServers: iceServers() });
       this.screenSharePC = pc;
       pc.onicecandidate = (event) => {
@@ -1475,7 +1474,7 @@ export default class App extends React.Component<AppProps, AppState> {
       async () => {
         if (
           !this.state.isAutoPlayable ||
-          (this.localStreamToPublish && !this.state.isLocalStreamAFile)
+          (this.localStreamToPublish && !this.isLocalStreamAFile)
         ) {
           console.log('auto-muting to allow autoplay or screenshare host');
           this.doSetMute(true);

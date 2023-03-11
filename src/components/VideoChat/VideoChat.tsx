@@ -421,7 +421,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
                         }}
                       >
                         {p.isScreenShare && (
-                          <Icon size="small" name="desktop" />
+                          <Icon size="small" name="slideshare" />
                         )}
                         {p.isVideoChat && <Icon size="small" name="video" />}
                         {p.isMuted && (
