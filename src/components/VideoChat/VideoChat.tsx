@@ -420,6 +420,9 @@ export class VideoChat extends React.Component<VideoChatProps> {
                           display: 'inline-block',
                         }}
                       >
+                        {p.isScreenShare && (
+                          <Icon size="small" name="slideshare" />
+                        )}
                         {p.isVideoChat && <Icon size="small" name="video" />}
                         {p.isMuted && (
                           <Icon

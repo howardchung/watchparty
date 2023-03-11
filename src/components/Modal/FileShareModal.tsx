@@ -1,12 +1,20 @@
 import React from 'react';
 import { Modal, Button, Table } from 'semantic-ui-react';
+import firebase from 'firebase/compat/app';
+import { SubscribeButton } from '../SubscribeButton/SubscribeButton';
 
 export class FileShareModal extends React.Component<{
   closeModal: () => void;
-  startFileShare: () => void;
+  startFileShare: (useMediaSoup: boolean) => void;
+  isSubscriber: boolean;
+  user: firebase.User | undefined;
+  beta?: boolean;
 }> {
   render() {
     const { closeModal } = this.props;
+    const subscribeButton = !this.props.isSubscriber ? (
+      <SubscribeButton user={this.props.user} />
+    ) : null;
     return (
       <Modal open={true} onClose={closeModal as any}>
         <Modal.Header>Share A File</Modal.Header>
@@ -25,29 +33,63 @@ export class FileShareModal extends React.Component<{
                 <Table.Row>
                   <Table.HeaderCell />
                   <Table.HeaderCell>WatchParty Free</Table.HeaderCell>
+                  <Table.HeaderCell>WatchParty Plus</Table.HeaderCell>
                 </Table.Row>
               </Table.Header>
 
               <Table.Body>
                 <Table.Row>
+                  <Table.Cell>Method</Table.Cell>
+                  <Table.Cell>
+                    Stream your video to each viewer individually.
+                  </Table.Cell>
+                  <Table.Cell>
+                    Our relay server streams to viewers for you.
+                    <br />
+                    Higher quality and lower bandwidth usage.
+                  </Table.Cell>
+                </Table.Row>
+                <Table.Row>
+                  <Table.Cell>Latency</Table.Cell>
+                  <Table.Cell>{`< 1s`}</Table.Cell>
+                  <Table.Cell>{`< 1s`}</Table.Cell>
+                </Table.Row>
+                <Table.Row>
                   <Table.Cell>Recommended Max Viewers</Table.Cell>
                   <Table.Cell>5</Table.Cell>
+                  <Table.Cell>20</Table.Cell>
                 </Table.Row>
                 <Table.Row>
                   <Table.Cell>Recommended Upload Speed</Table.Cell>
                   <Table.Cell>5 Mbps per viewer</Table.Cell>
+                  <Table.Cell>5 Mbps</Table.Cell>
                 </Table.Row>
                 <Table.Row>
                   <Table.Cell></Table.Cell>
                   <Table.Cell>
                     <Button
                       onClick={() => {
-                        this.props.startFileShare();
+                        this.props.startFileShare(false);
                         this.props.closeModal();
                       }}
                     >
                       Start Fileshare
                     </Button>
+                  </Table.Cell>
+                  <Table.Cell>
+                    {this.props.isSubscriber ? (
+                      <Button
+                        color="orange"
+                        onClick={() => {
+                          this.props.startFileShare(true);
+                          this.props.closeModal();
+                        }}
+                      >
+                        Start Fileshare w/Relay
+                      </Button>
+                    ) : (
+                      subscribeButton
+                    )}
                   </Table.Cell>
                 </Table.Row>
               </Table.Body>

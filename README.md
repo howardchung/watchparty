@@ -27,7 +27,7 @@ An website for watching videos together.
 - Start the server via `PORT=8080 npm run dev`
   - Defaults to port 8080, customize with `PORT` env var
   - Run using self-signed HTTPS cert with `HTTPS=true`. This is needed for some WebRTC features (camera, etc.)
-- Start the React application in a separate shell and port via `PORT=3000 npm run start`
+- Start the React application in a separate shell and port via `PORT=3000 npm run react`
   - Point to server using `REACT_APP_SERVER_HOST` env var if you customized it above
   - Run using self-signed HTTPS cert with `HTTPS=true`. This is needed for some WebRTC features (camera, etc.)
 - Duplicate the `.env.example` file
