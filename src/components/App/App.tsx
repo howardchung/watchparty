@@ -217,8 +217,8 @@ export default class App extends React.Component<AppProps, AppState> {
   ytDebounce = true;
   localStreamToPublish?: MediaStream;
   isLocalStreamAFile = false;
-  screenHostPC: PCDict = {};
-  screenSharePC?: RTCPeerConnection;
+  publisherConns: PCDict = {};
+  consumerConn?: RTCPeerConnection;
   progressUpdater?: number;
   heartbeat: number | undefined = undefined;
 
@@ -756,7 +756,7 @@ export default class App extends React.Component<AppProps, AppState> {
       const from = data.from;
       // Determine whether the message came from the sharer or the sharee
       const pc = (
-        data.sharer ? this.screenSharePC : this.screenHostPC[from]
+        data.sharer ? this.consumerConn : this.publisherConns[from]
       ) as RTCPeerConnection;
       if (msg.ice !== undefined) {
         pc.addIceCandidate(new RTCIceCandidate(msg.ice));
@@ -1285,14 +1285,14 @@ export default class App extends React.Component<AppProps, AppState> {
         track.stop();
       });
     this.localStreamToPublish = undefined;
-    if (this.screenSharePC) {
-      this.screenSharePC.close();
-      this.screenSharePC = undefined;
+    if (this.consumerConn) {
+      this.consumerConn.close();
+      this.consumerConn = undefined;
     }
-    Object.values(this.screenHostPC).forEach((pc) => {
+    Object.values(this.publisherConns).forEach((pc) => {
       pc.close();
     });
-    this.screenHostPC = {};
+    this.publisherConns = {};
     this.isLocalStreamAFile = false;
   };
 
@@ -1318,10 +1318,10 @@ export default class App extends React.Component<AppProps, AppState> {
       // Delete and close any connections that aren't in the current member list (maybe someone disconnected)
       // This allows them to rejoin later
       const clientIds = new Set(this.state.participants.map((p) => p.clientId));
-      Object.entries(this.screenHostPC).forEach(([key, value]) => {
+      Object.entries(this.publisherConns).forEach(([key, value]) => {
         if (!clientIds.has(key)) {
           value.close();
-          delete this.screenHostPC[key];
+          delete this.publisherConns[key];
         }
       });
 
@@ -1331,10 +1331,10 @@ export default class App extends React.Component<AppProps, AppState> {
           // Don't set up a connection to ourselves if sharing file
           return;
         }
-        if (!this.screenHostPC[id]) {
+        if (!this.publisherConns[id]) {
           // Set up the RTCPeerConnection for sharing media to each member
           const pc = new RTCPeerConnection({ iceServers: iceServers() });
-          this.screenHostPC[id] = pc;
+          this.publisherConns[id] = pc;
           this.localStreamToPublish?.getTracks().forEach((track) => {
             if (this.localStreamToPublish != null) {
               pc.addTrack(track, this.localStreamToPublish);
@@ -1358,17 +1358,17 @@ export default class App extends React.Component<AppProps, AppState> {
     // We're a watcher, establish connection to sharer
     // If screensharing, sharer also does this
     // If filesharing, sharer does not do this since we use leftVideo
-    if (sharer && !this.screenSharePC && !this.isLocalStreamAFile) {
+    if (sharer && !this.consumerConn && !this.isLocalStreamAFile) {
       const pc = new RTCPeerConnection({ iceServers: iceServers() });
-      this.screenSharePC = pc;
+      this.consumerConn = pc;
       pc.onicecandidate = (event) => {
-        // We generated an ICE candidate, send it to peer
+        // We generated an ICE candidate, send it to sharer
         if (event.candidate) {
           this.sendSignalSS(sharer.clientId, { ice: event.candidate });
         }
       };
       pc.ontrack = (event: RTCTrackEvent) => {
-        // Mount the stream from peer
+        // Mount the stream from sharer
         // console.log(stream);
         const leftVideo = document.getElementById(
           'leftVideo'
