@@ -32,6 +32,22 @@ export class FileShareModal extends React.Component<{
 
               <Table.Body>
                 <Table.Row>
+                  <Table.Cell>Method</Table.Cell>
+                  <Table.Cell>
+                    Stream your video to each viewer individually.
+                  </Table.Cell>
+                  <Table.Cell>
+                    Our relay server streams to viewers for you.
+                    <br />
+                    Higher quality and lower bandwidth usage.
+                  </Table.Cell>
+                </Table.Row>
+                <Table.Row>
+                  <Table.Cell>Latency</Table.Cell>
+                  <Table.Cell>{`< 1s`}</Table.Cell>
+                  <Table.Cell>{`< 1s`}</Table.Cell>
+                </Table.Row>
+                <Table.Row>
                   <Table.Cell>Recommended Max Viewers</Table.Cell>
                   <Table.Cell>5</Table.Cell>
                   <Table.Cell>20</Table.Cell>
