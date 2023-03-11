@@ -972,7 +972,7 @@ export default class App extends React.Component<AppProps, AppState> {
   };
 
   // Play the video from MediaSoup
-  consumeMediasoup = async (mediaSoupURL: string) => {
+  subscribeMediasoup = async (mediaSoupURL: string) => {
     let device: any = null;
     let consumerTransport: any = null;
 
@@ -984,15 +984,15 @@ export default class App extends React.Component<AppProps, AppState> {
         });
         const socket = this.mediasoupSubSocket;
         socket?.on('connect', function () {
-          console.log('CONSUME: connected to socket.io');
+          console.log('SUBSCRIBE: connected to socket.io');
           resolve();
         });
         socket?.on('error', function (err) {
-          console.error('CONSUME: socket.io ERROR:', err);
+          console.error('SUBSCRIBE: socket.io ERROR:', err);
           reject(err);
         });
         socket?.on('newProducer', async function (message) {
-          console.log('CONSUME: socket.io newProducer:', message);
+          console.log('SUBSCRIBE: socket.io newProducer:', message);
           if (consumerTransport) {
             // start consume
             if (message.kind === 'video') {
@@ -1054,23 +1054,23 @@ export default class App extends React.Component<AppProps, AppState> {
     async function consumeAndResume(kind: any) {
       const consumer = await consume(consumerTransport, kind);
       if (consumer) {
-        console.log('CONSUME: -- track exist, consumer ready. kind=' + kind);
+        console.log('SUBSCRIBE: -- track exist, consumer ready. kind=' + kind);
         if (kind === 'video') {
-          console.log('CONSUME: -- resume kind=' + kind);
+          console.log('SUBSCRIBE: -- resume kind=' + kind);
           sendRequest('resume', { kind: kind })
             .then(() => {
-              console.log('CONSUME: resume OK');
+              console.log('SUBSCRIBE: resume OK');
               return consumer;
             })
             .catch((err) => {
-              console.error('CONSUME: resume ERROR:', err);
+              console.error('SUBSCRIBE: resume ERROR:', err);
               return consumer;
             });
         } else {
-          console.log('CONSUME: -- do not resume kind=' + kind);
+          console.log('SUBSCRIBE: -- do not resume kind=' + kind);
         }
       } else {
-        console.log('CONSUME: -- no consumer yet. kind=' + kind);
+        console.log('SUBSCRIBE: -- no consumer yet. kind=' + kind);
         return null;
       }
     }
@@ -1087,13 +1087,13 @@ export default class App extends React.Component<AppProps, AppState> {
     }
 
     async function consume(transport: any, trackKind: any) {
-      console.log('CONSUME: --start of consume --kind=' + trackKind);
+      console.log('SUBSCRIBE: --start of consume --kind=' + trackKind);
       const { rtpCapabilities } = device;
       const data = await sendRequest('consume', {
         rtpCapabilities: rtpCapabilities,
         kind: trackKind,
       }).catch((err) => {
-        console.error('CONSUME: ERROR:', err);
+        console.error('SUBSCRIBE: ERROR:', err);
       });
       const { producerId, id, kind, rtpParameters } = data;
 
@@ -1108,26 +1108,26 @@ export default class App extends React.Component<AppProps, AppState> {
         });
 
         addRemoteTrack(consumer.track);
-        console.log('CONSUME: --end of consume');
+        console.log('SUBSCRIBE: --end of consume');
         return consumer;
       } else {
-        console.warn('CONSUME: ---remote producer NOT READY');
+        console.warn('SUBSCRIBE: ---remote producer NOT READY');
         return null;
       }
     }
 
     async function subscribe() {
-      console.log('CONSUME: ---createConsumerTransport --');
+      console.log('SUBSCRIBE: ---createConsumerTransport --');
       const params = await sendRequest('createConsumerTransport', {});
-      console.log('CONSUME: transport params:', params);
+      console.log('SUBSCRIBE: transport params:', params);
       consumerTransport = device.createRecvTransport(params);
-      console.log('CONSUME: createConsumerTransport:', consumerTransport);
+      console.log('SUBSCRIBE: createConsumerTransport:', consumerTransport);
 
       // --- join & start watching
       consumerTransport.on(
         'connect',
         async ({ dtlsParameters }: any, callback: any, errback: any) => {
-          console.log('CONSUME: ---consumer transport connect');
+          console.log('SUBSCRIBE: ---consumer transport connect');
           sendRequest('connectConsumerTransport', {
             dtlsParameters: dtlsParameters,
           })
@@ -1139,15 +1139,15 @@ export default class App extends React.Component<AppProps, AppState> {
       // consumerTransport.on('connectionstatechange', (state: string) => {
       //   switch (state) {
       //     case 'connecting':
-      //       console.log('CONSUME: connecting');
+      //       console.log('SUBSCRIBE: connecting');
       //       break;
 
       //     case 'connected':
-      //       console.log('CONSUME: connected');
+      //       console.log('SUBSCRIBE: connected');
       //       break;
 
       //     case 'failed':
-      //       console.log('CONSUME: failed');
+      //       console.log('SUBSCRIBE: failed');
       //       consumerTransport.close();
       //       break;
 
@@ -1225,7 +1225,7 @@ export default class App extends React.Component<AppProps, AppState> {
       // If we're not sharing a file, also start watching
       // avoid duplicate watching if the socket already exists
       if (!this.isLocalStreamAFile && this.mediasoupSubSocket == null) {
-        await this.consumeMediasoup(mediasoupURL);
+        await this.subscribeMediasoup(mediasoupURL);
       }
       return;
     }
