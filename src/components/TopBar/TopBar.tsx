@@ -268,7 +268,6 @@ export class TopBar extends React.Component<{
   hideSignin?: boolean;
   hideMyRooms?: boolean;
   isSubscriber: boolean;
-  isCustomer: boolean;
   roomTitle?: string;
   roomDescription?: string;
   roomTitleColor?: string;
