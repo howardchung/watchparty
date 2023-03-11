@@ -12,6 +12,7 @@ import { AssignedVM } from './vm/base';
 import { getStartOfDay } from './utils/time';
 import { updateObject, upsertObject } from './utils/postgres';
 import { fetchYoutubeVideo, getYoutubeVideoID } from './utils/youtube';
+import { v4 as uuidv4 } from 'uuid';
 
 let redis: Redis | undefined = undefined;
 if (config.REDIS_URL) {
@@ -286,9 +287,9 @@ export class Room {
   protected getSharerId = (): string => {
     let sharerId = '';
     if (this.video?.startsWith('screenshare://')) {
-      sharerId = this.video?.slice('screenshare://'.length);
+      sharerId = this.video?.slice('screenshare://'.length).split('@')[0];
     } else if (this.video?.startsWith('fileshare://')) {
-      sharerId = this.video?.slice('fileshare://'.length);
+      sharerId = this.video?.slice('fileshare://'.length).split('@')[0];
     }
     return sharerId;
   };
@@ -697,7 +698,10 @@ export class Room {
     this.io.of(this.roomId).emit('roster', this.getRosterForApp());
   };
 
-  private joinScreenSharing = (socket: Socket, data: { file: boolean }) => {
+  private joinScreenSharing = (
+    socket: Socket,
+    data: { file: boolean; mediasoup?: boolean }
+  ) => {
     if (!this.validateLock(socket.id)) {
       return;
     }
@@ -706,11 +710,24 @@ export class Room {
       // Someone's already sharing
       return;
     }
+    let mediasoupSuffix = '';
+    if (data?.mediasoup) {
+      // TODO validate the user has permissions to ask for a mediasoup
+      // TODO set up the room on the remote server rather than letting the remote server create
+      mediasoupSuffix = '@' + config.MEDIASOUP_SERVER + '/' + uuidv4();
+      redisCount('mediasoupStarts');
+    }
     if (data && data.file) {
-      this.cmdHost(socket, 'fileshare://' + this.clientIdMap[socket.id]);
+      this.cmdHost(
+        socket,
+        'fileshare://' + this.clientIdMap[socket.id] + mediasoupSuffix
+      );
       redisCount('fileShareStarts');
     } else {
-      this.cmdHost(socket, 'screenshare://' + this.clientIdMap[socket.id]);
+      this.cmdHost(
+        socket,
+        'screenshare://' + this.clientIdMap[socket.id] + mediasoupSuffix
+      );
       redisCount('screenShareStarts');
     }
     this.io.of(this.roomId).emit('roster', this.getRosterForApp());
