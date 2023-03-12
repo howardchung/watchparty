@@ -2,6 +2,7 @@ import React from 'react';
 import { Icon, Progress, Label, Popup, Dropdown } from 'semantic-ui-react';
 import { Slider } from 'react-semantic-ui-range';
 import { formatTimestamp } from '../../utils';
+import styles from './Controls.module.css';
 
 interface ControlsProps {
   duration: number;
@@ -78,13 +79,13 @@ export class Controls extends React.Component<ControlsProps> {
     } = this.props;
     const isBehind = leaderTime && leaderTime - currentTime > 3;
     return (
-      <div className="controls">
+      <div className={styles.controls}>
         <Icon
           size="large"
           onClick={() => {
             togglePlay();
           }}
-          className="control action"
+          className={`${styles.control} ${styles.action}`}
           disabled={disabled || isPauseDisabled}
           name={paused ? 'play' : 'pause'}
         />
@@ -97,7 +98,7 @@ export class Controls extends React.Component<ControlsProps> {
           trigger={
             <div
               onClick={() => jumpToLeader()}
-              className="control action text"
+              className={`${styles.control} ${styles.action} ${styles.text}`}
               style={{
                 color: isBehind ? 'gray' : 'red',
               }}
@@ -107,7 +108,9 @@ export class Controls extends React.Component<ControlsProps> {
             </div>
           }
         />
-        <div className="control text">{formatTimestamp(currentTime)}</div>
+        <div className={`${styles.control} ${styles.text}`}>
+          {formatTimestamp(currentTime)}
+        </div>
         <Progress
           size="tiny"
           color="blue"
@@ -117,7 +120,7 @@ export class Controls extends React.Component<ControlsProps> {
           onMouseOver={this.onMouseOver}
           onMouseOut={this.onMouseOut}
           onMouseMove={this.onMouseMove}
-          className="control action"
+          className={`${styles.control} ${styles.action}`}
           inverted
           style={{
             flexGrow: 1,
@@ -166,7 +169,9 @@ export class Controls extends React.Component<ControlsProps> {
             </div>
           )}
         </Progress>
-        <div className="control text">{formatTimestamp(duration)}</div>
+        <div className={`${styles.control} ${styles.text}`}>
+          {formatTimestamp(duration)}
+        </div>
         <div style={{ fontSize: '10px', fontWeight: 700 }}>
           <Popup
             content={
@@ -184,7 +189,7 @@ export class Controls extends React.Component<ControlsProps> {
           {this.props.playbackRate?.toFixed(2)}x
         </div>
         {
-          <Dropdown style={{ marginLeft: -8 }} className="control">
+          <Dropdown style={{ marginLeft: -8 }} className={`${styles.control}`}>
             <Dropdown.Menu>
               {[
                 { key: 'Auto', text: 'Auto', value: 0 },
@@ -208,7 +213,10 @@ export class Controls extends React.Component<ControlsProps> {
           </Dropdown>
         }
         {this.props.isYouTube ? (
-          <Dropdown icon="closed captioning outline large" className="control">
+          <Dropdown
+            icon="closed captioning outline large"
+            className={`${styles.control}`}
+          >
             <Dropdown.Menu>
               {[
                 { key: 'hidden', text: 'Off', value: 'hidden' },
@@ -234,7 +242,7 @@ export class Controls extends React.Component<ControlsProps> {
             onClick={() => {
               showSubtitle();
             }}
-            className="control action"
+            className={`${styles.control} ${styles.action}`}
             name={subtitled ? 'closed captioning' : 'closed captioning outline'}
             title="Captions"
           />
@@ -242,7 +250,7 @@ export class Controls extends React.Component<ControlsProps> {
         <Icon
           size="large"
           onClick={() => fullScreen(false)}
-          className="control action"
+          className={`${styles.control} ${styles.action}`}
           style={{ transform: 'rotate(90deg)' }}
           name="window maximize outline"
           title="Theater Mode"
@@ -250,7 +258,7 @@ export class Controls extends React.Component<ControlsProps> {
         <Icon
           size="large"
           onClick={() => fullScreen(true)}
-          className="control action"
+          className={`${styles.control} ${styles.action}`}
           name="expand"
           title="Fullscreen"
         />
@@ -259,7 +267,7 @@ export class Controls extends React.Component<ControlsProps> {
           onClick={() => {
             toggleMute();
           }}
-          className="control action"
+          className={`${styles.control} ${styles.action}`}
           name={muted ? 'volume off' : 'volume up'}
           title="Mute"
         />
