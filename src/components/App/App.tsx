@@ -55,19 +55,17 @@ import firebase from 'firebase/compat/app';
 import { SubtitleModal } from '../Modal/SubtitleModal';
 import { HTML } from './HTML';
 import { YouTube } from './YouTube';
+import type WebTorrent from 'webtorrent';
 
 declare global {
   interface Window {
     onYouTubeIframeAPIReady: any;
-    YT: any;
-    FB: any;
-    Hls: any;
-    WebTorrent: any;
+    YT: YT.JsApi;
     watchparty: {
       ourStream: MediaStream | undefined;
       videoRefs: HTMLVideoElementDict;
       videoPCs: PCDict;
-      webtorrent: any;
+      webtorrent: WebTorrent.Instance | null;
     };
   }
 }
@@ -253,11 +251,6 @@ export default class App extends React.Component<AppProps, AppState> {
     this.heartbeat = window.setInterval(() => {
       window.fetch(serverPath + '/ping');
     }, 10 * 60 * 1000);
-
-    // window.Hls = (await import('hls.js')).default;
-    // window.WebTorrent = //@ts-ignore
-    // (await import('webtorrent/dist/webtorrent.min.js')).default;
-    // client = new window.WebTorrent();
 
     const canAutoplay = await testAutoplay();
     this.setState({ isAutoPlayable: canAutoplay });
@@ -639,12 +632,14 @@ export default class App extends React.Component<AppProps, AppState> {
           if (currentMedia.startsWith('magnet:')) {
             this.progressUpdater = window.setInterval(async () => {
               const client = window.watchparty.webtorrent;
-              this.setState({
-                downloaded: client?.torrents[0]?.downloaded,
-                total: client?.torrents[0]?.length,
-                speed: client?.torrents[0]?.downloadSpeed,
-                connections: client?.torrents[0]?.numPeers,
-              });
+              if (client) {
+                this.setState({
+                  downloaded: client.torrents[0]?.downloaded,
+                  total: client.torrents[0]?.length,
+                  speed: client.torrents[0]?.downloadSpeed,
+                  connections: client.torrents[0]?.numPeers,
+                });
+              }
             }, 1000);
           }
         }
