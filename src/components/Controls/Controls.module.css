@@ -1,0 +1,41 @@
+.controlsContainer {
+  position: absolute;
+  width: 100%;
+  bottom: 0px;
+}
+
+.controls {
+  color: white;
+  display: flex;
+  align-items: center;
+  line-height: 14px;
+  padding-left: 10px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+@media only screen and (max-width: 600px) {
+  .controls {
+    flex-wrap: wrap;
+    row-gap: 4px;
+  }
+}
+
+.control.control.control {
+  margin-right: 10px;
+}
+
+.control.text {
+  font-weight: 700;
+  font-size: 11px;
+}
+
+.control.action {
+  cursor: pointer;
+}
+
+.controls .progress .bar.bar.bar {
+  pointer-events: none;
+  min-width: initial;
+  border-radius: 0px;
+}

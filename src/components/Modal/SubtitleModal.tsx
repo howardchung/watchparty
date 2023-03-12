@@ -63,11 +63,8 @@ export class SubtitleModal extends React.Component<{
           <Modal.Description>
             <Checkbox
               toggle
-              checked={
-                Boolean(this.props.currentSubtitle) &&
-                this.props.getSubtitleMode() === 'hidden'
-              }
-              label="Hide subtitles for myself"
+              checked={this.props.getSubtitleMode() === 'showing'}
+              label="Toggle subtitles for myself"
               onClick={(e, data) => {
                 this.props.setSubtitleMode();
               }}
