@@ -15,6 +15,7 @@ import 'firebase/auth';
 import { serverPath } from './utils';
 import { Create } from './components/Create/Create';
 import { Discord } from './components/Discord/Discord';
+import 'semantic-ui-css/semantic.min.css';
 
 const Debug = lazy(() => import('./components/Debug/Debug'));
 
