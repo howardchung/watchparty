@@ -7,6 +7,7 @@ import { init } from 'emoji-mart';
 //@ts-ignore
 import Linkify from 'react-linkify';
 import { SecureLink } from 'react-secure-link';
+import styles from './Chat.module.css';
 
 import {
   formatTimestamp,
@@ -217,7 +218,7 @@ export class Chat extends React.Component<ChatProps> {
         }}
       >
         <div
-          className="chatContainer"
+          className={styles.chatContainer}
           ref={this.messagesRef}
           style={{ position: 'relative', paddingTop: 13 }}
         >
@@ -416,20 +417,20 @@ const ChatMessage = ({
           isChatMessage
           disabled={!Boolean(owner && owner === user?.uid)}
           trigger={
-            <Comment.Author as="a" className="light">
+            <Comment.Author as="a" className={styles.light}>
               {Boolean(system) && 'System'}
               {nameMap[id] || id}
             </Comment.Author>
           }
         />
-        <Comment.Metadata className="dark">
+        <Comment.Metadata className={styles.dark}>
           <div title={new Date(timestamp).toLocaleDateString()}>
             {new Date(timestamp).toLocaleTimeString()}
             {Boolean(videoTS) && ' @ '}
             {formatTimestamp(videoTS)}
           </div>
         </Comment.Metadata>
-        <Comment.Text className="light system">
+        <Comment.Text className={styles.light + ' ' + styles.system}>
           {cmd && formatMessage(cmd, msg)}
         </Comment.Text>
         <Linkify
@@ -444,7 +445,9 @@ const ChatMessage = ({
           )}
         >
           <Comment.Text
-            className={`light ${isEmojiString(msg) ? 'emoji' : ''}`}
+            className={`${styles.light} ${
+              isEmojiString(msg) ? styles.emoji : ''
+            }`}
           >
             {!cmd && msg}
           </Comment.Text>
