@@ -49,7 +49,7 @@
     "ssh-exec": "^2.0.0",
     "stripe": "^8.222.0",
     "uuid": "^9.0.0",
-    "webtorrent": "^2.0.13"
+    "webtorrent": "^2.0.14"
   },
   "scripts": {
     "start": "node buildServer/server.js",
