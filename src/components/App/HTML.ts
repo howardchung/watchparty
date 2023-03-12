@@ -53,7 +53,8 @@ export class HTML implements Player {
         src.includes('.m3u8') &&
         !leftVideo?.canPlayType('application/vnd.apple.mpegurl')
       ) {
-        let hls = new window.Hls();
+        const Hls = (await import('hls.js')).default;
+        let hls = new Hls();
         hls.loadSource(src);
         hls.attachMedia(leftVideo);
         return;
@@ -63,20 +64,27 @@ export class HTML implements Player {
       if (src.startsWith('magnet:')) {
         // WebTorrent
         // magnet:?xt=urn:btih:08ada5a7a6183aae1e09d831df6748d566095a10&dn=Sintel&tr=udp%3A%2F%2Fexplodie.org%3A6969&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Ftracker.empire-js.us%3A1337&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=wss%3A%2F%2Ftracker.btorrent.xyz&tr=wss%3A%2F%2Ftracker.fastcast.nz&tr=wss%3A%2F%2Ftracker.openwebtorrent.com&ws=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2F&xs=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2Fsintel.torrent
+        // Can't import webtorrent directly yet since it uses importAssertions feature
+        //@ts-ignore
+        const WebTorrent = (await import('webtorrent/dist/webtorrent.min.js'))
+          .default;
+        //@ts-ignore
         window.watchparty.webtorrent?._server?.close();
         window.watchparty.webtorrent?.destroy();
-        window.watchparty.webtorrent = new window.WebTorrent();
+        window.watchparty.webtorrent = new WebTorrent();
         await navigator.serviceWorker?.register('/sw.min.js');
         const controller = await navigator.serviceWorker.ready;
         await new Promise((resolve) => setTimeout(resolve, 500));
         console.log(controller, controller.active?.state);
+        // createServer is only in v2, types are outdated
+        //@ts-ignore
         const server = await window.watchparty.webtorrent.createServer({
           controller,
         });
         console.log(server);
         await new Promise((resolve) => setTimeout(resolve, 500));
         await new Promise((resolve) => {
-          window.watchparty.webtorrent.add(
+          window.watchparty.webtorrent?.add(
             src,
             {
               announce: [
@@ -88,6 +96,7 @@ export class HTML implements Player {
               path: '/tmp/webtorrent/',
               storeCacheSlots: 20,
               strategy: 'sequential',
+              //@ts-ignore
               noPeersIntervalTime: 30,
             },
             async (torrent: any) => {
