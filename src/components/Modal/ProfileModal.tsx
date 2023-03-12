@@ -123,6 +123,10 @@ export class ProfileModal extends React.Component<{
               Are you sure you want to delete your account? This can't be
               undone.
             </p>
+            <p>
+              If you have an active subscription, deleting your account will not
+              automatically cancel it!
+            </p>
           </Modal.Content>
           <Modal.Actions>
             <Button
