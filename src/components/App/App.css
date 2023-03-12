@@ -2,7 +2,7 @@
   background: rgba(0, 0, 0, 0);
 }
 
-body {
+html body {
   background-color: #222222;
 }
 
@@ -10,15 +10,15 @@ body {
   word-break: break-word;
 }
 
-.comment .light.light.light {
+.comment .light.light.light.light {
   color: gainsboro;
 }
 
-.comment .light.light.light.emoji {
+.comment .light.light.light.light.emoji {
   font-size: 24px;
 }
 
-.comment .dark.dark.dark {
+.comment .dark.dark.dark.dark {
   color: gray;
 }
 
@@ -27,7 +27,7 @@ body {
   overflow: auto;
 }
 
-.system.system.system.system {
+.system.system.system.system.system {
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 1px;
