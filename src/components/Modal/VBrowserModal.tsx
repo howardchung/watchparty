@@ -170,7 +170,7 @@ export class VBrowserModal extends React.Component<{
                     </Table.Cell>
                     <Table.Cell>
                       {this.props.isSubscriber ? (
-                        <LaunchButton />
+                        <LaunchButton large />
                       ) : (
                         subscribeButton
                       )}
