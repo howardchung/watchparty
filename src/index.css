@@ -11,6 +11,8 @@ button.linkButton {
   color: #069;
   text-decoration: underline;
   cursor: pointer;
+  /* make the font match the rest of the text */
+  font-family: inherit;
 }
 
 .footerIcon {

@@ -136,7 +136,7 @@ export class SignInButton extends React.Component<SignInButtonProps> {
       <React.Fragment>
         {this.state.isLoginOpen && (
           <LoginModal
-            closeLogin={() => this.setState({ isLoginOpen: false })}
+            closeModal={() => this.setState({ isLoginOpen: false })}
           />
         )}
         <Popup
