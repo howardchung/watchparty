@@ -40,6 +40,29 @@
   }
 }
 
+.chatContainer {
+  flex-grow: 1;
+  overflow: auto;
+}
+
+.light.light.light.light.light {
+  color: gainsboro;
+}
+
+.light.light.light.light.light.emoji {
+  font-size: 24px;
+}
+
+.dark.dark.dark.dark.dark {
+  color: gray;
+}
+
+.system.system.system.system.system {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
 .comment .commentMenu {
   display: none;
   justify-content: center;

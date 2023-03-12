@@ -1,38 +1,3 @@
-::-webkit-scrollbar-corner {
-  background: rgba(0, 0, 0, 0);
-}
-
-html body {
-  background-color: #222222;
-}
-
-.comment {
-  word-break: break-word;
-}
-
-.comment .light.light.light.light {
-  color: gainsboro;
-}
-
-.comment .light.light.light.light.emoji {
-  font-size: 24px;
-}
-
-.comment .dark.dark.dark.dark {
-  color: gray;
-}
-
-.chatContainer {
-  flex-grow: 1;
-  overflow: auto;
-}
-
-.system.system.system.system.system {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
 .videoContent {
   position: absolute;
   top: 0;
@@ -78,6 +43,11 @@ html body {
 
 .fullHeightColumnFullscreen.fullHeightColumnFullscreen.fullHeightColumnFullscreen {
   height: calc(100vh);
+}
+
+/* Override default semantic ui styles below */
+.ui .comment {
+  word-break: break-word;
 }
 
 .ui.labeled.icon.button > .icon.loading,

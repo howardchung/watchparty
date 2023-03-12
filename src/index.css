@@ -1,9 +1,15 @@
-body {
+html body {
   margin: 0;
   /* fix for scrollbar popping in and out at certain widths, but adds a permanent scrollbar */
   overflow-y: scroll;
+  background-color: #222222;
 }
 
+::-webkit-scrollbar-corner {
+  background: rgba(0, 0, 0, 0);
+}
+
+/* Styles generally used outside of App */
 button.linkButton {
   background: none !important;
   border: none;
