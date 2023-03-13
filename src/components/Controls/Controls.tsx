@@ -11,7 +11,7 @@ interface ControlsProps {
   fullScreen: (fs: boolean) => void;
   toggleMute: () => void;
   showSubtitle: () => void;
-  jumpToLeader: () => void;
+  syncSelf: () => void;
   paused: boolean;
   muted: boolean;
   volume: number;
@@ -27,6 +27,7 @@ interface ControlsProps {
   roomPlaybackRate: number;
   isYouTube: boolean;
   setSubtitleMode: (mode: TextTrackMode, lang?: string) => void;
+  isHls: boolean;
 }
 
 export class Controls extends React.Component<ControlsProps> {
@@ -66,7 +67,7 @@ export class Controls extends React.Component<ControlsProps> {
       fullScreen,
       toggleMute,
       showSubtitle,
-      jumpToLeader,
+      syncSelf,
       currentTime,
       duration,
       leaderTime,
@@ -97,7 +98,15 @@ export class Controls extends React.Component<ControlsProps> {
           }
           trigger={
             <div
-              onClick={() => jumpToLeader()}
+              onClick={() => {
+                if (this.props.isHls) {
+                  // do a regular seek rather than sync self if it's HLS since we're basically seeking to the live position
+                  // Also, clear the room TS since we want to start at live again on refresh
+                  this.props.onSeek(null, Number.MAX_SAFE_INTEGER);
+                } else {
+                  syncSelf();
+                }
+              }}
               className={`${styles.control} ${styles.action} ${styles.text}`}
               style={{
                 color: isBehind ? 'gray' : 'red',

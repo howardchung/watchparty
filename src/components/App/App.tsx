@@ -524,7 +524,7 @@ export default class App extends React.Component<AppProps, AppState> {
       this.doPause();
     });
     socket.on('REC:seek', (data: number) => {
-      this.Player().seekVideo(data);
+      this.syncSelf(data);
     });
     socket.on('REC:playbackRate', (data: number) => {
       this.setState({ roomPlaybackRate: data });
@@ -622,7 +622,8 @@ export default class App extends React.Component<AppProps, AppState> {
             'canplay',
             () => {
               this.setLoadingFalse();
-              this.jumpToLeader();
+              // Pass the timestamp if HLS so we can calculate, otherwise just jump to leader
+              this.syncSelf(this.playingHls() ? data.videoTS : undefined);
             },
             { once: true }
           );
@@ -1416,12 +1417,19 @@ export default class App extends React.Component<AppProps, AppState> {
     return this.playingScreenShare() || this.playingVBrowser();
   };
 
-  jumpToLeader = () => {
-    // Jump to the leader's position
-    const maxTS = this.getLeaderTime();
-    if (maxTS > 0) {
-      console.log('jump to leader at ', maxTS);
-      this.Player().seekVideo(maxTS);
+  syncSelf = (customTime?: number) => {
+    // Jump to the leader's position, or a custom one
+    // for HLS the leader is the live stream position
+    let target = customTime ?? this.getLeaderTime();
+    if (this.playingHls() && customTime) {
+      // Translate the time back to video time
+      const zeroTime =
+        Math.floor(Date.now() / 1000) - this.HTMLInterface.getDuration();
+      target = customTime - zeroTime;
+    }
+    if (target >= 0) {
+      console.log('syncing self to leader or custom:', target);
+      this.Player().seekVideo(target);
     }
   };
 
@@ -1506,6 +1514,7 @@ export default class App extends React.Component<AppProps, AppState> {
 
   onSeek = (e: any, time: number) => {
     let target = time;
+    // Read the time from the click event if it exists
     if (e) {
       const rect = e.target.getBoundingClientRect();
       const x = e.clientX - rect.left;
@@ -1514,7 +1523,9 @@ export default class App extends React.Component<AppProps, AppState> {
     }
     target = Math.max(target, 0);
     this.Player().seekVideo(target);
-    this.socket.emit('CMD:seek', target);
+    const hlsTarget =
+      Math.floor(Date.now() / 1000) - this.HTMLInterface.getDuration() + target;
+    this.socket.emit('CMD:seek', this.playingHls() ? hlsTarget : target);
   };
 
   onFullScreenChange = () => {
@@ -1741,7 +1752,7 @@ export default class App extends React.Component<AppProps, AppState> {
         toggleMute={this.toggleMute}
         showSubtitle={this.doSubtitle}
         setVolume={this.doSetVolume}
-        jumpToLeader={this.jumpToLeader}
+        syncSelf={this.syncSelf}
         paused={this.state.currentMediaPaused}
         muted={this.Player().isMuted()}
         volume={this.Player().getVolume()}
@@ -1757,6 +1768,7 @@ export default class App extends React.Component<AppProps, AppState> {
         roomPlaybackRate={this.state.roomPlaybackRate}
         isYouTube={this.usingYoutube()}
         setSubtitleMode={this.Player().setSubtitleMode}
+        isHls={this.playingHls()}
       />
     );
     const displayRightContent =
