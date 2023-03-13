@@ -34,7 +34,7 @@
   cursor: pointer;
 }
 
-.controls .progress .bar.bar.bar {
+.controls :global(.progress) :global(.bar.bar.bar) {
   pointer-events: none;
   min-width: initial;
   border-radius: 0px;

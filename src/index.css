@@ -9,7 +9,7 @@ html body {
   background: rgba(0, 0, 0, 0);
 }
 
-/* Styles generally used outside of App */
+/* If a style is used outside of App, put it here */
 button.linkButton {
   background: none !important;
   border: none;
@@ -41,4 +41,43 @@ button.linkButton {
   font-weight: bolder;
   color: gray;
   margin-top: 8px;
+}
+
+/* Override default semantic ui styles below */
+.ui .comment {
+  word-break: break-word;
+}
+
+.ui.labeled.icon.button > .icon.loading,
+.ui.labeled.icon.buttons > .button > .icon.loading {
+  background-color: initial;
+}
+
+.ui.dropdown .menu[role='listbox'] {
+  z-index: 1001;
+}
+
+.ui.selection.dropdown.ui.selection.dropdown {
+  min-height: 1em;
+  border: 0px;
+}
+
+.ui.search.dropdown > .text {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  width: 100%;
+  overflow: hidden;
+}
+
+.ui.dropdown > .text {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  width: 100%;
+  overflow: hidden;
+}
+
+.ui.inverted.menu .active.item {
+  border-bottom: 2px solid #2185d0;
+  background: inherit;
+  margin-bottom: -2px;
 }
