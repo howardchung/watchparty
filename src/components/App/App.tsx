@@ -1,5 +1,3 @@
-import './App.css';
-
 import * as MediasoupClient from 'mediasoup-client';
 import axios from 'axios';
 import React from 'react';
@@ -56,6 +54,7 @@ import { SubtitleModal } from '../Modal/SubtitleModal';
 import { HTML } from './HTML';
 import { YouTube } from './YouTube';
 import type WebTorrent from 'webtorrent';
+import styles from './App.module.css';
 
 declare global {
   interface Window {
@@ -1749,8 +1748,8 @@ export default class App extends React.Component<AppProps, AppState> {
         style={{ display: 'flex', flexDirection: 'column' }}
         className={`${
           this.state.fullScreen
-            ? 'fullHeightColumnFullscreen'
-            : 'fullHeightColumn'
+            ? styles.fullHeightColumnFullscreen
+            : styles.fullHeightColumn
         }`}
       >
         <Form autoComplete="off">
@@ -2017,8 +2016,8 @@ export default class App extends React.Component<AppProps, AppState> {
                 width={this.state.showRightBar ? 12 : 15}
                 className={
                   this.state.fullScreen
-                    ? 'fullHeightColumnFullscreen'
-                    : 'fullHeightColumn'
+                    ? styles.fullHeightColumnFullscreen
+                    : styles.fullHeightColumn
                 }
               >
                 <div
@@ -2045,7 +2044,7 @@ export default class App extends React.Component<AppProps, AppState> {
                       />
                       <Separator />
                       <div
-                        className="mobileStack"
+                        className={styles.mobileStack}
                         style={{ display: 'flex', gap: '4px' }}
                       >
                         {this.localStreamToPublish && (
@@ -2238,13 +2237,13 @@ export default class App extends React.Component<AppProps, AppState> {
                     </React.Fragment>
                   )}
                   <div style={{ flexGrow: 1 }}>
-                    <div id="playerContainer">
+                    <div className={styles.playerContainer}>
                       {(this.state.loading ||
                         !this.state.currentMedia ||
                         this.state.nonPlayableMedia) && (
                         <div
                           id="loader"
-                          className="videoContent"
+                          className={styles.videoContent}
                           style={{
                             display: 'flex',
                             alignItems: 'center',
@@ -2288,7 +2287,7 @@ export default class App extends React.Component<AppProps, AppState> {
                         }}
                         title="YouTube"
                         id="leftYt"
-                        className="videoContent"
+                        className={styles.videoContent}
                         allowFullScreen
                         frameBorder="0"
                         allow="autoplay"
