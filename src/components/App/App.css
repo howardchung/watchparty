@@ -16,10 +16,6 @@
   min-height: 48vh;
 }
 
-.fullScreenChat.fullScreenChat.fullScreenChat {
-  width: 20vw;
-}
-
 #leftVideo::-webkit-media-controls {
   display: none !important;
 }
@@ -43,43 +39,4 @@
 
 .fullHeightColumnFullscreen.fullHeightColumnFullscreen.fullHeightColumnFullscreen {
   height: calc(100vh);
-}
-
-/* Override default semantic ui styles below */
-.ui .comment {
-  word-break: break-word;
-}
-
-.ui.labeled.icon.button > .icon.loading,
-.ui.labeled.icon.buttons > .button > .icon.loading {
-  background-color: initial;
-}
-
-.ui.dropdown .menu[role='listbox'] {
-  z-index: 1001;
-}
-
-.ui.selection.dropdown.ui.selection.dropdown {
-  min-height: 1em;
-  border: 0px;
-}
-
-.ui.search.dropdown > .text {
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  width: 100%;
-  overflow: hidden;
-}
-
-.ui.dropdown > .text {
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  width: 100%;
-  overflow: hidden;
-}
-
-.ui.inverted.menu .active.item {
-  border-bottom: 2px solid #2185d0;
-  background: inherit;
-  margin-bottom: -2px;
 }
