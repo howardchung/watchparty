@@ -25,6 +25,17 @@ export function formatTimestamp(input: any) {
   return `${hours ? `${hours}:` : ''}${minutes}:${seconds}`;
 }
 
+export function formatUnixTime(input: string) {
+  try {
+    if (Number(input) >= Number.MAX_SAFE_INTEGER) {
+      return 'live';
+    }
+    return new Date(Number(input) * 1000).toISOString();
+  } catch {
+    return input;
+  }
+}
+
 export function formatSpeed(input: number) {
   if (input >= 1000000) {
     return (input / 1000000).toFixed(2) + ' MB/s';
