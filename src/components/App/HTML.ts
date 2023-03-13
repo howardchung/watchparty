@@ -1,3 +1,4 @@
+import { isHls, isMagnet } from '../../utils';
 import { Player } from './Player';
 
 export class HTML implements Player {
@@ -50,7 +51,7 @@ export class HTML implements Player {
       // Check for HLS
       // https://moctobpltc-i.akamaihd.net/hls/live/571329/eight/playlist.m3u8
       if (
-        src.includes('.m3u8') &&
+        isHls(src) &&
         !leftVideo?.canPlayType('application/vnd.apple.mpegurl')
       ) {
         const Hls = (await import('hls.js')).default;
@@ -61,7 +62,7 @@ export class HTML implements Player {
       }
       // Set to room time (don't do for HLS streams since durations will be different)
       leftVideo.currentTime = time;
-      if (src.startsWith('magnet:')) {
+      if (isMagnet(src)) {
         // WebTorrent
         // magnet:?xt=urn:btih:08ada5a7a6183aae1e09d831df6748d566095a10&dn=Sintel&tr=udp%3A%2F%2Fexplodie.org%3A6969&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Ftracker.empire-js.us%3A1337&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=wss%3A%2F%2Ftracker.btorrent.xyz&tr=wss%3A%2F%2Ftracker.fastcast.nz&tr=wss%3A%2F%2Ftracker.openwebtorrent.com&ws=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2F&xs=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2Fsintel.torrent
         // Can't import webtorrent directly yet since it uses importAssertions feature
@@ -178,11 +179,6 @@ export class HTML implements Player {
 
   getVolume = (): number => {
     return this.getVideoEl()?.volume ?? 1;
-  };
-
-  showSubtitle = () => {
-    // No-op since we open the subtitle modal
-    return;
   };
 
   setSubtitleMode = (mode?: TextTrackMode) => {

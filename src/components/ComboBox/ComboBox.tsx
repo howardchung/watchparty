@@ -10,8 +10,10 @@ import {
 import {
   debounce,
   getMediaPathResults,
-  getMediaType,
   getYouTubeResults,
+  isHttp,
+  isMagnet,
+  isYouTube,
 } from '../../utils';
 import { examples } from '../../utils/examples';
 import ChatVideoCard from '../Playlist/ChatVideoCard';
@@ -58,7 +60,8 @@ export class ComboBox extends React.Component<ComboBoxProps> {
           let results: JSX.Element[] | undefined = undefined;
           if (
             query === '' ||
-            (query && (query.startsWith('http') || query.startsWith('magnet:')))
+            // Anything that doesn't pass this check we pass to YouTube as a search query
+            (query && (isHttp(query) || isMagnet(query)))
           ) {
             let items = examples;
             if (!this.state.inputMedia && this.props.mediaPath) {
@@ -66,10 +69,10 @@ export class ComboBox extends React.Component<ComboBoxProps> {
             }
             if (query) {
               let type = 'file';
-              if (getMediaType(query) === 'youtube') {
+              if (isYouTube(query)) {
                 type = 'youtube';
               }
-              if (query.startsWith('magnet:')) {
+              if (isMagnet(query)) {
                 type = 'magnet';
               }
               items = [
@@ -146,8 +149,7 @@ export class ComboBox extends React.Component<ComboBoxProps> {
                 this.setState(
                   {
                     inputMedia:
-                      currentMedia.startsWith('http') ||
-                      currentMedia.startsWith('magnet:')
+                      isHttp(currentMedia) || isMagnet(currentMedia)
                         ? currentMedia
                         : getMediaDisplayName(currentMedia),
                   },
@@ -155,8 +157,8 @@ export class ComboBox extends React.Component<ComboBoxProps> {
                     if (
                       !this.state.inputMedia ||
                       (this.state.inputMedia &&
-                        (this.state.inputMedia.startsWith('http') ||
-                          this.state.inputMedia.startsWith('magnet:')))
+                        (isHttp(this.state.inputMedia) ||
+                          isMagnet(this.state.inputMedia)))
                     ) {
                       this.doSearch(e);
                     }

@@ -103,17 +103,35 @@ export function getColorForStringHex(id: string) {
 export const getFbPhoto = (fbId: string) =>
   `https://graph.facebook.com/${fbId}/picture?type=normal`;
 
-export const getMediaType = (input: string) => {
-  if (!input) {
-    return '';
-  }
-  if (
+export const isYouTube = (input: string) => {
+  return (
     input.startsWith('https://www.youtube.com/') ||
     input.startsWith('https://youtu.be/')
-  ) {
-    return 'youtube';
-  }
-  return 'video';
+  );
+};
+
+export const isHttp = (input: string) => {
+  return input.startsWith('http');
+};
+
+export const isMagnet = (input: string) => {
+  return input.startsWith('magnet:');
+};
+
+export const isHls = (input: string) => {
+  return input.includes('.m3u8');
+};
+
+export const isScreenShare = (input: string) => {
+  return input.startsWith('screenshare://');
+};
+
+export const isFileShare = (input: string) => {
+  return input.startsWith('fileshare://');
+};
+
+export const isVBrowser = (input: string) => {
+  return input.startsWith('vbrowser://');
 };
 
 export async function testAutoplay() {

@@ -86,11 +86,6 @@ export class YouTube implements Player {
     return volume / 100;
   };
 
-  showSubtitle = () => {
-    // YouTube doesn't use the subtitle modal
-    return;
-  };
-
   setSubtitleMode = (mode?: TextTrackMode, lang?: string) => {
     // Show the available options
     // console.log(this.watchPartyYTPlayer?.getOptions('captions'));
