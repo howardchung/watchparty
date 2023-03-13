@@ -15,6 +15,5 @@ export abstract class Player {
   public abstract isSubtitled: () => boolean;
   public abstract getSubtitleMode: () => TextTrackMode;
   public abstract setSubtitleMode: (mode?: TextTrackMode) => void;
-  public abstract showSubtitle: () => void;
   public abstract isReady: () => boolean;
 }

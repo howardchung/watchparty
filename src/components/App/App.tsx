@@ -22,7 +22,6 @@ import io, { Socket } from 'socket.io-client';
 import { default as toWebVTT } from 'srt-webvtt';
 import {
   formatSpeed,
-  getMediaType,
   iceServers,
   isMobile,
   serverPath,
@@ -32,6 +31,13 @@ import {
   calculateMedian,
   getUserImage,
   getColorForString,
+  isYouTube,
+  isMagnet,
+  isHttp,
+  isHls,
+  isScreenShare,
+  isFileShare,
+  isVBrowser,
 } from '../../utils';
 import { generateName } from '../../utils/generateName';
 import { Chat } from '../Chat';
@@ -233,7 +239,7 @@ export default class App extends React.Component<AppProps, AppState> {
   YouTubeInterface: YouTube = new YouTube(null);
   HTMLInterface: HTML = new HTML('leftVideo', this.launchMultiSelect);
   Player = () => {
-    if (this.isYouTube()) {
+    if (this.usingYoutube()) {
       return this.YouTubeInterface;
     } else {
       return this.HTMLInterface;
@@ -308,16 +314,22 @@ export default class App extends React.Component<AppProps, AppState> {
             this.YouTubeInterface = new YouTube(ytPlayer);
             this.setState({ loading: false });
             // We might have failed to play YT originally, ask for the current video again
-            if (this.isYouTube()) {
+            if (this.usingYoutube()) {
               console.log('requesting host data again after ytReady');
               this.socket.emit('CMD:askHost');
             }
           },
           onStateChange: (e: any) => {
-            if (this.isYouTube() && e.data === window.YT?.PlayerState?.CUED) {
+            if (
+              this.usingYoutube() &&
+              e.data === window.YT?.PlayerState?.CUED
+            ) {
               this.setState({ loading: false });
             }
-            if (this.isYouTube() && e.data === window.YT?.PlayerState?.ENDED) {
+            if (
+              this.usingYoutube() &&
+              e.data === window.YT?.PlayerState?.ENDED
+            ) {
               this.onVideoEnded();
             }
             if (
@@ -533,21 +545,21 @@ export default class App extends React.Component<AppProps, AppState> {
     });
     socket.on('REC:host', async (data: HostState) => {
       let currentMedia = data.video || '';
-      if (this.isScreenShare() && !currentMedia.startsWith('screenshare://')) {
+      if (this.playingScreenShare() && !isScreenShare(currentMedia)) {
         this.stopPublishingLocalStream();
       }
-      if (this.isFileShare() && !currentMedia.startsWith('fileshare://')) {
+      if (this.playingFileShare() && !isFileShare(currentMedia)) {
         this.stopPublishingLocalStream();
       }
-      if (this.isScreenShare() && currentMedia.startsWith('screenshare://')) {
+      if (this.playingScreenShare() && isScreenShare(currentMedia)) {
         // Ignore, it's probably a reconnection
         return;
       }
-      if (this.isFileShare() && currentMedia.startsWith('fileshare://')) {
+      if (this.playingFileShare() && isFileShare(currentMedia)) {
         // Ignore, it's probably a reconnection
         return;
       }
-      if (this.isVBrowser() && !currentMedia.startsWith('vbrowser://')) {
+      if (this.playingVBrowser() && !isVBrowser(currentMedia)) {
         this.stopVBrowser();
       }
       this.setState(
@@ -579,17 +591,21 @@ export default class App extends React.Component<AppProps, AppState> {
             this.Player().setPlaybackRate(data.playbackRate);
           }
 
-          if (this.isScreenShare() || this.isFileShare() || this.isVBrowser()) {
+          if (
+            this.playingScreenShare() ||
+            this.playingFileShare() ||
+            this.playingVBrowser()
+          ) {
             console.log(
               'exiting REC:host since we are using webRTC (fileshare, screenshare, or vbrowser). Check setupRTCConnections()'
             );
-            if (!(this.isVBrowser() && !this.getVBrowserHost())) {
+            if (!(this.playingVBrowser() && !this.getVBrowserHost())) {
               // Remove the loader unless we're waiting for a vbrowser
               this.setLoadingFalse();
             }
             return;
           }
-          if (this.isYouTube() && !this.YouTubeInterface.isReady()) {
+          if (this.usingYoutube() && !this.YouTubeInterface.isReady()) {
             console.log(
               'YT player not ready, onReady callback will retry when it is'
             );
@@ -628,7 +644,7 @@ export default class App extends React.Component<AppProps, AppState> {
               });
             }, 1000);
           }
-          if (currentMedia.startsWith('magnet:')) {
+          if (isMagnet(currentMedia)) {
             this.progressUpdater = window.setInterval(async () => {
               const client = window.watchparty.webtorrent;
               if (client) {
@@ -706,8 +722,8 @@ export default class App extends React.Component<AppProps, AppState> {
         // e.g. screenshare, fileshare, .m3u8 HLS streams
         if (
           !this.state.currentMediaPaused &&
-          !this.state.currentMedia.includes('.m3u8') &&
-          this.isHttp() &&
+          !this.playingHls() &&
+          this.hasDuration() &&
           this.state.roomPlaybackRate === 0
         ) {
           const leader = this.getLeaderTime();
@@ -1238,7 +1254,7 @@ export default class App extends React.Component<AppProps, AppState> {
   };
 
   setupRTCConnections = async () => {
-    if (!this.isScreenShare() && !this.isFileShare()) {
+    if (!this.playingScreenShare() && !this.playingFileShare()) {
       return;
     }
     const sharer = this.state.participants.find((p) => p.isScreenShare);
@@ -1250,7 +1266,7 @@ export default class App extends React.Component<AppProps, AppState> {
     }
     if (this.state.currentMedia.includes('@')) {
       let prefix = 'screenshare://';
-      if (this.isFileShare()) {
+      if (this.playingFileShare()) {
         prefix = 'fileshare://';
       }
       const unprefixed = this.state.currentMedia.replace(prefix, '');
@@ -1358,33 +1374,34 @@ export default class App extends React.Component<AppProps, AppState> {
     this.socket.emit('signalSS', { to, msg: data, sharer });
   };
 
-  isYouTube = () => {
-    return getMediaType(this.state.currentMedia) === 'youtube';
+  usingYoutube = () => {
+    return isYouTube(this.state.currentMedia);
   };
 
-  isVideo = () => {
-    // Anything that uses HTML Video (e.g. not YouTube)
-    return getMediaType(this.state.currentMedia) === 'video';
+  usingNative = () => {
+    // Anything that uses HTML Video (e.g. not YouTube, Vimeo, or other embedded JS player)
+    return !this.usingYoutube();
   };
 
-  isScreenShare = () => {
-    return this.state.currentMedia.startsWith('screenshare://');
+  hasDuration = () => {
+    // Youtube, link, or magnet, etc. Has a defined runtime (not WebRTC)
+    return isHttp(this.state.currentMedia) || isMagnet(this.state.currentMedia);
   };
 
-  isFileShare = () => {
-    return this.state.currentMedia.startsWith('fileshare://');
+  playingScreenShare = () => {
+    return isScreenShare(this.state.currentMedia);
   };
 
-  isVBrowser = () => {
-    return this.state.currentMedia.startsWith('vbrowser://');
+  playingFileShare = () => {
+    return isFileShare(this.state.currentMedia);
   };
 
-  isHttp = () => {
-    // Youtube, link, or magnet
-    return (
-      this.state.currentMedia.startsWith('http') ||
-      this.state.currentMedia.startsWith('magnet:')
-    );
+  playingVBrowser = () => {
+    return isVBrowser(this.state.currentMedia);
+  };
+
+  playingHls = () => {
+    return isHls(this.state.currentMedia);
   };
 
   getVBrowserPass = () => {
@@ -1396,7 +1413,7 @@ export default class App extends React.Component<AppProps, AppState> {
   };
 
   isPauseDisabled = () => {
-    return this.isScreenShare() || this.isVBrowser();
+    return this.playingScreenShare() || this.playingVBrowser();
   };
 
   jumpToLeader = () => {
@@ -1434,7 +1451,7 @@ export default class App extends React.Component<AppProps, AppState> {
           await this.Player().playVideo();
         } catch (e: any) {
           console.warn(e, e.name);
-          if (e.name === 'NotSupportedError' && this.isHttp()) {
+          if (e.name === 'NotSupportedError' && this.usingNative()) {
             this.setState({ loading: false, nonPlayableMedia: true });
           }
         }
@@ -1459,10 +1476,10 @@ export default class App extends React.Component<AppProps, AppState> {
   };
 
   doSubtitle = () => {
-    if (this.isVideo()) {
+    // Native player uses subtitle modal.
+    if (this.usingNative()) {
       this.setState({ isSubtitleModalOpen: true });
     }
-    this.Player().showSubtitle();
   };
 
   doSetPlaybackRate = (rate: number) => {
@@ -1513,8 +1530,6 @@ export default class App extends React.Component<AppProps, AppState> {
         this.onSeek(null, this.Player().getCurrentTime() + 15);
       } else if (e.key === 'ArrowLeft') {
         this.onSeek(null, this.Player().getCurrentTime() - 15);
-      } else if (e.key === 'c') {
-        this.Player().showSubtitle();
       } else if (e.key === 't') {
         this.fullScreen(false);
       } else if (e.key === 'f') {
@@ -1528,13 +1543,13 @@ export default class App extends React.Component<AppProps, AppState> {
   fullScreen = async (bVideoOnly: boolean) => {
     let container = document.getElementById('theaterContainer') as HTMLElement;
     if (bVideoOnly || isMobile()) {
-      if (this.isVBrowser() && !isMobile()) {
+      if (this.playingVBrowser() && !isMobile()) {
         // Can't really control the VBrowser on mobile anyway, so just fullscreen the video
         // https://github.com/howardchung/watchparty/issues/208
         container = document.getElementById('leftVideoParent') as HTMLElement;
       } else {
         container = document.getElementById(
-          this.isYouTube() ? 'leftYt' : 'leftVideo'
+          this.usingYoutube() ? 'leftYt' : 'leftVideo'
         ) as HTMLElement;
       }
     }
@@ -1650,7 +1665,7 @@ export default class App extends React.Component<AppProps, AppState> {
       return '';
     }
     // Show the whole URL for youtube
-    if (this.isYouTube()) {
+    if (this.usingYoutube()) {
       return input;
     }
     if (input.startsWith('screenshare://')) {
@@ -1664,7 +1679,7 @@ export default class App extends React.Component<AppProps, AppState> {
     if (input.startsWith('vbrowser://')) {
       return 'Virtual Browser' + (this.state.isVBrowserLarge ? '+' : '');
     }
-    if (input.startsWith('magnet:')) {
+    if (isMagnet(input)) {
       const magnetParsed = new URLSearchParams(input);
       const index = magnetParsed.get('fileIndex');
       return magnetParsed.get('dn') + (index != null ? ` (file ${index})` : '');
@@ -1685,6 +1700,10 @@ export default class App extends React.Component<AppProps, AppState> {
   };
 
   getLeaderTime = () => {
+    if (this.playingHls()) {
+      // Pick a time near the end of the livestream
+      return this.HTMLInterface.getDuration() - 5;
+    }
     if (this.state.participants.length > 2) {
       return calculateMedian(Object.values(this.state.tsMap));
     }
@@ -1730,13 +1749,13 @@ export default class App extends React.Component<AppProps, AppState> {
         currentTime={this.Player().getCurrentTime()}
         duration={this.Player().getDuration()}
         disabled={!this.haveLock()}
-        leaderTime={this.isHttp() ? this.getLeaderTime() : undefined}
+        leaderTime={this.hasDuration() ? this.getLeaderTime() : undefined}
         isPauseDisabled={this.isPauseDisabled()}
         playbackRate={this.Player().getPlaybackRate()}
         setPlaybackRate={this.doSetPlaybackRate}
         beta={this.props.beta}
         roomPlaybackRate={this.state.roomPlaybackRate}
-        isYouTube={this.isYouTube()}
+        isYouTube={this.usingYoutube()}
         setSubtitleMode={this.Player().setSubtitleMode}
       />
     );
@@ -2063,7 +2082,7 @@ export default class App extends React.Component<AppProps, AppState> {
                         )}
                         {!this.localStreamToPublish &&
                           !sharer &&
-                          !this.isVBrowser() && (
+                          !this.playingVBrowser() && (
                             <Popup
                               content={`Share a tab or an application.`}
                               trigger={
@@ -2088,7 +2107,7 @@ export default class App extends React.Component<AppProps, AppState> {
                           )}
                         {!this.localStreamToPublish &&
                           !sharer &&
-                          !this.isVBrowser() && (
+                          !this.playingVBrowser() && (
                             <Popup
                               content="Launch a shared virtual browser"
                               trigger={
@@ -2111,7 +2130,7 @@ export default class App extends React.Component<AppProps, AppState> {
                               }
                             />
                           )}
-                        {this.isVBrowser() && (
+                        {this.playingVBrowser() && (
                           <Popup
                             content="Choose the person controlling the VBrowser"
                             trigger={
@@ -2135,7 +2154,7 @@ export default class App extends React.Component<AppProps, AppState> {
                             }
                           />
                         )}
-                        {this.isVBrowser() && (
+                        {this.playingVBrowser() && (
                           <Dropdown
                             icon="desktop"
                             labeled
@@ -2175,7 +2194,7 @@ export default class App extends React.Component<AppProps, AppState> {
                             ]}
                           ></Dropdown>
                         )}
-                        {this.isVBrowser() && (
+                        {this.playingVBrowser() && (
                           <Button
                             fluid
                             className="toolButton"
@@ -2191,7 +2210,7 @@ export default class App extends React.Component<AppProps, AppState> {
                         )}
                         {!this.localStreamToPublish &&
                           !sharer &&
-                          !this.isVBrowser() && (
+                          !this.playingVBrowser() && (
                             <Popup
                               content="Stream your own video file"
                               trigger={
@@ -2253,7 +2272,7 @@ export default class App extends React.Component<AppProps, AppState> {
                           {this.state.loading && (
                             <Dimmer active>
                               <Loader>
-                                {this.isVBrowser()
+                                {this.playingVBrowser()
                                   ? 'Launching virtual browser. This can take up to a minute.'
                                   : ''}
                               </Loader>
@@ -2281,7 +2300,7 @@ export default class App extends React.Component<AppProps, AppState> {
                       <iframe
                         style={{
                           display:
-                            this.isYouTube() && !this.state.loading
+                            this.usingYoutube() && !this.state.loading
                               ? 'block'
                               : 'none',
                         }}
@@ -2293,7 +2312,7 @@ export default class App extends React.Component<AppProps, AppState> {
                         allow="autoplay"
                         src="https://www.youtube.com/embed/?enablejsapi=1&controls=0&rel=0"
                       />
-                      {this.isVBrowser() &&
+                      {this.playingVBrowser() &&
                       this.getVBrowserPass() &&
                       this.getVBrowserHost() ? (
                         <VBrowser
@@ -2311,7 +2330,7 @@ export default class App extends React.Component<AppProps, AppState> {
                         <video
                           style={{
                             display:
-                              (this.isVideo() && !this.state.loading) ||
+                              (this.usingNative() && !this.state.loading) ||
                               this.state.fullScreen
                                 ? 'block'
                                 : 'none',
