@@ -1,4 +1,4 @@
-import * as MediasoupClient from 'mediasoup-client';
+import type MediasoupClient from 'mediasoup-client';
 import axios from 'axios';
 import React from 'react';
 import {
@@ -1000,7 +1000,8 @@ export default class App extends React.Component<AppProps, AppState> {
     async function loadDevice(
       routerRtpCapabilities: MediasoupClient.types.RtpCapabilities
     ) {
-      device = new MediasoupClient.Device();
+      const { Device } = await import('mediasoup-client');
+      device = new Device();
       await device.load({ routerRtpCapabilities });
     }
 
@@ -1016,8 +1017,8 @@ export default class App extends React.Component<AppProps, AppState> {
   subscribeMediasoup = async (mediaSoupURL: string) => {
     let device: MediasoupClient.types.Device = null as any;
     let consumerTransport: MediasoupClient.types.Transport = null as any;
-
     // =========== socket.io ==========
+
     const connectSocket = () => {
       return new Promise<void>((resolve, reject) => {
         this.mediasoupSubSocket = io(mediaSoupURL, {
@@ -1120,7 +1121,8 @@ export default class App extends React.Component<AppProps, AppState> {
       routerRtpCapabilities: MediasoupClient.types.RtpCapabilities
     ) {
       try {
-        device = new MediasoupClient.Device();
+        const { Device } = await import('mediasoup-client');
+        device = new Device();
         await device.load({ routerRtpCapabilities });
       } catch (error: any) {
         if (error.name === 'UnsupportedError') {
@@ -1871,6 +1873,7 @@ export default class App extends React.Component<AppProps, AppState> {
           owner={this.state.owner}
           user={this.props.user}
           ref={this.chatRef}
+          isHls={this.playingHls()}
         />
         {this.state.state === 'connected' && (
           <VideoChat

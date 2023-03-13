@@ -11,6 +11,7 @@ import styles from './Chat.module.css';
 
 import {
   formatTimestamp,
+  formatUnixTime,
   getColorForStringHex,
   getDefaultPicture,
   isEmojiString,
@@ -39,6 +40,7 @@ interface ChatProps {
   user: firebase.User | undefined;
   owner: string | undefined;
   ref: RefObject<Chat>;
+  isHls: boolean;
 }
 
 export class Chat extends React.Component<ChatProps> {
@@ -168,7 +170,9 @@ export class Chat extends React.Component<ChatProps> {
         </React.Fragment>
       );
     } else if (cmd === 'seek') {
-      return `jumped to ${formatTimestamp(msg)}`;
+      return `jumped to ${
+        this.props.isHls ? formatUnixTime(msg) : formatTimestamp(msg)
+      }`;
     } else if (cmd === 'play') {
       return `started the video at ${formatTimestamp(msg)}`;
     } else if (cmd === 'pause') {
