@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import './UserMenu.css';
 import { Popup, Button } from 'semantic-ui-react';
 import { Socket } from 'socket.io-client';
 import firebase from 'firebase/compat/app';
+import styles from './UserMenu.module.css';
 
 export const UserMenu = ({
   user,
@@ -31,7 +31,7 @@ export const UserMenu = ({
   const handleClose = () => setIsOpen(false);
   return (
     <Popup
-      className="userMenu"
+      className={styles.userMenu}
       trigger={trigger}
       on="click"
       open={isOpen}
@@ -40,8 +40,8 @@ export const UserMenu = ({
       position={position}
       disabled={disabled}
     >
-      <div className="userMenuHeader">{displayName}</div>
-      <div className="userMenuContent">
+      <div className={styles.userMenuHeader}>{displayName}</div>
+      <div className={styles.userMenuContent}>
         <Button.Group vertical labeled icon>
           <Button
             content="Kick"
