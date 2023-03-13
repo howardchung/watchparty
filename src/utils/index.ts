@@ -27,23 +27,23 @@ export function formatTimestamp(input: any) {
 
 export function formatSpeed(input: number) {
   if (input >= 1000000) {
-    return (input / 1000000).toFixed(2) + ' MiB/s';
+    return (input / 1000000).toFixed(2) + ' MB/s';
   }
   if (input >= 1000) {
-    return (input / 1000).toFixed(0) + ' KiB/s';
+    return (input / 1000).toFixed(0) + ' KB/s';
   }
   return input + ' B/s';
 }
 
 export function formatSize(input: number) {
   if (input >= 1000000000) {
-    return (input / 1000000000).toFixed(2) + ' GiB';
+    return (input / 1000000000).toFixed(2) + ' GB';
   }
   if (input >= 1000000) {
-    return (input / 1000000).toFixed(2) + ' MiB';
+    return (input / 1000000).toFixed(2) + ' MB';
   }
   if (input >= 1000) {
-    return (input / 1000).toFixed(0) + ' KiB';
+    return (input / 1000).toFixed(0) + ' KB';
   }
   return input + ' B';
 }

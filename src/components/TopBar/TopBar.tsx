@@ -16,6 +16,7 @@ import { SubscribeButton } from '../SubscribeButton/SubscribeButton';
 import { ProfileModal } from '../Modal/ProfileModal';
 import Announce from '../Announce/Announce';
 import { InviteButton } from '../InviteButton/InviteButton';
+import appStyles from '../App/App.module.css';
 
 export async function createRoom(
   user: firebase.User | undefined,
@@ -412,7 +413,7 @@ export class TopBar extends React.Component<{
           </div>
           <Announce />
           <div
-            className="mobileStack"
+            className={appStyles.mobileStack}
             style={{
               display: 'flex',
               marginLeft: 'auto',
