@@ -791,6 +791,7 @@ async function getStats() {
   const playlistAdds = await getRedisCountDay('playlistAdds');
   const screenShareStarts = await getRedisCountDay('screenShareStarts');
   const fileShareStarts = await getRedisCountDay('fileShareStarts');
+  const mediasoupStarts = await getRedisCountDay('mediasoupStarts');
   const videoChatStarts = await getRedisCountDay('videoChatStarts');
   const connectStarts = await getRedisCountDay('connectStarts');
   const connectStartsDistinct = await getRedisCountDayDistinct(
@@ -878,6 +879,7 @@ async function getStats() {
     playlistAdds,
     screenShareStarts,
     fileShareStarts,
+    mediasoupStarts,
     subUploads,
     subDownloadsOS,
     subSearchesOS,
