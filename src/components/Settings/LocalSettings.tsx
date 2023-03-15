@@ -60,14 +60,14 @@ export function getCurrentSettings(): Settings {
 export function validateSettingsString(
   setting: string | null
 ): Settings | null {
-  // Don't have a setting or invalid value
-  let settingObject: Settings = JSON.parse(setting as any);
   if (!setting) {
     return {};
   }
   if (setting[0] !== '{') {
     throw new Error('failed to parse settings, using defaults');
   }
+  // Don't have a setting or invalid value
+  let settingObject: Settings = JSON.parse(setting);
   return settingObject;
 }
 

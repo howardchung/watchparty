@@ -27,7 +27,7 @@ WantedBy=multi-user.target' > /etc/systemd/system/ipv6.service
 systemctl enable ipv6.service
 
 # determine if this is a large or not via nproc
-# systemd to start vbrowser
+# This systemd config starts the vbrowser on reboot (or instances created from a snapshot of this init vm)
 echo '
 #!/bin/bash
 
@@ -49,4 +49,5 @@ ExecStart=bash /etc/systemd/system/vbrowser.sh
 WantedBy=multi-user.target' > /etc/systemd/system/vbrowser.service
 systemctl enable vbrowser.service
 
+# This ensures the image is pre-pulled and also creates a health check endpoint
 docker run -d --rm --name=test --log-opt max-size=1g --net=host --shm-size=1g --cap-add="SYS_ADMIN" -e DISPLAY=":99.0" -e NEKO_PASSWORD=neko -e NEKO_PASSWORD_ADMIN=admin -e NEKO_BIND=":5000" -e NEKO_EPR=":59000-59100" howardc93/vbrowser

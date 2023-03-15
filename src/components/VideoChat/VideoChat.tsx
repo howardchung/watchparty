@@ -231,7 +231,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
     const videoChatContentStyle = {
       height: participants.length < 3 ? 220 : 110,
       borderRadius: '4px',
-      objectFit: 'contain',
+      objectFit: 'contain' as any, // ObjectFit
     };
     const selfId = getAndSaveClientId();
     return (
@@ -370,7 +370,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
                           }
                         }}
                         style={{
-                          ...(videoChatContentStyle as any),
+                          ...videoChatContentStyle,
                           // mirror the video if it's our stream. this style mimics Zoom where your
                           // video is mirrored only for you)
                           transform: `scaleX(${
@@ -383,7 +383,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
                       />
                     ) : (
                       <img
-                        style={videoChatContentStyle as any}
+                        style={videoChatContentStyle}
                         src={
                           pictureMap[p.id] ||
                           getDefaultPicture(

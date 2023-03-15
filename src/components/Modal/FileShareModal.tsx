@@ -16,7 +16,7 @@ export class FileShareModal extends React.Component<{
       <SubscribeButton user={this.props.user} />
     ) : null;
     return (
-      <Modal open={true} onClose={closeModal as any}>
+      <Modal open={true} onClose={closeModal}>
         <Modal.Header>Share A File</Modal.Header>
         <Modal.Content image>
           <Modal.Description>

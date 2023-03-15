@@ -7,7 +7,7 @@ export class PermanentRoomModal extends React.Component<{
   render() {
     const { closeModal } = this.props;
     return (
-      <Modal open={true} onClose={closeModal as any} closeIcon>
+      <Modal open={true} onClose={closeModal} closeIcon>
         <Modal.Header>Permanent Rooms</Modal.Header>
         <Modal.Content image>
           <Modal.Description>

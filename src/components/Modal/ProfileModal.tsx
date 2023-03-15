@@ -109,7 +109,7 @@ export class ProfileModal extends React.Component<{
   render() {
     const { close, userImage } = this.props;
     return (
-      <Modal open={true} onClose={close as any} size="tiny">
+      <Modal open={true} onClose={close} size="tiny">
         <Modal
           open={this.state.deleteConfirmOpen}
           onClose={() => {

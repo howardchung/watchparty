@@ -29,13 +29,13 @@ export class SubscribeModal extends React.Component<{
               : 'price_HNDBoPDI7yYRi9',
           quantity: 1,
         },
-      ] as any,
+      ],
       mode: 'subscription',
       successUrl: window.location.href,
       cancelUrl: window.location.href,
-      customerEmail: this.props.user?.email,
+      customerEmail: this.props.user?.email ?? undefined,
       clientReferenceId: this.props.user?.uid,
-    } as any);
+    });
     // If `redirectToCheckout` fails due to a browser or network
     // error, display the localized error message to your customer
     // using `error.message`.
@@ -46,7 +46,7 @@ export class SubscribeModal extends React.Component<{
   render() {
     const { closeSubscribe } = this.props;
     return (
-      <Modal open={true} onClose={closeSubscribe as any}>
+      <Modal open={true} onClose={closeSubscribe}>
         <Modal.Header>Subscribe to WatchParty Plus</Modal.Header>
         <Modal.Content image>
           {/* <Image wrapped size='medium' src='https://react.semantic-ui.com/images/avatar/large/rachel.png' /> */}
