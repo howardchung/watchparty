@@ -1031,7 +1031,7 @@ export class Room {
       };
       let result: QueryResult | null = null;
       result = await upsertObject(postgres, 'room', roomObj, {
-        roomId: this.roomId,
+        roomId: true,
       });
       const row = result?.rows?.[0];
       // console.log(result, row);
