@@ -254,7 +254,7 @@ app.post('/createRoom', async (req, res) => {
   const newRoom = new Room(io, name);
   if (postgres) {
     const now = new Date();
-    const roomObj: any = {
+    const roomObj = {
       roomId: newRoom.roomId,
       lastUpdateTime: now,
       creationTime: now,
@@ -352,7 +352,7 @@ app.get('/metadata', async (req, res) => {
       postgres,
       'active_user',
       { uid: decoded?.uid, lastActiveTime: new Date() },
-      { uid: decoded?.uid }
+      { uid: true }
     );
   }
   return res.json({
@@ -468,7 +468,7 @@ app.post('/linkAccount', async (req, res) => {
         uid: decoded.uid,
         kind: kind,
       },
-      { uid: decoded.uid, kind }
+      { uid: true, kind: true }
     );
     return res.json({});
   }

@@ -1,10 +1,23 @@
+import type WebTorrent from 'webtorrent';
 import { isHls, isMagnet } from '../../utils';
 import { Player } from './Player';
 
 export class HTML implements Player {
   elId: string;
-  launchMultiSelect: (multi: []) => void;
-  constructor(elId: string, launchMultiSelect: (multi: []) => void) {
+  launchMultiSelect: (
+    multi: { name: string; url: string; length: number; playFn?: () => void }[]
+  ) => void;
+  constructor(
+    elId: string,
+    launchMultiSelect: (
+      multi: {
+        name: string;
+        url: string;
+        length: number;
+        playFn?: () => void;
+      }[]
+    ) => void
+  ) {
     this.elId = elId;
     this.launchMultiSelect = launchMultiSelect;
   }
@@ -100,14 +113,14 @@ export class HTML implements Player {
               //@ts-ignore
               noPeersIntervalTime: 30,
             },
-            async (torrent: any) => {
+            async (torrent: WebTorrent.Torrent) => {
               // Got torrent metadata!
               console.log('Client is downloading:', torrent.infoHash);
 
               // Torrents can contain many files.
               const files = torrent.files;
               const filtered = files.filter(
-                (f: any) => f.length >= 10 * 1024 * 1024
+                (f: WebTorrent.TorrentFile) => f.length >= 10 * 1024 * 1024
               );
               const fileIndex = new URLSearchParams(src).get(
                 'fileIndex'
@@ -118,13 +131,14 @@ export class HTML implements Player {
               if (!target) {
                 // Open the selector
                 this.launchMultiSelect(
-                  files.map((f: any, i: number) => ({
+                  files.map((f: WebTorrent.TorrentFile, i: number) => ({
                     name: f.name as string,
                     url: src + `&fileIndex=${i}`,
                     length: f.length as number,
                   }))
                 );
               } else {
+                //@ts-ignore
                 target.streamTo(leftVideo);
               }
               resolve(null);

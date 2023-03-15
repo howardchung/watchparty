@@ -21,7 +21,7 @@ async function statsTimeSeries() {
           'http://localhost:' + config.VMWORKER_PORT + '/isFreePoolFull'
         )
       ).data.isFull;
-      const datapoint: any = {
+      const datapoint: AnyDict = {
         time: new Date(),
         currentUsers: stats.currentUsers,
         currentVBrowser: stats.currentVBrowser,
