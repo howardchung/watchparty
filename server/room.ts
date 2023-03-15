@@ -1024,7 +1024,7 @@ export class Room {
         );
         return;
       }
-      const roomObj: any = {
+      const roomObj = {
         roomId: this.roomId,
         owner: owner,
         isSubRoom: isSubscriber,

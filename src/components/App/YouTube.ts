@@ -1,8 +1,8 @@
 import { Player } from './Player';
 
 export class YouTube implements Player {
-  watchPartyYTPlayer: any | null;
-  constructor(watchPartyYTPlayer: any) {
+  watchPartyYTPlayer: YT.Player | null;
+  constructor(watchPartyYTPlayer: YT.Player | null) {
     this.watchPartyYTPlayer = watchPartyYTPlayer;
   }
   getCurrentTime = () => {
@@ -83,7 +83,7 @@ export class YouTube implements Player {
 
   getVolume = (): number => {
     const volume = this.watchPartyYTPlayer?.getVolume();
-    return volume / 100;
+    return (volume ?? 0) / 100;
   };
 
   setSubtitleMode = (mode?: TextTrackMode, lang?: string) => {
@@ -91,7 +91,9 @@ export class YouTube implements Player {
     // console.log(this.watchPartyYTPlayer?.getOptions('captions'));
     if (mode === 'showing') {
       console.log(lang);
+      //@ts-ignore
       this.watchPartyYTPlayer?.setOption('captions', 'reload', true);
+      //@ts-ignore
       this.watchPartyYTPlayer?.setOption('captions', 'track', {
         languageCode: lang ?? 'en',
       });
@@ -100,6 +102,7 @@ export class YouTube implements Player {
       // BUG this doesn't actually set the value of track
       // so we can't determine if subtitles are on or off
       // need to provide separate menu options
+      //@ts-ignore
       this.watchPartyYTPlayer?.setOption('captions', 'track', {});
     }
   };
