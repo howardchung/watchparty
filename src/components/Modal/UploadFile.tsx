@@ -44,10 +44,10 @@ export default function UploadFile(props: IUploadFileProps) {
       const fileName = `${uniqueID + '_' + file.name}`;
       let config: AxiosRequestConfig = {
         method: 'PUT',
-        url: `https://sg.storage.bunnycdn.com/asia-metawood/${fileName}`,
+        url: `https://sg.storage.bunnycdn.com/metawood/${fileName}`,
         headers: {
           'content-type': 'application/octet-stream',
-          AccessKey: 'f24b834e-9408-417b-a712aaf9bbe0-dcb6-40b2',
+          AccessKey: '1b797de9-d1dd-4c0b-bd78489acc56-56fa-4484',
         },
         data: blob,
         onUploadProgress: async (event: any) => {
@@ -61,7 +61,7 @@ export default function UploadFile(props: IUploadFileProps) {
       try {
         const data = await axios(config);
         data.data.HttpCode === 201 &&
-          setVideo(`https://metawood.b-cdn.net/${fileName}`);
+          setVideo(`https://metawood-multiverse.b-cdn.net/${fileName}`);
         // console.log(data);
         setIsLoading(false);
       } catch (error) {
