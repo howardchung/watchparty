@@ -58,9 +58,9 @@ export class VBrowserModal extends React.Component<{
         <Button
           color={large ? 'orange' : undefined}
           onClick={async () => {
-            const rcToken = await (
-              googleReCaptchaProps as any
-            ).executeRecaptcha('launchVBrowser');
+            const rcToken = await googleReCaptchaProps.executeRecaptcha(
+              'launchVBrowser'
+            );
             startVBrowser(rcToken, {
               size: large ? 'large' : '',
               region: large ? this.state.region : 'US',
@@ -100,7 +100,7 @@ export class VBrowserModal extends React.Component<{
         reCaptchaKey={process.env.REACT_APP_RECAPTCHA_SITE_KEY as string}
         useRecaptchaNet
       >
-        <Modal open={true} onClose={closeModal as any}>
+        <Modal open={true} onClose={closeModal}>
           <Modal.Header>Launch a VBrowser</Modal.Header>
           <Modal.Content image>
             <Modal.Description>

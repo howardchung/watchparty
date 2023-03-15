@@ -82,7 +82,7 @@ export class SearchComponent extends React.Component<SearchComponentProps> {
           className="icon"
           labeled
           disabled={this.props.disabled}
-          search={(() => {}) as any}
+          search={true}
           text={placeholder}
           onSearchChange={this.doSearch}
           onFocus={this.doSearch}

@@ -16,7 +16,7 @@ export class ScreenShareModal extends React.Component<{
       <SubscribeButton user={this.props.user} />
     ) : null;
     return (
-      <Modal open={true} onClose={closeModal as any}>
+      <Modal open={true} onClose={closeModal}>
         <Modal.Header>Share Your Screen</Modal.Header>
         <Modal.Content image>
           <Modal.Description>

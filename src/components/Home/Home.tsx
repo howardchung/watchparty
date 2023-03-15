@@ -1,5 +1,5 @@
 import React from 'react';
-import { Divider, Header, Icon, Step } from 'semantic-ui-react';
+import { Divider, Header, Icon, SemanticICONS, Step } from 'semantic-ui-react';
 import firebase from 'firebase/compat/app';
 
 import { NewRoomButton } from '../TopBar';
@@ -167,7 +167,7 @@ const Feature = ({
         minWidth: '180px',
       }}
     >
-      <Icon fitted size="huge" name={icon as any} />
+      <Icon fitted size="huge" name={icon as SemanticICONS} />
       <h4 className={styles.featureTitle}>{title}</h4>
       <div className={styles.featureText}>{text}</div>
     </div>

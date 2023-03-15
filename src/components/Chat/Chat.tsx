@@ -341,7 +341,7 @@ export class Chat extends React.Component<ChatProps> {
                 const curr = this.state.isPickerOpen;
                 setTimeout(() => this.setState({ isPickerOpen: !curr }), 100);
               }}
-              name={'' as any}
+              name={undefined}
               inverted
               circular
               link
@@ -470,7 +470,7 @@ const ChatMessage = ({
                 );
               }, 100);
             }}
-            name={'' as any}
+            name={undefined}
             inverted
             link
             disabled={isChatDisabled}

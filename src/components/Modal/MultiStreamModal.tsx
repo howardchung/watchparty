@@ -10,7 +10,7 @@ export const MultiStreamModal = ({
   setMedia: (_e: any, data: DropdownProps) => void;
   resetMultiSelect: () => void;
 }) => (
-  <Modal inverted="true" basic open closeIcon onClose={resetMultiSelect as any}>
+  <Modal inverted="true" basic open closeIcon onClose={resetMultiSelect}>
     <Modal.Header>Select a file</Modal.Header>
     <Modal.Content>
       {streams.length === 0 && <Loader />}

@@ -57,7 +57,7 @@ export class SubtitleModal extends React.Component<{
   render() {
     const { closeModal } = this.props;
     return (
-      <Modal open={true} onClose={closeModal as any}>
+      <Modal open={true} onClose={closeModal}>
         <Modal.Header>Subtitles</Modal.Header>
         <Modal.Content image>
           <Modal.Description>

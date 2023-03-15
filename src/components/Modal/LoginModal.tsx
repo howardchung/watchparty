@@ -44,7 +44,7 @@ export class LoginModal extends React.Component<{
         {this.state.showReset && (
           <ResetModal closeModal={() => this.setState({ showReset: false })} />
         )}
-        <Modal open={true} onClose={closeModal as any}>
+        <Modal open={true} onClose={closeModal}>
           <Modal.Header>{'Login'}</Modal.Header>
           <Modal.Content>
             {this.state.error && (
@@ -121,7 +121,7 @@ export class CreateModal extends React.Component<{
   render() {
     const { closeModal } = this.props;
     return (
-      <Modal open={true} onClose={closeModal as any}>
+      <Modal open={true} onClose={closeModal}>
         <Modal.Header>{'Create an account'}</Modal.Header>
         <Modal.Content>
           {this.state.error && (
@@ -178,7 +178,7 @@ export class ResetModal extends React.Component<{
   render() {
     const { closeModal } = this.props;
     return (
-      <Modal open={true} onClose={closeModal as any}>
+      <Modal open={true} onClose={closeModal}>
         <Modal.Header>Reset Password</Modal.Header>
         <Modal.Content>
           {this.state.error && (

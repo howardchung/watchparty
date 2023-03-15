@@ -9,6 +9,7 @@ import {
   Button,
   Label,
   Popup,
+  SemanticICONS,
 } from 'semantic-ui-react';
 // import { SignInButton } from '../TopBar/TopBar';
 import { getCurrentSettings, updateSettings } from './LocalSettings';
@@ -464,7 +465,7 @@ const SettingRow = ({
       <Divider inverted horizontal />
       <div>
         <div style={{ display: 'flex' }}>
-          <Icon size="large" name={icon as any} />
+          <Icon size="large" name={icon as SemanticICONS} />
           <div>
             {name} {helpIcon}
             {subOnly ? (
