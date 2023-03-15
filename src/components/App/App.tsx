@@ -1815,6 +1815,7 @@ export default class App extends React.Component<AppProps, AppState> {
               marginTop: '4px',
               marginBottom: '4px',
               visibility: displayRightContent ? '' : 'hidden',
+              height: '40px',
             }}
           >
             <Menu.Item
