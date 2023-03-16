@@ -1,25 +1,10 @@
-import type WebTorrent from 'webtorrent';
-import { isHls, isMagnet } from '../../utils';
+import { default as toWebVTT } from 'srt-webvtt';
 import { Player } from './Player';
 
 export class HTML implements Player {
   elId: string;
-  launchMultiSelect: (
-    multi: { name: string; url: string; length: number; playFn?: () => void }[]
-  ) => void;
-  constructor(
-    elId: string,
-    launchMultiSelect: (
-      multi: {
-        name: string;
-        url: string;
-        length: number;
-        playFn?: () => void;
-      }[]
-    ) => void
-  ) {
+  constructor(elId: string) {
     this.elId = elId;
-    this.launchMultiSelect = launchMultiSelect;
   }
 
   getVideoEl = (): HTMLMediaElement => {
@@ -55,99 +40,8 @@ export class HTML implements Player {
   setSrcAndTime = async (src: string, time: number) => {
     const leftVideo = this.getVideoEl();
     if (leftVideo) {
-      leftVideo.srcObject = null;
-
-      // Clear subtitles
-      this.setSubtitleMode('hidden');
-      leftVideo.innerHTML = '';
-
-      // Check for HLS
-      // https://moctobpltc-i.akamaihd.net/hls/live/571329/eight/playlist.m3u8
-      if (
-        isHls(src) &&
-        !leftVideo?.canPlayType('application/vnd.apple.mpegurl')
-      ) {
-        const Hls = (await import('hls.js')).default;
-        let hls = new Hls();
-        hls.loadSource(src);
-        hls.attachMedia(leftVideo);
-        return;
-      }
-      // Set to room time (don't do for HLS streams since durations will be different)
       leftVideo.currentTime = time;
-      if (isMagnet(src)) {
-        // WebTorrent
-        // magnet:?xt=urn:btih:08ada5a7a6183aae1e09d831df6748d566095a10&dn=Sintel&tr=udp%3A%2F%2Fexplodie.org%3A6969&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Ftracker.empire-js.us%3A1337&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=wss%3A%2F%2Ftracker.btorrent.xyz&tr=wss%3A%2F%2Ftracker.fastcast.nz&tr=wss%3A%2F%2Ftracker.openwebtorrent.com&ws=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2F&xs=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2Fsintel.torrent
-        // Can't import webtorrent directly yet since it uses importAssertions feature
-        //@ts-ignore
-        const WebTorrent = (await import('webtorrent/dist/webtorrent.min.js'))
-          .default;
-        //@ts-ignore
-        window.watchparty.webtorrent?._server?.close();
-        window.watchparty.webtorrent?.destroy();
-        window.watchparty.webtorrent = new WebTorrent();
-        await navigator.serviceWorker?.register('/sw.min.js');
-        const controller = await navigator.serviceWorker.ready;
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        console.log(controller, controller.active?.state);
-        // createServer is only in v2, types are outdated
-        //@ts-ignore
-        const server = await window.watchparty.webtorrent.createServer({
-          controller,
-        });
-        console.log(server);
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        await new Promise((resolve) => {
-          window.watchparty.webtorrent?.add(
-            src,
-            {
-              announce: [
-                'wss://tracker.btorrent.xyz',
-                'wss://tracker.openwebtorrent.com',
-              ],
-              destroyStoreOnDestroy: true,
-              maxWebConns: 4,
-              path: '/tmp/webtorrent/',
-              storeCacheSlots: 20,
-              strategy: 'sequential',
-              //@ts-ignore
-              noPeersIntervalTime: 30,
-            },
-            async (torrent: WebTorrent.Torrent) => {
-              // Got torrent metadata!
-              console.log('Client is downloading:', torrent.infoHash);
-
-              // Torrents can contain many files.
-              const files = torrent.files;
-              const filtered = files.filter(
-                (f: WebTorrent.TorrentFile) => f.length >= 10 * 1024 * 1024
-              );
-              const fileIndex = new URLSearchParams(src).get(
-                'fileIndex'
-              ) as unknown as number;
-              // Try to find a single large file to play
-              const target =
-                files[fileIndex] ?? (filtered.length > 1 ? null : filtered[0]);
-              if (!target) {
-                // Open the selector
-                this.launchMultiSelect(
-                  files.map((f: WebTorrent.TorrentFile, i: number) => ({
-                    name: f.name as string,
-                    url: src + `&fileIndex=${i}`,
-                    length: f.length as number,
-                  }))
-                );
-              } else {
-                //@ts-ignore
-                target.streamTo(leftVideo);
-              }
-              resolve(null);
-            }
-          );
-        });
-      } else {
-        leftVideo.src = src;
-      }
+      leftVideo.src = src;
     }
   };
 
@@ -213,5 +107,63 @@ export class HTML implements Player {
 
   isReady = () => {
     return Boolean(this.getVideoEl());
+  };
+
+  clearState = () => {
+    const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
+
+    // Clear src
+    leftVideo.srcObject = null;
+
+    // Clear subtitles
+    this.setSubtitleMode('hidden');
+    leftVideo.innerHTML = '';
+  };
+
+  loadSubtitles = async (src: string) => {
+    const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
+    if (!leftVideo) {
+      return;
+    }
+    // Clear subtitles and put new ones in
+    leftVideo.innerHTML = '';
+    if (Boolean(src)) {
+      let subtitleSrc = src;
+      if (subtitleSrc) {
+        const response = await window.fetch(subtitleSrc);
+        const buffer = await response.arrayBuffer();
+        const url = await toWebVTT(new Blob([buffer]));
+        const track = document.createElement('track');
+        track.kind = 'captions';
+        track.label = 'English';
+        track.srclang = 'en';
+        track.src = url;
+        leftVideo.appendChild(track);
+        leftVideo.textTracks[0].mode = 'showing';
+      }
+    }
+  };
+
+  syncSubtitles = (sharerTime: number) => {
+    // When sharing, our timestamp doesn't match the subtitles so adjust them
+    // For each cue, subtract the videoTS of the sharer, then add our own
+    const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
+    const track = leftVideo?.textTracks[0];
+    let offset = leftVideo.currentTime - sharerTime;
+    if (track && track.cues && offset) {
+      for (let i = 0; i < track.cues.length; i++) {
+        let cue = track?.cues?.[i];
+        if (!cue) {
+          continue;
+        }
+        // console.log(cue.text, offset, (cue as any).origStart, (cue as any).origEnd);
+        if (!(cue as any).origStart) {
+          (cue as any).origStart = cue.startTime;
+          (cue as any).origEnd = cue.endTime;
+        }
+        cue.startTime = (cue as any).origStart + offset;
+        cue.endTime = (cue as any).origEnd + offset;
+      }
+    }
   };
 }

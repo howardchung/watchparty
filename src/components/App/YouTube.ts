@@ -118,4 +118,16 @@ export class YouTube implements Player {
   stopVideo = () => {
     this.watchPartyYTPlayer?.stopVideo();
   };
+
+  clearState = () => {
+    return;
+  };
+
+  loadSubtitles = async (src: string) => {
+    return;
+  };
+
+  syncSubtitles = (sharerTime: number) => {
+    return;
+  };
 }
