@@ -16,4 +16,7 @@ export abstract class Player {
   public abstract getSubtitleMode: () => TextTrackMode;
   public abstract setSubtitleMode: (mode?: TextTrackMode) => void;
   public abstract isReady: () => boolean;
+  public abstract clearState: () => void;
+  public abstract loadSubtitles: (src: string) => void;
+  public abstract syncSubtitles: (sharerTime: number) => void;
 }
