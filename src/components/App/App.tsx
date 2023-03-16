@@ -418,6 +418,10 @@ export default class App extends React.Component<AppProps, AppState> {
           controller: data.controller,
         },
         async () => {
+          const leftVideo = document.getElementById(
+            'leftVideo'
+          ) as HTMLMediaElement;
+
           // Stop all players
           // Unless the user is sharing a file, because we play it in leftVideo and capture stream
           if (!this.isLocalStreamAFile) {
@@ -425,7 +429,9 @@ export default class App extends React.Component<AppProps, AppState> {
           }
           this.YouTubeInterface.stopVideo();
 
-          this.Player().clearState();
+          if (!this.isLocalStreamAFile) {
+            this.Player().clearState();
+          }
           if (data.subtitle) {
             this.Player().loadSubtitles(data.subtitle);
           }
@@ -454,9 +460,6 @@ export default class App extends React.Component<AppProps, AppState> {
             );
             return;
           }
-          const leftVideo = document.getElementById(
-            'leftVideo'
-          ) as HTMLMediaElement;
           const src = data.video;
           const time = data.videoTS;
           if (isMagnet(src)) {
@@ -464,7 +467,7 @@ export default class App extends React.Component<AppProps, AppState> {
             // magnet:?xt=urn:btih:08ada5a7a6183aae1e09d831df6748d566095a10&dn=Sintel&tr=udp%3A%2F%2Fexplodie.org%3A6969&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Ftracker.empire-js.us%3A1337&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=wss%3A%2F%2Ftracker.btorrent.xyz&tr=wss%3A%2F%2Ftracker.fastcast.nz&tr=wss%3A%2F%2Ftracker.openwebtorrent.com&ws=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2F&xs=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2Fsintel.torrent
             // Can't import webtorrent directly yet since it uses importAssertions feature
             const WebTorrent = //@ts-ignore
-            (await import('webtorrent/dist/webtorrent.min.js')).default;
+              (await import('webtorrent/dist/webtorrent.min.js')).default;
             //@ts-ignore
             window.watchparty.webtorrent?._server?.close();
             window.watchparty.webtorrent?.destroy();
@@ -927,8 +930,8 @@ export default class App extends React.Component<AppProps, AppState> {
       return;
     }
     const file = files[0];
+    this.Player().clearState();
     const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
-    leftVideo.srcObject = null;
     leftVideo.src = URL.createObjectURL(file);
     leftVideo.play();
     //@ts-ignore

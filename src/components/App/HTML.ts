@@ -112,7 +112,8 @@ export class HTML implements Player {
   clearState = () => {
     const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
 
-    // Clear src
+    // Clear src and srcObject
+    leftVideo.src = '';
     leftVideo.srcObject = null;
 
     // Clear subtitles
