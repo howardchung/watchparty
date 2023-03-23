@@ -1523,6 +1523,7 @@ export default class App extends React.Component<AppProps, AppState> {
     if (this.playingHls()) {
       if (customTime) {
         // Translate the time back to video time
+        // TODO Safari reports the duration as Infinity, so keep track of our duration using the max of our current timestamp
         const zeroTime =
           Math.floor(Date.now() / 1000) - this.HTMLInterface.getDuration();
         target = customTime - zeroTime;
@@ -1530,7 +1531,7 @@ export default class App extends React.Component<AppProps, AppState> {
         target = this.getLeaderTime();
       }
     }
-    if (target >= 0) {
+    if (target >= 0 && target < Infinity) {
       console.log('syncing self to leader or custom:', target);
       this.Player().seekVideo(target);
     }
