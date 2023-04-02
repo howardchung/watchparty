@@ -1,3 +1,4 @@
+import { response } from 'express';
 import React from 'react';
 import {
   Modal,
@@ -30,6 +31,25 @@ export class SubtitleModal extends React.Component<{
       .split('/')
       .slice(-1)[0],
   };
+
+  async componentDidMount() {
+    if (this.props.src.includes('/stream?torrent=magnet')) {
+      const re = /&fileIndex=(\d+)$/;
+      const match = re.exec(this.props.src);
+      if (match) {
+        const fileIndex = match[1];
+        if (fileIndex) {
+          // Fetch title from the data endpoint
+          const response = await fetch(
+            this.props.src.replace('/stream', '/data')
+          );
+          const data = await response.json();
+          this.setState({ titleQuery: data?.files[fileIndex]?.name });
+        }
+      }
+    }
+  }
+
   uploadSubtitle = async () => {
     const files = await openFileSelector('.srt');
     if (!files) {

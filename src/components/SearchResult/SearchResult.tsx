@@ -96,9 +96,9 @@ export class StreamPathSearchResult extends React.Component<
                     i,
                 })
               );
-              multiStreamSelection.sort((a: any, b: any) =>
-                a.name.localeCompare(b.name)
-              );
+              // multiStreamSelection.sort((a: any, b: any) =>
+              //   a.name.localeCompare(b.name)
+              // );
               if (this.props.launchMultiSelect) {
                 this.props.launchMultiSelect(multiStreamSelection);
               }
