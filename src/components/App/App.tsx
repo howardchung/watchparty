@@ -1528,7 +1528,8 @@ export default class App extends React.Component<AppProps, AppState> {
         // TODO Safari reports the duration as Infinity, so keep track of our duration using the max of our current timestamp
         const zeroTime =
           Math.floor(Date.now() / 1000) - this.HTMLInterface.getDuration();
-        target = customTime - zeroTime;
+        // Cap the time to the leadertime so we don't try to seek too close to edge
+        target = Math.min(customTime - zeroTime, this.getLeaderTime());
       } else {
         target = this.getLeaderTime();
       }
