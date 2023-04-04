@@ -534,11 +534,9 @@ export default class App extends React.Component<AppProps, AppState> {
                 }
               );
             });
-          } else if (
-            isHls(src) &&
-            !leftVideo?.canPlayType('application/vnd.apple.mpegurl')
-          ) {
-            // Check for HLS
+          } else if (isHls(src) && window.MediaSource) {
+            // Prefer using hls.js if MediaSource Extensions are supported
+            // otherwise fallback to native HLS support using video tag (i.e. iPhones)
             // https://moctobpltc-i.akamaihd.net/hls/live/571329/eight/playlist.m3u8
             const Hls = (await import('hls.js')).default;
             let hls = new Hls();
