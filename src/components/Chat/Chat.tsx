@@ -40,7 +40,7 @@ interface ChatProps {
   user: firebase.User | undefined;
   owner: string | undefined;
   ref: RefObject<Chat>;
-  isHls: boolean;
+  isLiveHls: boolean;
 }
 
 export class Chat extends React.Component<ChatProps> {
@@ -171,7 +171,7 @@ export class Chat extends React.Component<ChatProps> {
       );
     } else if (cmd === 'seek') {
       return `jumped to ${
-        this.props.isHls ? formatUnixTime(msg) : formatTimestamp(msg)
+        this.props.isLiveHls ? formatUnixTime(msg) : formatTimestamp(msg)
       }`;
     } else if (cmd === 'play') {
       return `started the video at ${formatTimestamp(msg)}`;
