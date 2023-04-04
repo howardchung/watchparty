@@ -472,7 +472,8 @@ export class Room {
     // If a reddit URL, extract video URL
     if (
       data.startsWith('https://www.reddit.com') ||
-      data.startsWith('https://www.old.reddit.com')
+      data.startsWith('https://old.reddit.com') ||
+      data.startsWith('https://reddit.com')
     ) {
       if (data.endsWith('/')) {
         // Remove trailing slash
