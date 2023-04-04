@@ -27,7 +27,7 @@ interface ControlsProps {
   roomPlaybackRate: number;
   isYouTube: boolean;
   setSubtitleMode: (mode: TextTrackMode, lang?: string) => void;
-  isHls: boolean;
+  isLiveHls: boolean;
 }
 
 export class Controls extends React.Component<ControlsProps> {
@@ -99,7 +99,7 @@ export class Controls extends React.Component<ControlsProps> {
           trigger={
             <div
               onClick={() => {
-                if (this.props.isHls) {
+                if (this.props.isLiveHls) {
                   // do a regular seek rather than sync self if it's HLS since we're basically seeking to the live position
                   // Also, clear the room TS since we want to start at live again on refresh
                   this.props.onSeek(null, Number.MAX_SAFE_INTEGER);

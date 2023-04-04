@@ -152,6 +152,7 @@ interface AppState {
   roomTitleColor: string | undefined;
   mediaPath: string | undefined;
   roomPlaybackRate: number;
+  isLiveHls: boolean;
 }
 
 export default class App extends React.Component<AppProps, AppState> {
@@ -213,6 +214,7 @@ export default class App extends React.Component<AppProps, AppState> {
     roomTitleColor: '',
     mediaPath: undefined,
     roomPlaybackRate: 0,
+    isLiveHls: false,
   };
   socket: Socket = null as any;
   mediasoupPubSocket: Socket | null = null;
@@ -416,6 +418,7 @@ export default class App extends React.Component<AppProps, AppState> {
             ? '1920x1080@30'
             : '1280x720@30',
           controller: data.controller,
+          isLiveHls: false,
         },
         async () => {
           const leftVideo = document.getElementById(
@@ -543,7 +546,10 @@ export default class App extends React.Component<AppProps, AppState> {
             let hls = new Hls();
             hls.loadSource(src);
             hls.attachMedia(leftVideo);
-            leftVideo.currentTime = time;
+            hls.once(Hls.Events.LEVEL_LOADED, (_, data) => {
+              console.log('isLiveHls', data.details.live);
+              this.setState({ isLiveHls: data.details.live });
+            });
           } else {
             await this.Player().setSrcAndTime(src, time);
           }
@@ -556,8 +562,7 @@ export default class App extends React.Component<AppProps, AppState> {
             'canplay',
             () => {
               this.setLoadingFalse();
-              // Pass the timestamp if HLS so we can calculate, otherwise just jump to leader
-              this.syncSelf(this.playingHls() ? data.videoTS : undefined);
+              this.syncSelf(this.state.isLiveHls ? data.videoTS : undefined);
             },
             { once: true }
           );
@@ -657,7 +662,7 @@ export default class App extends React.Component<AppProps, AppState> {
         // Also not necessary for WebRTC sharing since it should be close to realtime
         if (
           !this.state.currentMediaPaused &&
-          !this.playingHls() &&
+          !this.state.isLiveHls &&
           this.hasDuration() &&
           this.state.roomPlaybackRate === 0
         ) {
@@ -1500,10 +1505,6 @@ export default class App extends React.Component<AppProps, AppState> {
     return isVBrowser(this.state.currentMedia);
   };
 
-  playingHls = () => {
-    return isHls(this.state.currentMedia);
-  };
-
   getVBrowserPass = () => {
     return this.state.currentMedia.replace('vbrowser://', '').split('@')[0];
   };
@@ -1520,7 +1521,8 @@ export default class App extends React.Component<AppProps, AppState> {
     // Jump to the leader's position, or a custom one
     // for HLS the leader is the live stream position
     let target = customTime ?? this.getLeaderTime();
-    if (this.playingHls()) {
+    if (this.state.isLiveHls) {
+      console.log('syncing self for livehls');
       if (customTime) {
         // Translate the time back to video time
         // TODO Safari reports the duration as Infinity, so keep track of our duration using the max of our current timestamp
@@ -1624,7 +1626,7 @@ export default class App extends React.Component<AppProps, AppState> {
     this.Player().seekVideo(target);
     const hlsTarget =
       Math.floor(Date.now() / 1000) - this.HTMLInterface.getDuration() + target;
-    this.socket.emit('CMD:seek', this.playingHls() ? hlsTarget : target);
+    this.socket.emit('CMD:seek', this.state.isLiveHls ? hlsTarget : target);
   };
 
   onFullScreenChange = () => {
@@ -1759,7 +1761,7 @@ export default class App extends React.Component<AppProps, AppState> {
   };
 
   getLeaderTime = () => {
-    if (this.playingHls()) {
+    if (this.state.isLiveHls) {
       // Pick a time near the end of the livestream
       return this.HTMLInterface.getDuration() - 5;
     }
@@ -1816,7 +1818,7 @@ export default class App extends React.Component<AppProps, AppState> {
         roomPlaybackRate={this.state.roomPlaybackRate}
         isYouTube={this.usingYoutube()}
         setSubtitleMode={this.Player().setSubtitleMode}
-        isHls={this.playingHls()}
+        isLiveHls={this.state.isLiveHls}
       />
     );
     const displayRightContent =
@@ -1920,7 +1922,7 @@ export default class App extends React.Component<AppProps, AppState> {
           owner={this.state.owner}
           user={this.props.user}
           ref={this.chatRef}
-          isHls={this.playingHls()}
+          isLiveHls={this.state.isLiveHls}
         />
         {this.state.state === 'connected' && (
           <VideoChat
