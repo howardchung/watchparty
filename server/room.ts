@@ -13,6 +13,8 @@ import { getStartOfDay } from './utils/time';
 import { updateObject, upsertObject } from './utils/postgres';
 import { fetchYoutubeVideo, getYoutubeVideoID } from './utils/youtube';
 import { v4 as uuidv4 } from 'uuid';
+//@ts-ignore
+// import twitch from 'twitch-m3u8';
 
 let redis: Redis | undefined = undefined;
 if (config.REDIS_URL) {
@@ -454,7 +456,7 @@ export class Room {
     }
   };
 
-  private startHosting = (socket: Socket, data: string) => {
+  private startHosting = async (socket: Socket, data: string) => {
     if (data && data.length > 20000) {
       return;
     }
@@ -467,6 +469,33 @@ export class Room {
       return;
     }
     redisCount('urlStarts');
+    // If a reddit URL, extract video URL
+    if (
+      data.startsWith('https://www.reddit.com') ||
+      data.startsWith('https://www.old.reddit.com')
+    ) {
+      if (data.endsWith('/')) {
+        // Remove trailing slash
+        data = data.slice(0, -1);
+      }
+      data = data + '.json';
+      // Extract fallback_url
+      const resp = await axios.get(data);
+      const json = resp.data;
+      data =
+        json?.[0]?.data?.children?.[0]?.data?.secure_media?.reddit_video
+          ?.fallback_url;
+      console.log(data);
+    }
+    // else if (data.startsWith('https://www.twitch.tv')) {
+    //   // Extract m3u8 data
+    //   // Note this won't work directly since Twitch will reject requests from the wrong origin--need to proxy the m3u8 playlist
+    //   const channel = data.split('/').slice(-1)[0];
+    //   const result = await twitch.getStream(channel);
+    //   data = result?.[0]?.url;
+    //   const m3u8raw = await twitch.getStream(channel, true);
+    //   console.log(m3u8raw);
+    // }
     this.cmdHost(socket, data);
   };
 

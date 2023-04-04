@@ -33,6 +33,18 @@ import { statsAgg } from './utils/statsAgg';
 import { resolveShard } from './utils/resolveShard';
 import { makeRoomName, makeUserName } from './utils/moniker';
 
+if (config.NODE_ENV === 'development') {
+  axios.interceptors.request.use(
+    (config) => {
+      console.log(config);
+      return config;
+    },
+    (error) => {
+      console.error(error);
+    }
+  );
+}
+
 const gzip = util.promisify(zlib.gzip);
 
 const releaseInterval = 5 * 60 * 1000;
@@ -92,7 +104,7 @@ async function init() {
   saveRooms();
   if (process.env.NODE_ENV === 'development') {
     try {
-      require('./vmWorker');
+      // require('./vmWorker');
       // require('./syncSubs');
       // require('./timeSeries');
     } catch (e) {
