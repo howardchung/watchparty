@@ -483,10 +483,14 @@ export class Room {
       // Extract fallback_url
       const resp = await axios.get(data);
       const json = resp.data;
-      data =
+      let reddit_m3u8 =
+        json?.[0]?.data?.children?.[0]?.data?.secure_media?.reddit_video
+          ?.hls_url;
+      let reddit_mp4 =
         json?.[0]?.data?.children?.[0]?.data?.secure_media?.reddit_video
           ?.fallback_url;
-      console.log(data);
+      // prefer reddit m3u8 streams over the mp4 links as the m3u8 streams contain audio.
+      data = reddit_m3u8 || reddit_mp4 || data;
     }
     // else if (data.startsWith('https://www.twitch.tv')) {
     //   // Extract m3u8 data
