@@ -376,9 +376,6 @@ export default class App extends React.Component<AppProps, AppState> {
         this.Player().setPlaybackRate(data);
       }
     });
-    // socket.on('REC:autoPlaybackRate', (data: number) => {
-    //   this.Player().setPlaybackRate(data);
-    // });
     socket.on('REC:subtitle', (data: string) => {
       this.setState({ currentSubtitle: data }, () => {
         this.Player().loadSubtitles(data);
@@ -439,6 +436,7 @@ export default class App extends React.Component<AppProps, AppState> {
             this.Player().loadSubtitles(data.subtitle);
           }
           if (data.playbackRate) {
+            console.log('setting playbackRate', data.playbackRate);
             this.setState({ roomPlaybackRate: data.playbackRate });
             this.Player().setPlaybackRate(data.playbackRate);
           }
@@ -563,6 +561,11 @@ export default class App extends React.Component<AppProps, AppState> {
             () => {
               this.setLoadingFalse();
               this.syncSelf(this.state.isLiveHls ? data.videoTS : undefined);
+              if (data.playbackRate) {
+                // Set playback rate again since it might have been lost
+                console.log('setting playback rate again', data.playbackRate);
+                this.Player().setPlaybackRate(data.playbackRate);
+              }
             },
             { once: true }
           );
