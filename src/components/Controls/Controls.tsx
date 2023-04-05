@@ -210,6 +210,7 @@ export class Controls extends React.Component<ControlsProps> {
                 { key: '1.5', text: '1.5x', value: 1.5 },
                 { key: '1.75', text: '1.75x', value: 1.75 },
                 { key: '2', text: '2x', value: 2 },
+                { key: '3', text: '3x', value: 3 },
               ].map((item) => (
                 <Dropdown.Item
                   key={item.key}

@@ -435,9 +435,8 @@ export default class App extends React.Component<AppProps, AppState> {
           if (data.subtitle) {
             this.Player().loadSubtitles(data.subtitle);
           }
+          this.setState({ roomPlaybackRate: data.playbackRate });
           if (data.playbackRate) {
-            console.log('setting playbackRate', data.playbackRate);
-            this.setState({ roomPlaybackRate: data.playbackRate });
             this.Player().setPlaybackRate(data.playbackRate);
           }
 
