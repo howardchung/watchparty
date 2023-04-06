@@ -20,4 +20,5 @@ export abstract class Player {
   public abstract loadSubtitles: (src: string) => void;
   public abstract syncSubtitles: (sharerTime: number) => void;
   public abstract getTimeRanges: () => { start: number; end: number }[];
+  public abstract setLoop: (loop: boolean) => void;
 }
