@@ -28,6 +28,7 @@ interface ControlsProps {
   isYouTube: boolean;
   setSubtitleMode: (mode: TextTrackMode, lang?: string) => void;
   isLiveHls: boolean;
+  timeRanges: { start: number; end: number }[];
 }
 
 export class Controls extends React.Component<ControlsProps> {
@@ -79,6 +80,23 @@ export class Controls extends React.Component<ControlsProps> {
       volume,
     } = this.props;
     const isBehind = leaderTime && leaderTime - currentTime > 5;
+    const buffers = this.props.timeRanges.map(({ start, end }) => {
+      const buffStartPct = (start / duration) * 100;
+      const buffLengthPct = ((end - start) / duration) * 100;
+      return (
+        <div
+          style={{
+            position: 'absolute',
+            height: '6px',
+            backgroundColor: 'grey',
+            left: buffStartPct + '%',
+            width: buffLengthPct + '%',
+            bottom: '0.2em',
+            zIndex: -1,
+          }}
+        ></div>
+      );
+    });
     return (
       <div className={styles.controls}>
         <Icon
@@ -141,6 +159,7 @@ export class Controls extends React.Component<ControlsProps> {
           value={currentTime}
           total={duration}
         >
+          {buffers}
           {
             <div
               style={{

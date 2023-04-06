@@ -167,4 +167,16 @@ export class HTML implements Player {
       }
     }
   };
+
+  getTimeRanges = (): { start: number; end: number }[] => {
+    const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
+    const buffers = [];
+    const rangeCount = leftVideo?.buffered.length;
+    for (let i = 0; i < rangeCount; i++) {
+      const start = leftVideo?.buffered.start(i);
+      const end = leftVideo?.buffered.end(i);
+      buffers.push({ start, end });
+    }
+    return buffers;
+  };
 }

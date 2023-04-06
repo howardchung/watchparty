@@ -130,4 +130,15 @@ export class YouTube implements Player {
   syncSubtitles = (sharerTime: number) => {
     return;
   };
+
+  getTimeRanges = (): { start: number; end: number }[] => {
+    return [
+      {
+        start: 0,
+        end:
+          (this.watchPartyYTPlayer?.getVideoLoadedFraction() ?? 0) *
+          this.getDuration(),
+      },
+    ];
+  };
 }
