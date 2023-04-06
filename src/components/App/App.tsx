@@ -1820,6 +1820,7 @@ export default class App extends React.Component<AppProps, AppState> {
         isYouTube={this.usingYoutube()}
         setSubtitleMode={this.Player().setSubtitleMode}
         isLiveHls={this.state.isLiveHls}
+        timeRanges={this.Player().getTimeRanges()}
       />
     );
     const displayRightContent =
