@@ -141,4 +141,8 @@ export class YouTube implements Player {
       },
     ];
   };
+
+  setLoop = (loop: boolean): void => {
+    this.watchPartyYTPlayer?.setLoop(loop);
+  };
 }

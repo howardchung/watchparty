@@ -179,4 +179,9 @@ export class HTML implements Player {
     }
     return buffers;
   };
+
+  setLoop = (loop: boolean): void => {
+    const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
+    leftVideo.loop = loop;
+  };
 }
