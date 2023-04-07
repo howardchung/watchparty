@@ -13,9 +13,9 @@ import { openFileSelector, serverPath } from '../../utils';
 
 export class SubtitleModal extends React.Component<{
   closeModal: () => void;
-  currentSubtitle: string | undefined;
+  roomSubtitle: string | undefined;
   haveLock: () => boolean;
-  src: string;
+  roomMedia: string;
   socket: Socket;
   getMediaDisplayName: (input: string) => string;
   beta: boolean;
@@ -26,21 +26,21 @@ export class SubtitleModal extends React.Component<{
     loading: false,
     searchResults: [],
     titleQuery: this.props
-      .getMediaDisplayName(this.props.src)
+      .getMediaDisplayName(this.props.roomMedia)
       .split('/')
       .slice(-1)[0],
   };
 
   async componentDidMount() {
-    if (this.props.src.includes('/stream?torrent=magnet')) {
+    if (this.props.roomMedia.includes('/stream?torrent=magnet')) {
       const re = /&fileIndex=(\d+)$/;
-      const match = re.exec(this.props.src);
+      const match = re.exec(this.props.roomMedia);
       if (match) {
         const fileIndex = match[1];
         if (fileIndex) {
           // Fetch title from the data endpoint
           const response = await fetch(
-            this.props.src.replace('/stream', '/data')
+            this.props.roomMedia.replace('/stream', '/data')
           );
           const data = await response.json();
           this.setState({ titleQuery: data?.files[fileIndex]?.name });
@@ -94,7 +94,7 @@ export class SubtitleModal extends React.Component<{
             >
               <Header>Room subtitle settings</Header>
               {process.env.NODE_ENV === 'development' && (
-                <Input value={this.props.currentSubtitle} />
+                <Input value={this.props.roomSubtitle} />
               )}
               <div>
                 <Radio
@@ -102,7 +102,7 @@ export class SubtitleModal extends React.Component<{
                   name="radioGroup"
                   label="No subtitles"
                   value=""
-                  checked={!this.props.currentSubtitle}
+                  checked={!this.props.roomSubtitle}
                   onClick={(e, { value }) => {
                     this.props.socket.emit('CMD:subtitle', '');
                   }}
@@ -116,11 +116,13 @@ export class SubtitleModal extends React.Component<{
                     label=".srt extension appended to current video URL"
                     value=""
                     checked={Boolean(
-                      this.props.currentSubtitle &&
-                        this.props.currentSubtitle?.startsWith(this.props.src)
+                      this.props.roomSubtitle &&
+                        this.props.roomSubtitle?.startsWith(
+                          this.props.roomMedia
+                        )
                     )}
                     onClick={(e, data) => {
-                      const subValue = this.props.src + '.srt';
+                      const subValue = this.props.roomMedia + '.srt';
                       this.props.socket.emit('CMD:subtitle', subValue);
                     }}
                   />
@@ -133,8 +135,8 @@ export class SubtitleModal extends React.Component<{
                   label=""
                   value=""
                   checked={
-                    Boolean(this.props.currentSubtitle) &&
-                    this.props.currentSubtitle?.startsWith(
+                    Boolean(this.props.roomSubtitle) &&
+                    this.props.roomSubtitle?.startsWith(
                       serverPath + '/subtitle'
                     )
                   }
@@ -158,8 +160,8 @@ export class SubtitleModal extends React.Component<{
                     name="radioGroup"
                     value=""
                     checked={
-                      Boolean(this.props.currentSubtitle) &&
-                      this.props.currentSubtitle?.startsWith(
+                      Boolean(this.props.roomSubtitle) &&
+                      this.props.roomSubtitle?.startsWith(
                         serverPath + '/downloadSubtitle'
                       )
                     }
@@ -207,7 +209,9 @@ export class SubtitleModal extends React.Component<{
                       onClick={async () => {
                         this.setState({ loading: true });
                         const resp = await window.fetch(
-                          serverPath + '/searchSubtitles?url=' + this.props.src
+                          serverPath +
+                            '/searchSubtitles?url=' +
+                            this.props.roomMedia
                         );
                         const json = await resp.json();
                         this.setState({ searchResults: json });
@@ -227,7 +231,7 @@ export class SubtitleModal extends React.Component<{
                     label={result.SubFileName}
                     name="radioGroup"
                     value={result.SubDownloadLink}
-                    checked={this.props.currentSubtitle?.includes(
+                    checked={this.props.roomSubtitle?.includes(
                       result.SubDownloadLink
                     )}
                     onChange={(e, { value }) => {

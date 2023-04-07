@@ -92,9 +92,10 @@ interface AppProps {
 
 interface AppState {
   state: 'init' | 'starting' | 'connected';
-  currentMedia: string;
-  currentSubtitle: string;
-  currentMediaPaused: boolean;
+  roomMedia: string;
+  roomSubtitle: string;
+  roomPaused: boolean;
+  roomLoop: boolean;
   participants: User[];
   rosterUpdateTS: Number;
   chat: ChatMessage[];
@@ -146,7 +147,7 @@ interface AppState {
   owner: string | undefined;
   vanity: string | undefined;
   password: string | undefined;
-  roomLink: string;
+  inviteLink: string;
   roomTitle: string | undefined;
   roomDescription: string | undefined;
   roomTitleColor: string | undefined;
@@ -158,9 +159,10 @@ interface AppState {
 export default class App extends React.Component<AppProps, AppState> {
   state: AppState = {
     state: 'starting',
-    currentMedia: '',
-    currentMediaPaused: false,
-    currentSubtitle: '',
+    roomMedia: '',
+    roomPaused: false,
+    roomSubtitle: '',
+    roomLoop: false,
     participants: [],
     rosterUpdateTS: Number(new Date()),
     chat: [],
@@ -208,7 +210,7 @@ export default class App extends React.Component<AppProps, AppState> {
     owner: undefined,
     vanity: undefined,
     password: undefined,
-    roomLink: '',
+    inviteLink: '',
     roomTitle: '',
     roomDescription: '',
     roomTitleColor: '',
@@ -362,13 +364,13 @@ export default class App extends React.Component<AppProps, AppState> {
       window.location.assign('/');
     });
     socket.on('REC:play', () => {
-      this.doPlay();
+      this.localPlay();
     });
     socket.on('REC:pause', () => {
-      this.doPause();
+      this.localPause();
     });
     socket.on('REC:seek', (data: number) => {
-      this.syncSelf(data);
+      this.localSeek(data);
     });
     socket.on('REC:playbackRate', (data: number) => {
       this.setState({ roomPlaybackRate: data });
@@ -377,9 +379,12 @@ export default class App extends React.Component<AppProps, AppState> {
       }
     });
     socket.on('REC:subtitle', (data: string) => {
-      this.setState({ currentSubtitle: data }, () => {
+      this.setState({ roomSubtitle: data }, () => {
         this.Player().loadSubtitles(data);
       });
+    });
+    socket.on('REC:loop', (data: boolean) => {
+      this.setState({ roomLoop: data });
     });
     socket.on('REC:changeController', (data: string) => {
       this.setState({ controller: data });
@@ -405,9 +410,11 @@ export default class App extends React.Component<AppProps, AppState> {
       }
       this.setState(
         {
-          currentMedia,
-          currentMediaPaused: data.paused,
-          currentSubtitle: data.subtitle,
+          roomMedia: currentMedia,
+          roomPaused: data.paused,
+          roomSubtitle: data.subtitle,
+          roomLoop: data.loop,
+          roomPlaybackRate: data.playbackRate,
           loading: Boolean(data.video),
           nonPlayableMedia: false,
           isVBrowserLarge: data.isVBrowserLarge,
@@ -435,7 +442,6 @@ export default class App extends React.Component<AppProps, AppState> {
           if (data.subtitle) {
             this.Player().loadSubtitles(data.subtitle);
           }
-          this.setState({ roomPlaybackRate: data.playbackRate });
           if (data.playbackRate) {
             this.Player().setPlaybackRate(data.playbackRate);
           }
@@ -550,14 +556,14 @@ export default class App extends React.Component<AppProps, AppState> {
           }
           // Start this video
           if (!data.paused) {
-            this.doPlay();
+            this.localPlay();
           }
           // One time, when we're ready to play
           leftVideo?.addEventListener(
             'canplay',
             () => {
               this.setLoadingFalse();
-              this.syncSelf(this.state.isLiveHls ? data.videoTS : undefined);
+              this.localSeek(this.state.isLiveHls ? data.videoTS : undefined);
               if (data.playbackRate) {
                 // Set playback rate again since it might have been lost
                 console.log('setting playback rate again', data.playbackRate);
@@ -661,7 +667,7 @@ export default class App extends React.Component<AppProps, AppState> {
         // e.g. screenshare, fileshare, .m3u8 HLS streams
         // Also not necessary for WebRTC sharing since it should be close to realtime
         if (
-          !this.state.currentMediaPaused &&
+          !this.state.roomPaused &&
           !this.state.isLiveHls &&
           this.hasDuration() &&
           this.state.roomPlaybackRate === 0
@@ -680,7 +686,7 @@ export default class App extends React.Component<AppProps, AppState> {
             this.Player().setPlaybackRate(pbr);
           }
         }
-        if (this.state.currentSubtitle) {
+        if (this.state.roomSubtitle) {
           const sharer = this.state.participants.find((p) => p.isScreenShare);
           if (sharer && sharer.id !== this.socket.id) {
             // Sync only if someone is sharing and it's not us
@@ -767,7 +773,7 @@ export default class App extends React.Component<AppProps, AppState> {
     );
     socket.on('REC:getRoomState', this.handleRoomState);
     window.setInterval(() => {
-      if (this.state.currentMedia) {
+      if (this.state.roomMedia) {
         this.socket.emit('CMD:ts', this.Player().getCurrentTime());
       }
     }, 1000);
@@ -842,17 +848,17 @@ export default class App extends React.Component<AppProps, AppState> {
             if (
               this.ytDebounce &&
               ((e.data === window.YT?.PlayerState?.PLAYING &&
-                this.state.currentMediaPaused) ||
+                this.state.roomPaused) ||
                 (e.data === window.YT?.PlayerState?.PAUSED &&
-                  !this.state.currentMediaPaused))
+                  !this.state.roomPaused))
             ) {
               this.ytDebounce = false;
               if (e.data === window.YT?.PlayerState?.PLAYING) {
                 this.socket.emit('CMD:play');
-                this.doPlay();
+                this.localPlay();
               } else {
                 this.socket.emit('CMD:pause');
-                this.doPause();
+                this.localPause();
               }
               window.setTimeout(() => (this.ytDebounce = true), 500);
             }
@@ -863,7 +869,7 @@ export default class App extends React.Component<AppProps, AppState> {
   };
 
   // Functions for managing room settings
-  getRoomLink = (vanity: string) => {
+  getInviteLink = (vanity: string) => {
     if (vanity) {
       return `${window.location.origin}/r/${vanity}`;
     }
@@ -874,13 +880,13 @@ export default class App extends React.Component<AppProps, AppState> {
     this.setOwner(data.owner);
     this.setVanity(data.vanity);
     this.setPassword(data.password);
-    this.setRoomLink(this.getRoomLink(data.vanity));
+    this.setInviteLink(this.getInviteLink(data.vanity));
     this.setIsChatDisabled(data.isChatDisabled);
     this.setRoomTitle(data.roomTitle);
     this.setRoomDescription(data.roomDescription);
     this.setRoomTitleColor(data.roomTitleColor);
     this.setMediaPath(data.mediaPath);
-    window.history.replaceState('', '', this.getRoomLink(data.vanity));
+    window.history.replaceState('', '', this.getInviteLink(data.vanity));
   };
 
   setOwner = (owner: string) => {
@@ -892,8 +898,8 @@ export default class App extends React.Component<AppProps, AppState> {
   setPassword = (password: string | undefined) => {
     this.setState({ password });
   };
-  setRoomLink = (roomLink: string) => {
-    this.setState({ roomLink });
+  setInviteLink = (inviteLink: string) => {
+    this.setState({ inviteLink });
   };
   setRoomTitle = (roomTitle: string | undefined) => {
     this.setState({ roomTitle });
@@ -1192,7 +1198,7 @@ export default class App extends React.Component<AppProps, AppState> {
         mediaStream.addTrack(track);
         video.srcObject = mediaStream;
       }
-      this.doPlay();
+      this.localPlay();
     };
 
     async function consumeAndResume(kind: string) {
@@ -1332,7 +1338,7 @@ export default class App extends React.Component<AppProps, AppState> {
     if (this.localStreamToPublish) {
       this.socket.emit('CMD:leaveScreenShare');
       // We don't actually need to unmute if it's a fileshare but this is fine
-      this.doSetMute(false);
+      this.localSetMute(false);
     }
     this.localStreamToPublish &&
       this.localStreamToPublish.getTracks().forEach((track) => {
@@ -1369,12 +1375,12 @@ export default class App extends React.Component<AppProps, AppState> {
       // Stop sharing if the local stream stops
       localTrack.onended = () => this.stopPublishingLocalStream();
     }
-    if (this.state.currentMedia.includes('@')) {
+    if (this.state.roomMedia.includes('@')) {
       let prefix = 'screenshare://';
       if (this.playingFileShare()) {
         prefix = 'fileshare://';
       }
-      const unprefixed = this.state.currentMedia.replace(prefix, '');
+      const unprefixed = this.state.roomMedia.replace(prefix, '');
       const mediasoupURL = unprefixed.split('@')[1];
       if (sharer?.clientId === selfId && this.mediasoupPubSocket == null) {
         await this.publishMediasoup(mediasoupURL);
@@ -1450,7 +1456,7 @@ export default class App extends React.Component<AppProps, AppState> {
         if (leftVideo) {
           leftVideo.src = '';
           leftVideo.srcObject = event.streams[0];
-          this.doPlay();
+          this.localPlay();
         }
       };
     }
@@ -1480,7 +1486,7 @@ export default class App extends React.Component<AppProps, AppState> {
   };
 
   usingYoutube = () => {
-    return isYouTube(this.state.currentMedia);
+    return isYouTube(this.state.roomMedia);
   };
 
   usingNative = () => {
@@ -1490,34 +1496,34 @@ export default class App extends React.Component<AppProps, AppState> {
 
   hasDuration = () => {
     // Youtube, link, or magnet, etc. Has a defined runtime (not WebRTC)
-    return isHttp(this.state.currentMedia) || isMagnet(this.state.currentMedia);
+    return isHttp(this.state.roomMedia) || isMagnet(this.state.roomMedia);
   };
 
   playingScreenShare = () => {
-    return isScreenShare(this.state.currentMedia);
+    return isScreenShare(this.state.roomMedia);
   };
 
   playingFileShare = () => {
-    return isFileShare(this.state.currentMedia);
+    return isFileShare(this.state.roomMedia);
   };
 
   playingVBrowser = () => {
-    return isVBrowser(this.state.currentMedia);
+    return isVBrowser(this.state.roomMedia);
   };
 
   getVBrowserPass = () => {
-    return this.state.currentMedia.replace('vbrowser://', '').split('@')[0];
+    return this.state.roomMedia.replace('vbrowser://', '').split('@')[0];
   };
 
   getVBrowserHost = () => {
-    return this.state.currentMedia.replace('vbrowser://', '').split('@')[1];
+    return this.state.roomMedia.replace('vbrowser://', '').split('@')[1];
   };
 
   isPauseDisabled = () => {
     return this.playingScreenShare() || this.playingVBrowser();
   };
 
-  syncSelf = (customTime?: number) => {
+  localSeek = (customTime?: number) => {
     // Jump to the leader's position, or a custom one
     // for HLS the leader is the live stream position
     let target = customTime ?? this.getLeaderTime();
@@ -1540,22 +1546,22 @@ export default class App extends React.Component<AppProps, AppState> {
     }
   };
 
-  doPlay = async () => {
-    if (!this.state.currentMedia) {
+  localPlay = async () => {
+    if (!this.state.roomMedia) {
       return;
     }
     const canAutoplay = this.state.isAutoPlayable || (await testAutoplay());
     this.setState(
-      { currentMediaPaused: false, isAutoPlayable: canAutoplay },
+      { roomPaused: false, isAutoPlayable: canAutoplay },
       async () => {
         if (
           !this.state.isAutoPlayable ||
           (this.localStreamToPublish && !this.isLocalStreamAFile)
         ) {
           console.log('auto-muting to allow autoplay or screenshare host');
-          this.doSetMute(true);
+          this.localSetMute(true);
         } else {
-          this.doSetMute(false);
+          this.localSetMute(false);
         }
         try {
           await this.Player().playVideo();
@@ -1569,35 +1575,39 @@ export default class App extends React.Component<AppProps, AppState> {
     );
   };
 
-  doPause = () => {
-    this.setState({ currentMediaPaused: true }, async () => {
+  localPause = () => {
+    this.setState({ roomPaused: true }, async () => {
       this.Player().pauseVideo();
     });
   };
 
-  doSetMute = (muted: boolean) => {
+  localSetMute = (muted: boolean) => {
     this.Player().setMute(muted);
     this.refreshControls();
   };
 
-  doSetVolume = (volume: number) => {
+  localSetVolume = (volume: number) => {
     this.Player().setVolume(volume);
     this.refreshControls();
   };
 
-  doSubtitle = () => {
+  localSubtitleModal = () => {
     // Native player uses subtitle modal.
     if (this.usingNative()) {
       this.setState({ isSubtitleModalOpen: true });
     }
   };
 
-  doSetPlaybackRate = (rate: number) => {
+  roomSetPlaybackRate = (rate: number) => {
     // emit an event to the server
     this.socket.emit('CMD:playbackRate', rate);
   };
 
-  togglePlay = () => {
+  roomSetLoop = (loop: boolean) => {
+    this.socket.emit('CMD:loop', loop);
+  };
+
+  roomTogglePlay = () => {
     if (!this.haveLock()) {
       return;
     }
@@ -1607,14 +1617,14 @@ export default class App extends React.Component<AppProps, AppState> {
     const shouldPlay = this.Player().shouldPlay();
     if (shouldPlay) {
       this.socket.emit('CMD:play');
-      this.doPlay();
+      this.localPlay();
     } else {
       this.socket.emit('CMD:pause');
-      this.doPause();
+      this.localPause();
     }
   };
 
-  onSeek = (e: any, time: number) => {
+  roomSeek = (e: any, time: number) => {
     let target = time;
     // Read the time from the click event if it exists
     if (e) {
@@ -1638,22 +1648,22 @@ export default class App extends React.Component<AppProps, AppState> {
     if (!document.activeElement || document.activeElement.tagName === 'BODY') {
       if (e.key === ' ') {
         e.preventDefault();
-        this.togglePlay();
+        this.roomTogglePlay();
       } else if (e.key === 'ArrowRight') {
-        this.onSeek(null, this.Player().getCurrentTime() + 15);
+        this.roomSeek(null, this.Player().getCurrentTime() + 15);
       } else if (e.key === 'ArrowLeft') {
-        this.onSeek(null, this.Player().getCurrentTime() - 15);
+        this.roomSeek(null, this.Player().getCurrentTime() - 15);
       } else if (e.key === 't') {
-        this.fullScreen(false);
+        this.localFullScreen(false);
       } else if (e.key === 'f') {
-        this.fullScreen(true);
+        this.localFullScreen(true);
       } else if (e.key === 'm') {
-        this.toggleMute();
+        this.localToggleMute();
       }
     }
   };
 
-  fullScreen = async (bVideoOnly: boolean) => {
+  localFullScreen = async (bVideoOnly: boolean) => {
     let container = document.getElementById('theaterContainer') as HTMLElement;
     if (bVideoOnly || isMobile()) {
       if (this.playingVBrowser() && !isMobile()) {
@@ -1685,23 +1695,23 @@ export default class App extends React.Component<AppProps, AppState> {
     }
   };
 
-  toggleMute = () => {
-    this.doSetMute(!this.Player().isMuted());
+  localToggleMute = () => {
+    this.localSetMute(!this.Player().isMuted());
   };
 
-  setMedia = (_e: any, data: DropdownProps) => {
+  roomSetMedia = (_e: any, data: DropdownProps) => {
     this.socket.emit('CMD:host', data.value);
   };
 
-  playlistAdd = (_e: any, data: DropdownProps) => {
+  roomPlaylistAdd = (_e: any, data: DropdownProps) => {
     this.socket.emit('CMD:playlistAdd', data.value);
   };
 
-  playlistMove = (index: number, toIndex: number) => {
+  roomPlaylistMove = (index: number, toIndex: number) => {
     this.socket.emit('CMD:playlistMove', { index, toIndex });
   };
 
-  playlistDelete = (index: number) => {
+  roomPlaylistDelete = (index: number) => {
     this.socket.emit('CMD:playlistDelete', index);
   };
 
@@ -1773,18 +1783,28 @@ export default class App extends React.Component<AppProps, AppState> {
   };
 
   onVideoEnded = () => {
-    this.socket.emit('CMD:playlistNext', this.state.currentMedia);
-    // Play next
+    this.localPause();
+    // check if looping is on, if so set time back to 0 and restart
+    if (this.state.roomLoop) {
+      this.localSeek(0);
+      this.localPlay();
+      return;
+    }
+    if (this.state.playlist.length) {
+      this.socket.emit('CMD:playlistNext', this.state.roomMedia);
+      return;
+    }
+    // Play next fileIndex
     const re = /&fileIndex=(\d+)$/;
-    const match = re.exec(this.state.currentMedia);
+    const match = re.exec(this.state.roomMedia);
     if (match) {
       const fileIndex = match[1];
       const nextNum = Number(fileIndex) + 1;
-      const nextUrl = this.state.currentMedia.replace(
+      const nextUrl = this.state.roomMedia.replace(
         /&fileIndex=(\d+)$/,
         `&fileIndex=${nextNum}`
       );
-      this.setMedia(null, { value: nextUrl });
+      this.roomSetMedia(null, { value: nextUrl });
     }
   };
 
@@ -1797,14 +1817,10 @@ export default class App extends React.Component<AppProps, AppState> {
     const controls = (
       <Controls
         key={this.state.controlsTimestamp}
-        togglePlay={this.togglePlay}
-        onSeek={this.onSeek}
-        fullScreen={this.fullScreen}
-        toggleMute={this.toggleMute}
-        showSubtitle={this.doSubtitle}
-        setVolume={this.doSetVolume}
-        syncSelf={this.syncSelf}
-        paused={this.state.currentMediaPaused}
+        beta={this.props.beta}
+        paused={this.state.roomPaused}
+        roomPlaybackRate={this.state.roomPlaybackRate}
+        isLiveHls={this.state.isLiveHls}
         muted={this.Player().isMuted()}
         volume={this.Player().getVolume()}
         subtitled={this.Player().isSubtitled()}
@@ -1814,13 +1830,19 @@ export default class App extends React.Component<AppProps, AppState> {
         leaderTime={this.hasDuration() ? this.getLeaderTime() : undefined}
         isPauseDisabled={this.isPauseDisabled()}
         playbackRate={this.Player().getPlaybackRate()}
-        setPlaybackRate={this.doSetPlaybackRate}
-        beta={this.props.beta}
-        roomPlaybackRate={this.state.roomPlaybackRate}
         isYouTube={this.usingYoutube()}
-        setSubtitleMode={this.Player().setSubtitleMode}
-        isLiveHls={this.state.isLiveHls}
         timeRanges={this.Player().getTimeRanges()}
+        loop={this.state.roomLoop}
+        roomSetLoop={this.roomSetLoop}
+        roomTogglePlay={this.roomTogglePlay}
+        roomSeek={this.roomSeek}
+        roomSetPlaybackRate={this.roomSetPlaybackRate}
+        localFullScreen={this.localFullScreen}
+        localToggleMute={this.localToggleMute}
+        localSubtitleModal={this.localSubtitleModal}
+        localSetVolume={this.localSetVolume}
+        localSeek={this.localSeek}
+        localSetSubtitleMode={this.Player().setSubtitleMode}
       />
     );
     const displayRightContent =
@@ -1955,7 +1977,7 @@ export default class App extends React.Component<AppProps, AppState> {
           setOwner={this.setOwner}
           vanity={this.state.vanity}
           setVanity={this.setVanity}
-          roomLink={this.state.roomLink}
+          inviteLink={this.state.inviteLink}
           password={this.state.password}
           setPassword={this.setPassword}
           clearChat={this.clearChat}
@@ -1980,8 +2002,8 @@ export default class App extends React.Component<AppProps, AppState> {
                 size="large"
                 onClick={() => {
                   this.setState({ isAutoPlayable: true });
-                  this.doSetMute(false);
-                  this.doSetVolume(1);
+                  this.localSetMute(false);
+                  this.localSetVolume(1);
                 }}
                 icon
                 labelPosition="left"
@@ -1995,7 +2017,7 @@ export default class App extends React.Component<AppProps, AppState> {
         {this.state.multiStreamSelection && (
           <MultiStreamModal
             streams={this.state.multiStreamSelection}
-            setMedia={this.setMedia}
+            setMedia={this.roomSetMedia}
             resetMultiSelect={this.resetMultiSelect}
           />
         )}
@@ -2030,8 +2052,8 @@ export default class App extends React.Component<AppProps, AppState> {
           <SubtitleModal
             closeModal={() => this.setState({ isSubtitleModalOpen: false })}
             socket={this.socket}
-            currentSubtitle={this.state.currentSubtitle}
-            src={this.state.currentMedia}
+            roomSubtitle={this.state.roomSubtitle}
+            roomMedia={this.state.roomMedia}
             haveLock={this.haveLock}
             getMediaDisplayName={this.getMediaDisplayName}
             beta={this.props.beta}
@@ -2115,11 +2137,11 @@ export default class App extends React.Component<AppProps, AppState> {
                   {!this.state.fullScreen && (
                     <React.Fragment>
                       <ComboBox
-                        setMedia={this.setMedia}
-                        playlistAdd={this.playlistAdd}
-                        playlistDelete={this.playlistDelete}
-                        playlistMove={this.playlistMove}
-                        currentMedia={this.state.currentMedia}
+                        roomSetMedia={this.roomSetMedia}
+                        playlistAdd={this.roomPlaylistAdd}
+                        playlistDelete={this.roomPlaylistDelete}
+                        playlistMove={this.roomPlaylistMove}
+                        roomMedia={this.state.roomMedia}
                         getMediaDisplayName={this.getMediaDisplayName}
                         launchMultiSelect={this.launchMultiSelect}
                         streamPath={this.props.streamPath}
@@ -2300,8 +2322,8 @@ export default class App extends React.Component<AppProps, AppState> {
                           )}
                         {false && (
                           <SearchComponent
-                            setMedia={this.setMedia}
-                            playlistAdd={this.playlistAdd}
+                            setMedia={this.roomSetMedia}
+                            playlistAdd={this.roomPlaylistAdd}
                             type={'youtube'}
                             streamPath={this.props.streamPath}
                             disabled={!this.haveLock()}
@@ -2309,8 +2331,8 @@ export default class App extends React.Component<AppProps, AppState> {
                         )}
                         {Boolean(this.props.streamPath) && (
                           <SearchComponent
-                            setMedia={this.setMedia}
-                            playlistAdd={this.playlistAdd}
+                            setMedia={this.roomSetMedia}
+                            playlistAdd={this.roomPlaylistAdd}
                             type={'stream'}
                             streamPath={this.props.streamPath}
                             launchMultiSelect={this.launchMultiSelect}
@@ -2324,7 +2346,7 @@ export default class App extends React.Component<AppProps, AppState> {
                   <div style={{ flexGrow: 1 }}>
                     <div className={styles.playerContainer}>
                       {(this.state.loading ||
-                        !this.state.currentMedia ||
+                        !this.state.roomMedia ||
                         this.state.nonPlayableMedia) && (
                         <div
                           id="loader"
@@ -2344,7 +2366,7 @@ export default class App extends React.Component<AppProps, AppState> {
                               </Loader>
                             </Dimmer>
                           )}
-                          {!this.state.loading && !this.state.currentMedia && (
+                          {!this.state.loading && !this.state.roomMedia && (
                             <Message
                               color="yellow"
                               icon="hand point up"
@@ -2387,7 +2409,7 @@ export default class App extends React.Component<AppProps, AppState> {
                           hostname={this.getVBrowserHost()}
                           controlling={this.state.controller === this.socket.id}
                           resolution={this.state.vBrowserResolution}
-                          doPlay={this.doPlay}
+                          doPlay={this.localPlay}
                           setResolution={(data: string) =>
                             this.setState({ vBrowserResolution: data })
                           }
@@ -2407,12 +2429,12 @@ export default class App extends React.Component<AppProps, AppState> {
                           id="leftVideo"
                           onEnded={this.onVideoEnded}
                           playsInline
-                          onClick={this.togglePlay}
+                          onClick={this.roomTogglePlay}
                         ></video>
                       )}
                     </div>
                   </div>
-                  {this.state.currentMedia && controls}
+                  {this.state.roomMedia && controls}
                   {Boolean(this.state.total) && (
                     <div
                       style={{

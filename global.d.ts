@@ -70,6 +70,7 @@ interface HostState {
   isVBrowserLarge: boolean;
   controller?: string;
   playbackRate: number;
+  loop: boolean;
 }
 
 interface PersistentRoom {
