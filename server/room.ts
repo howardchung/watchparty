@@ -36,6 +36,7 @@ export class Room {
   public subtitle = '';
   public playbackRate = 0;
   public paused = false;
+  public loop = false;
   private chat: ChatMessage[] = [];
   private nameMap: StringDict = {};
   private pictureMap: StringDict = {};
@@ -137,6 +138,7 @@ export class Room {
       socket.on('CMD:playbackRate', (data) =>
         this.setPlaybackRate(socket, data)
       );
+      socket.on('CMD:loop', (data) => this.setLoop(socket, data));
       socket.on('CMD:ts', (data) => this.setTimestamp(socket, data));
       socket.on('CMD:chat', (data) => this.sendChatMessage(socket, data));
       socket.on('CMD:addReaction', (data) => this.addReaction(socket, data));
@@ -213,6 +215,7 @@ export class Room {
       lock: this.lock,
       creator: this.creator,
       playlist: this.playlist,
+      loop: this.loop,
     });
   };
 
@@ -249,6 +252,9 @@ export class Room {
     }
     if (roomObj.playbackRate) {
       this.playbackRate = roomObj.playbackRate;
+    }
+    if (roomObj.loop) {
+      this.loop = roomObj.loop;
     }
   };
 
@@ -318,6 +324,7 @@ export class Room {
       paused: this.paused,
       isVBrowserLarge: Boolean(this.vBrowser && this.vBrowser.large),
       controller: match?.id,
+      loop: this.loop,
     };
   };
 
@@ -360,9 +367,10 @@ export class Room {
     this.videoTS = 0;
     this.paused = false;
     this.subtitle = '';
+    this.loop = false;
+    this.playbackRate = 0;
     this.tsMap = {};
     this.nextVotes = {};
-    this.playbackRate = 0;
     this.preventTSUpdate = true;
     setTimeout(() => (this.preventTSUpdate = false), 1000);
     this.io.of(this.roomId).emit('REC:tsMap', this.tsMap);
@@ -627,6 +635,17 @@ export class Room {
       msg: data?.toString(),
     };
     this.addChatMessage(socket, chatMsg);
+  };
+
+  private setLoop = (socket: Socket, data: boolean) => {
+    if (String(data).length > 100) {
+      return;
+    }
+    if (!this.validateLock(socket.id)) {
+      return;
+    }
+    this.loop = data;
+    this.io.of(this.roomId).emit('REC:loop', data);
   };
 
   private setTimestamp = (socket: Socket, data: number) => {

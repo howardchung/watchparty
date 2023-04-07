@@ -19,11 +19,11 @@ import { examples } from '../../utils/examples';
 import ChatVideoCard from '../Playlist/ChatVideoCard';
 
 interface ComboBoxProps {
-  setMedia: (e: any, data: DropdownProps) => void;
+  roomSetMedia: (e: any, data: DropdownProps) => void;
   playlistAdd: (e: any, data: DropdownProps) => void;
   playlistMove: (index: number, toIndex: number) => void;
   playlistDelete: (index: number) => void;
-  currentMedia: string;
+  roomMedia: string;
   getMediaDisplayName: (input: string) => string;
   launchMultiSelect: (multi: []) => void;
   mediaPath: string | undefined;
@@ -46,7 +46,7 @@ export class ComboBox extends React.Component<ComboBoxProps> {
       () => this.setState({ inputMedia: undefined, results: undefined }),
       200
     );
-    this.props.setMedia(e, data);
+    this.props.roomSetMedia(e, data);
   };
 
   doSearch = async (e: any) => {
@@ -132,7 +132,7 @@ export class ComboBox extends React.Component<ComboBoxProps> {
   };
 
   render() {
-    const { currentMedia, getMediaDisplayName } = this.props;
+    const { roomMedia: currentMedia, getMediaDisplayName } = this.props;
     const { results } = this.state;
     return (
       <div style={{ position: 'relative' }}>
@@ -232,7 +232,7 @@ export class ComboBox extends React.Component<ComboBoxProps> {
                         index={index}
                         controls
                         onPlay={(index) => {
-                          this.props.setMedia(null, {
+                          this.props.roomSetMedia(null, {
                             value: this.props.playlist[index]?.url,
                           });
                           this.props.playlistDelete(index);

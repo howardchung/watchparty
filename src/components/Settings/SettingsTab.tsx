@@ -36,7 +36,7 @@ interface SettingsTabProps {
   setOwner: (owner: string) => void;
   vanity: string | undefined;
   setVanity: (vanity: string) => void;
-  roomLink: string;
+  inviteLink: string;
   password: string | undefined;
   setPassword: (password: string) => void;
   isChatDisabled: boolean;
@@ -62,7 +62,7 @@ export const SettingsTab = ({
   owner,
   vanity,
   setVanity,
-  roomLink,
+  inviteLink: roomLink,
   password,
   setPassword,
   isChatDisabled,

@@ -6,29 +6,31 @@ import styles from './Controls.module.css';
 
 interface ControlsProps {
   duration: number;
-  togglePlay: () => void;
-  onSeek: (e: any, time: number) => void;
-  fullScreen: (fs: boolean) => void;
-  toggleMute: () => void;
-  showSubtitle: () => void;
-  syncSelf: () => void;
   paused: boolean;
   muted: boolean;
   volume: number;
   subtitled: boolean;
   currentTime: number;
-  setVolume: (volume: number) => void;
   disabled?: boolean;
   leaderTime?: number;
   isPauseDisabled?: boolean;
   playbackRate: number;
-  setPlaybackRate: (rate: number) => void;
   beta: boolean;
   roomPlaybackRate: number;
   isYouTube: boolean;
-  setSubtitleMode: (mode: TextTrackMode, lang?: string) => void;
   isLiveHls: boolean;
   timeRanges: { start: number; end: number }[];
+  loop: boolean;
+  roomTogglePlay: () => void;
+  roomSeek: (e: any, time: number) => void;
+  roomSetPlaybackRate: (rate: number) => void;
+  roomSetLoop: (loop: boolean) => void;
+  localFullScreen: (fs: boolean) => void;
+  localToggleMute: () => void;
+  localSubtitleModal: () => void;
+  localSeek: () => void;
+  localSetVolume: (volume: number) => void;
+  localSetSubtitleMode: (mode: TextTrackMode, lang?: string) => void;
 }
 
 export class Controls extends React.Component<ControlsProps> {
@@ -63,12 +65,12 @@ export class Controls extends React.Component<ControlsProps> {
 
   render() {
     const {
-      togglePlay,
-      onSeek,
-      fullScreen,
-      toggleMute,
-      showSubtitle,
-      syncSelf,
+      roomTogglePlay,
+      roomSeek,
+      localFullScreen,
+      localToggleMute,
+      localSubtitleModal,
+      localSeek,
       currentTime,
       duration,
       leaderTime,
@@ -102,7 +104,7 @@ export class Controls extends React.Component<ControlsProps> {
         <Icon
           size="large"
           onClick={() => {
-            togglePlay();
+            roomTogglePlay();
           }}
           className={`${styles.control} ${styles.action}`}
           disabled={disabled || isPauseDisabled}
@@ -120,9 +122,9 @@ export class Controls extends React.Component<ControlsProps> {
                 if (this.props.isLiveHls) {
                   // do a regular seek rather than sync self if it's HLS since we're basically seeking to the live position
                   // Also, clear the room TS since we want to start at live again on refresh
-                  this.props.onSeek(null, Number.MAX_SAFE_INTEGER);
+                  this.props.roomSeek(null, Number.MAX_SAFE_INTEGER);
                 } else {
-                  syncSelf();
+                  localSeek();
                 }
               }}
               className={`${styles.control} ${styles.action} ${styles.text}`}
@@ -142,7 +144,7 @@ export class Controls extends React.Component<ControlsProps> {
           size="tiny"
           color="blue"
           onClick={
-            duration < Infinity && !this.props.disabled ? onSeek : undefined
+            duration < Infinity && !this.props.disabled ? roomSeek : undefined
           }
           onMouseOver={this.onMouseOver}
           onMouseOut={this.onMouseOut}
@@ -217,7 +219,11 @@ export class Controls extends React.Component<ControlsProps> {
           {this.props.playbackRate?.toFixed(2)}x
         </div>
         {
-          <Dropdown style={{ marginLeft: -8 }} className={`${styles.control}`}>
+          <Dropdown
+            style={{ marginLeft: -8 }}
+            className={`${styles.control}`}
+            disabled={this.props.disabled}
+          >
             <Dropdown.Menu>
               {[
                 { key: 'Auto', text: 'Auto', value: 0 },
@@ -234,13 +240,23 @@ export class Controls extends React.Component<ControlsProps> {
                 <Dropdown.Item
                   key={item.key}
                   text={item.text}
-                  onClick={() => this.props.setPlaybackRate(item.value)}
+                  onClick={() => this.props.roomSetPlaybackRate(item.value)}
                   active={this.props.roomPlaybackRate === item.value}
                 />
               ))}
             </Dropdown.Menu>
           </Dropdown>
         }
+        <Icon
+          onClick={() => {
+            this.props.roomSetLoop(Boolean(!this.props.loop));
+          }}
+          className={`${styles.control} ${styles.action}`}
+          name={'repeat'}
+          title="Loop"
+          loading={this.props.loop}
+          disabled={this.props.disabled}
+        />
         {this.props.isYouTube ? (
           <Dropdown
             icon="closed captioning outline large"
@@ -256,7 +272,7 @@ export class Controls extends React.Component<ControlsProps> {
                   key={item.key}
                   text={item.text}
                   onClick={() =>
-                    this.props.setSubtitleMode(
+                    this.props.localSetSubtitleMode(
                       item.value as TextTrackMode,
                       item.key
                     )
@@ -269,7 +285,7 @@ export class Controls extends React.Component<ControlsProps> {
           <Icon
             size="large"
             onClick={() => {
-              showSubtitle();
+              localSubtitleModal();
             }}
             className={`${styles.control} ${styles.action}`}
             name={subtitled ? 'closed captioning' : 'closed captioning outline'}
@@ -278,7 +294,7 @@ export class Controls extends React.Component<ControlsProps> {
         )}
         <Icon
           size="large"
-          onClick={() => fullScreen(false)}
+          onClick={() => localFullScreen(false)}
           className={`${styles.control} ${styles.action}`}
           style={{ transform: 'rotate(90deg)' }}
           name="window maximize outline"
@@ -286,7 +302,7 @@ export class Controls extends React.Component<ControlsProps> {
         />
         <Icon
           size="large"
-          onClick={() => fullScreen(true)}
+          onClick={() => localFullScreen(true)}
           className={`${styles.control} ${styles.action}`}
           name="expand"
           title="Fullscreen"
@@ -294,7 +310,7 @@ export class Controls extends React.Component<ControlsProps> {
         <Icon
           size="large"
           onClick={() => {
-            toggleMute();
+            localToggleMute();
           }}
           className={`${styles.control} ${styles.action}`}
           name={muted ? 'volume off' : 'volume up'}
@@ -311,7 +327,7 @@ export class Controls extends React.Component<ControlsProps> {
               step: 0.01,
               onChange: (value: number) => {
                 if (value !== this.props.volume && !isNaN(value)) {
-                  this.props.setVolume(value);
+                  this.props.localSetVolume(value);
                 }
               },
             }}
