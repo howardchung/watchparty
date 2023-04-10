@@ -503,23 +503,27 @@ export class Room {
       data.startsWith('https://www.twitch.tv') ||
       data.startsWith('https://twitch.tv')
     ) {
-      // Extract m3u8 data
-      // Note this won't work directly since Twitch will reject requests from the wrong origin--need to proxy the m3u8 playlist
-      const channel = data.split('/').slice(-1)[0];
-      const isStream = isNaN(Number(channel));
-      let streams = [];
-      if (isStream) {
-        streams = await twitch.getStream(channel);
-      } else {
-        streams = await twitch.getVod(channel);
+      try {
+        // Extract m3u8 data
+        // Note this won't work directly since Twitch will reject requests from the wrong origin--need to proxy the m3u8 playlist
+        const channel = data.split('/').slice(-1)[0];
+        const isStream = isNaN(Number(channel));
+        let streams = [];
+        if (isStream) {
+          streams = await twitch.getStream(channel);
+        } else {
+          streams = await twitch.getVod(channel);
+        }
+        const parsed = new URL(streams?.[0].url);
+        data =
+          config.TWITCH_PROXY_PATH +
+          '/proxy' +
+          parsed.pathname +
+          '?host=' +
+          parsed.host;
+      } catch (e) {
+        console.warn(e);
       }
-      const parsed = new URL(streams?.[0].url);
-      data =
-        config.TWITCH_PROXY_PATH +
-        '/proxy' +
-        parsed.pathname +
-        '?host=' +
-        parsed.host;
     }
     this.cmdHost(socket, data);
   };
