@@ -520,7 +520,9 @@ export class Room {
           '/proxy' +
           parsed.pathname +
           '?host=' +
-          parsed.host;
+          parsed.host +
+          '&displayName=' +
+          data;
       } catch (e) {
         console.warn(e);
       }

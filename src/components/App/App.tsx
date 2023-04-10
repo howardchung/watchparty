@@ -1764,6 +1764,11 @@ export default class App extends React.Component<AppProps, AppState> {
       const index = searchParsed.get('fileIndex');
       return magnetParsed.get('dn') + (index != null ? ` (file ${index})` : '');
     }
+    if (input.includes('/proxy/v1/playlist')) {
+      const urlParsed = new URLSearchParams(input);
+      const displayName = urlParsed.get('displayName') ?? input;
+      return displayName;
+    }
     return input;
   };
 

@@ -32,8 +32,6 @@ import ecosystem from './ecosystem.config';
 import { statsAgg } from './utils/statsAgg';
 import { resolveShard } from './utils/resolveShard';
 import { makeRoomName, makeUserName } from './utils/moniker';
-//@ts-ignore
-import twitch from 'twitch-m3u8';
 
 if (config.NODE_ENV === 'development') {
   axios.interceptors.request.use(
