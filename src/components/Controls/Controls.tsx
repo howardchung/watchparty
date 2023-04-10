@@ -87,6 +87,7 @@ export class Controls extends React.Component<ControlsProps> {
       const buffLengthPct = ((end - start) / duration) * 100;
       return (
         <div
+          key={start}
           style={{
             position: 'absolute',
             height: '6px',
