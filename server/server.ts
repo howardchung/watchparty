@@ -32,11 +32,13 @@ import ecosystem from './ecosystem.config';
 import { statsAgg } from './utils/statsAgg';
 import { resolveShard } from './utils/resolveShard';
 import { makeRoomName, makeUserName } from './utils/moniker';
+//@ts-ignore
+import twitch from 'twitch-m3u8';
 
 if (config.NODE_ENV === 'development') {
   axios.interceptors.request.use(
     (config) => {
-      console.log(config);
+      // console.log(config);
       return config;
     },
     (error) => {
@@ -507,6 +509,60 @@ app.delete('/linkAccount', async (req, res) => {
 
 app.get('/generateName', async (req, res) => {
   return res.send(makeUserName());
+});
+
+// Proxy video segments
+app.get('/proxy/*', async (req, res) => {
+  try {
+    if (req.path.includes('index-dvr.m3u8')) {
+      // VOD
+      // https://d2vjef5jvl6bfs.cloudfront.net/3012391a6c3e84c79ef6_gamesdonequick_41198403369_1681059003/chunked/index-dvr.m3u8
+      const resp = await axios.get(
+        'https://' + req.query.host + req.path.slice('/proxy'.length)
+      );
+      const re = /proxy\/(.*)\/chunked\/index-dvr.m3u8/;
+      const rematch = re.exec(req.path);
+      const host = req.query.host;
+      const name = rematch?.[1];
+      const re2 = /(.*).ts/g;
+      const repl = resp.data.replaceAll(
+        re2,
+        `/proxy/${name}/chunked/$1.ts?host=${host}`
+      );
+      res.send(repl);
+    } else if (req.path.includes('/v1/playlist')) {
+      // Stream
+      // https://video-weaver.sea02.hls.ttvnw.net/v1/playlist/CrQEgv7Mz6nnsfJH3XtVQxeYXk8mViy1zNGWglcybvxZsI1rv3iLnjAnnqwCiVXCJ-DdD27J6RuFrLy7YUYwHUCKazIKICIupUCn9UXtaBYhBM5JIYqg9dz6NWYrCWU9HZJj2TGROv9mAOKuTR51YS82hdYL4PFZa3xxWXhgDsxXQHNDB03kY6S0aG0-EVva1xYrn5Ge6IAXRwug9QDGlb-ydtF3BtYppoTklVI7CVLySPPwbbt5Ow1JXdnKhLSwQEs4bh3BLwMnRBwUFI5nmE18BLYbkMOUivgYP5SSMgnGGlSkJO-iJNPWvepunEgyBUzB_7L-b1keTcV-Qak9IcWIITIWbRvmg6qB3ZSuWdcJgWKmdXdIn4qoRM4o16G1_0N_WRqPtMQFo0hmTlAVmHrzRArJQmaSgqAxZxRbFMd9RFeX6qjP9NtwguPbSeStdVbQxMNC34iavYUIxo8Ug812BHsG7J_kIlof2zkIqkEbP3oV3UkSByIo7xh9EEVargjaGDuQRt8zPQ6-fNBWJJe9F6IFu7lXBPIJ016lopyfcvTWjbLbBHsVkg6vG-3UISh0nud7KB5g5ipQePhtcFSI5hvjlfX1DAVHEpTWXkvlnL4wNqEqpBYL2btSXYeE1Cb-RAvrAT0s61usERcL2eI-S5aTcSO8_hxQ2afC7c9vlypOWgP6p6XNpViZHXmdXv4t-d68Z-MpLtSU7VbB3pRWnSswFFyA3W39ITic4lb97Djp3wHhGgz0Sy8aDb9r0tnphIYgASoJdXMtZWFzdC0yMKQG.m3u8
+      // Extract the edge URL host and add it to URL so proxy can fetch
+      const resp = await axios.get(
+        'https://' + req.query.host + req.path.slice('/proxy'.length)
+      );
+      const re = /https:\/\/(.*)\/v1\/segment\/(.*)/g;
+      const match = re.exec(resp.data);
+      const edgehost = match?.[1];
+      const repl = resp.data.replaceAll(
+        re,
+        `/proxy/v1/segment/$2?host=${edgehost}`
+      );
+      res.send(repl);
+    } else {
+      // Segment
+      const resp = await axios.get(
+        'https://' + req.query.host + req.path.slice('/proxy'.length),
+        { responseType: 'arraybuffer' }
+      );
+      res.writeHead(200, {
+        'Content-Type': 'application/octet-stream',
+        'Accept-Ranges': 'bytes',
+        'Content-Length': resp.data.length,
+        'Transfer-Encoding': 'chunked',
+      });
+      res.write(resp.data);
+      res.end();
+    }
+  } catch (e) {
+    console.log(e, 'axios proxy failed');
+  }
 });
 
 app.use(express.static(config.BUILD_DIRECTORY));
