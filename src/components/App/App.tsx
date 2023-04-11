@@ -425,9 +425,7 @@ export default class App extends React.Component<AppProps, AppState> {
           isLiveHls: false,
         },
         async () => {
-          const leftVideo = document.getElementById(
-            'leftVideo'
-          ) as HTMLMediaElement;
+          const leftVideo = this.HTMLInterface.getVideoEl();
 
           // Stop all players
           // Unless the user is sharing a file, because we play it in leftVideo and capture stream
@@ -942,7 +940,7 @@ export default class App extends React.Component<AppProps, AppState> {
     }
     const file = files[0];
     this.Player().clearState();
-    const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
+    const leftVideo = this.HTMLInterface.getVideoEl();
     leftVideo.src = URL.createObjectURL(file);
     leftVideo.play();
     //@ts-ignore
@@ -1189,7 +1187,7 @@ export default class App extends React.Component<AppProps, AppState> {
 
     // =========== media handling ==========
     const addRemoteTrack = (track: MediaStreamTrack) => {
-      let video = document.getElementById('leftVideo') as HTMLMediaElement;
+      let video = this.HTMLInterface.getVideoEl();
       if (video.srcObject) {
         // Track already exists, add it
         (video.srcObject as MediaStream).addTrack(track);
@@ -1324,7 +1322,7 @@ export default class App extends React.Component<AppProps, AppState> {
     }
 
     // Clear the srcobject so we load our stream when received
-    const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
+    const leftVideo = this.HTMLInterface.getVideoEl();
     leftVideo.srcObject = null;
     await connectSocket();
     // --- get capabilities --
@@ -1450,9 +1448,7 @@ export default class App extends React.Component<AppProps, AppState> {
       pc.ontrack = (event: RTCTrackEvent) => {
         // Mount the stream from sharer
         // console.log(stream);
-        const leftVideo = document.getElementById(
-          'leftVideo'
-        ) as HTMLMediaElement;
+        const leftVideo = this.HTMLInterface.getVideoEl();
         if (leftVideo) {
           leftVideo.src = '';
           leftVideo.srcObject = event.streams[0];
@@ -1671,9 +1667,7 @@ export default class App extends React.Component<AppProps, AppState> {
         // https://github.com/howardchung/watchparty/issues/208
         container = document.getElementById('leftVideoParent') as HTMLElement;
       } else {
-        container = document.getElementById(
-          this.usingYoutube() ? 'leftYt' : 'leftVideo'
-        ) as HTMLElement;
+        container = this.Player().getVideoEl();
       }
     }
     if (

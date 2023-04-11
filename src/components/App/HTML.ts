@@ -110,7 +110,7 @@ export class HTML implements Player {
   };
 
   clearState = () => {
-    const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
+    const leftVideo = this.getVideoEl();
 
     // Clear src and srcObject
     leftVideo.src = '';
@@ -122,7 +122,7 @@ export class HTML implements Player {
   };
 
   loadSubtitles = async (src: string) => {
-    const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
+    const leftVideo = this.getVideoEl();
     if (!leftVideo) {
       return;
     }
@@ -148,7 +148,7 @@ export class HTML implements Player {
   syncSubtitles = (sharerTime: number) => {
     // When sharing, our timestamp doesn't match the subtitles so adjust them
     // For each cue, subtract the videoTS of the sharer, then add our own
-    const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
+    const leftVideo = this.getVideoEl();
     const track = leftVideo?.textTracks[0];
     let offset = leftVideo.currentTime - sharerTime;
     if (track && track.cues && offset) {
@@ -169,7 +169,7 @@ export class HTML implements Player {
   };
 
   getTimeRanges = (): { start: number; end: number }[] => {
-    const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
+    const leftVideo = this.getVideoEl();
     const buffers = [];
     const rangeCount = leftVideo?.buffered.length;
     for (let i = 0; i < rangeCount; i++) {
@@ -181,7 +181,7 @@ export class HTML implements Player {
   };
 
   setLoop = (loop: boolean): void => {
-    const leftVideo = document.getElementById('leftVideo') as HTMLMediaElement;
+    const leftVideo = this.getVideoEl();
     leftVideo.loop = loop;
   };
 }
