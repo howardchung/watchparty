@@ -37,6 +37,7 @@ import {
   isScreenShare,
   isFileShare,
   isVBrowser,
+  isTwitch,
 } from '../../utils';
 import { generateName } from '../../utils/generateName';
 import { Chat } from '../Chat';
@@ -65,6 +66,7 @@ declare global {
   interface Window {
     onYouTubeIframeAPIReady: any;
     YT: YT.JsApi;
+    Twitch: any;
     watchparty: {
       ourStream: MediaStream | undefined;
       videoRefs: HTMLVideoElementDict;
@@ -253,6 +255,7 @@ export default class App extends React.Component<AppProps, AppState> {
     this.setState({ isAutoPlayable: canAutoplay });
     this.loadSettings();
     this.loadYouTube();
+    this.loadTwitch();
     this.init();
   }
 
@@ -864,6 +867,69 @@ export default class App extends React.Component<AppProps, AppState> {
         },
       });
     };
+  };
+
+  loadTwitch = () => {
+    // This code loads the IFrame Player API code asynchronously.
+    // const tag = document.createElement('script');
+    // tag.src = 'https://player.twitch.tv/js/embed/v1.js';
+    // document.body.append(tag);
+    var options = {
+      width: '100%',
+      height: '100%',
+      channel: 'chessbrah',
+      // video: "<video ID>",
+    };
+    var player = new window.Twitch.Player('leftTwitch', options);
+    player.setVolume(0.5);
+    // window.onYouTubeIframeAPIReady = () => {
+    //   // Note: this fails silently if the element is not available
+    //   const ytPlayer = new window.YT.Player('leftYt', {
+    //     events: {
+    //       onReady: () => {
+    //         console.log('yt onReady');
+    //         this.YouTubeInterface = new YouTube(ytPlayer);
+    //         this.setState({ loading: false });
+    //         // We might have failed to play YT originally, ask for the current video again
+    //         if (this.usingYoutube()) {
+    //           console.log('requesting host data again after ytReady');
+    //           this.socket.emit('CMD:askHost');
+    //         }
+    //       },
+    //       onStateChange: (e: any) => {
+    //         if (
+    //           this.usingYoutube() &&
+    //           e.data === window.YT?.PlayerState?.CUED
+    //         ) {
+    //           this.setState({ loading: false });
+    //         }
+    //         if (
+    //           this.usingYoutube() &&
+    //           e.data === window.YT?.PlayerState?.ENDED
+    //         ) {
+    //           this.onVideoEnded();
+    //         }
+    //         if (
+    //           this.ytDebounce &&
+    //           ((e.data === window.YT?.PlayerState?.PLAYING &&
+    //             this.state.roomPaused) ||
+    //             (e.data === window.YT?.PlayerState?.PAUSED &&
+    //               !this.state.roomPaused))
+    //         ) {
+    //           this.ytDebounce = false;
+    //           if (e.data === window.YT?.PlayerState?.PLAYING) {
+    //             this.socket.emit('CMD:play');
+    //             this.localPlay();
+    //           } else {
+    //             this.socket.emit('CMD:pause');
+    //             this.localPause();
+    //           }
+    //           window.setTimeout(() => (this.ytDebounce = true), 500);
+    //         }
+    //       },
+    //     },
+    //   });
+    // };
   };
 
   // Functions for managing room settings
@@ -1485,9 +1551,13 @@ export default class App extends React.Component<AppProps, AppState> {
     return isYouTube(this.state.roomMedia);
   };
 
+  usingTwitch = () => {
+    return isTwitch(this.state.roomMedia);
+  };
+
   usingNative = () => {
     // Anything that uses HTML Video (e.g. not YouTube, Vimeo, or other embedded JS player)
-    return !this.usingYoutube();
+    return !this.usingYoutube() && !this.usingTwitch();
   };
 
   hasDuration = () => {
@@ -2398,6 +2468,15 @@ export default class App extends React.Component<AppProps, AppState> {
                         frameBorder="0"
                         allow="autoplay"
                         src="https://www.youtube.com/embed/?enablejsapi=1&controls=0&rel=0"
+                      />
+                      <div
+                        id="leftTwitch"
+                        style={{
+                          display:
+                            this.usingTwitch() && !this.state.loading
+                              ? 'block'
+                              : 'none',
+                        }}
                       />
                       {this.playingVBrowser() &&
                       this.getVBrowserPass() &&

@@ -121,6 +121,13 @@ export const isYouTube = (input: string) => {
   );
 };
 
+export const isTwitch = (input: string) => {
+  return (
+    input.startsWith('https://www.twitch.tv') ||
+    input.startsWith('https://twitch.tv')
+  );
+};
+
 export const isHttp = (input: string) => {
   return input.startsWith('http');
 };
