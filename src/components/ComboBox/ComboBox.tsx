@@ -17,6 +17,7 @@ import {
 // import { examples } from '../../utils/examples';
 import ChatVideoCard from '../Playlist/ChatVideoCard';
 import styles from './ComboBox.module.css';
+import MetaButton from '../../atoms/MetaButton';
 interface ComboBoxProps {
   setMedia: (e: any, data: DropdownProps) => void;
   playlistAdd: (e: any, data: DropdownProps) => void;
@@ -30,6 +31,8 @@ interface ComboBoxProps {
   disabled?: boolean;
   playlist: PlaylistVideo[];
   toggleIsUploadPress: Function;
+  isHome: boolean;
+  toggleHome: Function;
 }
 
 export class ComboBox extends React.Component<ComboBoxProps> {
@@ -47,8 +50,12 @@ export class ComboBox extends React.Component<ComboBoxProps> {
       200
     );
     this.props.setMedia(e, data);
+    this.props.toggleHome();
+    // this.setState({ isHome: false });
   };
-
+  // backToHome = () => {
+  //   this.setState({ isHome: true });
+  // }
   doSearch = async (e: any) => {
     e.persist();
     this.setState({ inputMedia: e.target.value }, () => {
@@ -63,6 +70,8 @@ export class ComboBox extends React.Component<ComboBoxProps> {
             let items = await getYouTubeTrendings();
             if (!this.state.inputMedia && this.props.mediaPath) {
               items = await getMediaPathResults(this.props.mediaPath, '');
+              this.props.toggleHome();
+              // this.setState({ isHome: true });
             }
             if (query) {
               items = [
@@ -168,6 +177,13 @@ export class ComboBox extends React.Component<ComboBoxProps> {
     return (
       <div style={{ position: 'relative' }}>
         <div style={{ display: 'flex', gap: '4px' }}>
+          <MetaButton
+            text=""
+            onClick={() => this.props.toggleHome()}
+            child={<Icon size="large" name="arrow left" />}
+          >
+            {' '}
+          </MetaButton>
           <Input
             style={{ flexGrow: 1 }}
             fluid
@@ -180,6 +196,7 @@ export class ComboBox extends React.Component<ComboBoxProps> {
               this.setState(
                 {
                   inputMedia: getMediaDisplayName(currentMedia),
+                  isHome: false,
                 },
                 () => {
                   if (
@@ -230,6 +247,11 @@ export class ComboBox extends React.Component<ComboBoxProps> {
                 ? this.state.inputMedia
                 : getMediaDisplayName(currentMedia)
             }
+            // value={
+            //   this.state.inputMedia !== undefined
+            //     ? this.state.inputMedia
+            //     : getMediaDisplayName(currentMedia)
+            // }
           />
 
           {/* ======================  Showing the playlist ====================== */}
@@ -295,24 +317,8 @@ export class ComboBox extends React.Component<ComboBoxProps> {
         </div>
 
         {/* ====================== Search list result ====================== */}
-        {/* ====================== Old version ====================== */}
-        {/* {Boolean(results) && this.state.inputMedia !== undefined && (
-          <Menu
-            fluid
-            vertical
-            style={{
-              position: 'absolute',
-              top: '22px',
-              maxHeight: '250px',
-              overflow: 'scroll',
-              zIndex: 1001,
-            }}
-          >
-            {results}
-          </Menu>
-        )} */}
-
         {/* ====================== new ui ====================== */}
+
         {Boolean(results) && this.state.inputMedia !== undefined && (
           <div className={styles.wrapper}>
             <Grid className={styles['list-container']}>

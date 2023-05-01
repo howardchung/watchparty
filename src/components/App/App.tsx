@@ -86,7 +86,7 @@ interface AppProps {
   streamPath: string | undefined;
 }
 
-interface AppState {
+export interface AppState {
   state: 'init' | 'starting' | 'connected';
   currentMedia: string;
   currentSubtitle: string;
@@ -145,6 +145,7 @@ interface AppState {
   roomTitleColor: string | undefined;
   mediaPath: string | undefined;
   isUploadPress: boolean;
+  isHome: boolean;
 }
 
 export default class App extends React.Component<AppProps, AppState> {
@@ -209,6 +210,7 @@ export default class App extends React.Component<AppProps, AppState> {
     roomTitleColor: '',
     mediaPath: undefined,
     isUploadPress: false,
+    isHome: true,
   };
   socket: Socket = null as any;
   watchPartyYTPlayer: any = null;
@@ -222,6 +224,7 @@ export default class App extends React.Component<AppProps, AppState> {
   chatRef = React.createRef<Chat>();
 
   async componentDidMount() {
+    console.log(this.state.isHome);
     document.onfullscreenchange = this.onFullScreenChange;
     document.onkeydown = this.onKeydown;
 
@@ -305,7 +308,11 @@ export default class App extends React.Component<AppProps, AppState> {
           onReady: () => {
             console.log('yt onReady');
             this.watchPartyYTPlayer = ytPlayer;
-            this.setState({ isYouTubeReady: true, loading: false });
+            this.setState({
+              isYouTubeReady: true,
+              loading: false,
+              isHome: false,
+            });
             // We might have failed to play YT originally, ask for the current video again
             if (this.isYouTube()) {
               this.socket.emit('CMD:askHost');
@@ -347,6 +354,7 @@ export default class App extends React.Component<AppProps, AppState> {
       });
     };
   };
+
   toggleIsUploadPress = () => {
     this.setState({ isUploadPress: !this.state.isUploadPress });
   };
@@ -355,6 +363,9 @@ export default class App extends React.Component<AppProps, AppState> {
   };
   setVanity = (vanity: string | undefined) => {
     this.setState({ vanity });
+  };
+  toggleHome = () => {
+    this.setState({ isHome: !this.state.isHome });
   };
   setPassword = (password: string | undefined) => {
     this.setState({ password });
@@ -1434,7 +1445,6 @@ export default class App extends React.Component<AppProps, AppState> {
   refreshControls = () => {
     this.setState({ controlsTimestamp: Number(new Date()) });
   };
-
   render() {
     const sharer = this.state.participants.find((p) => p.isScreenShare);
     const controls = (
@@ -1607,44 +1617,8 @@ export default class App extends React.Component<AppProps, AppState> {
     // );
     return (
       <React.Fragment>
-        {/* {!this.state.isAutoPlayable && (
-          <Modal inverted basic open>
-            <div style={{ display: 'flex', justifyContent: 'center' }}>
-              <Button
-                primary
-                size="large"
-                onClick={() => {
-                  this.setState({ isAutoPlayable: true });
-                  this.setMute(false);
-                  this.setVolume(1);
-                }}
-                icon
-                labelPosition="left"
-              >
-                <Icon name="volume up" />
-                Click to unmute
-              </Button>
-            </div>
-          </Modal>
-        )} */}
         {this.state.isUploadPress && (
           <UploadFile toggleIsUploadPress={this.toggleIsUploadPress} />
-          // <Modal inverted basic open>
-          //   <div style={{ display: 'flex', justifyContent: 'center' }}>
-          //     <Button
-          //       primary
-          //       size="large"
-          //       onClick={() => {
-          //         this.setState({ isUploadPress: false });
-          //       }}
-          //       icon
-          //       labelPosition="left"
-          //     >
-          //       <Icon name="volume up" />
-          //       Upload File
-          //     </Button>
-          //   </div>
-          // </Modal>
         )}
         {this.state.multiStreamSelection && (
           <MultiStreamModal
@@ -1741,6 +1715,7 @@ export default class App extends React.Component<AppProps, AppState> {
                     ? 'fullHeightColumnFullscreen'
                     : 'fullHeightColumn'
                 }
+                style={{ padding: 0 }}
               >
                 <div
                   style={{
@@ -1749,309 +1724,180 @@ export default class App extends React.Component<AppProps, AppState> {
                     height: '100%',
                   }}
                 >
-                  {!this.state.fullScreen && (
-                    <React.Fragment>
-                      <ComboBox
-                        toggleIsUploadPress={this.toggleIsUploadPress}
-                        setMedia={this.setMedia}
-                        playlistAdd={this.playlistAdd}
-                        playlistDelete={this.playlistDelete}
-                        playlistMove={this.playlistMove}
-                        currentMedia={this.state.currentMedia}
-                        getMediaDisplayName={this.getMediaDisplayName}
-                        launchMultiSelect={this.launchMultiSelect}
-                        streamPath={this.props.streamPath}
-                        mediaPath={this.state.mediaPath}
-                        disabled={!this.haveLock()}
-                        playlist={this.state.playlist}
-                      />
-                      <Separator />
-                      <div
-                        className="mobileStack"
-                        style={{ display: 'flex', gap: '4px' }}
-                      >
-                        {this.screenShareStream && (
-                          <Button
-                            fluid
-                            className="toolButton"
-                            icon
-                            labelPosition="left"
-                            color="red"
-                            onClick={this.stopScreenShare}
-                            disabled={sharer?.id !== this.socket?.id}
-                          >
-                            <Icon name="cancel" />
-                            Stop Share
-                          </Button>
-                        )}
-                        {/*{!this.screenShareStream &&*/}
-                        {/*  !sharer &&*/}
-                        {/*  !this.isVBrowser() && (*/}
-                        {/*    <Popup*/}
-                        {/*      content={`Share a tab or an application.`}*/}
-                        {/*      trigger={*/}
-                        {/*        <Button*/}
-                        {/*          fluid*/}
-                        {/*          className="toolButton"*/}
-                        {/*          disabled={!this.haveLock()}*/}
-                        {/*          icon*/}
-                        {/*          labelPosition="left"*/}
-                        {/*          color={'instagram'}*/}
-                        {/*          onClick={() => {*/}
-                        {/*            this.setState({*/}
-                        {/*              isScreenShareModalOpen: true,*/}
-                        {/*            });*/}
-                        {/*          }}*/}
-                        {/*        >*/}
-                        {/*          <Icon name={'slideshare'} />*/}
-                        {/*          Screenshare*/}
-                        {/*        </Button>*/}
-                        {/*      }*/}
-                        {/*    />*/}
-                        {/*  )}*/}
-                        {/*{!this.screenShareStream &&*/}
-                        {/*  !sharer &&*/}
-                        {/*  !this.isVBrowser() && (*/}
-                        {/*    <Popup*/}
-                        {/*      content="Launch a shared virtual browser"*/}
-                        {/*      trigger={*/}
-                        {/*        <Button*/}
-                        {/*          fluid*/}
-                        {/*          className="toolButton"*/}
-                        {/*          disabled={!this.haveLock()}*/}
-                        {/*          icon*/}
-                        {/*          labelPosition="left"*/}
-                        {/*          color="green"*/}
-                        {/*          onClick={() => {*/}
-                        {/*            this.setState({*/}
-                        {/*              isVBrowserModalOpen: true,*/}
-                        {/*            });*/}
-                        {/*          }}*/}
-                        {/*        >*/}
-                        {/*          <Icon name="desktop" />*/}
-                        {/*          VBrowsers*/}
-                        {/*        </Button>*/}
-                        {/*      }*/}
-                        {/*    />*/}
-                        {/*  )}*/}
-                        {this.isVBrowser() && (
-                          <Popup
-                            content="Choose the person controlling the VBrowser"
-                            trigger={
-                              <Dropdown
-                                icon="keyboard"
-                                labeled
-                                className="icon"
-                                style={{ height: '36px' }}
-                                button
-                                value={this.state.controller}
-                                placeholder="No controller"
-                                clearable
-                                onChange={this.changeController}
-                                selection
-                                disabled={!this.haveLock()}
-                                options={this.state.participants.map((p) => ({
-                                  text: this.state.nameMap[p.id] || p.id,
-                                  value: p.id,
-                                }))}
-                              ></Dropdown>
-                            }
-                          />
-                        )}
-                        {this.isVBrowser() && (
-                          <Dropdown
-                            icon="desktop"
-                            labeled
-                            className="icon"
-                            style={{ height: '36px' }}
-                            button
-                            disabled={!this.haveLock()}
-                            value={this.state.vBrowserResolution}
-                            onChange={(_e, data) =>
-                              this.setState({
-                                vBrowserResolution: data.value as string,
-                              })
-                            }
-                            selection
-                            options={[
-                              {
-                                text: '1080p (Plus only)',
-                                value: '1920x1080@30',
-                                disabled: !this.state.isVBrowserLarge,
-                              },
-                              {
-                                text: '720p',
-                                value: '1280x720@30',
-                              },
-                              {
-                                text: '576p',
-                                value: '1024x576@60',
-                              },
-                              {
-                                text: '486p',
-                                value: '864x486@60',
-                              },
-                              {
-                                text: '360p',
-                                value: '640x360@60',
-                              },
-                            ]}
-                          ></Dropdown>
-                        )}
-                        {this.isVBrowser() && (
-                          <Button
-                            fluid
-                            className="toolButton"
-                            icon
-                            labelPosition="left"
-                            color="red"
-                            disabled={!this.haveLock()}
-                            onClick={this.stopVBrowser}
-                          >
-                            <Icon name="cancel" />
-                            Stop VBrowser
-                          </Button>
-                        )}
-                        {/*{!this.screenShareStream &&*/}
-                        {/*  !sharer &&*/}
-                        {/*  !this.isVBrowser() && (*/}
-                        {/*    <Popup*/}
-                        {/*      content="Stream your own video file"*/}
-                        {/*      trigger={*/}
-                        {/*        <Button*/}
-                        {/*          fluid*/}
-                        {/*          className="toolButton"*/}
-                        {/*          disabled={!this.haveLock()}*/}
-                        {/*          icon*/}
-                        {/*          labelPosition="left"*/}
-                        {/*          onClick={() => {*/}
-                        {/*            this.setState({*/}
-                        {/*              isFileShareModalOpen: true,*/}
-                        {/*            });*/}
-                        {/*          }}*/}
-                        {/*        >*/}
-                        {/*          <Icon name="file" />*/}
-                        {/*          File*/}
-                        {/*        </Button>*/}
-                        {/*      }*/}
-                        {/*    />*/}
-                        {/*  )}*/}
-                        {Boolean(this.props.streamPath) && (
-                          <SearchComponent
+                  {/* ====================== MAIN CONTENT ====================== */}
+                  <React.Fragment>
+                    {/* ====================== TopBAR ====================== */}
+                    {!this.state.fullScreen &&
+                      !this.state.isHome &&
+                      this.state.currentMedia && (
+                        <React.Fragment>
+                          <ComboBox
+                            isHome={this.state.isHome}
+                            toggleIsUploadPress={this.toggleIsUploadPress}
                             setMedia={this.setMedia}
                             playlistAdd={this.playlistAdd}
-                            type={'stream'}
-                            streamPath={this.props.streamPath}
+                            playlistDelete={this.playlistDelete}
+                            playlistMove={this.playlistMove}
+                            currentMedia={this.state.currentMedia}
+                            getMediaDisplayName={this.getMediaDisplayName}
                             launchMultiSelect={this.launchMultiSelect}
+                            streamPath={this.props.streamPath}
+                            mediaPath={this.state.mediaPath}
                             disabled={!this.haveLock()}
+                            playlist={this.state.playlist}
+                            toggleHome={this.toggleHome}
                           />
+                          <Separator />
+                          <div
+                            className="mobileStack"
+                            style={{ display: 'flex', gap: '4px' }}
+                          >
+                            {this.screenShareStream && (
+                              <Button
+                                fluid
+                                className="toolButton"
+                                icon
+                                labelPosition="left"
+                                color="red"
+                                onClick={this.stopScreenShare}
+                                disabled={sharer?.id !== this.socket?.id}
+                              >
+                                <Icon name="cancel" />
+                                Stop Share
+                              </Button>
+                            )}
+                            {Boolean(this.props.streamPath) && (
+                              <SearchComponent
+                                setMedia={this.setMedia}
+                                playlistAdd={this.playlistAdd}
+                                type={'stream'}
+                                streamPath={this.props.streamPath}
+                                launchMultiSelect={this.launchMultiSelect}
+                                disabled={!this.haveLock()}
+                              />
+                            )}
+                          </div>
+                          <Separator />
+                        </React.Fragment>
+                      )}
+                    {/* ====================== END topBAR ====================== */}
+                    <div style={{ flexGrow: 2 }}>
+                      <div id="playerContainer">
+                        {
+                          // !this.isYouTube() &&
+                          // !this.state.loading &&
+                          // !this.isVBrowser() &&
+                          // !this.getVBrowserPass() &&
+                          // !this.getVBrowserHost() &&
+                          (this.state.isHome || !this.state.currentMedia) && (
+                            <EmptyTheatre
+                              state={this.state}
+                              setState={this.setState}
+                              playlist={this.state.playlist}
+                              toggleIsUploadPress={this.toggleIsUploadPress}
+                              setMedia={this.setMedia}
+                              playlistAdd={this.playlistAdd}
+                              playlistDelete={this.playlistDelete}
+                              playlistMove={this.playlistMove}
+                              currentMedia={this.state.currentMedia}
+                              getMediaDisplayName={this.getMediaDisplayName}
+                              launchMultiSelect={this.launchMultiSelect}
+                              streamPath={this.props.streamPath}
+                              mediaPath={this.state.mediaPath}
+                              disabled={!this.haveLock()}
+                              toggleHome={this.toggleHome}
+                              // isHome={this.state.isHome}
+                            />
+                          )
+                        }
+                        {(this.state.loading ||
+                          // !this.state.currentMedia ||
+                          (this.state.nonPlayableMedia &&
+                            !this.state.isHome)) && (
+                          <div
+                            id="loader"
+                            className="videoContent"
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            {this.state.loading && (
+                              <Dimmer active>
+                                <Loader>
+                                  {this.isVBrowser()
+                                    ? 'Launching virtual browser. This can take up to a minute.'
+                                    : ''}
+                                </Loader>
+                              </Dimmer>
+                            )}
+                          </div>
+                        )}
+
+                        {this.isYouTube() && (
+                          <iframe
+                            style={{
+                              display:
+                                this.isYouTube() &&
+                                !this.state.loading &&
+                                !this.state.isHome
+                                  ? 'block'
+                                  : 'none',
+                            }}
+                            title="YouTube"
+                            id="leftYt"
+                            className="videoContent"
+                            allowFullScreen
+                            frameBorder="0"
+                            allow="autoplay"
+                            src="https://www.youtube.com/embed/?enablejsapi=1&controls=0&rel=0"
+                          />
+                        )}
+                        {this.isVBrowser() &&
+                        this.getVBrowserPass() &&
+                        this.getVBrowserHost() ? (
+                          <VBrowser
+                            username={this.socket.id}
+                            password={this.getVBrowserPass()}
+                            hostname={this.getVBrowserHost()}
+                            controlling={
+                              this.state.controller === this.socket.id
+                            }
+                            setLoadingFalse={this.setLoadingFalse}
+                            resolution={this.state.vBrowserResolution}
+                            doPlay={this.doPlay}
+                            setResolution={(data: string) =>
+                              this.setState({ vBrowserResolution: data })
+                            }
+                          />
+                        ) : (
+                          !this.state.isHome && (
+                            <video
+                              style={{
+                                display:
+                                  (this.isVideo() && !this.state.loading) ||
+                                  this.state.fullScreen
+                                    ? 'block'
+                                    : 'none',
+                                width: '100%',
+                                maxHeight:
+                                  'calc(100vh - 62px - 36px - 36px - 8px - 41px - 16px)',
+                              }}
+                              id="leftVideo"
+                              onEnded={this.onVideoEnded}
+                              playsInline
+                              autoPlay
+                              onClick={this.togglePlay}
+                            ></video>
+                          )
                         )}
                       </div>
-                      <Separator />
-                    </React.Fragment>
-                  )}
-                  <div style={{ flexGrow: 2 }}>
-                    <div id="playerContainer">
-                      {(this.state.loading ||
-                        !this.state.currentMedia ||
-                        this.state.nonPlayableMedia) && (
-                        <div
-                          id="loader"
-                          className="videoContent"
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}
-                        >
-                          {this.state.loading && (
-                            <Dimmer active>
-                              <Loader>
-                                {this.isVBrowser()
-                                  ? 'Launching virtual browser. This can take up to a minute.'
-                                  : ''}
-                              </Loader>
-                            </Dimmer>
-                          )}
-                          {/*{!this.state.loading && !this.state.currentMedia && (*/}
-                          {/*  <Message*/}
-                          {/*    color="yellow"*/}
-                          {/*    icon="hand point up"*/}
-                          {/*    header="You're not watching anything!"*/}
-                          {/*    content="Pick something to watch above."*/}
-                          {/*  />*/}
-                          {/*)}*/}
-                          {/*{!this.state.loading &&*/}
-                          {/*  this.state.nonPlayableMedia && (*/}
-                          {/*    <Message*/}
-                          {/*      color="red"*/}
-                          {/*      icon="frown"*/}
-                          {/*      header="It doesn't look like this is a media file!"*/}
-                          {/*      content="Maybe you meant to launch a VBrowser if you're trying to visit a web page?"*/}
-                          {/*    />*/}
-                          {/*  )}*/}
-                        </div>
-                      )}
-                      {!this.isYouTube() &&
-                        !this.state.loading &&
-                        !this.isVBrowser() &&
-                        !this.getVBrowserPass() &&
-                        !this.getVBrowserHost() && (
-                          <EmptyTheatre
-                            toggleIsUploadPress={this.toggleIsUploadPress}
-                          />
-                        )}
-                      <iframe
-                        style={{
-                          display:
-                            this.isYouTube() && !this.state.loading
-                              ? 'block'
-                              : 'none',
-                        }}
-                        title="YouTube"
-                        id="leftYt"
-                        className="videoContent"
-                        allowFullScreen
-                        frameBorder="0"
-                        allow="autoplay"
-                        src="https://www.youtube.com/embed/?enablejsapi=1&controls=0&rel=0"
-                      />
-                      {this.isVBrowser() &&
-                      this.getVBrowserPass() &&
-                      this.getVBrowserHost() ? (
-                        <VBrowser
-                          username={this.socket.id}
-                          password={this.getVBrowserPass()}
-                          hostname={this.getVBrowserHost()}
-                          controlling={this.state.controller === this.socket.id}
-                          setLoadingFalse={this.setLoadingFalse}
-                          resolution={this.state.vBrowserResolution}
-                          doPlay={this.doPlay}
-                          setResolution={(data: string) =>
-                            this.setState({ vBrowserResolution: data })
-                          }
-                        />
-                      ) : (
-                        <video
-                          style={{
-                            display:
-                              (this.isVideo() && !this.state.loading) ||
-                              this.state.fullScreen
-                                ? 'block'
-                                : 'none',
-                            width: '100%',
-                            maxHeight:
-                              'calc(100vh - 62px - 36px - 36px - 8px - 41px - 16px)',
-                          }}
-                          id="leftVideo"
-                          onEnded={this.onVideoEnded}
-                          playsInline
-                          onClick={this.togglePlay}
-                        ></video>
-                      )}
                     </div>
-                  </div>
-                  {this.state.currentMedia && controls}
+                    {this.state.currentMedia && !this.state.isHome && controls}
+                  </React.Fragment>
+                  {/* ====================== END MAIN CONTENT ====================== */}
+
                   {Boolean(this.state.total) && (
                     <div>
                       <Progress

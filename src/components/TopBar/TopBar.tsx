@@ -44,6 +44,10 @@ export class NewRoomButton extends React.Component<{
     await createRoom(this.props.user, this.props.openNewTab);
   };
 
+  componentDidMount(): void {
+    this.createRoom();
+  }
+
   render() {
     return (
       <Popup

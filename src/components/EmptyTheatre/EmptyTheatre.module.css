@@ -7,21 +7,79 @@
   color: #f4f4f4 !important;
   margin: 10px 0 !important;
 }
+.btn_area {
+  width: 80%;
+  gap: 10px;
+  display: flex;
+  justify-content: end;
+  align-items: center;
+  margin-top: 20px;
+}
 .content {
-  margin-top: -30px;
+  /* margin-top: -80px; */
   display: flex;
   flex-direction: column;
   justify-content: start;
   align-items: center;
-  height: 50vh;
-  background: rgba(0, 0, 0, 0.8);
+  height: 100vh;
+  width: 100%;
+  position: relative;
+  /* background: rgba(0, 0, 0, 0.8); */
+  background: url(/src/assets/home/home-bg.png);
+  background-size: cover;
+  background-position: top;
+  background-repeat: no-repeat;
+  /* z-index: 1; */
+}
+.content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(180deg, #000000 0%, rgba(0, 0, 0, 0) 180%);
+  transform: rotate(180deg);
+  /* z-index: 1; */
 }
 .content p {
   text-align: center;
-  font-size: 1.8vw;
+  font-size: 1.5vw;
   margin: 4px;
-  color: #fff9f9b5;
+  position: relative;
+  color: rgba(170, 165, 165, 0.767) !important;
 }
 .btncontainer {
   margin: 20px 0px;
+}
+.inputContainer {
+  margin: 20px 0px;
+  padding: 0;
+  position: relative;
+  width: 94%;
+}
+
+.PlaylistDropdown {
+  background-color: #ffffff !important;
+  color: #49454f !important;
+  width: 150px;
+  border-radius: 35px !important;
+  display: flex !important;
+  align-items: center !important;
+}
+.PlaylistDropdown > div {
+  font-size: 2.6wv !important;
+}
+.PlaylistDropdown > i {
+  background-color: #ffffff !important;
+  color: #49454f !important;
+}
+.PlaylistMenu {
+  background: black !important;
+  padding: 0 !important;
+  width: 100% !important;
+}
+.PlaylistItem {
+  background: inherit;
+  padding: 0px !important;
 }
