@@ -149,6 +149,7 @@ export interface AppState {
   isHome: boolean;
   clipboard?: string | undefined;
   isCollapsed: boolean;
+  isTheatre: boolean;
 }
 
 export default class App extends React.Component<AppProps, AppState> {
@@ -216,6 +217,7 @@ export default class App extends React.Component<AppProps, AppState> {
     isHome: true,
     clipboard: undefined,
     isCollapsed: false,
+    isTheatre: false,
   };
   socket: Socket = null as any;
   watchPartyYTPlayer: any = null;
@@ -225,7 +227,6 @@ export default class App extends React.Component<AppProps, AppState> {
   screenSharePC?: RTCPeerConnection;
   progressUpdater?: number;
   heartbeat: number | undefined = undefined;
-
   chatRef = React.createRef<Chat>();
 
   async componentDidMount() {
