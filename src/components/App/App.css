@@ -73,16 +73,19 @@ body {
 
 #playerContainer {
   height: 100%;
-  position: relative;
+  position: absolute;
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Making this larger causes issues on mobile */
   min-height: 48vh;
+  top: 0;
+  left: 0;
+  width: 100%;
 }
 
 #theaterContainer {
   background: #070707;
+  overflow: hidden;
 }
 
 .fullScreenChat.fullScreenChat.fullScreenChat {

@@ -39,6 +39,7 @@ export interface IEmptyTheatreProps {
   playlist: PlaylistVideo[];
   toggleHome: Function;
   setState: Function;
+  setLoadingFalse: Function;
   state: AppState;
 }
 
@@ -52,136 +53,11 @@ export function EmptyTheatre(props: IEmptyTheatreProps) {
     playlistAdd,
     getMediaDisplayName,
     currentMedia,
+    setLoadingFalse,
   } = props;
-  let debounced: any = null;
-  const [empData, setEmpData] = React.useState({
-    inputMedia: undefined as string | undefined,
-    results: undefined as JSX.Element[] | undefined,
-    loading: false,
-    lastResultTimestamp: Number(new Date()),
-  });
-  const setMediaAndClose = (e: any, data: DropdownProps) => {
-    window.setTimeout(
-      () => setState({ inputMedia: undefined, results: undefined }),
-      200
-    );
-    setMedia(e, data);
-    toggleHome();
-    // this.setState({ isHome: false });
-  };
-  const doSearch = async (e: any) => {
-    e.persist();
-    setState({ inputMedia: e.target.value }, () => {
-      if (debounced) {
-        debounced = debounce(async () => {
-          setState({ loading: true });
-          const query: string = empData.inputMedia || '';
-          let timestamp = Number(new Date());
-          let results: JSX.Element[] | undefined = undefined;
-          if (query === '' || (query && query.startsWith('http'))) {
-            // let items = examples;
-            let items = await getYouTubeTrendings();
-            if (!empData.inputMedia && state.mediaPath) {
-              items = await getMediaPathResults(state.mediaPath, '');
-              toggleHome();
-              // this.setState({ isHome: true });
-            }
-            if (query) {
-              items = [
-                {
-                  name: query,
-                  type: 'file',
-                  url: query,
-                  duration: 0,
-                },
-              ];
-            }
-            results =
-              items?.length > 0
-                ? items?.map((result: SearchResult, index: number) => (
-                    <Grid.Column
-                      key={result.url}
-                      onClick={(e: any) =>
-                        setMediaAndClose(e, { value: result.url })
-                      }
-                    >
-                      <ChatVideoCard
-                        video={result}
-                        index={index}
-                        onPlaylistAdd={playlistAdd}
-                        isYoutube
-                      />
-                    </Grid.Column>
-                  ))
-                : undefined;
-
-            // {/* ====================== OLD VIEW ====================== */}
-            // results = items.map((result: SearchResult, index: number) => (
-            //   <Menu.Item
-            //     style={{ padding: '2px' }}
-            //     key={result.url}
-            //     onClick={(e: any) =>
-            //       this.setMediaAndClose(e, { value: result.url })
-            //     }
-            //   >
-            //     <ChatVideoCard
-            //       video={result}
-            //       index={index}
-            //       onPlaylistAdd={this.props.playlistAdd}
-            //     />
-            //   </Menu.Item>
-            // ));
-          } else {
-            const data = await getYouTubeResults(query);
-            results =
-              data?.length > 0
-                ? data?.map((result: SearchResult, index: number) => (
-                    <Grid.Column
-                      key={result.url}
-                      onClick={(e: any) =>
-                        setMediaAndClose(e, { value: result.url })
-                      }
-                      stretched
-                    >
-                      <ChatVideoCard
-                        video={result}
-                        index={index}
-                        onPlaylistAdd={playlistAdd}
-                        isYoutube
-                      />
-                    </Grid.Column>
-                  ))
-                : undefined;
-
-            // {/* ====================== Old View ====================== */ }
-            // results = data.map((result, index) => (
-            //   <Menu.Item
-            //     key={result.url}
-            //     onClick={(e: any) =>
-            //       this.setMediaAndClose(e, { value: result.url })
-            //     }
-            //   >
-            //     <ChatVideoCard
-            //       video={result}
-            //       index={index}
-            //       onPlaylistAdd={this.props.playlistAdd}
-            //       isYoutube
-            //     />
-            //   </Menu.Item>
-            // ));
-          }
-          if (timestamp > empData.lastResultTimestamp) {
-            setState({
-              loading: false,
-              results,
-              lastResultTimestamp: timestamp,
-            });
-          }
-        }, 500);
-      }
-      debounced();
-    });
-  };
+  // React.useEffect(() => {
+  //   ((state as AppState).clipboard && (state as AppState).currentMedia) && setLoadingFalse();
+  // }, [])
 
   return (
     <main className={classes.content}>
@@ -208,44 +84,46 @@ export function EmptyTheatre(props: IEmptyTheatreProps) {
             <span>
               <img src={playlistIcon} alt="" className="h-8 mr-2" />
             </span>
-            Playlist (${props.playlist.length})
+            Playlist ({props.playlist.length})
           </label>
 
           <div
             tabIndex={0}
-            className="dropdown-content w-full bg-gray-dark relative"
+            className="dropdown-content w-[60vw] bg-gray-dark relative h-[80vh] overflow-y-auto"
           >
-            {props.playlist.map((item: PlaylistVideo, index: number) => {
-              return (
-                <div
-                  key={index}
-                  tabIndex={index}
-                  className={`dropdown-content card card-compact w-full p-2 shadow bg-primary text-primary-content ${classes.PlaylistItem}`}
-                >
-                  <div style={{ width: '100%' }}>
-                    <ChatVideoCard
-                      video={item}
-                      index={index}
-                      controls
-                      onPlay={(index) => {
-                        props.setMedia(null, {
-                          value: props.playlist[index]?.url,
-                        });
-                        props.playlistDelete(index);
-                      }}
-                      onPlayNext={(index) => {
-                        props.playlistMove(index, 0);
-                      }}
-                      onRemove={(index) => {
-                        props.playlistDelete(index);
-                      }}
-                      disabled={props.disabled}
-                      isYoutube={Boolean(item.img)}
-                    />
+            <section className="absolute w-[550px] right-0 top-2">
+              {props.playlist.map((item: PlaylistVideo, index: number) => {
+                return (
+                  <div
+                    key={index}
+                    tabIndex={index}
+                    className={` w-full p-2 shadow bg-primary text-primary-content ${classes.PlaylistItem}`}
+                  >
+                    <div style={{ width: '100%' }}>
+                      <ChatVideoCard
+                        video={item}
+                        index={index}
+                        controls
+                        onPlay={(index) => {
+                          props.setMedia(null, {
+                            value: props.playlist[index]?.url,
+                          });
+                          props.playlistDelete(index);
+                        }}
+                        onPlayNext={(index) => {
+                          props.playlistMove(index, 0);
+                        }}
+                        onRemove={(index) => {
+                          props.playlistDelete(index);
+                        }}
+                        disabled={props.disabled}
+                        isYoutube={Boolean(item.img)}
+                      />
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </section>
 
             {props.playlist.length === 0 && (
               <div
@@ -259,9 +137,8 @@ export function EmptyTheatre(props: IEmptyTheatreProps) {
               </div>
             )}
           </div>
-
-          {/* ====================== dropdown content end ====================== */}
         </div>
+        {/* ====================== dropdown content end ====================== */}
 
         {/* ======================  OLD VERESION DROPDOWN ====================== */}
         {/* <Dropdown
@@ -320,13 +197,34 @@ export function EmptyTheatre(props: IEmptyTheatreProps) {
             <img src={searchIcon} alt="s" className="h-6" />
             {/* <button className='btn bg-white/70 disabled hover:bg-white/70 border-none rounded-xl '></button> */}
           </span>
-          <input
-            type="search"
-            placeholder="Enter or paste your video URL"
-            className="input w-full px-14 py-4 rounded-xl text-gray bg-white/90 border-none focus:outline-0 focus:border-none focus:ring-0"
-          />
-          <span className="absolute right-0 top-0 cursor-pointer">
-            <button className="btn bg-white hover:bg-white border-none rounded-xl">
+          <div>
+            <input
+              type="search"
+              onKeyPress={(e: any) => {
+                if (e.key === 'Enter') {
+                  toggleHome(e.target.value);
+                }
+              }}
+              placeholder="Enter or paste your video URL"
+              className="input w-full px-14 py-4 rounded-xl text-gray bg-white/90 border-none focus:outline-0 focus:border-none focus:ring-0"
+            />
+          </div>
+          <span className="absolute right-0 top-0 cursor-pointer ">
+            <button
+              className=" bg-white/80   m-1 p-2  active:bg-white/50 border-none rounded-xl"
+              onClick={async () => {
+                // const permission = await navigator.permissions.query({ name:  });
+                navigator.clipboard
+                  .readText()
+                  .then((text) => {
+                    console.log('Clipboard text: ', { text });
+                    toggleHome(text);
+                  })
+                  .catch((err) => {
+                    console.error('Failed to read clipboard text: ', err);
+                  });
+              }}
+            >
               <img src={clipboardIcon} alt="s" className="h-6" />
             </button>
           </span>
@@ -338,7 +236,7 @@ export function EmptyTheatre(props: IEmptyTheatreProps) {
               className="btn btn-md font-bold text-[14px] bg-transparent hover:bg-transparent rounded-xl border-none "
             >
               <span>
-                <img src={yt} alt="" className="h-18 " />
+                <img src={yt} alt="" className="h-[65px] " />
               </span>{' '}
             </button>
           </div>
@@ -348,7 +246,7 @@ export function EmptyTheatre(props: IEmptyTheatreProps) {
               className="btn btn-md font-bold text-[14px] bg-transparent hover:bg-transparent rounded-xl border-none "
             >
               <span>
-                <img src={upload} alt="" className="h-18 " />
+                <img src={upload} alt="" className="h-[70px]" />
               </span>{' '}
             </button>
           </div>
@@ -357,7 +255,7 @@ export function EmptyTheatre(props: IEmptyTheatreProps) {
               onClick={() => {}}
               className="btn btn-lg font-bold text-[14px] bg-transparent hover:bg-transparent rounded-xl border-none "
             >
-              <img src={telegram} alt="" className="h-18 w-full " />{' '}
+              <img src={telegram} alt="" className="h-[70px] w-full " />{' '}
             </button>
           </div>
         </div>

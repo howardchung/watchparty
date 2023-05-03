@@ -42,6 +42,7 @@
   transform: rotate(180deg);
   /* z-index: 1; */
 }
+
 .content p {
   text-align: center;
   font-size: 1.5vw;

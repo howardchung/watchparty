@@ -14,10 +14,16 @@ import {
   getYouTubeResults,
   getYouTubeTrendings,
 } from '../../utils';
+
+import playIcon from '../../assets/icons/play.svg';
+import playlistIcon from '../../assets/icons/playlist.svg';
 // import { examples } from '../../utils/examples';
 import ChatVideoCard from '../Playlist/ChatVideoCard';
 import styles from './ComboBox.module.css';
 import MetaButton from '../../atoms/MetaButton';
+import clipboardIcon from '../../assets/icons/clipboard-paste.svg';
+import searchIcon from '../../assets/icons/search.svg';
+import { log, timeLog } from 'console';
 interface ComboBoxProps {
   setMedia: (e: any, data: DropdownProps) => void;
   playlistAdd: (e: any, data: DropdownProps) => void;
@@ -33,16 +39,48 @@ interface ComboBoxProps {
   toggleIsUploadPress: Function;
   isHome: boolean;
   toggleHome: Function;
+  clipboard: string | undefined;
+  loadYouTube: Function;
+  isCollapsed: boolean;
+  toggleCollapse: Function;
+}
+interface ComboState {
+  inputMedia: string | undefined;
+  results: JSX.Element[] | undefined;
+  loading: boolean;
+  lastResultTimestamp: number;
+  currentClipboard: string;
 }
 
 export class ComboBox extends React.Component<ComboBoxProps> {
-  state = {
-    inputMedia: undefined as string | undefined,
-    results: undefined as JSX.Element[] | undefined,
+  private inputRef = React.createRef<HTMLInputElement>();
+
+  state: ComboState = {
+    inputMedia: undefined,
+    results: undefined,
     loading: false,
     lastResultTimestamp: Number(new Date()),
+    currentClipboard: '',
   };
   debounced: any = null;
+
+  componentDidMount() {
+    if (this.inputRef.current) {
+      if (this.props.clipboard) {
+        this.inputRef?.current.focus();
+        // this.setState({ currentClipboard: this.props.clipboard })
+      }
+      if (this.props.clipboard || this.props.currentMedia)
+        this.props.loadYouTube();
+    }
+  }
+
+  // componentDidUpdate(prevProps: ComboBoxProps, prevState: ComboState) {
+  //   console.log({ prevCLip: prevProps.clipboard, currentCLip: this.props.clipboard, boxClip: this.state.currentClipboard, boxPrevCLip: prevState.currentClipboard });
+  //   if (this.props.clipboard !== prevProps.clipboard) {
+  //     this.setState({ currentClipboard: this.props.clipboard })
+  //   }
+  // }
 
   setMediaAndClose = (e: any, data: DropdownProps) => {
     window.setTimeout(
@@ -50,12 +88,13 @@ export class ComboBox extends React.Component<ComboBoxProps> {
       200
     );
     this.props.setMedia(e, data);
-    this.props.toggleHome();
+    // this.props.toggleHome();
     // this.setState({ isHome: false });
   };
   // backToHome = () => {
   //   this.setState({ isHome: true });
   // }
+
   doSearch = async (e: any) => {
     e.persist();
     this.setState({ inputMedia: e.target.value }, () => {
@@ -70,7 +109,7 @@ export class ComboBox extends React.Component<ComboBoxProps> {
             let items = await getYouTubeTrendings();
             if (!this.state.inputMedia && this.props.mediaPath) {
               items = await getMediaPathResults(this.props.mediaPath, '');
-              this.props.toggleHome();
+              // this.props.toggleHome();
               // this.setState({ isHome: true });
             }
             if (query) {
@@ -125,9 +164,9 @@ export class ComboBox extends React.Component<ComboBoxProps> {
                 ? data?.map((result: SearchResult, index: number) => (
                     <Grid.Column
                       key={result.url}
-                      onClick={(e: any) =>
-                        this.setMediaAndClose(e, { value: result.url })
-                      }
+                      onClick={(e: any) => {
+                        this.setMediaAndClose(e, { value: result.url });
+                      }}
                       stretched
                     >
                       <ChatVideoCard
@@ -171,140 +210,219 @@ export class ComboBox extends React.Component<ComboBoxProps> {
   };
 
   render() {
-    const { currentMedia, getMediaDisplayName, toggleIsUploadPress } =
-      this.props;
+    const {
+      currentMedia,
+      getMediaDisplayName,
+      toggleIsUploadPress,
+      clipboard,
+      toggleHome,
+    } = this.props;
     const { results } = this.state;
     return (
-      <div style={{ position: 'relative' }}>
-        <div style={{ display: 'flex', gap: '4px' }}>
-          <MetaButton
-            text=""
-            onClick={() => this.props.toggleHome()}
-            child={<Icon size="large" name="arrow left" />}
+      <div
+        style={{ position: 'relative', zIndex: 100, height: '10vh' }}
+        className="collapse_btn_container"
+      >
+        {/* ====================== COLLAPSE SWITCH ====================== */}
+        {this.props.isCollapsed && (
+          <main className="flex justify-center">
+            <div className="absolute top-[-10px] text-center ">
+              <button
+                onClick={() => {
+                  this.props.toggleCollapse();
+                }}
+                className="btn bg-white border-none w-32 rounded-lg hover:bg-white text-gray-dark"
+              >
+                <Icon className="chevron down" size="big"></Icon>
+              </button>
+            </div>
+          </main>
+        )}
+        {/* ====================== COLLAPSE SWITCH END ====================== */}
+
+        {/* ====================== SEARCH CONTAINER ====================== */}
+        {!this.props.isCollapsed && (
+          <div
+            style={{
+              display: 'flex',
+              gap: '6px',
+              alignItems: 'center',
+              margin: '0 20px',
+            }}
           >
-            {' '}
-          </MetaButton>
-          <Input
-            style={{ flexGrow: 1 }}
-            fluid
-            focus
-            size="massive"
-            disabled={this.props.disabled}
-            onChange={this.doSearch}
-            onFocus={(e: any) => {
-              e.persist();
-              this.setState(
-                {
-                  inputMedia: getMediaDisplayName(currentMedia),
-                  isHome: false,
-                },
-                () => {
-                  if (
-                    !this.state.inputMedia ||
-                    (this.state.inputMedia &&
-                      this.state.inputMedia.startsWith('http'))
-                  ) {
-                    this.doSearch(e);
-                  }
-                }
-              );
-              setTimeout(() => e.target.select(), 100);
-            }}
-            inverted={true}
-            className={styles.SearchInput}
-            onBlur={() => {
-              setTimeout(
-                () =>
-                  this.setState({ inputMedia: undefined, results: undefined }),
-                200
-              );
-            }}
-            onKeyPress={(e: any) => {
-              if (e.key === 'Enter') {
-                this.setMediaAndClose(e, {
-                  value: this.state.inputMedia,
-                });
+            <MetaButton
+              text=""
+              onClick={() => toggleHome()}
+              child={
+                <Icon
+                  size="large"
+                  className="text-gray-dark"
+                  name="arrow left"
+                />
               }
-            }}
-            icon={
-              <Icon
-                onClick={(e: any) =>
-                  this.setMediaAndClose(e, {
-                    value: this.state.inputMedia,
-                  })
-                }
-                name="arrow right"
-                link
-                circular
-                //bordered
-              />
-            }
-            loading={this.state.loading}
-            label={{ content: 'Now Watching:', className: styles.InputLabel }}
-            placeholder="Enter video file URL, YouTube link, or YouTube search term"
-            value={
-              this.state.inputMedia !== undefined
-                ? this.state.inputMedia
-                : getMediaDisplayName(currentMedia)
-            }
-            // value={
-            //   this.state.inputMedia !== undefined
-            //     ? this.state.inputMedia
-            //     : getMediaDisplayName(currentMedia)
-            // }
-          />
+            ></MetaButton>
 
-          {/* ======================  Showing the playlist ====================== */}
-          <Dropdown
-            labeled
-            className={`${styles.PlaylistDropdown} icon`}
-            button
-            text={`Playlist (${this.props.playlist.length})`}
-            icon="list"
-            scrolling
-          >
-            <Dropdown.Menu direction="left" className={styles.PlaylistMenu}>
-              {this.props.playlist.length === 0 && (
-                <Dropdown.Item
-                  disabled
-                  style={{ color: 'white', fontSize: '1.2vw' }}
+            <div className={styles.inputContainer}>
+              <span className="absolute left-3 top-3">
+                <img src={searchIcon} alt="s" className="h-6" />
+              </span>
+              <div>
+                <input
+                  ref={this.inputRef}
+                  disabled={this.props.disabled}
+                  onChange={this.doSearch}
+                  onFocus={(e: any) => {
+                    e.persist();
+                    this.setState(
+                      {
+                        inputMedia:
+                          clipboard ?? getMediaDisplayName(currentMedia),
+                        isHome: false,
+                      },
+                      () => {
+                        if (
+                          !this.state.inputMedia ||
+                          this.state.inputMedia ||
+                          this.state.inputMedia.startsWith('http')
+                        ) {
+                          console.log('Searching for', this.state.inputMedia);
+                          this.doSearch(e);
+                        }
+                      }
+                    );
+                    setTimeout(() => e.target.select(), 100);
+                  }}
+                  type="search"
+                  onBlur={() => {
+                    setTimeout(
+                      () =>
+                        this.setState({
+                          inputMedia: undefined,
+                          results: undefined,
+                        }),
+                      200
+                    );
+                  }}
+                  onKeyPress={(e: any) => {
+                    if (e.key === 'Enter') {
+                      this.setMediaAndClose(e, {
+                        value: this.state.inputMedia,
+                      });
+                      toggleHome(null, false);
+                    }
+                  }}
+                  value={
+                    this.state.inputMedia !== undefined
+                      ? this.state.inputMedia
+                      : clipboard
+                      ? clipboard
+                      : getMediaDisplayName(currentMedia)
+                  }
+                  placeholder="Enter or paste your video URL"
+                  className="input w-full px-14 py-4 rounded-xl text-gray bg-white/90 border-none focus:outline-0 focus:border-none focus:ring-0"
+                />
+              </div>
+              <span className="absolute right-0 top-0 cursor-pointer ">
+                <button
+                  className=" bg-white/80   m-1 p-2  active:bg-white/50 border-none rounded-xl"
+                  onClick={async (e) => {
+                    // const permission = await navigator.permissions.query({ name:  });
+                    navigator.clipboard
+                      .readText()
+                      .then((text) => {
+                        toggleHome(text, false);
+                      })
+                      .catch((err) => {
+                        console.error('Failed to read clipboard text: ', err);
+                      });
+                  }}
                 >
-                  There are no items in the playlist.
-                </Dropdown.Item>
-              )}
-              {this.props.playlist.map((item: PlaylistVideo, index: number) => {
-                return (
-                  <Dropdown.Item className={styles.PlaylistItem}>
-                    <div style={{ width: '100%' }}>
-                      <ChatVideoCard
-                        video={item}
-                        index={index}
-                        controls
-                        onPlay={(index) => {
-                          this.props.setMedia(null, {
-                            value: this.props.playlist[index]?.url,
-                          });
-                          this.props.playlistDelete(index);
-                        }}
-                        onPlayNext={(index) => {
-                          this.props.playlistMove(index, 0);
-                        }}
-                        onRemove={(index) => {
-                          this.props.playlistDelete(index);
-                        }}
-                        disabled={this.props.disabled}
-                        isYoutube={Boolean(item.img)}
-                      />
-                    </div>
-                  </Dropdown.Item>
-                );
-              })}
-            </Dropdown.Menu>
-          </Dropdown>
-          {/* ====================== END PLAYLIST ====================== */}
+                  <img src={clipboardIcon} alt="s" className="h-6" />
+                </button>
+              </span>
+            </div>
 
-          {/* ====================== Upload Button ====================== */}
-          <Button
+            {/* ====================== NOW PLAYING BTN ====================== */}
+            <div className="relative w-[280px] flex">
+              <button
+                onClick={() => toggleHome()}
+                className="btn btn-md font-bold text-[14px] bg-white hover:bg-white text-gray-dark rounded-xl border-none capitalize"
+              >
+                <span>
+                  <img src={playIcon} alt="" className="h-8 mr-2 opacity-70" />
+                </span>{' '}
+                Now Playing
+              </button>
+            </div>
+
+            {/* ====================== PLAYLIST content ====================== */}
+            <div className="dropdown dropdown-end w-[280px]">
+              <label
+                tabIndex={1}
+                className="btn btn-md font-bold text-[14px] mx-1 hover:bg-white bg-white text-gray-dark rounded-xl outline-0 border-0 active:outline-0 focus:outline-0 capitalize w-full"
+              >
+                <span>
+                  <img src={playlistIcon} alt="" className="h-8 mr-2" />
+                </span>
+                Playlist ({this.props.playlist.length})
+              </label>
+
+              <div
+                tabIndex={1}
+                className={`dropdown-content w-[50vw] bg-[#3A3A3A] p-2 rounded-md max-h-[98vh] min-h-[10vh] overflow-y-auto ${styles.playlist_content}`}
+              >
+                <section className=" w-full ">
+                  {this.props.playlist.map(
+                    (item: PlaylistVideo, index: number) => {
+                      return (
+                        <div
+                          key={index}
+                          // tabIndex={index}
+                          className={` card-compact w-full p-2 shadow bg-primary text-primary-content ${styles.PlaylistItem}`}
+                        >
+                          <div style={{ width: '100%', position: 'relative' }}>
+                            <ChatVideoCard
+                              video={item}
+                              index={index}
+                              controls
+                              onPlay={(index) => {
+                                this.props.setMedia(null, {
+                                  value: this.props.playlist[index]?.url,
+                                });
+                                this.props.playlistDelete(index);
+                              }}
+                              onPlayNext={(index) => {
+                                this.props.playlistMove(index, 0);
+                              }}
+                              onRemove={(index) => {
+                                this.props.playlistDelete(index);
+                              }}
+                              disabled={this.props.disabled}
+                              isYoutube={Boolean(item.img)}
+                            />
+                          </div>
+                        </div>
+                      );
+                    }
+                  )}
+                </section>
+
+                {this.props.playlist.length === 0 && (
+                  <div
+                    // style={{ color: 'white', fontSize: '1.2vw' }}
+                    className="w-full  shadow bg-transparent text-primary-content"
+                  >
+                    <div className="">
+                      <h3 className=" text-center">Playlist Empty!</h3>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+            {/* ====================== END PLAYLIST content ====================== */}
+
+            {/* ====================== Upload Button ====================== */}
+            {/* <Button
             icon
             labelPosition="right"
             size="big"
@@ -313,21 +431,23 @@ export class ComboBox extends React.Component<ComboBoxProps> {
           >
             Upload
             <Icon size="large" name="arrow alternate circle down outline" />
-          </Button>
-        </div>
-
-        {/* ====================== Search list result ====================== */}
-        {/* ====================== new ui ====================== */}
-
-        {Boolean(results) && this.state.inputMedia !== undefined && (
-          <div className={styles.wrapper}>
-            <Grid className={styles['list-container']}>
-              <Grid.Row columns={2} padded>
-                {results}
-              </Grid.Row>
-            </Grid>
+          </Button> */}
           </div>
         )}
+        {/* ====================== SEARCH CONTAINER END====================== */}
+
+        {/* ====================== Search list result ====================== */}
+        {!this.props.isCollapsed &&
+          Boolean(results) &&
+          this.state.inputMedia !== undefined && (
+            <div className={styles.wrapper}>
+              <Grid className={styles['list-container']}>
+                <Grid.Row columns={2} padded>
+                  {results}
+                </Grid.Row>
+              </Grid>
+            </div>
+          )}
         {/* ====================== Search list end ====================== */}
       </div>
     );

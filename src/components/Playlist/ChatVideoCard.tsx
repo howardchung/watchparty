@@ -124,7 +124,7 @@ const ChatVideoCard: React.FC<{
 
         {controls && (
           <div className={classes.Controls}>
-            <ButtonGroup size="massive">
+            <ButtonGroup size="medium">
               <Button
                 icon
                 style={{ color: 'white' }}
