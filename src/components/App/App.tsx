@@ -56,7 +56,7 @@ import { SubtitleModal } from '../Modal/SubtitleModal';
 import UploadFile from '../Modal/UploadFile';
 import { EmptyTheatre } from '../EmptyTheatre/EmptyTheatre';
 import { EVENT } from '../VBrowser/events';
-
+import ReactPlayer from 'react-player/lazy';
 declare global {
   interface Window {
     onYouTubeIframeAPIReady: any;
@@ -150,6 +150,8 @@ export interface AppState {
   clipboard?: string | undefined;
   isCollapsed: boolean;
   isTheatre: boolean;
+  isMute: boolean;
+  volume: number;
 }
 
 export default class App extends React.Component<AppProps, AppState> {
@@ -218,6 +220,8 @@ export default class App extends React.Component<AppProps, AppState> {
     clipboard: undefined,
     isCollapsed: false,
     isTheatre: false,
+    isMute: false,
+    volume: 0.6,
   };
   socket: Socket = null as any;
   watchPartyYTPlayer: any = null;
@@ -228,6 +232,7 @@ export default class App extends React.Component<AppProps, AppState> {
   progressUpdater?: number;
   heartbeat: number | undefined = undefined;
   chatRef = React.createRef<Chat>();
+  playerRef = React.createRef<ReactPlayer>();
 
   async componentDidMount() {
     // console.log(this.state.isHome);
@@ -242,7 +247,7 @@ export default class App extends React.Component<AppProps, AppState> {
     const canAutoplay = await testAutoplay();
     this.setState({ isAutoPlayable: canAutoplay });
     this.loadSettings();
-    this.loadYouTube();
+    // this.loadYouTube();
     this.init();
   }
 
@@ -308,72 +313,72 @@ export default class App extends React.Component<AppProps, AppState> {
     const tag = document.createElement('script');
     tag.src = 'https://www.youtube.com/iframe_api';
     document.body.append(tag);
-    window.onYouTubeIframeAPIReady = () => {
-      // Note: this fails silently if the element is not available
-      const ytPlayer = new window.YT.Player('leftYt', {
-        playerVars: {
-          autoplay: 1,
-          controls: 0,
-          disablekb: 1,
-          iv_load_policy: 3,
-          modestbranding: 1,
-          rel: 0,
-          showinfo: 0,
-        },
-        events: {
-          onReady: (e: any) => {
-            console.log('yt onReady');
-            this.watchPartyYTPlayer = ytPlayer;
-            this.setState({
-              isYouTubeReady: true,
-              loading: false,
-              isHome: false,
-            });
-            // e.target.playVideo();
-            // We might have failed to play YT originally, ask for the current video again
-            if (this.isYouTube()) {
-              this.socket.emit('CMD:askHost');
-              // this.doSeek(2);
-              // ytPlayer.playVideo();
-            }
-          },
-          onStateChange: (e: any) => {
-            if (
-              getMediaType(this.state.currentMedia) === 'youtube' &&
-              e.data === window.YT?.PlayerState?.CUED
-            ) {
-              this.setState({ loading: false });
-            }
-            if (
-              getMediaType(this.state.currentMedia) === 'youtube' &&
-              e.data === window.YT?.PlayerState?.ENDED
-            ) {
-              this.onVideoEnded();
-            }
-            // console.log(this.ytDebounce, e.data, this.watchPartyYTPlayer?.getVideoUrl());
-            if (
-              this.ytDebounce &&
-              ((e.data === window.YT?.PlayerState?.PLAYING &&
-                this.state.currentMediaPaused) ||
-                (e.data === window.YT?.PlayerState?.PAUSED &&
-                  !this.state.currentMediaPaused))
-            ) {
-              this.ytDebounce = false;
-              if (e.data === window.YT?.PlayerState?.PLAYING) {
-                this.socket.emit('CMD:play');
-                this.doPlay();
-              } else {
-                this.socket.emit('CMD:pause');
-                this.doPause();
-              }
-              window.setTimeout(() => (this.ytDebounce = true), 500);
-            }
-          },
-        },
-      });
+    // window.onYouTubeIframeAPIReady = () => {
+    //   // Note: this fails silently if the element is not available
+    //   const ytPlayer = new window.YT.Player('leftYt', {
+    //     playerVars: {
+    //       autoplay: 1,
+    //       controls: 0,
+    //       disablekb: 1,
+    //       iv_load_policy: 3,
+    //       modestbranding: 1,
+    //       rel: 0,
+    //       showinfo: 0,
+    //     },
+    //     events: {
+    //       onReady: (e: any) => {
+    //         console.log('yt onReady');
+    //         this.watchPartyYTPlayer = ytPlayer;
+    //         this.setState({
+    //           isYouTubeReady: true,
+    //           loading: false,
+    //           isHome: false,
+    //         });
+    //         // e.target.playVideo();
+    //         // We might have failed to play YT originally, ask for the current video again
+    //         if (this.isYouTube()) {
+    //           this.socket.emit('CMD:askHost');
+    //           // this.doSeek(2);
+    //           // ytPlayer.playVideo();
+    //         }
+    //       },
+    //       onStateChange: (e: any) => {
+    //         if (
+    //           getMediaType(this.state.currentMedia) === 'youtube' &&
+    //           e.data === window.YT?.PlayerState?.CUED
+    //         ) {
+    //           this.setState({ loading: false });
+    //         }
+    //         if (
+    //           getMediaType(this.state.currentMedia) === 'youtube' &&
+    //           e.data === window.YT?.PlayerState?.ENDED
+    //         ) {
+    //           this.onVideoEnded();
+    //         }
+    //         // console.log(this.ytDebounce, e.data, this.watchPartyYTPlayer?.getVideoUrl());
+    //         if (
+    //           this.ytDebounce &&
+    //           ((e.data === window.YT?.PlayerState?.PLAYING &&
+    //             this.state.currentMediaPaused) ||
+    //             (e.data === window.YT?.PlayerState?.PAUSED &&
+    //               !this.state.currentMediaPaused))
+    //         ) {
+    //           this.ytDebounce = false;
+    //           if (e.data === window.YT?.PlayerState?.PLAYING) {
+    //             this.socket.emit('CMD:play');
+    //             this.doPlay();
+    //           } else {
+    //             this.socket.emit('CMD:pause');
+    //             this.doPause();
+    //           }
+    //           window.setTimeout(() => (this.ytDebounce = true), 500);
+    //         }
+    //       },
+    //     },
+    //   });
 
-      console.log('tag: ', { tag, ytPlayer });
-    };
+    //   console.log('tag: ', { tag, ytPlayer });
+    // };
   };
   toggleCollapse = () => {
     this.setState({ isCollapsed: !this.state.isCollapsed });
@@ -528,6 +533,7 @@ export default class App extends React.Component<AppProps, AppState> {
     });
     socket.on('REC:host', async (data: HostState) => {
       let currentMedia = data.video || '';
+      console.log('currentMedia: ', currentMedia, data.video);
       if (this.isScreenShare() && !currentMedia.startsWith('screenshare://')) {
         this.stopScreenShare();
       }
@@ -550,7 +556,7 @@ export default class App extends React.Component<AppProps, AppState> {
           currentMedia,
           currentMediaPaused: data.paused,
           currentSubtitle: data.subtitle,
-          loading: Boolean(data.video),
+          loading: false,
           nonPlayableMedia: false,
           isVBrowserLarge: data.isVBrowserLarge,
           vBrowserResolution: data.isVBrowserLarge
@@ -577,11 +583,12 @@ export default class App extends React.Component<AppProps, AppState> {
           this.watchPartyYTPlayer?.stopVideo();
           // this.loadYouTube();
 
-          if (this.isYouTube() && !this.watchPartyYTPlayer) {
-            console.log(
-              'YT player not ready, onReady callback will retry when it is'
-            );
-          } else if (this.isVBrowser()) {
+          // if (this.isYouTube() && !this.watchPartyYTPlayer) {
+          //   console.log(
+          //     'YT player not ready, onReady callback will retry when it is'
+          //   );
+          // }
+          if (this.isVBrowser()) {
             console.log(
               'not playing video as this is a vbrowser:// placeholder'
             );
@@ -964,30 +971,33 @@ export default class App extends React.Component<AppProps, AppState> {
   };
 
   getCurrentTime = () => {
-    if (this.isVideo()) {
-      const leftVideo = document.getElementById(
-        'leftVideo'
-      ) as HTMLMediaElement;
-      return leftVideo?.currentTime;
+    // if (this.isVideo()) {
+    //   const leftVideo = document.getElementById(
+    //     'leftVideo'
+    //   ) as HTMLMediaElement;
+    //   return leftVideo?.currentTime;
+    // }
+    if (this.playerRef.current) {
+      return this.playerRef.current?.getCurrentTime();
+      // return this.watchPartyYTPlayer?.getCurrentTime();
     }
-    if (this.isYouTube()) {
-      return this.watchPartyYTPlayer?.getCurrentTime();
-    }
+    return 0;
   };
 
   getDuration = () => {
-    if (this.isVideo()) {
-      try {
-        const leftVideo = document.getElementById(
-          'leftVideo'
-        ) as HTMLMediaElement;
-        return leftVideo.duration;
-      } catch (error) {
-        return 1;
-      }
-    }
-    if (this.isYouTube()) {
-      return this.watchPartyYTPlayer?.getDuration();
+    // if (this.isVideo()) {
+    //   try {
+    //     const leftVideo = document.getElementById(
+    //       'leftVideo'
+    //     ) as HTMLMediaElement;
+    //     return leftVideo.duration;
+    //   } catch (error) {
+    //     return 1;
+    //   }
+    // }
+    if (this?.playerRef.current) {
+      // return this.watchPartyYTPlayer?.getDuration();
+      return this?.playerRef?.current.getDuration();
     }
     return 0;
   };
@@ -999,16 +1009,17 @@ export default class App extends React.Component<AppProps, AppState> {
   };
 
   isMuted = () => {
-    if (this.isVideo()) {
-      const leftVideo = document.getElementById(
-        'leftVideo'
-      ) as HTMLMediaElement;
-      return leftVideo?.muted;
-    }
-    if (this.isYouTube()) {
-      return this.watchPartyYTPlayer?.isMuted();
-    }
-    return false;
+    // if (this.isVideo()) {
+    //   const leftVideo = document.getElementById(
+    //     'leftVideo'
+    //   ) as HTMLMediaElement;
+    //   return leftVideo?.muted;
+    // }
+    // if (this.isYouTube()) {
+    //   return this.state.currentMediaPaused;
+    //   // return this.watchPartyYTPlayer?.isMuted();
+    // }
+    return this.state.isMute;
   };
 
   isSubtitled = () => {
@@ -1038,30 +1049,30 @@ export default class App extends React.Component<AppProps, AppState> {
 
   doSrc = async (src: string, time: number) => {
     console.log('doSrc', src, time);
-    if (this.isScreenShare() || this.isFileShare() || this.isVBrowser()) {
-      // No-op as we'll set video when WebRTC completes
-      return;
-    }
-    if (this.isVideo()) {
-      const leftVideo = document.getElementById(
-        'leftVideo'
-      ) as HTMLMediaElement;
-      if (leftVideo) {
-        leftVideo.srcObject = null;
-        leftVideo.src = src;
-        leftVideo.currentTime = time;
-        this.setSubtitleMode('hidden');
-        leftVideo.innerHTML = '';
-      }
-    }
-    if (this.isYouTube()) {
-      let url = new window.URL(src);
-      // Standard link https://www.youtube.com/watch?v=ID
-      let videoId = querystring.parse(url.search.substring(1))['v'];
-      // Link shortener https://youtu.be/ID
-      let altVideoId = src.split('/').slice(-1)[0];
-      this.watchPartyYTPlayer?.cueVideoById(videoId || altVideoId, time);
-    }
+    // if (this.isScreenShare() || this.isFileShare() || this.isVBrowser()) {
+    //   // No-op as we'll set video when WebRTC completes
+    //   return;
+    // }
+    // if (this.isVideo()) {
+    //   const leftVideo = document.getElementById(
+    //     'leftVideo'
+    //   ) as HTMLMediaElement;
+    //   if (leftVideo) {
+    //     leftVideo.srcObject = null;
+    //     leftVideo.src = src;
+    //     leftVideo.currentTime = time;
+    //     this.setSubtitleMode('hidden');
+    //     leftVideo.innerHTML = '';
+    //   }
+    // }
+    // if (this.isYouTube()) {
+    //   // let url = new window.URL(src);
+    //   // // Standard link https://www.youtube.com/watch?v=ID
+    //   // let videoId = querystring.parse(url.search.substring(1))['v'];
+    //   // // Link shortener https://youtu.be/ID
+    //   // let altVideoId = src.split('/').slice(-1)[0];
+    //   // this.watchPartyYTPlayer?.cueVideoById(videoId || altVideoId, time);
+    // }
   };
 
   doPlay = async () => {
@@ -1069,44 +1080,44 @@ export default class App extends React.Component<AppProps, AppState> {
     this.setState(
       { currentMediaPaused: false, isAutoPlayable: canAutoplay },
       async () => {
-        if (!this.state.isAutoPlayable || this.state.isScreenSharing) {
-          console.log('auto-muting to allow autoplay or screenshare host');
-          this.setMute(true);
-          this.setLoadingFalse();
-        } else {
-          this.setMute(false);
-        }
-        if (this.isVideo()) {
-          const leftVideo = document.getElementById(
-            'leftVideo'
-          ) as HTMLMediaElement;
-          //check for HLS
-          let lv = leftVideo?.src.split('.');
-          if (
-            lv?.length > 0 &&
-            lv[lv.length - 1] === 'm3u8' &&
-            !leftVideo?.canPlayType('application/vnd.apple.mpegurl')
-          ) {
-            let hls = new window.Hls();
-            hls.loadSource(leftVideo.src);
-            hls.attachMedia(leftVideo);
-          }
-          try {
-            await leftVideo?.play();
-          } catch (e: any) {
-            console.warn(e);
-            console.log({ e });
-            if (e.name === 'NotSupportedError') {
-              this.setState({ loading: false, nonPlayableMedia: true });
-            }
-          }
-        }
-        if (this.isYouTube()) {
-          setTimeout(() => {
-            console.log('play yt');
-            this.watchPartyYTPlayer.playVideo();
-          }, 500);
-        }
+        // if (!this.state.isAutoPlayable || this.state.isScreenSharing) {
+        //   console.log('auto-muting to allow autoplay or screenshare host');
+        //   this.setMute(true);
+        //   this.setLoadingFalse();
+        // } else {
+        //   this.setMute(false);
+        // }
+        // if (this.isVideo()) {
+        //   const leftVideo = document.getElementById(
+        //     'leftVideo'
+        //   ) as HTMLMediaElement;
+        //   //check for HLS
+        //   let lv = leftVideo?.src.split('.');
+        //   if (
+        //     lv?.length > 0 &&
+        //     lv[lv.length - 1] === 'm3u8' &&
+        //     !leftVideo?.canPlayType('application/vnd.apple.mpegurl')
+        //   ) {
+        //     let hls = new window.Hls();
+        //     hls.loadSource(leftVideo.src);
+        //     hls.attachMedia(leftVideo);
+        //   }
+        //   try {
+        //     await leftVideo?.play();
+        //   } catch (e: any) {
+        //     console.warn(e);
+        //     console.log({ e });
+        //     if (e.name === 'NotSupportedError') {
+        //       this.setState({ loading: false, nonPlayableMedia: true });
+        //     }
+        //   }
+        // }
+        // if (this.isYouTube()) {
+        //   setTimeout(() => {
+        //     console.log('play yt');
+        //     this.watchPartyYTPlayer.playVideo();
+        //   }, 500);
+        // }
       }
     );
   };
@@ -1119,10 +1130,10 @@ export default class App extends React.Component<AppProps, AppState> {
         ) as HTMLMediaElement;
         leftVideo.pause();
       }
-      if (this.isYouTube()) {
-        console.log('pause');
-        this.watchPartyYTPlayer?.pauseVideo();
-      }
+      // if (this.isYouTube()) {
+      //   console.log('pause');
+      //   this.watchPartyYTPlayer?.pauseVideo();
+      // }
     });
   };
 
@@ -1134,7 +1145,9 @@ export default class App extends React.Component<AppProps, AppState> {
       leftVideo.currentTime = time;
     }
     if (this.isYouTube()) {
-      this.watchPartyYTPlayer?.seekTo(time, true);
+      // this.watchPartyYTPlayer?.seekTo(time, true);
+
+      this.playerRef.current?.seekTo(time);
     }
   };
 
@@ -1142,27 +1155,28 @@ export default class App extends React.Component<AppProps, AppState> {
     if (this.isPauseDisabled()) {
       return;
     }
-    let shouldPlay = true;
-    if (this.isVideo()) {
-      const leftVideo = document.getElementById(
-        'leftVideo'
-      ) as HTMLMediaElement;
-      shouldPlay = leftVideo.paused || leftVideo.ended;
-    } else if (this.isYouTube()) {
-      shouldPlay =
-        this.watchPartyYTPlayer?.getPlayerState() === 2 ||
-        this.watchPartyYTPlayer?.getPlayerState() === 5 ||
-        this.getCurrentTime() === this.getDuration();
-      console.log(
-        this.watchPartyYTPlayer?.getPlayerState(),
-        window.YT?.PlayerState
-      );
-      //   this.watchPartyYTPlayer?.getPlayerState() ===
-      //   window.YT?.PlayerState.PAUSED ||
-      //   this.getCurrentTime() === this.getDuration();
-      // console.log(this.watchPartyYTPlayer?.getPlayerState(),
-      //   window.YT?.PlayerState);
-    }
+    let shouldPlay = this.state.currentMediaPaused;
+
+    // if (this.isVideo()) {
+    //   const leftVideo = document.getElementById(
+    //     'leftVideo'
+    //   ) as HTMLMediaElement;
+    //   shouldPlay = leftVideo.paused || leftVideo.ended;
+    // } else if (this.isYouTube()) {
+    //   shouldPlay =
+    //     this.watchPartyYTPlayer?.getPlayerState() === 2 ||
+    //     this.watchPartyYTPlayer?.getPlayerState() === 5 ||
+    //     this.getCurrentTime() === this.getDuration();
+    //   console.log(
+    //     this.watchPartyYTPlayer?.getPlayerState(),
+    //     window.YT?.PlayerState
+    //   );
+    //   //   this.watchPartyYTPlayer?.getPlayerState() ===
+    //   //   window.YT?.PlayerState.PAUSED ||
+    //   //   this.getCurrentTime() === this.getDuration();
+    //   // console.log(this.watchPartyYTPlayer?.getPlayerState(),
+    //   //   window.YT?.PlayerState);
+    // }
     if (shouldPlay) {
       console.log('shouldPlay: ON PLAY', shouldPlay);
       this.socket.emit('CMD:play');
@@ -1249,61 +1263,63 @@ export default class App extends React.Component<AppProps, AppState> {
   };
 
   setMute = (muted: boolean) => {
-    if (this.isVideo()) {
-      const leftVideo = document.getElementById(
-        'leftVideo'
-      ) as HTMLMediaElement;
-      if (leftVideo) {
-        leftVideo.muted = muted;
-      }
-      const audio = document.getElementById('iPhoneAudio') as HTMLAudioElement;
-      if (audio) {
-        audio.muted = muted;
-      }
-    }
-    if (this.isYouTube()) {
-      if (muted) {
-        this.watchPartyYTPlayer?.mute();
-      } else {
-        this.watchPartyYTPlayer?.unMute();
-      }
-    }
-    this.refreshControls();
+    // if (this.isVideo()) {
+    //   const leftVideo = document.getElementById(
+    //     'leftVideo'
+    //   ) as HTMLMediaElement;
+    //   if (leftVideo) {
+    //     leftVideo.muted = muted;
+    //   }
+    //   const audio = document.getElementById('iPhoneAudio') as HTMLAudioElement;
+    //   if (audio) {
+    //     audio.muted = muted;
+    //   }
+    // }
+    // if (this.isYouTube()) {
+    //   if (muted) {
+    //     this.watchPartyYTPlayer?.mute();
+    //   } else {
+    //     this.watchPartyYTPlayer?.unMute();
+    //   }
+    // }
+    this.setState({ isMute: muted });
+    // this.refreshControls();
   };
 
   setVolume = (volume: number) => {
-    if (this.isVideo()) {
-      const leftVideo = document.getElementById(
-        'leftVideo'
-      ) as HTMLMediaElement;
-      leftVideo.volume = volume;
-    }
-    if (this.isYouTube()) {
-      this.watchPartyYTPlayer?.setVolume(volume * 100);
-    }
-    this.refreshControls();
+    // if (this.isVideo()) {
+    //   const leftVideo = document.getElementById(
+    //     'leftVideo'
+    //   ) as HTMLMediaElement;
+    //   leftVideo.volume = volume;
+    // }
+    // if (this.isYouTube()) {
+    //   this.watchPartyYTPlayer?.setVolume(volume * 100);
+    // }
+    this.setState({ volume: volume });
+    // this.refreshControls();
   };
 
   getVolume = (): number => {
-    if (this.isVideo()) {
-      try {
-        const leftVideo = document.getElementById(
-          'leftVideo'
-        ) as HTMLMediaElement;
-        return leftVideo.volume;
-      } catch (error) {
-        return 1;
-      }
-    }
-    if (this.isYouTube()) {
-      try {
-        const volume = this.watchPartyYTPlayer?.getVolume();
-        return volume / 100;
-      } catch (error) {
-        return 1;
-      }
-    }
-    return 1;
+    // if (this.isVideo()) {
+    //   try {
+    //     const leftVideo = document.getElementById(
+    //       'leftVideo'
+    //     ) as HTMLMediaElement;
+    //     return leftVideo.volume;
+    //   } catch (error) {
+    //     return 1;
+    //   }
+    // }
+    // if (this.isYouTube()) {
+    //   try {
+    //     const volume = this.watchPartyYTPlayer?.getVolume();
+    //     return volume / 100;
+    //   } catch (error) {
+    //     return 1;
+    //   }
+    // }
+    return this.state.volume;
   };
 
   loadSubtitles = async () => {
@@ -1915,28 +1931,74 @@ export default class App extends React.Component<AppProps, AppState> {
                           </div>
                         )}
 
-                        {this.isYouTube() && (
-                          <iframe
-                            style={{
-                              display:
-                                this.isYouTube() &&
-                                !this.state.loading &&
-                                !this.state.isHome
-                                  ? 'block'
-                                  : 'none',
-                            }}
-                            title="YouTube"
-                            id="leftYt"
-                            className="videoContent"
-                            allowFullScreen
-                            frameBorder="0"
-                            allow="autoplay"
-                            src="https://www.youtube.com/embed/?enablejsapi=1&controls=0&rel=0&autoplay=1"
-                          />
-                        )}
-                        {this.isVBrowser() &&
-                        this.getVBrowserPass() &&
-                        this.getVBrowserHost() ? (
+                        {(this.isYouTube() || this.isVideo()) &&
+                          !this.state.isHome && (
+                            <div className="videoContent">
+                              <main
+                                style={{
+                                  display:
+                                    (this.isYouTube() || this.isVideo()) &&
+                                    !this.state.loading &&
+                                    !this.state.isHome
+                                      ? 'block'
+                                      : 'none',
+                                  position: 'relative',
+                                  paddingTop: '56.25%',
+                                  /* Player ratio: 100 / (1280 / 720) */
+                                }}
+                              >
+                                <ReactPlayer
+                                  ref={this.playerRef}
+                                  config={{
+                                    youtube: {
+                                      playerVars: {
+                                        // autoplay: 1,
+                                        controls: 0,
+                                        disablekb: 1,
+                                        iv_load_policy: 3,
+                                        modestbranding: 1,
+                                        rel: 0,
+                                        showinfo: 0,
+                                      },
+                                    },
+                                  }}
+                                  volume={this.getVolume()}
+                                  muted={this.state.isMute}
+                                  playing={!this.state.currentMediaPaused}
+                                  // muted={this.isMuted()}
+                                  className="react-player"
+                                  width="100%"
+                                  // playing={this.paused()}
+                                  // onPlay={}
+                                  height="100%"
+                                  id="leftYt"
+                                  url={this.state.currentMedia}
+                                  // autoplay
+                                />
+                              </main>
+                            </div>
+
+                            // <iframe
+                            //   style={{
+                            //     display:
+                            //       this.isYouTube() &&
+                            //       !this.state.loading &&
+                            //       !this.state.isHome
+                            //         ? 'block'
+                            //         : 'none',
+                            //   }}
+                            //   title="YouTube"
+                            //   id="leftYt"
+                            //   className="videoContent"
+                            //   allowFullScreen
+                            //   frameBorder="0"
+                            //   allow="autoplay"
+                            //   src="https://www.youtube.com/embed/?enablejsapi=1&controls=0&rel=0&autoplay=1"
+                            // />
+                          )}
+                        {/* {this.isVBrowser() &&
+                          this.getVBrowserPass() &&
+                          this.getVBrowserHost() ? (
                           <VBrowser
                             username={this.socket.id}
                             password={this.getVBrowserPass()}
@@ -1957,7 +2019,7 @@ export default class App extends React.Component<AppProps, AppState> {
                               style={{
                                 display:
                                   (this.isVideo() && !this.state.loading) ||
-                                  this.state.fullScreen
+                                    this.state.fullScreen
                                     ? 'block'
                                     : 'none',
                                 width: '100%',
@@ -1972,7 +2034,7 @@ export default class App extends React.Component<AppProps, AppState> {
                               onClick={this.togglePlay}
                             ></video>
                           )
-                        )}
+                        )} */}
                       </div>
                     </div>
                     {!this.state.isCollapsed &&
