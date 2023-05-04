@@ -62,6 +62,14 @@ body {
   pointer-events: none;
   min-width: initial;
 }
+.ui.progress .bar {
+  background: linear-gradient(
+    102.69deg,
+    #8350f1 0%,
+    #00ff85 115.08%
+  ) !important;
+  border-radius: 11.7385px !important;
+}
 
 .videoContent {
   position: absolute;

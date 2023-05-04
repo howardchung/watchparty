@@ -1,18 +1,67 @@
 .wrapper {
   z-index: 1200 !important;
-  min-height: 80vh;
+  min-height: 100vh;
+  margin: 0 !important;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
 }
 .UploadButton {
-  background-color: #8350f1 !important;
+  background-color: red !important;
   color: #f4f4f4 !important;
 }
+.fileImage {
+  width: 100px;
+  height: 85px;
+}
+.customProgress {
+  height: 1.75em;
+  margin: 0 !important;
+  background: #4b4b4b !important;
+  border-radius: 11.7385px !important;
+}
+
 .content {
+  width: 100vw;
+  height: 100vh;
   display: flex;
-  flex-direction: column;
   justify-content: center;
   align-items: center;
-  min-height: 60vh;
-  background: rgba(0, 0, 0, 0.8);
+  background-image: url('/src/assets/upload/uploadBg.png');
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  position: relative;
+}
+.subContent {
+  height: 60%;
+  width: 70%;
+  display: flex;
+  flex-direction: column;
+}
+.linearBackground {
+  background: linear-gradient(135deg, #08ff5c 0%, #00882e 100%);
+}
+.uploadSubContent {
+  height: 60%;
+  width: 60%;
+  display: flex;
+  flex-direction: column;
+}
+.contentDetails {
+  height: 80%;
+  width: 100%;
+}
+.backIcon {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+}
+.solarQuit {
+  position: absolute;
+  bottom: 1rem;
+  left: 1rem;
 }
 .header h5 {
   text-align: center;
@@ -42,6 +91,28 @@
 .inputWrapper {
   margin: 0 auto;
 }
+.fileUpload {
+  position: relative;
+  overflow: hidden;
+  color: #fff;
+  background: linear-gradient(135deg, #08ff5c 0%, #00882e 100%);
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: center;
+}
+
+.fileUpload input[type='file'] {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
 .input {
   /* margin: 20px 0 20px 40px; */
   margin-top: 20px;
