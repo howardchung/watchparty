@@ -12,9 +12,12 @@ import classes from './EmptyTheatre.module.css';
 import ChatVideoCard from '../Playlist/ChatVideoCard';
 import playlistIcon from '../../assets/icons/playlist.svg';
 import playIcon from '../../assets/icons/play.svg';
-import yt from '../../assets/icons/yt.png';
+import yt from '../../assets/icons/yt.svg';
+import tgIcon from '../../assets/icons/telegram.svg';
 import telegram from '../../assets/icons/telegram.png';
 import upload from '../../assets/icons/upload.png';
+import uploadIcon from '../../assets/upload/upload.svg';
+import solarQuit from '../../assets/upload/sorlarQuit.svg';
 import clipboardIcon from '../../assets/icons/clipboard-paste.svg';
 import searchIcon from '../../assets/icons/search.svg';
 import {
@@ -70,7 +73,7 @@ export function EmptyTheatre(props: IEmptyTheatreProps) {
             className="btn btn-md font-bold text-[14px] bg-white hover:bg-white text-gray-dark rounded-xl border-none capitalize"
           >
             <span>
-              <img src={playIcon} alt="" className="h-8 mr-2 opacity-70" />
+              <img src={playIcon} alt="" className="h-8 mr-1 opacity-70" />
             </span>{' '}
             Now Playing
           </button>
@@ -80,10 +83,10 @@ export function EmptyTheatre(props: IEmptyTheatreProps) {
         <div className="dropdown dropdown-end">
           <label
             tabIndex={0}
-            className="btn btn-md font-bold text-[14px] mx-1 hover:bg-white bg-white text-gray-dark rounded-xl outline-0 border-0 active:outline-0 focus:outline-0 capitalize"
+            className="btn btn-md font-bold text-[14px] hover:bg-white bg-white text-gray-dark rounded-xl outline-0 border-0 active:outline-0 focus:outline-0 capitalize"
           >
             <span>
-              <img src={playlistIcon} alt="" className="h-8 mr-2" />
+              <img src={playlistIcon} alt="" className="h-9 mr-1" />
             </span>
             Playlist ({props.playlist.length})
           </label>
@@ -189,9 +192,9 @@ export function EmptyTheatre(props: IEmptyTheatreProps) {
           </Dropdown.Menu>
         </Dropdown> */}
       </div>
-      <section className="flex flex-col h-full items-center gap-1 justify-start mt-10">
+      <section className="flex flex-col w-[75%] h-full items-center gap-1 justify-start mt-10">
         <div className={classes.header}>
-          <Image src="logo192.png" size="tiny" centered />
+          <img src="logo192.png" className="relative" width={120} alt="" />
         </div>
         <div className={classes.inputContainer}>
           <span className="absolute left-3 top-3">
@@ -207,12 +210,12 @@ export function EmptyTheatre(props: IEmptyTheatreProps) {
                 }
               }}
               placeholder="Enter or paste your video URL"
-              className="input w-full px-14 py-4 rounded-xl text-gray bg-white/90 border-none focus:outline-0 focus:border-none focus:ring-0"
+              className={`${classes.inputStyle} input w-full px-14 py-4 placeholder:text-[#49454F] rounded-xl text-gray border-none focus:outline-0 focus:border-none focus:ring-0`}
             />
           </div>
           <span className="absolute right-0 top-0 cursor-pointer ">
             <button
-              className=" bg-white/80   m-1 p-2  active:bg-white/50 border-none rounded-xl"
+              className=" bg-white   m-1 p-2  active:bg-white/50 border-none rounded-xl"
               onClick={async () => {
                 // const permission = await navigator.permissions.query({ name:  });
                 navigator.clipboard
@@ -230,45 +233,68 @@ export function EmptyTheatre(props: IEmptyTheatreProps) {
             </button>
           </span>
         </div>
-        <div className="flex justify-center gap-0">
+        {/* <div className="flex justify-center gap-0">
           <div className="relative">
             <button
               onClick={() => {}}
-              className="btn btn-md font-bold text-[14px] bg-transparent hover:bg-transparent rounded-xl border-none "
+              className="btn btn-md p-0 font-bold text-[14px] bg-transparent hover:bg-transparent rounded-xl border-none "
             >
-              <span>
-                <img src={yt} alt="" className="h-[65px] " />
-              </span>{' '}
+              <img src={yt} alt="" className="h-[65px] " />
             </button>
           </div>
-          <div className="relative -mx-6">
+          <div className="relative ">
             <button
               onClick={() => toggleIsUploadPress()}
-              className="btn btn-md font-bold text-[14px] bg-transparent hover:bg-transparent rounded-xl border-none "
+              className="btn btn-md p-0 font-bold text-[14px] bg-transparent hover:bg-transparent rounded-xl border-none "
             >
-              <span>
-                <img src={upload} alt="" className="h-[70px]" />
-              </span>{' '}
+              <img src={upload} alt="" className="h-[70px]" />
             </button>
           </div>
-          <div className="relative -ml-4">
+          <div className="relative">
             <button
               onClick={() => {}}
-              className="btn btn-lg font-bold text-[14px] bg-transparent hover:bg-transparent rounded-xl border-none "
+              className="btn btn-md p-0 font-bold text-[14px] bg-transparent hover:bg-transparent rounded-xl border-none "
             >
               <img src={telegram} alt="" className="h-[70px] w-full " />{' '}
             </button>
           </div>
+        </div> */}
+        <div className="grid relative w-full grid-cols-3 gap-3">
+          <button
+            onClick={() => {}}
+            className={`${classes.btnBoxShadow} bg-[#d20001] rounded-xl`}
+          >
+            <img className="mx-auto" src={yt} alt="" />
+          </button>
+          <button
+            onClick={() => toggleIsUploadPress()}
+            className={`${classes.uploadBtnBg} ${classes.btnBoxShadow} flex justify-center items-center rounded-xl`}
+          >
+            <span className="text-white font-semibold text-[18px]">Upload</span>
+            <img className="pl-3" src={uploadIcon} alt="uploadIcon" />
+          </button>
+          <button
+            onClick={() => {}}
+            className={`bg-[#27a2dd] ${classes.btnBoxShadow} flex justify-center items-center rounded-xl`}
+          >
+            <span className="text-white font-semibold text-[18px]">
+              Telegram
+            </span>
+            <img src={tgIcon} className="ml-1" alt="uploadIcon" />
+          </button>
         </div>
       </section>
-      <div className="mb-4 absolute bottom-8">
-        <p>
+      <div className="mb-4 absolute bottom-1">
+        <p className="font-bold">
           Psst! Did you know you can upload content from your computer and watch
           in metawood? Click on the upload button above.
         </p>
-        <p>
+        <p className="font-bold">
           Alternatively, you can use the search link to look for YouTube URLs.
         </p>
+      </div>
+      <div className="absolute left-3 bottom-3">
+        <img className="cursor-pointer" src={solarQuit} alt="solarQuit" />
       </div>
     </main>
   );
