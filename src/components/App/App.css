@@ -62,7 +62,7 @@ body {
   pointer-events: none;
   min-width: initial;
 }
-.ui.progress .bar {
+.upload-progress > .ui.progress .bar {
   background: linear-gradient(
     102.69deg,
     #8350f1 0%,

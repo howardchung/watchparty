@@ -1,5 +1,5 @@
 import React from 'react';
-import { Divider, Header, Icon, Step } from 'semantic-ui-react';
+import { Dimmer, Divider, Header, Icon, Loader, Step } from 'semantic-ui-react';
 import firebase from 'firebase/compat/app';
 
 import { NewRoomButton } from '../TopBar';
@@ -8,7 +8,20 @@ import styles from './Home.module.css';
 export const Home = ({ user }: { user: firebase.User | undefined }) => {
   return (
     <div>
-      <div className={styles.container}>
+      <div
+        id="loader"
+        className="w-full h-100vh flex items-center justify-center"
+      >
+        <Dimmer active>
+          <Loader>Launching New Room...</Loader>
+          <div
+            style={{ marginTop: '8px', width: '160px', visibility: 'hidden' }}
+          >
+            <NewRoomButton user={user} />
+          </div>
+        </Dimmer>
+      </div>
+      {/* <div className={styles.container}>
         <Hero
           heroText={'Watch videos in-sync with friends far away.'}
           subText={'No registration or download required.'}
@@ -137,7 +150,7 @@ export const Home = ({ user }: { user: firebase.User | undefined }) => {
             <NewRoomButton user={user} />
           </div>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 };

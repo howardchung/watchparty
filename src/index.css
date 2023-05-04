@@ -54,3 +54,43 @@ button.linkButton {
   color: gray;
   margin-top: 8px;
 }
+input[type='range'] {
+  -webkit-appearance: none;
+  height: 10px;
+  background: rgb(51, 50, 50);
+  outline: none;
+}
+
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  background: #fff;
+  border-radius: 50%;
+  border: 1px solid #ccc;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+}
+
+input[type='range']::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  background: #fff;
+  border-radius: 50%;
+  border: 1px solid #ccc;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+}
+
+/* input[type=range][value="0"]::-webkit-slider-thumb {
+  background: red;
+}
+
+input[type=range][value="50"]::-webkit-slider-thumb {
+  background: orange;
+}
+
+input[type=range][value="100"]::-webkit-slider-thumb {
+  background: green;
+} */

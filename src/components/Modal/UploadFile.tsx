@@ -75,7 +75,7 @@ export default function UploadFile(props: IUploadFileProps) {
         url: `https://sg.storage.bunnycdn.com/metawood/${fileName}`,
         headers: {
           'content-type': 'application/octet-stream',
-          AccessKey: '1b797de9-d1dd-4c0b-bd78489acc56-56fa-4484',
+          AccessKey: process.env.REACT_APP_BUNNYCDN_ACCESS_KEY,
         },
         data: blob,
         onUploadProgress: async (event: any) => {
@@ -216,7 +216,7 @@ export default function UploadFile(props: IUploadFileProps) {
         <Loader indeterminate>Uploading Files</Loader>
       </Dimmer> */}
       {/* ====================== UI AFTER FILE SELECTION ====================== */}
-      {File && !isCopied && (
+      {File && (
         // <div className={classes.content}>
         //   {/* <Image src={DemoImage} size='small' centered /> */}
         //   {video ? (
@@ -293,7 +293,7 @@ export default function UploadFile(props: IUploadFileProps) {
               />
             </div>
             <h4 className="my-2 font-bold text-center">File Name</h4>
-            <div className="relative">
+            <div className="relative upload-progress">
               <Progress
                 color="violet"
                 value={Math.floor(progress)}
@@ -320,6 +320,7 @@ export default function UploadFile(props: IUploadFileProps) {
                 Add To playlist
               </button>
               <button
+                onClick={copyToClipboard}
                 className={`${
                   Number(progress) === 100
                     ? `${classes.linearBackground} text-[#fff] `
@@ -334,6 +335,7 @@ export default function UploadFile(props: IUploadFileProps) {
           <div className={classes.backIcon}>
             <img
               // onClick={() => setFile(null)}
+              onClick={() => toggleIsUploadPress()}
               className="cursor-pointer"
               src={crossIcon}
               alt="crossIcon"
@@ -345,7 +347,7 @@ export default function UploadFile(props: IUploadFileProps) {
         </div>
       )}
 
-      {isCopied && (
+      {/* {isCopied && (
         <div className={classes.content}>
           <div className={classes.copiedBox}>
             <img
@@ -357,7 +359,7 @@ export default function UploadFile(props: IUploadFileProps) {
             <h4>Paste it in the search box to start viewing</h4>
           </div>
         </div>
-      )}
+      )} */}
     </Modal>
   );
 }

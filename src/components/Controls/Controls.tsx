@@ -4,6 +4,20 @@ import { Icon, Progress, Label, Popup } from 'semantic-ui-react';
 import { formatTimestamp } from '../../utils';
 import styles from './Controls.module.css';
 import Slider from 'rc-slider';
+import MetaButton from '../../atoms/MetaButton';
+import BackwardIcon from '../../../src/assets/icons/backward.svg';
+import ForwardIcon from '../../../src/assets/icons/forward.svg';
+import PlayIcon from '../../../src/assets/icons/play-btn.svg';
+import PauseIcon from '../../../src/assets/icons/pause.png';
+import fullScreenIcon from '../../../src/assets/icons/full-screen.svg';
+import quiteFScreenIcon from '../../../src/assets/icons/quit-full-screen.svg';
+import SyncIcon from '../../../src/assets/icons/sync.svg';
+import SyncInfoIcon from '../../../src/assets/icons/ion_sync-info.svg';
+import ccIcon from '../../../src/assets/icons/caption.svg';
+import vlmIcon from '../../../src/assets/icons/volume.svg';
+import muteIcon from '../../../src/assets/icons/mute.png';
+import rightArrowIcon from '../../../src/assets/icons/Arrow - Left.svg';
+import leftArrowIcon from '../../../src/assets/icons/Arrow - Left2.svg';
 interface ControlsProps {
   duration: number;
   togglePlay: Function;
@@ -21,15 +35,31 @@ interface ControlsProps {
   disabled?: boolean;
   leaderTime?: number;
   isPauseDisabled?: boolean;
+  isCollapsed: boolean;
+}
+
+interface ControlState {
+  showTimestamp: boolean;
+  currTimestamp: number;
+  posTimestamp: number;
+  isFullScreen: boolean;
+  isShowAllControls: boolean;
 }
 
 export class Controls extends React.Component<ControlsProps> {
-  state = {
+  state: ControlState = {
     showTimestamp: false,
     currTimestamp: 0,
     posTimestamp: 0,
+    isFullScreen: false,
+    isShowAllControls: false,
   };
-
+  toggleShowAllControls = () => {
+    this.setState({ isShowAllControls: !this.state.isShowAllControls });
+  };
+  toggleFScreen = (): void => {
+    this.setState({ isFullScreen: !this.state.isFullScreen });
+  };
   onMouseOver = () => {
     // console.log('mouseover');
     this.setState({ showTimestamp: true });
@@ -52,7 +82,15 @@ export class Controls extends React.Component<ControlsProps> {
       this.setState({ currTimestamp: target, posTimestamp: pct });
     }
   };
-
+  getSliderStyles = () => {
+    return {
+      background: this.props.muted
+        ? '#ccc'
+        : `linear-gradient(to right, #54C8FF, #54C8FF ${
+            this.props.volume * 100
+          }%, #ccc ${this.props.volume * 100}%, #ccc 100%)`,
+    };
+  };
   render() {
     const {
       togglePlay,
@@ -69,6 +107,7 @@ export class Controls extends React.Component<ControlsProps> {
       subtitled,
       paused,
       muted,
+      isCollapsed,
       volume,
     } = this.props;
     const isBehind = leaderTime && leaderTime - currentTime > 5;
@@ -81,57 +120,122 @@ export class Controls extends React.Component<ControlsProps> {
               display: 'flex',
               gap: '10px',
               alignItems: 'center',
-              background: '#2222',
             }}
+            className="absolute top-[46%] left-[40%]"
           >
-            <Icon
-              size="huge"
+            <MetaButton
               onClick={() => onSeek(null, currentTime - 10)}
-              className={styles.Btn}
-              name="angle double left"
-              // style={{ transform: 'rotate(180deg)' }}
-              title="Backward 10 seconds"
-            />
-            <Icon
-              size="huge"
-              onClick={() => {
-                togglePlay();
-              }}
-              className={styles.Btn}
-              disabled={disabled || isPauseDisabled}
-              name={paused ? 'play circle outline' : 'pause circle outline'}
-            />
-            <Icon
-              size="huge"
+              img={BackwardIcon}
+              className="bg-transparent"
+              imgClass="h-16"
+            ></MetaButton>
+            <MetaButton
+              onClick={() => togglePlay()}
+              img={paused ? PlayIcon : PauseIcon}
+              className="bg-transparent"
+              imgClass="h-16"
+            ></MetaButton>
+            <MetaButton
               onClick={() => onSeek(null, currentTime + 10)}
-              className={styles.Btn}
-              name="angle double right"
-              title="Forward 10 seconds"
-            />
+              img={ForwardIcon}
+              className="bg-transparent"
+              imgClass="h-16"
+            ></MetaButton>
           </div>
 
-          <div>
-            <div className="controls">
-              <Popup
-                content={
-                  (isBehind
-                    ? "We've detected that your stream is behind. "
-                    : '') + 'Click to sync with leader.'
+          <div className="controls -mb-2">
+            {/* ====================== Progress ====================== */}
+            <div className="control">{formatTimestamp(currentTime)}</div>
+            <Progress
+              size="small"
+              color="blue"
+              onClick={
+                duration < Infinity && !this.props.disabled ? onSeek : undefined
+              }
+              onMouseOver={this.onMouseOver}
+              onMouseOut={this.onMouseOut}
+              onMouseMove={this.onMouseMove}
+              className="control action"
+              inverted
+              style={{
+                flexGrow: 1,
+                marginTop: 0,
+                marginBottom: 0,
+                position: 'relative',
+                minWidth: '50px',
+              }}
+              value={currentTime}
+              total={duration}
+            >
+              {duration < Infinity && this.state.showTimestamp && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    bottom: '0px',
+                    left: `calc(${this.state.posTimestamp * 100 + '% - 27px'})`,
+                    pointerEvents: 'none',
+                  }}
+                >
+                  <Label basic color="blue" pointing="below">
+                    <div style={{ width: '24px' }}>
+                      {formatTimestamp(this.state.currTimestamp)}
+                    </div>
+                  </Label>
+                </div>
+              )}
+            </Progress>
+            <div className={`control `}>{formatTimestamp(duration)}</div>
+            {/* ====================== Progress END ====================== */}
+          </div>
+
+          <section className=" flex justify-between items-center">
+            <div>
+              <MetaButton
+                onClick={() => this.toggleFScreen()}
+                img={
+                  this.state.isFullScreen ? quiteFScreenIcon : fullScreenIcon
                 }
-                trigger={
-                  <Icon
-                    size="huge"
-                    onClick={jumpToLeader}
-                    disabled={!isBehind}
-                    className={`${styles.Btn} control action ${
-                      isBehind ? 'glowing' : ''
-                    }`}
-                    name={'sync alternate'}
-                    title="Click to sync with leader."
-                  />
-                }
-              />
-              {/* <Icon
+                className="bg-transparent"
+                imgClass="h-16"
+              ></MetaButton>
+            </div>
+            <div>
+              <div className="controls gap-3">
+                {/* <Popup
+                  content={
+                    (isBehind
+                      ? "We've detected that your stream is behind. "
+                      : '') + 'Click to sync with leader.'
+                  }
+                  trigger={
+                    <Icon
+                      size="huge"
+                      onClick={jumpToLeader}
+                      disabled={!isBehind}
+                      className={`${styles.Btn} control action ${isBehind ? 'glowing' : ''
+                        }`}
+                      name={'sync alternate'}
+                      title="Click to sync with leader."
+                    />
+                  }
+                /> */}
+                <MetaButton
+                  onClick={() => (isBehind ? jumpToLeader() : null)}
+                  img={isBehind ? SyncInfoIcon : SyncIcon}
+                  className="bg-transparent"
+                  imgClass="h-14"
+                />
+                <MetaButton
+                  onClick={() => this.toggleShowAllControls()}
+                  img={
+                    this.state.isShowAllControls
+                      ? rightArrowIcon
+                      : leftArrowIcon
+                  }
+                  className="bg-transparent"
+                  imgClass="h-14"
+                />
+                {/* <Icon
                 size="big"
                 onClick={() => fullScreen(false)}
                 className="control action"
@@ -139,112 +243,94 @@ export class Controls extends React.Component<ControlsProps> {
                 name="window maximize outline"
                 title="Theater Mode"
               /> */}
-              <Icon
-                size="huge"
-                onClick={() => fullScreen(true)}
-                className="control action"
-                name="expand"
-                title="Fullscreen"
-              />
-              <Icon
-                size="huge"
-                onClick={() => {
-                  showSubtitle();
-                }}
-                className="control action"
-                name={
-                  subtitled ? 'closed captioning' : 'closed captioning outline'
-                }
-                title="Captions"
-              />
-              <Icon
-                size="huge"
-                onClick={() => {
-                  toggleMute();
-                }}
-                className="control action"
-                name={muted ? 'volume off' : 'volume up'}
-                title="Mute"
-              />
-              <div style={{ width: '150px', marginRight: '0px' }}>
-                <Slider
-                  value={volume}
-                  railStyle={{ height: 15 }}
-                  trackStyle={{ height: 15 }}
-                  handleStyle={{
-                    height: 32,
-                    width: 32,
-                    marginLeft: -14,
-                    marginTop: -9,
+                {/* <Icon
+                  size="huge"
+                  onClick={() => {
+                    showSubtitle();
                   }}
-                  min={0}
-                  max={1}
-                  step={0.01}
-                  disabled={muted}
-                  onChange={(value: any) => {
-                    if (value !== this.props.volume && !isNaN(value)) {
-                      this.props.setVolume(value);
-                    }
+                  className="control action"
+                  name={
+                    subtitled ? 'closed captioning' : 'closed captioning outline'
+                  }
+                  title="Captions"
+                /> */}
+                {/* <Icon
+                  size="huge"
+                  onClick={() => fullScreen(true)}
+                  className="control action"
+                  name="expand"
+                  title="Fullscreen"
+                /> */}
+
+                {/* <Icon
+                  size="huge"
+                  onClick={() => {
+                    toggleMute();
                   }}
-                  // settings={{
-                  //   min: 0,
-                  //   max: 1,
-                  //   step: 0.01,
-                  //   onChange: (value: number) => {
-                  //     if (value !== this.props.volume && !isNaN(value)) {
-                  //       this.props.setVolume(value);
-                  //     }
-                  //   },
-                  // }}
-                />
+                  className="control action"
+                  name={muted ? 'volume off' : 'volume up'}
+                  title="Mute"
+                /> */}
+                {this.state.isShowAllControls && (
+                  <>
+                    {' '}
+                    <MetaButton
+                      onClick={() => showSubtitle()}
+                      img={ccIcon}
+                      className={`bg-transparent ${
+                        subtitled ? 'opacity-100' : 'opacity-50'
+                      }`}
+                      imgClass="h-14"
+                    />
+                    <MetaButton
+                      onClick={() => toggleMute()}
+                      img={muted ? muteIcon : vlmIcon}
+                      className="bg-transparent"
+                      imgClass="h-12"
+                    />
+                    <div style={{ width: '150px', marginRight: '10px' }}>
+                      <input
+                        type="range"
+                        style={this.getSliderStyles()}
+                        className="rounded-lg w-full cursor-pointer"
+                        min="0"
+                        max="100"
+                        value={volume * 100}
+                        step={1}
+                        onChange={(e: any) => {
+                          const value = e.target.value;
+                          if (value !== this.props.volume && !isNaN(value)) {
+                            this.props.setVolume(value / 100);
+                          }
+                        }}
+                      />
+                    </div>
+                  </>
+                )}
+                {/* <Slider
+                    value={volume}
+                    railStyle={{ height: 15 }}
+                    trackStyle={{ height: 15 }}
+                    handleStyle={{
+                      height: 32,
+                      width: 32,
+                      marginLeft: -14,
+                      marginTop: -9,
+                    }}
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    disabled={muted}
+                    onChange={(value: any) => {
+                      if (value !== this.props.volume && !isNaN(value)) {
+                        this.props.setVolume(value);
+                      }
+                    }}
+                 
+                  /> */}
               </div>
             </div>
-          </div>
-        </div>
-
-        <div className="controls">
-          {/* ====================== Progress ====================== */}
-          <div className="control">{formatTimestamp(currentTime)}</div>
-          <Progress
-            size="small"
-            color="blue"
-            onClick={
-              duration < Infinity && !this.props.disabled ? onSeek : undefined
-            }
-            onMouseOver={this.onMouseOver}
-            onMouseOut={this.onMouseOut}
-            onMouseMove={this.onMouseMove}
-            className="control action"
-            inverted
-            style={{
-              flexGrow: 1,
-              marginTop: 0,
-              marginBottom: 0,
-              position: 'relative',
-              minWidth: '50px',
-            }}
-            value={currentTime}
-            total={duration}
-          >
-            {duration < Infinity && this.state.showTimestamp && (
-              <div
-                style={{
-                  position: 'absolute',
-                  bottom: '0px',
-                  left: `calc(${this.state.posTimestamp * 100 + '% - 27px'})`,
-                  pointerEvents: 'none',
-                }}
-              >
-                <Label basic color="blue" pointing="below">
-                  <div style={{ width: '34px' }}>
-                    {formatTimestamp(this.state.currTimestamp)}
-                  </div>
-                </Label>
-              </div>
-            )}
-          </Progress>
-          <div className={`control `}>{formatTimestamp(duration)}</div>
-          {/* ====================== Progress END ====================== */}
+          </section>
         </div>
       </>
     );

@@ -2,13 +2,17 @@
   position: relative;
 }
 .list-container {
-  background: #000000;
+  background: #3a3a3a;
   font-size: 16px;
-  width: 100vw;
+  width: 98%;
   position: absolute;
-  top: 18px;
+  top: 0px;
+  left: 22px;
+  border-radius: 20px;
   max-height: 80vh;
-  overflow: auto;
+  padding: 10px;
+  overflow-y: auto;
+  overflow-x: hidden;
   z-index: 900;
 }
 .InputLabel {
@@ -19,7 +23,6 @@
   background-color: #1f1f1f !important;
   color: #f4f4f4 !important;
   width: 180px;
-
   display: flex !important;
   align-items: center !important;
 }
@@ -30,10 +33,9 @@
   margin: 20px 0px;
   padding: 0;
   position: relative;
-  width: 90%;
+  width: 70%;
 }
 .playlist_content {
-  /* absolute right-0 top-[-1px] */
   position: absolute;
   right: -13px !important;
   top: -18px !important;

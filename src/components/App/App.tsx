@@ -242,7 +242,7 @@ export default class App extends React.Component<AppProps, AppState> {
     const canAutoplay = await testAutoplay();
     this.setState({ isAutoPlayable: canAutoplay });
     this.loadSettings();
-    !this.watchPartyYTPlayer && this.loadYouTube();
+    this.loadYouTube();
     this.init();
   }
 
@@ -575,7 +575,6 @@ export default class App extends React.Component<AppProps, AppState> {
           ) as HTMLMediaElement;
           leftVideo?.pause();
           this.watchPartyYTPlayer?.stopVideo();
-          console.log('watchPartyYTPlayer: ', this.watchPartyYTPlayer);
           // this.loadYouTube();
 
           if (this.isYouTube() && !this.watchPartyYTPlayer) {
@@ -588,7 +587,6 @@ export default class App extends React.Component<AppProps, AppState> {
             );
           } else {
             // Start this video
-            console.log('YT Start: ');
             this.doSrc(data.video, data.videoTS);
             // this.watchPartyYTPlayer.playVideo();
             // const playButton: any = document.querySelector('.ytp-button');
@@ -1534,6 +1532,7 @@ export default class App extends React.Component<AppProps, AppState> {
         volume={this.getVolume()}
         subtitled={this.isSubtitled()}
         currentTime={this.getCurrentTime()}
+        isCollapsed={this.state.isCollapsed}
         duration={this.getDuration()}
         disabled={!this.haveLock()}
         leaderTime={this.isHttp() ? this.getLeaderTime() : undefined}
@@ -1932,7 +1931,7 @@ export default class App extends React.Component<AppProps, AppState> {
                             allowFullScreen
                             frameBorder="0"
                             allow="autoplay"
-                            src="https://www.youtube.com/embed/?enablejsapi=1&controls=0&rel=0"
+                            src="https://www.youtube.com/embed/?enablejsapi=1&controls=0&rel=0&autoplay=1"
                           />
                         )}
                         {this.isVBrowser() &&
@@ -1962,10 +1961,11 @@ export default class App extends React.Component<AppProps, AppState> {
                                     ? 'block'
                                     : 'none',
                                 width: '100%',
-                                maxHeight:
-                                  'calc(100vh - 62px - 36px - 36px - 8px - 41px - 16px)',
+                                // maxHeight:
+                                //   'calc(100vh - 62px - 36px - 36px - 8px - 41px - 16px)',
                               }}
                               id="leftVideo"
+                              className="videoContent"
                               onEnded={this.onVideoEnded}
                               playsInline
                               // autoPlay

@@ -45,7 +45,9 @@ export class NewRoomButton extends React.Component<{
   };
 
   componentDidMount(): void {
-    this.createRoom();
+    setTimeout(() => {
+      this.createRoom();
+    }, 1000);
   }
 
   render() {

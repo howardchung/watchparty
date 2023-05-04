@@ -55,9 +55,10 @@ export function EmptyTheatre(props: IEmptyTheatreProps) {
     currentMedia,
     setLoadingFalse,
   } = props;
-  // React.useEffect(() => {
-  //   ((state as AppState).clipboard && (state as AppState).currentMedia) && setLoadingFalse();
-  // }, [])
+  React.useEffect(() => {
+    // ((state as AppState).clipboard && (state as AppState).currentMedia) && setLoadingFalse();
+    setLoadingFalse();
+  }, []);
 
   return (
     <main className={classes.content}>

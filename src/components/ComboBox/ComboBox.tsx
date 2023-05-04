@@ -23,7 +23,8 @@ import styles from './ComboBox.module.css';
 import MetaButton from '../../atoms/MetaButton';
 import clipboardIcon from '../../assets/icons/clipboard-paste.svg';
 import searchIcon from '../../assets/icons/search.svg';
-import { log, timeLog } from 'console';
+import BackIcon from '../../assets/icons/back.svg';
+// import { log, timeLog } from 'console';
 interface ComboBoxProps {
   setMedia: (e: any, data: DropdownProps) => void;
   playlistAdd: (e: any, data: DropdownProps) => void;
@@ -251,20 +252,13 @@ export class ComboBox extends React.Component<ComboBoxProps> {
             }}
           >
             <MetaButton
-              text=""
               onClick={() => toggleHome()}
-              child={
-                <Icon
-                  size="large"
-                  className="text-gray-dark"
-                  name="arrow left"
-                />
-              }
+              img={BackIcon}
             ></MetaButton>
 
             <div className={styles.inputContainer}>
               <span className="absolute left-3 top-3">
-                <img src={searchIcon} alt="s" className="h-6" />
+                <img src={searchIcon} alt="s" className="h-10" />
               </span>
               <div>
                 <input
@@ -319,12 +313,12 @@ export class ComboBox extends React.Component<ComboBoxProps> {
                       : getMediaDisplayName(currentMedia)
                   }
                   placeholder="Enter or paste your video URL"
-                  className="input w-full px-14 py-4 rounded-xl text-gray bg-white/90 border-none focus:outline-0 focus:border-none focus:ring-0"
+                  className="input w-full px-14 py-8 text-lg rounded-xl text-gray bg-white/90 border-none focus:outline-0 focus:border-none focus:ring-0"
                 />
               </div>
               <span className="absolute right-0 top-0 cursor-pointer ">
                 <button
-                  className=" bg-white/80   m-1 p-2  active:bg-white/50 border-none rounded-xl"
+                  className=" bg-white/80  m-1 p-3  active:bg-white/50 border-none rounded-xl"
                   onClick={async (e) => {
                     // const permission = await navigator.permissions.query({ name:  });
                     navigator.clipboard
@@ -337,7 +331,7 @@ export class ComboBox extends React.Component<ComboBoxProps> {
                       });
                   }}
                 >
-                  <img src={clipboardIcon} alt="s" className="h-6" />
+                  <img src={clipboardIcon} alt="s" className="h-8" />
                 </button>
               </span>
             </div>
@@ -346,7 +340,7 @@ export class ComboBox extends React.Component<ComboBoxProps> {
             <div className="relative w-[280px] flex">
               <button
                 onClick={() => toggleHome()}
-                className="btn btn-md font-bold text-[14px] bg-white hover:bg-white text-gray-dark rounded-xl border-none capitalize"
+                className="btn btn-lg  font-semibold text-lg bg-white hover:bg-white text-gray-dark rounded-xl border-none capitalize"
               >
                 <span>
                   <img src={playIcon} alt="" className="h-8 mr-2 opacity-70" />
@@ -359,7 +353,7 @@ export class ComboBox extends React.Component<ComboBoxProps> {
             <div className="dropdown dropdown-end w-[280px]">
               <label
                 tabIndex={1}
-                className="btn btn-md font-bold text-[14px] mx-1 hover:bg-white bg-white text-gray-dark rounded-xl outline-0 border-0 active:outline-0 focus:outline-0 capitalize w-full"
+                className="btn btn-lg font-semibold text-xl mx-1 hover:bg-white bg-white text-gray-dark rounded-xl outline-0 border-0 active:outline-0 focus:outline-0 capitalize w-full"
               >
                 <span>
                   <img src={playlistIcon} alt="" className="h-8 mr-2" />
