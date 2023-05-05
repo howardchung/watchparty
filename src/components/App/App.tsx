@@ -1049,6 +1049,7 @@ export default class App extends React.Component<AppProps, AppState> {
 
   doSrc = async (src: string, time: number) => {
     console.log('doSrc', src, time);
+    this.doSeek(time);
     // if (this.isScreenShare() || this.isFileShare() || this.isVBrowser()) {
     //   // No-op as we'll set video when WebRTC completes
     //   return;
@@ -1931,54 +1932,63 @@ export default class App extends React.Component<AppProps, AppState> {
                           </div>
                         )}
 
-                        {(this.isYouTube() || this.isVideo()) &&
-                          !this.state.isHome && (
-                            <div className="videoContent">
-                              <main
-                                style={{
-                                  display:
-                                    (this.isYouTube() || this.isVideo()) &&
-                                    !this.state.loading &&
-                                    !this.state.isHome
-                                      ? 'block'
-                                      : 'none',
-                                  position: 'relative',
-                                  paddingTop: '56.25%',
-                                  /* Player ratio: 100 / (1280 / 720) */
-                                }}
-                              >
-                                <ReactPlayer
-                                  ref={this.playerRef}
-                                  config={{
-                                    youtube: {
-                                      playerVars: {
-                                        // autoplay: 1,
-                                        controls: 0,
-                                        disablekb: 1,
-                                        iv_load_policy: 3,
-                                        modestbranding: 1,
-                                        rel: 0,
-                                        showinfo: 0,
-                                      },
-                                    },
-                                  }}
-                                  volume={this.getVolume()}
-                                  muted={this.state.isMute}
-                                  playing={!this.state.currentMediaPaused}
-                                  // muted={this.isMuted()}
-                                  className="react-player"
-                                  width="100%"
-                                  // playing={this.paused()}
-                                  // onPlay={}
-                                  height="100%"
-                                  id="leftYt"
-                                  url={this.state.currentMedia}
-                                  // autoplay
-                                />
-                              </main>
-                            </div>
+                        {/* {(this.isYouTube() || this.isVideo()) &&
+                          !this.state.isHome && ( */}
+                        <div
+                          className="videoContent"
+                          style={{
+                            display:
+                              (this.isYouTube() || this.isVideo()) &&
+                              !this.state.loading &&
+                              !this.state.isHome
+                                ? 'block'
+                                : 'none',
+                          }}
+                        >
+                          <main
+                            style={{
+                              // height: '100%',
+                              // width: '100%',
+                              position: 'relative',
+                              paddingTop: '56.25%',
+                              // // paddingTop: '56.88%'
+                              // /* Player ratio: 100 / (1280 / 720) */
+                            }}
+                          >
+                            <ReactPlayer
+                              ref={this.playerRef}
+                              config={{
+                                youtube: {
+                                  playerVars: {
+                                    // autoplay: 1,
+                                    controls: 0,
+                                    disablekb: 1,
+                                    iv_load_policy: 3,
+                                    modestbranding: 1,
+                                    rel: 0,
+                                    showinfo: 0,
+                                  },
+                                },
+                              }}
+                              volume={this.getVolume()}
+                              muted={this.state.isMute}
+                              playing={!this.state.currentMediaPaused}
+                              // muted={this.isMuted()}
+                              className="react-player"
+                              width="100%"
+                              height="100%"
+                              // playing={this.paused()}
+                              // onPlay={}
+                              id="leftYt"
+                              url={this.state.currentMedia}
+                              onEnded={this.onVideoEnded}
+                              // autoplay
+                            />
+                          </main>
+                        </div>
+                        {/* )} */}
 
-                            // <iframe
+                        {/* // <iframe
                             //   style={{
                             //     display:
                             //       this.isYouTube() &&
@@ -1994,8 +2004,8 @@ export default class App extends React.Component<AppProps, AppState> {
                             //   frameBorder="0"
                             //   allow="autoplay"
                             //   src="https://www.youtube.com/embed/?enablejsapi=1&controls=0&rel=0&autoplay=1"
-                            // />
-                          )}
+                            // /> */}
+
                         {/* {this.isVBrowser() &&
                           this.getVBrowserPass() &&
                           this.getVBrowserHost() ? (

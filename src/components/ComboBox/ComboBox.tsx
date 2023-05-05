@@ -253,7 +253,9 @@ export class ComboBox extends React.Component<ComboBoxProps> {
           >
             <MetaButton
               onClick={() => toggleHome()}
+              className="p-0 border-none"
               img={BackIcon}
+              imgClass="bg-gray-dark rounded-full"
             ></MetaButton>
 
             <div className={styles.inputContainer}>
