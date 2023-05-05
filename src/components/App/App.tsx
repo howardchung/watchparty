@@ -110,9 +110,6 @@ interface AppState {
   scrollTimestamp: number;
   unreadCount: number;
   fullScreen: boolean;
-  leftVideoFullScreen: boolean;
-  leftYtFullScreen: boolean;
-  leftVideoParentFullScreen: boolean;
   draggableChatEnabled: boolean;
   controlsTimestamp: number;
   watchOptions: SearchResult[];
@@ -181,9 +178,6 @@ export default class App extends React.Component<AppProps, AppState> {
     scrollTimestamp: 0,
     unreadCount: 0,
     fullScreen: false,
-    leftVideoFullScreen: false,
-    leftYtFullScreen: false,
-    leftVideoParentFullScreen: false,
     draggableChatEnabled: false,
     controlsTimestamp: 0,
     watchOptions: [],
@@ -1654,18 +1648,7 @@ export default class App extends React.Component<AppProps, AppState> {
   };
 
   onFullScreenChange = (e: any) => {
-    this.setState({
-      fullScreen: Boolean(document.fullscreenElement),
-      leftVideoFullScreen:
-        Boolean(document.fullscreenElement) &&
-        e.target.id === 'fullScreenContainer video',
-      leftYtFullScreen:
-        Boolean(document.fullscreenElement) &&
-        e.target.id === 'fullScreenContainer youtube',
-      leftVideoParentFullScreen:
-        Boolean(document.fullscreenElement) &&
-        e.target.id === 'fullScreenContainer vBrowser',
-    });
+    this.setState({ fullScreen: Boolean(document.fullscreenElement) });
   };
 
   onKeydown = (e: any) => {
@@ -2434,7 +2417,7 @@ export default class App extends React.Component<AppProps, AppState> {
                         key="youtube"
                         enabled={
                           this.state.draggableChatEnabled &&
-                          this.state.leftYtFullScreen
+                          this.state.fullScreen
                         }
                         renderVideo={(isDraggableChangingDimensions) => (
                           <iframe
@@ -2478,7 +2461,7 @@ export default class App extends React.Component<AppProps, AppState> {
                           key="vBrowser"
                           enabled={
                             this.state.draggableChatEnabled &&
-                            this.state.leftVideoParentFullScreen
+                            this.state.fullScreen
                           }
                           renderVideo={(isDraggableChangingDimensions) => (
                             <VBrowser
@@ -2514,19 +2497,19 @@ export default class App extends React.Component<AppProps, AppState> {
                           key="video"
                           enabled={
                             this.state.draggableChatEnabled &&
-                            this.state.leftVideoFullScreen
+                            this.state.fullScreen
                           }
                           renderVideo={(isDraggableChangingDimensions) => (
                             <video
                               style={{
                                 display:
                                   (this.usingNative() && !this.state.loading) ||
-                                  this.state.leftVideoFullScreen
+                                  this.state.fullScreen
                                     ? 'block'
                                     : 'none',
                                 width: '100%',
                                 height: '100%',
-                                maxHeight: this.state.leftVideoFullScreen
+                                maxHeight: this.state.fullScreen
                                   ? 'none'
                                   : 'calc(100vh - 62px - 36px - 36px - 8px - 41px - 16px)',
                               }}
