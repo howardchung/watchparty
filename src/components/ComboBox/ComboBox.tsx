@@ -44,6 +44,8 @@ interface ComboBoxProps {
   loadYouTube: Function;
   isCollapsed: boolean;
   toggleCollapse: Function;
+  isShowTheatreTopbar: boolean;
+  toggleShowTopbar: Function;
 }
 interface ComboState {
   inputMedia: string | undefined;
@@ -215,8 +217,10 @@ export class ComboBox extends React.Component<ComboBoxProps> {
       currentMedia,
       getMediaDisplayName,
       toggleIsUploadPress,
+      isShowTheatreTopbar,
       clipboard,
       toggleHome,
+      toggleShowTopbar,
     } = this.props;
     const { results } = this.state;
     return (
@@ -225,12 +229,12 @@ export class ComboBox extends React.Component<ComboBoxProps> {
         className="collapse_btn_container"
       >
         {/* ====================== COLLAPSE SWITCH ====================== */}
-        {this.props.isCollapsed && (
+        {!this.props.isCollapsed && !this.props.isShowTheatreTopbar && (
           <main className="flex justify-center">
             <div className="absolute top-[-10px] text-center ">
               <button
                 onClick={() => {
-                  this.props.toggleCollapse();
+                  this.props.toggleShowTopbar();
                 }}
                 className="btn bg-white border-none w-32 rounded-lg hover:bg-white text-gray-dark"
               >
@@ -242,7 +246,7 @@ export class ComboBox extends React.Component<ComboBoxProps> {
         {/* ====================== COLLAPSE SWITCH END ====================== */}
 
         {/* ====================== SEARCH CONTAINER ====================== */}
-        {!this.props.isCollapsed && (
+        {this.props.isShowTheatreTopbar && !this.props.isCollapsed && (
           <div
             style={{
               display: 'flex',
@@ -252,10 +256,11 @@ export class ComboBox extends React.Component<ComboBoxProps> {
             }}
           >
             <MetaButton
+              backShadow
               onClick={() => toggleHome()}
               className="p-0 border-none"
               img={BackIcon}
-              imgClass="bg-gray-dark rounded-full"
+              imgClass="rounded-full h-16"
             ></MetaButton>
 
             <div className={styles.inputContainer}>
@@ -339,7 +344,7 @@ export class ComboBox extends React.Component<ComboBoxProps> {
             </div>
 
             {/* ====================== NOW PLAYING BTN ====================== */}
-            <div className="relative w-[280px] flex">
+            {/* <div className="relative w-[280px] flex">
               <button
                 onClick={() => toggleHome()}
                 className="btn btn-lg  font-semibold text-lg bg-white hover:bg-white text-gray-dark rounded-xl border-none capitalize"
@@ -349,7 +354,7 @@ export class ComboBox extends React.Component<ComboBoxProps> {
                 </span>{' '}
                 Now Playing
               </button>
-            </div>
+            </div> */}
 
             {/* ====================== PLAYLIST content ====================== */}
             <div className="dropdown dropdown-end w-[280px]">

@@ -152,6 +152,7 @@ export interface AppState {
   isTheatre: boolean;
   isMute: boolean;
   volume: number;
+  isShowTheatreTopbar: boolean;
 }
 
 export default class App extends React.Component<AppProps, AppState> {
@@ -222,6 +223,7 @@ export default class App extends React.Component<AppProps, AppState> {
     isTheatre: false,
     isMute: false,
     volume: 0.6,
+    isShowTheatreTopbar: false,
   };
   socket: Socket = null as any;
   watchPartyYTPlayer: any = null;
@@ -381,7 +383,10 @@ export default class App extends React.Component<AppProps, AppState> {
     // };
   };
   toggleCollapse = () => {
-    this.setState({ isCollapsed: !this.state.isCollapsed });
+    this.setState({
+      isCollapsed: !this.state.isCollapsed,
+      isShowTheatreTopbar: false,
+    });
   };
   toggleIsUploadPress = () => {
     this.setState({ isUploadPress: !this.state.isUploadPress });
@@ -838,7 +843,9 @@ export default class App extends React.Component<AppProps, AppState> {
     }
     this.setState({ isScreenSharing: false, isScreenSharingFile: false });
   };
-
+  toggleShowTopbar = () => {
+    this.setState({ isShowTheatreTopbar: !this.state.isShowTheatreTopbar });
+  };
   updateScreenShare = async () => {
     if (!this.isScreenShare() && !this.isFileShare()) {
       return;
@@ -1001,9 +1008,9 @@ export default class App extends React.Component<AppProps, AppState> {
     }
     return 0;
   };
-  toogleCollapse = () => {
-    this.setState({ isCollapsed: !this.state.isCollapsed });
-  };
+  // toggleCollapse = () => {
+  //   this.setState({ isCollapsed: !this.state.isCollapsed });
+  // };
   isPauseDisabled = () => {
     return this.isScreenShare() || this.isVBrowser();
   };
@@ -1536,6 +1543,7 @@ export default class App extends React.Component<AppProps, AppState> {
     const sharer = this.state.participants.find((p) => p.isScreenShare);
     const controls = (
       <Controls
+        isShowTheatreTopbar={this.state.isShowTheatreTopbar}
         key={this.state.controlsTimestamp}
         togglePlay={this.togglePlay}
         onSeek={this.onSeek}
@@ -1818,6 +1826,8 @@ export default class App extends React.Component<AppProps, AppState> {
                     {!this.state.fullScreen && !this.state.isHome && (
                       <React.Fragment>
                         <ComboBox
+                          isShowTheatreTopbar={this.state.isShowTheatreTopbar}
+                          toggleShowTopbar={this.toggleShowTopbar}
                           isCollapsed={this.state.isCollapsed}
                           toggleCollapse={this.toggleCollapse}
                           loadYouTube={this.loadYouTube}
@@ -1875,7 +1885,7 @@ export default class App extends React.Component<AppProps, AppState> {
                       {!this.state.isHome && (
                         <section
                           className="absolute top-0 w-full h-[100vh] bg-transparent z-[1]"
-                          onClick={() => this.toogleCollapse()}
+                          onClick={() => this.toggleCollapse()}
                         ></section>
                       )}
                       <div id="playerContainer">
