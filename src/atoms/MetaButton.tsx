@@ -15,7 +15,7 @@ const MetaButton: React.FunctionComponent<IMetaButtonProps> = (props) => {
   return (
     <button
       onClick={onClick}
-      className={`bg-gray-dark   border-none rounded-full ${props.className}`}
+      className={`border-0 right-0 outline-0  rounded-full ${props.className}`}
     >
       {text}
       {img && <img src={img} alt="__" className={props.imgClass} />}
