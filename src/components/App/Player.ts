@@ -22,4 +22,5 @@ export abstract class Player {
   public abstract getTimeRanges: () => { start: number; end: number }[];
   public abstract setLoop: (loop: boolean) => void;
   public abstract getVideoEl: () => HTMLMediaElement;
+  public abstract getFullScreenContainer: () => HTMLElement;
 }

@@ -11,6 +11,10 @@ export class HTML implements Player {
     return document.getElementById(this.elId) as HTMLMediaElement;
   };
 
+  getFullScreenContainer = (): HTMLElement => {
+    return document.getElementById('fullScreenContainer video') as HTMLElement;
+  };
+
   getCurrentTime = () => {
     return this.getVideoEl()?.currentTime ?? 0;
   };

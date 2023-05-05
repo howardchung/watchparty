@@ -1,0 +1,10 @@
+.dragCorner {
+  cursor: move;
+  z-index: 2;
+  opacity: 0.2;
+  transition: 1s;
+}
+
+.dragCorner:hover {
+  opacity: 1;
+}

@@ -58,6 +58,7 @@ import firebase from 'firebase/compat/app';
 import { SubtitleModal } from '../Modal/SubtitleModal';
 import { HTML } from './HTML';
 import { YouTube } from './YouTube';
+import { DraggableChat } from '../Chat/DraggableChat';
 import type WebTorrent from 'webtorrent';
 import styles from './App.module.css';
 
@@ -109,6 +110,10 @@ interface AppState {
   scrollTimestamp: number;
   unreadCount: number;
   fullScreen: boolean;
+  leftVideoFullScreen: boolean;
+  leftYtFullScreen: boolean;
+  leftVideoParentFullScreen: boolean;
+  draggableChatEnabled: boolean;
   controlsTimestamp: number;
   watchOptions: SearchResult[];
   isVBrowser: boolean;
@@ -176,6 +181,10 @@ export default class App extends React.Component<AppProps, AppState> {
     scrollTimestamp: 0,
     unreadCount: 0,
     fullScreen: false,
+    leftVideoFullScreen: false,
+    leftYtFullScreen: false,
+    leftVideoParentFullScreen: false,
+    draggableChatEnabled: false,
     controlsTimestamp: 0,
     watchOptions: [],
     isVBrowser: false,
@@ -251,6 +260,9 @@ export default class App extends React.Component<AppProps, AppState> {
 
     const canAutoplay = await testAutoplay();
     this.setState({ isAutoPlayable: canAutoplay });
+    this.setState({
+      draggableChatEnabled: Boolean(getCurrentSettings().chatDraggableEnabled),
+    });
     this.loadSettings();
     this.loadYouTube();
     this.init();
@@ -963,6 +975,7 @@ export default class App extends React.Component<AppProps, AppState> {
           autoGainControl: false,
           channelCount: 2,
           echoCancellation: false,
+          //@ts-ignore
           latency: 0,
           noiseSuppression: false,
           sampleRate: 48000,
@@ -1620,6 +1633,10 @@ export default class App extends React.Component<AppProps, AppState> {
     }
   };
 
+  toggleDraggableChat = () => {
+    this.setState({ draggableChatEnabled: !this.state.draggableChatEnabled });
+  };
+
   roomSeek = (e: any, time: number) => {
     let target = time;
     // Read the time from the click event if it exists
@@ -1636,8 +1653,19 @@ export default class App extends React.Component<AppProps, AppState> {
     this.socket.emit('CMD:seek', this.state.isLiveHls ? hlsTarget : target);
   };
 
-  onFullScreenChange = () => {
-    this.setState({ fullScreen: Boolean(document.fullscreenElement) });
+  onFullScreenChange = (e: any) => {
+    this.setState({
+      fullScreen: Boolean(document.fullscreenElement),
+      leftVideoFullScreen:
+        Boolean(document.fullscreenElement) &&
+        e.target.id === 'fullScreenContainer video',
+      leftYtFullScreen:
+        Boolean(document.fullscreenElement) &&
+        e.target.id === 'fullScreenContainer youtube',
+      leftVideoParentFullScreen:
+        Boolean(document.fullscreenElement) &&
+        e.target.id === 'fullScreenContainer vBrowser',
+    });
   };
 
   onKeydown = (e: any) => {
@@ -1665,9 +1693,11 @@ export default class App extends React.Component<AppProps, AppState> {
       if (this.playingVBrowser() && !isMobile()) {
         // Can't really control the VBrowser on mobile anyway, so just fullscreen the video
         // https://github.com/howardchung/watchparty/issues/208
-        container = document.getElementById('leftVideoParent') as HTMLElement;
+        container = document.getElementById(
+          'fullScreenContainer vBrowser'
+        ) as HTMLElement;
       } else {
-        container = this.Player().getVideoEl();
+        container = this.Player().getFullScreenContainer();
       }
     }
     if (
@@ -1990,6 +2020,7 @@ export default class App extends React.Component<AppProps, AppState> {
           setRoomTitleColor={this.setRoomTitleColor}
           mediaPath={this.state.mediaPath}
           setMediaPath={this.setMediaPath}
+          toggleDraggableChat={this.toggleDraggableChat}
         />
       </Grid.Column>
     );
@@ -2386,52 +2417,126 @@ export default class App extends React.Component<AppProps, AppState> {
                             )}
                         </div>
                       )}
-                      <iframe
-                        style={{
-                          display:
-                            this.usingYoutube() && !this.state.loading
-                              ? 'block'
-                              : 'none',
-                        }}
-                        title="YouTube"
-                        id="leftYt"
-                        className={styles.videoContent}
-                        allowFullScreen
-                        frameBorder="0"
-                        allow="autoplay"
-                        src="https://www.youtube.com/embed/?enablejsapi=1&controls=0&rel=0"
+                      <DraggableChat
+                        chat={this.state.chat}
+                        nameMap={this.state.nameMap}
+                        pictureMap={this.state.pictureMap}
+                        socket={this.socket}
+                        scrollTimestamp={this.state.scrollTimestamp}
+                        getMediaDisplayName={this.getMediaDisplayName}
+                        isChatDisabled={this.state.isChatDisabled}
+                        owner={this.state.owner}
+                        user={this.props.user}
+                        ref={this.chatRef}
+                        hide={!this.usingYoutube()}
+                        isLiveHls={this.state.isLiveHls}
+                        id="youtube"
+                        key="youtube"
+                        enabled={
+                          this.state.draggableChatEnabled &&
+                          this.state.leftYtFullScreen
+                        }
+                        renderVideo={(isDraggableChangingDimensions) => (
+                          <iframe
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              pointerEvents: isDraggableChangingDimensions
+                                ? 'none' // This will prevent poor performance when dragging or resizing the draggable chat overlay.
+                                : 'auto',
+                              display:
+                                this.usingYoutube() && !this.state.loading
+                                  ? 'block'
+                                  : 'none',
+                            }}
+                            title="YouTube"
+                            id="leftYt"
+                            className="videoContent"
+                            frameBorder="0"
+                            allow="autoplay"
+                            src="https://www.youtube.com/embed/?enablejsapi=1&controls=0&rel=0"
+                          />
+                        )}
                       />
                       {this.playingVBrowser() &&
                       this.getVBrowserPass() &&
                       this.getVBrowserHost() ? (
-                        <VBrowser
-                          username={this.socket.id}
-                          password={this.getVBrowserPass()}
-                          hostname={this.getVBrowserHost()}
-                          controlling={this.state.controller === this.socket.id}
-                          resolution={this.state.vBrowserResolution}
-                          doPlay={this.localPlay}
-                          setResolution={(data: string) =>
-                            this.setState({ vBrowserResolution: data })
+                        <DraggableChat
+                          chat={this.state.chat}
+                          nameMap={this.state.nameMap}
+                          pictureMap={this.state.pictureMap}
+                          socket={this.socket}
+                          scrollTimestamp={this.state.scrollTimestamp}
+                          getMediaDisplayName={this.getMediaDisplayName}
+                          isChatDisabled={this.state.isChatDisabled}
+                          owner={this.state.owner}
+                          user={this.props.user}
+                          ref={this.chatRef}
+                          hide={!this.playingVBrowser()}
+                          isLiveHls={this.state.isLiveHls}
+                          id="vBrowser"
+                          key="vBrowser"
+                          enabled={
+                            this.state.draggableChatEnabled &&
+                            this.state.leftVideoParentFullScreen
                           }
+                          renderVideo={(isDraggableChangingDimensions) => (
+                            <VBrowser
+                              username={this.socket.id}
+                              password={this.getVBrowserPass()}
+                              hostname={this.getVBrowserHost()}
+                              controlling={
+                                this.state.controller === this.socket.id
+                              }
+                              resolution={this.state.vBrowserResolution}
+                              doPlay={this.localPlay}
+                              setResolution={(data: string) =>
+                                this.setState({ vBrowserResolution: data })
+                              }
+                            />
+                          )}
                         />
                       ) : (
-                        <video
-                          style={{
-                            display:
-                              (this.usingNative() && !this.state.loading) ||
-                              this.state.fullScreen
-                                ? 'block'
-                                : 'none',
-                            width: '100%',
-                            maxHeight:
-                              'calc(100vh - 62px - 36px - 36px - 8px - 41px - 16px)',
-                          }}
-                          id="leftVideo"
-                          onEnded={this.onVideoEnded}
-                          playsInline
-                          onClick={this.roomTogglePlay}
-                        ></video>
+                        <DraggableChat
+                          chat={this.state.chat}
+                          nameMap={this.state.nameMap}
+                          pictureMap={this.state.pictureMap}
+                          socket={this.socket}
+                          scrollTimestamp={this.state.scrollTimestamp}
+                          getMediaDisplayName={this.getMediaDisplayName}
+                          isChatDisabled={this.state.isChatDisabled}
+                          owner={this.state.owner}
+                          user={this.props.user}
+                          ref={this.chatRef}
+                          hide={!this.usingNative()}
+                          isLiveHls={this.state.isLiveHls}
+                          id="video"
+                          key="video"
+                          enabled={
+                            this.state.draggableChatEnabled &&
+                            this.state.leftVideoFullScreen
+                          }
+                          renderVideo={(isDraggableChangingDimensions) => (
+                            <video
+                              style={{
+                                display:
+                                  (this.usingNative() && !this.state.loading) ||
+                                  this.state.leftVideoFullScreen
+                                    ? 'block'
+                                    : 'none',
+                                width: '100%',
+                                height: '100%',
+                                maxHeight: this.state.leftVideoFullScreen
+                                  ? 'none'
+                                  : 'calc(100vh - 62px - 36px - 36px - 8px - 41px - 16px)',
+                              }}
+                              id="leftVideo"
+                              onEnded={this.onVideoEnded}
+                              playsInline
+                              onClick={this.roomTogglePlay}
+                            ></video>
+                          )}
+                        />
                       )}
                     </div>
                   </div>
