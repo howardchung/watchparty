@@ -1,7 +1,5 @@
 import React, {
   SyntheticEvent,
-  useEffect,
-  useRef,
   useState,
   PropsWithChildren,
   useCallback,
