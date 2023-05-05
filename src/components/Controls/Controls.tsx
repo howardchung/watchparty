@@ -36,6 +36,7 @@ interface ControlsProps {
   leaderTime?: number;
   isPauseDisabled?: boolean;
   isCollapsed: boolean;
+  isShowTheatreTopbar: boolean;
 }
 
 interface ControlState {
@@ -121,7 +122,7 @@ export class Controls extends React.Component<ControlsProps> {
               gap: '10px',
               alignItems: 'center',
             }}
-            className="absolute top-[46%] left-[40%]"
+            className="absolute top-[46%] left-[38%]"
           >
             <MetaButton
               onClick={() => onSeek(null, currentTime - 10)}
@@ -274,14 +275,13 @@ export class Controls extends React.Component<ControlsProps> {
                 {this.state.isShowAllControls && (
                   <>
                     {' '}
-                    <MetaButton
+                    {/* <MetaButton
                       onClick={() => showSubtitle()}
                       img={ccIcon}
-                      className={`bg-transparent ${
-                        subtitled ? 'opacity-100' : 'opacity-50'
-                      }`}
+                      className={`bg-transparent ${subtitled ? 'opacity-100' : 'opacity-50'
+                        }`}
                       imgClass="h-14"
-                    />
+                    /> */}
                     <MetaButton
                       onClick={() => toggleMute()}
                       img={muted ? muteIcon : vlmIcon}
