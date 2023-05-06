@@ -5,6 +5,16 @@
   transition: 1s;
 }
 
+.collapseCorner {
+  cursor: pointer;
+  z-index: 2;
+  transition: 1s;
+}
+
 .dragCorner:hover {
   opacity: 1;
+}
+
+.collapseCorner:hover {
+  opacity: 1 !important;
 }

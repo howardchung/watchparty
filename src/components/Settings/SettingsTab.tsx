@@ -51,6 +51,7 @@ interface SettingsTabProps {
   mediaPath: string | undefined;
   setMediaPath: (path: string) => void;
   toggleDraggableChat: () => void;
+  resetChatDraggable: () => void;
 }
 
 export const SettingsTab = ({
@@ -75,6 +76,7 @@ export const SettingsTab = ({
   mediaPath,
   setMediaPath,
   toggleDraggableChat,
+  resetChatDraggable,
 }: SettingsTabProps) => {
   const [updateTS, setUpdateTS] = useState(0);
   const [permModalOpen, setPermModalOpen] = useState(false);
@@ -419,7 +421,7 @@ export const SettingsTab = ({
         updateTS={updateTS}
         icon="external"
         name="Enable chat box overlay in full screen mode"
-        description="Enables a moveable and resizable chat box overlay in full screen mode."
+        description="Enable a moveable and resizable chat box overlay in full screen mode."
         checked={Boolean(getCurrentSettings().chatDraggableEnabled)}
         disabled={false}
         onChange={(_e, data) => {
@@ -441,11 +443,13 @@ export const SettingsTab = ({
         checked={Boolean(getCurrentSettings().chatDraggableEnabled)}
         disabled={false}
         onClick={() => {
+          resetChatDraggable();
           updateSettings(
             JSON.stringify({
               ...getCurrentSettings(),
               chatDraggablePosition: undefined,
               chatDraggableSize: undefined,
+              chatDraggableCollapsed: undefined,
             })
           );
         }}

@@ -156,6 +156,7 @@ interface AppState {
   mediaPath: string | undefined;
   roomPlaybackRate: number;
   isLiveHls: boolean;
+  chatDraggableVersion: number;
 }
 
 export default class App extends React.Component<AppProps, AppState> {
@@ -220,6 +221,7 @@ export default class App extends React.Component<AppProps, AppState> {
     mediaPath: undefined,
     roomPlaybackRate: 0,
     isLiveHls: false,
+    chatDraggableVersion: 0,
   };
   socket: Socket = null as any;
   mediasoupPubSocket: Socket | null = null;
@@ -1631,6 +1633,12 @@ export default class App extends React.Component<AppProps, AppState> {
     this.setState({ draggableChatEnabled: !this.state.draggableChatEnabled });
   };
 
+  resetChatDraggable = () => {
+    this.setState((prevState) => ({
+      chatDraggableVersion: prevState.chatDraggableVersion + 1,
+    }));
+  };
+
   roomSeek = (e: any, time: number) => {
     let target = time;
     // Read the time from the click event if it exists
@@ -1861,38 +1869,44 @@ export default class App extends React.Component<AppProps, AppState> {
     );
     const displayRightContent =
       this.state.showRightBar || this.state.fullScreen;
-    const rightBar = (
+    const rightBar = (rightBarContainerStyle = {}, showNameInput = true) => (
       <Grid.Column
         width={displayRightContent ? 4 : 1}
-        style={{ display: 'flex', flexDirection: 'column' }}
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          ...rightBarContainerStyle,
+        }}
         className={`${
           this.state.fullScreen
             ? styles.fullHeightColumnFullscreen
             : styles.fullHeightColumn
         }`}
       >
-        <Form autoComplete="off">
-          <Input
-            inverted
-            fluid
-            label={'My name is:'}
-            value={this.state.myName}
-            onChange={this.updateName}
-            style={{ visibility: displayRightContent ? '' : 'hidden' }}
-            icon={
-              <Icon
-                onClick={async () =>
-                  this.updateName(null, { value: await generateName() })
-                }
-                name="random"
-                inverted
-                circular
-                link
-                title="Generate a random name"
-              />
-            }
-          />
-        </Form>
+        {showNameInput && (
+          <Form autoComplete="off">
+            <Input
+              inverted
+              fluid
+              label={'My name is:'}
+              value={this.state.myName}
+              onChange={this.updateName}
+              style={{ visibility: displayRightContent ? '' : 'hidden' }}
+              icon={
+                <Icon
+                  onClick={async () =>
+                    this.updateName(null, { value: await generateName() })
+                  }
+                  name="random"
+                  inverted
+                  circular
+                  link
+                  title="Generate a random name"
+                />
+              }
+            />
+          </Form>
+        )}
         {
           <Menu
             inverted
@@ -2004,6 +2018,7 @@ export default class App extends React.Component<AppProps, AppState> {
           mediaPath={this.state.mediaPath}
           setMediaPath={this.setMediaPath}
           toggleDraggableChat={this.toggleDraggableChat}
+          resetChatDraggable={this.resetChatDraggable}
         />
       </Grid.Column>
     );
@@ -2401,20 +2416,11 @@ export default class App extends React.Component<AppProps, AppState> {
                         </div>
                       )}
                       <DraggableChat
-                        chat={this.state.chat}
-                        nameMap={this.state.nameMap}
-                        pictureMap={this.state.pictureMap}
-                        socket={this.socket}
-                        scrollTimestamp={this.state.scrollTimestamp}
-                        getMediaDisplayName={this.getMediaDisplayName}
-                        isChatDisabled={this.state.isChatDisabled}
-                        owner={this.state.owner}
-                        user={this.props.user}
-                        ref={this.chatRef}
+                        rightBar={rightBar}
                         hide={!this.usingYoutube()}
-                        isLiveHls={this.state.isLiveHls}
                         id="youtube"
                         key="youtube"
+                        version={this.state.chatDraggableVersion}
                         enabled={
                           this.state.draggableChatEnabled &&
                           this.state.fullScreen
@@ -2445,20 +2451,11 @@ export default class App extends React.Component<AppProps, AppState> {
                       this.getVBrowserPass() &&
                       this.getVBrowserHost() ? (
                         <DraggableChat
-                          chat={this.state.chat}
-                          nameMap={this.state.nameMap}
-                          pictureMap={this.state.pictureMap}
-                          socket={this.socket}
-                          scrollTimestamp={this.state.scrollTimestamp}
-                          getMediaDisplayName={this.getMediaDisplayName}
-                          isChatDisabled={this.state.isChatDisabled}
-                          owner={this.state.owner}
-                          user={this.props.user}
-                          ref={this.chatRef}
-                          hide={!this.playingVBrowser()}
-                          isLiveHls={this.state.isLiveHls}
+                          rightBar={rightBar}
+                          hide={!this.playingVBrowser}
                           id="vBrowser"
                           key="vBrowser"
+                          version={this.state.chatDraggableVersion}
                           enabled={
                             this.state.draggableChatEnabled &&
                             this.state.fullScreen
@@ -2481,20 +2478,11 @@ export default class App extends React.Component<AppProps, AppState> {
                         />
                       ) : (
                         <DraggableChat
-                          chat={this.state.chat}
-                          nameMap={this.state.nameMap}
-                          pictureMap={this.state.pictureMap}
-                          socket={this.socket}
-                          scrollTimestamp={this.state.scrollTimestamp}
-                          getMediaDisplayName={this.getMediaDisplayName}
-                          isChatDisabled={this.state.isChatDisabled}
-                          owner={this.state.owner}
-                          user={this.props.user}
-                          ref={this.chatRef}
+                          rightBar={rightBar}
                           hide={!this.usingNative()}
-                          isLiveHls={this.state.isLiveHls}
                           id="video"
                           key="video"
+                          version={this.state.chatDraggableVersion}
                           enabled={
                             this.state.draggableChatEnabled &&
                             this.state.fullScreen
@@ -2574,7 +2562,7 @@ export default class App extends React.Component<AppProps, AppState> {
                   />
                 )}
               </Grid.Column>
-              {rightBar}
+              {rightBar()}
             </Grid.Row>
           </Grid>
         }
