@@ -2,7 +2,7 @@ import React, {
   SyntheticEvent,
   useState,
   PropsWithChildren,
-  useCallback,
+  useEffect,
 } from 'react';
 import { DraggableData, Rnd, RndResizeCallback } from 'react-rnd';
 import { Icon, Label } from 'semantic-ui-react';
@@ -20,6 +20,7 @@ interface DraggableChatProps {
   id: string;
   enabled: boolean;
   hide: boolean;
+  version: number;
   rightBar: (
     rightBarContainerStyle: object,
     showNameInput: boolean
@@ -37,27 +38,25 @@ export const DraggableChat = (props: PropsWithChildren<DraggableChatProps>) => {
   const [draggableCollapsed, setDraggableCollapsed] = useState(false);
   const [isChangingDimensions, setIsChangingDimensions] = useState(false);
 
-  const { id, enabled, renderVideo, rightBar } = props;
+  const { id, enabled, renderVideo, version, rightBar } = props;
 
-  const dimensionsRef = useCallback((node: Rnd) => {
-    if (node !== null) {
-      const { x, y } = getCurrentSettings().chatDraggablePosition ?? {};
-      setDraggablePositionX(x ?? DEFAULT_X_POSITION);
-      setDraggablePositionY(y ?? DEFAULT_Y_POSITION);
+  useEffect(() => {
+    const { x, y } = getCurrentSettings().chatDraggablePosition ?? {};
+    setDraggablePositionX(x ?? DEFAULT_X_POSITION);
+    setDraggablePositionY(y ?? DEFAULT_Y_POSITION);
 
-      const collapsed = getCurrentSettings().chatDraggableCollapsed ?? false;
-      setDraggableCollapsed(collapsed);
+    const collapsed = getCurrentSettings().chatDraggableCollapsed ?? false;
+    setDraggableCollapsed(collapsed);
 
-      if (collapsed) {
-        setDraggableWidth(COLLAPSED_WIDTH);
-        setDraggableHeight(COLLAPSED_HEIGHT);
-      } else {
-        const { width, height } = getCurrentSettings().chatDraggableSize ?? {};
-        setDraggableWidth(width ?? MIN_EXPANDED_WIDTH);
-        setDraggableHeight(height ?? MIN_EXPANDED_HEIGHT);
-      }
+    if (collapsed) {
+      setDraggableWidth(COLLAPSED_WIDTH);
+      setDraggableHeight(COLLAPSED_HEIGHT);
+    } else {
+      const { width, height } = getCurrentSettings().chatDraggableSize ?? {};
+      setDraggableWidth(width ?? MIN_EXPANDED_WIDTH);
+      setDraggableHeight(height ?? MIN_EXPANDED_HEIGHT);
     }
-  }, []);
+  }, [version]);
 
   const handleDragStop = (e: SyntheticEvent, data: DraggableData) => {
     setIsChangingDimensions(false);
@@ -125,7 +124,6 @@ export const DraggableChat = (props: PropsWithChildren<DraggableChatProps>) => {
         <Rnd
           position={{ x: draggablePositionX, y: draggablePositionY }}
           size={{ height: draggableHeight, width: draggableWidth }}
-          ref={dimensionsRef}
           onDragStart={() => setIsChangingDimensions(true)}
           onDragStop={handleDragStop as any}
           onResizeStart={() => setIsChangingDimensions(true)}

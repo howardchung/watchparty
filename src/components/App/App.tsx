@@ -156,6 +156,7 @@ interface AppState {
   mediaPath: string | undefined;
   roomPlaybackRate: number;
   isLiveHls: boolean;
+  chatDraggableVersion: number;
 }
 
 export default class App extends React.Component<AppProps, AppState> {
@@ -220,6 +221,7 @@ export default class App extends React.Component<AppProps, AppState> {
     mediaPath: undefined,
     roomPlaybackRate: 0,
     isLiveHls: false,
+    chatDraggableVersion: 0,
   };
   socket: Socket = null as any;
   mediasoupPubSocket: Socket | null = null;
@@ -1631,6 +1633,12 @@ export default class App extends React.Component<AppProps, AppState> {
     this.setState({ chatDraggableEnabled: !this.state.chatDraggableEnabled });
   };
 
+  resetChatDraggable = () => {
+    this.setState((prevState) => {
+      return { chatDraggableVersion: prevState.chatDraggableVersion + 1 };
+    });
+  };
+
   roomSeek = (e: any, time: number) => {
     let target = time;
     // Read the time from the click event if it exists
@@ -2010,6 +2018,7 @@ export default class App extends React.Component<AppProps, AppState> {
           mediaPath={this.state.mediaPath}
           setMediaPath={this.setMediaPath}
           toggleChatDraggable={this.toggleChatDraggable}
+          resetChatDraggable={this.resetChatDraggable}
         />
       </Grid.Column>
     );
@@ -2407,6 +2416,7 @@ export default class App extends React.Component<AppProps, AppState> {
                         </div>
                       )}
                       <DraggableChat
+                        version={this.state.chatDraggableVersion}
                         rightBar={rightBar}
                         hide={!this.usingYoutube()}
                         id="youtube"
@@ -2441,6 +2451,7 @@ export default class App extends React.Component<AppProps, AppState> {
                       this.getVBrowserPass() &&
                       this.getVBrowserHost() ? (
                         <DraggableChat
+                          version={this.state.chatDraggableVersion}
                           rightBar={rightBar}
                           hide={!this.playingVBrowser}
                           id="vBrowser"
@@ -2467,6 +2478,7 @@ export default class App extends React.Component<AppProps, AppState> {
                         />
                       ) : (
                         <DraggableChat
+                          version={this.state.chatDraggableVersion}
                           rightBar={rightBar}
                           hide={!this.usingNative()}
                           id="video"

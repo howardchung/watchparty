@@ -51,6 +51,7 @@ interface SettingsTabProps {
   mediaPath: string | undefined;
   setMediaPath: (path: string) => void;
   toggleChatDraggable: () => void;
+  resetChatDraggable: () => void;
 }
 
 export const SettingsTab = ({
@@ -75,6 +76,7 @@ export const SettingsTab = ({
   mediaPath,
   setMediaPath,
   toggleChatDraggable,
+  resetChatDraggable,
 }: SettingsTabProps) => {
   const [updateTS, setUpdateTS] = useState(0);
   const [permModalOpen, setPermModalOpen] = useState(false);
@@ -449,6 +451,7 @@ export const SettingsTab = ({
               chatDraggableCollapsed: undefined,
             })
           );
+          resetChatDraggable();
         }}
       />
       <SettingRow
