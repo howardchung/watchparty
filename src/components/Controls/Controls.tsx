@@ -36,6 +36,7 @@ interface ControlsProps {
   leaderTime?: number;
   isPauseDisabled?: boolean;
   isCollapsed: boolean;
+  isShowTheatreTopbar: boolean;
 }
 
 interface ControlState {
@@ -59,6 +60,7 @@ export class Controls extends React.Component<ControlsProps> {
   };
   toggleFScreen = (): void => {
     this.setState({ isFullScreen: !this.state.isFullScreen });
+    this.handleFullView();
   };
   onMouseOver = () => {
     // console.log('mouseover');
@@ -91,6 +93,46 @@ export class Controls extends React.Component<ControlsProps> {
           }%, #ccc ${this.props.volume * 100}%, #ccc 100%)`,
     };
   };
+  handleFullView = () => {
+    try {
+      if (window?.vuplex) {
+        // console.log('vuplex: ', { vuplex });
+        window?.vuplex.postMessage({
+          type: 'playerInfo',
+          message: {
+            volume: this.props.volume,
+            duration: this.props.duration,
+            currentTime: this.props.currentTime,
+            isMuted: this.props.muted,
+            isPaused: this.props.paused,
+          },
+        });
+        // The window.vuplex object already exists, so go ahead and send the message.
+        // sendMessageToCSharp();
+      } else {
+        // The window.vuplex object hasn't been initialized yet because the page is still
+        // loading, so add an event listener to send the message once it's initialized.
+        window.addEventListener(
+          'vuplexready',
+          window?.vuplex.postMessage({
+            type: 'playerInfo',
+            message: {
+              type: 'playerInfo',
+              message: {
+                volume: this.props.volume,
+                duration: this.props.duration,
+                currentTime: this.props.currentTime,
+                isMuted: this.props.muted,
+                isPaused: this.props.paused,
+              },
+            },
+          })
+        );
+      }
+    } catch (error) {
+      console.error('Something went wrong!');
+    }
+  };
   render() {
     const {
       togglePlay,
@@ -121,7 +163,7 @@ export class Controls extends React.Component<ControlsProps> {
               gap: '10px',
               alignItems: 'center',
             }}
-            className="absolute top-[46%] left-[40%]"
+            className="absolute top-[46%] left-[38%]"
           >
             <MetaButton
               onClick={() => onSeek(null, currentTime - 10)}
@@ -274,14 +316,13 @@ export class Controls extends React.Component<ControlsProps> {
                 {this.state.isShowAllControls && (
                   <>
                     {' '}
-                    <MetaButton
+                    {/* <MetaButton
                       onClick={() => showSubtitle()}
                       img={ccIcon}
-                      className={`bg-transparent ${
-                        subtitled ? 'opacity-100' : 'opacity-50'
-                      }`}
+                      className={`bg-transparent ${subtitled ? 'opacity-100' : 'opacity-50'
+                        }`}
                       imgClass="h-14"
-                    />
+                    /> */}
                     <MetaButton
                       onClick={() => toggleMute()}
                       img={muted ? muteIcon : vlmIcon}

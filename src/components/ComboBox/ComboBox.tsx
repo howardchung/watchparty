@@ -44,6 +44,8 @@ interface ComboBoxProps {
   loadYouTube: Function;
   isCollapsed: boolean;
   toggleCollapse: Function;
+  isShowTheatreTopbar: boolean;
+  toggleShowTopbar: Function;
 }
 interface ComboState {
   inputMedia: string | undefined;
@@ -67,7 +69,7 @@ export class ComboBox extends React.Component<ComboBoxProps> {
 
   componentDidMount() {
     if (this.inputRef.current) {
-      if (this.props.clipboard) {
+      if (this.props.clipboard || !this.props.currentMedia) {
         this.inputRef?.current.focus();
         // this.setState({ currentClipboard: this.props.clipboard })
       }
@@ -82,7 +84,24 @@ export class ComboBox extends React.Component<ComboBoxProps> {
   //     this.setState({ currentClipboard: this.props.clipboard })
   //   }
   // }
-
+  copyFromClipboard = () => {
+    navigator.clipboard
+      .readText()
+      .then((text) => {
+        console.log('Clipboard text: ', { text });
+        if (this.inputRef.current) {
+          this.inputRef?.current.focus();
+          this.inputRef.current.value = text;
+          // this.setState({ currentClipboard: text })
+        }
+      })
+      .catch((err) => {
+        if (this.inputRef.current) {
+          this.inputRef?.current.focus();
+          // this.setState({ currentClipboard: this.props.clipboard })
+        }
+      });
+  };
   setMediaAndClose = (e: any, data: DropdownProps) => {
     window.setTimeout(
       () => this.setState({ inputMedia: undefined, results: undefined }),
@@ -136,7 +155,7 @@ export class ComboBox extends React.Component<ComboBoxProps> {
                         video={result}
                         index={index}
                         onPlaylistAdd={this.props.playlistAdd}
-                        isYoutube
+                        isYoutube={!!result?.img}
                       />
                     </Grid.Column>
                   ))
@@ -215,8 +234,10 @@ export class ComboBox extends React.Component<ComboBoxProps> {
       currentMedia,
       getMediaDisplayName,
       toggleIsUploadPress,
+      isShowTheatreTopbar,
       clipboard,
       toggleHome,
+      toggleShowTopbar,
     } = this.props;
     const { results } = this.state;
     return (
@@ -225,12 +246,12 @@ export class ComboBox extends React.Component<ComboBoxProps> {
         className="collapse_btn_container"
       >
         {/* ====================== COLLAPSE SWITCH ====================== */}
-        {this.props.isCollapsed && (
+        {!this.props.isCollapsed && !this.props.isShowTheatreTopbar && (
           <main className="flex justify-center">
             <div className="absolute top-[-10px] text-center ">
               <button
                 onClick={() => {
-                  this.props.toggleCollapse();
+                  this.props.toggleShowTopbar();
                 }}
                 className="btn bg-white border-none w-32 rounded-lg hover:bg-white text-gray-dark"
               >
@@ -242,7 +263,7 @@ export class ComboBox extends React.Component<ComboBoxProps> {
         {/* ====================== COLLAPSE SWITCH END ====================== */}
 
         {/* ====================== SEARCH CONTAINER ====================== */}
-        {!this.props.isCollapsed && (
+        {this.props.isShowTheatreTopbar && !this.props.isCollapsed && (
           <div
             style={{
               display: 'flex',
@@ -252,10 +273,11 @@ export class ComboBox extends React.Component<ComboBoxProps> {
             }}
           >
             <MetaButton
+              backShadow
               onClick={() => toggleHome()}
               className="p-0 border-none"
               img={BackIcon}
-              imgClass="bg-gray-dark rounded-full"
+              imgClass="rounded-full h-16"
             ></MetaButton>
 
             <div className={styles.inputContainer}>
@@ -307,7 +329,7 @@ export class ComboBox extends React.Component<ComboBoxProps> {
                       toggleHome(null, false);
                     }
                   }}
-                  value={
+                  defaultValue={
                     this.state.inputMedia !== undefined
                       ? this.state.inputMedia
                       : clipboard
@@ -321,17 +343,7 @@ export class ComboBox extends React.Component<ComboBoxProps> {
               <span className="absolute right-0 top-0 cursor-pointer ">
                 <button
                   className=" bg-white/80  m-1 p-3  active:bg-white/50 border-none rounded-xl"
-                  onClick={async (e) => {
-                    // const permission = await navigator.permissions.query({ name:  });
-                    navigator.clipboard
-                      .readText()
-                      .then((text) => {
-                        toggleHome(text, false);
-                      })
-                      .catch((err) => {
-                        console.error('Failed to read clipboard text: ', err);
-                      });
-                  }}
+                  onClick={() => this.copyFromClipboard()}
                 >
                   <img src={clipboardIcon} alt="s" className="h-8" />
                 </button>
@@ -339,7 +351,7 @@ export class ComboBox extends React.Component<ComboBoxProps> {
             </div>
 
             {/* ====================== NOW PLAYING BTN ====================== */}
-            <div className="relative w-[280px] flex">
+            {/* <div className="relative w-[280px] flex">
               <button
                 onClick={() => toggleHome()}
                 className="btn btn-lg  font-semibold text-lg bg-white hover:bg-white text-gray-dark rounded-xl border-none capitalize"
@@ -349,7 +361,7 @@ export class ComboBox extends React.Component<ComboBoxProps> {
                 </span>{' '}
                 Now Playing
               </button>
-            </div>
+            </div> */}
 
             {/* ====================== PLAYLIST content ====================== */}
             <div className="dropdown dropdown-end w-[280px]">
@@ -365,7 +377,9 @@ export class ComboBox extends React.Component<ComboBoxProps> {
 
               <div
                 tabIndex={1}
-                className={`dropdown-content w-[50vw] bg-[#3A3A3A] p-2 rounded-md max-h-[98vh] min-h-[10vh] overflow-y-auto ${styles.playlist_content}`}
+                className={`dropdown-content w-[50vw] bg-[#3A3A3A] p-2 rounded-md max-h-[98vh] min-h-[10vh] overflow-y-auto ${
+                  this.props.playlist.length > 0 && styles.playlist_content
+                }`}
               >
                 <section className=" w-full ">
                   {this.props.playlist.map(

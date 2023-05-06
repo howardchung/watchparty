@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { createRef } from 'react';
 import { Button, ButtonGroup, DropdownProps, Icon } from 'semantic-ui-react';
 import { decodeEntities, formatTimestamp } from '../../utils';
 
 import classes from './ChatVideoCard.module.css';
+import ReactPlayer from 'react-player';
 
 const ChatVideoCard: React.FC<{
   video: PlaylistVideo;
@@ -15,6 +16,8 @@ const ChatVideoCard: React.FC<{
   onPlaylistAdd?: (e: any, data: DropdownProps) => void;
   isYoutube?: boolean;
   disabled?: boolean;
+  fromHome?: boolean;
+  toggleHome?: Function;
 }> = (props) => {
   const {
     video,
@@ -27,13 +30,16 @@ const ChatVideoCard: React.FC<{
     disabled,
     onPlaylistAdd,
     isYoutube,
+    fromHome,
+    toggleHome,
   } = props;
-
+  const thumbPlayer = React.createRef<ReactPlayer>();
   const handlePlayClick = React.useCallback(
     (e) => {
       if (onPlay) {
         onPlay(index);
       }
+      fromHome && toggleHome && toggleHome();
     },
     [onPlay, index]
   );
@@ -89,6 +95,21 @@ const ChatVideoCard: React.FC<{
                 alt={video.name}
               />
             )}
+          </div>
+        )}
+        {!isYoutube && (
+          <div className={classes.ThumbnailWrapper}>
+            <div className={classes.DurationLabel}>
+              {formatTimestamp(thumbPlayer.current?.getDuration())}
+            </div>
+            <ReactPlayer
+              height="100%"
+              width="100%"
+              ref={thumbPlayer}
+              url={video.url}
+              playing={false}
+              muted
+            />
           </div>
         )}
         {/* <Icon
