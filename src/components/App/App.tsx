@@ -156,7 +156,7 @@ interface AppState {
   mediaPath: string | undefined;
   roomPlaybackRate: number;
   isLiveHls: boolean;
-  chatDraggableVersion: number;
+  draggableChatVersion: number;
 }
 
 export default class App extends React.Component<AppProps, AppState> {
@@ -221,7 +221,7 @@ export default class App extends React.Component<AppProps, AppState> {
     mediaPath: undefined,
     roomPlaybackRate: 0,
     isLiveHls: false,
-    chatDraggableVersion: 0,
+    draggableChatVersion: 0,
   };
   socket: Socket = null as any;
   mediasoupPubSocket: Socket | null = null;
@@ -1633,9 +1633,9 @@ export default class App extends React.Component<AppProps, AppState> {
     this.setState({ draggableChatEnabled: !this.state.draggableChatEnabled });
   };
 
-  resetChatDraggable = () => {
+  resetDraggableChat = () => {
     this.setState((prevState) => ({
-      chatDraggableVersion: prevState.chatDraggableVersion + 1,
+      draggableChatVersion: prevState.draggableChatVersion + 1,
     }));
   };
 
@@ -2018,7 +2018,7 @@ export default class App extends React.Component<AppProps, AppState> {
           mediaPath={this.state.mediaPath}
           setMediaPath={this.setMediaPath}
           toggleDraggableChat={this.toggleDraggableChat}
-          resetChatDraggable={this.resetChatDraggable}
+          resetDraggableChat={this.resetDraggableChat}
         />
       </Grid.Column>
     );
@@ -2420,7 +2420,7 @@ export default class App extends React.Component<AppProps, AppState> {
                         hide={!this.usingYoutube()}
                         id="youtube"
                         key="youtube"
-                        version={this.state.chatDraggableVersion}
+                        version={this.state.draggableChatVersion}
                         enabled={
                           this.state.draggableChatEnabled &&
                           this.state.fullScreen
@@ -2455,7 +2455,7 @@ export default class App extends React.Component<AppProps, AppState> {
                           hide={!this.playingVBrowser}
                           id="vBrowser"
                           key="vBrowser"
-                          version={this.state.chatDraggableVersion}
+                          version={this.state.draggableChatVersion}
                           enabled={
                             this.state.draggableChatEnabled &&
                             this.state.fullScreen
@@ -2482,7 +2482,7 @@ export default class App extends React.Component<AppProps, AppState> {
                           hide={!this.usingNative()}
                           id="video"
                           key="video"
-                          version={this.state.chatDraggableVersion}
+                          version={this.state.draggableChatVersion}
                           enabled={
                             this.state.draggableChatEnabled &&
                             this.state.fullScreen
