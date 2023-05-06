@@ -95,6 +95,16 @@
   padding: 0 !important;
   width: 100% !important;
 }
+.playlist_content {
+  position: absolute;
+  right: -13px !important;
+  top: -18px !important;
+}
+.PlaylistMenu {
+  background: black !important;
+  padding: 0 !important;
+  width: 100% !important;
+}
 .PlaylistItem {
   background: inherit;
   padding: 0px !important;

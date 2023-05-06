@@ -23,7 +23,8 @@
   height: 70px;
   overflow: hidden;
   position: relative;
-  background: rgba(237, 33, 33, 0.825);
+  background: rgba(59, 59, 59, 0.825);
+  z-index: 0;
 }
 
 .Thumbnail {

@@ -67,47 +67,53 @@ export function EmptyTheatre(props: IEmptyTheatreProps) {
     <main className={classes.content}>
       <div className={classes.btn_area}>
         {/* ====================== NOW PLAYING ====================== */}
-        <div className="relative">
-          <button
-            onClick={() => toggleHome()}
-            className="btn btn-md font-bold text-[14px] bg-white hover:bg-white text-gray-dark rounded-xl border-none capitalize"
-          >
-            <span>
-              <img src={playIcon} alt="" className="h-8 mr-1 opacity-70" />
-            </span>{' '}
-            Now Playing
-          </button>
-        </div>
+        {currentMedia && (
+          <div className="relative">
+            <button
+              onClick={() => toggleHome()}
+              className="btn btn-md font-bold text-[14px] bg-white hover:bg-white text-gray-dark rounded-xl border-none capitalize"
+            >
+              <span>
+                <img src={playIcon} alt="" className="h-8 mr-1 opacity-70" />
+              </span>{' '}
+              Now Playing
+            </button>
+          </div>
+        )}
 
-        {/* ====================== PLAYLIST DROPDOWN ====================== */}
-        <div className="dropdown dropdown-end">
+        {/* ====================== PLAYLIST content ====================== */}
+        <div className="dropdown dropdown-end w-[250px]">
           <label
-            tabIndex={0}
-            className="btn btn-md font-bold text-[14px] hover:bg-white bg-white text-gray-dark rounded-xl outline-0 border-0 active:outline-0 focus:outline-0 capitalize"
+            tabIndex={1}
+            className="btn btn-md font-semibold text-xl mx-1 hover:bg-white bg-white text-gray-dark rounded-xl outline-0 border-0 active:outline-0 focus:outline-0 capitalize w-full"
           >
             <span>
-              <img src={playlistIcon} alt="" className="h-9 mr-1" />
+              <img src={playlistIcon} alt="" className="h-8 mr-2" />
             </span>
             Playlist ({props.playlist.length})
           </label>
 
           <div
-            tabIndex={0}
-            className="dropdown-content w-[60vw] bg-gray-dark relative h-[80vh] overflow-y-auto"
+            tabIndex={1}
+            className={`dropdown-content w-[50vw] bg-[#3A3A3A] p-2 rounded-md max-h-[98vh] min-h-[10vh] overflow-y-auto ${
+              props.playlist.length > 0 && classes.playlist_content
+            }`}
           >
-            <section className="absolute w-[550px] right-0 top-2">
+            <section className=" w-full ">
               {props.playlist.map((item: PlaylistVideo, index: number) => {
                 return (
                   <div
                     key={index}
-                    tabIndex={index}
-                    className={` w-full p-2 shadow bg-primary text-primary-content ${classes.PlaylistItem}`}
+                    // tabIndex={index}
+                    className={` card-compact w-full p-2 shadow bg-primary text-primary-content ${classes.PlaylistItem}`}
                   >
-                    <div style={{ width: '100%' }}>
+                    <div style={{ width: '100%', position: 'relative' }}>
                       <ChatVideoCard
+                        toggleHome={props.toggleHome}
                         video={item}
                         index={index}
                         controls
+                        fromHome
                         onPlay={(index) => {
                           props.setMedia(null, {
                             value: props.playlist[index]?.url,
@@ -132,17 +138,16 @@ export function EmptyTheatre(props: IEmptyTheatreProps) {
             {props.playlist.length === 0 && (
               <div
                 // style={{ color: 'white', fontSize: '1.2vw' }}
-                className="absolute w-[300px] right-0 top-2 p-2 shadow bg-primary text-primary-content"
+                className="w-full  shadow bg-transparent text-primary-content"
               >
-                <div className="card-body text-left disabled">
+                <div className="">
                   <h3 className=" text-center">Playlist Empty!</h3>
-                  <p className="">There are no items in the playlist.</p>
                 </div>
               </div>
             )}
           </div>
         </div>
-        {/* ====================== dropdown content end ====================== */}
+        {/* ====================== END PLAYLIST content ====================== */}
 
         {/* ======================  OLD VERESION DROPDOWN ====================== */}
         {/* <Dropdown
@@ -261,7 +266,7 @@ export function EmptyTheatre(props: IEmptyTheatreProps) {
         </div> */}
         <div className="grid relative w-full grid-cols-3 gap-3">
           <button
-            onClick={() => {}}
+            onClick={() => toggleHome()}
             className={`${classes.btnBoxShadow} bg-[#d20001] rounded-xl`}
           >
             <img className="mx-auto" src={yt} alt="" />
@@ -293,9 +298,9 @@ export function EmptyTheatre(props: IEmptyTheatreProps) {
           Alternatively, you can use the search link to look for YouTube URLs.
         </p>
       </div>
-      <div className="absolute left-3 bottom-3">
+      {/* <div className="absolute left-3 bottom-3">
         <img className="cursor-pointer" src={solarQuit} alt="solarQuit" />
-      </div>
+      </div> */}
     </main>
   );
 }
