@@ -42,6 +42,7 @@ interface ChatMessage extends ChatMessageBase {
 interface Settings {
   disableChatSound?: boolean;
   chatDraggableEnabled?: boolean;
+  chatDraggableCollapsed?: boolean;
   chatDraggableSize?: { width: string; height: string };
   chatDraggablePosition?: { x: number; y: number };
 }
