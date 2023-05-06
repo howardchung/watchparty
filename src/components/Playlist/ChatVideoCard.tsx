@@ -103,6 +103,8 @@ const ChatVideoCard: React.FC<{
               {formatTimestamp(thumbPlayer.current?.getDuration())}
             </div>
             <ReactPlayer
+              height="100%"
+              width="100%"
               ref={thumbPlayer}
               url={video.url}
               playing={false}
