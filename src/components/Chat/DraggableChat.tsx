@@ -20,7 +20,6 @@ interface DraggableChatProps {
   id: string;
   enabled: boolean;
   hide: boolean;
-  version: number;
   rightBar: (
     rightBarContainerStyle: object,
     showNameInput: boolean
@@ -38,31 +37,27 @@ export const DraggableChat = (props: PropsWithChildren<DraggableChatProps>) => {
   const [draggableCollapsed, setDraggableCollapsed] = useState(false);
   const [isChangingDimensions, setIsChangingDimensions] = useState(false);
 
-  const { id, enabled, renderVideo, version, rightBar } = props;
+  const { id, enabled, renderVideo, rightBar } = props;
 
-  const dimensionsRef = useCallback(
-    (node: Rnd) => {
-      if (node !== null) {
-        const { x, y } = getCurrentSettings().chatDraggablePosition ?? {};
-        setDraggablePositionX(x ?? DEFAULT_X_POSITION);
-        setDraggablePositionY(y ?? DEFAULT_Y_POSITION);
+  const dimensionsRef = useCallback((node: Rnd) => {
+    if (node !== null) {
+      const { x, y } = getCurrentSettings().chatDraggablePosition ?? {};
+      setDraggablePositionX(x ?? DEFAULT_X_POSITION);
+      setDraggablePositionY(y ?? DEFAULT_Y_POSITION);
 
-        const collapsed = getCurrentSettings().chatDraggableCollapsed ?? false;
-        setDraggableCollapsed(collapsed);
+      const collapsed = getCurrentSettings().chatDraggableCollapsed ?? false;
+      setDraggableCollapsed(collapsed);
 
-        if (collapsed) {
-          setDraggableWidth(COLLAPSED_WIDTH);
-          setDraggableHeight(COLLAPSED_HEIGHT);
-        } else {
-          const { width, height } =
-            getCurrentSettings().chatDraggableSize ?? {};
-          setDraggableWidth(width ?? MIN_EXPANDED_WIDTH);
-          setDraggableHeight(height ?? MIN_EXPANDED_HEIGHT);
-        }
+      if (collapsed) {
+        setDraggableWidth(COLLAPSED_WIDTH);
+        setDraggableHeight(COLLAPSED_HEIGHT);
+      } else {
+        const { width, height } = getCurrentSettings().chatDraggableSize ?? {};
+        setDraggableWidth(width ?? MIN_EXPANDED_WIDTH);
+        setDraggableHeight(height ?? MIN_EXPANDED_HEIGHT);
       }
-    },
-    [version]
-  );
+    }
+  }, []);
 
   const handleDragStop = (e: SyntheticEvent, data: DraggableData) => {
     setIsChangingDimensions(false);

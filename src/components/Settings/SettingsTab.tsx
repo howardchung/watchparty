@@ -51,7 +51,7 @@ interface SettingsTabProps {
   mediaPath: string | undefined;
   setMediaPath: (path: string) => void;
   toggleDraggableChat: () => void;
-  resetDraggableChat: () => void;
+  forceUpdateApp: () => void;
 }
 
 export const SettingsTab = ({
@@ -76,7 +76,7 @@ export const SettingsTab = ({
   mediaPath,
   setMediaPath,
   toggleDraggableChat,
-  resetDraggableChat,
+  forceUpdateApp,
 }: SettingsTabProps) => {
   const [updateTS, setUpdateTS] = useState(0);
   const [permModalOpen, setPermModalOpen] = useState(false);
@@ -443,7 +443,7 @@ export const SettingsTab = ({
         checked={Boolean(getCurrentSettings().chatDraggableEnabled)}
         disabled={false}
         onClick={() => {
-          resetDraggableChat();
+          forceUpdateApp();
           updateSettings(
             JSON.stringify({
               ...getCurrentSettings(),
