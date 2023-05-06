@@ -223,7 +223,7 @@ export default class App extends React.Component<AppProps, AppState> {
     isTheatre: false,
     isMute: false,
     volume: 0.6,
-    isShowTheatreTopbar: false,
+    isShowTheatreTopbar: true,
   };
   socket: Socket = null as any;
   watchPartyYTPlayer: any = null;
@@ -402,6 +402,7 @@ export default class App extends React.Component<AppProps, AppState> {
       this.setState({
         isHome: isRedirect ?? !this.state.isHome,
         currentMedia: media,
+        isUploadPress: false,
       });
     else if (media) {
       this.setState({
@@ -1713,8 +1714,13 @@ export default class App extends React.Component<AppProps, AppState> {
     // );
     return (
       <React.Fragment>
-        {this.state.isUploadPress && (
-          <UploadFile toggleIsUploadPress={this.toggleIsUploadPress} />
+        {this.state.isUploadPress && this.state.isHome && (
+          <UploadFile
+            playlistAdd={this.playlistAdd}
+            toggleIsUploadPress={this.toggleIsUploadPress}
+            toggleHome={this.toggleHome}
+            setMedia={this.setMedia}
+          />
         )}
         {this.state.multiStreamSelection && (
           <MultiStreamModal

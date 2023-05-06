@@ -8,6 +8,7 @@ import { XMLParser } from 'fast-xml-parser';
 // import config from './config';
 
 export function formatTimestamp(input: any) {
+  console.log('input: ', input);
   if (
     input === null ||
     input === undefined ||

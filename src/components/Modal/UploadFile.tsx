@@ -18,6 +18,9 @@ declare global {
 }
 export interface IUploadFileProps {
   toggleIsUploadPress: Function;
+  toggleHome: Function;
+  setMedia: Function;
+  playlistAdd: Function;
 }
 
 export default function UploadFile(props: IUploadFileProps) {
@@ -311,6 +314,10 @@ export default function UploadFile(props: IUploadFileProps) {
             </div>
             <div className="grid my-4 grid-cols-2 gap-4">
               <button
+                onClick={() => {
+                  props.playlistAdd(null, { value: video });
+                  props.toggleHome();
+                }}
                 className={`${
                   Number(progress) === 100
                     ? 'text-[#212121] bg-[#FFF]'
@@ -320,7 +327,11 @@ export default function UploadFile(props: IUploadFileProps) {
                 Add To playlist
               </button>
               <button
-                onClick={copyToClipboard}
+                onClick={() => {
+                  copyToClipboard();
+                  props.setMedia(null, { value: video });
+                  props.toggleHome();
+                }}
                 className={`${
                   Number(progress) === 100
                     ? `${classes.linearBackground} text-[#fff] `
