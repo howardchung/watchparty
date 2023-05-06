@@ -110,7 +110,7 @@ interface AppState {
   scrollTimestamp: number;
   unreadCount: number;
   fullScreen: boolean;
-  draggableChatEnabled: boolean;
+  chatDraggableEnabled: boolean;
   controlsTimestamp: number;
   watchOptions: SearchResult[];
   isVBrowser: boolean;
@@ -178,7 +178,7 @@ export default class App extends React.Component<AppProps, AppState> {
     scrollTimestamp: 0,
     unreadCount: 0,
     fullScreen: false,
-    draggableChatEnabled: false,
+    chatDraggableEnabled: false,
     controlsTimestamp: 0,
     watchOptions: [],
     isVBrowser: false,
@@ -255,7 +255,7 @@ export default class App extends React.Component<AppProps, AppState> {
     const canAutoplay = await testAutoplay();
     this.setState({ isAutoPlayable: canAutoplay });
     this.setState({
-      draggableChatEnabled: Boolean(getCurrentSettings().chatDraggableEnabled),
+      chatDraggableEnabled: Boolean(getCurrentSettings().chatDraggableEnabled),
     });
     this.loadSettings();
     this.loadYouTube();
@@ -1627,8 +1627,8 @@ export default class App extends React.Component<AppProps, AppState> {
     }
   };
 
-  toggleDraggableChat = () => {
-    this.setState({ draggableChatEnabled: !this.state.draggableChatEnabled });
+  toggleChatDraggable = () => {
+    this.setState({ chatDraggableEnabled: !this.state.chatDraggableEnabled });
   };
 
   roomSeek = (e: any, time: number) => {
@@ -2009,8 +2009,7 @@ export default class App extends React.Component<AppProps, AppState> {
           setRoomTitleColor={this.setRoomTitleColor}
           mediaPath={this.state.mediaPath}
           setMediaPath={this.setMediaPath}
-          toggleDraggableChat={this.toggleDraggableChat}
-          forceUpdateApp={() => this.forceUpdate()}
+          toggleChatDraggable={this.toggleChatDraggable}
         />
       </Grid.Column>
     );
@@ -2413,7 +2412,7 @@ export default class App extends React.Component<AppProps, AppState> {
                         id="youtube"
                         key="youtube"
                         enabled={
-                          this.state.draggableChatEnabled &&
+                          this.state.chatDraggableEnabled &&
                           this.state.fullScreen
                         }
                         renderVideo={(isDraggableChangingDimensions) => (
@@ -2447,7 +2446,7 @@ export default class App extends React.Component<AppProps, AppState> {
                           id="vBrowser"
                           key="vBrowser"
                           enabled={
-                            this.state.draggableChatEnabled &&
+                            this.state.chatDraggableEnabled &&
                             this.state.fullScreen
                           }
                           renderVideo={(isDraggableChangingDimensions) => (
@@ -2473,7 +2472,7 @@ export default class App extends React.Component<AppProps, AppState> {
                           id="video"
                           key="video"
                           enabled={
-                            this.state.draggableChatEnabled &&
+                            this.state.chatDraggableEnabled &&
                             this.state.fullScreen
                           }
                           renderVideo={(isDraggableChangingDimensions) => (

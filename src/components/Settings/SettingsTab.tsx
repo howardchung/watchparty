@@ -50,8 +50,7 @@ interface SettingsTabProps {
   setRoomTitleColor: (color: string) => void;
   mediaPath: string | undefined;
   setMediaPath: (path: string) => void;
-  toggleDraggableChat: () => void;
-  forceUpdateApp: () => void;
+  toggleChatDraggable: () => void;
 }
 
 export const SettingsTab = ({
@@ -75,8 +74,7 @@ export const SettingsTab = ({
   roomTitleColor,
   mediaPath,
   setMediaPath,
-  toggleDraggableChat,
-  forceUpdateApp,
+  toggleChatDraggable,
 }: SettingsTabProps) => {
   const [updateTS, setUpdateTS] = useState(0);
   const [permModalOpen, setPermModalOpen] = useState(false);
@@ -425,7 +423,7 @@ export const SettingsTab = ({
         checked={Boolean(getCurrentSettings().chatDraggableEnabled)}
         disabled={false}
         onChange={(_e, data) => {
-          toggleDraggableChat();
+          toggleChatDraggable();
           updateSettings(
             JSON.stringify({
               ...getCurrentSettings(),
@@ -443,7 +441,6 @@ export const SettingsTab = ({
         checked={Boolean(getCurrentSettings().chatDraggableEnabled)}
         disabled={false}
         onClick={() => {
-          forceUpdateApp();
           updateSettings(
             JSON.stringify({
               ...getCurrentSettings(),
