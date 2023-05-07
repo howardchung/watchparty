@@ -16,7 +16,7 @@ const HomeContainer = () => {
   return (
     <div className="bg-[#1E1E1E] w-full relative h-screen">
       <div className="pl-[3%] h-full pt-8">
-        <div className="h-full flex flex-col justify-end pb-[1rem]">
+        <div className="h-full flex flex-col justify-end lg:justify-center pb-[1rem]">
           <div className="flex space-x-6">
             <div
               className="relative flex items-end" /* className={`${selectBtn ===1 && "scale-0"}`} */
@@ -121,7 +121,7 @@ const HomeContainer = () => {
           </div>
 
           <div
-            className={`bg-[#3A3A3A] rounded-lg ${classes.scrollbarContainer} space-x-3 flex overflow-x-scroll whitespace-nowrap mt-10 p-4`}
+            className={`bg-[#3A3A3A] rounded-lg ${classes.scrollbarContainer} space-x-3 flex overflow-x-scroll whitespace-nowrap mt-8 p-4`}
           >
             <VideoListCard />
             <VideoListCard />
