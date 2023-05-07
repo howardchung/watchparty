@@ -149,10 +149,4 @@ export class YouTube implements Player {
   getVideoEl = (): HTMLMediaElement => {
     return document.getElementById('leftYt') as HTMLMediaElement;
   };
-
-  getFullScreenContainer = (): HTMLElement => {
-    return document.getElementById(
-      'fullScreenContainer youtube'
-    ) as HTMLMediaElement;
-  };
 }

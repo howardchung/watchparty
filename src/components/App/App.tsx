@@ -156,7 +156,6 @@ interface AppState {
   mediaPath: string | undefined;
   roomPlaybackRate: number;
   isLiveHls: boolean;
-  chatDraggableVersion: number;
 }
 
 export default class App extends React.Component<AppProps, AppState> {
@@ -221,7 +220,6 @@ export default class App extends React.Component<AppProps, AppState> {
     mediaPath: undefined,
     roomPlaybackRate: 0,
     isLiveHls: false,
-    chatDraggableVersion: 0,
   };
   socket: Socket = null as any;
   mediasoupPubSocket: Socket | null = null;
@@ -1633,10 +1631,16 @@ export default class App extends React.Component<AppProps, AppState> {
     this.setState({ chatDraggableEnabled: !this.state.chatDraggableEnabled });
   };
 
-  resetChatDraggable = () => {
-    this.setState((prevState) => {
-      return { chatDraggableVersion: prevState.chatDraggableVersion + 1 };
-    });
+  remountChatDraggable = () => {
+    // force remount
+    this.setState(
+      { chatDraggableEnabled: !this.state.chatDraggableEnabled },
+      () => {
+        this.setState({
+          chatDraggableEnabled: !this.state.chatDraggableEnabled,
+        });
+      }
+    );
   };
 
   roomSeek = (e: any, time: number) => {
@@ -1655,7 +1659,7 @@ export default class App extends React.Component<AppProps, AppState> {
     this.socket.emit('CMD:seek', this.state.isLiveHls ? hlsTarget : target);
   };
 
-  onFullScreenChange = (e: any) => {
+  onFullScreenChange = () => {
     this.setState({ fullScreen: Boolean(document.fullscreenElement) });
   };
 
@@ -1681,15 +1685,9 @@ export default class App extends React.Component<AppProps, AppState> {
   localFullScreen = async (bVideoOnly: boolean) => {
     let container = document.getElementById('theaterContainer') as HTMLElement;
     if (bVideoOnly || isMobile()) {
-      if (this.playingVBrowser() && !isMobile()) {
-        // Can't really control the VBrowser on mobile anyway, so just fullscreen the video
-        // https://github.com/howardchung/watchparty/issues/208
-        container = document.getElementById(
-          'fullScreenContainer vBrowser'
-        ) as HTMLElement;
-      } else {
-        container = this.Player().getFullScreenContainer();
-      }
+      // Can't really control the VBrowser on mobile anyway, so just fullscreen the video
+      // https://github.com/howardchung/watchparty/issues/208
+      container = document.getElementById('fullScreenContainer') as HTMLElement;
     }
     if (
       !container.requestFullscreen &&
@@ -2018,7 +2016,7 @@ export default class App extends React.Component<AppProps, AppState> {
           mediaPath={this.state.mediaPath}
           setMediaPath={this.setMediaPath}
           toggleChatDraggable={this.toggleChatDraggable}
-          resetChatDraggable={this.resetChatDraggable}
+          remountChatDraggable={this.remountChatDraggable}
         />
       </Grid.Column>
     );
@@ -2416,99 +2414,70 @@ export default class App extends React.Component<AppProps, AppState> {
                         </div>
                       )}
                       <DraggableChat
-                        version={this.state.chatDraggableVersion}
                         rightBar={rightBar}
-                        hide={!this.usingYoutube()}
-                        id="youtube"
-                        key="youtube"
                         enabled={
                           this.state.chatDraggableEnabled &&
                           this.state.fullScreen
                         }
                         renderVideo={(isDraggableChangingDimensions) => (
-                          <iframe
-                            style={{
-                              width: '100%',
-                              height: '100%',
-                              pointerEvents: isDraggableChangingDimensions
-                                ? 'none' // This will prevent poor performance when dragging or resizing the draggable chat overlay.
-                                : 'auto',
-                              display:
-                                this.usingYoutube() && !this.state.loading
-                                  ? 'block'
-                                  : 'none',
-                            }}
-                            title="YouTube"
-                            id="leftYt"
-                            className="videoContent"
-                            frameBorder="0"
-                            allow="autoplay"
-                            src="https://www.youtube.com/embed/?enablejsapi=1&controls=0&rel=0"
-                          />
-                        )}
-                      />
-                      {this.playingVBrowser() &&
-                      this.getVBrowserPass() &&
-                      this.getVBrowserHost() ? (
-                        <DraggableChat
-                          version={this.state.chatDraggableVersion}
-                          rightBar={rightBar}
-                          hide={!this.playingVBrowser}
-                          id="vBrowser"
-                          key="vBrowser"
-                          enabled={
-                            this.state.chatDraggableEnabled &&
-                            this.state.fullScreen
-                          }
-                          renderVideo={(isDraggableChangingDimensions) => (
-                            <VBrowser
-                              username={this.socket.id}
-                              password={this.getVBrowserPass()}
-                              hostname={this.getVBrowserHost()}
-                              controlling={
-                                this.state.controller === this.socket.id
-                              }
-                              resolution={this.state.vBrowserResolution}
-                              doPlay={this.localPlay}
-                              setResolution={(data: string) =>
-                                this.setState({ vBrowserResolution: data })
-                              }
-                            />
-                          )}
-                        />
-                      ) : (
-                        <DraggableChat
-                          version={this.state.chatDraggableVersion}
-                          rightBar={rightBar}
-                          hide={!this.usingNative()}
-                          id="video"
-                          key="video"
-                          enabled={
-                            this.state.chatDraggableEnabled &&
-                            this.state.fullScreen
-                          }
-                          renderVideo={(isDraggableChangingDimensions) => (
-                            <video
+                          <>
+                            <iframe
                               style={{
-                                display:
-                                  (this.usingNative() && !this.state.loading) ||
-                                  this.state.fullScreen
-                                    ? 'block'
-                                    : 'none',
                                 width: '100%',
                                 height: '100%',
-                                maxHeight: this.state.fullScreen
-                                  ? 'none'
-                                  : 'calc(100vh - 62px - 36px - 36px - 8px - 41px - 16px)',
+                                pointerEvents: isDraggableChangingDimensions
+                                  ? 'none' // This will prevent poor performance when dragging or resizing the draggable chat overlay.
+                                  : 'auto',
+                                display:
+                                  this.usingYoutube() && !this.state.loading
+                                    ? 'block'
+                                    : 'none',
                               }}
-                              id="leftVideo"
-                              onEnded={this.onVideoEnded}
-                              playsInline
-                              onClick={this.roomTogglePlay}
-                            ></video>
-                          )}
-                        />
-                      )}
+                              title="YouTube"
+                              id="leftYt"
+                              className="videoContent"
+                              frameBorder="0"
+                              allow="autoplay"
+                              src="https://www.youtube.com/embed/?enablejsapi=1&controls=0&rel=0"
+                            />
+                            {this.playingVBrowser() &&
+                            this.getVBrowserPass() &&
+                            this.getVBrowserHost() ? (
+                              <VBrowser
+                                username={this.socket.id}
+                                password={this.getVBrowserPass()}
+                                hostname={this.getVBrowserHost()}
+                                controlling={
+                                  this.state.controller === this.socket.id
+                                }
+                                resolution={this.state.vBrowserResolution}
+                                doPlay={this.localPlay}
+                                setResolution={(data: string) =>
+                                  this.setState({ vBrowserResolution: data })
+                                }
+                              />
+                            ) : (
+                              <video
+                                style={{
+                                  display:
+                                    this.usingNative() && !this.state.loading
+                                      ? 'block'
+                                      : 'none',
+                                  width: '100%',
+                                  height: '100%',
+                                  maxHeight: this.state.fullScreen
+                                    ? 'none'
+                                    : 'calc(100vh - 62px - 36px - 36px - 8px - 41px - 16px)',
+                                }}
+                                id="leftVideo"
+                                onEnded={this.onVideoEnded}
+                                playsInline
+                                onClick={this.roomTogglePlay}
+                              ></video>
+                            )}
+                          </>
+                        )}
+                      />
                     </div>
                   </div>
                   {this.state.roomMedia && controls}

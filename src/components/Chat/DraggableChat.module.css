@@ -18,3 +18,12 @@
 .collapseCorner:hover {
   opacity: 1 !important;
 }
+
+.draggable {
+  opacity: 1;
+  transition: opacity 0.3s linear;
+}
+
+.draggable.collapsed {
+  opacity: 0.3;
+}

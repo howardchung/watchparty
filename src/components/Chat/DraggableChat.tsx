@@ -17,10 +17,7 @@ const COLLAPSED_HEIGHT = '50px';
 const COLLAPSED_WIDTH = '320px';
 
 interface DraggableChatProps {
-  id: string;
   enabled: boolean;
-  hide: boolean;
-  version: number;
   rightBar: (
     rightBarContainerStyle: object,
     showNameInput: boolean
@@ -38,7 +35,7 @@ export const DraggableChat = (props: PropsWithChildren<DraggableChatProps>) => {
   const [draggableCollapsed, setDraggableCollapsed] = useState(false);
   const [isChangingDimensions, setIsChangingDimensions] = useState(false);
 
-  const { id, enabled, renderVideo, version, rightBar } = props;
+  const { enabled, renderVideo, rightBar } = props;
 
   useEffect(() => {
     const { x, y } = getCurrentSettings().chatDraggablePosition ?? {};
@@ -56,7 +53,7 @@ export const DraggableChat = (props: PropsWithChildren<DraggableChatProps>) => {
       setDraggableWidth(width ?? MIN_EXPANDED_WIDTH);
       setDraggableHeight(height ?? MIN_EXPANDED_HEIGHT);
     }
-  }, [version, enabled]);
+  }, [enabled]);
 
   const handleDragStop = (e: SyntheticEvent, data: DraggableData) => {
     setIsChangingDimensions(false);
@@ -113,15 +110,17 @@ export const DraggableChat = (props: PropsWithChildren<DraggableChatProps>) => {
 
   return (
     <div
-      id={'fullScreenContainer ' + id}
+      id="fullScreenContainer"
       style={{
         width: '100%',
         height: '100%',
-        display: props.hide ? 'none' : 'block',
       }}
     >
       {enabled && (
         <Rnd
+          className={`${classes.draggable} ${
+            draggableCollapsed ? classes.collapsed : ''
+          }`}
           position={{ x: draggablePositionX, y: draggablePositionY }}
           size={{ height: draggableHeight, width: draggableWidth }}
           onDragStart={() => setIsChangingDimensions(true)}
@@ -143,7 +142,6 @@ export const DraggableChat = (props: PropsWithChildren<DraggableChatProps>) => {
           minHeight={draggableCollapsed ? undefined : MIN_EXPANDED_HEIGHT}
         >
           <div
-            className="dragContainer"
             style={{
               width: '100%',
               height: '100%',
