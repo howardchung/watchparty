@@ -1867,7 +1867,7 @@ export default class App extends React.Component<AppProps, AppState> {
     );
     const displayRightContent =
       this.state.showRightBar || this.state.fullScreen;
-    const rightBar = (rightBarContainerStyle = {}, showNameInput = true) => (
+    const rightBar = (rightBarContainerStyle = {}, isDraggable = false) => (
       <Grid.Column
         width={displayRightContent ? 4 : 1}
         style={{
@@ -1881,7 +1881,7 @@ export default class App extends React.Component<AppProps, AppState> {
             : styles.fullHeightColumn
         }`}
       >
-        {showNameInput && (
+        {!isDraggable && (
           <Form autoComplete="off">
             <Input
               inverted
@@ -1973,6 +1973,7 @@ export default class App extends React.Component<AppProps, AppState> {
           user={this.props.user}
           ref={this.chatRef}
           isLiveHls={this.state.isLiveHls}
+          isDraggable={isDraggable}
         />
         {this.state.state === 'connected' && (
           <VideoChat

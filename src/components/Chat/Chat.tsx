@@ -27,7 +27,7 @@ import {
   TransitionGroup,
 } from 'react-transition-group';
 
-export interface ChatProps {
+interface ChatProps {
   chat: ChatMessage[];
   nameMap: StringDict;
   pictureMap: StringDict;
@@ -41,7 +41,6 @@ export interface ChatProps {
   owner: string | undefined;
   ref: RefObject<Chat>;
   isLiveHls: boolean;
-  outerContainerStyle?: Object;
   isDraggable?: boolean;
 }
 
@@ -221,7 +220,6 @@ export class Chat extends React.Component<ChatProps> {
           marginTop: 0,
           marginBottom: 0,
           padding: '8px',
-          ...this.props.outerContainerStyle,
         }}
       >
         <div

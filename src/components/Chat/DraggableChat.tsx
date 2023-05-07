@@ -166,7 +166,7 @@ export const DraggableChat = (props: PropsWithChildren<DraggableChatProps>) => {
               />
             </Label>
             {!draggableCollapsed &&
-              rightBar({ height: '100%', paddingTop: '20px' }, false)}
+              rightBar({ height: '100%', paddingTop: '20px' }, true)}
           </div>
         </Rnd>
       )}
