@@ -56,7 +56,7 @@ export const DraggableChat = (props: PropsWithChildren<DraggableChatProps>) => {
       setDraggableWidth(width ?? MIN_EXPANDED_WIDTH);
       setDraggableHeight(height ?? MIN_EXPANDED_HEIGHT);
     }
-  }, [version]);
+  }, [version, enabled]);
 
   const handleDragStop = (e: SyntheticEvent, data: DraggableData) => {
     setIsChangingDimensions(false);
