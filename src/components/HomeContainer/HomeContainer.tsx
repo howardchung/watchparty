@@ -24,7 +24,9 @@ const HomeContainer = () => {
               <button
                 onClick={() => setSelectBtn(1)}
                 className={` ${
-                  selectBtn === 1 ? `bg-[#DC0606] py-5` : `py-3 bg-[#fff]`
+                  selectBtn === 1
+                    ? `bg-[#DC0606] py-5 ${classes.boxShadowCustom}`
+                    : `py-3 bg-[#fff]`
                 } rounded-lg px-6 flex space-x-2 duration-500 justify-center items-center`}
               >
                 <img
@@ -41,7 +43,7 @@ const HomeContainer = () => {
                 </span>
               </button>
               {selectBtn === 1 && (
-                <div className="absolute top-[100%] w-full left-0 h-[4px] duration-500 rounded-lg mt-2 bg-[#3a3a3a]"></div>
+                <div className="absolute top-[100%] w-full left-0 h-[5px] duration-500 rounded-lg mt-3 bg-[#3a3a3a]"></div>
               )}
             </div>
             <div
@@ -50,7 +52,9 @@ const HomeContainer = () => {
               <button
                 onClick={() => setSelectBtn(2)}
                 className={` ${
-                  selectBtn === 2 ? `bg-[#DC0606] py-5` : `py-3 bg-[#fff]`
+                  selectBtn === 2
+                    ? `bg-[#DC0606] py-5 ${classes.boxShadowCustom}`
+                    : `py-3 bg-[#fff]`
                 } rounded-lg px-6 flex space-x-2 justify-center duration-500  items-center`}
               >
                 <img
@@ -67,7 +71,7 @@ const HomeContainer = () => {
                 </span>
               </button>
               {selectBtn === 2 && (
-                <div className="absolute top-[100%] w-full left-0 h-[4px] duration-500 rounded-lg mt-2 bg-[#3a3a3a]"></div>
+                <div className="absolute top-[100%] w-full left-0 h-[5px] duration-500 rounded-lg mt-3 bg-[#3a3a3a]"></div>
               )}
             </div>
             <div
@@ -76,7 +80,9 @@ const HomeContainer = () => {
               <button
                 onClick={() => setSelectBtn(3)}
                 className={` ${
-                  selectBtn === 3 ? `bg-[#DC0606] py-5` : `py-3 bg-[#fff]`
+                  selectBtn === 3
+                    ? `bg-[#DC0606] py-5 ${classes.boxShadowCustom}`
+                    : `py-3 bg-[#fff]`
                 } rounded-lg px-6 flex space-x-2 justify-center duration-500  items-center`}
               >
                 <img
@@ -93,7 +99,7 @@ const HomeContainer = () => {
                 </span>
               </button>
               {selectBtn === 3 && (
-                <div className="absolute top-[100%] w-full left-0 h-[4px] duration-500 rounded-lg mt-2 bg-[#3a3a3a]"></div>
+                <div className="absolute top-[100%] w-full left-0 h-[5px] duration-500 rounded-lg mt-3 bg-[#3a3a3a]"></div>
               )}
             </div>
             <div
@@ -102,7 +108,9 @@ const HomeContainer = () => {
               <button
                 onClick={() => setSelectBtn(4)}
                 className={` ${
-                  selectBtn === 4 ? `bg-[#DC0606] py-5` : `py-3 bg-[#fff]`
+                  selectBtn === 4
+                    ? `bg-[#DC0606] py-5 ${classes.boxShadowCustom}`
+                    : `py-3 bg-[#fff]`
                 } rounded-lg px-6 flex space-x-2 justify-center duration-500  items-center`}
               >
                 <img width={22} src={gamingR} alt="" />
@@ -115,7 +123,7 @@ const HomeContainer = () => {
                 </span>
               </button>
               {selectBtn === 4 && (
-                <div className="absolute top-[100%] w-full left-0 h-[4px] duration-500 rounded-lg mt-2 bg-[#3a3a3a]"></div>
+                <div className="absolute top-[100%] w-full left-0 h-[5px] duration-500 rounded-lg mt-3 bg-[#3a3a3a]"></div>
               )}
             </div>
           </div>

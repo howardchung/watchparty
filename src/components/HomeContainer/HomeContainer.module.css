@@ -23,3 +23,6 @@
 .scrollbarContainer::-webkit-scrollbar-track:hover {
   background-color: rgba(197, 197, 197, 0.3);
 }
+.boxShadowCustom {
+  box-shadow: 0 0 12px -2px white;
+}
