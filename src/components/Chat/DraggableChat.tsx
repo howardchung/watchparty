@@ -3,6 +3,7 @@ import React, {
   useState,
   PropsWithChildren,
   useEffect,
+  useRef,
 } from 'react';
 import { DraggableData, Rnd, RndResizeCallback } from 'react-rnd';
 import { Icon, Label } from 'semantic-ui-react';
@@ -14,13 +15,14 @@ const MIN_EXPANDED_WIDTH = '320px';
 const DEFAULT_X_POSITION = 100;
 const DEFAULT_Y_POSITION = 100;
 const COLLAPSED_HEIGHT = '50px';
-const COLLAPSED_WIDTH = '320px';
+const COLLAPSED_WIDTH = '200px';
 
 interface DraggableChatProps {
   enabled: boolean;
+  userChatMessageCount: number;
   rightBar: (
     rightBarContainerStyle: object,
-    showNameInput: boolean
+    isDraggable: boolean
   ) => JSX.Element;
   renderVideo: (isDraggableChangingDimensions: boolean) => JSX.Element;
 }
@@ -34,8 +36,9 @@ export const DraggableChat = (props: PropsWithChildren<DraggableChatProps>) => {
   const [draggableWidth, setDraggableWidth] = useState(MIN_EXPANDED_WIDTH);
   const [draggableCollapsed, setDraggableCollapsed] = useState(false);
   const [isChangingDimensions, setIsChangingDimensions] = useState(false);
+  const userChatMessageCountOnCollapse = useRef(0);
 
-  const { enabled, renderVideo, rightBar } = props;
+  const { enabled, renderVideo, rightBar, userChatMessageCount } = props;
 
   useEffect(() => {
     const { x, y } = getCurrentSettings().chatDraggablePosition ?? {};
@@ -48,6 +51,7 @@ export const DraggableChat = (props: PropsWithChildren<DraggableChatProps>) => {
     if (collapsed) {
       setDraggableWidth(COLLAPSED_WIDTH);
       setDraggableHeight(COLLAPSED_HEIGHT);
+      userChatMessageCountOnCollapse.current = userChatMessageCount;
     } else {
       const { width, height } = getCurrentSettings().chatDraggableSize ?? {};
       setDraggableWidth(width ?? MIN_EXPANDED_WIDTH);
@@ -94,6 +98,7 @@ export const DraggableChat = (props: PropsWithChildren<DraggableChatProps>) => {
     if (collapsed) {
       setDraggableHeight(COLLAPSED_HEIGHT);
       setDraggableWidth(COLLAPSED_WIDTH);
+      userChatMessageCountOnCollapse.current = userChatMessageCount;
     } else {
       const { width, height } = getCurrentSettings().chatDraggableSize ?? {};
       setDraggableWidth(width ?? MIN_EXPANDED_WIDTH);
@@ -107,6 +112,9 @@ export const DraggableChat = (props: PropsWithChildren<DraggableChatProps>) => {
       })
     );
   };
+
+  const unreadCount =
+    userChatMessageCount - userChatMessageCountOnCollapse.current;
 
   return (
     <div
@@ -165,6 +173,20 @@ export const DraggableChat = (props: PropsWithChildren<DraggableChatProps>) => {
                 style={{ cursor: 'pointer' }}
               />
             </Label>
+            {draggableCollapsed && unreadCount && (
+              <div
+                style={{ fontSize: 20, color: 'white', textAlign: 'center' }}
+              >
+                {unreadCount >= 10 && <span>+</span>}
+                {<span>{Math.min(10, unreadCount)}</span>}
+                {
+                  <span>
+                    {' '}
+                    <Icon name="talk" />
+                  </span>
+                }
+              </div>
+            )}
             {!draggableCollapsed &&
               rightBar({ height: '100%', paddingTop: '20px' }, true)}
           </div>

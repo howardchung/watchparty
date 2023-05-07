@@ -109,6 +109,7 @@ interface AppState {
   loading: boolean;
   scrollTimestamp: number;
   unreadCount: number;
+  userChatMessageCount: number;
   fullScreen: boolean;
   chatDraggableEnabled: boolean;
   controlsTimestamp: number;
@@ -177,6 +178,7 @@ export default class App extends React.Component<AppProps, AppState> {
     loading: true,
     scrollTimestamp: 0,
     unreadCount: 0,
+    userChatMessageCount: 0,
     fullScreen: false,
     chatDraggableEnabled: false,
     controlsTimestamp: 0,
@@ -622,6 +624,9 @@ export default class App extends React.Component<AppProps, AppState> {
       this.setState({
         chat: this.state.chat,
         scrollTimestamp: Number(new Date()),
+        userChatMessageCount: data.cmd
+          ? this.state.userChatMessageCount
+          : this.state.userChatMessageCount + 1,
         unreadCount:
           this.state.currentTab === 'chat'
             ? this.state.unreadCount
@@ -2416,6 +2421,7 @@ export default class App extends React.Component<AppProps, AppState> {
                       )}
                       <DraggableChat
                         rightBar={rightBar}
+                        userChatMessageCount={this.state.userChatMessageCount}
                         enabled={
                           this.state.chatDraggableEnabled &&
                           this.state.fullScreen
