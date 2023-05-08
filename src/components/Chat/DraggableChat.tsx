@@ -36,42 +36,36 @@ export const DraggableChat = (props: PropsWithChildren<DraggableChatProps>) => {
   const [draggableWidth, setDraggableWidth] = useState(MIN_EXPANDED_WIDTH);
   const [draggableCollapsed, setDraggableCollapsed] = useState(false);
   const [isChangingDimensions, setIsChangingDimensions] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const previousUserChatMessageCount = useRef(0);
+  const [userChatMessageCountOnCollapse, setUserMessageCountOnCallapse] =
+    useState(0);
+  const previousEnabled = useRef(false);
 
   const { enabled, renderVideo, rightBar, userChatMessageCount } = props;
 
   useEffect(() => {
-    if (enabled) {
-      setUnreadCount(0);
+    const { x, y } = getCurrentSettings().chatDraggablePosition ?? {};
+    setDraggablePositionX(x ?? DEFAULT_X_POSITION);
+    setDraggablePositionY(y ?? DEFAULT_Y_POSITION);
 
-      const { x, y } = getCurrentSettings().chatDraggablePosition ?? {};
-      setDraggablePositionX(x ?? DEFAULT_X_POSITION);
-      setDraggablePositionY(y ?? DEFAULT_Y_POSITION);
+    const collapsed = getCurrentSettings().chatDraggableCollapsed ?? false;
+    setDraggableCollapsed(collapsed);
 
-      const collapsed = getCurrentSettings().chatDraggableCollapsed ?? false;
-      setDraggableCollapsed(collapsed);
-
-      if (collapsed) {
-        setDraggableWidth(COLLAPSED_WIDTH);
-        setDraggableHeight(COLLAPSED_HEIGHT);
-      } else {
-        const { width, height } = getCurrentSettings().chatDraggableSize ?? {};
-        setDraggableWidth(width ?? MIN_EXPANDED_WIDTH);
-        setDraggableHeight(height ?? MIN_EXPANDED_HEIGHT);
-      }
+    if (collapsed) {
+      setDraggableWidth(COLLAPSED_WIDTH);
+      setDraggableHeight(COLLAPSED_HEIGHT);
+    } else {
+      const { width, height } = getCurrentSettings().chatDraggableSize ?? {};
+      setDraggableWidth(width ?? MIN_EXPANDED_WIDTH);
+      setDraggableHeight(height ?? MIN_EXPANDED_HEIGHT);
     }
-  }, [enabled]);
+  }, []);
 
   useEffect(() => {
-    if (
-      draggableCollapsed &&
-      previousUserChatMessageCount.current < userChatMessageCount
-    ) {
-      previousUserChatMessageCount.current = userChatMessageCount;
-      setUnreadCount((c) => c + 1);
+    if (!previousEnabled.current && draggableCollapsed) {
+      setUserMessageCountOnCallapse(userChatMessageCount);
     }
-  }, [userChatMessageCount, draggableCollapsed]);
+    previousEnabled.current = enabled;
+  }, [enabled, userChatMessageCount, draggableCollapsed]);
 
   const handleDragStop = (e: SyntheticEvent, data: DraggableData) => {
     setIsChangingDimensions(false);
@@ -108,12 +102,11 @@ export const DraggableChat = (props: PropsWithChildren<DraggableChatProps>) => {
   };
 
   const handleOnCollapse = () => {
-    setUnreadCount(0);
-    previousUserChatMessageCount.current = userChatMessageCount;
     const collapsed = !draggableCollapsed;
     if (collapsed) {
       setDraggableHeight(COLLAPSED_HEIGHT);
       setDraggableWidth(COLLAPSED_WIDTH);
+      setUserMessageCountOnCallapse(userChatMessageCount);
     } else {
       const { width, height } = getCurrentSettings().chatDraggableSize ?? {};
       setDraggableWidth(width ?? MIN_EXPANDED_WIDTH);
@@ -127,6 +120,8 @@ export const DraggableChat = (props: PropsWithChildren<DraggableChatProps>) => {
       })
     );
   };
+
+  const unreadCount = userChatMessageCount - userChatMessageCountOnCollapse;
 
   return (
     <div
