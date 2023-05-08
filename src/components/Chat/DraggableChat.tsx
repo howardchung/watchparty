@@ -36,11 +36,14 @@ export const DraggableChat = (props: PropsWithChildren<DraggableChatProps>) => {
   const [draggableWidth, setDraggableWidth] = useState(MIN_EXPANDED_WIDTH);
   const [draggableCollapsed, setDraggableCollapsed] = useState(false);
   const [isChangingDimensions, setIsChangingDimensions] = useState(false);
-  const userChatMessageCountOnCollapse = useRef(0);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const userChatMessageCountOnCollapse = useRef(props.userChatMessageCount);
 
   const { enabled, renderVideo, rightBar, userChatMessageCount } = props;
 
   useEffect(() => {
+    setUnreadCount(0);
+
     const { x, y } = getCurrentSettings().chatDraggablePosition ?? {};
     setDraggablePositionX(x ?? DEFAULT_X_POSITION);
     setDraggablePositionY(y ?? DEFAULT_Y_POSITION);
@@ -51,13 +54,26 @@ export const DraggableChat = (props: PropsWithChildren<DraggableChatProps>) => {
     if (collapsed) {
       setDraggableWidth(COLLAPSED_WIDTH);
       setDraggableHeight(COLLAPSED_HEIGHT);
-      userChatMessageCountOnCollapse.current = userChatMessageCount;
     } else {
       const { width, height } = getCurrentSettings().chatDraggableSize ?? {};
       setDraggableWidth(width ?? MIN_EXPANDED_WIDTH);
       setDraggableHeight(height ?? MIN_EXPANDED_HEIGHT);
     }
   }, [enabled]);
+
+  useEffect(() => {
+    if (!enabled) {
+      userChatMessageCountOnCollapse.current = userChatMessageCount;
+    }
+  }, [enabled, userChatMessageCount]);
+
+  useEffect(() => {
+    if (draggableCollapsed) {
+      setUnreadCount(
+        userChatMessageCount - userChatMessageCountOnCollapse.current
+      );
+    }
+  }, [userChatMessageCount, draggableCollapsed]);
 
   const handleDragStop = (e: SyntheticEvent, data: DraggableData) => {
     setIsChangingDimensions(false);
@@ -112,9 +128,6 @@ export const DraggableChat = (props: PropsWithChildren<DraggableChatProps>) => {
       })
     );
   };
-
-  const unreadCount =
-    userChatMessageCount - userChatMessageCountOnCollapse.current;
 
   return (
     <div
