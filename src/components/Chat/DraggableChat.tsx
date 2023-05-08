@@ -42,22 +42,24 @@ export const DraggableChat = (props: PropsWithChildren<DraggableChatProps>) => {
   const { enabled, renderVideo, rightBar, userChatMessageCount } = props;
 
   useEffect(() => {
-    setUnreadCount(0);
+    if (enabled) {
+      setUnreadCount(0);
 
-    const { x, y } = getCurrentSettings().chatDraggablePosition ?? {};
-    setDraggablePositionX(x ?? DEFAULT_X_POSITION);
-    setDraggablePositionY(y ?? DEFAULT_Y_POSITION);
+      const { x, y } = getCurrentSettings().chatDraggablePosition ?? {};
+      setDraggablePositionX(x ?? DEFAULT_X_POSITION);
+      setDraggablePositionY(y ?? DEFAULT_Y_POSITION);
 
-    const collapsed = getCurrentSettings().chatDraggableCollapsed ?? false;
-    setDraggableCollapsed(collapsed);
+      const collapsed = getCurrentSettings().chatDraggableCollapsed ?? false;
+      setDraggableCollapsed(collapsed);
 
-    if (collapsed) {
-      setDraggableWidth(COLLAPSED_WIDTH);
-      setDraggableHeight(COLLAPSED_HEIGHT);
-    } else {
-      const { width, height } = getCurrentSettings().chatDraggableSize ?? {};
-      setDraggableWidth(width ?? MIN_EXPANDED_WIDTH);
-      setDraggableHeight(height ?? MIN_EXPANDED_HEIGHT);
+      if (collapsed) {
+        setDraggableWidth(COLLAPSED_WIDTH);
+        setDraggableHeight(COLLAPSED_HEIGHT);
+      } else {
+        const { width, height } = getCurrentSettings().chatDraggableSize ?? {};
+        setDraggableWidth(width ?? MIN_EXPANDED_WIDTH);
+        setDraggableHeight(height ?? MIN_EXPANDED_HEIGHT);
+      }
     }
   }, [enabled]);
 
