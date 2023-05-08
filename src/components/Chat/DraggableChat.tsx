@@ -139,6 +139,7 @@ export const DraggableChat = (props: PropsWithChildren<DraggableChatProps>) => {
           onDragStop={handleDragStop as any}
           onResizeStart={() => setIsChangingDimensions(true)}
           onResizeStop={handleResizeStop as any}
+          enableResizing={!draggableCollapsed}
           dragHandleClassName={classes.dragCorner}
           style={{
             alignItems: 'center',
