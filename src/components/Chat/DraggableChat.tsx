@@ -37,7 +37,6 @@ export const DraggableChat = (props: PropsWithChildren<DraggableChatProps>) => {
   const [draggableCollapsed, setDraggableCollapsed] = useState(false);
   const [isChangingDimensions, setIsChangingDimensions] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  const previousUserChatMessageCount = useRef(0);
 
   const { enabled, renderVideo, rightBar, userChatMessageCount } = props;
 
@@ -64,10 +63,7 @@ export const DraggableChat = (props: PropsWithChildren<DraggableChatProps>) => {
   }, [enabled]);
 
   useEffect(() => {
-    if (previousUserChatMessageCount.current < userChatMessageCount) {
-      setUnreadCount((c) => c + 1);
-    }
-    previousUserChatMessageCount.current = userChatMessageCount;
+    setUnreadCount((c) => c + 1);
   }, [userChatMessageCount]);
 
   const handleDragStop = (e: SyntheticEvent, data: DraggableData) => {
