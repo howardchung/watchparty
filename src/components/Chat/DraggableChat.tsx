@@ -109,6 +109,7 @@ export const DraggableChat = (props: PropsWithChildren<DraggableChatProps>) => {
 
   const handleOnCollapse = () => {
     setUnreadCount(0);
+    previousUserChatMessageCount.current = userChatMessageCount;
     const collapsed = !draggableCollapsed;
     if (collapsed) {
       setDraggableHeight(COLLAPSED_HEIGHT);
