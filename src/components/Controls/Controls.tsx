@@ -99,13 +99,13 @@ export class Controls extends React.Component<ControlsProps> {
         // console.log('vuplex: ', { vuplex });
         window?.vuplex.postMessage({
           type: 'playerInfo',
-          message: {
+          message: JSON.stringify({
             volume: this.props.volume,
             duration: this.props.duration,
             currentTime: this.props.currentTime,
             isMuted: this.props.muted,
             isPaused: this.props.paused,
-          },
+          }),
         });
         // The window.vuplex object already exists, so go ahead and send the message.
         // sendMessageToCSharp();
@@ -162,8 +162,9 @@ export class Controls extends React.Component<ControlsProps> {
               display: 'flex',
               gap: '10px',
               alignItems: 'center',
+              justifyContent: 'center',
             }}
-            className="absolute top-[46%] left-[38%]"
+            className="absolute top-[46%] left-[38%] lg:left-[44vw]"
           >
             <MetaButton
               onClick={() => onSeek(null, currentTime - 10)}
@@ -191,9 +192,7 @@ export class Controls extends React.Component<ControlsProps> {
             <Progress
               size="small"
               color="blue"
-              onClick={
-                duration < Infinity && !this.props.disabled ? onSeek : undefined
-              }
+              onClick={duration < Infinity ? onSeek : undefined}
               onMouseOver={this.onMouseOver}
               onMouseOut={this.onMouseOut}
               onMouseMove={this.onMouseMove}

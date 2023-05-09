@@ -44,6 +44,7 @@ export interface IEmptyTheatreProps {
   setState: Function;
   setLoadingFalse: Function;
   state: AppState;
+  gotoYTScreen: Function;
 }
 
 export function EmptyTheatre(props: IEmptyTheatreProps) {
@@ -57,6 +58,7 @@ export function EmptyTheatre(props: IEmptyTheatreProps) {
     getMediaDisplayName,
     currentMedia,
     setLoadingFalse,
+    gotoYTScreen,
   } = props;
   React.useEffect(() => {
     // ((state as AppState).clipboard && (state as AppState).currentMedia) && setLoadingFalse();
@@ -197,7 +199,7 @@ export function EmptyTheatre(props: IEmptyTheatreProps) {
           </Dropdown.Menu>
         </Dropdown> */}
       </div>
-      <section className="flex flex-col w-[75%] h-full items-center gap-1 justify-start mt-10">
+      <section className="flex flex-col w-[75%] h-screen items-center gap-1 justify-start mt-10 lg:mt-0 lg:justify-center">
         <div className={classes.header}>
           <img src="logo192.png" className="relative" width={120} alt="" />
         </div>
@@ -266,7 +268,9 @@ export function EmptyTheatre(props: IEmptyTheatreProps) {
         </div> */}
         <div className="grid relative w-full grid-cols-3 gap-3">
           <button
-            onClick={() => toggleHome()}
+            onClick={() => {
+              gotoYTScreen();
+            }}
             className={`${classes.btnBoxShadow} bg-[#d20001] rounded-xl`}
           >
             <img className="mx-auto" src={yt} alt="" />

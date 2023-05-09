@@ -8,7 +8,7 @@ import { XMLParser } from 'fast-xml-parser';
 // import config from './config';
 
 export function formatTimestamp(input: any) {
-  console.log('input: ', input);
+  // console.log('input: ', input);
   if (
     input === null ||
     input === undefined ||
@@ -267,6 +267,23 @@ export async function getYouTubeResults(
 export async function getYouTubeTrendings(): Promise<SearchResult[]> {
   const response = await window.fetch(serverPath + '/youtube-trending');
   const data = await response.json();
+  return data;
+}
+export async function getYouTubeLive(): Promise<SearchResult[]> {
+  const response = await window.fetch(serverPath + '/youtube-live');
+  const data = await response.json();
+  console.log('data: live data', data);
+  return data;
+}
+export async function getYouTubeVideos(
+  type: 'movie' | 'game'
+): Promise<SearchResult[]> {
+  const response =
+    type === 'movie'
+      ? await window.fetch(serverPath + '/youtube-movies')
+      : await window.fetch(serverPath + '/youtube-games');
+  const data = await response.json();
+  // console.log('data: live data', data);
   return data;
 }
 

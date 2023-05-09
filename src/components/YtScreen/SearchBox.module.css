@@ -1,0 +1,67 @@
+.wrapper {
+  position: relative;
+}
+.list-container {
+  background: #3a3a3a;
+  font-size: 16px;
+  width: 98%;
+  position: absolute;
+  top: 0px;
+  left: 22px;
+  border-radius: 20px;
+  max-height: 80vh;
+  padding: 10px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  z-index: 900;
+}
+.InputLabel {
+  background-color: #1f1f1f !important;
+  color: #f4f4f4 !important;
+}
+.PlaylistDropdown {
+  background-color: #1f1f1f !important;
+  color: #f4f4f4 !important;
+  width: 180px;
+  display: flex !important;
+  align-items: center !important;
+}
+.PlaylistDropdown > .text {
+  font-size: 1.3wv !important;
+}
+.inputContainer {
+  margin: 20px 0px;
+  padding: 0;
+  position: relative;
+  width: 70%;
+}
+.playlist_content {
+  position: absolute;
+  right: -13px !important;
+  top: -18px !important;
+}
+.PlaylistMenu {
+  background: black !important;
+  padding: 0 !important;
+  width: 100% !important;
+}
+.PlaylistItem {
+  background: inherit;
+  padding: 0px !important;
+}
+.UploadButton {
+  background-color: #8350f1 !important;
+  color: #f4f4f4 !important;
+}
+.SearchInput i {
+  background-color: #222222 !important;
+  color: #f4f4f4 !important;
+}
+
+.SearchInput input {
+  background-color: #222222 !important;
+  color: #f4f4f4 !important;
+}
+.PlaylistMenu > .item {
+  padding: 0 !important;
+}

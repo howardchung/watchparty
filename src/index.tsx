@@ -16,7 +16,7 @@ import { serverPath } from './utils';
 import { Modal } from 'semantic-ui-react';
 import { Create } from './components/Create/Create';
 import 'semantic-ui-css/semantic.min.css';
-import HomeContainer from './components/HomeContainer/HomeContainer';
+import { YtScreen } from './components/Modal/YtScreen';
 
 const Debug = lazy(() => import('./components/Debug/Debug'));
 
@@ -119,17 +119,17 @@ class WatchParty extends React.Component {
               );
             }}
           />
-          <Route
+          {/* <Route
             path="/home-container"
             exact
             render={() => {
               return (
                 <React.Fragment>
-                  <HomeContainer />
+                  <YtScreen />
                 </React.Fragment>
               );
             }}
-          />
+          /> */}
           <Route path="/terms">
             <TopBar
               user={this.state.user}

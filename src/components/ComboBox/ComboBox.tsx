@@ -274,7 +274,10 @@ export class ComboBox extends React.Component<ComboBoxProps> {
           >
             <MetaButton
               backShadow
-              onClick={() => toggleHome()}
+              onClick={() => {
+                toggleHome();
+                this.props.toggleCollapse();
+              }}
               className="p-0 border-none"
               img={BackIcon}
               imgClass="rounded-full h-16"

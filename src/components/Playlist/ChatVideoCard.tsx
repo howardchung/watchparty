@@ -106,6 +106,7 @@ const ChatVideoCard: React.FC<{
               height="100%"
               width="100%"
               ref={thumbPlayer}
+              light
               url={video.url}
               playing={false}
               muted

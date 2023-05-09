@@ -9,7 +9,12 @@ import Redis from 'ioredis';
 import https from 'https';
 import http from 'http';
 import { Server } from 'socket.io';
-import { getYtTrendings, searchYoutube } from './utils/youtube';
+import {
+  getYtLive,
+  getYtTrendings,
+  getYtVideos,
+  searchYoutube,
+} from './utils/youtube';
 import { Room } from './room';
 import {
   getRedisCountDay,
@@ -272,6 +277,82 @@ app.get('/youtube-trending', async (req, res) => {
     return res.status(500).json({ error: 'youtube error' });
   }
 });
+app.get('/youtube-live', async (req, res) => {
+  try {
+    await redisCount('youtubeLive');
+    const ip =
+      (req.headers['x-forwarded-for'] as string) ||
+      (req.socket.remoteAddress as string);
+    console.log(
+      'headers IP::::',
+      req.headers['x-forwarded-for'],
+      req.socket.remoteAddress
+    );
+    console.log('===> fetching youtube live ==>>>', ip);
+    let geo: {} | any = null;
+    try {
+      geo = geoip.lookup(ip); // 13.127.77.62 is prod server
+      console.log('===> geo.country ==>>>', geo);
+    } catch (error) {
+      console.log('GEO LOOK UP ERROR: ', { error });
+    }
+    const items = await getYtLive(geo ? geo?.country : 'US');
+    res.json(items);
+  } catch {
+    return res.status(500).json({ error: 'youtube error' });
+  }
+});
+app.get('/youtube-movies', async (req, res) => {
+  try {
+    await redisCount('youtubeMovies');
+    const ip =
+      (req.headers['x-forwarded-for'] as string) ||
+      (req.socket.remoteAddress as string);
+    console.log(
+      'headers IP::::',
+      req.headers['x-forwarded-for'],
+      req.socket.remoteAddress
+    );
+    console.log('===> fetching youtube live ==>>>', ip);
+    let geo: {} | any = null;
+    try {
+      geo = geoip.lookup(ip); // 13.127.77.62 is prod server
+      console.log('===> geo.country ==>>>', geo);
+    } catch (error) {
+      console.log('GEO LOOK UP ERROR: ', { error });
+    }
+    const items = await getYtVideos(geo ? geo?.country : 'US', 'movies');
+    res.json(items);
+  } catch {
+    return res.status(500).json({ error: 'youtube error' });
+  }
+});
+app.get('/youtube-games', async (req, res) => {
+  try {
+    await redisCount('youtubeGames');
+    const ip =
+      (req.headers['x-forwarded-for'] as string) ||
+      (req.socket.remoteAddress as string);
+    console.log(
+      'headers IP::::',
+      req.headers['x-forwarded-for'],
+      req.socket.remoteAddress
+    );
+    console.log('===> fetching youtube live ==>>>', ip);
+    let geo: {} | any = null;
+    try {
+      geo = geoip.lookup(ip); // 13.127.77.62 is prod server
+      console.log('===> geo.country ==>>>', geo);
+    } catch (error) {
+      console.log('GEO LOOK UP ERROR: ', { error });
+    }
+    const items = await getYtVideos(geo ? geo?.country : 'US', 'games');
+    res.json(items);
+  } catch {
+    return res.status(500).json({ error: 'youtube error' });
+  }
+});
+
 app.post('/createRoom', async (req, res) => {
   const roomData = req.body;
 

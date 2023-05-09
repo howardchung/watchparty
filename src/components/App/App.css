@@ -164,3 +164,7 @@ body {
   background: inherit;
   margin-bottom: -2px;
 }
+
+.yt-screen > .ui.dimmer {
+  padding: 0 !important;
+}

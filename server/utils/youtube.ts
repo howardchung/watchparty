@@ -65,15 +65,6 @@ export const searchYoutube = (query: string): Promise<PlaylistVideo[]> => {
 export const getYtTrendings = async (
   region: string | undefined
 ): Promise<PlaylistVideo[]> => {
-  // const apiKey = config.YOUTUBE_API_KEY;
-  // const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet&chart=mostPopular&regionCode=${
-  //   region ? region : 'US'
-  // }&maxResults=20&key=${apiKey}`;
-  // console.log('trending yt URL', { url });
-  // const data: any = await axios.get(url);
-  // console.log('Trending data: ', { items: data.items[0] });
-  // const finalRes = data?.items ? data.items.map(mapYoutubeListResult) : [];
-  // return finalRes;
   return new Promise((resolve, reject) => {
     Youtube.videos.list(
       {
@@ -88,6 +79,66 @@ export const getYtTrendings = async (
           resolve(response);
         } else {
           // console.log({ query });
+          console.warn(data);
+          reject();
+        }
+      }
+    );
+  });
+};
+
+export const getYtLive = async (
+  region: string | undefined
+): Promise<PlaylistVideo[]> => {
+  return new Promise((resolve, reject) => {
+    Youtube.search.list(
+      {
+        part: 'snippet',
+        // chart: 'live',
+        // broadcastType: 'all',
+        chart: 'mostPopular',
+        eventType: 'live',
+        type: 'video',
+        maxResults: 25,
+        videoDefinition: 'high',
+        regionCode: region ? region : 'US',
+      },
+      (err: any, data: any) => {
+        if (data && data.items) {
+          const response = data.items.map(mapYoutubeSearchResult);
+          resolve(response);
+        } else {
+          console.log({ err });
+          console.warn(data);
+          reject();
+        }
+      }
+    );
+  });
+};
+export const getYtVideos = async (
+  region: string | undefined,
+  type: string
+): Promise<PlaylistVideo[]> => {
+  return new Promise((resolve, reject) => {
+    Youtube.search.list(
+      {
+        part: 'snippet',
+        q: type,
+        // chart: 'live',
+        // broadcastType: 'all',
+        chart: 'mostPopular',
+        type: 'video',
+        maxResults: 25,
+        videoDefinition: 'high',
+        regionCode: region ? region : 'US',
+      },
+      (err: any, data: any) => {
+        if (data && data.items) {
+          const response = data.items.map(mapYoutubeSearchResult);
+          resolve(response);
+        } else {
+          console.log({ err });
           console.warn(data);
           reject();
         }
