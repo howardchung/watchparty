@@ -58,7 +58,7 @@ export const DraggableChat = (props: PropsWithChildren<DraggableChatProps>) => {
       setDraggableWidth(width ?? MIN_EXPANDED_WIDTH);
       setDraggableHeight(height ?? MIN_EXPANDED_HEIGHT);
     }
-  }, []);
+  }, [enabled]);
 
   useEffect(() => {
     if (!previousEnabled.current && draggableCollapsed) {
