@@ -42,7 +42,7 @@ export class Scaleway extends VMManager {
         'Content-Type': 'text/plain',
       },
       // set userdata for boot action
-      //data: cloudInit(imageName, this.isLarge ? '1920x1080@30' : undefined),
+      //data: cloudInit(),
     });
     // console.log(response2.data);
     // boot the instance
