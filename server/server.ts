@@ -104,7 +104,7 @@ async function init() {
   saveRooms();
   if (process.env.NODE_ENV === 'development') {
     try {
-      // require('./vmWorker');
+      require('./vmWorker');
       // require('./syncSubs');
       // require('./timeSeries');
     } catch (e) {
