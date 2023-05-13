@@ -29,10 +29,7 @@ export class DigitalOcean extends VMManager {
         image: imageId,
         ssh_keys: sshKeys,
         private_networking: true,
-        // user_data: cloudInit(
-        //   imageName,
-        //   this.isLarge ? '1920x1080@30' : undefined
-        // ),
+        // user_data: cloudInit(),
         tags: [this.getTag()],
       },
     });

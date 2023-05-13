@@ -6,7 +6,7 @@ import fs from 'fs';
 
 const HETZNER_TOKEN = config.HETZNER_TOKEN;
 const sshKeys = config.HETZNER_SSH_KEYS.split(',').map(Number);
-const imageId = Number(config.HETZNER_IMAGE);
+const imageId = 'docker-ce';
 
 export class Hetzner extends VMManager {
   size = 'cpx11'; // cx11, cpx11, cpx21, cpx31, ccx11
@@ -43,10 +43,14 @@ export class Hetzner extends VMManager {
         // networks: [
         //   this.networks[Math.floor(Math.random() * this.networks.length)],
         // ],
-        // user_data: cloudInit(
-        //   imageName,
-        //   this.isLarge ? '1920x1080@30' : undefined,
-        // ),
+        user_data: `
+#!/bin/bash
+apt-get install -y dnsutils
+iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 5000
+PASSWORD=$(hostname)
+RESOLUTION=$(if [ "$(nproc)" -le "2" ]; then echo "1280x720@30"; else echo "1920x1080@30"; fi)
+docker run -d --rm --name=vbrowser --log-opt max-size=1g --net=host --shm-size=1g --cap-add="SYS_ADMIN" -e DISPLAY=":99.0" -e NEKO_SCREEN=$RESOLUTION -e NEKO_PASSWORD=$PASSWORD -e NEKO_PASSWORD_ADMIN=$PASSWORD -e NEKO_BIND=":5000" -e NEKO_EPR=":59000-59100" -e NEKO_H264="1" howardc93/vbrowser
+        `,
         labels: {
           [this.getTag()]: '1',
           originalName: name,
