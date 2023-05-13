@@ -424,9 +424,8 @@ export abstract class VMManager {
                   redisCount('vBrowserStagingFails');
                   await this.redis.lpush('vBrowserStageFails', id);
                   await this.redis.ltrim('vBrowserStageFails', 0, 24);
-                  // TODO temp fix
-                  // await this.resetVM(id);
-                  await this.terminateVMWrapper(id);
+                  await this.resetVM(id);
+                  // await this.terminateVMWrapper(id);
                 } else {
                   if (retryCount % 150 === 0) {
                     console.log(
