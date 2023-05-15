@@ -3,10 +3,10 @@
 apt-get update
 apt-get install -y curl
 
-# install docker
-curl -fsSL https://get.docker.com | sh
+# install docker (if not already installed)
+# curl -fsSL https://get.docker.com | sh
 # pull vbrowser image
-docker pull howardc93/vbrowser
+# docker pull howardc93/vbrowser
 
 # install dnsutils (iptables?)
 apt-get install -y dnsutils
@@ -35,6 +35,7 @@ iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 5000
 PASSWORD=$(hostname)
 #RESOLUTION=$(if [ "$(nproc)" -le "2" ]; then echo "1280x720@30"; else echo "1920x1080@30"; fi)
 RESOLUTION="1280x720@30"
+docker pull howardc93/vbrowser
 docker run -d --rm --name=vbrowser --log-opt max-size=1g --net=host --shm-size=1g --cap-add="SYS_ADMIN" -e DISPLAY=":99.0" -e NEKO_SCREEN=$RESOLUTION -e NEKO_PASSWORD=$PASSWORD -e NEKO_PASSWORD_ADMIN=$PASSWORD -e NEKO_BIND=":5000" -e NEKO_EPR=":59000-59100" -e NEKO_H264="1" howardc93/vbrowser
 ' > /etc/systemd/system/vbrowser.sh
 chmod u+x /etc/systemd/system/vbrowser.sh
@@ -50,5 +51,5 @@ ExecStart=bash /etc/systemd/system/vbrowser.sh
 WantedBy=multi-user.target' > /etc/systemd/system/vbrowser.service
 systemctl enable vbrowser.service
 
-# This ensures the image is pre-pulled and also creates a health check endpoint
-docker run -d --rm --name=test --log-opt max-size=1g --net=host --shm-size=1g --cap-add="SYS_ADMIN" -e DISPLAY=":99.0" -e NEKO_PASSWORD=neko -e NEKO_PASSWORD_ADMIN=admin -e NEKO_BIND=":5000" -e NEKO_EPR=":59000-59100" howardc93/vbrowser
+# This ensures the image is pre-pulled and also creates an endpoint for updateSnapshot to check
+docker run -d --rm --name=test --net=host --shm-size=1g --cap-add="SYS_ADMIN" -e DISPLAY=":99.0" -e NEKO_PASSWORD=neko -e NEKO_PASSWORD_ADMIN=admin -e NEKO_BIND=":5000" -e NEKO_EPR=":59000-59100" howardc93/vbrowser
