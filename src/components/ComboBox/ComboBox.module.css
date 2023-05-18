@@ -28,6 +28,7 @@
 }
 .PlaylistDropdown > .text {
   font-size: 1.3wv !important;
+  color: #222222;
 }
 .inputContainer {
   margin: 20px 0px;

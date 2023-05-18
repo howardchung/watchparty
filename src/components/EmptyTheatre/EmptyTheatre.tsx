@@ -73,7 +73,7 @@ export function EmptyTheatre(props: IEmptyTheatreProps) {
           <div className="relative">
             <button
               onClick={() => toggleHome()}
-              className="btn btn-md font-bold text-[14px] bg-white hover:bg-white text-gray-dark rounded-xl border-none capitalize"
+              className="btn btn-md font-bold text-[14px] bg-white hover:bg-white text-black/80 rounded-xl border-none capitalize"
             >
               <span>
                 <img src={playIcon} alt="" className="h-8 mr-1 opacity-70" />
@@ -87,7 +87,7 @@ export function EmptyTheatre(props: IEmptyTheatreProps) {
         <div className="dropdown dropdown-end w-[250px]">
           <label
             tabIndex={1}
-            className="btn btn-md font-semibold text-xl mx-1 hover:bg-white bg-white text-gray-dark rounded-xl outline-0 border-0 active:outline-0 focus:outline-0 capitalize w-full"
+            className="btn btn-md font-semibold text-xl mx-1 hover:bg-white bg-white text-black/80 rounded-xl outline-0 border-0 active:outline-0 focus:outline-0 capitalize w-full"
           >
             <span>
               <img src={playlistIcon} alt="" className="h-8 mr-2" />

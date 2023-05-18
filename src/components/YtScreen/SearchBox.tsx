@@ -323,7 +323,7 @@ export class SearchBox extends React.Component<SearchBoxProps> {
             <div className="relative">
               <button
                 onClick={() => toggleHome()}
-                className="btn btn-md font-bold flex whitespace-nowrap text-[14px]  w-[180px] bg-white hover:bg-white text-gray-dark rounded-xl border-none capitalize"
+                className="btn btn-md font-bold flex whitespace-nowrap text-[14px]  w-[180px] bg-white hover:bg-white text-black/80 rounded-xl border-none capitalize"
               >
                 <span>
                   <img src={playIcon} alt="" className="h-6 mr-1 opacity-70" />
@@ -336,7 +336,7 @@ export class SearchBox extends React.Component<SearchBoxProps> {
           <div className="dropdown dropdown-end w-[220px]">
             <label
               tabIndex={1}
-              className="btn btn-md font-semibold text-xl mx-1 hover:bg-white bg-white text-gray-dark rounded-xl outline-0 border-0 active:outline-0 focus:outline-0 capitalize w-full"
+              className="btn btn-md font-semibold text-xl mx-1 hover:bg-white bg-white text-black/80 rounded-xl outline-0 border-0 active:outline-0 focus:outline-0 capitalize w-full"
             >
               <span>
                 <img src={playlistIcon} alt="" className="h-8 mr-2" />

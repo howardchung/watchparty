@@ -1,23 +1,15 @@
 import './App.css';
-
 import querystring from 'querystring';
 import axios from 'axios';
 import React from 'react';
 import {
   Button,
   Dimmer,
-  Dropdown,
   DropdownProps,
   Grid,
   Icon,
   Loader,
-  Message,
-  Popup,
   Progress,
-  Menu,
-  Modal,
-  Label,
-  SemanticCOLORS,
 } from 'semantic-ui-react';
 import io, { Socket } from 'socket.io-client';
 import { default as toWebVTT } from 'srt-webvtt';
@@ -32,31 +24,21 @@ import {
   getAndSaveClientId,
   calculateMedian,
   getUserImage,
-  getColorForString,
 } from '../../utils';
 import { generateName } from '../../utils/generateName';
 import { Chat } from '../Chat';
-import { TopBar } from '../TopBar';
-import { VBrowser } from '../VBrowser';
-import { VideoChat } from '../VideoChat';
 import { getCurrentSettings } from '../Settings';
-import { MultiStreamModal } from '../Modal/MultiStreamModal';
 import { ComboBox } from '../ComboBox/ComboBox';
 import { SearchComponent } from '../SearchComponent/SearchComponent';
 import { Controls } from '../Controls/Controls';
-import { VBrowserModal } from '../Modal/VBrowserModal';
-import { SettingsTab } from '../Settings/SettingsTab';
 import { ErrorModal } from '../Modal/ErrorModal';
 import { PasswordModal } from '../Modal/PasswordModal';
-import { SubscribeButton } from '../SubscribeButton/SubscribeButton';
-import { ScreenShareModal } from '../Modal/ScreenShareModal';
-import { FileShareModal } from '../Modal/FileShareModal';
 import firebase from 'firebase/compat/app';
 import { SubtitleModal } from '../Modal/SubtitleModal';
 import UploadFile from '../Modal/UploadFile';
 import { EmptyTheatre } from '../EmptyTheatre/EmptyTheatre';
-import { EVENT } from '../VBrowser/events';
 import ReactPlayer from 'react-player/lazy';
+import YTReactPlayer from 'react-player/youtube';
 import { YtScreen } from '../Modal/YtScreen';
 declare global {
   interface Window {
@@ -70,6 +52,7 @@ declare global {
       videoRefs: HTMLVideoElementDict;
       videoPCs: PCDict;
     };
+    setVolume: any;
   }
 }
 
@@ -157,6 +140,8 @@ export interface AppState {
   screen: 'home' | 'youtube';
   isUntouched: boolean;
   lastInteraction: number;
+  isHideOverlap: boolean;
+  isBehind: boolean;
 }
 
 export default class App extends React.Component<AppProps, AppState> {
@@ -231,6 +216,8 @@ export default class App extends React.Component<AppProps, AppState> {
     screen: 'home',
     lastInteraction: Date.now(),
     isUntouched: false,
+    isHideOverlap: true,
+    isBehind: false,
   };
   socket: Socket = null as any;
   watchPartyYTPlayer: any = null;
@@ -244,7 +231,6 @@ export default class App extends React.Component<AppProps, AppState> {
   playerRef = React.createRef<ReactPlayer>();
   intervalId: any = null;
   async componentDidMount() {
-    // console.log(this.state.isHome);
     document.onfullscreenchange = this.onFullScreenChange;
     document.onkeydown = this.onKeydown;
 
@@ -259,6 +245,10 @@ export default class App extends React.Component<AppProps, AppState> {
     // this.loadYouTube();
     this.init();
 
+    // checking video player is synchronized or not
+    this.checkIsBehind();
+
+    // checking any user activity during theatre mode
     this.intervalId = setInterval(() => {
       const currentTime = Date.now();
       const elapsedTime = currentTime - this.state.lastInteraction;
@@ -273,7 +263,7 @@ export default class App extends React.Component<AppProps, AppState> {
           isShowTheatreTopbar: false,
           isCollapsed: true,
         });
-        console.log('The div has been untouched for 5 seconds.');
+        console.log('user has been untouched for 5 seconds.');
       }
     }, 5000);
   }
@@ -282,7 +272,23 @@ export default class App extends React.Component<AppProps, AppState> {
     // console.log("touching screen");
     this.setState({ lastInteraction: Date.now(), isUntouched: false });
   };
-
+  setIsBehindFalse = () => {
+    this.setState({ isBehind: false });
+  };
+  checkIsBehind = () => {
+    this.setState(
+      {
+        isBehind: Boolean(
+          this.getLeaderTime() &&
+            this.getLeaderTime() - this.getCurrentTime() > 3
+        ),
+      },
+      () => {
+        // console.log("checking is behind == >>>>");
+        // console.log({ leaderTime: this.getLeaderTime(), currentTime: this.getCurrentTime(), isBehind: this.state.isBehind })
+      }
+    );
+  };
   getRoomLink = (vanity: string) => {
     if (vanity) {
       return `${window.location.origin}/r/${vanity}`;
@@ -341,78 +347,61 @@ export default class App extends React.Component<AppProps, AppState> {
   };
 
   loadYouTube = () => {
-    console.log('===>> loading YouTube ===> ');
     // This code loads the IFrame Player API code asynchronously.
     const tag = document.createElement('script');
     tag.src = 'https://www.youtube.com/iframe_api';
     document.body.append(tag);
-    // window.onYouTubeIframeAPIReady = () => {
-    //   // Note: this fails silently if the element is not available
-    //   const ytPlayer = new window.YT.Player('leftYt', {
-    //     playerVars: {
-    //       autoplay: 1,
-    //       controls: 0,
-    //       disablekb: 1,
-    //       iv_load_policy: 3,
-    //       modestbranding: 1,
-    //       rel: 0,
-    //       showinfo: 0,
-    //     },
-    //     events: {
-    //       onReady: (e: any) => {
-    //         console.log('yt onReady');
-    //         this.watchPartyYTPlayer = ytPlayer;
-    //         this.setState({
-    //           isYouTubeReady: true,
-    //           loading: false,
-    //           isHome: false,
-    //         });
-    //         // e.target.playVideo();
-    //         // We might have failed to play YT originally, ask for the current video again
-    //         if (this.isYouTube()) {
-    //           this.socket.emit('CMD:askHost');
-    //           // this.doSeek(2);
-    //           // ytPlayer.playVideo();
-    //         }
-    //       },
-    //       onStateChange: (e: any) => {
-    //         if (
-    //           getMediaType(this.state.currentMedia) === 'youtube' &&
-    //           e.data === window.YT?.PlayerState?.CUED
-    //         ) {
-    //           this.setState({ loading: false });
-    //         }
-    //         if (
-    //           getMediaType(this.state.currentMedia) === 'youtube' &&
-    //           e.data === window.YT?.PlayerState?.ENDED
-    //         ) {
-    //           this.onVideoEnded();
-    //         }
-    //         // console.log(this.ytDebounce, e.data, this.watchPartyYTPlayer?.getVideoUrl());
-    //         if (
-    //           this.ytDebounce &&
-    //           ((e.data === window.YT?.PlayerState?.PLAYING &&
-    //             this.state.currentMediaPaused) ||
-    //             (e.data === window.YT?.PlayerState?.PAUSED &&
-    //               !this.state.currentMediaPaused))
-    //         ) {
-    //           this.ytDebounce = false;
-    //           if (e.data === window.YT?.PlayerState?.PLAYING) {
-    //             this.socket.emit('CMD:play');
-    //             this.doPlay();
-    //           } else {
-    //             this.socket.emit('CMD:pause');
-    //             this.doPause();
-    //           }
-    //           window.setTimeout(() => (this.ytDebounce = true), 500);
-    //         }
-    //       },
-    //     },
-    //   });
-
-    //   console.log('tag: ', { tag, ytPlayer });
-    // };
+    window.onYouTubeIframeAPIReady = () => {
+      // Note: this fails silently if the element is not available
+      const ytPlayer = new window.YT.Player('leftYt', {
+        events: {
+          onReady: () => {
+            console.log('yt onReady');
+            this.watchPartyYTPlayer = ytPlayer;
+            window.setVolume = (val: number) => this.setVolume(val);
+            this.setState({ isYouTubeReady: true, loading: false });
+            // We might have failed to play YT originally, ask for the current video again
+            if (this.isYouTube()) {
+              this.socket.emit('CMD:askHost');
+            }
+          },
+          onStateChange: (e: any) => {
+            if (
+              getMediaType(this.state.currentMedia) === 'youtube' &&
+              e.data === window.YT?.PlayerState?.CUED
+            ) {
+              this.setState({ loading: false });
+            }
+            if (
+              getMediaType(this.state.currentMedia) === 'youtube' &&
+              e.data === window.YT?.PlayerState?.ENDED
+            ) {
+              this.onVideoEnded();
+            }
+            // console.log(this.ytDebounce, e.data, this.watchPartyYTPlayer?.getVideoUrl());
+            if (
+              this.ytDebounce &&
+              ((e.data === window.YT?.PlayerState?.PLAYING &&
+                this.state.currentMediaPaused) ||
+                (e.data === window.YT?.PlayerState?.PAUSED &&
+                  !this.state.currentMediaPaused))
+            ) {
+              this.ytDebounce = false;
+              if (e.data === window.YT?.PlayerState?.PLAYING) {
+                this.socket.emit('CMD:play');
+                this.doPlay();
+              } else {
+                this.socket.emit('CMD:pause');
+                this.doPause();
+              }
+              window.setTimeout(() => (this.ytDebounce = true), 500);
+            }
+          },
+        },
+      });
+    };
   };
+
   toggleCollapse = () => {
     this.setState({
       isCollapsed: !this.state.isCollapsed,
@@ -614,11 +603,11 @@ export default class App extends React.Component<AppProps, AppState> {
             return;
           }
           // Stop all players
-          const leftVideo = document.getElementById(
-            'leftVideo'
-          ) as HTMLMediaElement;
-          leftVideo?.pause();
-          this.watchPartyYTPlayer?.stopVideo();
+          // const leftVideo = document.getElementById(
+          //   'leftVideo'
+          // ) as HTMLMediaElement;
+          // leftVideo?.pause();
+          // this.watchPartyYTPlayer?.stopVideo();
           // this.loadYouTube();
 
           // if (this.isYouTube() && !this.watchPartyYTPlayer) {
@@ -626,6 +615,7 @@ export default class App extends React.Component<AppProps, AppState> {
           //     'YT player not ready, onReady callback will retry when it is'
           //   );
           // }
+
           if (this.isVBrowser()) {
             console.log(
               'not playing video as this is a vbrowser:// placeholder'
@@ -652,14 +642,14 @@ export default class App extends React.Component<AppProps, AppState> {
             //   });
             // }
             // One time, when we're ready to play
-            leftVideo?.addEventListener(
-              'canplay',
-              () => {
-                this.setLoadingFalse();
-                this.jumpToLeader();
-              },
-              { once: true }
-            );
+            // leftVideo?.addEventListener(
+            //   'canplay',
+            //   () => {
+            //     this.setLoadingFalse();
+            //     this.jumpToLeader();
+            //   },
+            //   { once: true }
+            // );
 
             // Progress updater
             window.clearInterval(this.progressUpdater);
@@ -943,14 +933,14 @@ export default class App extends React.Component<AppProps, AppState> {
       pc.ontrack = (event: RTCTrackEvent) => {
         // Mount the stream from peer
         // console.log(stream);
-        const leftVideo = document.getElementById(
-          'leftVideo'
-        ) as HTMLMediaElement;
-        if (leftVideo) {
-          leftVideo.src = '';
-          leftVideo.srcObject = event.streams[0];
-          this.doPlay();
-        }
+        // const leftVideo = document.getElementById(
+        //   'leftVideo'
+        // ) as HTMLMediaElement;
+        // if (leftVideo) {
+        //   leftVideo.src = '';
+        //   leftVideo.srcObject = event.streams[0];
+        //   this.doPlay();
+        // }
       };
     }
   };
@@ -1047,7 +1037,9 @@ export default class App extends React.Component<AppProps, AppState> {
   isPauseDisabled = () => {
     return this.isScreenShare() || this.isVBrowser();
   };
-
+  showOverlap = () => {
+    this.setState({ isHideOverlap: false });
+  };
   isMuted = () => {
     // if (this.isVideo()) {
     //   const leftVideo = document.getElementById(
@@ -1084,6 +1076,7 @@ export default class App extends React.Component<AppProps, AppState> {
     if (maxTS > 0) {
       console.log('jump to leader at ', maxTS);
       this.doSeek(maxTS);
+      this.checkIsBehind();
     }
   };
 
@@ -1116,12 +1109,12 @@ export default class App extends React.Component<AppProps, AppState> {
     }
     let shouldPlay = this.state.currentMediaPaused;
     if (shouldPlay) {
-      console.log('shouldPlay: ON PLAY', shouldPlay);
+      // console.log('shouldPlay: ON PLAY', shouldPlay);
       this.socket.emit('CMD:play');
       this.doPlay();
       this.handleInteraction();
     } else {
-      console.log('shouldPlay: PAUSED', shouldPlay);
+      // console.log('shouldPlay: PAUSED', shouldPlay);
       this.socket.emit('CMD:pause');
       this.doPause();
       this.handleInteraction();
@@ -1439,6 +1432,8 @@ export default class App extends React.Component<AppProps, AppState> {
     const controls = (
       <Controls
         isShowTheatreTopbar={this.state.isShowTheatreTopbar}
+        isBehind={this.state.isBehind}
+        checkIsBehind={this.checkIsBehind}
         key={this.state.controlsTimestamp}
         togglePlay={this.togglePlay}
         onSeek={this.onSeek}
@@ -1611,7 +1606,7 @@ export default class App extends React.Component<AppProps, AppState> {
                       )}
                     {/* ====================== END topBAR ====================== */}
                     <div style={{ flexGrow: 2 }}>
-                      {!this.state.isHome && (
+                      {!this.state.isHome && !this.state.isHideOverlap && (
                         <section
                           onMouseOver={() => this.handleInteraction()}
                           onTouchStart={() => this.handleInteraction()}
@@ -1683,64 +1678,144 @@ export default class App extends React.Component<AppProps, AppState> {
 
                         {/* {(this.isYouTube() || this.isVideo()) &&
                           !this.state.isHome && ( */}
-                        <div
-                          className="videoContent"
-                          style={{
-                            display:
-                              (this.isYouTube() || this.isVideo()) &&
-                              !this.state.loading &&
-                              !this.state.isHome
-                                ? 'block'
-                                : 'none',
-                          }}
-                        >
-                          <main
+                        {this.isVideo() && (
+                          <div
+                            className="videoContent"
                             style={{
-                              height: '100%',
-                              width: '100%',
-                              // position: 'relative',
-                              // paddingTop: '56.25%',
+                              display:
+                                this.isVideo() &&
+                                !this.state.loading &&
+                                !this.state.isHome
+                                  ? 'block'
+                                  : 'none',
                             }}
                           >
-                            <ReactPlayer
-                              ref={this.playerRef}
-                              config={{
-                                youtube: {
-                                  playerVars: {
-                                    // autoplay: 1,
-                                    controls: 0,
-                                    disablekb: 1,
-                                    iv_load_policy: 3,
-                                    modestbranding: 1,
-                                    rel: 0,
-                                    showinfo: 0,
-                                  },
-                                  embedOptions: {
-                                    rel: 0,
-                                    showinfo: 0,
-                                  },
-                                },
+                            <main
+                              style={{
+                                height: '100%',
+                                width: '100%',
+                                // position: 'relative',
+                                // paddingTop: '56.25%',
                               }}
-                              volume={this.getVolume()}
-                              muted={this.state.isMute}
-                              playing={!this.state.currentMediaPaused}
-                              // muted={this.isMuted()}
-                              // className="react-player"
-                              width="100%"
-                              height="100%"
-                              // playing={this.paused()}
-                              // onPlay={}
-                              id="leftYt"
-                              url={
-                                this.isYouTube()
-                                  ? this.state.currentMedia + '?rel=0'
-                                  : this.state.currentMedia
-                              }
-                              onEnded={this.onVideoEnded}
-                              // autoplay
-                            />
-                          </main>
-                        </div>
+                            >
+                              <ReactPlayer
+                                ref={this.playerRef}
+                                volume={this.getVolume()}
+                                muted={this.state.isMute}
+                                playing={!this.state.currentMediaPaused}
+                                width="100%"
+                                height="100%"
+                                url={this.state.currentMedia}
+                                onEnded={this.onVideoEnded}
+                                onError={(err) => console.log({ err })}
+                                pip={false}
+                                onStart={() => {
+                                  console.log('player started');
+                                  this.showOverlap();
+                                  this.doPlay();
+                                }}
+                                onPause={() => {
+                                  console.log('onPause==: ');
+                                  const iframe: any =
+                                    this.playerRef.current?.getInternalPlayer();
+                                  if (iframe?.getCurrentTime) {
+                                    iframe.pauseVideo();
+                                    console.log({
+                                      title: iframe.videoTitle,
+                                      getPlaybackQuality:
+                                        iframe.getPlaybackQuality(),
+                                      iframe,
+                                    });
+                                  }
+                                }}
+                                onReady={() => {
+                                  console.log('onReady: ');
+                                  const iframe: any =
+                                    this.playerRef.current?.getInternalPlayer();
+                                  console.log('iframe: ', iframe);
+                                  // console.log('iframe: =', { type: typeof iframe, iframe: iframe.getCurrentTime() });
+                                  this.doPlay();
+                                  if (iframe?.getCurrentTime) {
+                                    iframe.playVideo();
+                                    iframe.setPlaybackQuality('high');
+                                    console.log(iframe.getCurrentTime());
+                                  }
+                                }}
+                                // autoplay
+                              />
+                            </main>
+                          </div>
+                        )}
+
+                        {this.isYouTube() && (
+                          <div
+                            className="videoContent"
+                            style={{
+                              display:
+                                this.isYouTube() &&
+                                !this.state.loading &&
+                                !this.state.isHome
+                                  ? 'block'
+                                  : 'none',
+                            }}
+                          >
+                            <main
+                              style={{
+                                height: '100%',
+                                width: '100%',
+                                // position: 'relative',
+                                // paddingTop: '56.25%',
+                              }}
+                            >
+                              <YTReactPlayer
+                                ref={this.playerRef as any}
+                                volume={this.getVolume()}
+                                muted={this.state.isMute}
+                                playing={!this.state.currentMediaPaused}
+                                width="100%"
+                                height="100%"
+                                className="ytPlayer"
+                                url={this.state.currentMedia}
+                                onEnded={this.onVideoEnded}
+                                onError={(err) => console.log({ err })}
+                                pip={false}
+                                onStart={() => {
+                                  console.log('player started');
+                                  this.showOverlap();
+                                  this.doPlay();
+                                }}
+                                onPause={() => {
+                                  console.log(': on YT Pause : ');
+                                  const iframe: any =
+                                    this.playerRef.current?.getInternalPlayer();
+                                  if (iframe?.getCurrentTime) {
+                                    iframe.pauseVideo();
+                                    console.log({
+                                      title: iframe.videoTitle,
+                                      getPlaybackQuality:
+                                        iframe.getPlaybackQuality(),
+                                      iframe,
+                                    });
+                                  }
+                                }}
+                                onReady={() => {
+                                  console.log('on YT Ready: ');
+                                  const iframe: any =
+                                    this.playerRef.current?.getInternalPlayer();
+                                  console.log('iframe: ', iframe);
+                                  // console.log('iframe: =', { type: typeof iframe, iframe: iframe.getCurrentTime() });
+                                  this.doPlay();
+                                  if (iframe?.getCurrentTime) {
+                                    iframe.playVideo();
+                                    iframe.setPlaybackQuality('high');
+                                    console.log(iframe.getCurrentTime());
+                                  }
+                                }}
+                                // autoplay
+                              />
+                            </main>
+                          </div>
+                        )}
                       </div>
                     </div>
                     {!this.state.isCollapsed &&

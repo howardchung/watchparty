@@ -253,7 +253,7 @@ export class ComboBox extends React.Component<ComboBoxProps> {
                 onClick={() => {
                   this.props.toggleShowTopbar();
                 }}
-                className="btn bg-white border-none w-32 rounded-lg hover:bg-white text-gray-dark"
+                className="btn bg-white border-none w-32 rounded-lg hover:bg-white text-black/80"
               >
                 <Icon className="chevron down" size="big"></Icon>
               </button>
@@ -370,7 +370,7 @@ export class ComboBox extends React.Component<ComboBoxProps> {
             <div className="dropdown dropdown-end w-[280px]">
               <label
                 tabIndex={1}
-                className="btn btn-lg font-semibold text-xl mx-1 hover:bg-white bg-white text-gray-dark rounded-xl outline-0 border-0 active:outline-0 focus:outline-0 capitalize w-full"
+                className="btn btn-lg font-semibold text-xl mx-1 hover:bg-white bg-white text-black/80 rounded-xl outline-0 border-0 active:outline-0 focus:outline-0 capitalize w-full"
               >
                 <span>
                   <img src={playlistIcon} alt="" className="h-8 mr-2" />

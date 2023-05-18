@@ -20,7 +20,6 @@ interface IYtBoxProps {
 }
 const YtBox = (props: IYtBoxProps) => {
   const { tab, setTab, playlistAdd, setMedia, toggleHome } = props;
-
   return (
     <div className="bg-[#1E1E1E] m-0 p-0 w-full h-screen relative pl-[3%]">
       <main className="mt-0">

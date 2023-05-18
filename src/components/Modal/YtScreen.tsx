@@ -1,15 +1,12 @@
 import * as React from 'react';
-import { DropdownProps, Modal, Transition } from 'semantic-ui-react';
+import { DropdownProps } from 'semantic-ui-react';
 import YtBox from '../YtScreen/YtBox';
-import { ComboBox } from '../ComboBox/ComboBox';
-import { Separator } from '../App/App';
 import { SearchBox } from '../YtScreen/SearchBox';
 import {
   getYouTubeLive,
   getYouTubeTrendings,
   getYouTubeVideos,
 } from '../../utils';
-import useEffect from 'react';
 import YtScreenIcon from '../../assets/icons/yt.svg';
 export interface IYtScreenProps {
   setMedia: (e: any, data: DropdownProps) => void;

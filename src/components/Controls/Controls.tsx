@@ -1,9 +1,9 @@
 import React from 'react';
-import { Icon, Progress, Label, Popup } from 'semantic-ui-react';
+import { Progress, Label } from 'semantic-ui-react';
 // import { Slider } from 'react-semantic-ui-range';
 import { formatTimestamp } from '../../utils';
 import styles from './Controls.module.css';
-import Slider from 'rc-slider';
+// import Slider from 'rc-slider';
 import MetaButton from '../../atoms/MetaButton';
 import BackwardIcon from '../../../src/assets/icons/backward.svg';
 import ForwardIcon from '../../../src/assets/icons/forward.svg';
@@ -13,7 +13,7 @@ import fullScreenIcon from '../../../src/assets/icons/full-screen.svg';
 import quiteFScreenIcon from '../../../src/assets/icons/quit-full-screen.svg';
 import SyncIcon from '../../../src/assets/icons/sync.svg';
 import SyncInfoIcon from '../../../src/assets/icons/ion_sync-info.svg';
-import ccIcon from '../../../src/assets/icons/caption.svg';
+// import ccIcon from '../../../src/assets/icons/caption.svg';
 import vlmIcon from '../../../src/assets/icons/volume.svg';
 import muteIcon from '../../../src/assets/icons/mute.png';
 import rightArrowIcon from '../../../src/assets/icons/Arrow - Left.svg';
@@ -37,6 +37,8 @@ interface ControlsProps {
   isPauseDisabled?: boolean;
   isCollapsed: boolean;
   isShowTheatreTopbar: boolean;
+  isBehind: boolean;
+  checkIsBehind: Function;
 }
 
 interface ControlState {
@@ -133,26 +135,33 @@ export class Controls extends React.Component<ControlsProps> {
       console.error('Something went wrong!');
     }
   };
+
+  componentDidMount(): void {
+    // console.log({ leaderTime: this.props.leaderTime });
+
+    this.props.checkIsBehind();
+  }
   render() {
     const {
       togglePlay,
       onSeek,
-      fullScreen,
+      // fullScreen,
       toggleMute,
-      showSubtitle,
+      // showSubtitle,
       jumpToLeader,
       currentTime,
       duration,
-      leaderTime,
-      isPauseDisabled,
-      disabled,
-      subtitled,
+      // leaderTime,
+      // isPauseDisabled,
+      // disabled,
+      // subtitled,
       paused,
       muted,
-      isCollapsed,
+      // isCollapsed,
       volume,
     } = this.props;
-    const isBehind = leaderTime && leaderTime - currentTime > 5;
+
+    // const isBehind = leaderTime && leaderTime - currentTime > 5;
     return (
       <>
         <div className={styles.ControlsWrapper}>
@@ -261,8 +270,8 @@ export class Controls extends React.Component<ControlsProps> {
                   }
                 /> */}
                 <MetaButton
-                  onClick={() => (isBehind ? jumpToLeader() : null)}
-                  img={isBehind ? SyncInfoIcon : SyncIcon}
+                  onClick={() => (this.props.isBehind ? jumpToLeader() : null)}
+                  img={this.props.isBehind ? SyncInfoIcon : SyncIcon}
                   className="bg-transparent"
                   imgClass="h-14"
                 />
