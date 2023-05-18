@@ -242,7 +242,7 @@ export default class App extends React.Component<AppProps, AppState> {
     const canAutoplay = await testAutoplay();
     this.setState({ isAutoPlayable: canAutoplay });
     this.loadSettings();
-    // this.loadYouTube();
+    this.loadYouTube();
     this.init();
 
     // checking video player is synchronized or not
@@ -607,7 +607,53 @@ export default class App extends React.Component<AppProps, AppState> {
           //   'leftVideo'
           // ) as HTMLMediaElement;
           // leftVideo?.pause();
-          // this.watchPartyYTPlayer?.stopVideo();
+          this.watchPartyYTPlayer?.stopVideo();
+          if (this.isYouTube() && !this.watchPartyYTPlayer) {
+            console.log(
+              'YT player not ready, onReady callback will retry when it is'
+            );
+          } else {
+            // Start this video
+            this.doSrc(data.video, data.videoTS);
+            if (!data.paused) {
+              this.doPlay();
+            }
+            if (data.subtitle) {
+              this.loadSubtitles();
+            }
+            // else if (this.isHttp() && !this.isYouTube()) {
+            //   const src = data.video;
+            //   const subtitlePath = src.slice(0, src.lastIndexOf('/') + 1);
+            //   // Expect subtitle name to be file name + .srt
+            //   const subtitleSrc = subtitlePath + 'subtitles/' + this.getFileName(src) + '.srt';
+            //   this.setState({ currentSubtitle: subtitleSrc }, () => {
+            //     this.loadSubtitles();
+            //   });
+            // }
+            // One time, when we're ready to play
+
+            this.setLoadingFalse();
+            this.jumpToLeader();
+
+            // Progress updater
+            window.clearInterval(this.progressUpdater);
+            this.setState({ downloaded: 0, total: 0, speed: 0 });
+
+            if (currentMedia.includes('/stream?torrent=magnet')) {
+              this.progressUpdater = window.setInterval(async () => {
+                const response = await window.fetch(
+                  currentMedia.replace('/stream', '/progress')
+                );
+                const data = await response.json();
+                this.setState({
+                  downloaded: data.downloaded,
+                  total: data.total,
+                  speed: data.speed,
+                  connections: data.connections,
+                });
+              }, 1000);
+            }
+          }
           // this.loadYouTube();
 
           // if (this.isYouTube() && !this.watchPartyYTPlayer) {
@@ -1007,10 +1053,14 @@ export default class App extends React.Component<AppProps, AppState> {
     //   ) as HTMLMediaElement;
     //   return leftVideo?.currentTime;
     // }
+    if (this.isYouTube()) {
+      return this.watchPartyYTPlayer?.getCurrentTime();
+    }
     if (this.playerRef.current) {
       return this.playerRef.current?.getCurrentTime();
       // return this.watchPartyYTPlayer?.getCurrentTime();
     }
+
     return 0;
   };
 
@@ -1025,6 +1075,9 @@ export default class App extends React.Component<AppProps, AppState> {
     //     return 1;
     //   }
     // }
+    if (this.isYouTube()) {
+      return this.watchPartyYTPlayer?.getDuration();
+    }
     if (this.playerRef.current) {
       // return this.watchPartyYTPlayer?.getDuration();
       return this?.playerRef?.current.getDuration();
@@ -1047,10 +1100,9 @@ export default class App extends React.Component<AppProps, AppState> {
     //   ) as HTMLMediaElement;
     //   return leftVideo?.muted;
     // }
-    // if (this.isYouTube()) {
-    //   return this.state.currentMediaPaused;
-    //   // return this.watchPartyYTPlayer?.isMuted();
-    // }
+    if (this.isYouTube()) {
+      return this.watchPartyYTPlayer?.isMuted();
+    }
     return this.state.isMute;
   };
 
@@ -1081,25 +1133,52 @@ export default class App extends React.Component<AppProps, AppState> {
   };
 
   doSrc = async (src: string, time: number) => {
-    console.log('doSrc', src, time);
-    this.doSeek(time);
+    // console.log('doSrc', src, time);
+    if (this.isYouTube()) {
+      console.log('YouTube src=: ', src);
+      let url = new window.URL(src);
+      // Standard link https://www.youtube.com/watch?v=ID
+      let videoId = querystring.parse(url.search.substring(1))['v'];
+      // Link shortener https://youtu.be/ID
+      let altVideoId = src.split('/').slice(-1)[0];
+      this.watchPartyYTPlayer?.cueVideoById(videoId || altVideoId, time ?? 2);
+    } else {
+      this.doSeek(time);
+    }
   };
 
   doPlay = async () => {
     const canAutoplay = this.state.isAutoPlayable || (await testAutoplay());
     this.setState(
       { currentMediaPaused: false, isAutoPlayable: canAutoplay },
-      async () => {}
+      async () => {
+        if (this.isYouTube()) {
+          setTimeout(() => {
+            console.log('--playing yt--');
+            this.watchPartyYTPlayer?.playVideo();
+            // console.log(window.YT?.PlayerState.PAUSED);
+            this.showOverlap();
+          }, 500);
+        }
+      }
     );
   };
 
   doPause = () => {
-    this.setState({ currentMediaPaused: true }, async () => {});
+    this.setState({ currentMediaPaused: true }, async () => {
+      if (this.isYouTube()) {
+        console.log('yt pause');
+        this.watchPartyYTPlayer?.pauseVideo();
+      }
+    });
   };
 
   doSeek = (time: number) => {
-    if (this.isYouTube() || this.isVideo()) {
+    if (this.isVideo()) {
       this.playerRef.current?.seekTo(time);
+    }
+    if (this.isYouTube()) {
+      this.watchPartyYTPlayer?.seekTo(time, true);
     }
   };
 
@@ -1108,6 +1187,12 @@ export default class App extends React.Component<AppProps, AppState> {
       return;
     }
     let shouldPlay = this.state.currentMediaPaused;
+    if (this.isYouTube()) {
+      shouldPlay =
+        this.watchPartyYTPlayer?.getPlayerState() ===
+          window.YT?.PlayerState.PAUSED ||
+        this.getCurrentTime() === this.getDuration();
+    }
     if (shouldPlay) {
       // console.log('shouldPlay: ON PLAY', shouldPlay);
       this.socket.emit('CMD:play');
@@ -1201,14 +1286,28 @@ export default class App extends React.Component<AppProps, AppState> {
 
   setMute = (muted: boolean) => {
     this.setState({ isMute: muted });
-    // this.refreshControls();
+    if (this.isYouTube()) {
+      if (muted) {
+        this.watchPartyYTPlayer?.mute();
+      } else {
+        this.watchPartyYTPlayer?.unMute();
+      }
+    }
+    this.refreshControls();
   };
 
   setVolume = (volume: number) => {
     this.setState({ volume: volume });
+    if (this.isYouTube()) {
+      this.watchPartyYTPlayer?.setVolume(volume * 100);
+    }
   };
 
   getVolume = (): number => {
+    if (this.isYouTube()) {
+      const volume = this.watchPartyYTPlayer?.getVolume();
+      return volume / 100;
+    }
     return this.state.volume;
   };
 
@@ -1606,11 +1705,12 @@ export default class App extends React.Component<AppProps, AppState> {
                       )}
                     {/* ====================== END topBAR ====================== */}
                     <div style={{ flexGrow: 2 }}>
-                      {!this.state.isHome && !this.state.isHideOverlap && (
+                      {!this.state.isHome && (
                         <section
                           onMouseOver={() => this.handleInteraction()}
                           onTouchStart={() => this.handleInteraction()}
-                          className="absolute top-0 w-full h-[100vh] bg-transparent z-[1]"
+                          className="absolute top-0 w-full h-[100vh] bg-transparent"
+                          style={{ zIndex: 50 }}
                           onClick={() => {
                             this.toggleCollapse();
                             this.handleInteraction();
@@ -1622,35 +1722,28 @@ export default class App extends React.Component<AppProps, AppState> {
                           this.state.screen === 'home' ? 'playerContainer' : ''
                         }
                       >
-                        {
-                          // !this.isYouTube() &&
-                          // !this.state.loading &&
-                          // !this.isVBrowser() &&
-                          // !this.getVBrowserPass() &&
-                          // !this.getVBrowserHost() &&
-                          this.state.isHome && this.state.screen === 'home' && (
-                            <EmptyTheatre
-                              gotoYTScreen={this.gotoYTScreen}
-                              state={this.state}
-                              setState={this.setState}
-                              playlist={this.state.playlist}
-                              toggleIsUploadPress={this.toggleIsUploadPress}
-                              setMedia={this.setMedia}
-                              playlistAdd={this.playlistAdd}
-                              playlistDelete={this.playlistDelete}
-                              playlistMove={this.playlistMove}
-                              currentMedia={this.state.currentMedia}
-                              getMediaDisplayName={this.getMediaDisplayName}
-                              launchMultiSelect={this.launchMultiSelect}
-                              streamPath={this.props.streamPath}
-                              mediaPath={this.state.mediaPath}
-                              disabled={!this.haveLock()}
-                              toggleHome={this.toggleHome}
-                              setLoadingFalse={this.setLoadingFalse}
-                              // isHome={this.state.isHome}
-                            />
-                          )
-                        }
+                        {this.state.isHome && this.state.screen === 'home' && (
+                          <EmptyTheatre
+                            gotoYTScreen={this.gotoYTScreen}
+                            state={this.state}
+                            setState={this.setState}
+                            playlist={this.state.playlist}
+                            toggleIsUploadPress={this.toggleIsUploadPress}
+                            setMedia={this.setMedia}
+                            playlistAdd={this.playlistAdd}
+                            playlistDelete={this.playlistDelete}
+                            playlistMove={this.playlistMove}
+                            currentMedia={this.state.currentMedia}
+                            getMediaDisplayName={this.getMediaDisplayName}
+                            launchMultiSelect={this.launchMultiSelect}
+                            streamPath={this.props.streamPath}
+                            mediaPath={this.state.mediaPath}
+                            disabled={!this.haveLock()}
+                            toggleHome={this.toggleHome}
+                            setLoadingFalse={this.setLoadingFalse}
+                            // isHome={this.state.isHome}
+                          />
+                        )}
                         {(this.state.loading ||
                           // !this.state.currentMedia ||
                           (this.state.nonPlayableMedia &&
@@ -1741,20 +1834,40 @@ export default class App extends React.Component<AppProps, AppState> {
                                     console.log(iframe.getCurrentTime());
                                   }
                                 }}
-                                // autoplay
                               />
                             </main>
                           </div>
                         )}
 
-                        {this.isYouTube() && (
+                        <iframe
+                          style={{
+                            display:
+                              this.isYouTube() &&
+                              !this.state.loading &&
+                              !this.state.isHome
+                                ? 'block'
+                                : 'none',
+                          }}
+                          height="100%"
+                          width="100%"
+                          title="YouTube"
+                          id="leftYt"
+                          className="videoContent"
+                          allowFullScreen={true}
+                          frameBorder="0"
+                          allow="autoplay"
+                          src="https://www.youtube.com/embed/?enablejsapi=1&controls=0&rel=0"
+                        />
+
+                        {/* // YT PLAYER:::: */}
+                        {/* {this.isYouTube() && (
                           <div
                             className="videoContent"
                             style={{
                               display:
                                 this.isYouTube() &&
-                                !this.state.loading &&
-                                !this.state.isHome
+                                  !this.state.loading &&
+                                  !this.state.isHome
                                   ? 'block'
                                   : 'none',
                             }}
@@ -1763,8 +1876,6 @@ export default class App extends React.Component<AppProps, AppState> {
                               style={{
                                 height: '100%',
                                 width: '100%',
-                                // position: 'relative',
-                                // paddingTop: '56.25%',
                               }}
                             >
                               <YTReactPlayer
@@ -1811,11 +1922,11 @@ export default class App extends React.Component<AppProps, AppState> {
                                     console.log(iframe.getCurrentTime());
                                   }
                                 }}
-                                // autoplay
+                              // autoplay
                               />
                             </main>
                           </div>
-                        )}
+                        )} */}
                       </div>
                     </div>
                     {!this.state.isCollapsed &&
@@ -1823,6 +1934,7 @@ export default class App extends React.Component<AppProps, AppState> {
                       !this.state.isHome &&
                       !this.state.isUntouched && (
                         <div
+                          id="controls"
                           className="z-50"
                           onClick={() => this.handleInteraction()}
                         >
