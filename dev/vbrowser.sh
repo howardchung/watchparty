@@ -12,6 +12,16 @@ apt-get install -y dnsutils
 # disable unattended-upgrades
 apt-get remove -y unattended-upgrades
 
+# disable ipv6 on reboot (fixes region detection sometimes)
+echo '[Unit]
+Description=Disable IPV6
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c "sysctl -w net.ipv6.conf.all.disable_ipv6=1 && sysctl -w net.ipv6.conf.default.disable_ipv6=1"
+[Install]
+WantedBy=multi-user.target' > /etc/systemd/system/ipv6.service
+systemctl enable ipv6.service
+
 # determine if this is a large or not via nproc
 # This systemd config starts the vbrowser on reboot (or instances created from a snapshot of this init vm)
 echo '
