@@ -6,6 +6,7 @@ import { Hetzner } from './hetzner';
 import { DigitalOcean } from './digitalocean';
 import { Docker } from './docker';
 
+// Chromium on ARM: ghcr.io/howardchung/vbrowser/arm-chromium
 export const imageName = 'howardc93/vbrowser';
 
 export const assignVM = async (
