@@ -40,17 +40,14 @@ export class Hetzner extends VMManager {
         start_after_create: true,
         image: imageId,
         ssh_keys: sshKeys,
+        public_net: {
+          enable_ipv4: true,
+          enable_ipv6: false,
+        },
         // networks: [
         //   this.networks[Math.floor(Math.random() * this.networks.length)],
         // ],
-        //         user_data: this.isLarge
-        //           ? `#!/bin/bash
-        // apt-get install -y dnsutils
-        // iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 5000
-        // PASSWORD=$(hostname)
-        // RESOLUTION=$(if [ "$(nproc)" -le "2" ]; then echo "1280x720@30"; else echo "1920x1080@30"; fi)
-        // docker run -d --rm --name=vbrowser --log-opt max-size=1g --net=host --shm-size=1g --cap-add="SYS_ADMIN" -e DISPLAY=":99.0" -e NEKO_SCREEN=$RESOLUTION -e NEKO_PASSWORD=$PASSWORD -e NEKO_PASSWORD_ADMIN=$PASSWORD -e NEKO_BIND=":5000" -e NEKO_EPR=":59000-59100" -e NEKO_H264="1" howardc93/vbrowser`
-        //           : '',
+        // user_data: `replace with vbrowser.sh startup script if we want to boot vbrowser on instance creation (won't trigger on rebuild/restart)`
         labels: {
           [this.getTag()]: '1',
           originalName: name,
