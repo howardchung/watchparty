@@ -70,6 +70,9 @@ body {
   ) !important;
   border-radius: 11.7385px !important;
 }
+iframe#leftYt .ytp-pause-overlay {
+  display: none !important;
+}
 
 .videoContent {
   position: absolute;

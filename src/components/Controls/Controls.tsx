@@ -138,7 +138,6 @@ export class Controls extends React.Component<ControlsProps> {
 
   componentDidMount(): void {
     // console.log({ leaderTime: this.props.leaderTime });
-
     this.props.checkIsBehind();
   }
   render() {

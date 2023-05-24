@@ -38,7 +38,8 @@ import { SubtitleModal } from '../Modal/SubtitleModal';
 import UploadFile from '../Modal/UploadFile';
 import { EmptyTheatre } from '../EmptyTheatre/EmptyTheatre';
 import ReactPlayer from 'react-player/lazy';
-import YTReactPlayer from 'react-player/youtube';
+import './App.css';
+// import YTReactPlayer from 'react-player/youtube';
 import { YtScreen } from '../Modal/YtScreen';
 declare global {
   interface Window {
@@ -284,8 +285,15 @@ export default class App extends React.Component<AppProps, AppState> {
         ),
       },
       () => {
-        // console.log("checking is behind == >>>>");
-        // console.log({ leaderTime: this.getLeaderTime(), currentTime: this.getCurrentTime(), isBehind: this.state.isBehind })
+        console.log('checking is behind == >>>>');
+        console.log({
+          leaderTime: this.getLeaderTime(),
+          currentTime: this.getCurrentTime(),
+          isBehind: this.state.isBehind,
+        });
+        if (this.state.isBehind) {
+          this.jumpToLeader();
+        }
       }
     );
   };
@@ -376,7 +384,22 @@ export default class App extends React.Component<AppProps, AppState> {
               getMediaType(this.state.currentMedia) === 'youtube' &&
               e.data === window.YT?.PlayerState?.ENDED
             ) {
+              ytPlayer.setOption('rel', 0);
               this.onVideoEnded();
+            }
+            if (e.data === window.YT?.PlayerState.PLAYING) {
+              // Player has started playing
+              if (this.state.isHideOverlap) {
+                this.jumpToLeader();
+              }
+              this.showOverlap();
+              console.log('Player started playing');
+              // this.jumpToLeader();
+            }
+            if (e.data === window.YT?.PlayerState.PAUSED) {
+              // Video is paused, hide the "More Videos" suggestions
+              // ytPlayer.setOption('showRelatedVideos', false);
+              console.log('showRelatedVideos: ');
             }
             // console.log(this.ytDebounce, e.data, this.watchPartyYTPlayer?.getVideoUrl());
             if (
@@ -394,7 +417,7 @@ export default class App extends React.Component<AppProps, AppState> {
                 this.socket.emit('CMD:pause');
                 this.doPause();
               }
-              window.setTimeout(() => (this.ytDebounce = true), 500);
+              window.setTimeout(() => (this.ytDebounce = true), 1000);
             }
           },
         },
@@ -607,7 +630,7 @@ export default class App extends React.Component<AppProps, AppState> {
           //   'leftVideo'
           // ) as HTMLMediaElement;
           // leftVideo?.pause();
-          this.watchPartyYTPlayer?.stopVideo();
+          // this.watchPartyYTPlayer?.stopVideo();
           if (this.isYouTube() && !this.watchPartyYTPlayer) {
             console.log(
               'YT player not ready, onReady callback will retry when it is'
@@ -617,6 +640,9 @@ export default class App extends React.Component<AppProps, AppState> {
             this.doSrc(data.video, data.videoTS);
             if (!data.paused) {
               this.doPlay();
+            }
+            if (data.paused) {
+              this.doPause();
             }
             if (data.subtitle) {
               this.loadSubtitles();
@@ -1091,7 +1117,7 @@ export default class App extends React.Component<AppProps, AppState> {
     return this.isScreenShare() || this.isVBrowser();
   };
   showOverlap = () => {
-    this.setState({ isHideOverlap: false });
+    this.setState({ isHideOverlap: false }, () => {});
   };
   isMuted = () => {
     // if (this.isVideo()) {
@@ -1123,6 +1149,7 @@ export default class App extends React.Component<AppProps, AppState> {
   };
 
   jumpToLeader = () => {
+    console.log('jumping to Leader');
     // Jump to the leader's position
     const maxTS = this.getLeaderTime();
     if (maxTS > 0) {
@@ -1141,7 +1168,7 @@ export default class App extends React.Component<AppProps, AppState> {
       let videoId = querystring.parse(url.search.substring(1))['v'];
       // Link shortener https://youtu.be/ID
       let altVideoId = src.split('/').slice(-1)[0];
-      this.watchPartyYTPlayer?.cueVideoById(videoId || altVideoId, time ?? 2);
+      this.watchPartyYTPlayer?.cueVideoById(videoId || altVideoId, time);
     } else {
       this.doSeek(time);
     }
@@ -1149,15 +1176,21 @@ export default class App extends React.Component<AppProps, AppState> {
 
   doPlay = async () => {
     const canAutoplay = this.state.isAutoPlayable || (await testAutoplay());
+    console.log('canAutoplay: ', canAutoplay);
     this.setState(
       { currentMediaPaused: false, isAutoPlayable: canAutoplay },
       async () => {
         if (this.isYouTube()) {
           setTimeout(() => {
             console.log('--playing yt--');
-            this.watchPartyYTPlayer?.playVideo();
-            // console.log(window.YT?.PlayerState.PAUSED);
-            this.showOverlap();
+            try {
+              this.watchPartyYTPlayer.playVideo();
+              // console.log(window.YT?.PlayerState.PAUSED);
+              // this.showOverlap();
+            } catch (error) {
+              console.log('error: ', error);
+              this.showOverlap();
+            }
           }, 500);
         }
       }
@@ -1187,12 +1220,15 @@ export default class App extends React.Component<AppProps, AppState> {
       return;
     }
     let shouldPlay = this.state.currentMediaPaused;
-    if (this.isYouTube()) {
-      shouldPlay =
-        this.watchPartyYTPlayer?.getPlayerState() ===
-          window.YT?.PlayerState.PAUSED ||
-        this.getCurrentTime() === this.getDuration();
-    }
+
+    // if (this.isYouTube()) {
+    //   console.log(this.watchPartyYTPlayer?.getPlayerState(), window.YT?.PlayerState.PAUSED);
+
+    //   shouldPlay =
+    //     this.watchPartyYTPlayer?.getPlayerState() ===
+    //       window.YT?.PlayerState.PAUSED ||
+    //     this.getCurrentTime() === this.getDuration();
+    // }
     if (shouldPlay) {
       // console.log('shouldPlay: ON PLAY', shouldPlay);
       this.socket.emit('CMD:play');
@@ -1207,6 +1243,7 @@ export default class App extends React.Component<AppProps, AppState> {
   };
 
   onSeek = (e: any, time: number) => {
+    this.isPlaying();
     let target = time;
     if (e) {
       const rect = e.target.getBoundingClientRect();
@@ -1300,6 +1337,13 @@ export default class App extends React.Component<AppProps, AppState> {
     this.setState({ volume: volume });
     if (this.isYouTube()) {
       this.watchPartyYTPlayer?.setVolume(volume * 100);
+    }
+  };
+
+  isPlaying = () => {
+    if (this.isYouTube()) {
+      // this.watchPartyYTPlayer?.isPlaying
+      console.log('playerstate=', this.watchPartyYTPlayer?.getPlayerState());
     }
   };
 
@@ -1705,7 +1749,7 @@ export default class App extends React.Component<AppProps, AppState> {
                       )}
                     {/* ====================== END topBAR ====================== */}
                     <div style={{ flexGrow: 2 }}>
-                      {!this.state.isHome && (
+                      {!this.state.isHome && !this.state.isHideOverlap && (
                         <section
                           onMouseOver={() => this.handleInteraction()}
                           onTouchStart={() => this.handleInteraction()}
@@ -1856,7 +1900,7 @@ export default class App extends React.Component<AppProps, AppState> {
                           allowFullScreen={true}
                           frameBorder="0"
                           allow="autoplay"
-                          src="https://www.youtube.com/embed/?enablejsapi=1&controls=0&rel=0"
+                          src="https://www.youtube.com/embed/?enablejsapi=1&controls=0&rel=0&autoplay=1"
                         />
 
                         {/* // YT PLAYER:::: */}
@@ -1932,7 +1976,8 @@ export default class App extends React.Component<AppProps, AppState> {
                     {!this.state.isCollapsed &&
                       this.state.currentMedia &&
                       !this.state.isHome &&
-                      !this.state.isUntouched && (
+                      !this.state.isUntouched &&
+                      !this.state.isHideOverlap && (
                         <div
                           id="controls"
                           className="z-50"
