@@ -40,7 +40,7 @@
     "react-secure-link": "^3.1.2",
     "react-semantic-ui-range": "^0.7.1",
     "react-transition-group": "^4.4.5",
-    "recharts": "^2.4.3",
+    "recharts": "^2.6.2",
     "semantic-ui-css": "^2.5.0",
     "semantic-ui-react": "^2.1.4",
     "socket.io": "^4.6.1",
