@@ -14,8 +14,7 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "react-jsx",
-    "types": ["youtube"]
+    "jsx": "react-jsx"
   },
   "include": ["src", "global.d.ts"],
   "ts-node": {
