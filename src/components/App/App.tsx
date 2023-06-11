@@ -58,7 +58,6 @@ import firebase from 'firebase/compat/app';
 import { SubtitleModal } from '../Modal/SubtitleModal';
 import { HTML } from './HTML';
 import { YouTube } from './YouTube';
-//@ts-ignore
 import type WebTorrent from 'webtorrent';
 import styles from './App.module.css';
 

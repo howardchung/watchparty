@@ -142,7 +142,7 @@ export class SignInButton extends React.Component<SignInButtonProps> {
         )}
         <Popup
           basic
-          content="Sign in to set your name and picture, subscribe, or launch VBrowsers"
+          content="Sign in for additional features"
           trigger={
             <Dropdown
               style={{ height: '36px' }}

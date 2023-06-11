@@ -244,7 +244,6 @@ export const serverPath =
       ? window.location.host
       : `${window.location.hostname}:8080`
   }`;
-console.log(process.env.REACT_APP_SERVER_HOST);
 
 export async function getMediaPathResults(
   mediaPath: string,
