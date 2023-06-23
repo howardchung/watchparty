@@ -233,11 +233,11 @@ export class ComboBox extends React.Component<ComboBoxProps> {
     const {
       currentMedia,
       getMediaDisplayName,
-      toggleIsUploadPress,
-      isShowTheatreTopbar,
+      // toggleIsUploadPress,
+      // isShowTheatreTopbar,
       clipboard,
       toggleHome,
-      toggleShowTopbar,
+      // toggleShowTopbar,
     } = this.props;
     const { results } = this.state;
     return (
@@ -365,7 +365,6 @@ export class ComboBox extends React.Component<ComboBoxProps> {
                 Now Playing
               </button>
             </div> */}
-
             {/* ====================== PLAYLIST content ====================== */}
             <div className="dropdown dropdown-end w-[280px]">
               <label

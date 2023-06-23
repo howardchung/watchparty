@@ -30,6 +30,7 @@ export interface IYtScreenProps {
   isShowTheatreTopbar: boolean;
   toggleShowTopbar: Function;
   gotoHomeScreen: Function;
+  currentMediaPaused: boolean;
 }
 export type TabsType = 'trending' | 'live' | 'movie' | 'game';
 export function YtScreen(props: IYtScreenProps) {
@@ -79,6 +80,7 @@ export function YtScreen(props: IYtScreenProps) {
         <section className="yt-screen bg-[#1E1E1E]  p-0  m-0  w-full min-h-screen overflow-y-hidden z-0">
           <main className="">
             <SearchBox
+              currentMediaPaused={props.currentMediaPaused}
               setVideoItems={setVideoItems}
               gotoHomeScreen={props.gotoHomeScreen}
               isShowTheatreTopbar={props.isShowTheatreTopbar}

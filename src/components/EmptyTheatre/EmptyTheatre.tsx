@@ -1,32 +1,16 @@
 import * as React from 'react';
-import {
-  Button,
-  Icon,
-  Image,
-  Dropdown,
-  DropdownProps,
-  Input,
-  Grid,
-} from 'semantic-ui-react';
+import { DropdownProps } from 'semantic-ui-react';
 import classes from './EmptyTheatre.module.css';
 import ChatVideoCard from '../Playlist/ChatVideoCard';
 import playlistIcon from '../../assets/icons/playlist.svg';
 import playIcon from '../../assets/icons/play.svg';
 import yt from '../../assets/icons/yt.svg';
 import tgIcon from '../../assets/icons/telegram.svg';
-import telegram from '../../assets/icons/telegram.png';
-import upload from '../../assets/icons/upload.png';
 import uploadIcon from '../../assets/upload/upload.svg';
-import solarQuit from '../../assets/upload/sorlarQuit.svg';
 import clipboardIcon from '../../assets/icons/clipboard-paste.svg';
 import searchIcon from '../../assets/icons/search.svg';
-import {
-  debounce,
-  getMediaPathResults,
-  getYouTubeResults,
-  getYouTubeTrendings,
-} from '../../utils';
 import { AppState } from '../App/App';
+import GetOpacity from '../../hook/getOpacity';
 export interface IEmptyTheatreProps {
   toggleIsUploadPress: Function;
   setMedia: (e: any, data: DropdownProps) => void;
@@ -51,19 +35,22 @@ export function EmptyTheatre(props: IEmptyTheatreProps) {
   const {
     toggleIsUploadPress,
     toggleHome,
-    setState,
+    // setState,
     state,
-    setMedia,
-    playlistAdd,
-    getMediaDisplayName,
+    // setMedia,
+    // playlistAdd,
     currentMedia,
     setLoadingFalse,
     gotoYTScreen,
   } = props;
+
+  const { opacity: op } = GetOpacity(!state.currentMediaPaused);
+
   React.useEffect(() => {
     // ((state as AppState).clipboard && (state as AppState).currentMedia) && setLoadingFalse();
     setLoadingFalse();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.currentMediaPaused]);
 
   return (
     <main className={classes.content}>
@@ -73,7 +60,9 @@ export function EmptyTheatre(props: IEmptyTheatreProps) {
           <div className="relative">
             <button
               onClick={() => toggleHome()}
-              className="btn btn-md font-bold text-[14px] bg-white hover:bg-white text-black/80 rounded-xl border-none capitalize"
+              className={`btn btn-md font-bold text-[14px] bg-[#EFFF33] hover:bg-[#EFFF33] text-black/80 rounded-xl border-none capitalize opacity-${
+                op * 100
+              }`}
             >
               <span>
                 <img src={playIcon} alt="" className="h-8 mr-1 opacity-70" />

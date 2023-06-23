@@ -24,6 +24,7 @@ import MetaButton from '../../atoms/MetaButton';
 import clipboardIcon from '../../assets/icons/clipboard-paste.svg';
 import searchIcon from '../../assets/icons/search.svg';
 import BackIcon from '../../assets/icons/back.svg';
+import GetOpacity from '../../hook/getOpacity';
 // import { log, timeLog } from 'console';
 interface SearchBoxProps {
   setMedia: (e: any, data: DropdownProps) => void;
@@ -48,6 +49,7 @@ interface SearchBoxProps {
   toggleShowTopbar: Function;
   gotoHomeScreen: Function;
   setVideoItems: Function;
+  currentMediaPaused: boolean;
 }
 interface ComboState {
   inputMedia: string | undefined;
@@ -55,6 +57,8 @@ interface ComboState {
   loading: boolean;
   lastResultTimestamp: number;
   currentClipboard: string;
+  opacity: number;
+  intervalId: undefined | any;
 }
 
 export class SearchBox extends React.Component<SearchBoxProps> {
@@ -66,6 +70,8 @@ export class SearchBox extends React.Component<SearchBoxProps> {
     loading: false,
     lastResultTimestamp: Number(new Date()),
     currentClipboard: '',
+    opacity: 1,
+    intervalId: undefined,
   };
   debounced: any = null;
 
@@ -217,18 +223,38 @@ export class SearchBox extends React.Component<SearchBoxProps> {
   // backToHome = () => {
   //   this.setState({ isHome: true });
   // }
+  componentDidMount() {
+    this.updateOpacity(!this.props.currentMediaPaused);
+  }
 
+  componentDidUpdate(prevProps: SearchBoxProps) {
+    if (prevProps?.currentMediaPaused !== this.props?.currentMediaPaused) {
+      this.updateOpacity(!this.props.currentMediaPaused);
+    }
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.state.intervalId);
+  }
+
+  updateOpacity(isPlaying: boolean) {
+    if (isPlaying) {
+      const interval = setInterval(() => {
+        this.setState((prevState: ComboState) => ({
+          opacity: prevState.opacity === 1 ? 0.5 : 1,
+        }));
+      }, 1000);
+      this.setState({ intervalId: interval });
+    } else {
+      clearInterval(this.state.intervalId);
+      this.setState({ opacity: 1, intervalId: undefined });
+    }
+  }
   render() {
-    const {
-      currentMedia,
-      getMediaDisplayName,
-      toggleIsUploadPress,
-      isShowTheatreTopbar,
-      clipboard,
-      toggleHome,
-      toggleShowTopbar,
-    } = this.props;
+    const { currentMedia, getMediaDisplayName, clipboard, toggleHome } =
+      this.props;
     const { results } = this.state;
+
     return (
       <div style={{ position: 'relative' }} className="bg-[#1E1E1E]">
         {/* ====================== SEARCH CONTAINER ====================== */}
@@ -323,12 +349,14 @@ export class SearchBox extends React.Component<SearchBoxProps> {
             <div className="relative">
               <button
                 onClick={() => toggleHome()}
-                className="btn btn-md font-bold flex whitespace-nowrap text-[14px]  w-[180px] bg-white hover:bg-white text-black/80 rounded-xl border-none capitalize"
+                className={`btn btn-md font-bold text-[14px] bg-[#EFFF33] hover:bg-[#EFFF33] text-black/80 rounded-xl border-none capitalize opacity-${
+                  this.state.opacity * 100
+                }`}
               >
                 <span>
-                  <img src={playIcon} alt="" className="h-6 mr-1 opacity-70" />
+                  <img src={playIcon} alt="" className="h-8 mr-1 opacity-70" />
                 </span>{' '}
-                <span>Now Playing</span>
+                Now Playing
               </button>
             </div>
           )}
