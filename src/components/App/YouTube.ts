@@ -42,7 +42,7 @@ export class YouTube implements Player {
     // Standard link https://www.youtube.com/watch?v=ID
     let videoId = new URLSearchParams(url.search).get('v');
     // Link shortener https://youtu.be/ID
-    let altVideoId = src.split('/').slice(-1)[0];
+    let altVideoId = src.split('/').slice(-1)[0].split('?')[0];
     this.watchPartyYTPlayer?.cueVideoById(videoId || altVideoId, time);
   };
 
