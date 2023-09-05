@@ -6,6 +6,7 @@ import { redisCount } from './utils/redis';
 // URL to invite bot: https://discord.com/api/oauth2/authorize?client_id=1071394728513380372&permissions=2147485696&scope=bot
 
 const HOST_NAME = 'https://www.watchparty.me';
+const API_NAME = 'https://backend.watchparty.me';
 
 const client = new Client({
   intents: [IntentsBitField.Flags.Guilds, IntentsBitField.Flags.GuildMessages],
@@ -22,7 +23,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
   if (interaction.commandName === 'watch') {
     const preload = interaction.options.get('video')?.value;
     // Call the watchparty API to make a room
-    const response = await axios.post(HOST_NAME + '/createRoom', {
+    const response = await axios.post(API_NAME + '/createRoom', {
       video: preload,
     });
     redisCount('discordBotWatch');
