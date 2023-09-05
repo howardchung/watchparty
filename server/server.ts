@@ -286,6 +286,12 @@ app.post('/createRoom', async (req, res) => {
     newRoom.paused = true;
     await newRoom.saveRoom();
   }
+  const prePlaylist = Array.isArray(req.body?.playlist) && req.body?.playlist;
+  if (prePlaylist) {
+    for (let i = 0; i < req.body.playlist; i++) {
+      newRoom.playlistAdd(null, req.body.playlist[i]);
+    }
+  }
   rooms.set(name, newRoom);
   res.json({ name });
 });

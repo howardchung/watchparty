@@ -547,7 +547,7 @@ export class Room {
     }
   };
 
-  private playlistAdd = async (socket: Socket, data: string) => {
+  public playlistAdd = async (socket: Socket | null, data: string) => {
     if (data && data.length > 20000) {
       return;
     }
@@ -568,12 +568,14 @@ export class Room {
       });
     }
     this.io.of(this.roomId).emit('playlist', this.playlist);
-    const chatMsg = {
-      id: socket.id,
-      cmd: 'playlistAdd',
-      msg: data,
-    };
-    this.addChatMessage(socket, chatMsg);
+    if (socket) {
+      const chatMsg = {
+        id: socket.id,
+        cmd: 'playlistAdd',
+        msg: data,
+      };
+      this.addChatMessage(socket, chatMsg);
+    }
     if (!this.video) {
       this.playlistNext(null);
     }
