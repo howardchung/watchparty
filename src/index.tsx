@@ -25,7 +25,7 @@ if (firebaseConfig) {
 }
 
 // Redirect old-style URLs
-if (window.location.hash) {
+if (window.location.hash && window.location.pathname === '/') {
   const hashRoomId = window.location.hash.substring(1);
   window.location.href = '/watch/' + hashRoomId;
 }
