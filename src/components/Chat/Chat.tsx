@@ -41,6 +41,7 @@ interface ChatProps {
   owner: string | undefined;
   ref: RefObject<Chat>;
   isLiveHls: boolean;
+  isDraggable?: boolean;
 }
 
 export class Chat extends React.Component<ChatProps> {
@@ -291,11 +292,17 @@ export class Chat extends React.Component<ChatProps> {
           <div
             style={{
               position: 'fixed',
-              top: Math.min(
-                this.state.reactionMenu.yPosition - 150,
-                window.innerHeight - 450
-              ),
-              left: this.state.reactionMenu.xPosition - 240,
+              zIndex: 2,
+              top: this.props.isDraggable
+                ? this.state.reactionMenu.yPosition - 300
+                : Math.min(
+                    this.state.reactionMenu.yPosition - 150,
+                    window.innerHeight - 450
+                  ),
+              right: this.props.isDraggable ? 100 : 'auto',
+              left: this.props.isDraggable
+                ? 'auto'
+                : this.state.reactionMenu.xPosition - 240,
             }}
           >
             <Picker

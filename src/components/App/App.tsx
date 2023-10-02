@@ -58,6 +58,7 @@ import firebase from 'firebase/compat/app';
 import { SubtitleModal } from '../Modal/SubtitleModal';
 import { HTML } from './HTML';
 import { YouTube } from './YouTube';
+import { DraggableChat } from '../Chat/DraggableChat';
 import type WebTorrent from 'webtorrent';
 import styles from './App.module.css';
 
@@ -108,7 +109,9 @@ interface AppState {
   loading: boolean;
   scrollTimestamp: number;
   unreadCount: number;
+  userChatMessageCount: number;
   fullScreen: boolean;
+  chatDraggableEnabled: boolean;
   controlsTimestamp: number;
   watchOptions: SearchResult[];
   isVBrowser: boolean;
@@ -175,7 +178,9 @@ export default class App extends React.Component<AppProps, AppState> {
     loading: true,
     scrollTimestamp: 0,
     unreadCount: 0,
+    userChatMessageCount: 0,
     fullScreen: false,
+    chatDraggableEnabled: false,
     controlsTimestamp: 0,
     watchOptions: [],
     isVBrowser: false,
@@ -251,6 +256,9 @@ export default class App extends React.Component<AppProps, AppState> {
 
     const canAutoplay = await testAutoplay();
     this.setState({ isAutoPlayable: canAutoplay });
+    this.setState({
+      chatDraggableEnabled: Boolean(getCurrentSettings().chatDraggableEnabled),
+    });
     this.loadSettings();
     this.loadYouTube();
     this.init();
@@ -616,6 +624,9 @@ export default class App extends React.Component<AppProps, AppState> {
       this.setState({
         chat: this.state.chat,
         scrollTimestamp: Number(new Date()),
+        userChatMessageCount: data.cmd
+          ? this.state.userChatMessageCount
+          : this.state.userChatMessageCount + 1,
         unreadCount:
           this.state.currentTab === 'chat'
             ? this.state.unreadCount
@@ -963,6 +974,7 @@ export default class App extends React.Component<AppProps, AppState> {
           autoGainControl: false,
           channelCount: 2,
           echoCancellation: false,
+          //@ts-ignore
           latency: 0,
           noiseSuppression: false,
           sampleRate: 48000,
@@ -1620,6 +1632,22 @@ export default class App extends React.Component<AppProps, AppState> {
     }
   };
 
+  toggleChatDraggable = () => {
+    this.setState({ chatDraggableEnabled: !this.state.chatDraggableEnabled });
+  };
+
+  remountChatDraggable = () => {
+    // force remount
+    this.setState(
+      { chatDraggableEnabled: !this.state.chatDraggableEnabled },
+      () => {
+        this.setState({
+          chatDraggableEnabled: !this.state.chatDraggableEnabled,
+        });
+      }
+    );
+  };
+
   roomSeek = (e: any, time: number) => {
     let target = time;
     // Read the time from the click event if it exists
@@ -1662,13 +1690,9 @@ export default class App extends React.Component<AppProps, AppState> {
   localFullScreen = async (bVideoOnly: boolean) => {
     let container = document.getElementById('theaterContainer') as HTMLElement;
     if (bVideoOnly || isMobile()) {
-      if (this.playingVBrowser() && !isMobile()) {
-        // Can't really control the VBrowser on mobile anyway, so just fullscreen the video
-        // https://github.com/howardchung/watchparty/issues/208
-        container = document.getElementById('leftVideoParent') as HTMLElement;
-      } else {
-        container = this.Player().getVideoEl();
-      }
+      // Can't really control the VBrowser on mobile anyway, so just fullscreen the video
+      // https://github.com/howardchung/watchparty/issues/208
+      container = document.getElementById('fullScreenContainer') as HTMLElement;
     }
     if (
       !container.requestFullscreen &&
@@ -1848,38 +1872,44 @@ export default class App extends React.Component<AppProps, AppState> {
     );
     const displayRightContent =
       this.state.showRightBar || this.state.fullScreen;
-    const rightBar = (
+    const rightBar = (rightBarContainerStyle = {}, isDraggable = false) => (
       <Grid.Column
         width={displayRightContent ? 4 : 1}
-        style={{ display: 'flex', flexDirection: 'column' }}
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          ...rightBarContainerStyle,
+        }}
         className={`${
           this.state.fullScreen
             ? styles.fullHeightColumnFullscreen
             : styles.fullHeightColumn
         }`}
       >
-        <Form autoComplete="off">
-          <Input
-            inverted
-            fluid
-            label={'My name is:'}
-            value={this.state.myName}
-            onChange={this.updateName}
-            style={{ visibility: displayRightContent ? '' : 'hidden' }}
-            icon={
-              <Icon
-                onClick={async () =>
-                  this.updateName(null, { value: await generateName() })
-                }
-                name="random"
-                inverted
-                circular
-                link
-                title="Generate a random name"
-              />
-            }
-          />
-        </Form>
+        {!isDraggable && (
+          <Form autoComplete="off">
+            <Input
+              inverted
+              fluid
+              label={'My name is:'}
+              value={this.state.myName}
+              onChange={this.updateName}
+              style={{ visibility: displayRightContent ? '' : 'hidden' }}
+              icon={
+                <Icon
+                  onClick={async () =>
+                    this.updateName(null, { value: await generateName() })
+                  }
+                  name="random"
+                  inverted
+                  circular
+                  link
+                  title="Generate a random name"
+                />
+              }
+            />
+          </Form>
+        )}
         {
           <Menu
             inverted
@@ -1948,6 +1978,7 @@ export default class App extends React.Component<AppProps, AppState> {
           user={this.props.user}
           ref={this.chatRef}
           isLiveHls={this.state.isLiveHls}
+          isDraggable={isDraggable}
         />
         {this.state.state === 'connected' && (
           <VideoChat
@@ -1990,6 +2021,8 @@ export default class App extends React.Component<AppProps, AppState> {
           setRoomTitleColor={this.setRoomTitleColor}
           mediaPath={this.state.mediaPath}
           setMediaPath={this.setMediaPath}
+          toggleChatDraggable={this.toggleChatDraggable}
+          remountChatDraggable={this.remountChatDraggable}
         />
       </Grid.Column>
     );
@@ -2386,53 +2419,72 @@ export default class App extends React.Component<AppProps, AppState> {
                             )}
                         </div>
                       )}
-                      <iframe
-                        style={{
-                          display:
-                            this.usingYoutube() && !this.state.loading
-                              ? 'block'
-                              : 'none',
-                        }}
-                        title="YouTube"
-                        id="leftYt"
-                        className={styles.videoContent}
-                        allowFullScreen
-                        frameBorder="0"
-                        allow="autoplay"
-                        src="https://www.youtube.com/embed/?enablejsapi=1&controls=0&rel=0"
+                      <DraggableChat
+                        rightBar={rightBar}
+                        userChatMessageCount={this.state.userChatMessageCount}
+                        enabled={
+                          this.state.chatDraggableEnabled &&
+                          this.state.fullScreen
+                        }
+                        renderVideo={(isDraggableChangingDimensions) => (
+                          <>
+                            <iframe
+                              style={{
+                                width: '100%',
+                                height: '100%',
+                                pointerEvents: isDraggableChangingDimensions
+                                  ? 'none' // This will prevent poor performance when dragging or resizing the draggable chat overlay.
+                                  : 'auto',
+                                display:
+                                  this.usingYoutube() && !this.state.loading
+                                    ? 'block'
+                                    : 'none',
+                              }}
+                              title="YouTube"
+                              id="leftYt"
+                              className="videoContent"
+                              frameBorder="0"
+                              allow="autoplay"
+                              src="https://www.youtube.com/embed/?enablejsapi=1&controls=0&rel=0"
+                            />
+                            {this.playingVBrowser() &&
+                            this.getVBrowserPass() &&
+                            this.getVBrowserHost() ? (
+                              <VBrowser
+                                username={this.socket.id}
+                                password={this.getVBrowserPass()}
+                                hostname={this.getVBrowserHost()}
+                                controlling={
+                                  this.state.controller === this.socket.id
+                                }
+                                resolution={this.state.vBrowserResolution}
+                                doPlay={this.localPlay}
+                                setResolution={(data: string) =>
+                                  this.setState({ vBrowserResolution: data })
+                                }
+                              />
+                            ) : (
+                              <video
+                                style={{
+                                  display:
+                                    this.usingNative() && !this.state.loading
+                                      ? 'block'
+                                      : 'none',
+                                  width: '100%',
+                                  height: '100%',
+                                  maxHeight: this.state.fullScreen
+                                    ? 'none'
+                                    : 'calc(100vh - 62px - 36px - 36px - 8px - 41px - 16px)',
+                                }}
+                                id="leftVideo"
+                                onEnded={this.onVideoEnded}
+                                playsInline
+                                onClick={this.roomTogglePlay}
+                              ></video>
+                            )}
+                          </>
+                        )}
                       />
-                      {this.playingVBrowser() &&
-                      this.getVBrowserPass() &&
-                      this.getVBrowserHost() ? (
-                        <VBrowser
-                          username={this.socket.id}
-                          password={this.getVBrowserPass()}
-                          hostname={this.getVBrowserHost()}
-                          controlling={this.state.controller === this.socket.id}
-                          resolution={this.state.vBrowserResolution}
-                          doPlay={this.localPlay}
-                          setResolution={(data: string) =>
-                            this.setState({ vBrowserResolution: data })
-                          }
-                        />
-                      ) : (
-                        <video
-                          style={{
-                            display:
-                              (this.usingNative() && !this.state.loading) ||
-                              this.state.fullScreen
-                                ? 'block'
-                                : 'none',
-                            width: '100%',
-                            maxHeight:
-                              'calc(100vh - 62px - 36px - 36px - 8px - 41px - 16px)',
-                          }}
-                          id="leftVideo"
-                          onEnded={this.onVideoEnded}
-                          playsInline
-                          onClick={this.roomTogglePlay}
-                        ></video>
-                      )}
                     </div>
                   </div>
                   {this.state.roomMedia && controls}
@@ -2486,7 +2538,7 @@ export default class App extends React.Component<AppProps, AppState> {
                   />
                 )}
               </Grid.Column>
-              {rightBar}
+              {rightBar()}
             </Grid.Row>
           </Grid>
         }

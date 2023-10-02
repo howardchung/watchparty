@@ -50,6 +50,8 @@ interface SettingsTabProps {
   setRoomTitleColor: (color: string) => void;
   mediaPath: string | undefined;
   setMediaPath: (path: string) => void;
+  toggleChatDraggable: () => void;
+  remountChatDraggable: () => void;
 }
 
 export const SettingsTab = ({
@@ -73,6 +75,8 @@ export const SettingsTab = ({
   roomTitleColor,
   mediaPath,
   setMediaPath,
+  toggleChatDraggable,
+  remountChatDraggable,
 }: SettingsTabProps) => {
   const [updateTS, setUpdateTS] = useState(0);
   const [permModalOpen, setPermModalOpen] = useState(false);
@@ -415,6 +419,44 @@ export const SettingsTab = ({
       <SettingRow
         toggle
         updateTS={updateTS}
+        icon="external"
+        name="Enable chat box overlay in full screen mode"
+        description="Enable a moveable and resizable chat box overlay in full screen mode."
+        checked={Boolean(getCurrentSettings().chatDraggableEnabled)}
+        disabled={false}
+        onChange={(_e, data) => {
+          toggleChatDraggable();
+          updateSettings(
+            JSON.stringify({
+              ...getCurrentSettings(),
+              chatDraggableEnabled: data.checked,
+            })
+          );
+          setUpdateTS(Number(new Date()));
+        }}
+      />
+      <SettingRow
+        button
+        icon="move"
+        name="Reset Chat Overlay"
+        description="Reset the position and size of the chat box overlay."
+        checked={Boolean(getCurrentSettings().chatDraggableEnabled)}
+        disabled={false}
+        onClick={() => {
+          updateSettings(
+            JSON.stringify({
+              ...getCurrentSettings(),
+              chatDraggablePosition: undefined,
+              chatDraggableSize: undefined,
+              chatDraggableCollapsed: undefined,
+            })
+          );
+          remountChatDraggable();
+        }}
+      />
+      <SettingRow
+        toggle
+        updateTS={updateTS}
         icon="bell"
         name="Disable chat notification sound"
         description="Don't play a sound when a chat message is sent while you're on another tab"
@@ -441,11 +483,13 @@ const SettingRow = ({
   checked,
   disabled,
   onChange,
+  onClick,
   content,
   subOnly,
   helpIcon,
   rightContent,
   toggle,
+  button,
 }: {
   icon: string;
   name: string;
@@ -454,11 +498,13 @@ const SettingRow = ({
   disabled: boolean;
   updateTS?: number;
   onChange?: (e: React.FormEvent, data: CheckboxProps) => void;
+  onClick?: () => void;
   content?: React.ReactNode;
   subOnly?: boolean;
   helpIcon?: React.ReactNode;
   rightContent?: React.ReactNode;
-  toggle: boolean;
+  toggle?: boolean;
+  button?: boolean;
 }) => {
   return (
     <React.Fragment>
@@ -481,6 +527,15 @@ const SettingRow = ({
               checked={checked}
               disabled={disabled}
               onChange={onChange}
+            />
+          )}
+          {button && (
+            <Button
+              style={{ marginLeft: 'auto' }}
+              size="tiny"
+              color="blue"
+              content="Reset"
+              onClick={onClick}
             />
           )}
           {rightContent && (
