@@ -9,17 +9,17 @@ import { Home } from './components/Home';
 import { Privacy, Terms, FAQ, DiscordBot } from './components/Pages/Pages';
 import { TopBar } from './components/TopBar/TopBar';
 import { Footer } from './components/Footer/Footer';
-import * as serviceWorker from './serviceWorker';
 import firebase from 'firebase/compat/app';
 import 'firebase/auth';
 import { serverPath } from './utils';
 import { Create } from './components/Create/Create';
 import { Discord } from './components/Discord/Discord';
 import 'semantic-ui-css/semantic.min.css';
+import config from './config';
 
 const Debug = lazy(() => import('./components/Debug/Debug'));
 
-const firebaseConfig = process.env.REACT_APP_FIREBASE_CONFIG;
+const firebaseConfig = config.VITE_FIREBASE_CONFIG;
 if (firebaseConfig) {
   firebase.initializeApp(JSON.parse(firebaseConfig));
 }
@@ -170,8 +170,3 @@ class WatchParty extends React.Component {
 const container = document.getElementById('root');
 const root = createRoot(container!);
 root.render(<WatchParty />);
-
-// If you want your app to work offline and load faster, you can change
-// unregister() to register() below. Note this comes with some pitfalls.
-// Learn more about service workers: https://bit.ly/CRA-PWA
-serviceWorker.unregister();

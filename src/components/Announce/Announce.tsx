@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Button } from 'semantic-ui-react';
 import styles from './Announce.module.css';
+import config from '../../config';
 
 const GITHUB_REPO = 'howardchung/watchparty-announcements';
 
@@ -21,7 +22,7 @@ const Announce = () => {
         {
           params: {
             q: `repo:${GITHUB_REPO} label:${
-              process.env.NODE_ENV === 'development' ? 'test' : 'release'
+              config.NODE_ENV === 'development' ? 'test' : 'release'
             }`,
             order: 'desc',
             page: 1,

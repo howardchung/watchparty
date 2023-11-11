@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import md5 from 'blueimp-md5';
 import firebase from 'firebase/compat/app';
 import { XMLParser } from 'fast-xml-parser';
+import config from '../config';
 
 export function formatTimestamp(input: any) {
   if (
@@ -238,11 +239,11 @@ export const iceServers = () => [
 ];
 
 export const serverPath =
-  process.env.REACT_APP_SERVER_HOST ||
+  config.VITE_SERVER_HOST ||
   `${window.location.protocol}//${
-    process.env.NODE_ENV === 'production'
-      ? window.location.host
-      : `${window.location.hostname}:8080`
+    config.NODE_ENV === 'development'
+      ? `${window.location.hostname}:8080`
+      : window.location.host
   }`;
 
 export async function getMediaPathResults(

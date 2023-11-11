@@ -33,7 +33,7 @@ import { statsAgg } from './utils/statsAgg';
 import { resolveShard } from './utils/resolveShard';
 import { makeRoomName, makeUserName } from './utils/moniker';
 
-if (config.NODE_ENV === 'development') {
+if (process.env.NODE_ENV === 'development') {
   axios.interceptors.request.use(
     (config) => {
       // console.log(config);

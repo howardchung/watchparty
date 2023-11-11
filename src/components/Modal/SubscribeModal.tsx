@@ -3,11 +3,12 @@ import { Modal, Header, Table, Button, Icon } from 'semantic-ui-react';
 import { loadStripe } from '@stripe/stripe-js';
 import { SignInButton } from '../TopBar/TopBar';
 import firebase from 'firebase/compat/app';
+import config from '../../config';
 
 // Make sure to call `loadStripe` outside of a component’s render to avoid
 // recreating the `Stripe` object on every render.
-const stripePromise = process.env.REACT_APP_STRIPE_PUBLIC_KEY
-  ? loadStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY as string)
+const stripePromise = config.VITE_STRIPE_PUBLIC_KEY
+  ? loadStripe(config.VITE_STRIPE_PUBLIC_KEY as string)
   : null;
 
 export class SubscribeModal extends React.Component<{
@@ -24,7 +25,7 @@ export class SubscribeModal extends React.Component<{
       lineItems: [
         {
           price:
-            process.env.NODE_ENV === 'development'
+            config.NODE_ENV === 'development'
               ? 'price_HNGtabCzD5qyfd'
               : 'price_HNDBoPDI7yYRi9',
           quantity: 1,

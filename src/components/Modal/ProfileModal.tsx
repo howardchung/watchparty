@@ -5,6 +5,7 @@ import 'firebase/compat/auth';
 import { serverPath } from '../../utils';
 import axios from 'axios';
 import { ManageSubButton } from '../SubscribeButton/SubscribeButton';
+import config from '../../config';
 
 export class ProfileModal extends React.Component<{
   close: () => void;
@@ -80,8 +81,7 @@ export class ProfileModal extends React.Component<{
 
   authDiscord = () => {
     const url = `https://discord.com/api/oauth2/authorize?client_id=1071707916719095908&redirect_uri=${encodeURIComponent(
-      process.env.REACT_APP_OAUTH_REDIRECT_HOSTNAME ??
-        'https://www.watchparty.me'
+      config.VITE_OAUTH_REDIRECT_HOSTNAME ?? 'https://www.watchparty.me'
     )}%2Fdiscord%2Fauth&response_type=token&scope=identify`;
     window.open(
       url,
