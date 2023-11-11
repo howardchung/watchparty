@@ -52,7 +52,7 @@
   "scripts": {
     "react": "vite --host",
     "build": "npm run buildReact && npm run buildServer",
-    "buildReact": "vite build",
+    "buildReact": "vite build && npm run typecheck",
     "buildServer": "tsc --project server/tsconfig.json",
     "dev": "ts-node-dev --respawn --transpile-only --project server/tsconfig.json server/server.ts",
     "pm2": "pm2 start buildServer/server.js",
