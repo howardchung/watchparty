@@ -8,6 +8,7 @@ import { SignInButton } from '../TopBar/TopBar';
 import { serverPath } from '../../utils';
 import firebase from 'firebase/compat/app';
 import { SubscribeButton } from '../SubscribeButton/SubscribeButton';
+import config from '../../config';
 
 export class VBrowserModal extends React.Component<{
   closeModal: () => void;
@@ -97,7 +98,7 @@ export class VBrowserModal extends React.Component<{
 
     return (
       <GoogleReCaptchaProvider
-        reCaptchaKey={process.env.VITE_RECAPTCHA_SITE_KEY as string}
+        reCaptchaKey={config.VITE_RECAPTCHA_SITE_KEY as string}
         useRecaptchaNet
       >
         <Modal open={true} onClose={closeModal}>
