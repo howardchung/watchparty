@@ -27,9 +27,9 @@ jobs:
       - run: npm run build --if-present
         env:
           CI: true
-          REACT_APP_FIREBASE_CONFIG: '{"apiKey":"AIzaSyA2fkXeFokJ-Ei_jnzDso5AmjbIaMdzuEc","authDomain":"watchparty-273604.firebaseapp.com","databaseURL":"https://watchparty-273604.firebaseio.com","projectId":"watchparty-273604","storageBucket":"watchparty-273604.appspot.com","messagingSenderId":"769614672795","appId":"1:769614672795:web:54bbda86288ab1a034273e"}'
-          REACT_APP_RECAPTCHA_SITE_KEY: 6LeDGP4UAAAAAGYZZenyU-3fRdhL3p0BaBmiK9mM
-          REACT_APP_STRIPE_PUBLIC_KEY: pk_live_eVMbIifj5lnvgBleBCRaCv4E00aeXQkPxQ
+          VITE_FIREBASE_CONFIG: '{"apiKey":"AIzaSyA2fkXeFokJ-Ei_jnzDso5AmjbIaMdzuEc","authDomain":"watchparty-273604.firebaseapp.com","databaseURL":"https://watchparty-273604.firebaseio.com","projectId":"watchparty-273604","storageBucket":"watchparty-273604.appspot.com","messagingSenderId":"769614672795","appId":"1:769614672795:web:54bbda86288ab1a034273e"}'
+          VITE_RECAPTCHA_SITE_KEY: 6LeDGP4UAAAAAGYZZenyU-3fRdhL3p0BaBmiK9mM
+          VITE_STRIPE_PUBLIC_KEY: pk_live_eVMbIifj5lnvgBleBCRaCv4E00aeXQkPxQ
           NODE_ENV: production
       - name: Push to remote
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}

@@ -10,6 +10,7 @@ import {
 } from 'semantic-ui-react';
 import { Socket } from 'socket.io-client';
 import { openFileSelector, serverPath } from '../../utils';
+import config from '../../config';
 
 export class SubtitleModal extends React.Component<{
   closeModal: () => void;
@@ -93,7 +94,7 @@ export class SubtitleModal extends React.Component<{
               style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}
             >
               <Header>Room subtitle settings</Header>
-              {process.env.NODE_ENV === 'development' && (
+              {config.NODE_ENV === 'development' && (
                 <Input value={this.props.roomSubtitle} />
               )}
               <div>

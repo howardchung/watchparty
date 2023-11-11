@@ -60,6 +60,7 @@ import { HTML } from './HTML';
 import { YouTube } from './YouTube';
 import type WebTorrent from 'webtorrent';
 import styles from './App.module.css';
+import config from '../../config';
 
 declare global {
   interface Window {
@@ -724,7 +725,7 @@ export default class App extends React.Component<AppProps, AppState> {
         from: string;
         sharer: boolean;
       }) => {
-        process.env.NODE_ENV === 'development' && console.log(data);
+        config.NODE_ENV === 'development' && console.log(data);
         // Handle messages received from signaling server
         const msg = data.msg;
         const from = data.from;
@@ -963,7 +964,6 @@ export default class App extends React.Component<AppProps, AppState> {
           autoGainControl: false,
           channelCount: 2,
           echoCancellation: false,
-          latency: 0,
           noiseSuppression: false,
           sampleRate: 48000,
           sampleSize: 16,

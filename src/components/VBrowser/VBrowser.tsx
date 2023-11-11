@@ -3,6 +3,7 @@ import React from 'react';
 import { EVENT } from './events';
 import { NekoClient } from '.';
 import GuacamoleKeyboard from './keyboard';
+import config from '../../config';
 
 // import { EVENT } from './events';
 
@@ -75,7 +76,7 @@ export default class VBrowser extends React.Component<{
     });
     this.$client.on(EVENT.CONTROL.CLIPBOARD, this.onClipboardChanged);
 
-    if (process.env.NODE_ENV === 'development') {
+    if (config.NODE_ENV === 'development') {
       this.$client.on('debug', (e, data) => console.log(e, data));
     }
 
