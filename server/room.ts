@@ -534,7 +534,13 @@ export class Room {
     if (data && data.length > 20000) {
       return;
     }
-    if (socket && data === this.video) {
+    if (
+      socket &&
+      data &&
+      this.video &&
+      (data === this.video ||
+        getYoutubeVideoID(data) === getYoutubeVideoID(this.video))
+    ) {
       this.nextVotes[socket.id] = data;
     }
     const votes = this.roster.filter((user) => this.nextVotes[user.id]).length;

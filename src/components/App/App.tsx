@@ -473,7 +473,7 @@ export default class App extends React.Component<AppProps, AppState> {
             // Can't import webtorrent directly due to vite build error
             //@ts-ignore
             const WebTorrent = //@ts-ignore
-            (await import('webtorrent/dist/webtorrent.min.js')).default;
+              (await import('webtorrent/dist/webtorrent.min.js')).default;
             //@ts-ignore
             window.watchparty.webtorrent?._server?.close();
             window.watchparty.webtorrent?.destroy();
@@ -832,7 +832,7 @@ export default class App extends React.Component<AppProps, AppState> {
               this.socket.emit('CMD:askHost');
             }
           },
-          onStateChange: (e: any) => {
+          onStateChange: (e) => {
             if (
               this.usingYoutube() &&
               e.data === window.YT?.PlayerState?.CUED
@@ -843,7 +843,8 @@ export default class App extends React.Component<AppProps, AppState> {
               this.usingYoutube() &&
               e.data === window.YT?.PlayerState?.ENDED
             ) {
-              this.onVideoEnded();
+              console.log(e.data, e.target.getVideoUrl());
+              this.onVideoEnded(null, e.target.getVideoUrl());
             }
             if (
               this.ytDebounce &&
@@ -1784,7 +1785,7 @@ export default class App extends React.Component<AppProps, AppState> {
     return Math.max(...Object.values(this.state.tsMap));
   };
 
-  onVideoEnded = () => {
+  onVideoEnded = (e: React.SyntheticEvent | null, url: string) => {
     this.localPause();
     // check if looping is on, if so set time back to 0 and restart
     if (this.state.roomLoop) {
@@ -1793,7 +1794,8 @@ export default class App extends React.Component<AppProps, AppState> {
       return;
     }
     if (this.state.playlist.length) {
-      this.socket.emit('CMD:playlistNext', this.state.roomMedia);
+      // Pass the url of the video at the time this video was started
+      this.socket.emit('CMD:playlistNext', url);
       return;
     }
     // Play next fileIndex
@@ -2429,7 +2431,9 @@ export default class App extends React.Component<AppProps, AppState> {
                               'calc(100vh - 62px - 36px - 36px - 8px - 41px - 16px)',
                           }}
                           id="leftVideo"
-                          onEnded={this.onVideoEnded}
+                          onEnded={(e) =>
+                            this.onVideoEnded(e, e.currentTarget.src)
+                          }
                           playsInline
                           onClick={this.roomTogglePlay}
                         ></video>
