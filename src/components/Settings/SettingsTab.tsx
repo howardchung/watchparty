@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useContext } from 'react';
 import {
   Icon,
   Divider,
@@ -19,6 +19,7 @@ import { PermanentRoomModal } from '../Modal/PermanentRoomModal';
 import firebase from 'firebase/compat/app';
 import { Socket } from 'socket.io-client';
 import { HexColorPicker } from 'react-colorful';
+import { MetadataContext } from '../../MetadataContext';
 
 const defaultRoomTitleColor = '#FFFFFF';
 const roomTitleMaxCharLength = 50;
@@ -26,11 +27,9 @@ const roomDescriptionMaxCharLength = 120;
 
 interface SettingsTabProps {
   hide: boolean;
-  user: firebase.User | undefined;
   roomLock: string;
   setRoomLock: (lock: boolean) => Promise<void>;
   socket: Socket;
-  isSubscriber: boolean;
   roomId: string;
   owner: string | undefined;
   setOwner: (owner: string) => void;
@@ -54,11 +53,9 @@ interface SettingsTabProps {
 
 export const SettingsTab = ({
   hide,
-  user,
   roomLock,
   setRoomLock,
   socket,
-  isSubscriber,
   owner,
   vanity,
   setVanity,
@@ -74,6 +71,7 @@ export const SettingsTab = ({
   mediaPath,
   setMediaPath,
 }: SettingsTabProps) => {
+  const { user, isSubscriber } = useContext(MetadataContext);
   const [updateTS, setUpdateTS] = useState(0);
   const [permModalOpen, setPermModalOpen] = useState(false);
   const [validVanity, setValidVanity] = useState(true);

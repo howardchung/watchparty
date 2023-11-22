@@ -6,13 +6,14 @@ import { serverPath } from '../../utils';
 import axios from 'axios';
 import { ManageSubButton } from '../SubscribeButton/SubscribeButton';
 import config from '../../config';
+import { MetadataContext } from '../../MetadataContext';
 
 export class ProfileModal extends React.Component<{
   close: () => void;
-  user: firebase.User;
   userImage: string | null;
-  isSubscriber: boolean;
 }> {
+  static contextType = MetadataContext;
+  declare context: React.ContextType<typeof MetadataContext>;
   public state = {
     resetDisabled: false,
     verifyDisabled: false,
@@ -21,12 +22,12 @@ export class ProfileModal extends React.Component<{
   };
 
   async componentDidMount() {
-    const token = await this.props.user.getIdToken();
+    const token = await this.context.user?.getIdToken();
     const response = await axios.get<LinkAccount[]>(
       serverPath + '/linkAccount',
       {
         params: {
-          uid: this.props.user.uid,
+          uid: this.context.user?.uid,
           token,
         },
       }
@@ -43,8 +44,8 @@ export class ProfileModal extends React.Component<{
 
   resetPassword = async () => {
     try {
-      if (this.props.user.email) {
-        await firebase.auth().sendPasswordResetEmail(this.props.user.email);
+      if (this.context.user?.email) {
+        await firebase.auth().sendPasswordResetEmail(this.context.user.email);
         this.setState({ resetDisabled: true });
       }
     } catch (e) {
@@ -54,8 +55,8 @@ export class ProfileModal extends React.Component<{
 
   verifyEmail = async () => {
     try {
-      if (this.props.user) {
-        await this.props.user.sendEmailVerification();
+      if (this.context.user) {
+        await this.context.user.sendEmailVerification();
         this.setState({ verifyDisabled: true });
       }
     } catch (e) {
@@ -68,13 +69,13 @@ export class ProfileModal extends React.Component<{
   };
 
   deleteAccount = async () => {
-    const token = await this.props.user.getIdToken();
+    const token = await this.context.user?.getIdToken();
     await window.fetch(serverPath + '/deleteAccount', {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ uid: this.props.user.uid, token }),
+      body: JSON.stringify({ uid: this.context.user?.uid, token }),
     });
     window.location.reload();
   };
@@ -91,14 +92,14 @@ export class ProfileModal extends React.Component<{
   };
 
   deleteDiscord = async () => {
-    const token = await this.props.user.getIdToken();
+    const token = await this.context.user?.getIdToken();
     await window.fetch(serverPath + '/linkAccount', {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        uid: this.props.user.uid,
+        uid: this.context.user?.uid,
         token,
         kind: 'discord',
       }),
@@ -149,8 +150,8 @@ export class ProfileModal extends React.Component<{
         </Modal>
         <Modal.Header>
           <Image avatar src={userImage} />
-          {this.props.user.email}
-          {this.props.user.emailVerified && (
+          {this.context.user?.email}
+          {this.context.user?.emailVerified && (
             <Icon
               style={{ marginLeft: '8px' }}
               title="Thie email is verified"
@@ -181,7 +182,7 @@ export class ProfileModal extends React.Component<{
             </Button>
             <Button
               disabled={
-                this.props.user.emailVerified || this.state.verifyDisabled
+                this.context.user?.emailVerified || this.state.verifyDisabled
               }
               icon
               labelPosition="left"
@@ -192,9 +193,7 @@ export class ProfileModal extends React.Component<{
               <Icon name="check circle" />
               Verify Email
             </Button>
-            {this.props.isSubscriber && (
-              <ManageSubButton user={this.props.user} />
-            )}
+            {this.context.isSubscriber && <ManageSubButton />}
             {this.state.linkedDiscord ? (
               <Button
                 icon

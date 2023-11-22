@@ -1,20 +1,17 @@
 import React from 'react';
 import { Modal, Button, Table } from 'semantic-ui-react';
-import firebase from 'firebase/compat/app';
 import { SubscribeButton } from '../SubscribeButton/SubscribeButton';
+import { MetadataContext } from '../../MetadataContext';
 
 export class FileShareModal extends React.Component<{
   closeModal: () => void;
   startFileShare: (useMediaSoup: boolean) => void;
-  isSubscriber: boolean;
-  user: firebase.User | undefined;
-  beta?: boolean;
 }> {
+  static contextType = MetadataContext;
+  declare context: React.ContextType<typeof MetadataContext>;
   render() {
     const { closeModal } = this.props;
-    const subscribeButton = !this.props.isSubscriber ? (
-      <SubscribeButton user={this.props.user} />
-    ) : null;
+    const subscribeButton = <SubscribeButton />;
     return (
       <Modal open={true} onClose={closeModal}>
         <Modal.Header>Share A File</Modal.Header>
@@ -77,7 +74,7 @@ export class FileShareModal extends React.Component<{
                     </Button>
                   </Table.Cell>
                   <Table.Cell>
-                    {this.props.isSubscriber ? (
+                    {this.context.isSubscriber ? (
                       <Button
                         color="orange"
                         onClick={() => {

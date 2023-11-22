@@ -16,6 +16,7 @@ import { Create } from './components/Create/Create';
 import { Discord } from './components/Discord/Discord';
 import 'semantic-ui-css/semantic.min.css';
 import config from './config';
+import { DEFAULT_STATE, MetadataContext } from './MetadataContext';
 
 const Debug = lazy(() => import('./components/Debug/Debug'));
 
@@ -31,12 +32,7 @@ if (window.location.hash && window.location.pathname === '/') {
 }
 
 class WatchParty extends React.Component {
-  public state = {
-    user: undefined as firebase.User | undefined,
-    isSubscriber: true,
-    streamPath: undefined as string | undefined,
-    beta: false,
-  };
+  public state = DEFAULT_STATE;
   async componentDidMount() {
     if (firebaseConfig) {
       firebase.auth().onAuthStateChanged(async (user: firebase.User | null) => {
@@ -60,107 +56,74 @@ class WatchParty extends React.Component {
   render() {
     return (
       // <React.StrictMode>
-      <BrowserRouter>
-        <Route
-          path="/"
-          exact
-          render={(props) => {
-            return (
-              <React.Fragment>
-                <TopBar
-                  user={this.state.user}
-                  isSubscriber={this.state.isSubscriber}
-                  hideNewRoom
-                />
-                <Home user={this.state.user} />
-                <Footer />
-              </React.Fragment>
-            );
-          }}
-        />
-        <Route
-          path="/create"
-          exact
-          render={() => {
-            return <Create user={this.state.user} />;
-          }}
-        />
-        <Route
-          path="/watch/:roomId"
-          exact
-          render={(props) => {
-            return (
-              <App
-                user={this.state.user}
-                isSubscriber={this.state.isSubscriber}
-                urlRoomId={props.match.params.roomId}
-                streamPath={this.state.streamPath}
-                beta={this.state.beta}
-              />
-            );
-          }}
-        />
-        <Route
-          path="/r/:vanity"
-          exact
-          render={(props) => {
-            return (
-              <App
-                user={this.state.user}
-                isSubscriber={this.state.isSubscriber}
-                vanity={props.match.params.vanity}
-                streamPath={this.state.streamPath}
-                beta={this.state.beta}
-              />
-            );
-          }}
-        />
-        <Route path="/terms">
-          <TopBar
-            user={this.state.user}
-            isSubscriber={this.state.isSubscriber}
+      <MetadataContext.Provider value={this.state}>
+        <BrowserRouter>
+          <Route
+            path="/"
+            exact
+            render={(props) => {
+              return (
+                <React.Fragment>
+                  <TopBar hideNewRoom />
+                  <Home />
+                  <Footer />
+                </React.Fragment>
+              );
+            }}
           />
-          <Terms />
-          <Footer />
-        </Route>
-        <Route path="/privacy">
-          <TopBar
-            user={this.state.user}
-            isSubscriber={this.state.isSubscriber}
+          <Route
+            path="/create"
+            exact
+            render={() => {
+              return <Create />;
+            }}
           />
-          <Privacy />
-          <Footer />
-        </Route>
-        <Route path="/faq">
-          <TopBar
-            user={this.state.user}
-            isSubscriber={this.state.isSubscriber}
+          <Route
+            path="/watch/:roomId"
+            exact
+            render={(props) => {
+              return <App urlRoomId={props.match.params.roomId} />;
+            }}
           />
-          <FAQ />
-          <Footer />
-        </Route>
-        <Route path="/discordBot">
-          <TopBar
-            user={this.state.user}
-            isSubscriber={this.state.isSubscriber}
+          <Route
+            path="/r/:vanity"
+            exact
+            render={(props) => {
+              return <App vanity={props.match.params.vanity} />;
+            }}
           />
-          <DiscordBot />
-          <Footer />
-        </Route>
-        <Route path="/discord/auth" exact>
-          <Discord user={this.state.user} />
-        </Route>
-        <Route path="/debug">
-          <TopBar
-            user={this.state.user}
-            isSubscriber={this.state.isSubscriber}
-          />
-          <Suspense fallback={null}>
-            <Debug />
-          </Suspense>
-          <Footer />
-        </Route>
-      </BrowserRouter>
+          <Route path="/terms">
+            <TopBar />
+            <Terms />
+            <Footer />
+          </Route>
+          <Route path="/privacy">
+            <TopBar />
+            <Privacy />
+            <Footer />
+          </Route>
+          <Route path="/faq">
+            <TopBar />
+            <FAQ />
+            <Footer />
+          </Route>
+          <Route path="/discordBot">
+            <TopBar />
+            <DiscordBot />
+            <Footer />
+          </Route>
+          <Route path="/discord/auth" exact>
+            <Discord />
+          </Route>
+          <Route path="/debug">
+            <TopBar />
+            <Suspense fallback={null}>
+              <Debug />
+            </Suspense>
+            <Footer />
+          </Route>
+        </BrowserRouter>
+      </MetadataContext.Provider>
       // </React.StrictMode>
     );
   }

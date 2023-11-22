@@ -11,6 +11,7 @@ import {
 } from '../../utils';
 import { UserMenu } from '../UserMenu/UserMenu';
 import firebase from 'firebase/compat/app';
+import { MetadataContext } from '../../MetadataContext';
 
 interface VideoChatProps {
   socket: Socket;
@@ -21,12 +22,13 @@ interface VideoChatProps {
   rosterUpdateTS: Number;
   hide?: boolean;
   owner: string | undefined;
-  user: firebase.User | undefined;
-  beta: boolean;
   getLeaderTime: () => number;
 }
 
 export class VideoChat extends React.Component<VideoChatProps> {
+  static contextType = MetadataContext;
+  declare context: React.ContextType<typeof MetadataContext>;
+
   socket = this.props.socket;
 
   componentDidMount() {
@@ -224,7 +226,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
   };
 
   render() {
-    const { participants, pictureMap, nameMap, tsMap, socket, owner, user } =
+    const { participants, pictureMap, nameMap, tsMap, socket, owner } =
       this.props;
     const ourStream = window.watchparty.ourStream;
     const videoRefs = window.watchparty.videoRefs;
@@ -340,8 +342,9 @@ export class VideoChat extends React.Component<VideoChatProps> {
                   <div>
                     <UserMenu
                       displayName={nameMap[p.id] || p.id}
-                      user={user}
-                      disabled={!Boolean(owner && owner === user?.uid)}
+                      disabled={
+                        !Boolean(owner && owner === this.context.user?.uid)
+                      }
                       position={'left center'}
                       socket={socket}
                       userToManage={p.id}
@@ -355,7 +358,9 @@ export class VideoChat extends React.Component<VideoChatProps> {
                             top: 5,
                             cursor: 'pointer',
                             opacity: 0.75,
-                            visibility: Boolean(owner && owner === user?.uid)
+                            visibility: Boolean(
+                              owner && owner === this.context.user?.uid
+                            )
                               ? 'visible'
                               : 'hidden',
                           }}
@@ -443,7 +448,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
                         }}
                       >
                         {formatTimestamp(tsMap[p.id] || 0)}{' '}
-                        {this.props.beta &&
+                        {this.context.beta &&
                           `(${(
                             (tsMap[p.id] - this.props.getLeaderTime()) *
                             1000
