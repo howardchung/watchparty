@@ -14,6 +14,8 @@ export default class VBrowser extends React.Component<{
   controlling: boolean;
   resolution: string;
   setResolution: (resolution: string) => void;
+  quality: number;
+  setQuality: (quality: number) => void;
   doPlay: () => Promise<void>;
 }> {
   // private observer = new ResizeObserver(this.onResize);
@@ -58,6 +60,7 @@ export default class VBrowser extends React.Component<{
       this.rate = data.rate;
       // Update our state with the resolution sent from server
       this.props.setResolution(`${this.width}x${this.height}@${this.rate}`);
+      this.props.setQuality(data.quality);
     });
     this.$client.on(EVENT.TRACK, async (track: MediaStreamTrack, stream) => {
       // console.log(track, streams);
@@ -120,8 +123,11 @@ export default class VBrowser extends React.Component<{
     if (this.props.controlling && !prevProps.controlling) {
       this.takeControl();
     }
-    if (this.props.resolution !== prevProps.resolution) {
-      this.changeResolution(this.props.resolution);
+    if (
+      this.props.resolution !== prevProps.resolution ||
+      this.props.quality !== prevProps.quality
+    ) {
+      this.changeResolution(this.props.resolution, this.props.quality);
     }
   }
 
@@ -141,12 +147,17 @@ export default class VBrowser extends React.Component<{
     }
   };
 
-  changeResolution = (resString: string) => {
+  changeResolution = (resString: string, quality: number) => {
     const split = resString.split(/x|@/);
     const width = Number(split[0]);
     const height = Number(split[1]);
     const rate = Number(split[2]);
-    this.$client.sendMessage(EVENT.SCREEN.SET, { width, height, rate });
+    this.$client.sendMessage(EVENT.SCREEN.SET, {
+      width,
+      height,
+      rate,
+      quality,
+    });
   };
 
   onClipboardChanged(clipboard: string) {
