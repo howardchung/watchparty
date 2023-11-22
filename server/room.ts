@@ -7,7 +7,7 @@ import { Client, QueryResult } from 'pg';
 
 import { getUser, validateUserToken } from './utils/firebase';
 import { redisCount, redisCountDistinct } from './utils/redis';
-import { getCustomerByEmail } from './utils/stripe';
+import { getIsSubscriberByEmail } from './utils/stripe';
 import { AssignedVM } from './vm/base';
 import { getStartOfDay } from './utils/time';
 import { updateObject, upsertObject } from './utils/postgres';
@@ -447,15 +447,10 @@ export class Room {
       return;
     }
     const decoded = await validateUserToken(data.uid, data.token);
-    if (!decoded) {
-      return;
+    if (decoded?.uid) {
+      this.uidMap[socket.id] = decoded.uid;
     }
-    this.uidMap[socket.id] = decoded.uid;
-
-    const customer = await getCustomerByEmail(decoded.email as string);
-    const isSubscriber = Boolean(
-      customer?.subscriptions?.data?.find((sub) => sub?.status === 'active')
-    );
+    const isSubscriber = await getIsSubscriberByEmail(decoded?.email);
     if (isSubscriber) {
       const user = this.roster.find((user) => user.id === socket.id);
       if (user) {
@@ -839,23 +834,26 @@ export class Room {
       return;
     }
 
-    const decoded = await validateUserToken(data.uid, data.token);
-    if (!decoded || !decoded.uid) {
-      socket.emit('errorMessage', 'Invalid user token.');
-      return;
-    }
+    // these checks are skipped if firebase not provided
+    if (config.FIREBASE_ADMIN_SDK_CONFIG) {
+      const decoded = await validateUserToken(data.uid, data.token);
+      if (!decoded || !decoded.uid) {
+        socket.emit('errorMessage', 'Invalid user token.');
+        return;
+      }
 
-    const user = await getUser(decoded.uid);
-    // Validate verified email if not a third-party auth provider
-    if (
-      user?.providerData[0].providerId === 'password' &&
-      !user?.emailVerified
-    ) {
-      socket.emit(
-        'errorMessage',
-        'A verified email is required to start a VBrowser.'
-      );
-      return;
+      const user = await getUser(decoded.uid);
+      // Validate verified email if not a third-party auth provider
+      if (
+        user?.providerData[0].providerId === 'password' &&
+        !user?.emailVerified
+      ) {
+        socket.emit(
+          'errorMessage',
+          'A verified email is required to start a VBrowser.'
+        );
+        return;
+      }
     }
 
     const clientId = this.clientIdMap[socket.id];
@@ -902,19 +900,14 @@ export class Room {
     }
     let isLarge = false;
     let region = config.DEFAULT_VM_REGION;
-    if (config.STRIPE_SECRET_KEY && data && data.uid && data.token) {
+    if (data && data.uid && data.token) {
       const decoded = await validateUserToken(data.uid, data.token);
-      // Check if user is subscriber, if so allow isLarge
-      if (decoded?.email) {
-        const customer = await getCustomerByEmail(decoded.email);
-        if (
-          customer?.subscriptions?.data?.find((sub) => sub?.status === 'active')
-        ) {
-          console.log('found active sub for ', customer?.email);
-          isLarge = data.options?.size === 'large';
-          if (data.options?.region) {
-            region = data.options?.region;
-          }
+      // Check if user is subscriber, if so allow sub options
+      const isSubscriber = await getIsSubscriberByEmail(decoded?.email);
+      if (isSubscriber) {
+        isLarge = data.options?.size === 'large';
+        if (data.options?.region) {
+          region = data.options?.region;
         }
       }
     }
@@ -1064,10 +1057,7 @@ export class Room {
       socket.emit('errorMessage', 'Not current room owner');
       return;
     }
-    const customer = await getCustomerByEmail(decoded.email as string);
-    const isSubscriber = Boolean(
-      customer?.subscriptions?.data?.find((sub) => sub?.status === 'active')
-    );
+    const isSubscriber = await getIsSubscriberByEmail(decoded?.email);
     if (data.undo) {
       await updateObject(
         postgres,
@@ -1095,7 +1085,6 @@ export class Room {
         )
       ).rows[0].count;
       const limit = isSubscriber ? config.SUBSCRIBER_ROOM_LIMIT : 1;
-      // console.log(roomCount, limit, isSubscriber);
       if (roomCount >= limit) {
         socket.emit(
           'errorMessage',
@@ -1178,10 +1167,7 @@ export class Room {
       socket.emit('errorMessage', 'Not current room owner');
       return;
     }
-    const customer = await getCustomerByEmail(decoded.email as string);
-    const isSubscriber = Boolean(
-      customer?.subscriptions?.data?.find((sub) => sub?.status === 'active')
-    );
+    const isSubscriber = await getIsSubscriberByEmail(decoded?.email);
     const {
       password,
       vanity,

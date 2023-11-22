@@ -16,7 +16,11 @@ import {
   getRedisCountDayDistinct,
   redisCount,
 } from './utils/redis';
-import { getCustomerByEmail, createSelfServicePortal } from './utils/stripe';
+import {
+  getCustomerByEmail,
+  createSelfServicePortal,
+  getIsSubscriberByEmail,
+} from './utils/stripe';
 import { deleteUser, validateUserToken } from './utils/firebase';
 import path from 'path';
 import { Client } from 'pg';
@@ -339,17 +343,9 @@ app.get('/metadata', async (req, res) => {
     req.query?.uid as string,
     req.query?.token as string
   );
-  let isCustomer = false;
-  let isSubscriber = false;
-  if (decoded?.email) {
-    const customer = await getCustomerByEmail(decoded.email);
-    // Is the user an active subscriber?
-    isSubscriber = Boolean(
-      customer?.subscriptions?.data?.find((sub) => sub?.status === 'active')
-    );
-    // Has the user ever been a subscriber?
-    isCustomer = Boolean(customer);
-  }
+  let isSubscriber = await getIsSubscriberByEmail(decoded?.email);
+  // Has the user ever been a subscriber?
+  // const customer = await getCustomerByEmail(decoded.email);
   let isFreePoolFull = false;
   try {
     isFreePoolFull = (
@@ -375,7 +371,6 @@ app.get('/metadata', async (req, res) => {
   }
   return res.json({
     isSubscriber,
-    isCustomer,
     isFreePoolFull,
     beta,
     streamPath,

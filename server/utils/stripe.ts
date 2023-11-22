@@ -16,6 +16,21 @@ export async function getCustomerByEmail(email: string) {
   return customer?.data[0];
 }
 
+export async function getIsSubscriberByEmail(email: string | undefined) {
+  if (!config.STRIPE_SECRET_KEY) {
+    // If Stripe isn't set up assume everyone is a subscriber
+    return true;
+  }
+  if (!email) {
+    return false;
+  }
+  const customer = await getCustomerByEmail(email);
+  const isSubscriber = Boolean(
+    customer?.subscriptions?.data?.find((sub) => sub?.status === 'active')
+  );
+  return isSubscriber;
+}
+
 export async function createSelfServicePortal(
   customerId: string,
   returnUrl: string
