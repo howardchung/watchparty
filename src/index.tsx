@@ -34,7 +34,6 @@ class WatchParty extends React.Component {
   public state = {
     user: undefined as firebase.User | undefined,
     isSubscriber: false,
-    isCustomer: false,
     streamPath: undefined as string | undefined,
     beta: false,
   };
@@ -51,7 +50,6 @@ class WatchParty extends React.Component {
           const data = await response.json();
           this.setState({
             isSubscriber: data.isSubscriber,
-            isCustomer: data.isCustomer,
             streamPath: data.streamPath,
             beta: data.beta,
           });

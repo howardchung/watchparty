@@ -2,7 +2,7 @@ import React from 'react';
 import { Modal, Button, Table, Message, Dropdown } from 'semantic-ui-react';
 import {
   GoogleReCaptchaProvider,
-  withGoogleReCaptcha,
+  useGoogleReCaptcha,
 } from 'react-google-recaptcha-v3';
 import { SignInButton } from '../TopBar/TopBar';
 import { serverPath } from '../../utils';
@@ -54,15 +54,15 @@ export class VBrowserModal extends React.Component<{
       });
     }
     const { closeModal, startVBrowser } = this.props;
-    const LaunchButton = withGoogleReCaptcha(
-      ({ googleReCaptchaProps, large }: any) => (
+    const LaunchButton = ({ large }: { large: boolean }) => {
+      const { executeRecaptcha } = useGoogleReCaptcha();
+      return (
         <Button
           color={large ? 'orange' : undefined}
           onClick={async () => {
-            const rcToken = await googleReCaptchaProps.executeRecaptcha(
-              'launchVBrowser'
-            );
-            startVBrowser(rcToken, {
+            const rcToken =
+              executeRecaptcha && (await executeRecaptcha('launchVBrowser'));
+            startVBrowser(rcToken ?? '', {
               size: large ? 'large' : '',
               region: large ? this.state.region : 'US',
             });
@@ -71,8 +71,8 @@ export class VBrowserModal extends React.Component<{
         >
           {large ? 'Launch VBrowser+' : 'Continue with Free'}
         </Button>
-      )
-    );
+      );
+    };
     const vmPoolFullMessage = (
       <Message
         size="small"
@@ -96,6 +96,7 @@ export class VBrowserModal extends React.Component<{
       <SubscribeButton user={this.props.user} />
     ) : null;
 
+    const canLaunch = this.props.user || !config.VITE_FIREBASE_CONFIG;
     return (
       <GoogleReCaptchaProvider
         reCaptchaKey={config.VITE_RECAPTCHA_SITE_KEY as string}
@@ -155,11 +156,11 @@ export class VBrowserModal extends React.Component<{
                   <Table.Row>
                     <Table.Cell></Table.Cell>
                     <Table.Cell>
-                      {this.props.user ? (
+                      {canLaunch ? (
                         this.state.isFreePoolFull ? (
                           vmPoolFullMessage
                         ) : (
-                          <LaunchButton />
+                          <LaunchButton large={false} />
                         )
                       ) : (
                         <SignInButton
