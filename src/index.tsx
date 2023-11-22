@@ -33,7 +33,7 @@ if (window.location.hash && window.location.pathname === '/') {
 class WatchParty extends React.Component {
   public state = {
     user: undefined as firebase.User | undefined,
-    isSubscriber: false,
+    isSubscriber: true,
     streamPath: undefined as string | undefined,
     beta: false,
   };

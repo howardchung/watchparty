@@ -46,7 +46,7 @@
     "stripe": "^8.222.0",
     "twitch-m3u8": "^1.1.5",
     "uuid": "^9.0.0",
-    "vite": "^5.0.0-beta.19",
+    "vite": "^5.0.2",
     "webtorrent": "^2.1.29"
   },
   "scripts": {
