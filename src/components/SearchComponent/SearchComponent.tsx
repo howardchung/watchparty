@@ -5,17 +5,19 @@ import {
   YouTubeSearchResult,
   StreamPathSearchResult,
 } from '../SearchResult/SearchResult';
+import { MetadataContext } from '../../MetadataContext';
 
 interface SearchComponentProps {
   setMedia: (_e: any, data: DropdownProps) => void;
   playlistAdd: (_e: any, data: DropdownProps) => void;
   type?: 'youtube' | 'media' | 'stream';
   launchMultiSelect?: (multi?: []) => void;
-  streamPath: string | undefined;
   disabled?: boolean;
 }
 
 export class SearchComponent extends React.Component<SearchComponentProps> {
+  static contextType = MetadataContext;
+  declare context: React.ContextType<typeof MetadataContext>;
   state = {
     results: [] as SearchResult[],
     resetDropdown: Number(new Date()),
@@ -36,8 +38,11 @@ export class SearchComponent extends React.Component<SearchComponentProps> {
           let timestamp = Number(new Date());
           if (this.props.type === 'youtube') {
             results = await getYouTubeResults(query);
-          } else if (this.props.type === 'stream' && this.props.streamPath) {
-            results = await getStreamPathResults(this.props.streamPath, query);
+          } else if (this.props.type === 'stream' && this.context.streamPath) {
+            results = await getStreamPathResults(
+              this.context.streamPath,
+              query
+            );
           }
           if (timestamp > this.state.lastResultTimestamp) {
             this.setState({
@@ -110,7 +115,6 @@ export class SearchComponent extends React.Component<SearchComponentProps> {
                     {...result}
                     setMedia={setMedia}
                     launchMultiSelect={this.props.launchMultiSelect}
-                    streamPath={this.props.streamPath || ''}
                   />
                 );
               })}

@@ -17,6 +17,7 @@ import { ProfileModal } from '../Modal/ProfileModal';
 import Announce from '../Announce/Announce';
 import { InviteButton } from '../InviteButton/InviteButton';
 import appStyles from '../App/App.module.css';
+import { MetadataContext } from '../../MetadataContext';
 
 export async function createRoom(
   user: firebase.User | undefined,
@@ -46,12 +47,13 @@ export async function createRoom(
 }
 
 export class NewRoomButton extends React.Component<{
-  user: firebase.User | undefined;
   size?: SemanticSIZES;
   openNewTab?: boolean;
 }> {
+  static contextType = MetadataContext;
+  declare context: React.ContextType<typeof MetadataContext>;
   createRoom = async () => {
-    await createRoom(this.props.user, this.props.openNewTab);
+    await createRoom(this.context.user, this.props.openNewTab);
   };
   render() {
     return (
@@ -77,17 +79,17 @@ export class NewRoomButton extends React.Component<{
 }
 
 type SignInButtonProps = {
-  user: firebase.User | undefined;
   fluid?: boolean;
-  isSubscriber: boolean;
 };
 
 export class SignInButton extends React.Component<SignInButtonProps> {
+  static contextType = MetadataContext;
+  declare context: React.ContextType<typeof MetadataContext>;
   public state = { isLoginOpen: false, isProfileOpen: false, userImage: null };
 
   async componentDidUpdate(prevProps: SignInButtonProps) {
-    if (!prevProps.user && this.props.user) {
-      this.setState({ userImage: await getUserImage(this.props.user) });
+    if (this.context.user && !this.state.userImage) {
+      this.setState({ userImage: await getUserImage(this.context.user) });
     }
   }
 
@@ -104,10 +106,11 @@ export class SignInButton extends React.Component<SignInButtonProps> {
   signOut = () => {
     firebase.auth().signOut();
     window.location.reload();
+    this.setState({ userImage: null });
   };
 
   render() {
-    if (this.props.user) {
+    if (this.context.user) {
       return (
         <div
           style={{
@@ -122,12 +125,10 @@ export class SignInButton extends React.Component<SignInButtonProps> {
             src={this.state.userImage}
             onClick={() => this.setState({ isProfileOpen: true })}
           />
-          {this.state.isProfileOpen && this.props.user && (
+          {this.state.isProfileOpen && this.context.user && (
             <ProfileModal
-              user={this.props.user}
               userImage={this.state.userImage}
               close={() => this.setState({ isProfileOpen: false })}
-              isSubscriber={this.props.isSubscriber}
             />
           )}
         </div>
@@ -177,9 +178,9 @@ export class SignInButton extends React.Component<SignInButtonProps> {
   }
 }
 
-export class ListRoomsButton extends React.Component<{
-  user: firebase.User | undefined;
-}> {
+export class ListRoomsButton extends React.Component<{}> {
+  static contextType = MetadataContext;
+  declare context: React.ContextType<typeof MetadataContext>;
   public state = { rooms: [] as PersistentRoom[] };
 
   componentDidMount() {
@@ -187,21 +188,21 @@ export class ListRoomsButton extends React.Component<{
   }
 
   refreshRooms = async () => {
-    if (this.props.user) {
-      const token = await this.props.user.getIdToken();
+    if (this.context.user) {
+      const token = await this.context.user.getIdToken();
       const response = await axios.get(
-        serverPath + `/listRooms?uid=${this.props.user?.uid}&token=${token}`
+        serverPath + `/listRooms?uid=${this.context.user?.uid}&token=${token}`
       );
       this.setState({ rooms: response.data });
     }
   };
 
   deleteRoom = async (roomId: string) => {
-    if (this.props.user) {
-      const token = await this.props.user.getIdToken();
+    if (this.context.user) {
+      const token = await this.context.user.getIdToken();
       await axios.delete(
         serverPath +
-          `/deleteRoom?uid=${this.props.user?.uid}&token=${token}&roomId=${roomId}`
+          `/deleteRoom?uid=${this.context.user?.uid}&token=${token}&roomId=${roomId}`
       );
       this.setState({
         rooms: this.state.rooms.filter((room) => room.roomId !== roomId),
@@ -264,20 +265,18 @@ export class ListRoomsButton extends React.Component<{
 }
 
 export class TopBar extends React.Component<{
-  user?: firebase.User;
   hideNewRoom?: boolean;
   hideSignin?: boolean;
   hideMyRooms?: boolean;
-  isSubscriber: boolean;
   roomTitle?: string;
   roomDescription?: string;
   roomTitleColor?: string;
   showInviteButton?: boolean;
 }> {
+  static contextType = MetadataContext;
+  declare context: React.ContextType<typeof MetadataContext>;
   render() {
-    const subscribeButton = !this.props.isSubscriber ? (
-      <SubscribeButton user={this.props.user} />
-    ) : null;
+    const subscribeButton = <SubscribeButton />;
     return (
       <React.Fragment>
         <div
@@ -421,19 +420,12 @@ export class TopBar extends React.Component<{
             }}
           >
             {this.props.showInviteButton && <InviteButton />}
-            {!this.props.hideNewRoom && (
-              <NewRoomButton user={this.props.user} openNewTab />
-            )}
-            {!this.props.hideMyRooms && this.props.user && (
-              <ListRoomsButton user={this.props.user} />
+            {!this.props.hideNewRoom && <NewRoomButton openNewTab />}
+            {!this.props.hideMyRooms && this.context.user && (
+              <ListRoomsButton />
             )}
             {subscribeButton}
-            {!this.props.hideSignin && (
-              <SignInButton
-                user={this.props.user}
-                isSubscriber={this.props.isSubscriber}
-              />
-            )}
+            {!this.props.hideSignin && <SignInButton />}
           </div>
         </div>
       </React.Fragment>

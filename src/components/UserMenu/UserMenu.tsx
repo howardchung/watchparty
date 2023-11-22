@@ -1,11 +1,10 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { Popup, Button } from 'semantic-ui-react';
 import { Socket } from 'socket.io-client';
-import firebase from 'firebase/compat/app';
 import styles from './UserMenu.module.css';
+import { MetadataContext } from '../../MetadataContext';
 
 export const UserMenu = ({
-  user,
   socket,
   userToManage,
   trigger,
@@ -15,7 +14,6 @@ export const UserMenu = ({
   timestamp,
   isChatMessage,
 }: {
-  user?: firebase.User;
   socket: Socket;
   userToManage: string;
   trigger: any;
@@ -26,6 +24,7 @@ export const UserMenu = ({
   timestamp?: string;
   isChatMessage?: boolean;
 }) => {
+  const { user } = useContext(MetadataContext);
   const [isOpen, setIsOpen] = useState(false);
   const handleOpen = () => setIsOpen(true);
   const handleClose = () => setIsOpen(false);

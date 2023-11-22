@@ -3,6 +3,7 @@ import { Icon, Progress, Label, Popup, Dropdown } from 'semantic-ui-react';
 import { Slider } from 'react-semantic-ui-range';
 import { formatTimestamp } from '../../utils';
 import styles from './Controls.module.css';
+import { MetadataContext } from '../../MetadataContext';
 
 interface ControlsProps {
   duration: number;
@@ -15,7 +16,6 @@ interface ControlsProps {
   leaderTime?: number;
   isPauseDisabled?: boolean;
   playbackRate: number;
-  beta: boolean;
   roomPlaybackRate: number;
   isYouTube: boolean;
   isLiveHls: boolean;
@@ -34,6 +34,8 @@ interface ControlsProps {
 }
 
 export class Controls extends React.Component<ControlsProps> {
+  static contextType = MetadataContext;
+  declare context: React.ContextType<typeof MetadataContext>;
   state = {
     showTimestamp: false,
     hoverTimestamp: 0,

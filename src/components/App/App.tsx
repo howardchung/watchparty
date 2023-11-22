@@ -61,6 +61,7 @@ import { YouTube } from './YouTube';
 import type WebTorrent from 'webtorrent';
 import styles from './App.module.css';
 import config from '../../config';
+import { MetadataContext } from '../../MetadataContext';
 
 declare global {
   interface Window {
@@ -85,10 +86,6 @@ window.watchparty = {
 interface AppProps {
   vanity?: string;
   urlRoomId?: string;
-  user?: firebase.User;
-  isSubscriber: boolean;
-  beta: boolean;
-  streamPath: string | undefined;
 }
 
 interface AppState {
@@ -158,6 +155,8 @@ interface AppState {
 }
 
 export default class App extends React.Component<AppProps, AppState> {
+  static contextType = MetadataContext;
+  declare context: React.ContextType<typeof MetadataContext>;
   state: AppState = {
     state: 'starting',
     roomMedia: '',
@@ -255,18 +254,17 @@ export default class App extends React.Component<AppProps, AppState> {
     this.loadSettings();
     this.loadYouTube();
     this.init();
+    firebase.auth().onAuthStateChanged(async (user: firebase.User | null) => {
+      if (user) {
+        this.loadSignInData();
+      }
+    });
   }
 
   componentWillUnmount() {
     document.removeEventListener('fullscreenchange', this.onFullScreenChange);
     document.removeEventListener('keydown', this.onKeydown);
     window.clearInterval(this.heartbeat);
-  }
-
-  componentDidUpdate(prevProps: AppProps) {
-    if (this.props.user && !prevProps.user) {
-      this.loadSignInData();
-    }
   }
 
   init = async () => {
@@ -796,7 +794,7 @@ export default class App extends React.Component<AppProps, AppState> {
   };
 
   loadSignInData = async () => {
-    const user = this.props.user;
+    const user = this.context.user;
     if (user && this.socket) {
       // NOTE: firebase auth doesn't provide the actual first name data that individual providers (G/FB) do
       // It's accessible at the time the user logs in but not afterward
@@ -916,8 +914,8 @@ export default class App extends React.Component<AppProps, AppState> {
   };
 
   setRoomLock = async (locked: boolean) => {
-    const uid = this.props.user?.uid;
-    const token = await this.props.user?.getIdToken();
+    const uid = this.context.user?.uid;
+    const token = await this.context.user?.getIdToken();
     this.socket.emit('CMD:lock', { uid, token, locked });
   };
 
@@ -925,14 +923,14 @@ export default class App extends React.Component<AppProps, AppState> {
     if (!this.state.roomLock) {
       return true;
     }
-    return this.props.user?.uid === this.state.roomLock;
+    return this.context.user?.uid === this.state.roomLock;
   };
 
   setIsChatDisabled = (val: boolean) => this.setState({ isChatDisabled: val });
 
   clearChat = async () => {
-    const uid = this.props.user?.uid;
-    const token = await this.props.user?.getIdToken();
+    const uid = this.context.user?.uid;
+    const token = await this.context.user?.getIdToken();
     this.socket.emit('CMD:deleteChatMessages', { uid, token });
   };
 
@@ -1463,7 +1461,7 @@ export default class App extends React.Component<AppProps, AppState> {
   startVBrowser = async (rcToken: string, options: { size: string }) => {
     // user.uid is the public user identifier
     // user.getIdToken() is the secret access token we can send to the server to prove identity
-    const user = this.props.user;
+    const user = this.context.user;
     const uid = user?.uid;
     const token = await user?.getIdToken();
     this.socket.emit('CMD:startVBrowser', { options, uid, token, rcToken });
@@ -1821,7 +1819,6 @@ export default class App extends React.Component<AppProps, AppState> {
     const controls = (
       <Controls
         key={this.state.controlsTimestamp}
-        beta={this.props.beta}
         paused={this.state.roomPaused}
         roomPlaybackRate={this.state.roomPlaybackRate}
         isLiveHls={this.state.isLiveHls}
@@ -1948,7 +1945,6 @@ export default class App extends React.Component<AppProps, AppState> {
           hide={this.state.currentTab !== 'chat' || !displayRightContent}
           isChatDisabled={this.state.isChatDisabled}
           owner={this.state.owner}
-          user={this.props.user}
           ref={this.chatRef}
           isLiveHls={this.state.isLiveHls}
         />
@@ -1962,18 +1958,14 @@ export default class App extends React.Component<AppProps, AppState> {
             rosterUpdateTS={this.state.rosterUpdateTS}
             hide={this.state.currentTab !== 'people' || !displayRightContent}
             owner={this.state.owner}
-            user={this.props.user}
-            beta={this.props.beta}
             getLeaderTime={this.getLeaderTime}
           />
         )}
         <SettingsTab
           hide={this.state.currentTab !== 'settings' || !displayRightContent}
-          user={this.props.user}
           roomLock={this.state.roomLock}
           setRoomLock={this.setRoomLock}
           socket={this.socket}
-          isSubscriber={this.props.isSubscriber}
           roomId={this.state.roomId}
           isChatDisabled={this.state.isChatDisabled}
           setIsChatDisabled={this.setIsChatDisabled}
@@ -2027,27 +2019,18 @@ export default class App extends React.Component<AppProps, AppState> {
         )}
         {this.state.isVBrowserModalOpen && (
           <VBrowserModal
-            isSubscriber={this.props.isSubscriber}
             closeModal={() => this.setState({ isVBrowserModalOpen: false })}
             startVBrowser={this.startVBrowser}
-            user={this.props.user}
-            beta={this.props.beta}
           />
         )}
         {this.state.isScreenShareModalOpen && (
           <ScreenShareModal
-            beta={this.props.beta}
-            isSubscriber={this.props.isSubscriber}
-            user={this.props.user}
             closeModal={() => this.setState({ isScreenShareModalOpen: false })}
             startScreenShare={this.startScreenShare}
           />
         )}
         {this.state.isFileShareModalOpen && (
           <FileShareModal
-            beta={this.props.beta}
-            isSubscriber={this.props.isSubscriber}
-            user={this.props.user}
             closeModal={() => this.setState({ isFileShareModalOpen: false })}
             startFileShare={this.startFileShare}
           />
@@ -2060,7 +2043,6 @@ export default class App extends React.Component<AppProps, AppState> {
             roomMedia={this.state.roomMedia}
             haveLock={this.haveLock}
             getMediaDisplayName={this.getMediaDisplayName}
-            beta={this.props.beta}
             setSubtitleMode={this.Player().setSubtitleMode}
             getSubtitleMode={this.Player().getSubtitleMode}
           />
@@ -2113,8 +2095,6 @@ export default class App extends React.Component<AppProps, AppState> {
           ></Message>
         )}
         <TopBar
-          user={this.props.user}
-          isSubscriber={this.props.isSubscriber}
           roomTitle={this.state.roomTitle}
           roomDescription={this.state.roomDescription}
           roomTitleColor={this.state.roomTitleColor}
@@ -2148,7 +2128,6 @@ export default class App extends React.Component<AppProps, AppState> {
                         roomMedia={this.state.roomMedia}
                         getMediaDisplayName={this.getMediaDisplayName}
                         launchMultiSelect={this.launchMultiSelect}
-                        streamPath={this.props.streamPath}
                         mediaPath={this.state.mediaPath}
                         disabled={!this.haveLock()}
                         playlist={this.state.playlist}
@@ -2329,16 +2308,14 @@ export default class App extends React.Component<AppProps, AppState> {
                             setMedia={this.roomSetMedia}
                             playlistAdd={this.roomPlaylistAdd}
                             type={'youtube'}
-                            streamPath={this.props.streamPath}
                             disabled={!this.haveLock()}
                           />
                         )}
-                        {Boolean(this.props.streamPath) && (
+                        {Boolean(this.context.streamPath) && (
                           <SearchComponent
                             setMedia={this.roomSetMedia}
                             playlistAdd={this.roomPlaylistAdd}
                             type={'stream'}
-                            streamPath={this.props.streamPath}
                             launchMultiSelect={this.launchMultiSelect}
                             disabled={!this.haveLock()}
                           />

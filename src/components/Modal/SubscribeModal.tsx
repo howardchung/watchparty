@@ -2,8 +2,8 @@ import React from 'react';
 import { Modal, Header, Table, Button, Icon } from 'semantic-ui-react';
 import { loadStripe } from '@stripe/stripe-js';
 import { SignInButton } from '../TopBar/TopBar';
-import firebase from 'firebase/compat/app';
 import config from '../../config';
+import { MetadataContext } from '../../MetadataContext';
 
 // Make sure to call `loadStripe` outside of a component’s render to avoid
 // recreating the `Stripe` object on every render.
@@ -13,8 +13,9 @@ const stripePromise = config.VITE_STRIPE_PUBLIC_KEY
 
 export class SubscribeModal extends React.Component<{
   closeSubscribe: () => void;
-  user?: firebase.User;
 }> {
+  static contextType = MetadataContext;
+  declare context: React.ContextType<typeof MetadataContext>;
   onSubscribe = async () => {
     if (!stripePromise) {
       console.warn('Stripe integration is not configured, cannot subscribe');
@@ -34,8 +35,8 @@ export class SubscribeModal extends React.Component<{
       mode: 'subscription',
       successUrl: window.location.href,
       cancelUrl: window.location.href,
-      customerEmail: this.props.user?.email ?? undefined,
-      clientReferenceId: this.props.user?.uid,
+      customerEmail: this.context.user?.email ?? undefined,
+      clientReferenceId: this.context.user?.uid,
     });
     // If `redirectToCheckout` fails due to a browser or network
     // error, display the localized error message to your customer
@@ -164,7 +165,7 @@ export class SubscribeModal extends React.Component<{
             </Table>
             <div style={{ textAlign: 'right' }}>
               {/* if user isn't logged in, provide login prompt */}
-              {this.props.user && this.props.user.email ? (
+              {this.context.user && this.context.user.email ? (
                 <Button
                   icon
                   labelPosition="left"
@@ -177,8 +178,7 @@ export class SubscribeModal extends React.Component<{
                 </Button>
               ) : (
                 <div>
-                  Please sign in to subscribe:{' '}
-                  <SignInButton user={undefined} isSubscriber={false} />
+                  Please sign in to subscribe: <SignInButton />
                 </div>
               )}
             </div>

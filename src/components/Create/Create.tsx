@@ -1,9 +1,10 @@
-import React, { useRef } from 'react';
-import firebase from 'firebase/compat/app';
+import React, { useContext, useRef } from 'react';
 import { createRoom } from '../TopBar/TopBar';
 import { Dimmer, Loader } from 'semantic-ui-react';
+import { MetadataContext } from '../../MetadataContext';
 
-export const Create = ({ user }: { user: firebase.User | undefined }) => {
+export const Create = () => {
+  const { user } = useContext(MetadataContext);
   const buttonEl = useRef<HTMLButtonElement>(null);
   setTimeout(() => {
     buttonEl?.current?.click();
@@ -15,7 +16,6 @@ export const Create = ({ user }: { user: firebase.User | undefined }) => {
         style={{ display: 'none' }}
         ref={buttonEl}
         onClick={() => {
-          console.log(user);
           createRoom(
             user,
             false,

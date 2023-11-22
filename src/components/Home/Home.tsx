@@ -1,11 +1,13 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { Divider, Header, Icon, SemanticICONS, Step } from 'semantic-ui-react';
 import firebase from 'firebase/compat/app';
 
 import { NewRoomButton } from '../TopBar';
 import styles from './Home.module.css';
+import { MetadataContext } from '../../MetadataContext';
 
-export const Home = ({ user }: { user: firebase.User | undefined }) => {
+export const Home = () => {
+  const { user } = useContext(MetadataContext);
   return (
     <div>
       <div className={styles.container}>
@@ -14,7 +16,7 @@ export const Home = ({ user }: { user: firebase.User | undefined }) => {
           subText={'No registration or download required.'}
           action={
             <div style={{ marginTop: '8px', width: '300px' }}>
-              <NewRoomButton size="huge" user={user} />
+              <NewRoomButton size="huge" />
             </div>
           }
           image={'/screenshot4.png'}
@@ -139,7 +141,7 @@ export const Home = ({ user }: { user: firebase.User | undefined }) => {
             </Step.Group>
           </div>
           <div style={{ width: '160px' }}>
-            <NewRoomButton user={user} />
+            <NewRoomButton />
           </div>
         </div>
       </div>

@@ -9,6 +9,7 @@ import { serverPath } from '../../utils';
 import firebase from 'firebase/compat/app';
 import { SubscribeButton } from '../SubscribeButton/SubscribeButton';
 import config from '../../config';
+import { MetadataContext } from '../../MetadataContext';
 
 export class VBrowserModal extends React.Component<{
   closeModal: () => void;
@@ -16,10 +17,9 @@ export class VBrowserModal extends React.Component<{
     rcToken: string,
     options: { size: string; region: string }
   ) => void;
-  isSubscriber: boolean;
-  user: firebase.User | undefined;
-  beta?: boolean;
 }> {
+  static contextType = MetadataContext;
+  declare context: React.ContextType<typeof MetadataContext>;
   state = {
     isFreePoolFull: false,
     region: 'US',
@@ -45,7 +45,7 @@ export class VBrowserModal extends React.Component<{
         image: { avatar: false, src: '/flag-european-union.png' },
       },
     ];
-    if (this.props.beta) {
+    if (this.context.beta) {
       regionOptions.push({
         key: 'USW',
         text: 'US West',
@@ -92,11 +92,9 @@ export class VBrowserModal extends React.Component<{
       />
     );
 
-    const subscribeButton = !this.props.isSubscriber ? (
-      <SubscribeButton user={this.props.user} />
-    ) : null;
+    const subscribeButton = <SubscribeButton />;
 
-    const canLaunch = this.props.user || !config.VITE_FIREBASE_CONFIG;
+    const canLaunch = this.context.user || !config.VITE_FIREBASE_CONFIG;
     return (
       <GoogleReCaptchaProvider
         reCaptchaKey={config.VITE_RECAPTCHA_SITE_KEY as string}
@@ -163,15 +161,11 @@ export class VBrowserModal extends React.Component<{
                           <LaunchButton large={false} />
                         )
                       ) : (
-                        <SignInButton
-                          fluid
-                          user={this.props.user}
-                          isSubscriber={this.props.isSubscriber}
-                        />
+                        <SignInButton fluid />
                       )}
                     </Table.Cell>
                     <Table.Cell>
-                      {this.props.isSubscriber ? (
+                      {this.context.isSubscriber ? (
                         <LaunchButton large />
                       ) : (
                         subscribeButton

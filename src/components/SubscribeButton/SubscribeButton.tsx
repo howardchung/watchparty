@@ -1,22 +1,19 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useContext, useState } from 'react';
 import { Button, Icon, Popup } from 'semantic-ui-react';
 import { serverPath } from '../../utils';
 import { SubscribeModal } from '../Modal/SubscribeModal';
-import firebase from 'firebase/compat/app';
+import { MetadataContext } from '../../MetadataContext';
 
-export const SubscribeButton = ({
-  user,
-}: {
-  user: firebase.User | undefined;
-}) => {
+export const SubscribeButton = () => {
+  const { isSubscriber } = useContext(MetadataContext);
   const [isSubscribeModalOpen, setIsSubscribeModalOpen] = useState(false);
+  if (isSubscriber) {
+    return null;
+  }
   return (
     <>
       {isSubscribeModalOpen && (
-        <SubscribeModal
-          user={user}
-          closeSubscribe={() => setIsSubscribeModalOpen(false)}
-        />
+        <SubscribeModal closeSubscribe={() => setIsSubscribeModalOpen(false)} />
       )}
       <Popup
         content="Subscribe to help support us and enable additional features!"
@@ -38,11 +35,8 @@ export const SubscribeButton = ({
   );
 };
 
-export const ManageSubButton = ({
-  user,
-}: {
-  user: firebase.User | undefined;
-}) => {
+export const ManageSubButton = ({}: {}) => {
+  const { user } = useContext(MetadataContext);
   const onManage = useCallback(async () => {
     const resp = await window.fetch(serverPath + '/manageSub', {
       method: 'POST',

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Menu, Icon, Label, Button, DropdownProps } from 'semantic-ui-react';
 import { decodeEntities, formatSize } from '../../utils';
+import { MetadataContext } from '../../MetadataContext';
 
 export const YouTubeSearchResult = (
   props: SearchResult & {
@@ -59,9 +60,10 @@ export class StreamPathSearchResult extends React.Component<
   SearchResult & {
     setMedia: (_e: any, data: DropdownProps) => void;
     launchMultiSelect?: (multi?: []) => void;
-    streamPath: string;
   }
 > {
+  static contextType = MetadataContext;
+  declare context: React.ContextType<typeof MetadataContext>;
   render() {
     const result = this.props;
     const setMedia = this.props.setMedia;
@@ -73,7 +75,7 @@ export class StreamPathSearchResult extends React.Component<
               this.props.launchMultiSelect([]);
             }
             let response = await window.fetch(
-              this.props.streamPath +
+              this.context.streamPath +
                 '/data?torrent=' +
                 encodeURIComponent(result.magnet!)
             );
@@ -89,7 +91,7 @@ export class StreamPathSearchResult extends React.Component<
                 (file: any, i: number) => ({
                   ...file,
                   url:
-                    this.props.streamPath +
+                    this.context.streamPath +
                     '/stream?torrent=' +
                     encodeURIComponent(result.magnet!) +
                     '&fileIndex=' +
@@ -108,7 +110,7 @@ export class StreamPathSearchResult extends React.Component<
               }
               setMedia(e, {
                 value:
-                  this.props.streamPath +
+                  this.context.streamPath +
                   '/stream?torrent=' +
                   encodeURIComponent(result.magnet!),
               });

@@ -11,6 +11,7 @@ import {
 import { Socket } from 'socket.io-client';
 import { openFileSelector, serverPath } from '../../utils';
 import config from '../../config';
+import { MetadataContext } from '../../MetadataContext';
 
 export class SubtitleModal extends React.Component<{
   closeModal: () => void;
@@ -19,10 +20,11 @@ export class SubtitleModal extends React.Component<{
   roomMedia: string;
   socket: Socket;
   getMediaDisplayName: (input: string) => string;
-  beta: boolean;
   setSubtitleMode: (mode?: TextTrackMode) => void;
   getSubtitleMode: () => TextTrackMode;
 }> {
+  static contextType = MetadataContext;
+  declare context: React.ContextType<typeof MetadataContext>;
   state = {
     loading: false,
     searchResults: [],
@@ -109,7 +111,7 @@ export class SubtitleModal extends React.Component<{
                   }}
                 />
               </div>
-              {this.props.beta && (
+              {this.context.beta && (
                 <div>
                   <Radio
                     disabled={!this.props.haveLock()}
@@ -167,7 +169,7 @@ export class SubtitleModal extends React.Component<{
                       )
                     }
                   />
-                  {this.props.beta && (
+                  {this.context.beta && (
                     <Input
                       value={this.state.titleQuery}
                       onChange={(e, { value }) =>
@@ -198,7 +200,7 @@ export class SubtitleModal extends React.Component<{
                     <Icon name="search" />
                     Search by Title
                   </Button>
-                  {this.props.beta && (
+                  {this.context.beta && (
                     <Button
                       style={{ marginLeft: '8px' }}
                       loading={this.state.loading}

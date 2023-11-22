@@ -27,7 +27,6 @@ interface ComboBoxProps {
   getMediaDisplayName: (input: string) => string;
   launchMultiSelect: (multi: []) => void;
   mediaPath: string | undefined;
-  streamPath: string | undefined;
   disabled?: boolean;
   playlist: PlaylistVideo[];
 }
