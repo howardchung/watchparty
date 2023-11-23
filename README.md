@@ -26,10 +26,10 @@ An website for watching videos together.
 - Install npm dependencies for the project via `npm install`
 - Start the server via `PORT=8080 npm run dev`
   - Defaults to port 8080, customize with `PORT` env var
-  - Run using self-signed HTTPS cert with `HTTPS=true`. This is needed for some WebRTC features (camera, etc.)
+  - Set `SSL_KEY_FILE` and `SSL_CRT_FILE` for HTTPS.
 - Start the React application in a separate shell and port via `PORT=3000 npm run react`
   - Point to server using `VITE_SERVER_HOST` env var if you customized it above
-  - Run using self-signed HTTPS cert with `HTTPS=true`. This is needed for some WebRTC features (camera, etc.)
+  - If the above SSL vars are set, HTTPS will be used. This is required by the browser for some WebRTC features (camera, etc.)
 - Duplicate the `.env.example` file
 - Rename it to `.env`
 - Add config for the features you want as described in the advanced setup

@@ -30,9 +30,8 @@ const defaults = {
   DOCKER_VM_HOST_SSH_USER: '', // Optional, username for Docker host
   DOCKER_VM_HOST_SSH_KEY_BASE64: '', // Optional, private SSH key for Docker host
   RECAPTCHA_SECRET_KEY: '', // Optional, Recaptcha for VBrowser creation
-  HTTPS: '', // Optional, Set to use HTTPS on the server
-  SSL_KEY_FILE: '', // Optional, Filename of SSL key
-  SSL_CRT_FILE: '', // Optional, Filename of SSL cert
+  SSL_KEY_FILE: '', // Optional, Filename of SSL key (to use https)
+  SSL_CRT_FILE: '', // Optional, Filename of SSL cert (to use https)
   PORT: 8080, // Port to use for server
   HOST: '0.0.0.0', // Host interface to bind server to
   STATS_KEY: '', // Secret string to validate viewing stats
