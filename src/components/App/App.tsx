@@ -254,11 +254,13 @@ export default class App extends React.Component<AppProps, AppState> {
     this.loadSettings();
     this.loadYouTube();
     this.init();
-    firebase.auth().onAuthStateChanged(async (user: firebase.User | null) => {
-      if (user) {
-        this.loadSignInData();
-      }
-    });
+    if (config.VITE_FIREBASE_CONFIG) {
+      firebase.auth().onAuthStateChanged(async (user: firebase.User | null) => {
+        if (user) {
+          this.loadSignInData();
+        }
+      });
+    }
   }
 
   componentWillUnmount() {
@@ -304,7 +306,7 @@ export default class App extends React.Component<AppProps, AppState> {
       console.warn('[ALERT] Could not parse saved passwords');
     }
     const response = await axios.get(serverPath + '/resolveShard' + roomId);
-    const shard = Number(response.data) ?? '';
+    const shard = Number(response.data) || '';
     const socket = io(serverPath + roomId, {
       transports: ['websocket'],
       query: {
