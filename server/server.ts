@@ -55,7 +55,7 @@ const releaseInterval = 5 * 60 * 1000;
 const releaseBatches = 10;
 const app = express();
 let server: any = null;
-if (config.HTTPS) {
+if (config.SSL_KEY_FILE && config.SSL_CRT_FILE) {
   const key = fs.readFileSync(config.SSL_KEY_FILE as string);
   const cert = fs.readFileSync(config.SSL_CRT_FILE as string);
   server = https.createServer({ key: key, cert: cert }, app);
