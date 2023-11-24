@@ -3,7 +3,7 @@ import React from 'react';
 
 export const DEFAULT_STATE = {
   user: undefined as firebase.User | undefined,
-  isSubscriber: true,
+  isSubscriber: false,
   streamPath: undefined as string | undefined,
   beta: false,
 };

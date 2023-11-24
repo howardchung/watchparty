@@ -51,6 +51,11 @@ class WatchParty extends React.Component {
           });
         }
       });
+    } else {
+      // Firebase isn't set up so enable subscriber features
+      this.setState({
+        isSubscriber: true,
+      });
     }
   }
   render() {
