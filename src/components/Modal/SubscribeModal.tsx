@@ -71,7 +71,7 @@ export class SubscribeModal extends React.Component<{
                 {/* Priority support */}
                 <Table.Row>
                   <Table.Cell>
-                    Basic (Synchronized watching, chat, screenshare)
+                    Synchronized watching, chat, screenshare
                   </Table.Cell>
                   <Table.Cell>
                     <Icon name="check" />
@@ -127,7 +127,7 @@ export class SubscribeModal extends React.Component<{
                   </Table.Cell>
                 </Table.Row>
                 <Table.Row>
-                  <Table.Cell>Custom Room URLs</Table.Cell>
+                  <Table.Cell>Custom Room URLs and Titles</Table.Cell>
                   <Table.Cell></Table.Cell>
                   <Table.Cell>
                     <Icon name="check" />
@@ -144,13 +144,6 @@ export class SubscribeModal extends React.Component<{
                 </Table.Row>
                 <Table.Row>
                   <Table.Cell>Animated Chat Avatar Frame</Table.Cell>
-                  <Table.Cell></Table.Cell>
-                  <Table.Cell>
-                    <Icon name="check" />
-                  </Table.Cell>
-                </Table.Row>
-                <Table.Row>
-                  <Table.Cell>Custom Room Title & Description</Table.Cell>
                   <Table.Cell></Table.Cell>
                   <Table.Cell>
                     <Icon name="check" />
