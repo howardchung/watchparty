@@ -419,9 +419,7 @@ export default class App extends React.Component<AppProps, AppState> {
           loading: Boolean(data.video),
           nonPlayableMedia: false,
           isVBrowserLarge: data.isVBrowserLarge,
-          vBrowserResolution: data.isVBrowserLarge
-            ? '1920x1080@30'
-            : '1280x720@30',
+          vBrowserResolution: '1280x720@30',
           controller: data.controller,
           isLiveHls: false,
         },
@@ -795,7 +793,7 @@ export default class App extends React.Component<AppProps, AppState> {
     this.setState({ settings });
   };
 
-  loadSignInData = async (user: firebase.User | null) => {
+  loadSignInData = async (user: firebase.User | undefined) => {
     if (user && this.socket) {
       // NOTE: firebase auth doesn't provide the actual first name data that individual providers (G/FB) do
       // It's accessible at the time the user logs in but not afterward
