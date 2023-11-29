@@ -488,8 +488,7 @@ export abstract class VMManager {
         await checkStaging();
       }
     } catch (e) {
-      console.log('error in runBackgroundJobs');
-      console.log(e);
+      console.log('error in runBackgroundJobs:', e);
     }
   };
 

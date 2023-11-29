@@ -697,8 +697,6 @@ async function getAllRooms() {
     }
     range = `/(${selection.join('|')})%`;
   }
-  console.log(config.SHARD);
-  console.log(range);
   return (
     await postgres.query<PersistentRoom>(
       `SELECT * from room where "roomId" SIMILAR TO '${range}'`
