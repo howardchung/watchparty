@@ -257,7 +257,7 @@ export default class App extends React.Component<AppProps, AppState> {
     if (config.VITE_FIREBASE_CONFIG) {
       firebase.auth().onAuthStateChanged(async (user: firebase.User | null) => {
         if (user) {
-          this.loadSignInData();
+          this.loadSignInData(user);
         }
       });
     }
@@ -327,7 +327,7 @@ export default class App extends React.Component<AppProps, AppState> {
       // Load username from localstorage
       let userName = window.localStorage.getItem('watchparty-username');
       this.updateName(null, { value: userName || (await generateName()) });
-      this.loadSignInData();
+      this.loadSignInData(this.context.user);
     });
     socket.on('connect_error', (err: any) => {
       console.error(err);
@@ -795,8 +795,7 @@ export default class App extends React.Component<AppProps, AppState> {
     this.setState({ settings });
   };
 
-  loadSignInData = async () => {
-    const user = this.context.user;
+  loadSignInData = async (user: firebase.User | null) => {
     if (user && this.socket) {
       // NOTE: firebase auth doesn't provide the actual first name data that individual providers (G/FB) do
       // It's accessible at the time the user logs in but not afterward
