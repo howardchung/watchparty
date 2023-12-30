@@ -82,7 +82,7 @@ export class ProfileModal extends React.Component<{
 
   authDiscord = () => {
     const url = `https://discord.com/api/oauth2/authorize?client_id=1071707916719095908&redirect_uri=${encodeURIComponent(
-      config.VITE_OAUTH_REDIRECT_HOSTNAME ?? 'https://www.watchparty.me'
+      config.VITE_OAUTH_REDIRECT_HOSTNAME
     )}%2Fdiscord%2Fauth&response_type=token&scope=identify`;
     window.open(
       url,
