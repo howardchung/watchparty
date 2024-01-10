@@ -643,7 +643,7 @@ async function minuteMetrics() {
         'lock:' + room.vBrowser.provider + ':' + room.vBrowser.id,
         300
       );
-      await redis?.expire('vBrowserUIDLock:' + room.vBrowser?.creatorUID, 120);
+      await redis?.expire('vBrowserUIDLock:' + room.vBrowser?.creatorUID, 70);
 
       const expireTime = getStartOfDay() / 1000 + 86400;
       if (room.vBrowser?.creatorClientID) {

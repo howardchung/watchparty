@@ -886,7 +886,7 @@ export class Room {
           'vBrowserUIDLock:' + uid,
           '1',
           'EX',
-          120,
+          70,
           'NX'
         );
         if (!uidLock) {
