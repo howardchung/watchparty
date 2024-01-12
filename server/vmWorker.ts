@@ -1,16 +1,10 @@
 import config from './config';
-import { assignVM, getBgVMManagers } from './vm/utils';
+import { getBgVMManagers } from './vm/utils';
 import express from 'express';
-import Redis from 'ioredis';
 import bodyParser from 'body-parser';
 
-let redis: Redis | undefined = undefined;
-if (config.REDIS_URL) {
-  redis = new Redis(config.REDIS_URL);
-}
 const app = express();
 const vmManagers = getBgVMManagers();
-const redisRefs: { [key: string]: Redis } = {};
 
 app.use(bodyParser.json());
 
@@ -18,21 +12,8 @@ Object.values(vmManagers).forEach((manager) => {
   manager?.runBackgroundJobs();
 });
 
-setInterval(() => {
-  redis?.setex('currentVBrowserWaiting', 90, Object.keys(redisRefs).length);
-}, 60000);
-
 app.post('/assignVM', async (req, res) => {
   try {
-    let redis: Redis | undefined = undefined;
-    if (config.REDIS_URL) {
-      redis = new Redis(config.REDIS_URL);
-      redisRefs[req.body.uid] = redis;
-      setTimeout(() => {
-        redis?.disconnect();
-        delete redisRefs[req.body.uid];
-      }, config.VM_ASSIGNMENT_TIMEOUT * 1000);
-    }
     // Find a pool that matches the size and region requirements
     const pool = Object.values(vmManagers).find((mgr) => {
       return (
@@ -41,18 +22,16 @@ app.post('/assignVM', async (req, res) => {
       );
     });
     // TODO maybe there's more than one, load balance between them?
-    if (redis && pool) {
+    if (pool) {
       console.log('assignVM from pool:', pool.getPoolName());
-      const vm = await assignVM(redis, pool);
-      redis?.disconnect();
-      delete redisRefs[req.body.uid];
+      const vm = await pool.assignVM(req.body.roomId, req.body.uid);
       return res.json(vm ?? null);
     }
+    return res.status(400).end();
   } catch (e) {
     console.warn(e);
+    return res.status(500).end();
   }
-  console.log('failed to assignVM');
-  return res.status(400).end();
 });
 
 app.post('/releaseVM', async (req, res) => {
@@ -61,15 +40,14 @@ app.post('/releaseVM', async (req, res) => {
       vmManagers[
         req.body.provider + (req.body.isLarge ? 'Large' : '') + req.body.region
       ];
-    redisRefs[req.body.uid]?.disconnect();
-    delete redisRefs[req.body.uid];
     if (req.body.id) {
-      await pool?.resetVM(req.body.id);
+      await pool?.resetVM(req.body.id, req.body.uid);
     }
+    return res.end();
   } catch (e) {
     console.warn(e);
+    return res.status(500).end();
   }
-  return res.end();
 });
 
 app.get('/stats', async (req, res) => {
@@ -77,22 +55,9 @@ app.get('/stats', async (req, res) => {
   for (let i = 0; i <= Object.keys(vmManagers).length; i++) {
     const key = Object.keys(vmManagers)[i];
     const vmManager = vmManagers[key];
-    const availableVBrowsers = await redis?.lrange(
-      vmManager?.getRedisQueueKey() || 'availableList',
-      0,
-      -1
-    );
-    const stagingVBrowsers = await redis?.lrange(
-      vmManager?.getRedisStagingKey() || 'stagingList',
-      0,
-      -1
-    );
-    // const terminationVBrowsers = await redis?.smembers(
-    //   vmManager?.getRedisTerminationKey() || 'terminationList',
-    // );
-    const size = await redis?.get(
-      vmManager?.getRedisPoolSizeKey() || 'vmPoolFull'
-    );
+    const availableVBrowsers = vmManager?.getAvailableVBrowsers();
+    const stagingVBrowsers = vmManager?.getStagingVBrowsers();
+    const size = await vmManager?.getCurrentSize();
     if (key && vmManager) {
       vmManagerStats[key] = {
         availableVBrowsers,
@@ -115,9 +80,9 @@ app.get('/isFreePoolFull', async (req, res) => {
   });
   let isFull = false;
   if (freePool) {
-    const availableCount = await redis?.llen(freePool.getRedisQueueKey());
+    const availableCount = await freePool.getAvailableCount();
     const limitSize = freePool?.getLimitSize() ?? 0;
-    const currentSize = await redis?.get(freePool.getRedisPoolSizeKey());
+    const currentSize = await freePool.getCurrentSize();
     isFull = Boolean(
       limitSize > 0 &&
         (Number(availableCount) === 0 ||

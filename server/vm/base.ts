@@ -1,25 +1,18 @@
 import config from '../config';
-import Redis from 'ioredis';
 import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
-import { redisCount } from '../utils/redis';
+import { redis, redisCount } from '../utils/redis';
+import { newPostgres } from '../utils/postgres';
 import { PoolConfig, PoolRegion } from './utils';
-
-let redis: Redis | undefined = undefined;
-if (config.REDIS_URL) {
-  redis = new Redis(config.REDIS_URL);
-}
-
 const incrInterval = 5 * 1000;
 const decrInterval = 30 * 1000;
 const cleanupInterval = 5 * 60 * 1000;
-const updateSizeInterval = 60 * 1000;
+
+const postgres = newPostgres();
 
 export abstract class VMManager {
   protected isLarge = false;
   protected region: PoolRegion = 'US';
-  protected redis: Redis;
-  private currentSize = 0;
   private limitSize = 0;
   private minSize = 0;
 
@@ -28,10 +21,6 @@ export abstract class VMManager {
     this.region = region;
     this.limitSize = Number(limitSize);
     this.minSize = Number(minSize);
-    if (!redis) {
-      throw new Error('Cannot construct VMManager without Redis');
-    }
-    this.redis = redis;
   }
 
   public getIsLarge = () => {
@@ -54,8 +43,12 @@ export abstract class VMManager {
     return this.limitSize * 0.05;
   };
 
-  public getCurrentSize = () => {
-    return this.currentSize;
+  public getCurrentSize = async () => {
+    const { rows } = await postgres.query(
+      `SELECT count(1) FROM vbrowser WHERE pool = $1`,
+      [this.getPoolName()]
+    );
+    return Number(rows[0]?.count);
   };
 
   public getPoolName = () => {
@@ -84,34 +77,36 @@ export abstract class VMManager {
     return [Math.ceil(minBuffer), Math.ceil(minBuffer * 1.5)];
   };
 
-  public getRedisQueueKey = () => {
-    return (
-      'availableList' + this.id + this.region + (this.isLarge ? 'Large' : '')
+  public getAvailableCount = async (): Promise<number> => {
+    const { rows } = await postgres.query(
+      `SELECT count(1) FROM vbrowser WHERE pool = $1 and state = 'available'`,
+      [this.getPoolName()]
     );
+    return Number(rows[0]?.count);
   };
 
-  public getRedisStagingKey = () => {
-    return (
-      'stagingList' + this.id + this.region + (this.isLarge ? 'Large' : '')
+  public getStagingCount = async (): Promise<number> => {
+    const { rows } = await postgres.query(
+      `SELECT count(1) FROM vbrowser WHERE pool = $1 and state = 'staging'`,
+      [this.getPoolName()]
     );
+    return Number(rows[0]?.count);
   };
 
-  public getRedisAllKey = () => {
-    return 'allList' + this.id + this.region + (this.isLarge ? 'Large' : '');
-  };
-
-  public getRedisHostCacheKey = () => {
-    return 'hostCache' + this.id + this.region + (this.isLarge ? 'Large' : '');
-  };
-
-  public getRedisPoolSizeKey = () => {
-    return 'vmPoolFull' + this.id + this.region + (this.isLarge ? 'Large' : '');
-  };
-
-  public getRedisTerminationKey = () => {
-    return (
-      'terminationList' + this.id + this.region + (this.isLarge ? 'Large' : '')
+  public getAvailableVBrowsers = async (): Promise<string[]> => {
+    const { rows } = await postgres.query(
+      `SELECT vmid from vbrowser WHERE pool = $1 and state = 'available'`,
+      [this.getPoolName()]
     );
+    return rows.map((row: any) => row.vmid);
+  };
+
+  public getStagingVBrowsers = async (): Promise<string[]> => {
+    const { rows } = await postgres.query(
+      `SELECT vmid from vbrowser WHERE pool = $1 and state = 'staging'`,
+      [this.getPoolName()]
+    );
+    return rows.map((row: any) => row.vmid);
   };
 
   public getTag = () => {
@@ -122,16 +117,123 @@ export abstract class VMManager {
     );
   };
 
-  public resetVM = async (id: string): Promise<void> => {
+  public assignVM = async (
+    roomId: string,
+    uid: string
+  ): Promise<AssignedVM | undefined> => {
+    if (!roomId || !uid) {
+      return undefined;
+    }
+    let postgres2 = newPostgres();
+    await postgres2.query('BEGIN TRANSACTION');
+    try {
+      const assignStart = Number(new Date());
+      if (this.getMinSize() === 0) {
+        // Spawns a VM if none is available in the pool
+        const availableCount = await this.getAvailableCount();
+        if (!availableCount) {
+          await this.startVMWrapper();
+        }
+      }
+      // Update and use SKIP LOCKED to ensure each consumer only gets one
+      const getAssignedVM = async (): Promise<VM | undefined> => {
+        const { rows } = await postgres2.query(
+          `
+        UPDATE vbrowser 
+        SET "roomId" = $1, uid = $2, "heartbeatTime" = $3, "assignTime" = $4, state = 'used'
+        WHERE id = (
+          SELECT id
+          FROM vbrowser
+          WHERE state = 'available'
+          AND pool = $5
+          ORDER BY id ASC
+          FOR UPDATE SKIP LOCKED
+          LIMIT 1
+        )
+        RETURNING data`,
+          [roomId, uid, new Date(), new Date(), this.getPoolName()]
+        );
+        return rows[0]?.data;
+      };
+      let selected: VM | undefined = undefined;
+      while (!selected) {
+        // make sure this room still wants a VM, otherwise rollback the transaction to avoid waste
+        const inQueue = await postgres2.query(
+          'SELECT "roomId" FROM vbrowser_queue WHERE "roomId" = $1 LIMIT 1',
+          [roomId]
+        );
+        if (!Boolean(inQueue.rows.length)) {
+          await postgres2.query('ROLLBACK');
+          await postgres2.end();
+          console.log('[ASSIGN] room %s no longer in queue', roomId);
+          return undefined;
+        }
+        selected = await getAssignedVM();
+        if (!selected) {
+          // Wait and try again
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
+      }
+      const assignEnd = Number(new Date());
+      const assignElapsed = assignEnd - assignStart;
+      await redis?.lpush('vBrowserStartMS', assignElapsed);
+      await redis?.ltrim('vBrowserStartMS', 0, 24);
+      console.log(
+        '[ASSIGN] %s to %s in %s',
+        selected.id,
+        roomId,
+        assignElapsed + 'ms'
+      );
+      const retVal = { ...selected, assignTime: Number(new Date()) };
+      await postgres2.query('COMMIT');
+      await postgres2.end();
+      return retVal;
+    } catch (e) {
+      console.warn(e);
+      await postgres2.query('ROLLBACK');
+      await postgres2.end();
+      return undefined;
+    }
+  };
+
+  public resetVM = async (vmid: string, uid?: string): Promise<void> => {
+    if (uid !== undefined) {
+      // verify the uid matches if user initiated
+      const vmUid = await postgres.query(
+        `SELECT uid FROM vbrowser WHERE pool = $1 AND vmid = $2`,
+        [this.getPoolName(), vmid]
+      );
+      if (vmUid.rows[0]?.uid && vmUid.rows[0]?.uid !== uid) {
+        console.log(
+          '[RESET] uid mismatch on %s, expected %s, got %s',
+          vmid,
+          vmUid.rows[0]?.uid,
+          uid
+        );
+        return;
+      }
+    }
     // We can attempt to reuse the instance which is more efficient if users tend to use them for a short time
     // Otherwise terminating them is simpler but more expensive since they're billed for an hour
-    console.log('[RESET]', id);
-    await this.rebootVM(id);
-    // Delete any locks/caches
-    await this.redis.del('lock:' + this.id + ':' + id);
-    await this.redis.del(this.getRedisHostCacheKey() + ':' + id);
-    // Add the VM back to the pool
-    await this.redis.rpush(this.getRedisStagingKey(), id);
+    console.log('[RESET]', vmid);
+    await this.rebootVM(vmid);
+    const { rowCount } = await postgres.query(
+      `
+      UPDATE vbrowser
+      SET "roomId" = NULL, uid = NULL, retries = 0, "heartbeatTime" = NULL, "resetTime" = $3, "readyTime" = NULL, "assignTime" = NULL, data = NULL, state = 'staging'
+      WHERE pool = $1 AND vmid = $2`,
+      [this.getPoolName(), vmid, new Date()]
+    );
+    console.log('UPDATE', rowCount);
+    if (rowCount === 0) {
+      // terminate if we don't have a record of it
+      // This could happen while we're migrating and don't have records yet
+      // Or if resetting a VM from cleanup that we didn't record in db
+      // Or if Docker terminated the VM in reboot already since we don't reuse containers
+      // Of if we resized down but didn't complete the termination
+      // In the Docker case that leads to a double terminate but might be ok
+      this.terminateVMWrapper(vmid);
+    }
   };
 
   public startVMWrapper = async () => {
@@ -139,7 +241,12 @@ export abstract class VMManager {
     try {
       const password = uuidv4();
       const id = await this.startVM(password);
-      await this.redis.rpush(this.getRedisStagingKey(), id);
+      await postgres.query(
+        `
+      INSERT INTO vbrowser(pool, vmid, "creationTime", state) 
+      VALUES($1, $2, $3, 'staging')`,
+        [this.getPoolName(), id, new Date()]
+      );
       redisCount('vBrowserLaunches');
       return id;
     } catch (e: any) {
@@ -152,344 +259,285 @@ export abstract class VMManager {
     }
   };
 
-  protected terminateVMWrapper = async (id: string) => {
-    console.log('[TERMINATE]', id);
-    // Remove from lists, if it exists
-    await this.redis.lrem(this.getRedisQueueKey(), 0, id);
-    await this.redis.lrem(this.getRedisStagingKey(), 0, id);
-    // Get the VM data to calculate lifetime, if we fail do the terminate anyway
-    // const lifetime = await this.terminateVMMetrics(id);
-    await this.terminateVM(id);
-    // if (lifetime) {
-    //   await this.redis.lpush('vBrowserVMLifetime', lifetime);
-    //   await this.redis.ltrim('vBrowserVMLifetime', 0, 24);
-    // }
-    // Delete any locks
-    await this.redis.del('lock:' + this.id + ':' + id);
-    await this.redis.del(this.getRedisHostCacheKey() + ':' + id);
-  };
-
-  protected terminateVMMetrics = async (id: string) => {
-    try {
-      const vm = await this.getVM(id);
-      if (vm) {
-        const lifetime =
-          Number(new Date()) - Number(new Date(vm.creation_date));
-        return lifetime;
-      }
-    } catch (e: any) {
-      console.warn(e.response?.data);
-    }
-    return 0;
+  protected terminateVMWrapper = async (vmid: string) => {
+    console.log('[TERMINATE]', vmid);
+    await this.terminateVM(vmid);
+    const { rowCount } = await postgres.query(
+      `DELETE FROM vbrowser WHERE pool = $1 AND vmid = $2 RETURNING id`,
+      [this.getPoolName(), vmid]
+    );
+    // We can log the VM lifetime here if desired
+    console.log('DELETE', rowCount);
   };
 
   public runBackgroundJobs = async () => {
-    try {
-      console.log(
-        '[VMWORKER] starting background jobs for %s',
-        this.getPoolName()
-      );
-      const resizeVMGroupIncr = async () => {
-        const availableCount = await this.redis.llen(this.getRedisQueueKey());
-        const stagingCount = await this.redis.llen(this.getRedisStagingKey());
-        let launch = false;
-        launch =
-          availableCount + stagingCount < this.getAdjustedBuffer()[0] &&
-          this.getCurrentSize() != null &&
-          this.getCurrentSize() < (this.getLimitSize() || Infinity);
-        if (launch) {
-          console.log(
-            '[RESIZE-LAUNCH]',
-            'minimum:',
-            this.getAdjustedBuffer()[0],
-            'available:',
-            availableCount,
-            'staging:',
-            stagingCount,
-            'currentSize:',
-            this.getCurrentSize(),
-            'limit:',
-            this.getLimitSize()
-          );
-          this.startVMWrapper();
-        }
-      };
-
-      const resizeVMGroupDecr = async () => {
-        let unlaunch = false;
-        const availableCount = await this.redis.llen(this.getRedisQueueKey());
-        unlaunch = availableCount > this.getAdjustedBuffer()[1];
-        if (unlaunch) {
-          const ids = await this.redis.smembers(this.getRedisTerminationKey());
-          // Remove the first available VM
-          let first = null;
-          let rem = 0;
-          while (ids.length && !rem) {
-            first = ids.shift();
-            rem = first
-              ? await this.redis.lrem(this.getRedisQueueKey(), 1, first)
-              : 0;
-            if (first && rem) {
-              console.log('[RESIZE-UNLAUNCH]', first);
-              await this.terminateVMWrapper(first);
-            }
-          }
-        }
-      };
-
-      const updateSize = async () => {
-        const allVMs = await this.listVMs(this.getTag());
-        const now = Date.now();
-        this.currentSize = allVMs.length;
-        await this.redis.setex(
-          this.getRedisPoolSizeKey(),
-          2 * 60,
-          allVMs.length
-        );
-        let sortedVMs = allVMs
-          // Sort newest first (decreasing alphabetically)
-          .sort((a, b) => -a.creation_date?.localeCompare(b.creation_date))
-          // Remove the minimum number of VMs to keep
-          .slice(0, -this.getMinSize() || undefined)
-          // Consider only VMs that have been up for most of an hour
-          .filter(
-            (vm) =>
-              (now - Number(new Date(vm.creation_date))) % (60 * 60 * 1000) >
-              config.VM_MIN_UPTIME_MINUTES * 60 * 1000
-          );
-        const cmd = this.redis.multi().del(this.getRedisTerminationKey());
-        if (sortedVMs.length) {
-          cmd.sadd(
-            this.getRedisTerminationKey(),
-            sortedVMs.map((vm) => vm.id)
-          );
-        }
-        await cmd.exec();
-        if (allVMs.length) {
-          const availableKeys = await this.redis.lrange(
-            this.getRedisQueueKey(),
-            0,
-            -1
-          );
-          const stagingKeys = await this.redis.lrange(
-            this.getRedisStagingKey(),
-            0,
-            -1
-          );
-          console.log(
-            '[STATS] %s: currentSize %s, available %s, staging %s, buffer %s',
-            this.getPoolName(),
-            allVMs.length,
-            availableKeys.length,
-            stagingKeys.length,
-            this.getAdjustedBuffer()
-          );
-        }
-      };
-
-      const cleanupVMGroup = async () => {
-        // Clean up hanging VMs
-        // It's possible we created a VM but lost track of it in redis
-        // Take the list of VMs from API, subtract VMs that have a lock in redis or are in the available or staging pool, delete the rest
-        let allVMs = [];
-        try {
-          allVMs = await this.listVMs(this.getTag());
-        } catch (e) {
-          console.log('cleanupVMGroup: failed to fetch VM list');
-          return;
-        }
-        const usedKeys: string[] = [];
-        for (let i = 0; i < allVMs.length; i++) {
-          if (await this.redis.get(`lock:${this.id}:${allVMs[i].id}`)) {
-            usedKeys.push(allVMs[i].id);
-          }
-        }
-        const availableKeys = await this.redis.lrange(
-          this.getRedisQueueKey(),
-          0,
-          -1
-        );
-        const stagingKeys = await this.redis.lrange(
-          this.getRedisStagingKey(),
-          0,
-          -1
-        );
-        const dontDelete = new Set([
-          ...usedKeys,
-          ...availableKeys,
-          ...stagingKeys,
-        ]);
+    const resizeVMGroupIncr = async () => {
+      const availableCount = await this.getAvailableCount();
+      const stagingCount = await this.getStagingCount();
+      const currentSize = await this.getCurrentSize();
+      let launch = false;
+      launch =
+        availableCount + stagingCount < this.getAdjustedBuffer()[0] &&
+        currentSize < (this.getLimitSize() || Infinity);
+      if (launch) {
         console.log(
-          '[CLEANUP] %s: cleanup %s VMs',
-          this.getPoolName(),
-          allVMs.length - dontDelete.size
+          '[RESIZE-LAUNCH]',
+          'minimum:',
+          this.getAdjustedBuffer()[0],
+          'available:',
+          availableCount,
+          'staging:',
+          stagingCount,
+          'currentSize:',
+          currentSize,
+          'limit:',
+          this.getLimitSize()
         );
-        for (let i = 0; i < allVMs.length; i++) {
-          const server = allVMs[i];
-          if (!dontDelete.has(server.id)) {
-            console.log('[CLEANUP]', server.id);
-            try {
-              await this.resetVM(server.id);
-            } catch (e: any) {
-              console.warn(e.response?.data);
-            }
-            //this.terminateVMWrapper(server.id);
-            await new Promise((resolve) => setTimeout(resolve, 2000));
-          }
-        }
-      };
+        this.startVMWrapper();
+      }
+    };
 
-      const checkStaging = async () => {
-        try {
-          // Get staging list and check if VM is ready
-          const stagingKeys = await this.redis.lrange(
-            this.getRedisStagingKey(),
-            0,
-            -1
+    const resizeVMGroupDecr = async () => {
+      let unlaunch = false;
+      const availableCount = await this.getAvailableCount();
+      unlaunch = availableCount > this.getAdjustedBuffer()[1];
+      if (unlaunch) {
+        // use SKIP LOCKED to delete to avoid deleting VM that might be assigning
+        // filter to only VMs eligible for deletion
+        // they must be up for long enough
+        // keep the oldest min pool size number of VMs
+        const { rows } = await postgres.query(
+          `
+          DELETE FROM vbrowser
+          WHERE id = (
+            SELECT id
+            FROM vbrowser
+            WHERE pool = $1
+            AND state = 'available'
+            AND CAST(extract(epoch from now() - "creationTime") as INT) % (60 * 60) > $2
+            ORDER BY id ASC
+            FOR UPDATE SKIP LOCKED
+            LIMIT 1
+            OFFSET $3
+          ) RETURNING vmid, CAST(extract(epoch from now() - "creationTime") as INT) % (60 * 60) as uptime_frac`,
+          [
+            this.getPoolName(),
+            config.VM_MIN_UPTIME_MINUTES * 60, // to seconds
+            this.getMinSize(),
+          ]
+        );
+        const first = rows[0];
+        if (first) {
+          console.log(
+            '[RESIZE-UNLAUNCH] %s up for %s seconds of hour',
+            first.vmid,
+            first.uptime_frac
           );
-          const stagingPromises = stagingKeys.map((id) => {
-            return new Promise<string>(async (resolve, reject) => {
-              const retryCount = await this.redis.incr(
-                this.getRedisStagingKey() + ':' + id
-              );
-              if (retryCount < this.minRetries) {
-                // Do a minimum # of retries to give reboot time
-                return resolve(id + ', ' + retryCount + ', ' + false);
-              }
-              let ready = false;
-              let vm: VM | null = null;
-              try {
-                const cached = await this.redis.get(
-                  this.getRedisHostCacheKey() + ':' + id
-                );
-                vm = cached ? JSON.parse(cached) : null;
-                if (
-                  !vm &&
-                  (retryCount === this.minRetries + 1 || retryCount % 20 === 0)
-                ) {
-                  vm = await this.getVM(id);
-                  if (vm?.host) {
-                    console.log(
-                      '[CHECKSTAGING] caching host %s for id %s',
-                      vm?.host,
-                      id
-                    );
-                    await this.redis.setex(
-                      this.getRedisHostCacheKey() + ':' + id,
-                      3600,
-                      JSON.stringify(vm)
-                    );
-                  }
-                }
-              } catch (e: any) {
-                console.warn(e.response?.data);
-                if (e.response?.status === 404) {
-                  await this.redis.lrem(this.getRedisQueueKey(), 0, id);
-                  await this.redis.lrem(this.getRedisStagingKey(), 0, id);
-                  await this.redis.del(this.getRedisStagingKey() + ':' + id);
-                  return reject();
-                }
-              }
-              if (!vm?.host) {
-                console.log('[CHECKSTAGING] no host for vm %s', id);
-                return reject();
-              }
-              ready = await checkVMReady(vm?.host);
-              //ready = retryCount > 100;
-              if (ready) {
-                console.log('[CHECKSTAGING] ready:', id, vm?.host, retryCount);
-                // If it is, move it to available list
-                const rem = await this.redis.lrem(
-                  this.getRedisStagingKey(),
-                  1,
-                  id
-                );
-                if (rem) {
-                  await this.redis
-                    .multi()
-                    .rpush(this.getRedisQueueKey(), id)
-                    .del(this.getRedisStagingKey() + ':' + id)
-                    .exec();
-                  await this.redis.lpush('vBrowserStageRetries', retryCount);
-                  await this.redis.ltrim('vBrowserStageRetries', 0, 24);
-                }
-              } else {
-                if (retryCount >= 240) {
-                  console.log('[CHECKSTAGING]', 'giving up:', id);
-                  await this.redis
-                    .multi()
-                    .lrem(this.getRedisStagingKey(), 0, id)
-                    .del(this.getRedisStagingKey() + ':' + id)
-                    .exec();
-                  redisCount('vBrowserStagingFails');
-                  await this.redis.lpush('vBrowserStageFails', id);
-                  await this.redis.ltrim('vBrowserStageFails', 0, 24);
-                  await this.resetVM(id);
-                  // await this.terminateVMWrapper(id);
-                } else {
-                  if (retryCount % 150 === 0) {
-                    console.log(
-                      '[CHECKSTAGING] %s attempt to poweron, attach to network',
-                      id
-                    );
-                    this.powerOn(id);
-                    //this.attachToNetwork(id);
-                  }
-                  if (retryCount % 30 === 0) {
-                    console.log(
-                      '[CHECKSTAGING]',
-                      'not ready:',
-                      id,
-                      vm?.host,
-                      retryCount
-                    );
-                  }
-                }
-              }
-              resolve(id + ', ' + retryCount + ', ' + ready);
-            });
-          });
-          // console.time('[CHECKSTAGING] ' + this.getPoolName());
-          const result = await Promise.race([
-            Promise.allSettled(stagingPromises),
-            new Promise((resolve) => setTimeout(resolve, 30000)),
-          ]);
-          // console.timeEnd('[CHECKSTAGING] ' + this.getPoolName());
-          return result;
-        } catch (e) {
-          console.warn('[CHECKSTAGING-ERROR]', e);
-          return [];
+          await this.terminateVMWrapper(first.vmid);
         }
-      };
+      }
+    };
 
-      setInterval(resizeVMGroupIncr, incrInterval);
-      setInterval(resizeVMGroupDecr, decrInterval);
-
-      updateSize();
-      setInterval(updateSize, updateSizeInterval);
-
-      setImmediate(async () => {
-        while (true) {
+    const cleanupVMGroup = async () => {
+      // Clean up hanging VMs
+      // It's possible we created a VM but lost track of it
+      // Take the list of VMs from API
+      // subtract VMs that have a heartbeat or are in the available or staging pool
+      // delete the rest
+      let allVMs = [];
+      try {
+        allVMs = await this.listVMs(this.getTag());
+      } catch (e) {
+        console.log('cleanupVMGroup: failed to fetch VM list');
+        return;
+      }
+      const { rows } = await postgres.query(
+        `
+        SELECT vmid from vbrowser
+        WHERE pool = $1
+        AND
+        ("heartbeatTime" > (NOW() - INTERVAL '5 minutes')
+        OR state = 'staging'
+        OR state = 'available')
+        `,
+        [this.getPoolName()]
+      );
+      const dontDelete = new Set(rows.map((row: any) => row.vmid));
+      console.log(
+        '[CLEANUP] %s: found %s VMs, %s to keep',
+        this.getPoolName(),
+        allVMs.length,
+        dontDelete.size
+      );
+      for (let i = 0; i < allVMs.length; i++) {
+        const server = allVMs[i];
+        if (!dontDelete.has(server.id)) {
+          console.log('[CLEANUP]', server.id);
           try {
-            await cleanupVMGroup();
+            await this.resetVM(server.id);
+            //this.terminateVMWrapper(server.id);
           } catch (e: any) {
-            console.log('error in cleanupVMGroup');
             console.warn(e.response?.data);
           }
-          await new Promise((resolve) => setTimeout(resolve, cleanupInterval));
+          await new Promise((resolve) => setTimeout(resolve, 2000));
         }
-      });
-
-      const checkStagingInterval = 1000;
-      while (true) {
-        await new Promise((resolve) =>
-          setTimeout(resolve, checkStagingInterval)
-        );
-        await checkStaging();
       }
-    } catch (e) {
-      console.log('error in runBackgroundJobs:', e);
-    }
+    };
+
+    const checkStaging = async () => {
+      const staging = await postgres.query(
+        `SELECT id FROM vbrowser WHERE pool = $1 and state = 'staging'`,
+        [this.getPoolName()]
+      );
+      const stagingPromises = staging.rows.map((row: any) => {
+        return new Promise<string>(async (resolve, reject) => {
+          const rowid = row.id;
+          // Increment retry count and return data
+          const { rows } = await postgres.query(
+            `
+              UPDATE vbrowser
+              SET retries = retries + 1 WHERE id = $1
+              RETURNING vmid, data, retries
+            `,
+            [rowid]
+          );
+          const first = rows[0];
+          if (!first) {
+            return reject('row not found for id ' + rowid);
+          }
+          let vmid = first.vmid as string;
+          let retryCount = first.retries as number;
+          let vm = first.data as VM | null;
+          if (retryCount < this.minRetries) {
+            if (config.NODE_ENV === 'development') {
+              console.log(
+                '[CHECKSTAGING] attempt %s, waiting for minRetries',
+                retryCount
+              );
+            }
+            // Do a minimum # of retries to give reboot time
+            return resolve(vmid + ', ' + retryCount + ', ' + false);
+          }
+          let ready = false;
+          // Fetch data on first attempt
+          // Try again only every once in a while to reduce load on cloud API
+          const shouldFetchVM =
+            retryCount === this.minRetries + 1 || retryCount % 20 === 0;
+          if (!vm && shouldFetchVM) {
+            try {
+              vm = await this.getVM(vmid);
+            } catch (e: any) {
+              console.warn(e.response?.data);
+              if (e.response?.status === 404) {
+                // Remove the VM beecause the provider says it doesn't exist
+                await postgres.query('DELETE FROM vbrowser WHERE id = $1', [
+                  rowid,
+                ]);
+                return reject('failed to find vm ' + vmid);
+              }
+            }
+            if (vm?.host) {
+              // Save the VM data
+              await postgres.query(
+                `UPDATE vbrowser SET data = $1 WHERE id = $2`,
+                [vm, rowid]
+              );
+            }
+          }
+          if (!vm?.host) {
+            console.log('[CHECKSTAGING] no host for vm %s', vmid);
+            return reject('no host for vm ' + vmid);
+          }
+          ready = await checkVMReady(vm.host);
+          if (ready) {
+            console.log('[CHECKSTAGING] ready:', vmid, vm?.host, retryCount);
+            await postgres.query(
+              `UPDATE vbrowser SET state = 'available', "readyTime" = $2 WHERE id = $1`,
+              [rowid, new Date()]
+            );
+            await redis?.lpush('vBrowserStageRetries', retryCount);
+            await redis?.ltrim('vBrowserStageRetries', 0, 24);
+          } else {
+            if (retryCount >= 240) {
+              console.log('[CHECKSTAGING]', 'giving up:', vmid);
+              redisCount('vBrowserStagingFails');
+              await redis?.lpush('vBrowserStageFails', vmid);
+              await redis?.ltrim('vBrowserStageFails', 0, 24);
+              await this.resetVM(vmid);
+              // await this.terminateVMWrapper(id);
+            } else {
+              if (retryCount % 150 === 0) {
+                console.log(
+                  '[CHECKSTAGING] %s attempt to poweron, attach to network',
+                  vmid
+                );
+                this.powerOn(vmid);
+                //this.attachToNetwork(id);
+              }
+              if (
+                retryCount % (config.NODE_ENV === 'development' ? 1 : 30) ===
+                0
+              ) {
+                console.log(
+                  '[CHECKSTAGING]',
+                  'not ready:',
+                  vmid,
+                  vm.host,
+                  retryCount
+                );
+              }
+            }
+          }
+          resolve(vmid + ', ' + retryCount + ', ' + ready);
+        });
+      });
+      // TODO log something if we timeout
+      const result = await Promise.race([
+        Promise.allSettled(stagingPromises),
+        new Promise((resolve) => setTimeout(resolve, 30000)),
+      ]);
+      return result;
+    };
+
+    console.log(
+      '[VMWORKER] starting background jobs for %s',
+      this.getPoolName()
+    );
+
+    setInterval(resizeVMGroupIncr, incrInterval);
+    setInterval(resizeVMGroupDecr, decrInterval);
+    setInterval(async () => {
+      console.log(
+        '[STATS] %s: currentSize %s, available %s, staging %s, buffer %s',
+        this.getPoolName(),
+        await this.getCurrentSize(),
+        await this.getAvailableCount(),
+        await this.getStagingCount(),
+        this.getAdjustedBuffer()
+      );
+    }, 10000);
+
+    setImmediate(async () => {
+      while (true) {
+        try {
+          await cleanupVMGroup();
+        } catch (e: any) {
+          console.warn('[CLEANUPVMGROUP-ERROR]', e.response?.data);
+        }
+        await new Promise((resolve) => setTimeout(resolve, cleanupInterval));
+      }
+    });
+
+    setImmediate(async () => {
+      while (true) {
+        try {
+          await checkStaging();
+        } catch (e) {
+          console.warn('[CHECKSTAGING-ERROR]', e);
+        }
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+    });
   };
 
   public abstract id: string;

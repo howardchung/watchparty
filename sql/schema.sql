@@ -16,6 +16,10 @@ CREATE TABLE room(
   "mediaPath" text,
   PRIMARY KEY ("roomId")
 );
+CREATE UNIQUE INDEX on room(LOWER(vanity)) WHERE vanity IS NOT NULL;
+CREATE INDEX on room(owner) WHERE owner IS NOT NULL;
+CREATE INDEX on room("creationTime");
+CREATE INDEX on room USING GIN("roomId" gin_trgm_ops);
 
 CREATE TABLE subscriber(
   "customerId" text,
@@ -40,7 +44,27 @@ CREATE TABLE active_user(
   PRIMARY KEY(uid)
 );
 
-CREATE UNIQUE INDEX on room (LOWER(vanity)) WHERE vanity IS NOT NULL;
-CREATE INDEX on room(owner) WHERE owner IS NOT NULL;
-CREATE INDEX on room("creationTime");
-CREATE INDEX on room USING GIN("roomId" gin_trgm_ops);
+CREATE TABLE vbrowser(
+  id bigserial PRIMARY KEY, -- numeric sequence ID
+  pool text NOT NULL, -- name of the pool this VM is in, e.g. HetznerLargeUS
+  vmid text NOT NULL, -- identifier for the VM, only unique across a provider
+  state text NOT NULL, -- available, staging, used
+  "creationTime" timestamp with time zone NOT NULL, -- time the VM was created
+  "heartbeatTime" timestamp with time zone, -- last time a room reported this VM was in use
+  "resetTime" timestamp with time zone, -- last time the VM was reset
+  "readyTime" timestamp with time zone, -- last time the VM became ready
+  "assignTime" timestamp with time zone, -- last time the VM was assigned
+  "roomId" text, -- room VM assigned to
+  uid text, -- user requesting the VM
+  data json, -- metadata for the VM
+  retries int DEFAULT 0 -- how many tries we checked if VM is up
+);
+CREATE UNIQUE INDEX on vbrowser(pool, id);
+CREATE INDEX on vbrowser(pool, state);
+CREATE INDEX on vbrowser("roomId");
+CREATE INDEX on vbrowser(uid);
+
+CREATE TABLE vbrowser_queue(
+  "roomId" text NOT NULL PRIMARY KEY,
+  "queueTime" timestamp with time zone NOT NULL
+);

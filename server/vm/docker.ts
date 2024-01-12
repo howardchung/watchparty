@@ -1,7 +1,6 @@
 // This assumes an installation of Docker exists at the Docker VM host
 // and that host is configured to accept our SSH key
 import config from '../config';
-import { v4 as uuidv4 } from 'uuid';
 import { VMManager, VM } from './base';
 import { imageName } from './utils';
 //@ts-ignore
@@ -62,12 +61,8 @@ export class Docker extends VMManager {
   };
 
   rebootVM = async (id: string) => {
-    return await this.terminateVM(id);
-  };
-
-  // Override the base method, since we don't need to reuse docker containers
-  resetVM = async (id: string) => {
-    return await this.terminateVM(id);
+    // We don't need to reuse Docker containers
+    return await this.terminateVMWrapper(id);
   };
 
   getVM = async (id: string) => {
