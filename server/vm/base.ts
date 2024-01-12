@@ -70,7 +70,7 @@ export abstract class VMManager {
       rampUpHours.length &&
       pointInInterval24(nowHour, rampUpHours[0], rampUpHours[1]);
     if (isRampDown) {
-      minBuffer /= 2;
+      minBuffer *= 0.5;
     } else if (isRampUp) {
       minBuffer *= 1.5;
     }
@@ -217,6 +217,8 @@ export abstract class VMManager {
     // Otherwise terminating them is simpler but more expensive since they're billed for an hour
     console.log('[RESET]', vmid);
     await this.rebootVM(vmid);
+    // we could crash here and then record will remain in used state
+    // need to periocally reset stale VMs
     const { rowCount } = await postgres.query(
       `
       UPDATE vbrowser
@@ -241,6 +243,7 @@ export abstract class VMManager {
     try {
       const password = uuidv4();
       const id = await this.startVM(password);
+      // We might fail to record it if crashing here but cleanup will eventually delete it
       await postgres.query(
         `
       INSERT INTO vbrowser(pool, vmid, "creationTime", state) 
@@ -261,13 +264,15 @@ export abstract class VMManager {
 
   protected terminateVMWrapper = async (vmid: string) => {
     console.log('[TERMINATE]', vmid);
-    await this.terminateVM(vmid);
+    // Update the DB before calling terminate
+    // If we don't actually complete the termination, cleanup will eventually remove it
     const { rowCount } = await postgres.query(
       `DELETE FROM vbrowser WHERE pool = $1 AND vmid = $2 RETURNING id`,
       [this.getPoolName(), vmid]
     );
-    // We can log the VM lifetime here if desired
     console.log('DELETE', rowCount);
+    // We can log the VM lifetime by returning the creationTime and diffing
+    await this.terminateVM(vmid);
   };
 
   public runBackgroundJobs = async () => {
@@ -342,7 +347,7 @@ export abstract class VMManager {
       // Clean up hanging VMs
       // It's possible we created a VM but lost track of it
       // Take the list of VMs from API
-      // subtract VMs that have a heartbeat or are in the available or staging pool
+      // subtract VMs that have a heartbeat or available or staging
       // delete the rest
       let allVMs = [];
       try {
@@ -385,42 +390,49 @@ export abstract class VMManager {
     };
 
     const checkStaging = async () => {
-      const staging = await postgres.query(
-        `SELECT id FROM vbrowser WHERE pool = $1 and state = 'staging'`,
+      // Increment retry count and return data
+      const { rows } = await postgres.query(
+        `
+          UPDATE vbrowser
+          SET retries = retries + 1
+          WHERE pool = $1 and state = 'staging'
+          RETURNING id, vmid, data, retries
+        `,
         [this.getPoolName()]
       );
-      const stagingPromises = staging.rows.map((row: any) => {
+      const stagingPromises = rows.map((row: any) => {
         return new Promise<string>(async (resolve, reject) => {
           const rowid = row.id;
-          // Increment retry count and return data
-          const { rows } = await postgres.query(
-            `
-              UPDATE vbrowser
-              SET retries = retries + 1 WHERE id = $1
-              RETURNING vmid, data, retries
-            `,
-            [rowid]
-          );
-          const first = rows[0];
-          if (!first) {
-            return reject('row not found for id ' + rowid);
-          }
-          let vmid = first.vmid as string;
-          let retryCount = first.retries as number;
-          let vm = first.data as VM | null;
+          const vmid = row.vmid as string;
+          const retryCount = row.retries as number;
+          let vm = row.data as VM | null;
           if (retryCount < this.minRetries) {
             if (config.NODE_ENV === 'development') {
               console.log(
-                '[CHECKSTAGING] attempt %s, waiting for minRetries',
+                '[CHECKSTAGING] %s attempt %s, waiting for minRetries',
+                vmid,
                 retryCount
               );
             }
             // Do a minimum # of retries to give reboot time
-            return resolve(vmid + ', ' + retryCount + ', ' + false);
+            return resolve([vmid, retryCount, false].join(','));
           }
-          let ready = false;
+          if (retryCount % 150 === 0) {
+            console.log('[CHECKSTAGING] %s poweron, attach to network', vmid);
+            this.powerOn(vmid);
+            //this.attachToNetwork(vmid);
+          }
+          if (retryCount >= 240) {
+            console.log('[CHECKSTAGING]', 'giving up:', vmid);
+            redisCount('vBrowserStagingFails');
+            await redis?.lpush('vBrowserStageFails', vmid);
+            await redis?.ltrim('vBrowserStageFails', 0, 24);
+            await this.resetVM(vmid);
+            // await this.terminateVMWrapper(vmid);
+            return reject('too many attempts on vm ' + vmid);
+          }
           // Fetch data on first attempt
-          // Try again only every once in a while to reduce load on cloud API
+          // Try again only every once in a while to reduce load on API
           const shouldFetchVM =
             retryCount === this.minRetries + 1 || retryCount % 20 === 0;
           if (!vm && shouldFetchVM) {
@@ -448,47 +460,28 @@ export abstract class VMManager {
             console.log('[CHECKSTAGING] no host for vm %s', vmid);
             return reject('no host for vm ' + vmid);
           }
-          ready = await checkVMReady(vm.host);
+          const ready = await checkVMReady(vm.host);
+          if (
+            ready ||
+            retryCount % (config.NODE_ENV === 'development' ? 1 : 30) === 0
+          ) {
+            console.log(
+              '[CHECKSTAGING] [ready: %s] [vmid: %s] [host: %s] [retries: %s]',
+              ready,
+              vmid,
+              vm?.host,
+              retryCount
+            );
+          }
           if (ready) {
-            console.log('[CHECKSTAGING] ready:', vmid, vm?.host, retryCount);
             await postgres.query(
               `UPDATE vbrowser SET state = 'available', "readyTime" = $2 WHERE id = $1`,
               [rowid, new Date()]
             );
             await redis?.lpush('vBrowserStageRetries', retryCount);
             await redis?.ltrim('vBrowserStageRetries', 0, 24);
-          } else {
-            if (retryCount >= 240) {
-              console.log('[CHECKSTAGING]', 'giving up:', vmid);
-              redisCount('vBrowserStagingFails');
-              await redis?.lpush('vBrowserStageFails', vmid);
-              await redis?.ltrim('vBrowserStageFails', 0, 24);
-              await this.resetVM(vmid);
-              // await this.terminateVMWrapper(id);
-            } else {
-              if (retryCount % 150 === 0) {
-                console.log(
-                  '[CHECKSTAGING] %s attempt to poweron, attach to network',
-                  vmid
-                );
-                this.powerOn(vmid);
-                //this.attachToNetwork(id);
-              }
-              if (
-                retryCount % (config.NODE_ENV === 'development' ? 1 : 30) ===
-                0
-              ) {
-                console.log(
-                  '[CHECKSTAGING]',
-                  'not ready:',
-                  vmid,
-                  vm.host,
-                  retryCount
-                );
-              }
-            }
           }
-          resolve(vmid + ', ' + retryCount + ', ' + ready);
+          resolve([vmid, retryCount, ready].join(','));
         });
       });
       // TODO log something if we timeout
@@ -503,6 +496,8 @@ export abstract class VMManager {
       '[VMWORKER] starting background jobs for %s',
       this.getPoolName()
     );
+
+    // TODO (howard) reset stale heartbeat VMs
 
     setInterval(resizeVMGroupIncr, incrInterval);
     setInterval(resizeVMGroupDecr, decrInterval);
@@ -567,6 +562,7 @@ async function checkVMReady(host: string) {
       url,
       timeout: 1000,
     });
+    // Check to make sure the VM was recently rebooted (we could also check on the password to ensure reset)
     const timeSinceBoot = Date.now() / 1000 - Number(resp.data);
     // console.log(timeSinceBoot);
     return process.env.NODE_ENV === 'production'
