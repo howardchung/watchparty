@@ -5,13 +5,13 @@ import bodyParser from 'body-parser';
 import compression from 'compression';
 import os from 'os';
 import cors from 'cors';
-import Redis from 'ioredis';
 import https from 'https';
 import http from 'http';
 import { Server } from 'socket.io';
 import { searchYoutube } from './utils/youtube';
 import { Room } from './room';
 import {
+  redis,
   getRedisCountDay,
   getRedisCountDayDistinct,
   redisCount,
@@ -23,11 +23,10 @@ import {
 } from './utils/stripe';
 import { deleteUser, validateUserToken } from './utils/firebase';
 import path from 'path';
-import { Client } from 'pg';
 import { getStartOfDay } from './utils/time';
 import { getBgVMManagers, getSessionLimitSeconds } from './vm/utils';
 import { hashString } from './utils/string';
-import { insertObject, upsertObject } from './utils/postgres';
+import { postgres, insertObject, upsertObject } from './utils/postgres';
 import axios from 'axios';
 import crypto from 'crypto';
 import zlib from 'zlib';
@@ -52,7 +51,7 @@ if (process.env.NODE_ENV === 'development') {
 const gzip = util.promisify(zlib.gzip);
 
 const releaseInterval = 5 * 60 * 1000;
-const releaseBatches = 10;
+const releaseBatches = config.NODE_ENV === 'development' ? 1 : 10;
 const app = express();
 let server: any = null;
 if (config.SSL_KEY_FILE && config.SSL_CRT_FILE) {
@@ -63,18 +62,6 @@ if (config.SSL_KEY_FILE && config.SSL_CRT_FILE) {
   server = new http.Server(app);
 }
 const io = new Server(server, { cors: {}, transports: ['websocket'] });
-let redis: Redis | undefined = undefined;
-if (config.REDIS_URL) {
-  redis = new Redis(config.REDIS_URL);
-}
-let postgres: Client | undefined = undefined;
-if (config.DATABASE_URL) {
-  postgres = new Client({
-    connectionString: config.DATABASE_URL,
-    ssl: { rejectUnauthorized: false },
-  });
-  postgres.connect();
-}
 
 const launchTime = Number(new Date());
 const rooms = new Map<string, Room>();
@@ -148,7 +135,7 @@ app.post('/subtitle', async (req, res) => {
     .update(data, 'utf8')
     .digest()
     .toString('hex');
-  let gzipData = (await gzip(data)) as Buffer;
+  let gzipData = await gzip(data);
   await redis.setex('subtitle:' + hash, 24 * 60 * 60, gzipData);
   redisCount('subUploads');
   return res.json({ hash });
@@ -327,9 +314,9 @@ app.delete('/deleteAccount', async (req, res) => {
   }
   if (postgres) {
     // Delete rooms
-    await postgres?.query('DELETE FROM room WHERE owner = $1', [decoded.uid]);
+    await postgres.query('DELETE FROM room WHERE owner = $1', [decoded.uid]);
     // Delete linked accounts
-    await postgres?.query('DELETE FROM link_account WHERE uid = $1', [
+    await postgres.query('DELETE FROM link_account WHERE uid = $1', [
       decoded.uid,
     ]);
   }
@@ -436,12 +423,12 @@ app.get('/linkAccount', async (req, res) => {
   }
   // Get the linked accounts for the user
   let linkAccounts: LinkAccount[] = [];
-  if (decoded?.uid) {
-    const result = await postgres?.query(
+  if (decoded?.uid && postgres) {
+    const { rows } = await postgres.query(
       'SELECT kind, accountid, accountname, discriminator FROM link_account WHERE uid = $1',
       [decoded?.uid]
     );
-    linkAccounts = result.rows;
+    linkAccounts = rows;
   }
   return res.json(linkAccounts);
 });
@@ -638,12 +625,11 @@ async function minuteMetrics() {
   for (let i = 0; i < roomArr.length; i++) {
     const room = roomArr[i];
     if (room.vBrowser && room.vBrowser.id) {
-      // Renew the locks
-      await redis?.expire(
-        'lock:' + room.vBrowser.provider + ':' + room.vBrowser.id,
-        300
+      // Update the heartbeat
+      await postgres?.query(
+        `UPDATE vbrowser SET "heartbeatTime" = $1 WHERE "roomId" = $2 and vmid = $3`,
+        [new Date(), room.roomId, room.vBrowser.id]
       );
-      await redis?.expire('vBrowserUIDLock:' + room.vBrowser?.creatorUID, 70);
 
       const expireTime = getStartOfDay() / 1000 + 86400;
       if (room.vBrowser?.creatorClientID) {
@@ -804,7 +790,10 @@ async function getStats() {
   const currentMemUsage = [process.memoryUsage().rss];
 
   // Singleton stats below (same for all shards so don't combine)
-  let vBrowserWaiting = Number(await redis?.get('currentVBrowserWaiting'));
+  let vBrowserWaiting = Number(
+    (await postgres?.query('SELECT count(1) FROM vbrowser_queue'))?.rows[0]
+      ?.count
+  );
   const cpuUsage = os.loadavg();
   const redisUsage = Number(
     (await redis?.info())

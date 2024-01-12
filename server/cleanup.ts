@@ -1,11 +1,4 @@
-import { Client } from 'pg';
-import config from './config';
-
-const postgres = new Client({
-  connectionString: config.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
-});
-postgres.connect();
+import { postgres } from './utils/postgres';
 
 cleanupPostgres();
 setInterval(cleanupPostgres, 5 * 60 * 1000);
