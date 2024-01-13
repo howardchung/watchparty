@@ -25,6 +25,7 @@ if (!postgres) {
     region: 'US',
     limitSize: 0,
     minSize: 0,
+    hostname: config.DOCKER_VM_HOST,
   });
 }
 

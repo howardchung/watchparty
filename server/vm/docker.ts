@@ -13,9 +13,8 @@ export class Docker extends VMManager {
   minRetries = 0;
   reuseVMs = false;
   id = 'Docker';
-  // TODO allow passing the hostname in the constructor so we can have multiple docker providers
+  // It's possible to have multiple Docker providers in the pool config
   // Use region to distinguish them, e.g. US1, US2
-  gatewayHost = config.DOCKER_VM_HOST;
   ssh: NodeSSH | undefined = undefined;
 
   getSSH = async () => {
@@ -24,7 +23,7 @@ export class Docker extends VMManager {
     }
     const sshConfig = {
       username: config.DOCKER_VM_HOST_SSH_USER,
-      host: this.gatewayHost,
+      host: this.hostname,
       // The private key the Docker host is configured to accept
       privateKey: config.DOCKER_VM_HOST_SSH_KEY_BASE64
         ? Buffer.from(config.DOCKER_VM_HOST_SSH_KEY_BASE64, 'base64').toString()
@@ -40,7 +39,7 @@ export class Docker extends VMManager {
     const conn = await this.getSSH();
     const sslEnv =
       config.SSL_KEY_FILE && config.SSL_CRT_FILE
-        ? `-e NEKO_KEY="/etc/letsencrypt/live/${this.gatewayHost}/privkey.pem" -e NEKO_CERT="/etc/letsencrypt/live/${this.gatewayHost}/fullchain.pem`
+        ? `-e NEKO_KEY="/etc/letsencrypt/live/${this.hostname}/privkey.pem" -e NEKO_CERT="/etc/letsencrypt/live/${this.hostname}/fullchain.pem`
         : '';
     const { stdout, stderr } = await conn.execCommand(
       `
@@ -114,7 +113,7 @@ export class Docker extends VMManager {
   mapServerObject = (server: any): VM => ({
     id: server.Id,
     pass: server.Name?.slice(1),
-    host: `${this.gatewayHost}:${5000 + Number(server.Config?.Labels?.index)}`,
+    host: `${this.hostname}:${5000 + Number(server.Config?.Labels?.index)}`,
     private_ip: '',
     state: server.State?.Status,
     tags: server.Config?.Labels,
