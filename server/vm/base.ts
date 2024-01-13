@@ -128,10 +128,10 @@ export abstract class VMManager {
       return undefined;
     }
     if (this.getMinSize() === 0) {
-      // Spawns a VM if none is available in the pool
+      // If the min size is 0 we may never create a VM
+      // So start one if we don't already have one
       const availableCount = await this.getAvailableCount();
-      const stagingCount = await this.getStagingCount();
-      if (!availableCount && !stagingCount) {
+      if (!availableCount) {
         await this.startVMWrapper();
       }
     }
