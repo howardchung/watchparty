@@ -13,6 +13,7 @@ export class Scaleway extends VMManager {
   size = 'DEV1-S'; // DEV1-S, DEV1-M, DEV1-L, GP1-XS
   largeSize = 'DEV1-M';
   minRetries = 20;
+  reuseVMs = true;
   id = 'Scaleway';
   startVM = async (name: string) => {
     const response = await axios({

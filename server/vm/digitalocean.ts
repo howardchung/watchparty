@@ -13,6 +13,7 @@ export class DigitalOcean extends VMManager {
   size = 's-2vcpu-2gb'; // s-1vcpu-1gb, s-1vcpu-2gb, s-2vcpu-2gb, s-4vcpu-8gb, c-2
   largeSize = 's-2vcpu-2gb';
   minRetries = 20;
+  reuseVMs = true;
   id = 'DO';
   startVM = async (name: string) => {
     const response = await axios({

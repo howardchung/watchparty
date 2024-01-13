@@ -20,6 +20,7 @@ export class Docker extends VMManager {
   size = '';
   largeSize = '';
   minRetries = 0;
+  reuseVMs = false;
   id = 'Docker';
   startVM = async (name: string) => {
     return new Promise<string>(async (resolve, reject) => {
