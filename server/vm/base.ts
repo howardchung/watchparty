@@ -17,12 +17,14 @@ export abstract class VMManager {
   protected region: PoolRegion = 'US';
   private limitSize = 0;
   private minSize = 0;
+  protected hostname: string | undefined;
 
-  constructor({ isLarge, region, limitSize, minSize }: PoolConfig) {
+  constructor({ isLarge, region, limitSize, minSize, hostname }: PoolConfig) {
     this.isLarge = isLarge;
     this.region = region;
-    this.limitSize = Number(limitSize);
-    this.minSize = Number(minSize);
+    this.limitSize = Number(limitSize) || 0;
+    this.minSize = Number(minSize) || 0;
+    this.hostname = hostname;
   }
 
   public getIsLarge = () => {

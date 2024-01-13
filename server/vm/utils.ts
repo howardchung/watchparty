@@ -13,8 +13,9 @@ export type PoolConfig = {
   provider: string;
   isLarge: boolean;
   region: PoolRegion;
-  limitSize: number;
-  minSize: number;
+  limitSize: number | undefined;
+  minSize: number | undefined;
+  hostname: string | undefined;
 };
 
 function createVMManager(poolConfig: PoolConfig): VMManager | null {
@@ -56,6 +57,7 @@ export function getVMManagerConfig(): PoolConfig[] {
       region: split[2] as PoolRegion,
       minSize: Number(split[3]),
       limitSize: Number(split[4]),
+      hostname: split[5],
     };
   });
 }
