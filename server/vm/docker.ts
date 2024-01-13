@@ -1,8 +1,10 @@
-// This assumes an installation of Docker exists at the Docker VM host
+// This assumes an installation of Docker exists at DOCKER_VM_HOST
 // and that host is configured to accept our SSH key
 import config from '../config';
 import { VMManager, VM } from './base';
 import { imageName } from './utils';
+import fs from 'fs';
+import { homedir } from 'os';
 //@ts-ignore
 import sshExec from 'ssh-exec';
 
@@ -10,10 +12,11 @@ const gatewayHost = config.DOCKER_VM_HOST;
 const sshConfig = {
   user: config.DOCKER_VM_HOST_SSH_USER || 'root',
   host: gatewayHost,
-  // Defaults to ~/.ssh/id_rsa
+  // The private key the Docker host is configured to accept
   key: config.DOCKER_VM_HOST_SSH_KEY_BASE64
     ? Buffer.from(config.DOCKER_VM_HOST_SSH_KEY_BASE64, 'base64')
-    : undefined,
+    : // Defaults to ~/.ssh/id_rsa on the local server
+      fs.readFileSync(homedir() + '/.ssh/id_rsa'),
 };
 
 export class Docker extends VMManager {

@@ -24,12 +24,13 @@ An website for watching videos together.
 
 - Clone this repo via `git clone git@github.com:howardchung/watchparty.git`
 - Install npm dependencies for the project via `npm install`
-- Start the server via `PORT=8080 npm run dev`
+- Start the server via `npm run dev`
   - Defaults to port 8080, customize with `PORT` env var
   - Set `SSL_KEY_FILE` and `SSL_CRT_FILE` for HTTPS.
-- Start the React application in a separate shell and port via `PORT=3000 npm run react`
+- Start the React application in a separate shell and port via `npm run react`
   - Point to server using `VITE_SERVER_HOST` env var if you customized it above
-  - If the above SSL vars are set, HTTPS will be used. This is required by the browser for some WebRTC features (camera, etc.)
+  - Set `SSL_KEY_FILE` and `SSL_CRT_FILE` for HTTPS.
+  - HTTPS is required by the browser for some WebRTC features (camera, etc.)
 - Duplicate the `.env.example` file
 - Rename it to `.env`
 - Add config for the features you want as described in the advanced setup
@@ -60,12 +61,11 @@ For server verification of accounts you'll also need `FIREBASE_ADMIN_SDK_CONFIG`
 
 ### Virtual Browser Setup
 
-This project supports creating virtual browsers (using https://github.com/m1k1o/neko) either on a cloud provider, or by spawning Docker containers on the development server. For local development, the Docker on local approach is preferred.
+This project supports creating virtual browsers (using https://github.com/m1k1o/neko) either on a cloud provider, or by spawning Docker containers on the local server. For development, Docker is preferred.
 
 - Install Docker: `curl -fsSL https://get.docker.com | sh`
 - Make sure you have an SSH key pair set up on the server (`id_rsa` in `~/.ssh` directory)
 - Add `DOCKER_VM_HOST=localhost` to your .env file (can substitute localhost for a public hostname)
-- Add `NODE_ENV=development` to .env to enable create-on-demand behavior for VMs
 - Configure Postgres by adding `DATABASE_URL` to your .env file (Postgres is required for virtual browser management)
 
 ### Room Persistence
@@ -79,4 +79,5 @@ This project supports creating virtual browsers (using https://github.com/m1k1o/
 - TypeScript
 - Node.js
 - Redis
+- PostgreSQL
 - Docker
