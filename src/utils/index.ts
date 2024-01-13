@@ -1,7 +1,7 @@
 //@ts-ignore
 import canAutoplay from 'can-autoplay';
 import { v4 as uuidv4 } from 'uuid';
-import md5 from 'blueimp-md5';
+import { MD5 } from './md5';
 import firebase from 'firebase/compat/app';
 import { XMLParser } from 'fast-xml-parser';
 import config from '../config';
@@ -365,7 +365,7 @@ export async function getUserImage(
   user: firebase.User
 ): Promise<string | null> {
   // Check if user has a Gravatar
-  const hash = user.email ? md5(user.email) : '';
+  const hash = user.email ? MD5.hash(user.email) : '';
   if (user.email) {
     const gravatar = `https://www.gravatar.com/avatar/${hash}?d=404&s=256`;
     const response = await window.fetch(gravatar);
