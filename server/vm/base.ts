@@ -124,117 +124,82 @@ export abstract class VMManager {
     if (!roomId || !uid) {
       return undefined;
     }
-    let postgres2 = newPostgres();
-    await postgres2.query('BEGIN TRANSACTION');
-    try {
-      const assignStart = Number(new Date());
-      if (this.getMinSize() === 0) {
-        // Spawns a VM if none is available in the pool
-        const availableCount = await this.getAvailableCount();
-        if (!availableCount) {
-          await this.startVMWrapper();
-        }
+    if (this.getMinSize() === 0) {
+      // Spawns a VM if none is available in the pool
+      const availableCount = await this.getAvailableCount();
+      const stagingCount = await this.getStagingCount();
+      if (!availableCount && !stagingCount) {
+        await this.startVMWrapper();
       }
-      // Update and use SKIP LOCKED to ensure each consumer only gets one
-      const getAssignedVM = async (): Promise<VM | undefined> => {
-        const { rows } = await postgres2.query(
-          `
-        UPDATE vbrowser 
-        SET "roomId" = $1, uid = $2, "heartbeatTime" = $3, "assignTime" = $4, state = 'used'
-        WHERE id = (
-          SELECT id
-          FROM vbrowser
-          WHERE state = 'available'
-          AND pool = $5
-          ORDER BY id ASC
-          FOR UPDATE SKIP LOCKED
-          LIMIT 1
-        )
-        RETURNING data`,
-          [roomId, uid, new Date(), new Date(), this.getPoolName()]
-        );
-        return rows[0]?.data;
-      };
-      let selected: VM | undefined = undefined;
-      while (!selected) {
-        // make sure this room still wants a VM, otherwise rollback the transaction to avoid waste
-        const inQueue = await postgres2.query(
-          'SELECT "roomId" FROM vbrowser_queue WHERE "roomId" = $1 LIMIT 1',
-          [roomId]
-        );
-        if (!Boolean(inQueue.rows.length)) {
-          await postgres2.query('ROLLBACK');
-          await postgres2.end();
-          console.log('[ASSIGN] room %s no longer in queue', roomId);
-          return undefined;
-        }
-        selected = await getAssignedVM();
-        if (!selected) {
-          // Wait and try again
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-        }
-      }
-      const assignEnd = Number(new Date());
-      const assignElapsed = assignEnd - assignStart;
-      await redis?.lpush('vBrowserStartMS', assignElapsed);
-      await redis?.ltrim('vBrowserStartMS', 0, 24);
-      console.log(
-        '[ASSIGN] %s to %s in %s',
-        selected.id,
-        roomId,
-        assignElapsed + 'ms'
-      );
-      const retVal = { ...selected, assignTime: Number(new Date()) };
-      await postgres2.query('COMMIT');
-      await postgres2.end();
-      return retVal;
-    } catch (e) {
-      console.warn(e);
-      await postgres2.query('ROLLBACK');
-      await postgres2.end();
-      return undefined;
     }
+    // Update and use SKIP LOCKED to ensure each consumer gets a different one
+    const getAssignedVM = async (): Promise<VM | undefined> => {
+      const { rows } = await postgres.query(
+        `
+      UPDATE vbrowser 
+      SET "roomId" = $1, uid = $2, "heartbeatTime" = $3, "assignTime" = $4, state = 'used'
+      WHERE id = (
+        SELECT id
+        FROM vbrowser
+        WHERE state = 'available'
+        AND pool = $5
+        ORDER BY id ASC
+        FOR UPDATE SKIP LOCKED
+        LIMIT 1
+      )
+      RETURNING data`,
+        [roomId, uid, new Date(), new Date(), this.getPoolName()]
+      );
+      return rows[0]?.data;
+    };
+    let selected: VM | undefined = await getAssignedVM();
+    if (!selected) {
+      return;
+    }
+    return { ...selected, assignTime: Number(new Date()) };
   };
 
   public resetVM = async (vmid: string, uid?: string): Promise<void> => {
     if (uid !== undefined) {
       // verify the uid matches if user initiated
-      const vmUid = await postgres.query(
+      const { rows } = await postgres.query(
         `SELECT uid FROM vbrowser WHERE pool = $1 AND vmid = $2`,
         [this.getPoolName(), vmid]
       );
-      if (vmUid.rows[0]?.uid && vmUid.rows[0]?.uid !== uid) {
+      if (rows[0]?.uid && rows[0]?.uid !== uid) {
         console.log(
           '[RESET] uid mismatch on %s, expected %s, got %s',
           vmid,
-          vmUid.rows[0]?.uid,
+          rows[0]?.uid,
           uid
         );
         return;
       }
     }
-    // We can attempt to reuse the instance which is more efficient if users tend to use them for a short time
-    // Otherwise terminating them is simpler but more expensive since they're billed for an hour
     console.log('[RESET]', vmid);
     await this.rebootVM(vmid);
     // we could crash here and then record will remain in used state
     // need to periocally reset stale VMs
-    const { rowCount } = await postgres.query(
-      `
-      UPDATE vbrowser
-      SET "roomId" = NULL, uid = NULL, retries = 0, "heartbeatTime" = NULL, "resetTime" = $3, "readyTime" = NULL, "assignTime" = NULL, data = NULL, state = 'staging'
-      WHERE pool = $1 AND vmid = $2`,
-      [this.getPoolName(), vmid, new Date()]
-    );
-    console.log('UPDATE', rowCount);
-    if (rowCount === 0) {
-      // terminate if we don't have a record of it
-      // This could happen while we're migrating and don't have records yet
-      // Or if resetting a VM from cleanup that we didn't record in db
-      // Or if Docker terminated the VM in reboot already since we don't reuse containers
-      // Of if we resized down but didn't complete the termination
-      // In the Docker case that leads to a double terminate but might be ok
-      this.terminateVMWrapper(vmid);
+
+    // We generally want to reuse if the provider has per-hour billing
+    // Since most user sessions are less than an hour
+    // Otherwise if it's per-second or Docker, it's easier to just terminate it on reboot
+    if (this.reuseVMs) {
+      const result = await postgres.query(
+        `
+        INSERT INTO vbrowser(pool, vmid, "creationTime", state)
+        VALUES($1, $2, $3, 'staging')
+        ON CONFLICT(pool, vmid) DO
+        UPDATE SET "resetTime" = $4, state = 'staging',
+        "roomId" = NULL, uid = NULL, retries = 0, "heartbeatTime" = NULL, "readyTime" = NULL, "assignTime" = NULL, data = NULL
+        `,
+        [this.getPoolName(), vmid, new Date(), new Date()]
+      );
+      console.log('UPSERT', result.rowCount);
+      // Normally this should be an update, but we could insert if:
+      // if cleaning up a VM we didn't record in db on create
+      // if we resized down and deleted db row but didn't complete the termination
+      // this.terminateVMWrapper(vmid);
     }
   };
 
@@ -539,6 +504,7 @@ export abstract class VMManager {
   protected abstract size: string;
   protected abstract largeSize: string;
   protected abstract minRetries: number;
+  protected abstract reuseVMs: boolean;
   protected abstract startVM: (name: string) => Promise<string>;
   protected abstract rebootVM: (id: string) => Promise<void>;
   protected abstract terminateVM: (id: string) => Promise<void>;

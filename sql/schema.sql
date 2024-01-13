@@ -59,12 +59,7 @@ CREATE TABLE vbrowser(
   data json, -- metadata for the VM
   retries int DEFAULT 0 -- how many tries we checked if VM is up
 );
-CREATE UNIQUE INDEX on vbrowser(pool, id);
+CREATE UNIQUE INDEX on vbrowser(pool, vmid);
 CREATE INDEX on vbrowser(pool, state);
 CREATE INDEX on vbrowser("roomId");
 CREATE INDEX on vbrowser(uid);
-
-CREATE TABLE vbrowser_queue(
-  "roomId" text NOT NULL PRIMARY KEY,
-  "queueTime" timestamp with time zone NOT NULL
-);

@@ -44,6 +44,18 @@ export class Room {
   public isChatDisabled: boolean | undefined = undefined;
   public lastUpdateTime: Date = new Date();
   private preventTSUpdate = false;
+  // Not really a queue since there's no ordering, we just retry as long as this is set
+  // If we want a real queue then we need external processing of the jobs and a way to update the room from outside
+  public vBrowserQueue:
+    | {
+        roomId: string;
+        queueTime: Date;
+        isLarge: boolean;
+        region: string;
+        uid: string;
+        clientId: string;
+      }
+    | undefined = undefined;
 
   constructor(
     io: Server,
@@ -57,7 +69,7 @@ export class Room {
       this.deserialize(roomData);
     }
 
-    this.tsInterval = setInterval(() => {
+    this.tsInterval = setInterval(async () => {
       // console.log(roomId, this.video, this.roster, this.tsMap, this.nameMap);
       // Clean up the data of users who aren't in the room anymore
       const memberIds = this.roster.map((p) => p.id);
@@ -366,9 +378,7 @@ export class Room {
       this.playlistNext(null);
     }
     // The room video is changing so remove room from vbrowser queue
-    postgres?.query('DELETE FROM vbrowser_queue WHERE "roomId" = $1', [
-      this.roomId,
-    ]);
+    this.vBrowserQueue = undefined;
   };
 
   public addChatMessage = (socket: Socket | null, chatMsg: ChatMessageBase) => {
@@ -921,46 +931,50 @@ export class Room {
     redisCount('vBrowserStarts');
     this.cmdHost(socket, 'vbrowser://');
     // Put the room in the vbrowser queue
-    await postgres?.query('INSERT INTO vbrowser_queue VALUES ($1, $2)', [
-      this.roomId,
-      new Date(),
-    ]);
-    const assignmentResp = await axios.post(
-      'http://localhost:' + config.VMWORKER_PORT + '/assignVM',
-      {
-        isLarge,
-        region,
-        uid,
-        roomId: this.roomId,
-      }
-    );
-    const assignment: AssignedVM = assignmentResp.data;
-    const inQueue = await postgres?.query(
-      'SELECT "roomId" FROM vbrowser_queue WHERE "roomId" = $1 LIMIT 1',
-      [this.roomId]
-    );
-    if (!Boolean(inQueue?.rows.length)) {
-      // This room is no longer waiting for VM (maybe user gave up)
-      return;
-    }
-    if (!assignment) {
-      this.cmdHost(socket, '');
-      this.vBrowser = undefined;
-      socket.emit(
-        'errorMessage',
-        'Failed to assign VBrowser. Please try again later.'
+    this.vBrowserQueue = {
+      roomId: this.roomId,
+      queueTime: new Date(),
+      isLarge,
+      region,
+      uid,
+      clientId,
+    };
+    // Check if a vbrowser is available
+    while (this.vBrowserQueue) {
+      const { queueTime, isLarge, region, uid, roomId, clientId } =
+        this.vBrowserQueue;
+      const assignmentResp = await axios.post<AssignedVM>(
+        'http://localhost:' + config.VMWORKER_PORT + '/assignVM',
+        {
+          isLarge,
+          region,
+          uid,
+          roomId,
+        }
       );
-      redisCount('vBrowserFails');
-      return;
+      const assignment = assignmentResp.data;
+      if (assignment) {
+        this.vBrowser = assignment;
+        this.vBrowser.controllerClient = clientId;
+        this.vBrowser.creatorUID = uid;
+        this.vBrowser.creatorClientID = clientId;
+        const assignEnd = Number(new Date());
+        const assignElapsed = assignEnd - Number(queueTime);
+        await redis?.lpush('vBrowserStartMS', assignElapsed);
+        await redis?.ltrim('vBrowserStartMS', 0, 24);
+        console.log(
+          '[ASSIGN] %s to %s in %s',
+          assignment.provider + ':' + assignment.id,
+          roomId,
+          assignElapsed + 'ms'
+        );
+        this.cmdHost(
+          null,
+          'vbrowser://' + this.vBrowser.pass + '@' + this.vBrowser.host
+        );
+      }
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     }
-    this.vBrowser = assignment;
-    this.vBrowser.controllerClient = clientId;
-    this.vBrowser.creatorUID = uid;
-    this.vBrowser.creatorClientID = clientId;
-    this.cmdHost(
-      null,
-      'vbrowser://' + this.vBrowser.pass + '@' + this.vBrowser.host
-    );
   };
 
   private stopVBrowser = async (socket: Socket) => {

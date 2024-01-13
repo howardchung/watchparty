@@ -697,6 +697,7 @@ async function getStats() {
   let currentHttp = 0;
   let currentVBrowser = 0;
   let currentVBrowserLarge = 0;
+  let currentVBrowserWaiting = 0;
   let currentScreenShare = 0;
   let currentFileShare = 0;
   let currentVideoChat = 0;
@@ -709,6 +710,7 @@ async function getStats() {
       rosterLength: room.roster.length,
       videoChats: room.roster.filter((p) => p.isVideoChat).length,
       vBrowser: room.vBrowser,
+      vBrowserQueue: room.vBrowserQueue,
     };
     currentUsers += obj.rosterLength;
     currentVideoChat += obj.videoChats;
@@ -717,6 +719,9 @@ async function getStats() {
     }
     if (obj.vBrowser && obj.vBrowser.large) {
       currentVBrowserLarge += 1;
+    }
+    if (obj.vBrowserQueue) {
+      currentVBrowserWaiting += 1;
     }
     if (obj.video?.startsWith('http') && obj.rosterLength) {
       currentHttp += 1;
@@ -790,10 +795,6 @@ async function getStats() {
   const currentMemUsage = [process.memoryUsage().rss];
 
   // Singleton stats below (same for all shards so don't combine)
-  let vBrowserWaiting = Number(
-    (await postgres?.query('SELECT count(1) FROM vbrowser_queue'))?.rows[0]
-      ?.count
-  );
   const cpuUsage = os.loadavg();
   const redisUsage = Number(
     (await redis?.info())
@@ -910,6 +911,7 @@ async function getStats() {
     currentUsers,
     currentVBrowser,
     currentVBrowserLarge,
+    currentVBrowserWaiting,
     currentHttp,
     currentScreenShare,
     currentFileShare,
@@ -920,7 +922,6 @@ async function getStats() {
     cpuUsage,
     redisUsage,
     postgresUsage,
-    vBrowserWaiting,
     numPermaRooms,
     numSubs,
     discordBotWatch,
