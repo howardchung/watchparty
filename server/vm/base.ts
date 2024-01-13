@@ -140,18 +140,18 @@ export abstract class VMManager {
       const { rows } = await postgres.query(
         `
       UPDATE vbrowser 
-      SET "roomId" = $1, uid = $2, "heartbeatTime" = $3, "assignTime" = $4, state = 'used'
+      SET "roomId" = $1, uid = $2, "heartbeatTime" = $3, state = 'used'
       WHERE id = (
         SELECT id
         FROM vbrowser
         WHERE state = 'available'
-        AND pool = $5
+        AND pool = $4
         ORDER BY id ASC
         FOR UPDATE SKIP LOCKED
         LIMIT 1
       )
       RETURNING data`,
-        [roomId, uid, new Date(), new Date(), this.getPoolName()]
+        [roomId, uid, new Date(), this.getPoolName()]
       );
       return rows[0]?.data;
     };
@@ -193,10 +193,10 @@ export abstract class VMManager {
         INSERT INTO vbrowser(pool, vmid, "creationTime", state)
         VALUES($1, $2, $3, 'staging')
         ON CONFLICT(pool, vmid) DO
-        UPDATE SET "resetTime" = $4, state = 'staging',
-        "roomId" = NULL, uid = NULL, retries = 0, "heartbeatTime" = NULL, "readyTime" = NULL, "assignTime" = NULL, data = NULL
+        UPDATE SET state = 'staging',
+        "roomId" = NULL, uid = NULL, retries = 0, "heartbeatTime" = NULL, data = NULL
         `,
-        [this.getPoolName(), vmid, new Date(), new Date()]
+        [this.getPoolName(), vmid, new Date()]
       );
       console.log('UPSERT', result.rowCount);
       // Normally this should be an update, but we could insert if:
@@ -443,7 +443,7 @@ export abstract class VMManager {
           }
           if (ready) {
             await postgres.query(
-              `UPDATE vbrowser SET state = 'available', "readyTime" = $2 WHERE id = $1`,
+              `UPDATE vbrowser SET state = 'available' WHERE id = $1`,
               [rowid, new Date()]
             );
             await redis?.lpush('vBrowserStageRetries', retryCount);

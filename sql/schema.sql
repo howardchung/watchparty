@@ -51,9 +51,6 @@ CREATE TABLE vbrowser(
   state text NOT NULL, -- available, staging, used
   "creationTime" timestamp with time zone NOT NULL, -- time the VM was created
   "heartbeatTime" timestamp with time zone, -- last time a room reported this VM was in use
-  "resetTime" timestamp with time zone, -- last time the VM was reset
-  "readyTime" timestamp with time zone, -- last time the VM became ready
-  "assignTime" timestamp with time zone, -- last time the VM was assigned
   "roomId" text, -- room VM assigned to
   uid text, -- user requesting the VM
   data json, -- metadata for the VM
