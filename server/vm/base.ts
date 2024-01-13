@@ -178,8 +178,8 @@ export abstract class VMManager {
     }
     console.log('[RESET]', vmid);
     await this.rebootVM(vmid);
-    // we could crash here and then record will remain in used state
-    // need to periocally reset stale VMs
+    // we could crash here and then row will remain in used state
+    // Once the heartbeat becomes stale cleanup will reset it
 
     // We generally want to reuse if the provider has per-hour billing
     // Since most user sessions are less than an hour
@@ -309,11 +309,10 @@ export abstract class VMManager {
     };
 
     const cleanupVMGroup = async () => {
-      // Clean up hanging VMs
+      // Reset hanging VMs
       // It's possible we created a VM but lost track of it
       // Take the list of VMs from API
       // subtract VMs that have a heartbeat or available or staging
-      // delete the rest
       let allVMs = [];
       try {
         allVMs = await this.listVMs(this.getTag());
@@ -332,16 +331,17 @@ export abstract class VMManager {
         `,
         [this.getPoolName()]
       );
-      const dontDelete = new Set(rows.map((row: any) => row.vmid));
+      const inUse = new Set(rows.map((row: any) => row.vmid));
       console.log(
         '[CLEANUP] %s: found %s VMs, %s to keep',
         this.getPoolName(),
         allVMs.length,
-        dontDelete.size
+        inUse.size
       );
       for (let i = 0; i < allVMs.length; i++) {
         const server = allVMs[i];
-        if (!dontDelete.has(server.id)) {
+        if (!inUse.has(server.id)) {
+          // TODO log how many cleanups we do
           console.log('[CLEANUP]', server.id);
           try {
             await this.resetVM(server.id);
@@ -461,8 +461,6 @@ export abstract class VMManager {
       '[VMWORKER] starting background jobs for %s',
       this.getPoolName()
     );
-
-    // TODO (howard) reset stale heartbeat VMs
 
     setInterval(resizeVMGroupIncr, incrInterval);
     setInterval(resizeVMGroupDecr, decrInterval);
