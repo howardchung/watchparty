@@ -1,4 +1,4 @@
-// This assumes an installation of Docker exists at DOCKER_VM_HOST
+// This assumes an installation of Docker exists on the given host
 // and that host is configured to accept our SSH key
 import config from '../config';
 import { VMManager, VM } from './base';
@@ -7,40 +7,41 @@ import fs from 'fs';
 import { homedir } from 'os';
 import { NodeSSH } from 'node-ssh';
 
-const gatewayHost = config.DOCKER_VM_HOST;
-let ssh: NodeSSH | undefined = undefined;
-
-async function getSSH() {
-  if (ssh && ssh.isConnected()) {
-    return ssh;
-  }
-  if (!gatewayHost) {
-    throw new Error('DOCKER_VM_HOST not defined');
-  }
-  const sshConfig = {
-    username: config.DOCKER_VM_HOST_SSH_USER || 'root',
-    host: gatewayHost,
-    // The private key the Docker host is configured to accept
-    privateKey: config.DOCKER_VM_HOST_SSH_KEY_BASE64
-      ? Buffer.from(config.DOCKER_VM_HOST_SSH_KEY_BASE64, 'base64').toString()
-      : // Defaults to ~/.ssh/id_rsa on the local server
-        fs.readFileSync(homedir() + '/.ssh/id_rsa').toString(),
-  };
-  ssh = new NodeSSH();
-  await ssh.connect(sshConfig);
-  return ssh;
-}
-
 export class Docker extends VMManager {
   size = '';
   largeSize = '';
   minRetries = 0;
   reuseVMs = false;
   id = 'Docker';
+  // TODO allow passing the hostname in the constructor so we can have multiple docker providers
+  // Use region to distinguish them, e.g. US1, US2
+  gatewayHost = config.DOCKER_VM_HOST;
+  ssh: NodeSSH | undefined = undefined;
+
+  getSSH = async () => {
+    if (this.ssh && this.ssh.isConnected()) {
+      return this.ssh;
+    }
+    const sshConfig = {
+      username: config.DOCKER_VM_HOST_SSH_USER,
+      host: this.gatewayHost,
+      // The private key the Docker host is configured to accept
+      privateKey: config.DOCKER_VM_HOST_SSH_KEY_BASE64
+        ? Buffer.from(config.DOCKER_VM_HOST_SSH_KEY_BASE64, 'base64').toString()
+        : fs.readFileSync(homedir() + '/.ssh/id_rsa').toString(),
+    };
+    this.ssh = new NodeSSH();
+    await this.ssh.connect(sshConfig);
+    return this.ssh;
+  };
 
   startVM = async (name: string) => {
     const tag = this.getTag();
-    const conn = await getSSH();
+    const conn = await this.getSSH();
+    const sslEnv =
+      config.SSL_KEY_FILE && config.SSL_CRT_FILE
+        ? `-e NEKO_KEY="/etc/letsencrypt/live/${this.gatewayHost}/privkey.pem" -e NEKO_CERT="/etc/letsencrypt/live/${this.gatewayHost}/fullchain.pem`
+        : '';
     const { stdout, stderr } = await conn.execCommand(
       `
       #!/bin/bash
@@ -49,7 +50,7 @@ export class Docker extends VMManager {
       INDEX=$(($PORT - 5000))
       UDP_START=$((59000+$INDEX*100))
       UDP_END=$((59099+$INDEX*100))
-      docker run -d --rm --name=${name} --memory="2g" --cpus="2" -p $PORT:$PORT -p $UDP_START-$UDP_END:$UDP_START-$UDP_END/udp -v /etc/letsencrypt:/etc/letsencrypt -l ${tag} -l index=$INDEX --log-opt max-size=1g --shm-size=1g --cap-add="SYS_ADMIN" -e NEKO_KEY="/etc/letsencrypt/live/${gatewayHost}/privkey.pem" -e NEKO_CERT="/etc/letsencrypt/live/${gatewayHost}/fullchain.pem" -e DISPLAY=":99.0" -e NEKO_PASSWORD=${name} -e NEKO_PASSWORD_ADMIN=${name} -e NEKO_BIND=":$PORT" -e NEKO_EPR=":$UDP_START-$UDP_END" -e NEKO_H264="1" ${imageName}
+      docker run -d --rm --name=${name} --memory="2g" --cpus="2" -p $PORT:$PORT -p $UDP_START-$UDP_END:$UDP_START-$UDP_END/udp -v /etc/letsencrypt:/etc/letsencrypt -l ${tag} -l index=$INDEX --log-opt max-size=1g --shm-size=1g --cap-add="SYS_ADMIN" ${sslEnv} -e DISPLAY=":99.0" -e NEKO_PASSWORD=${name} -e NEKO_PASSWORD_ADMIN=${name} -e NEKO_BIND=":$PORT" -e NEKO_EPR=":$UDP_START-$UDP_END" -e NEKO_H264="1" ${imageName}
       `
     );
     console.log(stdout, stderr);
@@ -57,7 +58,7 @@ export class Docker extends VMManager {
   };
 
   terminateVM = async (id: string) => {
-    const conn = await getSSH();
+    const conn = await this.getSSH();
     const { stdout, stderr } = await conn.execCommand(`docker rm -fv ${id}`);
     console.log(stdout, stderr);
     return;
@@ -69,7 +70,7 @@ export class Docker extends VMManager {
   };
 
   getVM = async (id: string) => {
-    const conn = await getSSH();
+    const conn = await this.getSSH();
     const { stdout } = await conn.execCommand(`docker inspect ${id}`);
     let data = null;
     try {
@@ -86,7 +87,7 @@ export class Docker extends VMManager {
   };
 
   listVMs = async (filter?: string) => {
-    const conn = await getSSH();
+    const conn = await this.getSSH();
     const listCmd = `docker inspect $(docker ps --filter label=${filter} --quiet --no-trunc)`;
     const { stdout } = await conn.execCommand(listCmd);
     if (!stdout) {
@@ -113,7 +114,7 @@ export class Docker extends VMManager {
   mapServerObject = (server: any): VM => ({
     id: server.Id,
     pass: server.Name?.slice(1),
-    host: `${gatewayHost}:${5000 + Number(server.Config?.Labels?.index)}`,
+    host: `${this.gatewayHost}:${5000 + Number(server.Config?.Labels?.index)}`,
     private_ip: '',
     state: server.State?.Status,
     tags: server.Config?.Labels,

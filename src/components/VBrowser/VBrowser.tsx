@@ -80,7 +80,11 @@ export default class VBrowser extends React.Component<{
       this.$client.on('debug', (e, data) => console.log(e, data));
     }
 
-    const url = 'wss://' + this.props.hostname + '/ws';
+    const url =
+      location.protocol.replace('http', 'ws') +
+      '//' +
+      this.props.hostname +
+      '/ws';
     this.$client.login(url, this.props.password, this.props.username);
 
     // this._container.current?.addEventListener('resize', this.onResize);

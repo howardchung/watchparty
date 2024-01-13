@@ -41,7 +41,7 @@ function createVMManager(poolConfig: PoolConfig): VMManager | null {
     poolConfig.provider === 'DO'
   ) {
     vmManager = new DigitalOcean(poolConfig);
-  } else if (config.DOCKER_VM_HOST && poolConfig.provider === 'Docker') {
+  } else if (poolConfig.provider === 'Docker') {
     vmManager = new Docker(poolConfig);
   }
   return vmManager;
