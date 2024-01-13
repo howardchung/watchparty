@@ -61,12 +61,12 @@ For server verification of accounts you'll also need `FIREBASE_ADMIN_SDK_CONFIG`
 
 ### Virtual Browser Setup
 
-This project supports creating virtual browsers (using https://github.com/m1k1o/neko) either on a cloud provider, or by spawning Docker containers on the local server. For development, Docker is preferred.
+This project supports creating virtual browsers (using https://github.com/m1k1o/neko) either on a cloud provider, or with Docker containers. For development, Docker is easiest. If needed, running the vmWorker service allows using cloud providers and pooling/cleanup (requires Postgres)
 
 - Install Docker: `curl -fsSL https://get.docker.com | sh`
-- Make sure you have an SSH key pair set up on the server (`id_rsa` in `~/.ssh` directory)
-- Add `DOCKER_VM_HOST=localhost` to your .env file (can substitute localhost for a public hostname)
-- Add `ENABLE_STATELESS_VM=1` if you don't want to configure Postgres for full VM management via vmWorker and just create/delete VMs on-demand
+- Make sure you have an SSH key pair set up on the server (`id_rsa` in `~/.ssh` directory), if not, use `ssh-keygen`.
+- Configure `DOCKER_VM_HOST_SSH_USER` if `root` is not the correct user
+- Note: If your client is not running on the same physical machine as the server, you will also need to configure `DOCKER_VM_HOST` to a publically-resolvable value (i.e. not localhost)
 
 ### Room Persistence
 

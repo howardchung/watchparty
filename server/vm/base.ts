@@ -2,16 +2,15 @@ import config from '../config';
 import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import { redis, redisCount } from '../utils/redis';
-import { newPostgres } from '../utils/postgres';
+import { postgres as pg } from '../utils/postgres';
 import { PoolConfig, PoolRegion } from './utils';
 import type { Client } from 'pg';
 const incrInterval = 5 * 1000;
 const decrInterval = 30 * 1000;
 const cleanupInterval = 5 * 60 * 1000;
 
-const postgres = config.ENABLE_STATELESS_VM
-  ? (null as unknown as Client)
-  : newPostgres();
+// If postgres isn't configured we can still run in stateless mode and not use the pool management
+const postgres = !pg ? (null as unknown as Client) : pg;
 
 export abstract class VMManager {
   protected isLarge = false;
