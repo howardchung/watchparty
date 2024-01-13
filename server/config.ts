@@ -29,6 +29,7 @@ const defaults = {
   DOCKER_VM_HOST: '', // Optional, for Docker VMs
   DOCKER_VM_HOST_SSH_USER: '', // Optional, username for Docker host
   DOCKER_VM_HOST_SSH_KEY_BASE64: '', // Optional, private SSH key for Docker host
+  ENABLE_STATELESS_VM: '', // Optional, create and delete Docker VMs without management/Postgres
   RECAPTCHA_SECRET_KEY: '', // Optional, Recaptcha for VBrowser creation
   SSL_KEY_FILE: '', // Optional, Filename of SSL key (to use https)
   SSL_CRT_FILE: '', // Optional, Filename of SSL cert (to use https)

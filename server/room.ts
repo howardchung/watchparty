@@ -14,6 +14,19 @@ import { v4 as uuidv4 } from 'uuid';
 //@ts-ignore
 import twitch from 'twitch-m3u8';
 import { QueryResult } from 'pg';
+import { Docker } from './vm/docker';
+
+// Stateless pool instance to use for VMs if full management isn't needed
+let stateless: Docker | undefined = undefined;
+if (config.ENABLE_STATELESS_VM && config.DOCKER_VM_HOST) {
+  stateless = new Docker({
+    provider: 'Docker',
+    isLarge: false,
+    region: 'US',
+    limitSize: 0,
+    minSize: 0,
+  });
+}
 
 export class Room {
   // Serialized state
@@ -261,7 +274,7 @@ export class Room {
     if (postgres) {
       try {
         const roomString = this.serialize();
-        await postgres?.query(
+        await postgres.query(
           `UPDATE room SET "lastUpdateTime" = $1, data = $2 WHERE "roomId" = $3`,
           [this.lastUpdateTime, roomString, this.roomId]
         );
@@ -341,19 +354,26 @@ export class Room {
       await redis.lpush('vBrowserSessionMS', Number(new Date()) - assignTime);
       await redis.ltrim('vBrowserSessionMS', 0, 24);
     }
-    try {
-      await axios.post(
-        'http://localhost:' + config.VMWORKER_PORT + '/releaseVM',
-        {
-          provider,
-          isLarge,
-          region,
-          id,
-          uid,
+
+    if (id) {
+      try {
+        if (stateless) {
+          await stateless.terminateVM(id);
+        } else {
+          await axios.post(
+            'http://localhost:' + config.VMWORKER_PORT + '/releaseVM',
+            {
+              provider,
+              isLarge,
+              region,
+              id,
+              uid,
+            }
+          );
         }
-      );
-    } catch (e) {
-      console.warn(e);
+      } catch (e) {
+        console.warn(e);
+      }
     }
   };
 
@@ -943,16 +963,29 @@ export class Room {
     while (this.vBrowserQueue) {
       const { queueTime, isLarge, region, uid, roomId, clientId } =
         this.vBrowserQueue;
-      const assignmentResp = await axios.post<AssignedVM>(
-        'http://localhost:' + config.VMWORKER_PORT + '/assignVM',
-        {
-          isLarge,
-          region,
-          uid,
-          roomId,
+      let assignment: AssignedVM | undefined = undefined;
+      try {
+        if (stateless) {
+          const id = await stateless.startVM(uuidv4());
+          assignment = {
+            ...(await stateless.getVM(id)),
+            assignTime: Date.now(),
+          };
+        } else {
+          const { data } = await axios.post<AssignedVM>(
+            'http://localhost:' + config.VMWORKER_PORT + '/assignVM',
+            {
+              isLarge,
+              region,
+              uid,
+              roomId,
+            }
+          );
+          assignment = data;
         }
-      );
-      const assignment = assignmentResp.data;
+      } catch (e) {
+        console.warn(e);
+      }
       if (assignment) {
         this.vBrowser = assignment;
         this.vBrowser.controllerClient = clientId;

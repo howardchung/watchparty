@@ -4,11 +4,14 @@ import { v4 as uuidv4 } from 'uuid';
 import { redis, redisCount } from '../utils/redis';
 import { newPostgres } from '../utils/postgres';
 import { PoolConfig, PoolRegion } from './utils';
+import type { Client } from 'pg';
 const incrInterval = 5 * 1000;
 const decrInterval = 30 * 1000;
 const cleanupInterval = 5 * 60 * 1000;
 
-const postgres = newPostgres();
+const postgres = config.ENABLE_STATELESS_VM
+  ? (null as unknown as Client)
+  : newPostgres();
 
 export abstract class VMManager {
   protected isLarge = false;
@@ -231,11 +234,11 @@ export abstract class VMManager {
     console.log('[TERMINATE]', vmid);
     // Update the DB before calling terminate
     // If we don't actually complete the termination, cleanup will eventually remove it
-    const { rowCount } = await postgres.query(
+    const { rows } = await postgres.query(
       `DELETE FROM vbrowser WHERE pool = $1 AND vmid = $2 RETURNING id`,
       [this.getPoolName(), vmid]
     );
-    console.log('DELETE', rowCount);
+    console.log('DELETE', rows.length);
     // We can log the VM lifetime by returning the creationTime and diffing
     await this.terminateVM(vmid);
   };
