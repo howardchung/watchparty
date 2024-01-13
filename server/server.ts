@@ -340,8 +340,8 @@ app.get('/metadata', async (req, res) => {
         'http://localhost:' + config.VMWORKER_PORT + '/isFreePoolFull'
       )
     ).data.isFull;
-  } catch (e) {
-    console.warn(e);
+  } catch (e: any) {
+    console.warn('[WARNING]: free pool check failed: %s', e.code);
   }
   const beta =
     decoded?.email != null &&
