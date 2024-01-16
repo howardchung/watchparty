@@ -37,9 +37,13 @@ export class Docker extends VMManager {
   startVM = async (name: string) => {
     const tag = this.getTag();
     const conn = await this.getSSH();
+    // If in development, have neko share the same SSL cert as the other services
+    // If in production, they are probably on different hosts and neko is behind a reverse proxy for SSL termination
     const sslEnv =
-      config.SSL_KEY_FILE && config.SSL_CRT_FILE
-        ? `-e NEKO_KEY="/etc/letsencrypt/live/${this.hostname}/privkey.pem" -e NEKO_CERT="/etc/letsencrypt/live/${this.hostname}/fullchain.pem`
+      config.NODE_ENV === 'development' &&
+      config.SSL_KEY_FILE &&
+      config.SSL_CRT_FILE
+        ? `-e NEKO_KEY="${config.SSL_KEY_FILE}" -e NEKO_CERT="${config.SSL_CRT_FILE}"`
         : '';
     const { stdout, stderr } = await conn.execCommand(
       `
@@ -64,8 +68,7 @@ export class Docker extends VMManager {
   };
 
   rebootVM = async (id: string) => {
-    // We don't need to reuse Docker containers
-    return await this.terminateVMWrapper(id);
+    // Docker containers aren't set to reuse, so do nothing (reset will terminate)
   };
 
   getVM = async (id: string) => {

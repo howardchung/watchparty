@@ -61,12 +61,13 @@ For server verification of accounts you'll also need `FIREBASE_ADMIN_SDK_CONFIG`
 
 ### Virtual Browser Setup
 
-This project supports creating virtual browsers (using https://github.com/m1k1o/neko) either on a cloud provider, or with Docker containers. For development, Docker is easiest. If needed, running the vmWorker service allows using cloud providers and pooling/cleanup (requires Postgres)
+This project supports creating virtual browsers (using https://github.com/m1k1o/neko) either on a cloud provider or with Docker containers. For development, Docker is easiest.
 
 - Install Docker: `curl -fsSL https://get.docker.com | sh`
 - Make sure you have an SSH key pair set up on the server (`id_rsa` in `~/.ssh` directory), if not, use `ssh-keygen`.
 - Configure `DOCKER_VM_HOST_SSH_USER` if `root` is not the correct user
-- Note: If your client is not running on the same physical machine as the server, you will also need to configure `DOCKER_VM_HOST` to a publically-resolvable value (i.e. not localhost)
+- Note: If your web client is not running on the same physical machine as the server, you will also need to configure `DOCKER_VM_HOST` to a publically-resolvable value (i.e. not localhost)
+- If you want to run managed instance pools (whether on cloud or with Docker), configure `VM_MANAGER_CONFIG` and run the vmWorker service.
 
 ### Room Persistence
 

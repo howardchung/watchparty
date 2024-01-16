@@ -18,7 +18,7 @@ import { Docker } from './vm/docker';
 
 // Stateless pool instance to use for VMs if full management isn't needed
 let stateless: Docker | undefined = undefined;
-if (!postgres) {
+if (!config.VM_MANAGER_CONFIG) {
   stateless = new Docker({
     provider: 'Docker',
     isLarge: false,
