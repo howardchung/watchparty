@@ -9,7 +9,8 @@ const incrInterval = 5 * 1000;
 const decrInterval = 30 * 1000;
 const cleanupInterval = 5 * 60 * 1000;
 
-// If postgres isn't configured we can still run in stateless mode and not use the pool management
+// If postgres isn't configured we can still run in stateless mode
+// Only start/get/terminate can be used, otherwise exception will be thrown
 const postgres = !pg ? (null as unknown as Client) : pg;
 
 export abstract class VMManager {
@@ -130,9 +131,10 @@ export abstract class VMManager {
     }
     if (this.getMinSize() === 0) {
       // If the min size is 0 we may never create a VM
-      // So start one if we don't already have one
+      // So start one if we don't already have one ready or staging
       const availableCount = await this.getAvailableCount();
-      if (!availableCount) {
+      const stagingCount = await this.getStagingCount();
+      if (!availableCount && !stagingCount) {
         await this.startVMWrapper();
       }
     }
@@ -203,7 +205,8 @@ export abstract class VMManager {
       // Normally this should be an update, but we could insert if:
       // if cleaning up a VM we didn't record in db on create
       // if we resized down and deleted db row but didn't complete the termination
-      // this.terminateVMWrapper(vmid);
+    } else {
+      this.terminateVMWrapper(vmid);
     }
   };
 
@@ -369,89 +372,87 @@ export abstract class VMManager {
         `,
         [this.getPoolName()]
       );
-      const stagingPromises = rows.map((row: any) => {
-        return new Promise<string>(async (resolve, reject) => {
-          const rowid = row.id;
-          const vmid = row.vmid as string;
-          const retryCount = row.retries as number;
-          let vm = row.data as VM | null;
-          if (retryCount < this.minRetries) {
-            if (config.NODE_ENV === 'development') {
-              console.log(
-                '[CHECKSTAGING] %s attempt %s, waiting for minRetries',
-                vmid,
-                retryCount
-              );
-            }
-            // Do a minimum # of retries to give reboot time
-            return resolve([vmid, retryCount, false].join(','));
-          }
-          if (retryCount % 150 === 0) {
-            console.log('[CHECKSTAGING] %s poweron, attach to network', vmid);
-            this.powerOn(vmid);
-            //this.attachToNetwork(vmid);
-          }
-          if (retryCount >= 240) {
-            console.log('[CHECKSTAGING]', 'giving up:', vmid);
-            redisCount('vBrowserStagingFails');
-            await redis?.lpush('vBrowserStageFails', vmid);
-            await redis?.ltrim('vBrowserStageFails', 0, 24);
-            await this.resetVM(vmid);
-            // await this.terminateVMWrapper(vmid);
-            return reject('too many attempts on vm ' + vmid);
-          }
-          // Fetch data on first attempt
-          // Try again only every once in a while to reduce load on API
-          const shouldFetchVM =
-            retryCount === this.minRetries + 1 || retryCount % 20 === 0;
-          if (!vm && shouldFetchVM) {
-            try {
-              vm = await this.getVM(vmid);
-            } catch (e: any) {
-              console.warn(e.response?.data);
-              if (e.response?.status === 404) {
-                // Remove the VM beecause the provider says it doesn't exist
-                await postgres.query('DELETE FROM vbrowser WHERE id = $1', [
-                  rowid,
-                ]);
-                return reject('failed to find vm ' + vmid);
-              }
-            }
-            if (vm?.host) {
-              // Save the VM data
-              await postgres.query(
-                `UPDATE vbrowser SET data = $1 WHERE id = $2`,
-                [vm, rowid]
-              );
-            }
-          }
-          if (!vm?.host) {
-            console.log('[CHECKSTAGING] no host for vm %s', vmid);
-            return reject('no host for vm ' + vmid);
-          }
-          const ready = await checkVMReady(vm.host);
-          if (
-            ready ||
-            retryCount % (config.NODE_ENV === 'development' ? 1 : 30) === 0
-          ) {
+      const stagingPromises = rows.map(async (row: any): Promise<string> => {
+        const rowid = row.id;
+        const vmid = row.vmid as string;
+        const retryCount = row.retries as number;
+        let vm = row.data as VM | null;
+        if (retryCount < this.minRetries) {
+          if (config.NODE_ENV === 'development') {
             console.log(
-              '[CHECKSTAGING] [ready: %s] [vmid: %s] [host: %s] [retries: %s]',
-              ready,
+              '[CHECKSTAGING] %s attempt %s, waiting for minRetries',
               vmid,
-              vm?.host,
               retryCount
             );
           }
-          if (ready) {
-            await postgres.query(
-              `UPDATE vbrowser SET state = 'available' WHERE id = $1`,
-              [rowid, new Date()]
-            );
-            await redis?.lpush('vBrowserStageRetries', retryCount);
-            await redis?.ltrim('vBrowserStageRetries', 0, 24);
+          // Do a minimum # of retries to give reboot time
+          return [vmid, retryCount, false].join(',');
+        }
+        if (retryCount % 150 === 0) {
+          console.log('[CHECKSTAGING] %s poweron, attach to network', vmid);
+          this.powerOn(vmid);
+          //this.attachToNetwork(vmid);
+        }
+        if (retryCount >= 240) {
+          console.log('[CHECKSTAGING]', 'giving up:', vmid);
+          redisCount('vBrowserStagingFails');
+          await redis?.lpush('vBrowserStageFails', vmid);
+          await redis?.ltrim('vBrowserStageFails', 0, 24);
+          await this.resetVM(vmid);
+          // await this.terminateVMWrapper(vmid);
+          throw new Error('too many attempts on vm ' + vmid);
+        }
+        // Fetch data on first attempt
+        // Try again only every once in a while to reduce load on API
+        const shouldFetchVM =
+          retryCount === this.minRetries + 1 || retryCount % 20 === 0;
+        if (!vm && shouldFetchVM) {
+          try {
+            vm = await this.getVM(vmid);
+          } catch (e: any) {
+            console.warn(e.response?.data);
+            if (e.response?.status === 404) {
+              // Remove the VM beecause the provider says it doesn't exist
+              await postgres.query('DELETE FROM vbrowser WHERE id = $1', [
+                rowid,
+              ]);
+              throw new Error('failed to find vm ' + vmid);
+            }
           }
-          resolve([vmid, retryCount, ready].join(','));
-        });
+          if (vm?.host) {
+            // Save the VM data
+            await postgres.query(
+              `UPDATE vbrowser SET data = $1 WHERE id = $2`,
+              [vm, rowid]
+            );
+          }
+        }
+        if (!vm?.host) {
+          console.log('[CHECKSTAGING] no host for vm %s', vmid);
+          throw new Error('no host for vm ' + vmid);
+        }
+        const ready = await checkVMReady(vm.host);
+        if (
+          ready ||
+          retryCount % (config.NODE_ENV === 'development' ? 1 : 30) === 0
+        ) {
+          console.log(
+            '[CHECKSTAGING] [ready: %s] [vmid: %s] [host: %s] [retries: %s]',
+            ready,
+            vmid,
+            vm?.host,
+            retryCount
+          );
+        }
+        if (ready) {
+          await postgres.query(
+            `UPDATE vbrowser SET state = 'available' WHERE id = $1`,
+            [rowid]
+          );
+          await redis?.lpush('vBrowserStageRetries', retryCount);
+          await redis?.ltrim('vBrowserStageRetries', 0, 24);
+        }
+        return [vmid, retryCount, ready].join(',');
       });
       // TODO log something if we timeout
       const result = await Promise.race([
@@ -479,24 +480,30 @@ export abstract class VMManager {
       );
     }, 10000);
 
+    // The following may take a while per iteration
+    // Use while loop and delay between iterations rather than setInterval to avoid stacking requests
     setImmediate(async () => {
       while (true) {
+        console.time(this.getPoolName() + ':cleanup');
         try {
           await cleanupVMGroup();
         } catch (e: any) {
           console.warn('[CLEANUPVMGROUP-ERROR]', e.response?.data);
         }
+        console.timeEnd(this.getPoolName() + ':cleanup');
         await new Promise((resolve) => setTimeout(resolve, cleanupInterval));
       }
     });
 
     setImmediate(async () => {
       while (true) {
+        // console.time(this.getPoolName() + ':checkstaging');
         try {
           await checkStaging();
         } catch (e) {
           console.warn('[CHECKSTAGING-ERROR]', e);
         }
+        // console.timeEnd(this.getPoolName() + ':checkstaging');
         await new Promise((resolve) => setTimeout(resolve, 1000));
       }
     });
