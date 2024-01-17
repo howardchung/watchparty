@@ -143,7 +143,7 @@ export abstract class VMManager {
       const { rows } = await postgres.query(
         `
       UPDATE vbrowser 
-      SET "roomId" = $1, uid = $2, "heartbeatTime" = $3, state = 'used'
+      SET "roomId" = $1, uid = $2, "heartbeatTime" = $3, "assignTime" = $3, state = 'used'
       WHERE id = (
         SELECT id
         FROM vbrowser
@@ -197,7 +197,7 @@ export abstract class VMManager {
         VALUES($1, $2, $3, 'staging')
         ON CONFLICT(pool, vmid) DO
         UPDATE SET state = 'staging',
-        "roomId" = NULL, uid = NULL, retries = 0, "heartbeatTime" = NULL, data = NULL
+        "roomId" = NULL, uid = NULL, retries = 0, "heartbeatTime" = NULL, "assignTime" = NULL, data = NULL
         `,
         [this.getPoolName(), vmid, new Date()]
       );
