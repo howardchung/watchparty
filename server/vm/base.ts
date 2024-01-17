@@ -324,7 +324,7 @@ export abstract class VMManager {
       try {
         allVMs = await this.listVMs(this.getTag());
       } catch (e) {
-        console.log('cleanupVMGroup: failed to fetch VM list');
+        console.log('[CLEANUP]: failed to fetch VM list');
         return;
       }
       const { rows } = await postgres.query(
@@ -354,7 +354,7 @@ export abstract class VMManager {
             await this.resetVM(server.id);
             //this.terminateVMWrapper(server.id);
           } catch (e: any) {
-            console.warn(e.response?.data);
+            console.warn('[CLEANUP]', e.response?.data);
           }
           await new Promise((resolve) => setTimeout(resolve, 2000));
         }
