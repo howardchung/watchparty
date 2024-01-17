@@ -215,7 +215,7 @@ export abstract class VMManager {
     try {
       const password = uuidv4();
       const id = await this.startVM(password);
-      // We might fail to record it if crashing here but cleanup will eventually delete it
+      // We might fail to record it if crashing here but cleanup will reset it
       await postgres.query(
         `
       INSERT INTO vbrowser(pool, vmid, "creationTime", state) 
@@ -237,7 +237,7 @@ export abstract class VMManager {
   protected terminateVMWrapper = async (vmid: string) => {
     console.log('[TERMINATE]', vmid);
     // Update the DB before calling terminate
-    // If we don't actually complete the termination, cleanup will eventually remove it
+    // If we don't actually complete the termination, cleanup will reset it
     const { rows } = await postgres.query(
       `DELETE FROM vbrowser WHERE pool = $1 AND vmid = $2 RETURNING id`,
       [this.getPoolName(), vmid]
