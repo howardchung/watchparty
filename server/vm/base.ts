@@ -292,10 +292,9 @@ export abstract class VMManager {
             WHERE pool = $1
             AND state = 'available'
             AND CAST(extract(epoch from now() - "creationTime") as INT) % (60 * 60) > $2
-            ORDER BY id ASC
+            AND id >= (SELECT id from vbrowser ORDER BY id ASC LIMIT 1 OFFSET $3)
             FOR UPDATE SKIP LOCKED
             LIMIT 1
-            OFFSET $3
           ) RETURNING vmid, CAST(extract(epoch from now() - "creationTime") as INT) % (60 * 60) as uptime_frac`,
           [
             this.getPoolName(),
