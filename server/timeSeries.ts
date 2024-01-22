@@ -1,12 +1,7 @@
 import config from './config';
-import Redis from 'ioredis';
 import { statsAgg } from './utils/statsAgg';
 import axios from 'axios';
-
-let redis: Redis | undefined = undefined;
-if (config.REDIS_URL) {
-  redis = new Redis(config.REDIS_URL);
-}
+import { redis } from './utils/redis';
 
 statsTimeSeries();
 setInterval(statsTimeSeries, 5 * 60 * 1000);

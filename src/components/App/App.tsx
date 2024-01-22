@@ -512,9 +512,9 @@ export default class App extends React.Component<AppProps, AppState> {
                   const filtered = files.filter(
                     (f: WebTorrent.TorrentFile) => f.length >= 10 * 1024 * 1024
                   );
-                  const fileIndex = new URLSearchParams(src).get(
-                    'fileIndex'
-                  ) as unknown as number;
+                  const fileIndex = Number(
+                    new URLSearchParams(src).get('fileIndex')
+                  );
                   // Try to find a single large file to play
                   const target =
                     files[fileIndex] ??

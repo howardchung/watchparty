@@ -1,4 +1,31 @@
 import { Client, QueryResult } from 'pg';
+import config from '../config';
+
+export let postgres: Client | undefined = undefined;
+if (config.DATABASE_URL) {
+  postgres = new Client({
+    connectionString: config.DATABASE_URL,
+    ssl: { rejectUnauthorized: false },
+  });
+  postgres.connect();
+}
+
+/**
+ * Use this if we need a new connection instead of sharing.
+ * Guarantees we'll return a client because we throw if we don't have it configured
+ * @returns
+ */
+export function newPostgres() {
+  if (!config.DATABASE_URL) {
+    throw new Error('postgres not configured');
+  }
+  const postgres = new Client({
+    connectionString: config.DATABASE_URL,
+    ssl: { rejectUnauthorized: false },
+  });
+  postgres.connect();
+  return postgres;
+}
 
 export async function updateObject(
   postgres: Client,

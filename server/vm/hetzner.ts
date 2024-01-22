@@ -3,6 +3,7 @@ import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import { VMManager, VM } from './base';
 import fs from 'fs';
+import { redis } from '../utils/redis';
 
 const HETZNER_TOKEN = config.HETZNER_TOKEN;
 const sshKeys = config.HETZNER_SSH_KEYS.split(',').map(Number);
@@ -12,6 +13,7 @@ export class Hetzner extends VMManager {
   size = 'cpx11'; // cx11, cpx11, cpx21, cpx31, ccx11
   largeSize = 'cpx31';
   minRetries = 30;
+  reuseVMs = true;
   id = 'Hetzner';
   gateway = config.HETZNER_GATEWAY;
 
@@ -27,6 +29,26 @@ export class Hetzner extends VMManager {
   }
 
   startVM = async (name: string) => {
+    const data = {
+      name: name,
+      server_type: this.isLarge ? this.largeSize : this.size,
+      start_after_create: true,
+      image: imageId,
+      ssh_keys: sshKeys,
+      public_net: {
+        enable_ipv4: true,
+        enable_ipv6: false,
+      },
+      // networks: [
+      //   this.networks[Math.floor(Math.random() * this.networks.length)],
+      // ],
+      // user_data: `replace with vbrowser.sh startup script if we want to boot vbrowser on instance creation (won't trigger on rebuild/restart)`
+      labels: {
+        [this.getTag()]: '1',
+        originalName: name,
+      },
+      location: this.getRandomDatacenter(),
+    };
     const response = await axios({
       method: 'POST',
       url: `https://api.hetzner.cloud/v1/servers`,
@@ -34,26 +56,7 @@ export class Hetzner extends VMManager {
         Authorization: 'Bearer ' + HETZNER_TOKEN,
         'Content-Type': 'application/json',
       },
-      data: {
-        name: name,
-        server_type: this.isLarge ? this.largeSize : this.size,
-        start_after_create: true,
-        image: imageId,
-        ssh_keys: sshKeys,
-        public_net: {
-          enable_ipv4: true,
-          enable_ipv6: false,
-        },
-        // networks: [
-        //   this.networks[Math.floor(Math.random() * this.networks.length)],
-        // ],
-        // user_data: `replace with vbrowser.sh startup script if we want to boot vbrowser on instance creation (won't trigger on rebuild/restart)`
-        labels: {
-          [this.getTag()]: '1',
-          originalName: name,
-        },
-        location: this.getRandomDatacenter(),
-      },
+      data,
     });
     const id = response.data.server.id;
     return id;
@@ -115,10 +118,7 @@ export class Hetzner extends VMManager {
       id,
       response?.headers['ratelimit-remaining']
     );
-    this.redis?.set(
-      'hetznerApiRemaining',
-      response?.headers['ratelimit-remaining']
-    );
+    redis?.set('hetznerApiRemaining', response?.headers['ratelimit-remaining']);
     if (response.data.server.private_net?.length > 1) {
       console.log('[WARNING] %s has more than one private network', id);
     }
@@ -247,6 +247,9 @@ export class Hetzner extends VMManager {
     const public_ip = server.public_net?.ipv4?.ip;
     // const private_ip = server.private_net?.[0]?.ip;
     const ip = public_ip;
+    // We can use either the public or private IP for communicating between gateway and VM
+    // Only signaling traffic goes through here since the video is transmitted over WebRTC
+    // The private IP requires the server and gateway to be on the same network and there is a limit to the number of servers allowed
     return {
       id: server.id?.toString(),
       pass: server.name,
