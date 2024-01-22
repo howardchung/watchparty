@@ -165,19 +165,19 @@ export abstract class VMManager {
     return { ...selected, assignTime: Number(new Date()) };
   };
 
-  public resetVM = async (vmid: string, uid?: string): Promise<void> => {
-    if (uid !== undefined) {
-      // verify the uid matches if user initiated
+  public resetVM = async (vmid: string, roomId?: string): Promise<void> => {
+    if (roomId !== undefined) {
+      // verify the roomId matches if user initiated
       const { rows } = await postgres.query(
-        `SELECT uid FROM vbrowser WHERE pool = $1 AND vmid = $2`,
+        `SELECT "roomId" FROM vbrowser WHERE pool = $1 AND vmid = $2`,
         [this.getPoolName(), vmid]
       );
-      if (rows[0]?.uid && rows[0]?.uid !== uid) {
+      if (rows[0]?.roomId && rows[0]?.roomId !== roomId) {
         console.log(
-          '[RESET] uid mismatch on %s, expected %s, got %s',
+          '[RESET] roomId mismatch on %s, expected %s, got %s',
           vmid,
-          rows[0]?.uid,
-          uid
+          rows[0]?.roomId,
+          roomId
         );
         return;
       }
