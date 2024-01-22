@@ -25,7 +25,12 @@ app.post('/assignVM', async (req, res) => {
     // However if the pool is 0 sized we need to consistently request the same pool for a given uid/roomid
     // Otherwise we may spawn multiple VMs on retries
     if (pool) {
-      console.log('assignVM from pool:', pool.getPoolName());
+      console.log(
+        'assignVM from pool:',
+        pool.getPoolName(),
+        req.body.roomId,
+        req.body.uid
+      );
       const vm = await pool.assignVM(req.body.roomId, req.body.uid);
       return res.json(vm ?? null);
     }
