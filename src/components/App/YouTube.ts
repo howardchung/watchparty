@@ -44,6 +44,7 @@ export class YouTube implements Player {
     // Link shortener https://youtu.be/ID
     let altVideoId = src.split('/').slice(-1)[0].split('?')[0];
     this.watchPartyYTPlayer?.cueVideoById(videoId || altVideoId, time);
+    // this.watchPartyYTPlayer?.cuePlaylist({listType: 'playlist', list: 'OLAK5uy_mtoaOGQksRdPbwlNtQ9IiK67wir5QqyIc'});
   };
 
   playVideo = async () => {
