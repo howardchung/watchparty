@@ -238,11 +238,11 @@ export abstract class VMManager {
     console.log('[TERMINATE]', vmid);
     // Update the DB before calling terminate
     // If we don't actually complete the termination, cleanup will reset it
-    const { rows } = await postgres.query(
-      `DELETE FROM vbrowser WHERE pool = $1 AND vmid = $2 RETURNING id`,
+    const { command, rowCount } = await postgres.query(
+      `DELETE FROM vbrowser WHERE pool = $1 AND vmid = $2`,
       [this.getPoolName(), vmid]
     );
-    console.log('DELETE', rows.length);
+    console.log(command, rowCount);
     // We can log the VM lifetime by returning the creationTime and diffing
     await this.terminateVM(vmid);
   };
