@@ -48,7 +48,7 @@ app.post('/releaseVM', async (req, res) => {
         req.body.provider + (req.body.isLarge ? 'Large' : '') + req.body.region
       ];
     if (req.body.id) {
-      await pool?.resetVM(req.body.id, req.body.uid);
+      await pool?.resetVM(req.body.id, req.body.roomId);
     }
     return res.end();
   } catch (e) {

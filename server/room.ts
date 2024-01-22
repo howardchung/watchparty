@@ -368,7 +368,7 @@ export class Room {
               isLarge,
               region,
               id,
-              uid,
+              roomId: this.roomId,
             }
           );
         }
