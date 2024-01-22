@@ -57,8 +57,8 @@ app.get('/stats', async (req, res) => {
   for (let i = 0; i <= Object.keys(vmManagers).length; i++) {
     const key = Object.keys(vmManagers)[i];
     const vmManager = vmManagers[key];
-    const availableVBrowsers = vmManager?.getAvailableVBrowsers();
-    const stagingVBrowsers = vmManager?.getStagingVBrowsers();
+    const availableVBrowsers = await vmManager?.getAvailableVBrowsers();
+    const stagingVBrowsers = await vmManager?.getStagingVBrowsers();
     const size = await vmManager?.getCurrentSize();
     if (key && vmManager) {
       vmManagerStats[key] = {
