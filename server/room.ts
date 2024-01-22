@@ -852,6 +852,9 @@ export class Room {
       return;
     }
 
+    const clientId = this.clientIdMap[socket.id];
+    let uid: string = '';
+
     // these checks are skipped if firebase not provided
     if (config.FIREBASE_ADMIN_SDK_CONFIG) {
       const decoded = await validateUserToken(data.uid, data.token);
@@ -872,54 +875,55 @@ export class Room {
         );
         return;
       }
-    }
 
-    const clientId = this.clientIdMap[socket.id];
-    const uid = this.uidMap[socket.id];
-    // Log the vbrowser creation by uid and clientid
-    if (redis) {
-      const expireTime = getStartOfDay() / 1000 + 86400;
-      if (clientId) {
-        const clientCount = await redis.zincrby(
-          'vBrowserClientIDs',
-          1,
-          clientId
-        );
-        redis.expireat('vBrowserClientIDs', expireTime);
-        const clientMinutes = await redis.zincrby(
-          'vBrowserClientIDMinutes',
-          1,
-          clientId
-        );
-        redis.expireat('vBrowserClientIDMinutes', expireTime);
+      uid = decoded.uid;
+
+      // Log the vbrowser creation by uid and clientid
+      if (redis) {
+        const expireTime = getStartOfDay() / 1000 + 86400;
+        if (clientId) {
+          const clientCount = await redis.zincrby(
+            'vBrowserClientIDs',
+            1,
+            clientId
+          );
+          redis.expireat('vBrowserClientIDs', expireTime);
+          const clientMinutes = await redis.zincrby(
+            'vBrowserClientIDMinutes',
+            1,
+            clientId
+          );
+          redis.expireat('vBrowserClientIDMinutes', expireTime);
+        }
+        if (uid) {
+          const uidCount = await redis.zincrby('vBrowserUIDs', 1, uid);
+          redis.expireat('vBrowserUIDs', expireTime);
+          const uidMinutes = await redis.zincrby('vBrowserUIDMinutes', 1, uid);
+          redis.expireat('vBrowserUIDMinutes', expireTime);
+          // TODO limit users based on client or uid usage
+        }
       }
-      if (uid) {
-        const uidCount = await redis.zincrby('vBrowserUIDs', 1, uid);
-        redis.expireat('vBrowserUIDs', expireTime);
-        const uidMinutes = await redis.zincrby('vBrowserUIDMinutes', 1, uid);
-        redis.expireat('vBrowserUIDMinutes', expireTime);
-        // TODO limit users based on client or uid usage
+      // TODO (howard) check if the user or room has a VM already in postgres
+      if (false) {
+        socket.emit(
+          'errorMessage',
+          'There is already an active vBrowser for this user.'
+        );
+        return;
       }
-    }
-    // TODO (howard) check if the user or room has a VM already in postgres
-    if (false) {
-      socket.emit(
-        'errorMessage',
-        'There is already an active vBrowser for this user.'
-      );
-      return;
     }
     let isLarge = false;
     let region = config.DEFAULT_VM_REGION;
+    let isSubscriber = false;
     if (data && data.uid && data.token) {
       const decoded = await validateUserToken(data.uid, data.token);
-      // Check if user is subscriber, if so allow sub options
-      const isSubscriber = await getIsSubscriberByEmail(decoded?.email);
-      if (isSubscriber) {
-        isLarge = data.options?.size === 'large';
-        if (data.options?.region) {
-          region = data.options?.region;
-        }
+      isSubscriber = await getIsSubscriberByEmail(decoded?.email);
+    }
+    // Check if user is subscriber or firebase not configured, if so allow sub options
+    if (isSubscriber || !config.FIREBASE_ADMIN_SDK_CONFIG) {
+      isLarge = data.options?.size === 'large';
+      if (data.options?.region) {
+        region = data.options?.region;
       }
     }
 
