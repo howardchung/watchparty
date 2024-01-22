@@ -6,7 +6,7 @@ import { postgres as pg } from '../utils/postgres';
 import { PoolConfig, PoolRegion } from './utils';
 import type { Client } from 'pg';
 const incrInterval = 5 * 1000;
-const decrInterval = 30 * 1000;
+const decrInterval = 15 * 1000;
 const cleanupInterval = 5 * 60 * 1000;
 
 // If postgres isn't configured we can still run in stateless mode
