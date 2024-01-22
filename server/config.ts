@@ -1,8 +1,8 @@
 require('dotenv').config();
 
 const defaults = {
-  REDIS_URL: '', // Optional, for room persistence and VM queueing (localhost:6379 for a local install)
-  DATABASE_URL: '', // Optional, for permanent rooms (localhost:5432 for a local install)
+  REDIS_URL: '', // Optional, for metrics
+  DATABASE_URL: '', // Optional, for permanent rooms and VBrowser management
   YOUTUBE_API_KEY: '', // Optional, provide one to enable searching YouTube
   NODE_ENV: '', // Usually, you should let process.env.NODE_ENV override this
   FIREBASE_ADMIN_SDK_CONFIG: '', // Optional, for features requiring sign-in/authentication
@@ -21,14 +21,14 @@ const defaults = {
   HETZNER_GATEWAY: '', // Gateway handling SSL termination
   HETZNER_SSH_KEYS: '', // IDs of Hetzner SSH keys to access vbrowsers
   HETZNER_IMAGE: '', // ID of Hetzner snapshot image to use for vbrowser
-  VM_MANAGER_CONFIG: 'Docker:large:US:0:0,Docker:standard:US:0:0', // Comma-separated list of the pools of VMs to run (provider:size:region:minSize:limitSize)
+  VM_MANAGER_CONFIG: '', // Comma-separated list of the pools of VMs to run (provider:size:region:minSize:limitSize:hostname), e.g. Docker:large:US:0:0:localhost,Docker:standard:US:0:0:localhost
   SCW_SECRET_KEY: '', // Optional, for Scaleway VMs
   SCW_ORGANIZATION_ID: '', // Optional, for Scaleway VMs
   SCW_GATEWAY: '', // Gateway handling SSL termination
   SCW_IMAGE: '', // ID of Scaleway snapshot image to use for vbrowser
-  DOCKER_VM_HOST: '', // Optional, for Docker VMs
-  DOCKER_VM_HOST_SSH_USER: '', // Optional, username for Docker host
-  DOCKER_VM_HOST_SSH_KEY_BASE64: '', // Optional, private SSH key for Docker host
+  DOCKER_VM_HOST: 'localhost', // Optional, for Docker VMs
+  DOCKER_VM_HOST_SSH_USER: 'root', // Optional, username for Docker host
+  DOCKER_VM_HOST_SSH_KEY_BASE64: '', // Optional, private SSH key for Docker host, or default to ~/.ssh/id_rsa content
   RECAPTCHA_SECRET_KEY: '', // Optional, Recaptcha for VBrowser creation
   SSL_KEY_FILE: '', // Optional, Filename of SSL key (to use https)
   SSL_CRT_FILE: '', // Optional, Filename of SSL cert (to use https)

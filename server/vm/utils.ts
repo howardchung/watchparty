@@ -1,5 +1,4 @@
 import { AssignedVM, VMManager } from './base';
-import Redis from 'ioredis';
 import config from '../config';
 import { Scaleway } from './scaleway';
 import { Hetzner } from './hetzner';
@@ -9,99 +8,41 @@ import { Docker } from './docker';
 // Chromium on ARM: ghcr.io/howardchung/vbrowser/arm-chromium
 export const imageName = 'howardc93/vbrowser';
 
-export const assignVM = async (
-  redis: Redis,
-  vmManager: VMManager
-): Promise<AssignedVM | undefined> => {
-  try {
-    const assignStart = Number(new Date());
-    let selected = null;
-    while (!selected) {
-      if (vmManager.getMinSize() === 0) {
-        // This code spawns a VM if none is available in the pool
-        const availableCount = await redis.llen(vmManager.getRedisQueueKey());
-        if (!availableCount) {
-          await vmManager.startVMWrapper();
-        }
-      }
-      let resp = await redis.blpop(
-        vmManager.getRedisQueueKey(),
-        config.VM_ASSIGNMENT_TIMEOUT
-      );
-      if (!resp) {
-        return undefined;
-      }
-      const id = resp[1];
-      console.log('[ASSIGN]', id);
-      const lock = await redis.set(
-        'lock:' + vmManager.id + ':' + id,
-        '1',
-        'EX',
-        300,
-        'NX'
-      );
-      if (!lock) {
-        console.log('failed to acquire lock on VM:', id);
-        continue;
-      }
-      const cachedData = await redis.get(
-        vmManager.getRedisHostCacheKey() + ':' + id
-      );
-      let candidate =
-        cachedData && cachedData.startsWith('{') && JSON.parse(cachedData);
-      if (!candidate) {
-        candidate = await vmManager.getVM(id);
-      }
-      selected = candidate;
-    }
-    const assignEnd = Number(new Date());
-    const assignElapsed = assignEnd - assignStart;
-    await redis.lpush('vBrowserStartMS', assignElapsed);
-    await redis.ltrim('vBrowserStartMS', 0, 24);
-    console.log('[ASSIGN]', selected.id, assignElapsed + 'ms');
-    const retVal = { ...selected, assignTime: Number(new Date()) };
-    return retVal;
-  } catch (e) {
-    console.warn(e);
-    return undefined;
-  }
-};
-
 export type PoolRegion = 'US' | 'USW' | 'EU';
 export type PoolConfig = {
   provider: string;
   isLarge: boolean;
   region: PoolRegion;
-  limitSize: number;
-  minSize: number;
+  limitSize: number | undefined;
+  minSize: number | undefined;
+  hostname: string | undefined;
 };
 
 function createVMManager(poolConfig: PoolConfig): VMManager | null {
   let vmManager: VMManager | null = null;
   if (
-    config.REDIS_URL &&
     config.SCW_SECRET_KEY &&
     config.SCW_ORGANIZATION_ID &&
+    config.SCW_IMAGE &&
+    config.SCW_GATEWAY &&
     poolConfig.provider === 'Scaleway'
   ) {
     vmManager = new Scaleway(poolConfig);
   } else if (
-    config.REDIS_URL &&
     config.HETZNER_TOKEN &&
+    config.HETZNER_IMAGE &&
+    config.HETZNER_GATEWAY &&
     poolConfig.provider === 'Hetzner'
   ) {
     vmManager = new Hetzner(poolConfig);
   } else if (
-    config.REDIS_URL &&
     config.DO_TOKEN &&
+    config.DO_IMAGE &&
+    config.DO_GATEWAY &&
     poolConfig.provider === 'DO'
   ) {
     vmManager = new DigitalOcean(poolConfig);
-  } else if (
-    config.REDIS_URL &&
-    config.DOCKER_VM_HOST &&
-    poolConfig.provider === 'Docker'
-  ) {
+  } else if (poolConfig.provider === 'Docker') {
     vmManager = new Docker(poolConfig);
   }
   return vmManager;
@@ -116,6 +57,7 @@ export function getVMManagerConfig(): PoolConfig[] {
       region: split[2] as PoolRegion,
       minSize: Number(split[3]),
       limitSize: Number(split[4]),
+      hostname: split[5],
     };
   });
 }

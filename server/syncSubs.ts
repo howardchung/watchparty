@@ -1,18 +1,13 @@
-import { Client } from 'pg';
 import config from './config';
 import { getUserByEmail } from './utils/firebase';
-import { insertObject, updateObject } from './utils/postgres';
+import { insertObject, newPostgres, updateObject } from './utils/postgres';
 import { getAllActiveSubscriptions, getAllCustomers } from './utils/stripe';
 import { Client as DiscordClient, IntentsBitField } from 'discord.js';
 
 let lastSubs = '';
 let currentSubs = '';
 
-const postgres2 = new Client({
-  connectionString: config.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
-});
-postgres2.connect();
+const postgres2 = newPostgres();
 
 // set up the Discord admin bot
 const discordBot = new DiscordClient({

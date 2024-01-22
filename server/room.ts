@@ -1,32 +1,32 @@
 import config from './config';
 
 import axios from 'axios';
-import Redis from 'ioredis';
 import { Server, Socket } from 'socket.io';
-import { Client, QueryResult } from 'pg';
 
 import { getUser, validateUserToken } from './utils/firebase';
-import { redisCount, redisCountDistinct } from './utils/redis';
+import { redis, redisCount, redisCountDistinct } from './utils/redis';
 import { getIsSubscriberByEmail } from './utils/stripe';
 import { AssignedVM } from './vm/base';
 import { getStartOfDay } from './utils/time';
-import { updateObject, upsertObject } from './utils/postgres';
+import { postgres, updateObject, upsertObject } from './utils/postgres';
 import { fetchYoutubeVideo, getYoutubeVideoID } from './utils/youtube';
 import { v4 as uuidv4 } from 'uuid';
 //@ts-ignore
 import twitch from 'twitch-m3u8';
+import { QueryResult } from 'pg';
+import { Docker } from './vm/docker';
 
-let redis: Redis | undefined = undefined;
-if (config.REDIS_URL) {
-  redis = new Redis(config.REDIS_URL);
-}
-let postgres: Client | undefined = undefined;
-if (config.DATABASE_URL) {
-  postgres = new Client({
-    connectionString: config.DATABASE_URL,
-    ssl: { rejectUnauthorized: false },
+// Stateless pool instance to use for VMs if full management isn't needed
+let stateless: Docker | undefined = undefined;
+if (!config.VM_MANAGER_CONFIG) {
+  stateless = new Docker({
+    provider: 'Docker',
+    isLarge: false,
+    region: 'US',
+    limitSize: 0,
+    minSize: 0,
+    hostname: config.DOCKER_VM_HOST,
   });
-  postgres.connect();
 }
 
 export class Room {
@@ -58,6 +58,18 @@ export class Room {
   public isChatDisabled: boolean | undefined = undefined;
   public lastUpdateTime: Date = new Date();
   private preventTSUpdate = false;
+  // Not really a queue since there's no ordering, we just retry as long as this is set
+  // If we want a real queue then we need external processing of the jobs and a way to update the room from outside
+  public vBrowserQueue:
+    | {
+        roomId: string;
+        queueTime: Date;
+        isLarge: boolean;
+        region: string;
+        uid: string;
+        clientId: string;
+      }
+    | undefined = undefined;
 
   constructor(
     io: Server,
@@ -71,7 +83,7 @@ export class Room {
       this.deserialize(roomData);
     }
 
-    this.tsInterval = setInterval(() => {
+    this.tsInterval = setInterval(async () => {
       // console.log(roomId, this.video, this.roster, this.tsMap, this.nameMap);
       // Clean up the data of users who aren't in the room anymore
       const memberIds = this.roster.map((p) => p.id);
@@ -263,7 +275,7 @@ export class Room {
     if (postgres) {
       try {
         const roomString = this.serialize();
-        await postgres?.query(
+        await postgres.query(
           `UPDATE room SET "lastUpdateTime" = $1, data = $2 WHERE "roomId" = $3`,
           [this.lastUpdateTime, roomString, this.roomId]
         );
@@ -343,22 +355,26 @@ export class Room {
       await redis.lpush('vBrowserSessionMS', Number(new Date()) - assignTime);
       await redis.ltrim('vBrowserSessionMS', 0, 24);
     }
-    if (redis && uid) {
-      await redis.del('vBrowserUIDLock:' + uid);
-    }
-    try {
-      await axios.post(
-        'http://localhost:' + config.VMWORKER_PORT + '/releaseVM',
-        {
-          provider,
-          isLarge,
-          region,
-          id,
-          uid,
+
+    if (id) {
+      try {
+        if (stateless) {
+          await stateless.terminateVM(id);
+        } else {
+          await axios.post(
+            'http://localhost:' + config.VMWORKER_PORT + '/releaseVM',
+            {
+              provider,
+              isLarge,
+              region,
+              id,
+              uid,
+            }
+          );
         }
-      );
-    } catch (e) {
-      console.warn(e);
+      } catch (e) {
+        console.warn(e);
+      }
     }
   };
 
@@ -382,6 +398,8 @@ export class Room {
     if (data === '') {
       this.playlistNext(null);
     }
+    // The room video is changing so remove room from vbrowser queue
+    this.vBrowserQueue = undefined;
   };
 
   public addChatMessage = (socket: Socket | null, chatMsg: ChatMessageBase) => {
@@ -880,23 +898,16 @@ export class Room {
         redis.expireat('vBrowserUIDs', expireTime);
         const uidMinutes = await redis.zincrby('vBrowserUIDMinutes', 1, uid);
         redis.expireat('vBrowserUIDMinutes', expireTime);
-        // TODO limit users based on these counts
-
-        const uidLock = await redis.set(
-          'vBrowserUIDLock:' + uid,
-          '1',
-          'EX',
-          70,
-          'NX'
-        );
-        if (!uidLock) {
-          socket.emit(
-            'errorMessage',
-            'There is already an active vBrowser for this user.'
-          );
-          return;
-        }
+        // TODO limit users based on client or uid usage
       }
+    }
+    // TODO (howard) check if the user or room has a VM already in postgres
+    if (false) {
+      socket.emit(
+        'errorMessage',
+        'There is already an active vBrowser for this user.'
+      );
+      return;
     }
     let isLarge = false;
     let region = config.DEFAULT_VM_REGION;
@@ -940,36 +951,64 @@ export class Room {
 
     redisCount('vBrowserStarts');
     this.cmdHost(socket, 'vbrowser://');
-    const assignmentResp = await axios.post(
-      'http://localhost:' + config.VMWORKER_PORT + '/assignVM',
-      {
-        isLarge,
-        region,
-        uid,
+    // Put the room in the vbrowser queue
+    this.vBrowserQueue = {
+      roomId: this.roomId,
+      queueTime: new Date(),
+      isLarge,
+      region,
+      uid,
+      clientId,
+    };
+    // Check if a vbrowser is available
+    while (this.vBrowserQueue) {
+      const { queueTime, isLarge, region, uid, roomId, clientId } =
+        this.vBrowserQueue;
+      let assignment: AssignedVM | undefined = undefined;
+      try {
+        if (stateless) {
+          const id = await stateless.startVM(uuidv4());
+          assignment = {
+            ...(await stateless.getVM(id)),
+            assignTime: Date.now(),
+          };
+        } else {
+          const { data } = await axios.post<AssignedVM>(
+            'http://localhost:' + config.VMWORKER_PORT + '/assignVM',
+            {
+              isLarge,
+              region,
+              uid,
+              roomId,
+            }
+          );
+          assignment = data;
+        }
+      } catch (e) {
+        console.warn(e);
       }
-    );
-    const assignment: AssignedVM = assignmentResp.data;
-    if (this.video !== 'vbrowser://') {
-      return;
+      if (assignment) {
+        this.vBrowser = assignment;
+        this.vBrowser.controllerClient = clientId;
+        this.vBrowser.creatorUID = uid;
+        this.vBrowser.creatorClientID = clientId;
+        const assignEnd = Number(new Date());
+        const assignElapsed = assignEnd - Number(queueTime);
+        await redis?.lpush('vBrowserStartMS', assignElapsed);
+        await redis?.ltrim('vBrowserStartMS', 0, 24);
+        console.log(
+          '[ASSIGN] %s to %s in %s',
+          assignment.provider + ':' + assignment.id,
+          roomId,
+          assignElapsed + 'ms'
+        );
+        this.cmdHost(
+          null,
+          'vbrowser://' + this.vBrowser.pass + '@' + this.vBrowser.host
+        );
+      }
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     }
-    if (!assignment) {
-      this.cmdHost(socket, '');
-      this.vBrowser = undefined;
-      socket.emit(
-        'errorMessage',
-        'Failed to assign VBrowser. Please try again later.'
-      );
-      redisCount('vBrowserFails');
-      return;
-    }
-    this.vBrowser = assignment;
-    this.vBrowser.controllerClient = clientId;
-    this.vBrowser.creatorUID = uid;
-    this.vBrowser.creatorClientID = clientId;
-    this.cmdHost(
-      null,
-      'vbrowser://' + this.vBrowser.pass + '@' + this.vBrowser.host
-    );
   };
 
   private stopVBrowser = async (socket: Socket) => {
