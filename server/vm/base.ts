@@ -174,7 +174,8 @@ export abstract class VMManager {
       );
       if (rows[0]?.roomId && rows[0]?.roomId !== roomId) {
         console.log(
-          '[RESET] roomId mismatch on %s, expected %s, got %s',
+          '[RESET] %s: roomId mismatch on %s, expected %s, got %s',
+          this.getPoolName(),
           vmid,
           rows[0]?.roomId,
           roomId
@@ -182,7 +183,7 @@ export abstract class VMManager {
         return;
       }
     }
-    console.log('[RESET]', vmid);
+    console.log('[RESET]', this.getPoolName(), vmid, roomId);
     await this.rebootVM(vmid);
     // we could crash here and then row will remain in used state
     // Once the heartbeat becomes stale cleanup will reset it
@@ -235,7 +236,7 @@ export abstract class VMManager {
   };
 
   protected terminateVMWrapper = async (vmid: string) => {
-    console.log('[TERMINATE]', vmid);
+    console.log('[TERMINATE]', this.getPoolName(), vmid);
     // Update the DB before calling terminate
     // If we don't actually complete the termination, cleanup will reset it
     const { command, rowCount } = await postgres.query(
@@ -258,7 +259,8 @@ export abstract class VMManager {
         currentSize < (this.getLimitSize() || Infinity);
       if (launch) {
         console.log(
-          '[RESIZE-LAUNCH]',
+          '[RESIZE-INCR]',
+          this.getPoolName(),
           'minimum:',
           this.getAdjustedBuffer()[0],
           'available:',
@@ -275,9 +277,10 @@ export abstract class VMManager {
     };
 
     const resizeVMGroupDecr = async () => {
-      let unlaunch = false;
       const availableCount = await this.getAvailableCount();
-      unlaunch = availableCount > this.getAdjustedBuffer()[1];
+      const stagingCount = await this.getStagingCount();
+      let unlaunch = false;
+      unlaunch = availableCount + stagingCount > this.getAdjustedBuffer()[1];
       if (unlaunch) {
         // use SKIP LOCKED to delete to avoid deleting VM that might be assigning
         // filter to only VMs eligible for deletion
@@ -305,7 +308,8 @@ export abstract class VMManager {
         const first = rows[0];
         if (first) {
           console.log(
-            '[RESIZE-UNLAUNCH] %s up for %s seconds of hour',
+            '[RESIZE-DECR] %s: %s up for %s seconds of hour',
+            this.getPoolName(),
             first.vmid,
             first.uptime_frac
           );
@@ -323,7 +327,10 @@ export abstract class VMManager {
       try {
         allVMs = await this.listVMs(this.getTag());
       } catch (e) {
-        console.log('[CLEANUP]: failed to fetch VM list');
+        console.log(
+          '[CLEANUP] %s: failed to fetch VM list',
+          this.getPoolName()
+        );
         return;
       }
       const { rows } = await postgres.query(
@@ -348,12 +355,12 @@ export abstract class VMManager {
         const server = allVMs[i];
         if (!inUse.has(server.id)) {
           // TODO log how many cleanups we do
-          console.log('[CLEANUP]', server.id);
+          console.log('[CLEANUP]', this.getPoolName(), server.id);
           try {
             await this.resetVM(server.id);
             //this.terminateVMWrapper(server.id);
           } catch (e: any) {
-            console.warn('[CLEANUP]', e.response?.data);
+            console.warn('[CLEANUP]', this.getPoolName(), e.response?.data);
           }
           await new Promise((resolve) => setTimeout(resolve, 2000));
         }
@@ -379,7 +386,8 @@ export abstract class VMManager {
         if (retryCount < this.minRetries) {
           if (config.NODE_ENV === 'development') {
             console.log(
-              '[CHECKSTAGING] %s attempt %s, waiting for minRetries',
+              '[CHECKSTAGING] %s: [vmid: %s] [attempt: %s] waiting for minRetries',
+              this.getPoolName(),
               vmid,
               retryCount
             );
@@ -388,12 +396,16 @@ export abstract class VMManager {
           return [vmid, retryCount, false].join(',');
         }
         if (retryCount % 150 === 0) {
-          console.log('[CHECKSTAGING] %s poweron, attach to network', vmid);
+          console.log(
+            '[CHECKSTAGING] %s: %s poweron, attach to network',
+            this.getPoolName(),
+            vmid
+          );
           this.powerOn(vmid);
           //this.attachToNetwork(vmid);
         }
         if (retryCount >= 240) {
-          console.log('[CHECKSTAGING]', 'giving up:', vmid);
+          console.log('[CHECKSTAGING]', this.getPoolName(), 'giving up:', vmid);
           redisCount('vBrowserStagingFails');
           await redis?.lpush('vBrowserStageFails', vmid);
           await redis?.ltrim('vBrowserStageFails', 0, 24);
@@ -427,7 +439,11 @@ export abstract class VMManager {
           }
         }
         if (!vm?.host) {
-          console.log('[CHECKSTAGING] no host for vm %s', vmid);
+          console.log(
+            '[CHECKSTAGING] %s: no host for vm %s',
+            this.getPoolName(),
+            vmid
+          );
           throw new Error('no host for vm ' + vmid);
         }
         const ready = await checkVMReady(vm.host);
@@ -436,11 +452,12 @@ export abstract class VMManager {
           retryCount % (config.NODE_ENV === 'development' ? 1 : 30) === 0
         ) {
           console.log(
-            '[CHECKSTAGING] [ready: %s] [vmid: %s] [host: %s] [retries: %s]',
+            '[CHECKSTAGING] %s: [ready: %s] [vmid: %s] [retries: %s] [host: %s]',
+            this.getPoolName(),
             ready,
             vmid,
-            vm?.host,
-            retryCount
+            retryCount,
+            vm?.host
           );
         }
         if (ready) {
@@ -461,10 +478,7 @@ export abstract class VMManager {
       return result;
     };
 
-    console.log(
-      '[VMWORKER] starting background jobs for %s',
-      this.getPoolName()
-    );
+    console.log('[VMWORKER] %s: starting background jobs', this.getPoolName());
 
     setInterval(resizeVMGroupIncr, incrInterval);
     setInterval(resizeVMGroupDecr, decrInterval);
@@ -487,7 +501,11 @@ export abstract class VMManager {
         try {
           await cleanupVMGroup();
         } catch (e: any) {
-          console.warn('[CLEANUPVMGROUP-ERROR]', e.response?.data);
+          console.warn(
+            '[CLEANUPVMGROUP-ERROR]',
+            this.getPoolName(),
+            e.response?.data
+          );
         }
         console.timeEnd(this.getPoolName() + ':cleanup');
         await new Promise((resolve) => setTimeout(resolve, cleanupInterval));
@@ -500,7 +518,7 @@ export abstract class VMManager {
         try {
           await checkStaging();
         } catch (e) {
-          console.warn('[CHECKSTAGING-ERROR]', e);
+          console.warn('[CHECKSTAGING-ERROR]', this.getPoolName(), e);
         }
         // console.timeEnd(this.getPoolName() + ':checkstaging');
         await new Promise((resolve) => setTimeout(resolve, 1000));
