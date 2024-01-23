@@ -13,7 +13,7 @@ async function statsTimeSeries() {
       const stats = await statsAgg();
       const isFreePoolFull = (
         await axios.get(
-          'http://localhost:' + config.VMWORKER_PORT + '/isFreePoolFull'
+          'http://localhost:' + config.VMWORKER_PORT + '/isFreePoolFull',
         )
       ).data.isFull;
       const datapoint: AnyDict = {
@@ -33,7 +33,7 @@ async function statsTimeSeries() {
           stats.vBrowserStartMS &&
           stats.vBrowserStartMS.reduce(
             (a: string, b: string) => Number(a) + Number(b),
-            0
+            0,
           ) / stats.vBrowserStartMS.length,
         vBrowserStarts: stats.vBrowserStarts,
         vBrowserLaunches: stats.vBrowserLaunches,

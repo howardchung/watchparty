@@ -43,7 +43,7 @@ export class SubtitleModal extends React.Component<{
         if (fileIndex) {
           // Fetch title from the data endpoint
           const response = await fetch(
-            this.props.roomMedia.replace('/stream', '/data')
+            this.props.roomMedia.replace('/stream', '/data'),
           );
           const data = await response.json();
           this.setState({ titleQuery: data?.files[fileIndex]?.name });
@@ -71,7 +71,7 @@ export class SubtitleModal extends React.Component<{
       const json = await resp.json();
       this.props.socket.emit(
         'CMD:subtitle',
-        serverPath + '/subtitle/' + json.hash
+        serverPath + '/subtitle/' + json.hash,
       );
     });
     reader.readAsText(file);
@@ -121,8 +121,8 @@ export class SubtitleModal extends React.Component<{
                     checked={Boolean(
                       this.props.roomSubtitle &&
                         this.props.roomSubtitle?.startsWith(
-                          this.props.roomMedia
-                        )
+                          this.props.roomMedia,
+                        ),
                     )}
                     onClick={(e, data) => {
                       const subValue = this.props.roomMedia + '.srt';
@@ -140,7 +140,7 @@ export class SubtitleModal extends React.Component<{
                   checked={
                     Boolean(this.props.roomSubtitle) &&
                     this.props.roomSubtitle?.startsWith(
-                      serverPath + '/subtitle'
+                      serverPath + '/subtitle',
                     )
                   }
                 />
@@ -165,7 +165,7 @@ export class SubtitleModal extends React.Component<{
                     checked={
                       Boolean(this.props.roomSubtitle) &&
                       this.props.roomSubtitle?.startsWith(
-                        serverPath + '/downloadSubtitle'
+                        serverPath + '/downloadSubtitle',
                       )
                     }
                   />
@@ -190,7 +190,7 @@ export class SubtitleModal extends React.Component<{
                       const resp = await window.fetch(
                         serverPath +
                           '/searchSubtitles?title=' +
-                          this.state.titleQuery
+                          this.state.titleQuery,
                       );
                       const json = await resp.json();
                       this.setState({ searchResults: json });
@@ -214,7 +214,7 @@ export class SubtitleModal extends React.Component<{
                         const resp = await window.fetch(
                           serverPath +
                             '/searchSubtitles?url=' +
-                            this.props.roomMedia
+                            this.props.roomMedia,
                         );
                         const json = await resp.json();
                         this.setState({ searchResults: json });
@@ -235,12 +235,12 @@ export class SubtitleModal extends React.Component<{
                     name="radioGroup"
                     value={result.SubDownloadLink}
                     checked={this.props.roomSubtitle?.includes(
-                      result.SubDownloadLink
+                      result.SubDownloadLink,
                     )}
                     onChange={(e, { value }) => {
                       this.props.socket.emit(
                         'CMD:subtitle',
-                        serverPath + '/downloadSubtitles?url=' + value
+                        serverPath + '/downloadSubtitles?url=' + value,
                       );
                     }}
                   />

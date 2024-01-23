@@ -158,7 +158,7 @@ export class DigitalOcean extends VMManager {
 
   mapServerObject = (server: any): VM => {
     const ip = server.networks.v4.find(
-      (network: any) => network.type === 'private'
+      (network: any) => network.type === 'private',
     )?.ip_address;
     return {
       id: server.id?.toString(),

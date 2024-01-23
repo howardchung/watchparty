@@ -82,7 +82,7 @@ export class Chat extends React.Component<ChatProps> {
     selectedMsgId?: string,
     selectedMsgTimestamp?: string,
     yPosition?: number,
-    xPosition?: number
+    xPosition?: number,
   ) => {
     this.setState({
       reactionMenu: {
@@ -97,7 +97,7 @@ export class Chat extends React.Component<ChatProps> {
 
   handleReactionClick = (value: string, id?: string, timestamp?: string) => {
     const msg = this.props.chat.find(
-      (m) => m.id === id && m.timestamp === timestamp
+      (m) => m.id === id && m.timestamp === timestamp,
     );
     const data = {
       value,
@@ -294,7 +294,7 @@ export class Chat extends React.Component<ChatProps> {
               position: 'fixed',
               top: Math.min(
                 this.state.reactionMenu.yPosition - 150,
-                window.innerHeight - 450
+                window.innerHeight - 450,
               ),
               left: this.state.reactionMenu.xPosition - 240,
             }}
@@ -385,7 +385,7 @@ const ChatMessage = ({
     selectedMsgId?: string,
     selectedMsgTimestamp?: string,
     yPosition?: number,
-    xPosition?: number
+    xPosition?: number,
   ) => void;
   handleReactionClick: (value: string, id?: string, timestamp?: string) => void;
   className: string;
@@ -440,7 +440,7 @@ const ChatMessage = ({
           componentDecorator={(
             decoratedHref: string,
             decoratedText: string,
-            key: string
+            key: string,
           ) => (
             <SecureLink href={decoratedHref} key={key}>
               {decoratedText}
@@ -465,7 +465,7 @@ const ChatMessage = ({
                   id,
                   timestamp,
                   viewportOffset.top,
-                  viewportOffset.right
+                  viewportOffset.right,
                 );
               }, 100);
             }}
@@ -512,11 +512,11 @@ const ChatMessage = ({
                     .concat(
                       reactions[key].length > spellFull
                         ? [`${reactions[key].length - spellFull} more`]
-                        : []
+                        : [],
                     )
                     .reduce(
                       (text, value, i, array) =>
-                        text + (i < array.length - 1 ? ', ' : ' and ') + value
+                        text + (i < array.length - 1 ? ', ' : ' and ') + value,
                     )} reacted.`}
                   offset={[0, 6]}
                   trigger={
@@ -569,7 +569,7 @@ const ChatMessage = ({
                   }
                 />
               </CSSTransition>
-            ) : null
+            ) : null,
           )}
         </TransitionGroup>
       </Comment.Content>

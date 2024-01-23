@@ -43,7 +43,7 @@ export class ComboBox extends React.Component<ComboBoxProps> {
   setMediaAndClose = (e: any, data: DropdownProps) => {
     window.setTimeout(
       () => this.setState({ inputMedia: undefined, results: undefined }),
-      200
+      200,
     );
     this.props.roomSetMedia(e, data);
   };
@@ -161,7 +161,7 @@ export class ComboBox extends React.Component<ComboBoxProps> {
                     ) {
                       this.doSearch(e);
                     }
-                  }
+                  },
                 );
                 setTimeout(() => e.target.select(), 100);
               }}
@@ -172,7 +172,7 @@ export class ComboBox extends React.Component<ComboBoxProps> {
                       inputMedia: undefined,
                       results: undefined,
                     }),
-                  200
+                  200,
                 );
               }}
               onKeyPress={(e: any) => {

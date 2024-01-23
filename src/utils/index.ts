@@ -248,7 +248,7 @@ export const serverPath =
 
 export async function getMediaPathResults(
   mediaPath: string,
-  query: string
+  query: string,
 ): Promise<SearchResult[]> {
   const response = await window.fetch(mediaPath);
   let results: SearchResult[] = [];
@@ -259,7 +259,7 @@ export async function getMediaPathResults(
     const data = parser.parse(xml);
     let filtered = data.ListBucketResult.Contents.filter(
       // Exclude subdirectories
-      (file: any) => !file.Key.includes('/')
+      (file: any) => !file.Key.includes('/'),
     );
     results = filtered.map((file: any) => ({
       url: mediaPath + '/' + file.Key,
@@ -279,27 +279,27 @@ export async function getMediaPathResults(
     (option: SearchResult) =>
       // Exclude subtitles
       !option.url.endsWith('.srt') &&
-      option.name.toLowerCase().includes(query.toLowerCase())
+      option.name.toLowerCase().includes(query.toLowerCase()),
   );
   return results;
 }
 
 export async function getStreamPathResults(
   streamPath: string,
-  query: string
+  query: string,
 ): Promise<SearchResult[]> {
   const response = await window.fetch(
-    streamPath + `/${query ? 'search' : 'top'}?q=` + encodeURIComponent(query)
+    streamPath + `/${query ? 'search' : 'top'}?q=` + encodeURIComponent(query),
   );
   const data = await response.json();
   return data;
 }
 
 export async function getYouTubeResults(
-  query: string
+  query: string,
 ): Promise<SearchResult[]> {
   const response = await window.fetch(
-    serverPath + '/youtube?q=' + encodeURIComponent(query)
+    serverPath + '/youtube?q=' + encodeURIComponent(query),
   );
   const data = await response.json();
   return data.map((d: any) => ({ ...d, type: 'youtube' }));
@@ -362,7 +362,7 @@ export function calculateMedian(array: number[]): number {
 }
 
 export async function getUserImage(
-  user: firebase.User
+  user: firebase.User,
 ): Promise<string | null> {
   // Check if user has a Gravatar
   const hash = user.email ? MD5.hash(user.email) : '';
@@ -385,6 +385,6 @@ export const getFileName = (input: string) => {
 
 export const isEmojiString = (input: string): boolean => {
   return /^(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])+$/g.test(
-    input
+    input,
   );
 };

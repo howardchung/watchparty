@@ -15,7 +15,7 @@ async function init() {
   console.log(vids);
   vids.forEach((vid) => {
     const match = subs.find((sub) =>
-      vid.toLowerCase().startsWith(sub.slice(0, -4).toLowerCase())
+      vid.toLowerCase().startsWith(sub.slice(0, -4).toLowerCase()),
     );
     console.log(vid, match);
     if (vid && match) {

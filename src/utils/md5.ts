@@ -124,7 +124,7 @@ export class MD5 {
     b: number,
     x: number,
     s: number,
-    t: number
+    t: number,
   ): number {
     return MD5.ad(MD5.rl(MD5.ad(MD5.ad(a, q), MD5.ad(x, t)), s), b);
   }
@@ -136,7 +136,7 @@ export class MD5 {
     d: number,
     x: number,
     s: number,
-    t: number
+    t: number,
   ): number {
     return MD5.cm((b & c) | (~b & d), a, b, x, s, t);
   }
@@ -148,7 +148,7 @@ export class MD5 {
     d: number,
     x: number,
     s: number,
-    t: number
+    t: number,
   ): number {
     return MD5.cm((b & d) | (c & ~d), a, b, x, s, t);
   }
@@ -160,7 +160,7 @@ export class MD5 {
     d: number,
     x: number,
     s: number,
-    t: number
+    t: number,
   ): number {
     return MD5.cm(b ^ c ^ d, a, b, x, s, t);
   }
@@ -172,7 +172,7 @@ export class MD5 {
     d: number,
     x: number,
     s: number,
-    t: number
+    t: number,
   ): number {
     return MD5.cm(c ^ (b | ~d), a, b, x, s, t);
   }

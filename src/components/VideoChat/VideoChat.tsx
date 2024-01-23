@@ -168,7 +168,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
     const clientIds = new Set(
       this.props.participants
         .filter((p) => p.isVideoChat)
-        .map((p) => p.clientId)
+        .map((p) => p.clientId),
     );
     Object.entries(videoPCs).forEach(([key, value]) => {
       if (!clientIds.has(key)) {
@@ -359,7 +359,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
                             cursor: 'pointer',
                             opacity: 0.75,
                             visibility: Boolean(
-                              owner && owner === this.context.user?.uid
+                              owner && owner === this.context.user?.uid,
                             )
                               ? 'visible'
                               : 'hidden',
@@ -393,7 +393,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
                           pictureMap[p.id] ||
                           getDefaultPicture(
                             nameMap[p.id],
-                            getColorForStringHex(p.id)
+                            getColorForStringHex(p.id),
                           )
                         }
                         alt=""

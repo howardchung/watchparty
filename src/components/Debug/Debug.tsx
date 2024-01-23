@@ -23,7 +23,7 @@ const Debug = () => {
       json.reverse();
       setData(json);
     }) as any,
-    [setData]
+    [setData],
   );
   // Get the keys from the last/mostrecent element
   const keys = Object.keys(data.slice(-1)[0] ?? {});

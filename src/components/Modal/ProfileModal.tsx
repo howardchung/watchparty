@@ -30,7 +30,7 @@ export class ProfileModal extends React.Component<{
           uid: this.context.user?.uid,
           token,
         },
-      }
+      },
     );
     const data = response.data;
     const linkedDiscord = data.find((d) => d.kind === 'discord');
@@ -82,12 +82,12 @@ export class ProfileModal extends React.Component<{
 
   authDiscord = () => {
     const url = `https://discord.com/api/oauth2/authorize?client_id=1071707916719095908&redirect_uri=${encodeURIComponent(
-      config.VITE_OAUTH_REDIRECT_HOSTNAME
+      config.VITE_OAUTH_REDIRECT_HOSTNAME,
     )}%2Fdiscord%2Fauth&response_type=token&scope=identify`;
     window.open(
       url,
       '_blank',
-      'toolbar=0,location=0,menubar=0,width=450,height=900'
+      'toolbar=0,location=0,menubar=0,width=450,height=900',
     );
   };
 

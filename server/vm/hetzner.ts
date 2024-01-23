@@ -116,7 +116,7 @@ export class Hetzner extends VMManager {
     console.log(
       '[GETVM] %s: %s rate limit remaining',
       id,
-      response?.headers['ratelimit-remaining']
+      response?.headers['ratelimit-remaining'],
     );
     redis?.set('hetznerApiRemaining', response?.headers['ratelimit-remaining']);
     if (response.data.server.private_net?.length > 1) {
@@ -147,13 +147,13 @@ export class Hetzner extends VMManager {
             per_page: 50,
             label_selector: filter,
           },
-        })
-      )
+        }),
+      ),
     );
     const responsesMapped = responses.map((response) =>
       response.data.servers
         .map(this.mapServerObject)
-        .filter((server: VM) => server.tags.includes(this.getTag()))
+        .filter((server: VM) => server.tags.includes(this.getTag())),
     );
     return responsesMapped.flat();
   };

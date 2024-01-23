@@ -74,7 +74,7 @@ export class Room {
   constructor(
     io: Server,
     roomId: string,
-    roomData?: string | null | undefined
+    roomData?: string | null | undefined,
   ) {
     this.roomId = roomId;
     this.io = io;
@@ -105,7 +105,7 @@ export class Room {
       if (postgres) {
         const result = await postgres.query(
           `SELECT password, "isSubRoom" FROM room where "roomId" = $1`,
-          [this.roomId]
+          [this.roomId],
         );
         const roomPassword = result.rows[0]?.password;
         if (roomPassword && password !== roomPassword) {
@@ -148,28 +148,28 @@ export class Room {
       socket.on('CMD:pause', () => this.pauseVideo(socket));
       socket.on('CMD:seek', (data) => this.seekVideo(socket, data));
       socket.on('CMD:playbackRate', (data) =>
-        this.setPlaybackRate(socket, data)
+        this.setPlaybackRate(socket, data),
       );
       socket.on('CMD:loop', (data) => this.setLoop(socket, data));
       socket.on('CMD:ts', (data) => this.setTimestamp(socket, data));
       socket.on('CMD:chat', (data) => this.sendChatMessage(socket, data));
       socket.on('CMD:addReaction', (data) => this.addReaction(socket, data));
       socket.on('CMD:removeReaction', (data) =>
-        this.removeReaction(socket, data)
+        this.removeReaction(socket, data),
       );
       socket.on('CMD:joinVideo', () => this.joinVideo(socket));
       socket.on('CMD:leaveVideo', () => this.leaveVideo(socket));
       socket.on('CMD:joinScreenShare', (data) =>
-        this.joinScreenSharing(socket, data)
+        this.joinScreenSharing(socket, data),
       );
       socket.on('CMD:userMute', (data) => this.setUserMute(socket, data));
       socket.on('CMD:leaveScreenShare', () => this.leaveScreenSharing(socket));
       socket.on('CMD:startVBrowser', (data) =>
-        this.startVBrowser(socket, data)
+        this.startVBrowser(socket, data),
       );
       socket.on('CMD:stopVBrowser', () => this.stopVBrowser(socket));
       socket.on('CMD:changeController', (data) =>
-        this.changeController(socket, data)
+        this.changeController(socket, data),
       );
       socket.on('CMD:subtitle', (data) => this.addSubtitles(socket, data));
       socket.on('CMD:lock', (data) => this.lockRoom(socket, data));
@@ -183,7 +183,7 @@ export class Room {
       socket.on('CMD:playlistAdd', (data) => this.playlistAdd(socket, data));
       socket.on('CMD:playlistMove', (data) => this.playlistMove(socket, data));
       socket.on('CMD:playlistDelete', (data) =>
-        this.playlistDelete(socket, data)
+        this.playlistDelete(socket, data),
       );
 
       socket.on('signal', (data) => this.sendSignal(socket, data));
@@ -191,7 +191,7 @@ export class Room {
 
       socket.on('kickUser', (data) => this.kickUser(socket, data));
       socket.on('CMD:deleteChatMessages', (data) =>
-        this.deleteChatMessages(socket, data)
+        this.deleteChatMessages(socket, data),
       );
 
       socket.on('disconnect', () => this.disconnectUser(socket));
@@ -277,7 +277,7 @@ export class Room {
         const roomString = this.serialize();
         await postgres.query(
           `UPDATE room SET "lastUpdateTime" = $1, data = $2 WHERE "roomId" = $3`,
-          [this.lastUpdateTime, roomString, this.roomId]
+          [this.lastUpdateTime, roomString, this.roomId],
         );
       } catch (e) {
         console.warn(e);
@@ -326,7 +326,7 @@ export class Room {
   private getHostState = (): HostState => {
     // Reverse lookup the clientid to the socket id
     const match = this.roster.find(
-      (user) => this.clientIdMap[user.id] === this.vBrowser?.controllerClient
+      (user) => this.clientIdMap[user.id] === this.vBrowser?.controllerClient,
     );
     return {
       video: this.video ?? '',
@@ -369,7 +369,7 @@ export class Room {
               region,
               id,
               roomId: this.roomId,
-            }
+            },
           );
         }
       } catch (e) {
@@ -432,7 +432,7 @@ export class Room {
   private validateOwner = async (uid: string) => {
     const result = await postgres?.query(
       'SELECT owner FROM room where "roomId" = $1',
-      [this.roomId]
+      [this.roomId],
     );
     const owner = result?.rows[0]?.owner;
     return !owner || uid === owner;
@@ -459,7 +459,7 @@ export class Room {
 
   private changeUserID = async (
     socket: Socket,
-    data: { uid: string; token: string }
+    data: { uid: string; token: string },
   ) => {
     if (!data) {
       return;
@@ -609,7 +609,7 @@ export class Room {
 
   private playlistMove = (
     socket: Socket,
-    data: { index: number; toIndex: number }
+    data: { index: number; toIndex: number },
   ) => {
     if (data.index !== -1) {
       const items = this.playlist.splice(data.index, 1);
@@ -721,14 +721,14 @@ export class Room {
 
   private addReaction = (
     socket: Socket,
-    data: { value: string; msgId: string; msgTimestamp: string }
+    data: { value: string; msgId: string; msgTimestamp: string },
   ) => {
     // Emojis can be multiple bytes
     if (data.value.length > 8) {
       return;
     }
     const msg = this.chat.find(
-      (m) => m.id === data.msgId && m.timestamp === data.msgTimestamp
+      (m) => m.id === data.msgId && m.timestamp === data.msgTimestamp,
     );
     if (!msg) {
       return;
@@ -746,20 +746,20 @@ export class Room {
 
   private removeReaction = (
     socket: Socket,
-    data: { value: string; msgId: string; msgTimestamp: string }
+    data: { value: string; msgId: string; msgTimestamp: string },
   ) => {
     // Emojis can be multiple bytes
     if (data.value.length > 8) {
       return;
     }
     const msg = this.chat.find(
-      (m) => m.id === data.msgId && m.timestamp === data.msgTimestamp
+      (m) => m.id === data.msgId && m.timestamp === data.msgTimestamp,
     );
     if (!msg || !msg.reactions?.[data.value]) {
       return;
     }
     msg.reactions[data.value] = msg.reactions[data.value].filter(
-      (id) => id !== socket.id
+      (id) => id !== socket.id,
     );
     const reaction: Reaction = { user: socket.id, ...data };
     this.io.of(this.roomId).emit('REC:removeReaction', reaction);
@@ -792,7 +792,7 @@ export class Room {
 
   private joinScreenSharing = (
     socket: Socket,
-    data: { file: boolean; mediasoup?: boolean }
+    data: { file: boolean; mediasoup?: boolean },
   ) => {
     if (!this.validateLock(socket.id)) {
       return;
@@ -812,13 +812,13 @@ export class Room {
     if (data && data.file) {
       this.cmdHost(
         socket,
-        'fileshare://' + this.clientIdMap[socket.id] + mediasoupSuffix
+        'fileshare://' + this.clientIdMap[socket.id] + mediasoupSuffix,
       );
       redisCount('fileShareStarts');
     } else {
       this.cmdHost(
         socket,
-        'screenshare://' + this.clientIdMap[socket.id] + mediasoupSuffix
+        'screenshare://' + this.clientIdMap[socket.id] + mediasoupSuffix,
       );
       redisCount('screenShareStarts');
     }
@@ -841,7 +841,7 @@ export class Room {
       token: string;
       rcToken: string;
       options: { size: string; region: string; provider: string };
-    }
+    },
   ) => {
     if (!this.validateLock(socket.id)) {
       socket.emit('errorMessage', 'Room is locked.');
@@ -871,7 +871,7 @@ export class Room {
       ) {
         socket.emit(
           'errorMessage',
-          'A verified email is required to start a VBrowser.'
+          'A verified email is required to start a VBrowser.',
         );
         return;
       }
@@ -885,13 +885,13 @@ export class Room {
           const clientCount = await redis.zincrby(
             'vBrowserClientIDs',
             1,
-            clientId
+            clientId,
           );
           redis.expireat('vBrowserClientIDs', expireTime);
           const clientMinutes = await redis.zincrby(
             'vBrowserClientIDMinutes',
             1,
-            clientId
+            clientId,
           );
           redis.expireat('vBrowserClientIDMinutes', expireTime);
         }
@@ -907,7 +907,7 @@ export class Room {
       if (false) {
         socket.emit(
           'errorMessage',
-          'There is already an active vBrowser for this user.'
+          'There is already an active vBrowser for this user.',
         );
         return;
       }
@@ -984,7 +984,7 @@ export class Room {
               region,
               uid,
               roomId,
-            }
+            },
           );
           assignment = data;
         }
@@ -1004,11 +1004,11 @@ export class Room {
           '[ASSIGN] %s to %s in %s',
           assignment.provider + ':' + assignment.id,
           roomId,
-          assignElapsed + 'ms'
+          assignElapsed + 'ms',
         );
         this.cmdHost(
           null,
-          'vbrowser://' + this.vBrowser.pass + '@' + this.vBrowser.host
+          'vbrowser://' + this.vBrowser.pass + '@' + this.vBrowser.host,
         );
       }
       await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -1052,7 +1052,7 @@ export class Room {
 
   private lockRoom = async (
     socket: Socket,
-    data: { uid: string; token: string; locked: boolean }
+    data: { uid: string; token: string; locked: boolean },
   ) => {
     if (!data) {
       return;
@@ -1080,7 +1080,7 @@ export class Room {
       uid: string;
       token: string;
       undo: boolean;
-    }
+    },
   ) => {
     if (!postgres) {
       socket.emit('errorMessage', 'Database is not available');
@@ -1088,7 +1088,7 @@ export class Room {
     }
     const decoded = await validateUserToken(
       data?.uid as string,
-      data?.token as string
+      data?.token as string,
     );
     if (!decoded) {
       socket.emit('errorMessage', 'Failed to authenticate user');
@@ -1116,7 +1116,7 @@ export class Room {
           roomTitleColor: null,
           mediaPath: null,
         },
-        { roomId: this.roomId }
+        { roomId: this.roomId },
       );
       socket.emit('REC:getRoomState', {});
     } else {
@@ -1124,14 +1124,14 @@ export class Room {
       const roomCount = (
         await postgres.query(
           'SELECT count(1) from room where owner = $1 AND "roomId" != $2',
-          [owner, this.roomId]
+          [owner, this.roomId],
         )
       ).rows[0].count;
       const limit = isSubscriber ? config.SUBSCRIBER_ROOM_LIMIT : 1;
       if (roomCount >= limit) {
         socket.emit(
           'errorMessage',
-          `You've exceeded the permanent room limit. Subscribe for additional permanent rooms.`
+          `You've exceeded the permanent room limit. Subscribe for additional permanent rooms.`,
         );
         return;
       }
@@ -1160,7 +1160,7 @@ export class Room {
     }
     const result = await postgres.query(
       `SELECT password, vanity, owner, "isChatDisabled", "roomTitle", "roomDescription", "roomTitleColor", "mediaPath" FROM room where "roomId" = $1`,
-      [this.roomId]
+      [this.roomId],
     );
     const first = result.rows[0];
     if (this.isChatDisabled === undefined) {
@@ -1191,7 +1191,7 @@ export class Room {
       roomDescription: string;
       roomTitleColor: string;
       mediaPath: string;
-    }
+    },
   ) => {
     if (!postgres) {
       socket.emit('errorMessage', 'Database is not available');
@@ -1199,7 +1199,7 @@ export class Room {
     }
     const decoded = await validateUserToken(
       data?.uid as string,
-      data?.token as string
+      data?.token as string,
     );
     if (!decoded) {
       socket.emit('errorMessage', 'Failed to authenticate user');
@@ -1307,7 +1307,7 @@ export class Room {
 
   private signalSS = (
     socket: Socket,
-    data: { to: string; sharer: boolean; msg: string }
+    data: { to: string; sharer: boolean; msg: string },
   ) => {
     if (!data) {
       return;
@@ -1343,11 +1343,11 @@ export class Room {
       uid: string;
       token: string;
       userToBeKicked: string;
-    }
+    },
   ) => {
     const decoded = await validateUserToken(
       data?.uid as string,
-      data?.token as string
+      data?.token as string,
     );
     if (!decoded) {
       socket.emit('errorMessage', 'Failed to authenticate user');
@@ -1378,11 +1378,11 @@ export class Room {
       timestamp: string | undefined;
       uid: string;
       token: string;
-    }
+    },
   ) => {
     const decoded = await validateUserToken(
       data?.uid as string,
-      data?.token as string
+      data?.token as string,
     );
     if (!decoded) {
       socket.emit('errorMessage', 'Failed to authenticate user');

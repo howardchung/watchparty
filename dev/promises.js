@@ -8,7 +8,7 @@ async function test() {
         await new Promise((resolve) => setTimeout(resolve, el * 1000));
         console.log('[m]', start);
         resolve(el);
-      })
+      }),
   );
   const result = await Promise.allSettled(arrPromises);
   console.log('[e]', start, result);

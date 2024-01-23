@@ -29,7 +29,7 @@ app.post('/assignVM', async (req, res) => {
         'assignVM from pool:',
         pool.getPoolName(),
         req.body.roomId,
-        req.body.uid
+        req.body.uid,
       );
       const vm = await pool.assignVM(req.body.roomId, req.body.uid);
       return res.json(vm ?? null);
@@ -93,7 +93,7 @@ app.get('/isFreePoolFull', async (req, res) => {
     isFull = Boolean(
       limitSize > 0 &&
         (Number(availableCount) === 0 ||
-          Number(currentSize) - Number(availableCount) > limitSize * 0.95)
+          Number(currentSize) - Number(availableCount) > limitSize * 0.95),
     );
   }
   return res.json({ isFull });

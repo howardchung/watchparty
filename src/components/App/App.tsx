@@ -245,9 +245,12 @@ export default class App extends React.Component<AppProps, AppState> {
     document.onkeydown = this.onKeydown;
 
     // Send heartbeat to the server
-    this.heartbeat = window.setInterval(() => {
-      window.fetch(serverPath + '/ping');
-    }, 10 * 60 * 1000);
+    this.heartbeat = window.setInterval(
+      () => {
+        window.fetch(serverPath + '/ping');
+      },
+      10 * 60 * 1000,
+    );
 
     const canAutoplay = await testAutoplay();
     this.setState({ isAutoPlayable: canAutoplay });
@@ -275,7 +278,7 @@ export default class App extends React.Component<AppProps, AppState> {
     if (this.props.vanity) {
       try {
         const response = await axios.get(
-          serverPath + '/resolveRoom/' + this.props.vanity
+          serverPath + '/resolveRoom/' + this.props.vanity,
         );
         if (response.data.roomId) {
           roomId = response.data.roomId;
@@ -297,7 +300,7 @@ export default class App extends React.Component<AppProps, AppState> {
     let password = '';
     try {
       const savedPasswordsString = window.localStorage.getItem(
-        'watchparty-passwords'
+        'watchparty-passwords',
       );
       const savedPasswords = JSON.parse(savedPasswordsString || '{}');
       this.setState({ savedPasswords });
@@ -449,7 +452,7 @@ export default class App extends React.Component<AppProps, AppState> {
             this.playingVBrowser()
           ) {
             console.log(
-              'exiting REC:host since we are using webRTC (fileshare, screenshare, or vbrowser). Check setupRTCConnections()'
+              'exiting REC:host since we are using webRTC (fileshare, screenshare, or vbrowser). Check setupRTCConnections()',
             );
             if (!(this.playingVBrowser() && !this.getVBrowserHost())) {
               // Remove the loader unless we're waiting for a vbrowser
@@ -459,7 +462,7 @@ export default class App extends React.Component<AppProps, AppState> {
           }
           if (this.usingYoutube() && !this.YouTubeInterface.isReady()) {
             console.log(
-              'YT player not ready, onReady callback will retry when it is'
+              'YT player not ready, onReady callback will retry when it is',
             );
             return;
           }
@@ -510,10 +513,10 @@ export default class App extends React.Component<AppProps, AppState> {
                   // Torrents can contain many files.
                   const files = torrent.files;
                   const filtered = files.filter(
-                    (f: WebTorrent.TorrentFile) => f.length >= 10 * 1024 * 1024
+                    (f: WebTorrent.TorrentFile) => f.length >= 10 * 1024 * 1024,
                   );
                   const fileIndex = Number(
-                    new URLSearchParams(src).get('fileIndex')
+                    new URLSearchParams(src).get('fileIndex'),
                   );
                   // Try to find a single large file to play
                   const target =
@@ -526,7 +529,7 @@ export default class App extends React.Component<AppProps, AppState> {
                         name: f.name as string,
                         url: src + `&fileIndex=${i}`,
                         length: f.length as number,
-                      }))
+                      })),
                     );
                   } else {
                     //@ts-ignore
@@ -534,7 +537,7 @@ export default class App extends React.Component<AppProps, AppState> {
                     leftVideo.currentTime = time;
                   }
                   resolve(null);
-                }
+                },
               );
             });
           } else if (isHls(src) && window.MediaSource) {
@@ -568,7 +571,7 @@ export default class App extends React.Component<AppProps, AppState> {
                 this.Player().setPlaybackRate(data.playbackRate);
               }
             },
-            { once: true }
+            { once: true },
           );
 
           // Progress updater
@@ -577,7 +580,7 @@ export default class App extends React.Component<AppProps, AppState> {
           if (currentMedia.includes('/stream?torrent=magnet')) {
             this.progressUpdater = window.setInterval(async () => {
               const response = await window.fetch(
-                currentMedia.replace('/stream', '/progress')
+                currentMedia.replace('/stream', '/progress'),
               );
               const data = await response.json();
               this.setState({
@@ -601,7 +604,7 @@ export default class App extends React.Component<AppProps, AppState> {
               }
             }, 1000);
           }
-        }
+        },
       );
     });
     socket.on('REC:chat', (data: ChatMessage) => {
@@ -625,7 +628,7 @@ export default class App extends React.Component<AppProps, AppState> {
     socket.on('REC:addReaction', (data: Reaction) => {
       const { chat } = this.state;
       const msgIndex = chat.findIndex(
-        (m) => m.id === data.msgId && m.timestamp === data.msgTimestamp
+        (m) => m.id === data.msgId && m.timestamp === data.msgTimestamp,
       );
       if (msgIndex === -1) {
         return;
@@ -648,13 +651,13 @@ export default class App extends React.Component<AppProps, AppState> {
     socket.on('REC:removeReaction', (data: Reaction) => {
       const { chat } = this.state;
       const msg = chat.find(
-        (m) => m.id === data.msgId && m.timestamp === data.msgTimestamp
+        (m) => m.id === data.msgId && m.timestamp === data.msgTimestamp,
       );
       if (!msg || !msg.reactions?.[data.value]) {
         return;
       }
       msg.reactions[data.value] = msg.reactions[data.value].filter(
-        (id) => id !== data.user
+        (id) => id !== data.user,
       );
       this.setState({ chat });
     });
@@ -708,7 +711,7 @@ export default class App extends React.Component<AppProps, AppState> {
         { participants: data, rosterUpdateTS: Number(new Date()) },
         () => {
           this.setupRTCConnections();
-        }
+        },
       );
     });
     socket.on('chatinit', (data: ChatMessage[]) => {
@@ -749,7 +752,7 @@ export default class App extends React.Component<AppProps, AppState> {
           // Allow stereo audio
           answer.sdp = answer.sdp?.replace(
             'useinbandfec=1',
-            'useinbandfec=1; stereo=1; maxaveragebitrate=510000'
+            'useinbandfec=1; stereo=1; maxaveragebitrate=510000',
           );
           // console.log(answer.sdp);
           // Allow multichannel audio if Chromium
@@ -759,7 +762,7 @@ export default class App extends React.Component<AppProps, AppState> {
               ?.replace('opus/48000/2', 'multiopus/48000/6')
               .replace(
                 'useinbandfec=1',
-                'channel_mapping=0,4,1,2,3,5; num_streams=4; coupled_streams=2;maxaveragebitrate=510000;minptime=10;useinbandfec=1'
+                'channel_mapping=0,4,1,2,3,5; num_streams=4; coupled_streams=2;maxaveragebitrate=510000;minptime=10;useinbandfec=1',
               );
           }
           await pc.setLocalDescription(answer);
@@ -767,7 +770,7 @@ export default class App extends React.Component<AppProps, AppState> {
         } else if (msg.sdp && msg.sdp.type === 'answer') {
           pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
         }
-      }
+      },
     );
     socket.on('REC:getRoomState', this.handleRoomState);
     window.setInterval(() => {
@@ -778,7 +781,7 @@ export default class App extends React.Component<AppProps, AppState> {
   };
 
   launchMultiSelect = (
-    data?: { name: string; url: string; length: number; playFn?: () => void }[]
+    data?: { name: string; url: string; length: number; playFn?: () => void }[],
   ) => {
     this.setState({ multiStreamSelection: data });
   };
@@ -1032,7 +1035,7 @@ export default class App extends React.Component<AppProps, AppState> {
             dtlsParameters,
           }: { dtlsParameters: MediasoupClient.types.DtlsParameters },
           callback: () => void,
-          errback: (error: Error) => void
+          errback: (error: Error) => void,
         ) => {
           console.log('PUBLISH: --transport connect');
           sendRequest('connectProducerTransport', {
@@ -1040,7 +1043,7 @@ export default class App extends React.Component<AppProps, AppState> {
           })
             .then(callback)
             .catch(errback);
-        }
+        },
       );
 
       producerTransport.on(
@@ -1054,7 +1057,7 @@ export default class App extends React.Component<AppProps, AppState> {
             rtpParameters: MediasoupClient.types.RtpParameters;
           },
           callback: ({ id }: { id: string }) => void,
-          errback: (error: Error) => void
+          errback: (error: Error) => void,
         ) => {
           console.log('PUBLISH: --transport produce');
           try {
@@ -1067,7 +1070,7 @@ export default class App extends React.Component<AppProps, AppState> {
           } catch (err: any) {
             errback(err);
           }
-        }
+        },
       );
 
       // producerTransport.on('connectionstatechange', (state: string) => {
@@ -1103,7 +1106,7 @@ export default class App extends React.Component<AppProps, AppState> {
     }
 
     async function loadDevice(
-      routerRtpCapabilities: MediasoupClient.types.RtpCapabilities
+      routerRtpCapabilities: MediasoupClient.types.RtpCapabilities,
     ) {
       const { Device } = await import('mediasoup-client');
       device = new Device();
@@ -1223,7 +1226,7 @@ export default class App extends React.Component<AppProps, AppState> {
     }
 
     async function loadDevice(
-      routerRtpCapabilities: MediasoupClient.types.RtpCapabilities
+      routerRtpCapabilities: MediasoupClient.types.RtpCapabilities,
     ) {
       try {
         const { Device } = await import('mediasoup-client');
@@ -1238,7 +1241,7 @@ export default class App extends React.Component<AppProps, AppState> {
 
     async function consume(
       transport: MediasoupClient.types.Transport,
-      trackKind: string
+      trackKind: string,
     ) {
       console.log('SUBSCRIBE: --start of consume --kind=' + trackKind);
       const { rtpCapabilities } = device;
@@ -1285,7 +1288,7 @@ export default class App extends React.Component<AppProps, AppState> {
             dtlsParameters,
           }: { dtlsParameters: MediasoupClient.types.DtlsParameters },
           callback: () => void,
-          errback: (err: Error) => void
+          errback: (err: Error) => void,
         ) => {
           console.log('SUBSCRIBE: ---consumer transport connect');
           sendRequest('connectConsumerTransport', {
@@ -1293,7 +1296,7 @@ export default class App extends React.Component<AppProps, AppState> {
           })
             .then(callback)
             .catch(errback);
-        }
+        },
       );
 
       // consumerTransport.on('connectionstatechange', (state: string) => {
@@ -1566,7 +1569,7 @@ export default class App extends React.Component<AppProps, AppState> {
             this.setState({ loading: false, nonPlayableMedia: true });
           }
         }
-      }
+      },
     );
   };
 
@@ -1803,7 +1806,7 @@ export default class App extends React.Component<AppProps, AppState> {
       const nextNum = Number(fileIndex) + 1;
       const nextUrl = this.state.roomMedia.replace(
         /&fileIndex=(\d+)$/,
-        `&fileIndex=${nextNum}`
+        `&fileIndex=${nextNum}`,
       );
       this.roomSetMedia(null, { value: nextUrl });
     }
@@ -1916,7 +1919,7 @@ export default class App extends React.Component<AppProps, AppState> {
                 circular
                 color={
                   getColorForString(
-                    this.state.participants.length.toString()
+                    this.state.participants.length.toString(),
                   ) as SemanticCOLORS
                 }
               >
@@ -2438,7 +2441,7 @@ export default class App extends React.Component<AppProps, AppState> {
                       ></Progress> */}
                       {Math.min(
                         (this.state.downloaded / this.state.total) * 100,
-                        100
+                        100,
                       ).toFixed(2) +
                         '% - ' +
                         formatSpeed(this.state.speed) +

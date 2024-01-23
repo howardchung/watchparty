@@ -15,7 +15,7 @@ export const PasswordModal = ({
         ...savedPasswords,
         [roomId]: (document.getElementById('roomPassword') as HTMLInputElement)
           ?.value,
-      })
+      }),
     );
     window.location.reload();
   }, [savedPasswords, roomId]);

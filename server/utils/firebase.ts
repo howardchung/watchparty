@@ -4,7 +4,7 @@ import * as admin from 'firebase-admin';
 if (config.FIREBASE_ADMIN_SDK_CONFIG) {
   admin.initializeApp({
     credential: admin.credential.cert(
-      JSON.parse(config.FIREBASE_ADMIN_SDK_CONFIG)
+      JSON.parse(config.FIREBASE_ADMIN_SDK_CONFIG),
     ),
     databaseURL: config.FIREBASE_DATABASE_URL,
   });

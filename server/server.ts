@@ -44,7 +44,7 @@ if (process.env.NODE_ENV === 'development') {
     },
     (error) => {
       console.error(error);
-    }
+    },
   );
 }
 
@@ -183,7 +183,7 @@ app.get('/searchSubtitles', async (req, res) => {
       subUrl = `https://rest.opensubtitles.org/search/moviebytesize-${size}/moviehash-${hash}/sublanguageid-eng`;
     } else if (title) {
       subUrl = `https://rest.opensubtitles.org/search/query-${encodeURIComponent(
-        title
+        title,
       )}/sublanguageid-eng`;
     }
     console.log(subUrl);
@@ -301,7 +301,7 @@ app.post('/manageSub', async (req, res) => {
   }
   const session = await createSelfServicePortal(
     customer.id,
-    req.body?.return_url
+    req.body?.return_url,
   );
   return res.json(session);
 });
@@ -328,7 +328,7 @@ app.delete('/deleteAccount', async (req, res) => {
 app.get('/metadata', async (req, res) => {
   const decoded = await validateUserToken(
     req.query?.uid as string,
-    req.query?.token as string
+    req.query?.token as string,
   );
   let isSubscriber = await getIsSubscriberByEmail(decoded?.email);
   // Has the user ever been a subscriber?
@@ -337,7 +337,7 @@ app.get('/metadata', async (req, res) => {
   try {
     isFreePoolFull = (
       await axios.get(
-        'http://localhost:' + config.VMWORKER_PORT + '/isFreePoolFull'
+        'http://localhost:' + config.VMWORKER_PORT + '/isFreePoolFull',
       )
     ).data.isFull;
   } catch (e: any) {
@@ -353,7 +353,7 @@ app.get('/metadata', async (req, res) => {
       postgres,
       'active_user',
       { uid: decoded?.uid, lastActiveTime: new Date() },
-      { uid: true }
+      { uid: true },
     );
   }
   return res.json({
@@ -368,7 +368,7 @@ app.get('/resolveRoom/:vanity', async (req, res) => {
   const vanity = req.params.vanity;
   const result = await postgres?.query(
     `SELECT "roomId", vanity from room WHERE LOWER(vanity) = $1`,
-    [vanity?.toLowerCase() ?? '']
+    [vanity?.toLowerCase() ?? ''],
   );
   // console.log(vanity, result.rows);
   // We also use this for checking name availability, so just return empty response if it doesn't exist (http 200)
@@ -383,14 +383,14 @@ app.get('/resolveShard/:roomId', async (req, res) => {
 app.get('/listRooms', async (req, res) => {
   const decoded = await validateUserToken(
     req.query?.uid as string,
-    req.query?.token as string
+    req.query?.token as string,
   );
   if (!decoded) {
     return res.status(400).json({ error: 'invalid user token' });
   }
   const result = await postgres?.query<PersistentRoom>(
     `SELECT "roomId", vanity from room WHERE owner = $1`,
-    [decoded.uid]
+    [decoded.uid],
   );
   return res.json(result?.rows ?? []);
 });
@@ -398,14 +398,14 @@ app.get('/listRooms', async (req, res) => {
 app.delete('/deleteRoom', async (req, res) => {
   const decoded = await validateUserToken(
     req.query?.uid as string,
-    req.query?.token as string
+    req.query?.token as string,
   );
   if (!decoded) {
     return res.status(400).json({ error: 'invalid user token' });
   }
   const result = await postgres?.query(
     `DELETE from room WHERE owner = $1 and "roomId" = $2`,
-    [decoded.uid, req.query.roomId]
+    [decoded.uid, req.query.roomId],
   );
   return res.json(result?.rows);
 });
@@ -413,7 +413,7 @@ app.delete('/deleteRoom', async (req, res) => {
 app.get('/linkAccount', async (req, res) => {
   const decoded = await validateUserToken(
     req.query?.uid as string,
-    req.query?.token as string
+    req.query?.token as string,
   );
   if (!decoded) {
     return res.status(400).json({ error: 'invalid user token' });
@@ -426,7 +426,7 @@ app.get('/linkAccount', async (req, res) => {
   if (decoded?.uid && postgres) {
     const { rows } = await postgres.query(
       'SELECT kind, accountid, accountname, discriminator FROM link_account WHERE uid = $1',
-      [decoded?.uid]
+      [decoded?.uid],
     );
     linkAccounts = rows;
   }
@@ -436,7 +436,7 @@ app.get('/linkAccount', async (req, res) => {
 app.post('/linkAccount', async (req, res) => {
   const decoded = await validateUserToken(
     req.body?.uid as string,
-    req.body?.token as string
+    req.body?.token as string,
   );
   if (!decoded) {
     return res.status(400).json({ error: 'invalid user token' });
@@ -468,7 +468,7 @@ app.post('/linkAccount', async (req, res) => {
         uid: decoded.uid,
         kind: kind,
       },
-      { uid: true, kind: true }
+      { uid: true, kind: true },
     );
     return res.json({});
   }
@@ -478,7 +478,7 @@ app.delete('/linkAccount', async (req, res) => {
   // TODO read from req.query instead
   const decoded = await validateUserToken(
     req.body?.uid as string,
-    req.body?.token as string
+    req.body?.token as string,
   );
   if (!decoded) {
     return res.status(400).json({ error: 'invalid user token' });
@@ -488,7 +488,7 @@ app.delete('/linkAccount', async (req, res) => {
   }
   await postgres.query(
     'DELETE FROM link_account WHERE uid = $1 AND kind = $2',
-    [decoded.uid, req.body.kind]
+    [decoded.uid, req.body.kind],
   );
   res.json({});
 });
@@ -504,7 +504,7 @@ app.get('/proxy/*', async (req, res) => {
       // VOD
       // https://d2vjef5jvl6bfs.cloudfront.net/3012391a6c3e84c79ef6_gamesdonequick_41198403369_1681059003/chunked/index-dvr.m3u8
       const resp = await axios.get(
-        'https://' + req.query.host + req.path.slice('/proxy'.length)
+        'https://' + req.query.host + req.path.slice('/proxy'.length),
       );
       const re = /proxy\/(.*)\/chunked\/index-dvr.m3u8/;
       const rematch = re.exec(req.path);
@@ -513,7 +513,7 @@ app.get('/proxy/*', async (req, res) => {
       const re2 = /(.*).ts/g;
       const repl = resp.data.replaceAll(
         re2,
-        `/proxy/${name}/chunked/$1.ts?host=${host}`
+        `/proxy/${name}/chunked/$1.ts?host=${host}`,
       );
       res.send(repl);
     } else if (req.path.includes('/v1/playlist')) {
@@ -521,21 +521,21 @@ app.get('/proxy/*', async (req, res) => {
       // https://video-weaver.sea02.hls.ttvnw.net/v1/playlist/CrQEgv7Mz6nnsfJH3XtVQxeYXk8mViy1zNGWglcybvxZsI1rv3iLnjAnnqwCiVXCJ-DdD27J6RuFrLy7YUYwHUCKazIKICIupUCn9UXtaBYhBM5JIYqg9dz6NWYrCWU9HZJj2TGROv9mAOKuTR51YS82hdYL4PFZa3xxWXhgDsxXQHNDB03kY6S0aG0-EVva1xYrn5Ge6IAXRwug9QDGlb-ydtF3BtYppoTklVI7CVLySPPwbbt5Ow1JXdnKhLSwQEs4bh3BLwMnRBwUFI5nmE18BLYbkMOUivgYP5SSMgnGGlSkJO-iJNPWvepunEgyBUzB_7L-b1keTcV-Qak9IcWIITIWbRvmg6qB3ZSuWdcJgWKmdXdIn4qoRM4o16G1_0N_WRqPtMQFo0hmTlAVmHrzRArJQmaSgqAxZxRbFMd9RFeX6qjP9NtwguPbSeStdVbQxMNC34iavYUIxo8Ug812BHsG7J_kIlof2zkIqkEbP3oV3UkSByIo7xh9EEVargjaGDuQRt8zPQ6-fNBWJJe9F6IFu7lXBPIJ016lopyfcvTWjbLbBHsVkg6vG-3UISh0nud7KB5g5ipQePhtcFSI5hvjlfX1DAVHEpTWXkvlnL4wNqEqpBYL2btSXYeE1Cb-RAvrAT0s61usERcL2eI-S5aTcSO8_hxQ2afC7c9vlypOWgP6p6XNpViZHXmdXv4t-d68Z-MpLtSU7VbB3pRWnSswFFyA3W39ITic4lb97Djp3wHhGgz0Sy8aDb9r0tnphIYgASoJdXMtZWFzdC0yMKQG.m3u8
       // Extract the edge URL host and add it to URL so proxy can fetch
       const resp = await axios.get(
-        'https://' + req.query.host + req.path.slice('/proxy'.length)
+        'https://' + req.query.host + req.path.slice('/proxy'.length),
       );
       const re = /https:\/\/(.*)\/v1\/segment\/(.*)/g;
       const match = re.exec(resp.data);
       const edgehost = match?.[1];
       const repl = resp.data.replaceAll(
         re,
-        `/proxy/v1/segment/$2?host=${edgehost}`
+        `/proxy/v1/segment/$2?host=${edgehost}`,
       );
       res.send(repl);
     } else {
       // Segment
       const resp = await axios.get(
         'https://' + req.query.host + req.path.slice('/proxy'.length),
-        { responseType: 'arraybuffer' }
+        { responseType: 'arraybuffer' },
       );
       res.writeHead(200, {
         'Content-Type': 'application/octet-stream',
@@ -555,7 +555,7 @@ app.use(express.static(config.BUILD_DIRECTORY));
 // Send index.html for all other requests (SPA)
 app.use('/*', (_req, res) => {
   res.sendFile(
-    path.resolve(__dirname + `/../${config.BUILD_DIRECTORY}/index.html`)
+    path.resolve(__dirname + `/../${config.BUILD_DIRECTORY}/index.html`),
   );
 });
 
@@ -628,7 +628,7 @@ async function minuteMetrics() {
       // Update the heartbeat
       await postgres?.query(
         `UPDATE vbrowser SET "heartbeatTime" = $1 WHERE "roomId" = $2 and vmid = $3`,
-        [new Date(), room.roomId, room.vBrowser.id]
+        [new Date(), room.roomId, room.vBrowser.id],
       );
 
       const expireTime = getStartOfDay() / 1000 + 86400;
@@ -636,7 +636,7 @@ async function minuteMetrics() {
         await redis?.zincrby(
           'vBrowserClientIDMinutes',
           1,
-          room.vBrowser.creatorClientID
+          room.vBrowser.creatorClientID,
         );
         await redis?.expireat('vBrowserClientIDMinutes', expireTime);
       }
@@ -644,7 +644,7 @@ async function minuteMetrics() {
         await redis?.zincrby(
           'vBrowserUIDMinutes',
           1,
-          room.vBrowser?.creatorUID
+          room.vBrowser?.creatorUID,
         );
         await redis?.expireat('vBrowserUIDMinutes', expireTime);
       }
@@ -685,7 +685,7 @@ async function getAllRooms() {
   }
   return (
     await postgres.query<PersistentRoom>(
-      `SELECT * from room where "roomId" SIMILAR TO '${range}'`
+      `SELECT * from room where "roomId" SIMILAR TO '${range}'`,
     )
   ).rows;
 }
@@ -747,12 +747,12 @@ async function getStats() {
   });
 
   currentVBrowserUIDCounts = Object.fromEntries(
-    Object.entries(currentVBrowserUIDCounts).filter(([, val]) => val > 1)
+    Object.entries(currentVBrowserUIDCounts).filter(([, val]) => val > 1),
   );
 
   const dbRoomData = (
     await postgres?.query(
-      `SELECT "roomId", "creationTime", "lastUpdateTime", vanity, "isSubRoom", "roomTitle", "roomDescription", "mediaPath", owner, password from room WHERE "lastUpdateTime" > NOW() - INTERVAL '7 day' ORDER BY "creationTime" DESC`
+      `SELECT "roomId", "creationTime", "lastUpdateTime", vanity, "isSubRoom", "roomTitle", "roomDescription", "mediaPath", owner, password from room WHERE "lastUpdateTime" > NOW() - INTERVAL '7 day' ORDER BY "creationTime" DESC`,
     )
   )?.rows;
   const currentRoomData = dbRoomData
@@ -801,18 +801,18 @@ async function getStats() {
       ?.split('\n')
       .find((line) => line.startsWith('used_memory:'))
       ?.split(':')[1]
-      .trim()
+      .trim(),
   );
   const postgresUsage = Number(
     (await postgres?.query(`SELECT pg_database_size('postgres');`))?.rows[0]
-      .pg_database_size
+      .pg_database_size,
   );
   const numPermaRooms = Number(
     (await postgres?.query('SELECT count(1) from room WHERE owner IS NOT NULL'))
-      ?.rows[0].count
+      ?.rows[0].count,
   );
   const numSubs = Number(
-    (await postgres?.query('SELECT count(1) from subscriber'))?.rows[0].count
+    (await postgres?.query('SELECT count(1) from subscriber'))?.rows[0].count,
   );
   const discordBotWatch = await getRedisCountDay('discordBotWatch');
   const createRoomErrors = await getRedisCountDay('createRoomError');
@@ -825,18 +825,18 @@ async function getStats() {
   const vBrowserFails = await getRedisCountDay('vBrowserFails');
   const vBrowserStagingFails = await getRedisCountDay('vBrowserStagingFails');
   const vBrowserStopTimeout = await getRedisCountDay(
-    'vBrowserTerminateTimeout'
+    'vBrowserTerminateTimeout',
   );
   const vBrowserStopEmpty = await getRedisCountDay('vBrowserTerminateEmpty');
   const vBrowserStopManual = await getRedisCountDay('vBrowserTerminateManual');
   const recaptchaRejectsLowScore = await getRedisCountDay(
-    'recaptchaRejectsLowScore'
+    'recaptchaRejectsLowScore',
   );
   const vBrowserStartMS = await redis?.lrange('vBrowserStartMS', 0, -1);
   const vBrowserStageRetries = await redis?.lrange(
     'vBrowserStageRetries',
     0,
-    -1
+    -1,
   );
   const vBrowserStageFails = await redis?.lrange('vBrowserStageFails', 0, -1);
   const vBrowserSessionMS = await redis?.lrange('vBrowserSessionMS', 0, -1);
@@ -850,7 +850,7 @@ async function getStats() {
   const videoChatStarts = await getRedisCountDay('videoChatStarts');
   const connectStarts = await getRedisCountDay('connectStarts');
   const connectStartsDistinct = await getRedisCountDayDistinct(
-    'connectStartsDistinct'
+    'connectStartsDistinct',
   );
   const subUploads = await getRedisCountDay('subUploads');
   const subDownloadsOS = await getRedisCountDay('subDownloadsOS');
@@ -863,7 +863,7 @@ async function getStats() {
     'WITHSCORES',
     'LIMIT',
     0,
-    20
+    20,
   );
   const vBrowserUIDs = await redis?.zrevrangebyscore(
     'vBrowserUIDs',
@@ -872,7 +872,7 @@ async function getStats() {
     'WITHSCORES',
     'LIMIT',
     0,
-    20
+    20,
   );
   const vBrowserClientIDMinutes = await redis?.zrevrangebyscore(
     'vBrowserClientIDMinutes',
@@ -881,7 +881,7 @@ async function getStats() {
     'WITHSCORES',
     'LIMIT',
     0,
-    20
+    20,
   );
   const vBrowserUIDMinutes = await redis?.zrevrangebyscore(
     'vBrowserUIDMinutes',
@@ -890,7 +890,7 @@ async function getStats() {
     'WITHSCORES',
     'LIMIT',
     0,
-    20
+    20,
   );
   const vBrowserClientIDsCard = await redis?.zcard('vBrowserClientIDs');
   const vBrowserUIDsCard = await redis?.zcard('vBrowserUIDs');

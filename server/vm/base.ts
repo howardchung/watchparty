@@ -51,7 +51,7 @@ export abstract class VMManager {
   public getCurrentSize = async () => {
     const { rows } = await postgres.query(
       `SELECT count(1) FROM vbrowser WHERE pool = $1`,
-      [this.getPoolName()]
+      [this.getPoolName()],
     );
     return Number(rows[0]?.count);
   };
@@ -85,7 +85,7 @@ export abstract class VMManager {
   public getAvailableCount = async (): Promise<number> => {
     const { rows } = await postgres.query(
       `SELECT count(1) FROM vbrowser WHERE pool = $1 and state = 'available'`,
-      [this.getPoolName()]
+      [this.getPoolName()],
     );
     return Number(rows[0]?.count);
   };
@@ -93,7 +93,7 @@ export abstract class VMManager {
   public getStagingCount = async (): Promise<number> => {
     const { rows } = await postgres.query(
       `SELECT count(1) FROM vbrowser WHERE pool = $1 and state = 'staging'`,
-      [this.getPoolName()]
+      [this.getPoolName()],
     );
     return Number(rows[0]?.count);
   };
@@ -101,7 +101,7 @@ export abstract class VMManager {
   public getAvailableVBrowsers = async (): Promise<string[]> => {
     const { rows } = await postgres.query(
       `SELECT vmid from vbrowser WHERE pool = $1 and state = 'available'`,
-      [this.getPoolName()]
+      [this.getPoolName()],
     );
     return rows.map((row: any) => row.vmid);
   };
@@ -109,7 +109,7 @@ export abstract class VMManager {
   public getStagingVBrowsers = async (): Promise<string[]> => {
     const { rows } = await postgres.query(
       `SELECT vmid from vbrowser WHERE pool = $1 and state = 'staging'`,
-      [this.getPoolName()]
+      [this.getPoolName()],
     );
     return rows.map((row: any) => row.vmid);
   };
@@ -124,7 +124,7 @@ export abstract class VMManager {
 
   public assignVM = async (
     roomId: string,
-    uid: string
+    uid: string,
   ): Promise<AssignedVM | undefined> => {
     if (!roomId || !uid) {
       return undefined;
@@ -154,7 +154,7 @@ export abstract class VMManager {
         LIMIT 1
       )
       RETURNING data`,
-        [roomId, uid, new Date(), this.getPoolName()]
+        [roomId, uid, new Date(), this.getPoolName()],
       );
       return rows[0]?.data;
     };
@@ -170,7 +170,7 @@ export abstract class VMManager {
       // verify the roomId matches if user initiated
       const { rows } = await postgres.query(
         `SELECT "roomId" FROM vbrowser WHERE pool = $1 AND vmid = $2`,
-        [this.getPoolName(), vmid]
+        [this.getPoolName(), vmid],
       );
       if (rows[0]?.roomId && rows[0]?.roomId !== roomId) {
         console.log(
@@ -178,7 +178,7 @@ export abstract class VMManager {
           this.getPoolName(),
           vmid,
           rows[0]?.roomId,
-          roomId
+          roomId,
         );
         return;
       }
@@ -200,7 +200,7 @@ export abstract class VMManager {
         UPDATE SET state = 'staging',
         "roomId" = NULL, uid = NULL, retries = 0, "heartbeatTime" = NULL, "assignTime" = NULL, data = NULL
         `,
-        [this.getPoolName(), vmid, new Date()]
+        [this.getPoolName(), vmid, new Date()],
       );
       console.log('UPSERT', result.rowCount);
       // Normally this should be an update, but we could insert if:
@@ -221,7 +221,7 @@ export abstract class VMManager {
         `
       INSERT INTO vbrowser(pool, vmid, "creationTime", state) 
       VALUES($1, $2, $3, 'staging')`,
-        [this.getPoolName(), id, new Date()]
+        [this.getPoolName(), id, new Date()],
       );
       redisCount('vBrowserLaunches');
       return id;
@@ -230,7 +230,7 @@ export abstract class VMManager {
         e.response?.status,
         JSON.stringify(e.response?.data),
         e.config?.url,
-        e.config?.data
+        e.config?.data,
       );
     }
   };
@@ -241,7 +241,7 @@ export abstract class VMManager {
     // If we don't actually complete the termination, cleanup will reset it
     const { command, rowCount } = await postgres.query(
       `DELETE FROM vbrowser WHERE pool = $1 AND vmid = $2`,
-      [this.getPoolName(), vmid]
+      [this.getPoolName(), vmid],
     );
     console.log(command, rowCount);
     // We can log the VM lifetime by returning the creationTime and diffing
@@ -270,7 +270,7 @@ export abstract class VMManager {
           'currentSize:',
           currentSize,
           'limit:',
-          this.getLimitSize()
+          this.getLimitSize(),
         );
         this.startVMWrapper();
       }
@@ -303,7 +303,7 @@ export abstract class VMManager {
             this.getPoolName(),
             config.VM_MIN_UPTIME_MINUTES * 60, // to seconds
             this.getMinSize(),
-          ]
+          ],
         );
         const first = rows[0];
         if (first) {
@@ -311,7 +311,7 @@ export abstract class VMManager {
             '[RESIZE-DECR] %s: %s up for %s seconds of hour',
             this.getPoolName(),
             first.vmid,
-            first.uptime_frac
+            first.uptime_frac,
           );
           await this.terminateVMWrapper(first.vmid);
         }
@@ -329,7 +329,7 @@ export abstract class VMManager {
       } catch (e) {
         console.log(
           '[CLEANUP] %s: failed to fetch VM list',
-          this.getPoolName()
+          this.getPoolName(),
         );
         return;
       }
@@ -342,14 +342,14 @@ export abstract class VMManager {
         OR state = 'staging'
         OR state = 'available')
         `,
-        [this.getPoolName()]
+        [this.getPoolName()],
       );
       const inUse = new Set(rows.map((row: any) => row.vmid));
       console.log(
         '[CLEANUP] %s: found %s VMs, %s to keep',
         this.getPoolName(),
         allVMs.length,
-        inUse.size
+        inUse.size,
       );
       for (let i = 0; i < allVMs.length; i++) {
         const server = allVMs[i];
@@ -376,7 +376,7 @@ export abstract class VMManager {
           WHERE pool = $1 and state = 'staging'
           RETURNING id, vmid, data, retries
         `,
-        [this.getPoolName()]
+        [this.getPoolName()],
       );
       const stagingPromises = rows.map(async (row: any): Promise<string> => {
         const rowid = row.id;
@@ -389,7 +389,7 @@ export abstract class VMManager {
               '[CHECKSTAGING] %s: [vmid: %s] [attempt: %s] waiting for minRetries',
               this.getPoolName(),
               vmid,
-              retryCount
+              retryCount,
             );
           }
           // Do a minimum # of retries to give reboot time
@@ -399,7 +399,7 @@ export abstract class VMManager {
           console.log(
             '[CHECKSTAGING] %s: %s poweron, attach to network',
             this.getPoolName(),
-            vmid
+            vmid,
           );
           this.powerOn(vmid);
           //this.attachToNetwork(vmid);
@@ -434,7 +434,7 @@ export abstract class VMManager {
             // Save the VM data
             await postgres.query(
               `UPDATE vbrowser SET data = $1 WHERE id = $2`,
-              [vm, rowid]
+              [vm, rowid],
             );
           }
         }
@@ -442,7 +442,7 @@ export abstract class VMManager {
           console.log(
             '[CHECKSTAGING] %s: no host for vm %s',
             this.getPoolName(),
-            vmid
+            vmid,
           );
           throw new Error('no host for vm ' + vmid);
         }
@@ -457,13 +457,13 @@ export abstract class VMManager {
             ready,
             vmid,
             retryCount,
-            vm?.host
+            vm?.host,
           );
         }
         if (ready) {
           await postgres.query(
             `UPDATE vbrowser SET state = 'available' WHERE id = $1`,
-            [rowid]
+            [rowid],
           );
           await redis?.lpush('vBrowserStageRetries', retryCount);
           await redis?.ltrim('vBrowserStageRetries', 0, 24);
@@ -489,7 +489,7 @@ export abstract class VMManager {
         await this.getCurrentSize(),
         await this.getAvailableCount(),
         await this.getStagingCount(),
-        this.getAdjustedBuffer()
+        this.getAdjustedBuffer(),
       );
     }, 10000);
 
@@ -504,7 +504,7 @@ export abstract class VMManager {
           console.warn(
             '[CLEANUPVMGROUP-ERROR]',
             this.getPoolName(),
-            e.response?.data
+            e.response?.data,
           );
         }
         console.timeEnd(this.getPoolName() + ':cleanup');

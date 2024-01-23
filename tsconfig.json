@@ -15,12 +15,12 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
-    "types": ["vite/client", "youtube"]
+    "types": ["vite/client", "youtube"],
   },
   "include": ["src", "global.d.ts"],
   "ts-node": {
     "compilerOptions": {
-      "module": "commonjs"
-    }
-  }
+      "module": "commonjs",
+    },
+  },
 }

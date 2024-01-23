@@ -20,7 +20,7 @@ export const Create = () => {
             user,
             false,
             new URLSearchParams(window.location.search).get('video') ??
-              undefined
+              undefined,
           );
         }}
       />

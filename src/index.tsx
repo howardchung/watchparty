@@ -41,7 +41,7 @@ class WatchParty extends React.Component {
           this.setState({ user });
           const token = await user.getIdToken();
           const response = await window.fetch(
-            serverPath + `/metadata?uid=${user.uid}&token=${token}`
+            serverPath + `/metadata?uid=${user.uid}&token=${token}`,
           );
           const data = await response.json();
           this.setState({

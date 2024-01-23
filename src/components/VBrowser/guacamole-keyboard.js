@@ -279,7 +279,7 @@ Guacamole.Keyboard = function Keyboard(element) {
       this.keysym = keysym_from_key_identifier(
         this.keyIdentifier,
         this.location,
-        this.modifiers.shift
+        this.modifiers.shift,
       );
 
     // If a key is pressed while meta is held down, the keyup will
@@ -753,7 +753,7 @@ Guacamole.Keyboard = function Keyboard(element) {
    */
   var key_identifier_sane = function key_identifier_sane(
     keyCode,
-    keyIdentifier
+    keyIdentifier,
   ) {
     // Missing identifier is not sane
     if (!keyIdentifier) return false;
@@ -766,7 +766,7 @@ Guacamole.Keyboard = function Keyboard(element) {
     // then the identifier is likely correct
     var codepoint = parseInt(
       keyIdentifier.substring(unicodePrefixLocation + 2),
-      16
+      16,
     );
     if (keyCode !== codepoint) return true;
 
@@ -903,7 +903,7 @@ Guacamole.Keyboard = function Keyboard(element) {
   var updateModifierState = function updateModifierState(
     modifier,
     keysyms,
-    keyEvent
+    keyEvent,
   ) {
     var localState = keyEvent.modifiers[modifier];
     var remoteState = guac_keyboard.modifiers[modifier];
@@ -963,7 +963,7 @@ Guacamole.Keyboard = function Keyboard(element) {
         0xffea, // Right alt
         0xfe03, // AltGr
       ],
-      keyEvent
+      keyEvent,
     );
 
     // Resync state of shift
@@ -973,7 +973,7 @@ Guacamole.Keyboard = function Keyboard(element) {
         0xffe1, // Left shift
         0xffe2, // Right shift
       ],
-      keyEvent
+      keyEvent,
     );
 
     // Resync state of ctrl
@@ -983,7 +983,7 @@ Guacamole.Keyboard = function Keyboard(element) {
         0xffe3, // Left ctrl
         0xffe4, // Right ctrl
       ],
-      keyEvent
+      keyEvent,
     );
 
     // Resync state of meta
@@ -993,7 +993,7 @@ Guacamole.Keyboard = function Keyboard(element) {
         0xffe7, // Left meta
         0xffe8, // Right meta
       ],
-      keyEvent
+      keyEvent,
     );
 
     // Resync state of hyper
@@ -1003,7 +1003,7 @@ Guacamole.Keyboard = function Keyboard(element) {
         0xffeb, // Left super/hyper
         0xffec, // Right super/hyper
       ],
-      keyEvent
+      keyEvent,
     );
 
     // Update state
@@ -1272,7 +1272,7 @@ Guacamole.Keyboard = function Keyboard(element) {
         // Interpret as many events as possible, prevent default if indicated
         if (interpret_events()) e.preventDefault();
       },
-      true
+      true,
     );
 
     // When key pressed
@@ -1291,7 +1291,7 @@ Guacamole.Keyboard = function Keyboard(element) {
         // Interpret as many events as possible, prevent default if indicated
         if (interpret_events()) e.preventDefault();
       },
-      true
+      true,
     );
 
     // When key released
@@ -1310,7 +1310,7 @@ Guacamole.Keyboard = function Keyboard(element) {
         eventLog.push(new KeyupEvent(e));
         interpret_events();
       },
-      true
+      true,
     );
 
     // NEKO: Do not automatically type text entered into the wrapped field

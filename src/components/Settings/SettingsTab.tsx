@@ -78,7 +78,7 @@ export const SettingsTab = ({
   const [validVanityLoading, setValidVanityLoading] = useState(false);
   const [adminSettingsChanged, setAdminSettingsChanged] = useState(false);
   const [roomTitleInput, setRoomTitleInput] = useState<string | undefined>(
-    undefined
+    undefined,
   );
   const [roomDescriptionInput, setRoomDescriptionInput] = useState<
     string | undefined
@@ -96,7 +96,7 @@ export const SettingsTab = ({
         ...data,
       });
     },
-    [socket, user]
+    [socket, user],
   );
   const setRoomOwner = useCallback(
     async (data: any) => {
@@ -107,7 +107,7 @@ export const SettingsTab = ({
         ...data,
       });
     },
-    [socket, user]
+    [socket, user],
   );
   const checkValidVanity = useCallback(
     async (input: string) => {
@@ -131,7 +131,7 @@ export const SettingsTab = ({
         setValidVanity(true);
       }
     },
-    [setValidVanity, roomLink]
+    [setValidVanity, roomLink],
   );
   const disableLocking =
     !Boolean(user) || Boolean(roomLock && roomLock !== user?.uid);
@@ -423,7 +423,7 @@ export const SettingsTab = ({
             JSON.stringify({
               ...getCurrentSettings(),
               disableChatSound: data.checked,
-            })
+            }),
           );
           setUpdateTS(Number(new Date()));
         }}

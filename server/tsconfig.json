@@ -6,7 +6,7 @@
     "strict": true,
     "esModuleInterop": true,
     "module": "commonjs",
-    "outDir": "../buildServer"
+    "outDir": "../buildServer",
   },
-  "include": [".", "../global.d.ts"]
+  "include": [".", "../global.d.ts"],
 }

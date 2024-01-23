@@ -12,7 +12,7 @@ export async function statsAgg() {
     axios({
       url: `http://localhost:${port}/stats?key=${config.STATS_KEY}`,
       validateStatus: () => true,
-    })
+    }),
   );
 
   let stats: any = {};
