@@ -404,13 +404,15 @@ export abstract class VMManager {
           this.powerOn(vmid);
           //this.attachToNetwork(vmid);
         }
-        if (retryCount >= 240) {
+        if (retryCount % 240 === 0) {
           console.log('[CHECKSTAGING]', this.getPoolName(), 'giving up:', vmid);
           redisCount('vBrowserStagingFails');
           await redis?.lpush('vBrowserStageFails', vmid);
           await redis?.ltrim('vBrowserStageFails', 0, 24);
           await this.resetVM(vmid);
           // await this.terminateVMWrapper(vmid);
+        }
+        if (retryCount >= 240) {
           throw new Error('too many attempts on vm ' + vmid);
         }
         // Fetch data on first attempt
