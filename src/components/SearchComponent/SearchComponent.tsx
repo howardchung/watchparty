@@ -41,7 +41,7 @@ export class SearchComponent extends React.Component<SearchComponentProps> {
           } else if (this.props.type === 'stream' && this.context.streamPath) {
             results = await getStreamPathResults(
               this.context.streamPath,
-              query
+              query,
             );
           }
           if (timestamp > this.state.lastResultTimestamp) {
@@ -60,7 +60,7 @@ export class SearchComponent extends React.Component<SearchComponentProps> {
   setMedia = (e: any, data: DropdownProps) => {
     window.setTimeout(
       () => this.setState({ resetDropdown: Number(new Date()) }),
-      300
+      300,
     );
     this.props.setMedia(e, data);
   };

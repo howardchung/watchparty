@@ -33,7 +33,7 @@ const ChatVideoCard: React.FC<{
         onPlay(index);
       }
     },
-    [onPlay, index]
+    [onPlay, index],
   );
 
   const handlePlayNextClick = React.useCallback(
@@ -44,7 +44,7 @@ const ChatVideoCard: React.FC<{
         onPlayNext(index);
       }
     },
-    [onPlayNext, index]
+    [onPlayNext, index],
   );
 
   const handleRemoveClick = React.useCallback(
@@ -55,7 +55,7 @@ const ChatVideoCard: React.FC<{
         onRemove(index);
       }
     },
-    [onRemove, index]
+    [onRemove, index],
   );
 
   const Element = 'div';

@@ -7,7 +7,7 @@ export const YouTubeSearchResult = (
   props: SearchResult & {
     setMedia: (_e: any, data: DropdownProps) => void;
     playlistAdd: (_e: any, data: DropdownProps) => void;
-  }
+  },
 ) => {
   const result = props;
   const setMedia = props.setMedia;
@@ -38,7 +38,7 @@ export const YouTubeSearchResult = (
 };
 
 export const MediaPathSearchResult = (
-  props: SearchResult & { setMedia: (_e: any, data: DropdownProps) => void }
+  props: SearchResult & { setMedia: (_e: any, data: DropdownProps) => void },
 ) => {
   const result = props;
   const setMedia = props.setMedia;
@@ -77,13 +77,13 @@ export class StreamPathSearchResult extends React.Component<
             let response = await window.fetch(
               this.context.streamPath +
                 '/data?torrent=' +
-                encodeURIComponent(result.magnet!)
+                encodeURIComponent(result.magnet!),
             );
             let metadata = await response.json();
             // console.log(metadata);
             if (
               metadata.files.filter(
-                (file: any) => file.length > 10 * 1024 * 1024
+                (file: any) => file.length > 10 * 1024 * 1024,
               ).length > 1
             ) {
               // Multiple large files, present user selection
@@ -96,7 +96,7 @@ export class StreamPathSearchResult extends React.Component<
                     encodeURIComponent(result.magnet!) +
                     '&fileIndex=' +
                     i,
-                })
+                }),
               );
               // multiStreamSelection.sort((a: any, b: any) =>
               //   a.name.localeCompare(b.name)

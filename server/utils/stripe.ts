@@ -26,14 +26,14 @@ export async function getIsSubscriberByEmail(email: string | undefined) {
   }
   const customer = await getCustomerByEmail(email);
   const isSubscriber = Boolean(
-    customer?.subscriptions?.data?.find((sub) => sub?.status === 'active')
+    customer?.subscriptions?.data?.find((sub) => sub?.status === 'active'),
   );
   return isSubscriber;
 }
 
 export async function createSelfServicePortal(
   customerId: string,
-  returnUrl: string
+  returnUrl: string,
 ) {
   return await stripe.billingPortal.sessions.create({
     customer: customerId,

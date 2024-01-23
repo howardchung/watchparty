@@ -41,7 +41,7 @@ export default class VBrowser extends React.Component<{
     this.controlling = this.props.controlling;
     this.keepAliveInterval = window.setInterval(
       () => this.$client.sendMessage('chat/message'),
-      30000
+      30000,
     );
 
     this.$client.on(EVENT.CONNECTED, () => {
@@ -67,7 +67,7 @@ export default class VBrowser extends React.Component<{
       // Manually play audio for iPhone Safari since this seems to create two separate streams
       if (stream.getTracks().length === 1 && track.kind === 'audio') {
         const audio = document.getElementById(
-          'iPhoneAudio'
+          'iPhoneAudio',
         ) as HTMLAudioElement;
         audio.srcObject = new MediaStream([track]);
         audio.play();

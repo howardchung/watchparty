@@ -22,7 +22,7 @@ import { MetadataContext } from '../../MetadataContext';
 export async function createRoom(
   user: firebase.User | undefined,
   openNewTab: boolean | undefined,
-  video: string = ''
+  video: string = '',
 ) {
   const uid = user?.uid;
   const token = await user?.getIdToken();
@@ -191,7 +191,7 @@ export class ListRoomsButton extends React.Component<{}> {
     if (this.context.user) {
       const token = await this.context.user.getIdToken();
       const response = await axios.get(
-        serverPath + `/listRooms?uid=${this.context.user?.uid}&token=${token}`
+        serverPath + `/listRooms?uid=${this.context.user?.uid}&token=${token}`,
       );
       this.setState({ rooms: response.data });
     }
@@ -202,7 +202,7 @@ export class ListRoomsButton extends React.Component<{}> {
       const token = await this.context.user.getIdToken();
       await axios.delete(
         serverPath +
-          `/deleteRoom?uid=${this.context.user?.uid}&token=${token}&roomId=${roomId}`
+          `/deleteRoom?uid=${this.context.user?.uid}&token=${token}&roomId=${roomId}`,
       );
       this.setState({
         rooms: this.state.rooms.filter((room) => room.roomId !== roomId),

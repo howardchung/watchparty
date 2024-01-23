@@ -277,7 +277,7 @@ export class Controls extends React.Component<ControlsProps> {
                   onClick={() =>
                     this.props.localSetSubtitleMode(
                       item.value as TextTrackMode,
-                      item.key
+                      item.key,
                     )
                   }
                 />

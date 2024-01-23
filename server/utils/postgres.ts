@@ -31,7 +31,7 @@ export async function updateObject(
   postgres: Client,
   table: string,
   object: AnyDict,
-  condition: AnyDict
+  condition: AnyDict,
 ): Promise<QueryResult<any>> {
   const columns = Object.keys(object);
   const values = Object.values(object);
@@ -52,7 +52,7 @@ export async function updateObject(
 export async function insertObject(
   postgres: Client,
   table: string,
-  object: AnyDict
+  object: AnyDict,
 ): Promise<QueryResult<any>> {
   const columns = Object.keys(object);
   const values = Object.values(object);
@@ -68,7 +68,7 @@ export async function upsertObject(
   postgres: Client,
   table: string,
   object: AnyDict,
-  conflict: BooleanDict
+  conflict: BooleanDict,
 ): Promise<QueryResult<any>> {
   const columns = Object.keys(object);
   const values = Object.values(object);

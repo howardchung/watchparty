@@ -15,7 +15,7 @@ export class VBrowserModal extends React.Component<{
   closeModal: () => void;
   startVBrowser: (
     rcToken: string,
-    options: { size: string; region: string }
+    options: { size: string; region: string },
   ) => void;
 }> {
   static contextType = MetadataContext;

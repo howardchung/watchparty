@@ -52,9 +52,9 @@ async function syncSubscribers() {
         .map((sub) =>
           emailMap.get(sub.customer)
             ? getUserByEmail(emailMap.get(sub.customer))
-            : null
+            : null,
         )
-        .filter(Boolean)
+        .filter(Boolean),
     );
     fbUsers.forEach((user) => {
       uidMap.set(user?.email, user?.uid);
@@ -82,7 +82,8 @@ async function syncSubscribers() {
   console.log('%s subs do not have UID, using email', noUID);
 
   const newResult = result.filter(
-    (sub, index) => index === result.findIndex((other) => sub.uid === other.uid)
+    (sub, index) =>
+      index === result.findIndex((other) => sub.uid === other.uid),
   );
   console.log('%s deduped subs to insert', newResult.length);
   if (result.length !== newResult.length) {
@@ -110,7 +111,7 @@ async function syncSubscribers() {
           postgres2,
           'room',
           { isSubRoom: true },
-          { owner: row.uid }
+          { owner: row.uid },
         );
       }
       await postgres2?.query('COMMIT');
@@ -129,12 +130,12 @@ async function syncSubscribers() {
     // Update the sub status of users in Discord
     // Join the current subs with linked accounts
     const guild = discordBot.guilds.cache.get(
-      config.DISCORD_ADMIN_BOT_SERVER_ID
+      config.DISCORD_ADMIN_BOT_SERVER_ID,
     );
     const role = guild?.roles.cache.get(config.DISCORD_ADMIN_BOT_SUB_ROLE_ID);
     const toUpdate = (
       await postgres2.query(
-        `SELECT la.accountid from subscriber JOIN link_account la ON subscriber.uid = la.uid WHERE la.kind = 'discord'`
+        `SELECT la.accountid from subscriber JOIN link_account la ON subscriber.uid = la.uid WHERE la.kind = 'discord'`,
       )
     ).rows;
     console.log('%s users to set sub role', toUpdate.length);

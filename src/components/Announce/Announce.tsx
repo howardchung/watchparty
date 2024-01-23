@@ -28,7 +28,7 @@ const Announce = () => {
             page: 1,
             per_page: 1,
           },
-        }
+        },
       );
       const data = response.data;
       //   console.log(data);

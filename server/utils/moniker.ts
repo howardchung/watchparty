@@ -21,7 +21,7 @@ export function makeRoomName(shard: number | undefined) {
   if (shard) {
     // Filter the adjective list by shard
     filteredAdjectives = adjectives.filter(
-      (adj) => resolveShard(adj) === Number(shard)
+      (adj) => resolveShard(adj) === Number(shard),
     );
   }
   const adjective = randomElement(filteredAdjectives);
@@ -32,7 +32,7 @@ export function makeRoomName(shard: number | undefined) {
 
 export function makeUserName() {
   return `${capFirst(randomElement(adjectives))} ${capFirst(
-    randomElement(nouns)
+    randomElement(nouns),
   )}`;
 }
 

@@ -15,7 +15,7 @@ let Youtube = config.YOUTUBE_API_KEY
   : null;
 
 export const mapYoutubeSearchResult = (
-  video: youtube_v3.Schema$SearchResult
+  video: youtube_v3.Schema$SearchResult,
 ): PlaylistVideo => {
   return {
     channel: video.snippet?.channelTitle ?? '',
@@ -28,7 +28,7 @@ export const mapYoutubeSearchResult = (
 };
 
 export const mapYoutubeListResult = (
-  video: youtube_v3.Schema$Video
+  video: youtube_v3.Schema$Video,
 ): PlaylistVideo => {
   const videoId = video.id;
   return {
@@ -42,7 +42,7 @@ export const mapYoutubeListResult = (
 };
 
 export const searchYoutube = async (
-  query: string
+  query: string,
 ): Promise<PlaylistVideo[]> => {
   const response = await Youtube?.search.list({
     part: ['snippet'],
@@ -68,7 +68,7 @@ export const getYoutubeVideoID = (url: string) => {
 };
 
 export const fetchYoutubeVideo = async (
-  id: string
+  id: string,
 ): Promise<PlaylistVideo | null> => {
   const response = await Youtube?.videos.list({
     part: ['snippet', 'contentDetails'],
