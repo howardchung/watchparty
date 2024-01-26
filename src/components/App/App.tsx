@@ -401,6 +401,9 @@ export default class App extends React.Component<AppProps, AppState> {
       if (this.playingFileShare() && !isFileShare(currentMedia)) {
         this.stopPublishingLocalStream();
       }
+      if (this.playingVBrowser() && !isVBrowser(currentMedia)) {
+        this.stopVBrowser();
+      }
       if (this.playingScreenShare() && isScreenShare(currentMedia)) {
         // Ignore, it's probably a reconnection
         return;
@@ -409,8 +412,9 @@ export default class App extends React.Component<AppProps, AppState> {
         // Ignore, it's probably a reconnection
         return;
       }
-      if (this.playingVBrowser() && !isVBrowser(currentMedia)) {
-        this.stopVBrowser();
+      if (this.playingVBrowser() && isVBrowser(currentMedia)) {
+        // Ignore, it's probably a reconnection
+        return;
       }
       this.setState(
         {
