@@ -412,7 +412,11 @@ export default class App extends React.Component<AppProps, AppState> {
         // Ignore, it's probably a reconnection
         return;
       }
-      if (this.playingVBrowser() && isVBrowser(currentMedia)) {
+      if (
+        this.playingVBrowser() &&
+        this.getVBrowserHost() &&
+        isVBrowser(currentMedia)
+      ) {
         // Ignore, it's probably a reconnection
         return;
       }
