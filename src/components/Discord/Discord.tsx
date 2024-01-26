@@ -1,15 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import firebase from 'firebase/compat/app';
 import { serverPath } from '../../utils';
+import { MetadataContext } from '../../MetadataContext';
 
-type DiscordProps = {
-  user?: firebase.User;
-};
-
-export const Discord = ({ user }: DiscordProps) => {
+export const Discord = () => {
   const [errorMsg, setErrorMsg] = useState('');
-
-  console.log(user);
+  const { user } = useContext(MetadataContext);
   useEffect(() => {
     async function auth() {
       const fragment = new URLSearchParams(window.location.hash.slice(1));
