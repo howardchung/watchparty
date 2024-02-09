@@ -80,23 +80,29 @@ app.get('/stats', async (req, res) => {
 });
 
 app.get('/isFreePoolFull', async (req, res) => {
-  const freePool = Object.values(vmManagers).find((mgr) => {
+  const freePools = Object.values(vmManagers).filter((mgr) => {
     return (
       mgr?.getIsLarge() === false &&
       mgr?.getRegion() === config.DEFAULT_VM_REGION
     );
   });
-  let isFull = false;
-  if (freePool) {
-    const availableCount = await freePool.getAvailableCount();
-    const limitSize = freePool?.getLimitSize() ?? 0;
-    const currentSize = await freePool.getCurrentSize();
-    isFull = Boolean(
-      limitSize > 0 &&
-        (Number(availableCount) === 0 ||
-          Number(currentSize) - Number(availableCount) > limitSize * 0.95),
-    );
-  }
+  const fullResult = await Promise.all<Boolean>(
+    freePools.map(async (freePool) => {
+      let isFull = false;
+      if (freePool) {
+        const availableCount = await freePool.getAvailableCount();
+        const limitSize = freePool?.getLimitSize() ?? 0;
+        const currentSize = await freePool.getCurrentSize();
+        isFull = Boolean(
+          limitSize > 0 &&
+            (Number(availableCount) === 0 ||
+              Number(currentSize) - Number(availableCount) > limitSize * 0.95),
+        );
+      }
+      return isFull;
+    }),
+  );
+  const isFull = fullResult.every(Boolean);
   return res.json({ isFull });
 });
 
