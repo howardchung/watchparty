@@ -483,7 +483,7 @@ export abstract class VMManager {
     console.log('[VMWORKER] %s: starting background jobs', this.getPoolName());
 
     setInterval(resizeVMGroupIncr, incrInterval);
-    setInterval(resizeVMGroupDecr, decrInterval);
+    // setInterval(resizeVMGroupDecr, decrInterval);
     setInterval(async () => {
       console.log(
         '[STATS] %s: currentSize %s, available %s, staging %s, buffer %s',
