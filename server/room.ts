@@ -903,13 +903,19 @@ export class Room {
           // TODO limit users based on client or uid usage
         }
       }
-      // TODO (howard) check if the user or room has a VM already in postgres
-      if (false) {
-        socket.emit(
-          'errorMessage',
-          'There is already an active vBrowser for this user.',
+      // check if the user already has a VM already in postgres
+      if (postgres) {
+        const { rows } = await postgres.query(
+          'SELECT count(1) from vbrowser WHERE uid = ?',
+          [decoded.uid],
         );
-        return;
+        if (rows[0].count >= 2) {
+          socket.emit(
+            'errorMessage',
+            'There is already an active vBrowser for this user.',
+          );
+          return;
+        }
       }
     }
     let isLarge = false;
