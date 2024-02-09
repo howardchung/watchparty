@@ -156,17 +156,21 @@ export class Scaleway extends VMManager {
     return '';
   };
 
-  mapServerObject = (server: any): VM => ({
-    id: server.id,
-    pass: server.name,
-    // The gateway handles SSL termination and proxies to the private IP
-    host: `${gatewayHost}/?ip=${server.private_ip}`,
-    private_ip: server.private_ip,
-    state: server.state,
-    tags: server.tags,
-    creation_date: server.creation_date,
-    provider: this.id,
-    large: this.isLarge,
-    region: this.region,
-  });
+  mapServerObject = (server: any): VM => {
+    // const ip = server.private_ip;
+    const ip = server.public_ip?.address;
+    return {
+      id: server.id,
+      pass: server.name,
+      // The gateway handles SSL termination and proxies to the private IP
+      host: `${gatewayHost}/?ip=${ip}`,
+      private_ip: ip,
+      state: server.state,
+      tags: server.tags,
+      creation_date: server.creation_date,
+      provider: this.id,
+      large: this.isLarge,
+      region: this.region,
+    };
+  };
 }
