@@ -906,7 +906,7 @@ export class Room {
       // check if the user already has a VM already in postgres
       if (postgres) {
         const { rows } = await postgres.query(
-          'SELECT count(1) from vbrowser WHERE uid = ?',
+          'SELECT count(1) from vbrowser WHERE uid = $1',
           [decoded.uid],
         );
         if (rows[0].count >= 2) {
