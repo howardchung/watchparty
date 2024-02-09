@@ -15,14 +15,15 @@ Object.values(vmManagers).forEach((manager) => {
 app.post('/assignVM', async (req, res) => {
   try {
     // Find a pool that matches the size and region requirements
-    const pool = Object.values(vmManagers).find((mgr) => {
+    const pools = Object.values(vmManagers).filter((mgr) => {
       return (
         mgr?.getIsLarge() === Boolean(req.body.isLarge) &&
         mgr?.getRegion() === req.body.region
       );
     });
-    // TODO maybe there's more than one, load balance between them?
-    // However if the pool is 0 sized we need to consistently request the same pool for a given uid/roomid
+    // maybe there's more than one, randomly load balance between them?
+    const pool = pools[Math.floor(Math.random() * pools.length)];
+    // TODO (howard) However if the pool is 0 sized we need to consistently request the same pool for a given uid/roomid
     // Otherwise we may spawn multiple VMs on retries
     if (pool) {
       console.log(
