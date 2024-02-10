@@ -129,36 +129,38 @@ export abstract class VMManager {
     if (!roomId || !uid) {
       return undefined;
     }
-    if (this.getMinSize() === 0) {
-      // If the min size is 0 we may never create a VM
-      // So start one if we don't already have one ready or staging
-      const availableCount = await this.getAvailableCount();
-      const stagingCount = await this.getStagingCount();
-      if (!availableCount && !stagingCount) {
-        await this.startVMWrapper();
+    if (this.id === 'Docker' && this.getLimitSize() === 0) {
+      // For Docker if the size is 0, just create a VM directly
+      const vmid = await this.startVM(uuidv4());
+      await postgres.query(
+        `INSERT INTO vbrowser(pool, vmid, "creationTime", state, "roomId", uid, "heartbeatTime", "assignTime") VALUES ($1, $2, NOW(), 'used', $3, $4, NOW(), NOW())`,
+        [this.getPoolName(), vmid, roomId, uid],
+      );
+      redisCount('vBrowserLaunches');
+      const vm = await this.getVM(vmid);
+      if (!vm) {
+        return;
       }
+      return { ...vm, assignTime: Number(new Date()) };
     }
     // Update and use SKIP LOCKED to ensure each consumer gets a different one
-    const getAssignedVM = async (): Promise<VM | undefined> => {
-      const { rows } = await postgres.query(
-        `
-      UPDATE vbrowser 
-      SET "roomId" = $1, uid = $2, "heartbeatTime" = $3, "assignTime" = $3, state = 'used'
-      WHERE id = (
-        SELECT id
-        FROM vbrowser
-        WHERE state = 'available'
-        AND pool = $4
-        ORDER BY id ASC
-        FOR UPDATE SKIP LOCKED
-        LIMIT 1
-      )
-      RETURNING data`,
-        [roomId, uid, new Date(), this.getPoolName()],
-      );
-      return rows[0]?.data;
-    };
-    let selected: VM | undefined = await getAssignedVM();
+    const { rows } = await postgres.query(
+      `
+    UPDATE vbrowser 
+    SET "roomId" = $1, uid = $2, "heartbeatTime" = NOW(), "assignTime" = NOW(), state = 'used'
+    WHERE id = (
+      SELECT id
+      FROM vbrowser
+      WHERE state = 'available'
+      AND pool = $3
+      ORDER BY id ASC
+      FOR UPDATE SKIP LOCKED
+      LIMIT 1
+    )
+    RETURNING data`,
+      [roomId, uid, this.getPoolName()],
+    );
+    let selected: VM | undefined = rows[0]?.data;
     if (!selected) {
       return;
     }
@@ -195,12 +197,12 @@ export abstract class VMManager {
       const result = await postgres.query(
         `
         INSERT INTO vbrowser(pool, vmid, "creationTime", state)
-        VALUES($1, $2, $3, 'staging')
+        VALUES($1, $2, NOW(), 'staging')
         ON CONFLICT(pool, vmid) DO
         UPDATE SET state = 'staging',
         "roomId" = NULL, uid = NULL, retries = 0, "heartbeatTime" = NULL, "assignTime" = NULL, data = NULL
         `,
-        [this.getPoolName(), vmid, new Date()],
+        [this.getPoolName(), vmid],
       );
       console.log('UPSERT', result.rowCount);
       // Normally this should be an update, but we could insert if:
@@ -213,26 +215,17 @@ export abstract class VMManager {
 
   public startVMWrapper = async () => {
     // generate credentials and boot a VM
-    try {
-      const password = uuidv4();
-      const id = await this.startVM(password);
-      // We might fail to record it if crashing here but cleanup will reset it
-      await postgres.query(
-        `
-      INSERT INTO vbrowser(pool, vmid, "creationTime", state) 
-      VALUES($1, $2, $3, 'staging')`,
-        [this.getPoolName(), id, new Date()],
-      );
-      redisCount('vBrowserLaunches');
-      return id;
-    } catch (e: any) {
-      console.log(
-        e.response?.status,
-        JSON.stringify(e.response?.data),
-        e.config?.url,
-        e.config?.data,
-      );
-    }
+    const password = uuidv4();
+    const id = await this.startVM(password);
+    // We might fail to record it if crashing here but cleanup will reset it
+    await postgres.query(
+      `
+    INSERT INTO vbrowser(pool, vmid, "creationTime", state) 
+    VALUES($1, $2, NOW(), 'staging')`,
+      [this.getPoolName(), id],
+    );
+    redisCount('vBrowserLaunches');
+    return id;
   };
 
   protected terminateVMWrapper = async (vmid: string) => {
@@ -272,7 +265,16 @@ export abstract class VMManager {
           'limit:',
           this.getLimitSize(),
         );
-        this.startVMWrapper();
+        try {
+          this.startVMWrapper();
+        } catch (e: any) {
+          console.log(
+            e.response?.status,
+            JSON.stringify(e.response?.data),
+            e.config?.url,
+            e.config?.data,
+          );
+        }
       }
     };
 
@@ -483,9 +485,7 @@ export abstract class VMManager {
     console.log('[VMWORKER] %s: starting background jobs', this.getPoolName());
 
     setInterval(resizeVMGroupIncr, incrInterval);
-    if (this.id !== 'Hetzner') {
-      setInterval(resizeVMGroupDecr, decrInterval);
-    }
+    setInterval(resizeVMGroupDecr, decrInterval);
     setInterval(async () => {
       console.log(
         '[STATS] %s: currentSize %s, available %s, staging %s, buffer %s',

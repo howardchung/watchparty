@@ -18,7 +18,7 @@ export type PoolConfig = {
   hostname: string | undefined;
 };
 
-function createVMManager(poolConfig: PoolConfig): VMManager | null {
+function createVMManager(poolConfig: PoolConfig): VMManager {
   let vmManager: VMManager | null = null;
   if (
     config.SCW_SECRET_KEY &&
@@ -45,6 +45,9 @@ function createVMManager(poolConfig: PoolConfig): VMManager | null {
   } else if (poolConfig.provider === 'Docker') {
     vmManager = new Docker(poolConfig);
   }
+  if (!vmManager) {
+    throw new Error('failed to create vmManager');
+  }
   return vmManager;
 }
 
@@ -62,8 +65,8 @@ export function getVMManagerConfig(): PoolConfig[] {
   });
 }
 
-export function getBgVMManagers(): { [key: string]: VMManager | null } {
-  const result: { [key: string]: VMManager | null } = {};
+export function getBgVMManagers(): { [key: string]: VMManager } {
+  const result: { [key: string]: VMManager } = {};
   const conf = getVMManagerConfig();
   conf.forEach((c) => {
     const mgr = createVMManager(c);

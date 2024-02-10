@@ -17,25 +17,26 @@ app.post('/assignVM', async (req, res) => {
     // Find a pool that matches the size and region requirements
     const pools = Object.values(vmManagers).filter((mgr) => {
       return (
-        mgr?.getIsLarge() === Boolean(req.body.isLarge) &&
-        mgr?.getRegion() === req.body.region
+        mgr.getIsLarge() === Boolean(req.body.isLarge) &&
+        mgr.getRegion() === req.body.region
       );
     });
-    // maybe there's more than one, randomly load balance between them?
-    const pool = pools[Math.floor(Math.random() * pools.length)];
-    // TODO (howard) However if the pool is 0 sized we need to consistently request the same pool for a given uid/roomid
-    // Otherwise we may spawn multiple VMs on retries
-    if (pool) {
+    let vm = null;
+    for (let i = 0; i < pools.length; i++) {
+      // maybe there's more than one, randomly load balance between them
+      const pool = pools[i];
       console.log(
-        'assignVM from pool:',
+        'try assignVM from pool:',
         pool.getPoolName(),
         req.body.roomId,
         req.body.uid,
       );
-      const vm = await pool.assignVM(req.body.roomId, req.body.uid);
-      return res.json(vm ?? null);
+      vm = await pool.assignVM(req.body.roomId, req.body.uid);
+      if (vm) {
+        return res.json(vm);
+      }
     }
-    return res.status(400).end();
+    return res.json(null);
   } catch (e) {
     console.warn(e);
     return res.status(500).end();
