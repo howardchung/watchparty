@@ -21,7 +21,7 @@ const defaults = {
   HETZNER_GATEWAY: '', // Gateway handling SSL termination
   HETZNER_SSH_KEYS: '', // IDs of Hetzner SSH keys to access vbrowsers
   HETZNER_IMAGE: '', // ID of Hetzner snapshot image to use for vbrowser
-  VM_MANAGER_CONFIG: '', // Comma-separated list of the pools of VMs to run (provider:size:region:minSize:limitSize:hostname), e.g. Docker:large:US:0:0:localhost,Docker:standard:US:0:0:localhost
+  VM_MANAGER_CONFIG: '', // Comma-separated list of the pools of VMs to run (provider:size:region:minSize:limitSize:hostname), e.g. Docker:large:US:0:1:localhost,Docker:standard:US:0:1:localhost
   SCW_SECRET_KEY: '', // Optional, for Scaleway VMs
   SCW_ORGANIZATION_ID: '', // Optional, for Scaleway VMs
   SCW_GATEWAY: '', // Gateway handling SSL termination

@@ -627,8 +627,8 @@ async function minuteMetrics() {
     if (room.vBrowser && room.vBrowser.id) {
       // Update the heartbeat
       await postgres?.query(
-        `UPDATE vbrowser SET "heartbeatTime" = $1 WHERE "roomId" = $2 and vmid = $3`,
-        [new Date(), room.roomId, room.vBrowser.id],
+        `UPDATE vbrowser SET "heartbeatTime" = NOW() WHERE "roomId" = $1 and vmid = $2`,
+        [room.roomId, room.vBrowser.id],
       );
 
       const expireTime = getStartOfDay() / 1000 + 86400;
