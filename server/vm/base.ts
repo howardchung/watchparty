@@ -266,7 +266,7 @@ export abstract class VMManager {
           this.getLimitSize(),
         );
         try {
-          this.startVMWrapper();
+          await this.startVMWrapper();
         } catch (e: any) {
           console.log(
             e.response?.status,
