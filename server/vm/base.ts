@@ -19,6 +19,7 @@ export abstract class VMManager {
   private limitSize = 0;
   private minSize = 0;
   protected hostname: string | undefined;
+  protected onDemand = false;
 
   constructor({ isLarge, region, limitSize, minSize, hostname }: PoolConfig) {
     this.isLarge = isLarge;
@@ -129,20 +130,6 @@ export abstract class VMManager {
     if (!roomId || !uid) {
       return undefined;
     }
-    if (this.id === 'Docker' && this.getLimitSize() === 0) {
-      // For Docker if the size is 0, just create a VM directly
-      const vmid = await this.startVM(uuidv4());
-      await postgres.query(
-        `INSERT INTO vbrowser(pool, vmid, "creationTime", state, "roomId", uid, "heartbeatTime", "assignTime") VALUES ($1, $2, NOW(), 'used', $3, $4, NOW(), NOW())`,
-        [this.getPoolName(), vmid, roomId, uid],
-      );
-      redisCount('vBrowserLaunches');
-      const vm = await this.getVM(vmid);
-      if (!vm) {
-        return;
-      }
-      return { ...vm, assignTime: Number(new Date()) };
-    }
     // Update and use SKIP LOCKED to ensure each consumer gets a different one
     const { rows } = await postgres.query(
       `
@@ -160,11 +147,35 @@ export abstract class VMManager {
     RETURNING data`,
       [roomId, uid, this.getPoolName()],
     );
-    let selected: VM | undefined = rows[0]?.data;
-    if (!selected) {
+    let vm: VM | undefined = rows[0]?.data;
+    if (
+      !vm &&
+      this.onDemand &&
+      (this.getLimitSize() === 0 ||
+        (await this.getCurrentSize()) < this.getLimitSize())
+    ) {
+      // Try creating a VM directly if onDemand enabled (short boot times)
+      const vmid = await this.startVM(uuidv4());
+      await postgres.query(
+        `INSERT INTO vbrowser(pool, vmid, "roomId", uid, state, "creationTime", "heartbeatTime", "assignTime") VALUES ($1, $2, $3, $4, 'used', NOW(), NOW(), NOW())`,
+        [this.getPoolName(), vmid, roomId, uid],
+      );
+      redisCount('vBrowserLaunches');
+      // Wait until vm has host
+      let vm = await this.getVM(vmid);
+      while (!vm.host) {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        vm = await this.getVM(vmid);
+      }
+      while (!(await checkVMReady(vm.host))) {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+      return { ...vm, assignTime: Number(new Date()) };
+    }
+    if (!vm) {
       return;
     }
-    return { ...selected, assignTime: Number(new Date()) };
+    return { ...vm, assignTime: Number(new Date()) };
   };
 
   public resetVM = async (vmid: string, roomId?: string): Promise<void> => {
@@ -288,6 +299,12 @@ export abstract class VMManager {
         // filter to only VMs eligible for deletion
         // they must be up for long enough
         // keep the oldest min pool size number of VMs
+        // Hetzner rounds up to nearest hour
+        let modulo = 3600;
+        if (this.id === 'Scaleway') {
+          // Scaleway just charges by the minute with a min of 60 min so don't modulo
+          modulo = 2147483647;
+        }
         const { rows } = await postgres.query(
           `
           DELETE FROM vbrowser
@@ -296,25 +313,21 @@ export abstract class VMManager {
             FROM vbrowser
             WHERE pool = $1
             AND state = 'available'
-            AND CAST(extract(epoch from now() - "creationTime") as INT) % (60 * 60) > $2
-            AND id >= (SELECT id from vbrowser WHERE pool = $1 ORDER BY id ASC LIMIT 1 OFFSET $3)
+            AND id >= (SELECT id from vbrowser WHERE pool = $1 ORDER BY id ASC LIMIT 1 OFFSET $2)
+            AND CAST(extract(epoch from now() - "creationTime") as INT) % $3 > $4
             FOR UPDATE SKIP LOCKED
             LIMIT 1
-          ) RETURNING vmid, CAST(extract(epoch from now() - "creationTime") as INT) % (60 * 60) as uptime_frac`,
+          ) RETURNING vmid`,
           [
             this.getPoolName(),
-            config.VM_MIN_UPTIME_MINUTES * 60, // to seconds
             this.getMinSize(),
+            modulo,
+            config.VM_MIN_UPTIME_MINUTES * 60, // to seconds
           ],
         );
         const first = rows[0];
         if (first) {
-          console.log(
-            '[RESIZE-DECR] %s: %s up for %s seconds of hour',
-            this.getPoolName(),
-            first.vmid,
-            first.uptime_frac,
-          );
+          console.log('[RESIZE-DECR] %s: %s', this.getPoolName(), first.vmid);
           await this.terminateVMWrapper(first.vmid);
         }
       }
@@ -538,7 +551,7 @@ export abstract class VMManager {
   protected abstract startVM: (name: string) => Promise<string>;
   protected abstract rebootVM: (id: string) => Promise<void>;
   protected abstract terminateVM: (id: string) => Promise<void>;
-  public abstract getVM: (id: string) => Promise<VM | null>;
+  public abstract getVM: (id: string) => Promise<VM>;
   protected abstract listVMs: (filter?: string) => Promise<VM[]>;
   protected abstract powerOn: (id: string) => Promise<void>;
   protected abstract attachToNetwork: (id: string) => Promise<void>;
@@ -582,7 +595,6 @@ export interface VM {
   id: string;
   pass: string;
   host: string;
-  private_ip: string;
   state: string;
   tags: string[];
   creation_date: string;

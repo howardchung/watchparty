@@ -122,9 +122,6 @@ export class DigitalOcean extends VMManager {
       },
     });
     let server = this.mapServerObject(response.data.droplet);
-    if (!server.private_ip) {
-      return null;
-    }
     return server;
   };
 
@@ -164,8 +161,7 @@ export class DigitalOcean extends VMManager {
       id: server.id?.toString(),
       pass: server.name,
       // The gateway handles SSL termination and proxies to the private IP
-      host: `${gatewayHost}/?ip=${ip}`,
-      private_ip: ip,
+      host: ip ? `${gatewayHost}/?ip=${ip}` : '',
       state: server.status,
       tags: server.tags,
       creation_date: server.created_at,

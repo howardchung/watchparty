@@ -8,13 +8,13 @@ import { homedir } from 'os';
 import { NodeSSH } from 'node-ssh';
 
 export class Docker extends VMManager {
+  // TODO support multiple Docker providers in the pool config with same region
   size = '';
   largeSize = '';
   minRetries = 0;
+  onDemand = true;
   reuseVMs = false;
   id = 'Docker';
-  // It's possible to have multiple Docker providers in the pool config
-  // Use region to distinguish them, e.g. US1, US2
   ssh: NodeSSH | undefined = undefined;
 
   getSSH = async () => {
@@ -117,7 +117,6 @@ export class Docker extends VMManager {
     id: server.Id,
     pass: server.Name?.slice(1),
     host: `${this.hostname}:${5000 + Number(server.Config?.Labels?.index)}`,
-    private_ip: '',
     state: server.State?.Status,
     tags: server.Config?.Labels,
     creation_date: server.State?.StartedAt,
