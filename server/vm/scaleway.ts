@@ -12,7 +12,7 @@ const imageId = config.SCW_IMAGE;
 export class Scaleway extends VMManager {
   size = 'DEV1-S'; // DEV1-S, DEV1-M, DEV1-L, GP1-XS
   largeSize = 'DEV1-M';
-  minRetries = 20;
+  minRetries = 10;
   reuseVMs = true;
   id = 'Scaleway';
   startVM = async (name: string) => {
@@ -117,9 +117,6 @@ export class Scaleway extends VMManager {
       },
     });
     let server = this.mapServerObject(response.data.server);
-    if (!server.private_ip) {
-      return null;
-    }
     return server;
   };
 
@@ -163,8 +160,7 @@ export class Scaleway extends VMManager {
       id: server.id,
       pass: server.name,
       // The gateway handles SSL termination and proxies to the private IP
-      host: `${gatewayHost}/?ip=${ip}`,
-      private_ip: ip,
+      host: ip ? `${gatewayHost}/?ip=${ip}` : '',
       state: server.state,
       tags: server.tags,
       creation_date: server.creation_date,

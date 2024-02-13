@@ -22,8 +22,9 @@ app.post('/assignVM', async (req, res) => {
       );
     });
     let vm = null;
+    // Sequentially try each to give earlier pools preference
+    // We might want to add the ability to load balance as well by randomly selecting between pools with same priority
     for (let i = 0; i < pools.length; i++) {
-      // maybe there's more than one, randomly load balance between them
       const pool = pools[i];
       console.log(
         'try assignVM from pool:',

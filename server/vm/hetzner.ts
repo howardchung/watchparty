@@ -123,9 +123,6 @@ export class Hetzner extends VMManager {
       console.log('[WARNING] %s has more than one private network', id);
     }
     const server = this.mapServerObject(response.data.server);
-    if (!server.private_ip) {
-      return null;
-    }
     return server;
   };
 
@@ -254,8 +251,7 @@ export class Hetzner extends VMManager {
       id: server.id?.toString(),
       pass: server.name,
       // The gateway handles SSL termination and proxies to the private IP
-      host: `${this.gateway}/?ip=${ip}`,
-      private_ip: ip,
+      host: ip ? `${this.gateway}/?ip=${ip}` : '',
       state: server.status,
       tags: Object.keys(server.labels),
       creation_date: server.created,
