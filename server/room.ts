@@ -943,11 +943,11 @@ export class Room {
         // console.log(validation?.data);
         const isLowScore = validation?.data?.score < 0.1;
         const failed = validation?.data?.success === false;
-        console.log('[RECAPTCHA] score: ', validation?.data?.score);
         if (failed || isLowScore) {
           if (isLowScore) {
             redisCount('recaptchaRejectsLowScore');
           } else {
+            console.log('[RECAPTCHA] score: ', validation?.data);
             redisCount('recaptchaRejectsOther');
           }
           socket.emit('errorMessage', 'Invalid ReCAPTCHA.');
