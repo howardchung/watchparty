@@ -10,8 +10,8 @@ const imageId = Number(config.DO_IMAGE);
 const sshKeys = config.DO_SSH_KEYS.split(',');
 
 export class DigitalOcean extends VMManager {
-  size = 's-1vcpu-2gb'; // s-1vcpu-1gb, s-1vcpu-2gb, s-2vcpu-2gb, s-2vcpu-4gb, c-2
-  largeSize = 's-2vcpu-4gb';
+  size = 's-2vcpu-2gb'; // s-1vcpu-1gb, s-1vcpu-2gb, s-2vcpu-2gb, s-2vcpu-4gb, c-2, s-4vcpu-8gb
+  largeSize = 's-4vcpu-8gb';
   minRetries = 20;
   reuseVMs = true;
   id = 'DO';
@@ -154,8 +154,11 @@ export class DigitalOcean extends VMManager {
   };
 
   mapServerObject = (server: any): VM => {
+    // const ip = server.networks.v4.find(
+    //   (network: any) => network.type === 'private',
+    // )?.ip_address;
     const ip = server.networks.v4.find(
-      (network: any) => network.type === 'private',
+      (network: any) => network.type === 'public',
     )?.ip_address;
     return {
       id: server.id?.toString(),
