@@ -46,7 +46,7 @@ export abstract class VMManager {
   };
 
   public getMinBuffer = () => {
-    return this.limitSize * 0.05;
+    return this.limitSize * 0.04;
   };
 
   public getCurrentSize = async () => {
@@ -299,7 +299,7 @@ export abstract class VMManager {
         // filter to only VMs eligible for deletion
         // they must be up for long enough
         // keep the oldest min pool size number of VMs
-        // Hetzner rounds up to nearest hour
+        // Hetzner/DO rounds up to nearest hour
         let modulo = 3600;
         if (this.id === 'Scaleway') {
           // Scaleway just charges by the minute with a min of 60 min so don't modulo
