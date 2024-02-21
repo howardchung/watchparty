@@ -197,14 +197,20 @@ export abstract class VMManager {
       }
     }
     console.log('[RESET]', this.getPoolName(), vmid, roomId);
-    await this.rebootVM(vmid);
-    // we could crash here and then row will remain in used state
-    // Once the heartbeat becomes stale cleanup will reset it
-
     // We generally want to reuse if the provider has per-hour billing
     // Since most user sessions are less than an hour
     // Otherwise if it's per-second or Docker, it's easier to just terminate it on reboot
     if (this.reuseVMs) {
+      // To reset without API calls:
+      // Update vbrowser image to generate password and save to file
+      // vbrowser uses file content as password
+      // ssh to vbrowser and sudo reboot
+      // Image serves file content at secret endpoint
+      // on vmWorker, checkvmready checks secret endpoint for password and updates DB
+      // add option to force reimage VM (in case of chrome updates)
+      await this.rebootVM(vmid);
+      // we could crash here and then row will remain in used state
+      // Once the heartbeat becomes stale cleanup will reset it
       const result = await postgres.query(
         `
         INSERT INTO vbrowser(pool, vmid, "creationTime", state)

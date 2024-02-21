@@ -121,28 +121,32 @@ export class Scaleway extends VMManager {
   };
 
   listVMs = async (filter?: string) => {
-    const mapping: StringDict = {
-      available: 'available',
-      inUse: 'inUse',
-    };
-    let tags = mapping[filter as string];
-    // console.log(filter, tags);
-    const response = await axios({
-      method: 'GET',
-      url: `https://api.scaleway.com/instance/v1/zones/${region}/servers`,
-      headers: {
-        'X-Auth-Token': SCW_SECRET_KEY,
-        'Content-Type': 'application/json',
-      },
-      params: {
-        // TODO need to update if over 100 results
-        per_page: 100,
-        tags,
-      },
-    });
-    return response.data.servers
-      .map(this.mapServerObject)
-      .filter((server: VM) => server.tags.includes(this.getTag()));
+    const limit = this.getLimitSize();
+    const pageCount = Math.ceil((limit || 1) / 100);
+    const pages = Array.from(Array(pageCount).keys()).map((i) => i + 1);
+    const responses: any[] = await Promise.all(
+      pages.map((page) =>
+        axios({
+          method: 'GET',
+          url: `https://api.scaleway.com/instance/v1/zones/${region}/servers`,
+          headers: {
+            'X-Auth-Token': SCW_SECRET_KEY,
+            'Content-Type': 'application/json',
+          },
+          params: {
+            page,
+            per_page: 100,
+            tags: filter,
+          },
+        }),
+      ),
+    );
+    const responsesMapped = responses.map((response) =>
+      response.data.servers
+        .map(this.mapServerObject)
+        .filter((server: VM) => server.tags.includes(this.getTag())),
+    );
+    return responsesMapped.flat();
   };
 
   powerOn = async (_id: string) => {};
