@@ -125,7 +125,7 @@ export class DigitalOcean extends VMManager {
     return server;
   };
 
-  listVMs = async (filter?: string) => {
+  listVMs = async (filter: string) => {
     // console.log(filter, tags);
     const response = await axios({
       method: 'GET',
@@ -140,9 +140,7 @@ export class DigitalOcean extends VMManager {
         tag_name: filter,
       },
     });
-    return response.data.droplets
-      .map(this.mapServerObject)
-      .filter((server: VM) => server.tags.includes(this.getTag()));
+    return response.data.droplets.map(this.mapServerObject);
   };
 
   powerOn = async (_id: string) => {};
@@ -165,9 +163,6 @@ export class DigitalOcean extends VMManager {
       pass: server.name,
       // The gateway handles SSL termination and proxies to the private IP
       host: ip ? `${gatewayHost}/?ip=${ip}` : '',
-      state: server.status,
-      tags: server.tags,
-      creation_date: server.created_at,
       provider: this.id,
       large: this.isLarge,
       region: this.region,

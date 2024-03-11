@@ -201,16 +201,20 @@ export abstract class VMManager {
     // Since most user sessions are less than an hour
     // Otherwise if it's per-second or Docker, it's easier to just terminate it on reboot
     if (this.reuseVMs) {
-      // To reset without API calls:
-      // Update vbrowser image to generate password and save to file
-      // vbrowser uses file content as password
-      // ssh to vbrowser and sudo reboot
-      // Image serves file content at secret endpoint
-      // on vmWorker, checkvmready checks secret endpoint for password and updates DB
+      // To reset without API calls/reimaging (logic can be reused on any cloud provider):
+      // Update vbrowser image to create default password file with hostname
+      // vbrowser image should use file content as password instead of hostname
+      // generate a new password on vmWorker
+      // ssh to vbrowser, then:
+      // save generated password to file (~/password)
+      // sudo reboot
+      // update DB with generated password
+      // getVM needs to lookup password from db rather than reading server name from API
+      // listvm only needs ID, so avoid doing DB password lookup
       // add option to force reimage VM (in case of chrome updates)
       await this.rebootVM(vmid);
       // we could crash here and then row will remain in used state
-      // Once the heartbeat becomes stale cleanup will reset it
+      // Once the heartbeat becomes stale cleanup will reset it again
       const result = await postgres.query(
         `
         INSERT INTO vbrowser(pool, vmid, "creationTime", state)
@@ -305,12 +309,8 @@ export abstract class VMManager {
         // filter to only VMs eligible for deletion
         // they must be up for long enough
         // keep the oldest min pool size number of VMs
-        // Hetzner/DO rounds up to nearest hour
+        // Hetzner/DO/Scaleway rounds up to nearest hour
         let modulo = 3600;
-        if (this.id === 'Scaleway') {
-          // Scaleway just charges by the minute with a min of 60 min so don't modulo
-          modulo = 2147483647;
-        }
         const { rows } = await postgres.query(
           `
           DELETE FROM vbrowser
@@ -558,7 +558,7 @@ export abstract class VMManager {
   protected abstract rebootVM: (id: string) => Promise<void>;
   protected abstract terminateVM: (id: string) => Promise<void>;
   public abstract getVM: (id: string) => Promise<VM>;
-  protected abstract listVMs: (filter?: string) => Promise<VM[]>;
+  protected abstract listVMs: (filter: string) => Promise<VM[]>;
   protected abstract powerOn: (id: string) => Promise<void>;
   protected abstract attachToNetwork: (id: string) => Promise<void>;
   protected abstract mapServerObject: (server: any) => VM;
@@ -601,11 +601,7 @@ export interface VM {
   id: string;
   pass: string;
   host: string;
-  state: string;
-  tags: string[];
-  creation_date: string;
   provider: string;
-  originalName?: string;
   large: boolean;
   region: string;
 }

@@ -18,8 +18,11 @@ echo '
 #!/bin/bash
 
 iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 5000
-# create random password
-# uuidgen > ~/password
+# do if password does not exist
+# if [ ! -f ~/password ]
+# then
+# hostname > ~/password
+# fi
 # PASSWORD=$(cat ~/password)
 PASSWORD=$(hostname)
 #RESOLUTION=$(if [ "$(nproc)" -le "2" ]; then echo "1280x720@30"; else echo "1920x1080@30"; fi)
