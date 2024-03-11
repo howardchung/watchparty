@@ -88,7 +88,7 @@ export class Docker extends VMManager {
     return server;
   };
 
-  listVMs = async (filter?: string) => {
+  listVMs = async (filter: string) => {
     const conn = await this.getSSH();
     const listCmd = `docker inspect $(docker ps --filter label=${filter} --quiet --no-trunc)`;
     const { stdout } = await conn.execCommand(listCmd);
@@ -117,9 +117,6 @@ export class Docker extends VMManager {
     id: server.Id,
     pass: server.Name?.slice(1),
     host: `${this.hostname}:${5000 + Number(server.Config?.Labels?.index)}`,
-    state: server.State?.Status,
-    tags: server.Config?.Labels,
-    creation_date: server.State?.StartedAt,
     provider: this.id,
     large: this.isLarge,
     region: this.region,

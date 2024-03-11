@@ -120,7 +120,7 @@ export class Scaleway extends VMManager {
     return server;
   };
 
-  listVMs = async (filter?: string) => {
+  listVMs = async (filter: string) => {
     const limit = this.getLimitSize();
     const pageCount = Math.ceil((limit || 1) / 100);
     const pages = Array.from(Array(pageCount).keys()).map((i) => i + 1);
@@ -142,9 +142,7 @@ export class Scaleway extends VMManager {
       ),
     );
     const responsesMapped = responses.map((response) =>
-      response.data.servers
-        .map(this.mapServerObject)
-        .filter((server: VM) => server.tags.includes(this.getTag())),
+      response.data.servers.map(this.mapServerObject),
     );
     return responsesMapped.flat();
   };
@@ -165,9 +163,6 @@ export class Scaleway extends VMManager {
       pass: server.name,
       // The gateway handles SSL termination and proxies to the private IP
       host: ip ? `${gatewayHost}/?ip=${ip}` : '',
-      state: server.state,
-      tags: server.tags,
-      creation_date: server.creation_date,
       provider: this.id,
       large: this.isLarge,
       region: this.region,

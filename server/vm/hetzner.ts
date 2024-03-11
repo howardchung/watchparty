@@ -45,7 +45,6 @@ export class Hetzner extends VMManager {
       // user_data: `replace with vbrowser.sh startup script if we want to boot vbrowser on instance creation (won't trigger on rebuild/restart)`
       labels: {
         [this.getTag()]: '1',
-        originalName: name,
       },
       location: this.getRandomDatacenter(),
     };
@@ -126,7 +125,7 @@ export class Hetzner extends VMManager {
     return server;
   };
 
-  listVMs = async (filter?: string) => {
+  listVMs = async (filter: string) => {
     const limit = this.getLimitSize();
     const pageCount = Math.ceil((limit || 1) / 50);
     const pages = Array.from(Array(pageCount).keys()).map((i) => i + 1);
@@ -148,9 +147,7 @@ export class Hetzner extends VMManager {
       ),
     );
     const responsesMapped = responses.map((response) =>
-      response.data.servers
-        .map(this.mapServerObject)
-        .filter((server: VM) => server.tags.includes(this.getTag())),
+      response.data.servers.map(this.mapServerObject),
     );
     return responsesMapped.flat();
   };
@@ -252,10 +249,6 @@ export class Hetzner extends VMManager {
       pass: server.name,
       // The gateway handles SSL termination and proxies to the private IP
       host: ip ? `${this.gateway}/?ip=${ip}` : '',
-      state: server.status,
-      tags: Object.keys(server.labels),
-      creation_date: server.created,
-      originalName: server.labels.originalName,
       provider: this.id,
       large: this.isLarge,
       region: this.region,
