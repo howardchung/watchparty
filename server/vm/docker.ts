@@ -12,10 +12,10 @@ export class Docker extends VMManager {
   size = '';
   largeSize = '';
   minRetries = 0;
-  onDemand = true;
   reuseVMs = false;
   id = 'Docker';
   ssh: NodeSSH | undefined = undefined;
+  imageId = imageName;
 
   getSSH = async () => {
     if (this.ssh && this.ssh.isConnected()) {
@@ -53,7 +53,7 @@ export class Docker extends VMManager {
       INDEX=$(($PORT - 5000))
       UDP_START=$((59000+$INDEX*100))
       UDP_END=$((59099+$INDEX*100))
-      docker run -d --rm --name=${name} --memory="2g" --cpus="2" -p $PORT:$PORT -p $UDP_START-$UDP_END:$UDP_START-$UDP_END/udp -v /etc/letsencrypt:/etc/letsencrypt -l ${tag} -l index=$INDEX --log-opt max-size=1g --shm-size=1g --cap-add="SYS_ADMIN" ${sslEnv} -e DISPLAY=":99.0" -e NEKO_PASSWORD=${name} -e NEKO_PASSWORD_ADMIN=${name} -e NEKO_BIND=":$PORT" -e NEKO_EPR=":$UDP_START-$UDP_END" -e NEKO_H264="1" ${imageName}
+      docker run -d --rm --name=${name} --memory="2g" --cpus="2" -p $PORT:$PORT -p $UDP_START-$UDP_END:$UDP_START-$UDP_END/udp -v /etc/letsencrypt:/etc/letsencrypt -l ${tag} -l index=$INDEX --log-opt max-size=1g --shm-size=1g --cap-add="SYS_ADMIN" ${sslEnv} -e DISPLAY=":99.0" -e NEKO_PASSWORD=${name} -e NEKO_PASSWORD_ADMIN=${name} -e NEKO_ADMIN_KEY=${config.VBROWSER_ADMIN_KEY} -e NEKO_BIND=":$PORT" -e NEKO_EPR=":$UDP_START-$UDP_END" -e NEKO_H264="1" ${imageName}
       `,
     );
     console.log(stdout, stderr);
@@ -69,6 +69,15 @@ export class Docker extends VMManager {
 
   rebootVM = async (id: string) => {
     // Docker containers aren't set to reuse, so do nothing (reset will terminate)
+  };
+
+  reimageVM = async (id: string) => {
+    const conn = await this.getSSH();
+    const { stdout, stderr } = await conn.execCommand(
+      `docker pull ${this.imageId}`,
+    );
+    console.log(stdout, stderr);
+    return;
   };
 
   getVM = async (id: string) => {
@@ -115,7 +124,6 @@ export class Docker extends VMManager {
 
   mapServerObject = (server: any): VM => ({
     id: server.Id,
-    pass: server.Name?.slice(1),
     host: `${this.hostname}:${5000 + Number(server.Config?.Labels?.index)}`,
     provider: this.id,
     large: this.isLarge,

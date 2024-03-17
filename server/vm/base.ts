@@ -19,7 +19,6 @@ export abstract class VMManager {
   private limitSize = 0;
   private minSize = 0;
   protected hostname: string | undefined;
-  protected onDemand = false;
 
   constructor({ isLarge, region, limitSize, minSize, hostname }: PoolConfig) {
     this.isLarge = isLarge;
@@ -45,8 +44,8 @@ export abstract class VMManager {
     return this.limitSize;
   };
 
-  public getMinBuffer = () => {
-    return this.limitSize * 0.04;
+  public getTargetBuffer = () => {
+    return this.limitSize * 0.03;
   };
 
   public getCurrentSize = async () => {
@@ -61,9 +60,9 @@ export abstract class VMManager {
     return this.id + (this.isLarge ? 'Large' : '') + this.region;
   };
 
-  public getAdjustedBuffer = () => {
-    let minBuffer = this.getMinBuffer();
-    // If ramping config, adjust minBuffer based on the hour
+  public getAdjustedBuffer = (): number => {
+    let buffer = this.getTargetBuffer();
+    // If ramping config, adjust buffer based on the hour
     // During ramp down hours, keep a smaller buffer
     // During ramp up hours, keep a larger buffer
     const rampDownHours = config.VM_POOL_RAMP_DOWN_HOURS.split(',').map(Number);
@@ -76,11 +75,11 @@ export abstract class VMManager {
       rampUpHours.length &&
       pointInInterval24(nowHour, rampUpHours[0], rampUpHours[1]);
     if (isRampDown) {
-      minBuffer *= 0.5;
+      buffer *= 0.5;
     } else if (isRampUp) {
-      minBuffer *= 1.5;
+      buffer *= 1.5;
     }
-    return [Math.ceil(minBuffer), Math.ceil(minBuffer * 1.5)];
+    return Math.ceil(buffer);
   };
 
   public getAvailableCount = async (): Promise<number> => {
@@ -144,38 +143,15 @@ export abstract class VMManager {
       FOR UPDATE SKIP LOCKED
       LIMIT 1
     )
-    RETURNING data`,
+    RETURNING data, pass`,
       [roomId, uid, this.getPoolName()],
     );
     let vm: VM | undefined = rows[0]?.data;
-    if (
-      !vm &&
-      this.onDemand &&
-      (this.getLimitSize() === 0 ||
-        (await this.getCurrentSize()) < this.getLimitSize())
-    ) {
-      // Try creating a VM directly if onDemand enabled (short boot times)
-      const vmid = await this.startVM(uuidv4());
-      await postgres.query(
-        `INSERT INTO vbrowser(pool, vmid, "roomId", uid, state, "creationTime", "heartbeatTime", "assignTime") VALUES ($1, $2, $3, $4, 'used', NOW(), NOW(), NOW())`,
-        [this.getPoolName(), vmid, roomId, uid],
-      );
-      redisCount('vBrowserLaunches');
-      // Wait until vm has host
-      let vm = await this.getVM(vmid);
-      while (!vm.host) {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        vm = await this.getVM(vmid);
-      }
-      while (!(await checkVMReady(vm.host))) {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      }
-      return { ...vm, assignTime: Number(new Date()) };
-    }
+    let pass: string = rows[0]?.pass;
     if (!vm) {
       return;
     }
-    return { ...vm, assignTime: Number(new Date()) };
+    return { ...vm, pass, assignTime: Number(new Date()) };
   };
 
   public resetVM = async (vmid: string, roomId?: string): Promise<void> => {
@@ -201,18 +177,27 @@ export abstract class VMManager {
     // Since most user sessions are less than an hour
     // Otherwise if it's per-second or Docker, it's easier to just terminate it on reboot
     if (this.reuseVMs) {
-      // To reset without API calls/reimaging (logic can be reused on any cloud provider):
-      // Update vbrowser image to create default password file with hostname
-      // vbrowser image should use file content as password instead of hostname
-      // generate a new password on vmWorker
-      // ssh to vbrowser, then:
-      // save generated password to file (~/password)
-      // sudo reboot
-      // update DB with generated password
-      // getVM needs to lookup password from db rather than reading server name from API
-      // listvm only needs ID, so avoid doing DB password lookup
-      // add option to force reimage VM (in case of chrome updates)
-      await this.rebootVM(vmid);
+      // To reset without API calls/reimaging (logic can be reused on any cloud provider so we can avoid individual reboot implementations):
+      // Update vbrowser script to generate uuid password
+      // add admin endpoints to vbrowser to get password and reboot
+      // to reset, hit reboot endpoint with admin key OR call cloud reboot method
+      // in checkstaging, check password endpoint with admin key, update DB once available
+      const { rows } = await postgres.query(
+        `SELECT image FROM vbrowser WHERE pool = $1 AND vmid = $2`,
+        [this.getPoolName(), vmid],
+      );
+      const vmImageId = rows[0]?.image;
+      // Check if VM needs to be reimaged
+      if (this.imageId !== vmImageId) {
+        await this.reimageVM(vmid);
+        // Update the vmImageId
+        await postgres.query(
+          `UPDATE vbrowser SET image = $3 WHERE pool = $1 AND vmid = $2`,
+          [this.getPoolName(), vmid, this.imageId],
+        );
+      } else {
+        await this.rebootVM(vmid);
+      }
       // we could crash here and then row will remain in used state
       // Once the heartbeat becomes stale cleanup will reset it again
       const result = await postgres.query(
@@ -262,6 +247,30 @@ export abstract class VMManager {
     await this.terminateVM(vmid);
   };
 
+  checkVMReady = async (host: string) => {
+    // NOTE: This URL doesn't work for docker since it doesn't have /
+    // But since we don't reuse docker VMs it's ok
+    const url = 'https://' + host.replace('/', '/health');
+    try {
+      // const out = execSync(`curl -i -L -v --ipv4 '${host}'`);
+      // if (!out.toString().startsWith('OK') && !out.toString().startsWith('404 page not found')) {
+      //   throw new Error('mismatched response from health');
+      // }
+      const resp = await axios({
+        method: 'GET',
+        url,
+        timeout: 1000,
+      });
+      // Check to make sure the VM was recently rebooted (we could also check on the password to ensure reset)
+      const timeSinceBoot = Date.now() / 1000 - Number(resp.data);
+      // console.log(timeSinceBoot);
+      return this.reuseVMs ? timeSinceBoot < 60 * 1000 : true;
+    } catch (e) {
+      // console.log(url, e.message, e.response?.status);
+      return false;
+    }
+  };
+
   public runBackgroundJobs = async () => {
     const resizeVMGroupIncr = async () => {
       const availableCount = await this.getAvailableCount();
@@ -269,14 +278,14 @@ export abstract class VMManager {
       const currentSize = await this.getCurrentSize();
       let launch = false;
       launch =
-        availableCount + stagingCount < this.getAdjustedBuffer()[0] &&
+        availableCount + stagingCount < this.getAdjustedBuffer() &&
         currentSize < (this.getLimitSize() || Infinity);
       if (launch) {
         console.log(
           '[RESIZE-INCR]',
           this.getPoolName(),
-          'minimum:',
-          this.getAdjustedBuffer()[0],
+          'target:',
+          this.getAdjustedBuffer(),
           'available:',
           availableCount,
           'staging:',
@@ -303,7 +312,7 @@ export abstract class VMManager {
       const availableCount = await this.getAvailableCount();
       const stagingCount = await this.getStagingCount();
       let unlaunch = false;
-      unlaunch = availableCount + stagingCount > this.getAdjustedBuffer()[1];
+      unlaunch = availableCount + stagingCount > this.getAdjustedBuffer();
       if (unlaunch) {
         // use SKIP LOCKED to delete to avoid deleting VM that might be assigning
         // filter to only VMs eligible for deletion
@@ -416,7 +425,7 @@ export abstract class VMManager {
           // Do a minimum # of retries to give reboot time
           return [vmid, retryCount, false].join(',');
         }
-        if (retryCount % 150 === 0) {
+        if (retryCount % 100 === 0) {
           console.log(
             '[CHECKSTAGING] %s: %s poweron, attach to network',
             this.getPoolName(),
@@ -425,7 +434,7 @@ export abstract class VMManager {
           this.powerOn(vmid);
           //this.attachToNetwork(vmid);
         }
-        if (retryCount % 240 === 0) {
+        if (retryCount % 150 === 0) {
           console.log('[CHECKSTAGING]', this.getPoolName(), 'giving up:', vmid);
           redisCount('vBrowserStagingFails');
           await redis?.lpush('vBrowserStageFails', vmid);
@@ -433,7 +442,7 @@ export abstract class VMManager {
           await this.resetVM(vmid);
           // await this.terminateVMWrapper(vmid);
         }
-        if (retryCount >= 240) {
+        if (retryCount >= 150) {
           throw new Error('too many attempts on vm ' + vmid);
         }
         // Fetch data on first attempt
@@ -469,7 +478,7 @@ export abstract class VMManager {
           );
           throw new Error('no host for vm ' + vmid);
         }
-        const ready = await checkVMReady(vm.host);
+        const ready = await this.checkVMReady(vm.host);
         if (
           ready ||
           retryCount % (config.NODE_ENV === 'development' ? 1 : 30) === 0
@@ -484,10 +493,27 @@ export abstract class VMManager {
           );
         }
         if (ready) {
-          await postgres.query(
-            `UPDATE vbrowser SET state = 'available' WHERE id = $1`,
-            [rowid],
+          const passUrl =
+            'https://' +
+            (vm.host.includes('/')
+              ? vm.host.replace('/', '/password')
+              : vm.host + '/password') +
+            (vm.host.includes('?') ? '&' : '?') +
+            'key=' +
+            config.VBROWSER_ADMIN_KEY;
+          // console.log(passUrl);
+          const resp2 = await axios({
+            method: 'GET',
+            url: passUrl,
+            timeout: 1000,
+          });
+          const pass = resp2.data;
+          // password is a uuid so it should never match the previous value, if it does we probably didn't reset properly
+          const { rows } = await postgres.query(
+            `UPDATE vbrowser SET state = 'available', pass = $2 WHERE id = $1 AND pass IS DISTINCT FROM $2`,
+            [rowid, pass],
           );
+          // console.log(rows);
           await redis?.lpush('vBrowserStageRetries', retryCount);
           await redis?.ltrim('vBrowserStageRetries', 0, 24);
         }
@@ -507,7 +533,7 @@ export abstract class VMManager {
     setInterval(resizeVMGroupDecr, decrInterval);
     setInterval(async () => {
       console.log(
-        '[STATS] %s: currentSize %s, available %s, staging %s, buffer %s',
+        '[STATS] %s: currentSize %s, available %s, staging %s, target %s',
         this.getPoolName(),
         await this.getCurrentSize(),
         await this.getAvailableCount(),
@@ -554,8 +580,10 @@ export abstract class VMManager {
   protected abstract largeSize: string;
   protected abstract minRetries: number;
   protected abstract reuseVMs: boolean;
+  protected abstract imageId: string;
   protected abstract startVM: (name: string) => Promise<string>;
   protected abstract rebootVM: (id: string) => Promise<void>;
+  protected abstract reimageVM: (id: string) => Promise<void>;
   protected abstract terminateVM: (id: string) => Promise<void>;
   public abstract getVM: (id: string) => Promise<VM>;
   protected abstract listVMs: (filter: string) => Promise<VM[]>;
@@ -563,30 +591,6 @@ export abstract class VMManager {
   protected abstract attachToNetwork: (id: string) => Promise<void>;
   protected abstract mapServerObject: (server: any) => VM;
   public abstract updateSnapshot: () => Promise<string>;
-}
-
-async function checkVMReady(host: string) {
-  const url = 'https://' + host.replace('/', '/health');
-  try {
-    // const out = execSync(`curl -i -L -v --ipv4 '${host}'`);
-    // if (!out.toString().startsWith('OK') && !out.toString().startsWith('404 page not found')) {
-    //   throw new Error('mismatched response from health');
-    // }
-    const resp = await axios({
-      method: 'GET',
-      url,
-      timeout: 1000,
-    });
-    // Check to make sure the VM was recently rebooted (we could also check on the password to ensure reset)
-    const timeSinceBoot = Date.now() / 1000 - Number(resp.data);
-    // console.log(timeSinceBoot);
-    return process.env.NODE_ENV === 'production'
-      ? timeSinceBoot < 60 * 1000
-      : true;
-  } catch (e) {
-    // console.log(url, e.message, e.response?.status);
-    return false;
-  }
 }
 
 function pointInInterval24(x: number, a: number, b: number) {
@@ -599,7 +603,6 @@ function nonNegativeMod(n: number, m: number) {
 
 export interface VM {
   id: string;
-  pass: string;
   host: string;
   provider: string;
   large: boolean;
@@ -607,6 +610,7 @@ export interface VM {
 }
 
 export interface AssignedVM extends VM {
+  pass: string;
   assignTime: number;
   controllerClient?: string;
   creatorUID?: string;

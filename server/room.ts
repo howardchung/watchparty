@@ -977,9 +977,11 @@ export class Room {
       let assignment: AssignedVM | undefined = undefined;
       try {
         if (stateless) {
-          const id = await stateless.startVM(uuidv4());
+          const pass = uuidv4();
+          const id = await stateless.startVM(pass);
           assignment = {
             ...(await stateless.getVM(id)),
+            pass,
             assignTime: Date.now(),
           };
         } else {

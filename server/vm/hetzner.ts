@@ -1,21 +1,20 @@
 import config from '../config';
 import axios from 'axios';
-import { v4 as uuidv4 } from 'uuid';
 import { VMManager, VM } from './base';
 import fs from 'fs';
 import { redis } from '../utils/redis';
 
 const HETZNER_TOKEN = config.HETZNER_TOKEN;
 const sshKeys = config.HETZNER_SSH_KEYS.split(',').map(Number);
-const imageId = Number(config.HETZNER_IMAGE);
 
 export class Hetzner extends VMManager {
   size = 'cpx11'; // cx11, cpx11, cpx21, cpx31, ccx11
   largeSize = 'cpx31';
-  minRetries = 30;
+  minRetries = 10;
   reuseVMs = true;
   id = 'Hetzner';
   gateway = config.HETZNER_GATEWAY;
+  imageId = config.HETZNER_IMAGE;
 
   private getRandomDatacenter() {
     // US
@@ -33,7 +32,7 @@ export class Hetzner extends VMManager {
       name: name,
       server_type: this.isLarge ? this.largeSize : this.size,
       start_after_create: true,
-      image: imageId,
+      image: Number(this.imageId),
       ssh_keys: sshKeys,
       public_net: {
         enable_ipv4: true,
@@ -72,24 +71,18 @@ export class Hetzner extends VMManager {
   };
 
   rebootVM = async (id: string) => {
-    // Hetzner does not update the hostname automatically on instance name update + reboot
-    // It requires a rebuild command
-    // Generate a new password
-    const password = uuidv4();
-
-    // Update the VM's name
+    // Reboot the VM
     await axios({
-      method: 'PUT',
-      url: `https://api.hetzner.cloud/v1/servers/${id}`,
+      method: 'POST',
+      url: `https://api.hetzner.cloud/v1/servers/${id}/actions/reboot`,
       headers: {
         Authorization: 'Bearer ' + HETZNER_TOKEN,
-        'Content-Type': 'application/json',
-      },
-      data: {
-        name: password,
       },
     });
+    return;
+  };
 
+  reimageVM = async (id: string) => {
     // Rebuild the VM
     await axios({
       method: 'POST',
@@ -98,7 +91,7 @@ export class Hetzner extends VMManager {
         Authorization: 'Bearer ' + HETZNER_TOKEN,
       },
       data: {
-        image: imageId,
+        image: Number(this.imageId),
       },
     });
     return;
@@ -214,7 +207,8 @@ export class Hetzner extends VMManager {
         ssh_keys: sshKeys,
         user_data: fs
           .readFileSync(__dirname + '/../../dev/vbrowser.sh')
-          .toString(),
+          .toString()
+          .replace('{VBROWSER_ADMIN_KEY}', config.VBROWSER_ADMIN_KEY),
         location: this.getRandomDatacenter(),
       },
     });
@@ -246,7 +240,6 @@ export class Hetzner extends VMManager {
     // The private IP requires the server and gateway to be on the same network and there is a limit to the number of servers allowed
     return {
       id: server.id?.toString(),
-      pass: server.name,
       // The gateway handles SSL termination and proxies to the private IP
       host: ip ? `${this.gateway}/?ip=${ip}` : '',
       provider: this.id,

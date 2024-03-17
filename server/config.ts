@@ -53,6 +53,7 @@ const defaults = {
   DISCORD_ADMIN_BOT_SUB_ROLE_ID: '722202622345609246', // Optional, ID of subscriber role
   MEDIASOUP_SERVER: '', // Optional, URL of the MediaSoup server to broadcast to for larger screen/file shares
   TWITCH_PROXY_PATH: '', // Optional, URL of the server that can proxy twitch HLS stream playlists and segments
+  VBROWSER_ADMIN_KEY: '', // Optional, the key to hit admin endpoints on the vbrowser
 };
 
 export default {
