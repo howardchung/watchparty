@@ -41,6 +41,20 @@ export const mapYoutubeListResult = (
   };
 };
 
+export const mapYoutubePlaylistResult = (
+  item: youtube_v3.Schema$PlaylistItem,
+): PlaylistVideo => {
+  return {
+    url: 'https://www.youtube.com/watch?v=' + item.snippet?.resourceId?.videoId,
+    name: item.snippet?.title ?? '',
+    img: item.snippet?.thumbnails?.default?.url ?? '',
+    channel: item.snippet?.channelTitle ?? '',
+    duration: 0,
+    // duration: getVideoDuration(video.contentDetails?.duration ?? ''),
+    type: 'youtube',
+  };
+};
+
 export const searchYoutube = async (
   query: string,
 ): Promise<PlaylistVideo[]> => {
@@ -51,6 +65,17 @@ export const searchYoutube = async (
     q: query,
   });
   return response?.data?.items?.map(mapYoutubeSearchResult) ?? [];
+};
+
+export const youtubePlaylist = async (
+  playlistId: string,
+): Promise<PlaylistVideo[]> => {
+  const response = await Youtube?.playlistItems.list({
+    part: ['snippet'],
+    playlistId,
+    maxResults: 100,
+  });
+  return response?.data?.items?.map(mapYoutubePlaylistResult) ?? [];
 };
 
 export const getYoutubeVideoID = (url: string) => {

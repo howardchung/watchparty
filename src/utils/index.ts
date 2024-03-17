@@ -250,9 +250,9 @@ export async function getMediaPathResults(
   mediaPath: string,
   query: string,
 ): Promise<SearchResult[]> {
-  const response = await window.fetch(mediaPath);
   let results: SearchResult[] = [];
   if (mediaPath.includes('s3.')) {
+    const response = await window.fetch(mediaPath);
     // S3-style buckets return data in XML
     const xml = await response.text();
     const parser = new XMLParser();
@@ -265,15 +265,16 @@ export async function getMediaPathResults(
       url: mediaPath + '/' + file.Key,
       name: mediaPath + '/' + file.Key,
     }));
-  } else {
-    // nginx with autoindex_format json;
+  } else if (mediaPath.startsWith('https://www.youtube.com/playlist?list=')) {
+    // https://www.youtube.com/playlist?list=<playlist ID>
+    const playlistID = mediaPath.split(
+      'https://www.youtube.com/playlist?list=',
+    )[1];
+    const response = await window.fetch(
+      serverPath + '/youtubePlaylist/' + playlistID,
+    );
     const data = await response.json();
-    results = data
-      .filter((file: any) => file.type === 'file')
-      .map((file: any) => ({
-        url: mediaPath + '/' + file.name,
-        name: mediaPath + '/' + file.name,
-      }));
+    return data;
   }
   results = results.filter(
     (option: SearchResult) =>

@@ -239,7 +239,7 @@ export abstract class VMManager {
     // Update the DB before calling terminate
     // If we don't actually complete the termination, cleanup will reset it
     const { command, rowCount } = await postgres.query(
-      `DELETE FROM vbrowser WHERE pool = $1 AND vmid = $2`,
+      `DELETE FROM vbrowser WHERE pool = $1 AND vmid = $2 RETURNING id`,
       [this.getPoolName(), vmid],
     );
     console.log(command, rowCount);
