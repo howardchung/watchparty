@@ -85,7 +85,8 @@ app.get('/isFreePoolFull', async (req, res) => {
   const freePools = Object.values(vmManagers).filter((mgr) => {
     return (
       mgr?.getIsLarge() === false &&
-      mgr?.getRegion() === config.DEFAULT_VM_REGION
+      mgr?.getRegion() === config.DEFAULT_VM_REGION &&
+      mgr?.getLimitSize() > 0
     );
   });
   const fullResult = await Promise.all<Boolean>(
