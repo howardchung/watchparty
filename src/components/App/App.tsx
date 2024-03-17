@@ -618,6 +618,7 @@ export default class App extends React.Component<AppProps, AppState> {
     socket.on('REC:chat', (data: ChatMessage) => {
       if (
         !getCurrentSettings().disableChatSound &&
+        !data.system &&
         ((document.visibilityState && document.visibilityState !== 'visible') ||
           this.state.currentTab !== 'chat')
       ) {
