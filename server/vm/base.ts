@@ -425,7 +425,7 @@ export abstract class VMManager {
           // Do a minimum # of retries to give reboot time
           return [vmid, retryCount, false].join(',');
         }
-        if (retryCount % 100 === 0) {
+        if (retryCount % 150 === 0) {
           console.log(
             '[CHECKSTAGING] %s: %s poweron, attach to network',
             this.getPoolName(),
@@ -434,7 +434,7 @@ export abstract class VMManager {
           this.powerOn(vmid);
           //this.attachToNetwork(vmid);
         }
-        if (retryCount % 150 === 0) {
+        if (retryCount % 180 === 0) {
           console.log('[CHECKSTAGING]', this.getPoolName(), 'giving up:', vmid);
           redisCount('vBrowserStagingFails');
           await redis?.lpush('vBrowserStageFails', vmid);
@@ -442,7 +442,7 @@ export abstract class VMManager {
           await this.resetVM(vmid);
           // await this.terminateVMWrapper(vmid);
         }
-        if (retryCount >= 150) {
+        if (retryCount >= 180) {
           throw new Error('too many attempts on vm ' + vmid);
         }
         // Fetch data on first attempt
