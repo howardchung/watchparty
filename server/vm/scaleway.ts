@@ -1,5 +1,4 @@
 import config from '../config';
-import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
 import { VMManager, VM } from './base';
 
@@ -7,7 +6,6 @@ const SCW_SECRET_KEY = config.SCW_SECRET_KEY;
 const SCW_ORGANIZATION_ID = config.SCW_ORGANIZATION_ID;
 const region = 'nl-ams-1'; //fr-par-1
 const gatewayHost = config.SCW_GATEWAY;
-const imageId = config.SCW_IMAGE;
 
 export class Scaleway extends VMManager {
   size = 'DEV1-S'; // DEV1-S, DEV1-M, DEV1-L, GP1-XS
@@ -15,6 +13,7 @@ export class Scaleway extends VMManager {
   minRetries = 10;
   reuseVMs = true;
   id = 'Scaleway';
+  imageId = config.SCW_IMAGE;
   startVM = async (name: string) => {
     const response = await axios({
       method: 'POST',
@@ -27,7 +26,7 @@ export class Scaleway extends VMManager {
         name: name,
         dynamic_ip_required: true,
         commercial_type: this.isLarge ? this.largeSize : this.size,
-        image: imageId,
+        image: this.imageId,
         volumes: {},
         organization: SCW_ORGANIZATION_ID,
         tags: [this.getTag()],
@@ -77,21 +76,6 @@ export class Scaleway extends VMManager {
   };
 
   rebootVM = async (id: string) => {
-    // Generate a new password
-    const password = uuidv4();
-    // Update the VM's name (also the hostname that will be used as password)
-    const response = await axios({
-      method: 'PATCH',
-      url: `https://api.scaleway.com/instance/v1/zones/${region}/servers/${id}`,
-      headers: {
-        'X-Auth-Token': SCW_SECRET_KEY,
-        'Content-Type': 'application/json',
-      },
-      data: {
-        name: password,
-        tags: [this.getTag()],
-      },
-    });
     // Reboot the VM (also destroys the Docker container since it has --rm flag)
     const response2 = await axios({
       method: 'POST',
@@ -105,6 +89,11 @@ export class Scaleway extends VMManager {
       },
     });
     return;
+  };
+
+  reimageVM = async (id: string) => {
+    // Scaleway doesn't have a reimage/rebuild command. Delete the VM
+    await this.terminateVMWrapper(id);
   };
 
   getVM = async (id: string) => {
@@ -160,7 +149,6 @@ export class Scaleway extends VMManager {
     const ip = server.public_ip?.address;
     return {
       id: server.id,
-      pass: server.name,
       // The gateway handles SSL termination and proxies to the private IP
       host: ip ? `${gatewayHost}/?ip=${ip}` : '',
       provider: this.id,

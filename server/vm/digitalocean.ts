@@ -1,20 +1,19 @@
 import config from '../config';
-import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
 import { VMManager, VM } from './base';
 
 const DO_TOKEN = config.DO_TOKEN;
 const region = 'sfo3';
 const gatewayHost = config.DO_GATEWAY;
-const imageId = Number(config.DO_IMAGE);
 const sshKeys = config.DO_SSH_KEYS.split(',');
 
 export class DigitalOcean extends VMManager {
   size = 's-2vcpu-2gb'; // s-1vcpu-1gb, s-1vcpu-2gb, s-2vcpu-2gb, s-2vcpu-4gb, c-2, s-4vcpu-8gb
   largeSize = 's-4vcpu-8gb';
-  minRetries = 20;
+  minRetries = 10;
   reuseVMs = true;
   id = 'DO';
+  imageId = config.DO_IMAGE;
   startVM = async (name: string) => {
     const response = await axios({
       method: 'POST',
@@ -27,7 +26,7 @@ export class DigitalOcean extends VMManager {
         name: name,
         region: region,
         size: this.isLarge ? this.largeSize : this.size,
-        image: imageId,
+        image: Number(this.imageId),
         ssh_keys: sshKeys,
         private_networking: true,
         // user_data: cloudInit(),
@@ -50,10 +49,8 @@ export class DigitalOcean extends VMManager {
   };
 
   rebootVM = async (id: string) => {
-    // Generate a new password
-    const password = uuidv4();
-    // Update the VM's name (also the hostname that will be used as password)
-    const response = await axios({
+    // Reboot the VM
+    const response2 = await axios({
       method: 'POST',
       url: `https://api.digitalocean.com/v2/droplets/${id}/actions`,
       headers: {
@@ -61,29 +58,13 @@ export class DigitalOcean extends VMManager {
         'Content-Type': 'application/json',
       },
       data: {
-        type: 'rename',
-        name: password,
+        type: 'reboot',
       },
     });
+    return;
+  };
 
-    const actionId = response.data.action.id;
-    // Wait for the rename action to complete
-    while (true) {
-      const response3 = await axios({
-        method: 'GET',
-        url: `https://api.digitalocean.com/v2/actions/${actionId}`,
-        headers: {
-          Authorization: 'Bearer ' + DO_TOKEN,
-          'Content-Type': 'application/json',
-        },
-      });
-      if (response3?.data?.action?.status === 'completed') {
-        break;
-      } else {
-        await new Promise((resolve) => setTimeout(resolve, 3000));
-      }
-    }
-
+  reimageVM = async (id: string) => {
     // Rebuild the VM
     const response2 = await axios({
       method: 'POST',
@@ -94,21 +75,9 @@ export class DigitalOcean extends VMManager {
       },
       data: {
         type: 'rebuild',
-        image: imageId,
+        image: Number(this.imageId),
       },
     });
-    // Reboot the VM
-    // const response2 = await axios({
-    //   method: 'POST',
-    //   url: `https://api.digitalocean.com/v2/droplets/${id}/actions`,
-    //   headers: {
-    //     Authorization: 'Bearer ' + DO_TOKEN,
-    //     'Content-Type': 'application/json',
-    //   },
-    //   data: {
-    //     type: 'reboot',
-    //   },
-    // });
     return;
   };
 
@@ -160,7 +129,6 @@ export class DigitalOcean extends VMManager {
     )?.ip_address;
     return {
       id: server.id?.toString(),
-      pass: server.name,
       // The gateway handles SSL termination and proxies to the private IP
       host: ip ? `${gatewayHost}/?ip=${ip}` : '',
       provider: this.id,

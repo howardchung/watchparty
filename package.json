@@ -59,7 +59,7 @@
     "typecheckServer": "tsc --project server/tsconfig.json --noEmit",
     "typecheck": "tsc --project tsconfig.json --noEmit",
     "ncu": "ncu --semverLevel major -u",
-    "updateSnapshot": "curl -X POST http://localhost:3100/updateSnapshot -H 'Content-Type: application/json' -d '{\"provider\":\"Hetzner\",\"region\":\"US\"}'",
+    "updateSnapshot": "curl -X POST localhost:3100/updateSnapshot -H 'Content-Type: application/json' -d '{\"provider\":\"Hetzner\",\"region\":\"US\"}'",
     "testvBrowser": "docker run -d --rm --name=vbrowser --log-opt max-size=1g --net=host --shm-size=1g --cap-add=\"SYS_ADMIN\" -e DISPLAY=\":99.0\" -e NEKO_PASSWORD=user -e NEKO_PASSWORD_ADMIN=admin -e NEKO_BIND=\":5100\" -e NEKO_EPR=\":59000-59100\" -e NEKO_H264=\"1\" howardc93/vbrowser",
     "testvlc": "docker run -d --rm --name=vlc --log-opt max-size=1g --net=host -e VLC_MEDIA=\"https://github.com/ietf-wg-cellar/matroska-test-files/raw/master/test_files/test1.mkv\" -e NEKO_PASSWORD=user -e NEKO_PASSWORD_ADMIN=admin -e NEKO_BIND=\":5100\" -e NEKO_EPR=\":59000-59100\" -e NEKO_H264=\"1\" m1k1o/neko:vlc",
     "analyze": "source-map-explorer 'build/static/js/*.js' --html result.html"

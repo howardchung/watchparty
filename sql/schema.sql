@@ -55,7 +55,9 @@ CREATE TABLE vbrowser(
   "roomId" text, -- room VM assigned to
   uid text, -- user requesting the VM
   data json, -- metadata for the VM
-  retries int DEFAULT 0 -- how many tries we checked if VM is up
+  retries int DEFAULT 0, -- how many times we checked if VM is up
+  pass text, -- password to access vbrowser
+  image text -- ID of the last image applied to this VM
 );
 CREATE UNIQUE INDEX on vbrowser(pool, vmid);
 CREATE INDEX on vbrowser(pool, state);
