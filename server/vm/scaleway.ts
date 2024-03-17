@@ -10,7 +10,7 @@ const gatewayHost = config.SCW_GATEWAY;
 export class Scaleway extends VMManager {
   size = 'DEV1-S'; // DEV1-S, DEV1-M, DEV1-L, GP1-XS
   largeSize = 'DEV1-M';
-  minRetries = 10;
+  minRetries = 5;
   reuseVMs = true;
   id = 'Scaleway';
   imageId = config.SCW_IMAGE;

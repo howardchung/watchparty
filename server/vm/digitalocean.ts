@@ -10,7 +10,7 @@ const sshKeys = config.DO_SSH_KEYS.split(',');
 export class DigitalOcean extends VMManager {
   size = 's-2vcpu-2gb'; // s-1vcpu-1gb, s-1vcpu-2gb, s-2vcpu-2gb, s-2vcpu-4gb, c-2, s-4vcpu-8gb
   largeSize = 's-4vcpu-8gb';
-  minRetries = 10;
+  minRetries = 5;
   reuseVMs = true;
   id = 'DO';
   imageId = config.DO_IMAGE;

@@ -10,7 +10,7 @@ const sshKeys = config.HETZNER_SSH_KEYS.split(',').map(Number);
 export class Hetzner extends VMManager {
   size = 'cpx11'; // cx11, cpx11, cpx21, cpx31, ccx11
   largeSize = 'cpx31';
-  minRetries = 10;
+  minRetries = 5;
   reuseVMs = true;
   id = 'Hetzner';
   gateway = config.HETZNER_GATEWAY;

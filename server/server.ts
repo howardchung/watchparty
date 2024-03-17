@@ -8,7 +8,7 @@ import cors from 'cors';
 import https from 'https';
 import http from 'http';
 import { Server } from 'socket.io';
-import { searchYoutube } from './utils/youtube';
+import { searchYoutube, youtubePlaylist } from './utils/youtube';
 import { Room } from './room';
 import {
   redis,
@@ -247,6 +247,15 @@ app.get('/youtube', async (req, res) => {
     }
   } else {
     return res.status(500).json({ error: 'query must be a string' });
+  }
+});
+
+app.get('/youtubePlaylist/:playlistId', async (req, res) => {
+  try {
+    const items = await youtubePlaylist(req.params.playlistId);
+    res.json(items);
+  } catch {
+    return res.status(500).json({ error: 'youtube error' });
   }
 });
 
