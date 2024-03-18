@@ -125,6 +125,7 @@ interface AppState {
   isErrorAuth: boolean;
   settings: Settings;
   vBrowserResolution: string;
+  vBrowserQuality: string;
   isVBrowserLarge: boolean;
   nonPlayableMedia: boolean;
   currentTab: string;
@@ -189,6 +190,7 @@ export default class App extends React.Component<AppProps, AppState> {
     isErrorAuth: false,
     settings: {},
     vBrowserResolution: '1280x720@30',
+    vBrowserQuality: '1',
     isVBrowserLarge: false,
     nonPlayableMedia: false,
     currentTab:
@@ -431,6 +433,7 @@ export default class App extends React.Component<AppProps, AppState> {
           nonPlayableMedia: false,
           isVBrowserLarge: data.isVBrowserLarge,
           vBrowserResolution: '1280x720@30',
+          vBrowserQuality: '1',
           controller: data.controller,
           isLiveHls: false,
         },
@@ -2277,6 +2280,45 @@ export default class App extends React.Component<AppProps, AppState> {
                           ></Dropdown>
                         )}
                         {this.playingVBrowser() && (
+                          <Dropdown
+                            icon="chart area"
+                            labeled
+                            className="icon"
+                            style={{ height: '36px' }}
+                            button
+                            disabled={!this.haveLock()}
+                            value={this.state.vBrowserQuality}
+                            onChange={(_e, data) => {
+                              this.setState({
+                                vBrowserQuality: data.value as string,
+                              });
+                            }}
+                            selection
+                            options={[
+                              {
+                                text: 'Eco',
+                                value: '0.25',
+                              },
+                              {
+                                text: 'Low',
+                                value: '0.5',
+                              },
+                              {
+                                text: 'Standard',
+                                value: '1',
+                              },
+                              {
+                                text: 'High',
+                                value: '1.5',
+                              },
+                              {
+                                text: 'Ultra',
+                                value: '2',
+                              },
+                            ]}
+                          ></Dropdown>
+                        )}
+                        {this.playingVBrowser() && (
                           <Button
                             fluid
                             className="toolButton"
@@ -2401,10 +2443,14 @@ export default class App extends React.Component<AppProps, AppState> {
                           hostname={this.getVBrowserHost()}
                           controlling={this.state.controller === this.socket.id}
                           resolution={this.state.vBrowserResolution}
+                          quality={this.state.vBrowserQuality}
                           doPlay={this.localPlay}
                           setResolution={(data: string) =>
                             this.setState({ vBrowserResolution: data })
                           }
+                          setQuality={(data: string) => {
+                            this.setState({ vBrowserQuality: data });
+                          }}
                         />
                       ) : (
                         <video
