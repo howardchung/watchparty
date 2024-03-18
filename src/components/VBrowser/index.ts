@@ -98,8 +98,9 @@ export class NekoClient extends BaseClient implements EventEmitter<any> {
     width,
     height,
     rate,
+    quality,
   }: ScreenResolutionPayload) {
-    this.emit(EVENT.SCREEN.RESOLUTION, { width, height, rate });
+    this.emit(EVENT.SCREEN.RESOLUTION, { width, height, rate, quality });
   }
 }
 
