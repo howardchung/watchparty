@@ -42,7 +42,7 @@ module.exports = {
       env: {
         HETZNER_GATEWAY: 'gateway2.watchparty.me',
         HETZNER_SSH_KEYS: '1570536',
-        HETZNER_IMAGE: '154842128',
+        HETZNER_IMAGE: '155035382',
         SCW_GATEWAY: 'gateway2.watchparty.me',
         SCW_IMAGE: '172bd9df-eba5-44e7-add0-f6edbb0f9c64',
         DO_GATEWAY: 'gateway2.watchparty.me',
