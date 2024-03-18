@@ -21,4 +21,5 @@ export interface ScreenResolution {
   width: number;
   height: number;
   rate: number;
+  quality: number;
 }
