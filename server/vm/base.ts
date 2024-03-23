@@ -448,8 +448,9 @@ export abstract class VMManager {
         // Fetch data on first attempt
         // Try again only every once in a while to reduce load on API
         const shouldFetchVM =
-          retryCount === this.minRetries + 1 || retryCount % 20 === 0;
-        if (!vm && shouldFetchVM) {
+          retryCount === this.minRetries + 1 || retryCount % 30 === 0;
+        // Refetch the VM every once in a while even if cached to check if it should be deleted
+        if (shouldFetchVM) {
           try {
             vm = await this.getVM(vmid);
           } catch (e: any) {
