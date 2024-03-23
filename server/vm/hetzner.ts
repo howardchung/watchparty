@@ -111,9 +111,6 @@ export class Hetzner extends VMManager {
       response?.headers['ratelimit-remaining'],
     );
     redis?.set('hetznerApiRemaining', response?.headers['ratelimit-remaining']);
-    if (response.data.server.private_net?.length > 1) {
-      console.log('[WARNING] %s has more than one private network', id);
-    }
     const server = this.mapServerObject(response.data.server);
     return server;
   };
