@@ -1,0 +1,38 @@
+{
+	"name": "semver-regex",
+	"version": "3.1.4",
+	"description": "Regular expression for matching semver versions",
+	"license": "MIT",
+	"repository": "sindresorhus/semver-regex",
+	"funding": "https://github.com/sponsors/sindresorhus",
+	"author": {
+		"name": "Sindre Sorhus",
+		"email": "sindresorhus@gmail.com",
+		"url": "https://sindresorhus.com"
+	},
+	"engines": {
+		"node": ">=8"
+	},
+	"scripts": {
+		"test": "xo && ava && tsd"
+	},
+	"files": [
+		"index.js",
+		"index.d.ts"
+	],
+	"keywords": [
+		"semver",
+		"version",
+		"versions",
+		"regex",
+		"regexp",
+		"match",
+		"matching",
+		"semantic"
+	],
+	"devDependencies": {
+		"ava": "^1.4.1",
+		"tsd": "^0.7.2",
+		"xo": "^0.24.0"
+	}
+}
