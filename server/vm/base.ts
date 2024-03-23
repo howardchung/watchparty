@@ -425,26 +425,6 @@ export abstract class VMManager {
           // Do a minimum # of retries to give reboot time
           return [vmid, retryCount, false].join(',');
         }
-        if (retryCount % 150 === 0) {
-          console.log(
-            '[CHECKSTAGING] %s: %s poweron, attach to network',
-            this.getPoolName(),
-            vmid,
-          );
-          this.powerOn(vmid);
-          //this.attachToNetwork(vmid);
-        }
-        if (retryCount % 180 === 0) {
-          console.log('[CHECKSTAGING]', this.getPoolName(), 'giving up:', vmid);
-          redisCount('vBrowserStagingFails');
-          await redis?.lpush('vBrowserStageFails', vmid);
-          await redis?.ltrim('vBrowserStageFails', 0, 24);
-          await this.resetVM(vmid);
-          // await this.terminateVMWrapper(vmid);
-        }
-        if (retryCount >= 180) {
-          throw new Error('too many attempts on vm ' + vmid);
-        }
         // Fetch data on first attempt
         // Try again only every once in a while to reduce load on API
         const shouldFetchVM =
@@ -456,7 +436,7 @@ export abstract class VMManager {
           } catch (e: any) {
             console.warn(e.response?.data);
             if (e.response?.status === 404) {
-              // Remove the VM beecause the provider says it doesn't exist
+              // Remove the VM because the provider says it doesn't exist
               await postgres.query('DELETE FROM vbrowser WHERE id = $1', [
                 rowid,
               ]);
@@ -478,6 +458,26 @@ export abstract class VMManager {
             vmid,
           );
           throw new Error('no host for vm ' + vmid);
+        }
+        if (retryCount % 150 === 0) {
+          console.log(
+            '[CHECKSTAGING] %s: %s poweron, attach to network',
+            this.getPoolName(),
+            vmid,
+          );
+          this.powerOn(vmid);
+          //this.attachToNetwork(vmid);
+        }
+        if (retryCount % 180 === 0) {
+          console.log('[CHECKSTAGING]', this.getPoolName(), 'giving up:', vmid);
+          redisCount('vBrowserStagingFails');
+          await redis?.lpush('vBrowserStageFails', vmid);
+          await redis?.ltrim('vBrowserStageFails', 0, 24);
+          await this.resetVM(vmid);
+          // await this.terminateVMWrapper(vmid);
+        }
+        if (retryCount >= 180) {
+          throw new Error('too many attempts on vm ' + vmid);
         }
         const ready = await this.checkVMReady(vm.host);
         if (
