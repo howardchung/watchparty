@@ -125,8 +125,8 @@ export class ProfileModal extends React.Component<{
               undone.
             </p>
             <p>
-              If you have an active subscription, deleting your account will not
-              automatically cancel it!
+              Note: If you have an active subscription, deleting your account will NOT
+              automatically cancel it and you will need to contact support@watchparty.me to cancel.
             </p>
           </Modal.Content>
           <Modal.Actions>
