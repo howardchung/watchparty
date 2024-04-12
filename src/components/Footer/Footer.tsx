@@ -25,5 +25,7 @@ export const Footer = () => (
     <Link style={{ color: 'white' }} to="/discordBot">
       Discord Bot
     </Link>
+    {' · '}
+    <span>Gravitech LLC</span>
   </div>
 );
