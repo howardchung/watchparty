@@ -1660,9 +1660,9 @@ export default class App extends React.Component<AppProps, AppState> {
         e.preventDefault();
         this.roomTogglePlay();
       } else if (e.key === 'ArrowRight') {
-        this.roomSeek(null, this.Player().getCurrentTime() + 15);
+        this.roomSeek(null, this.Player().getCurrentTime() + 10);
       } else if (e.key === 'ArrowLeft') {
-        this.roomSeek(null, this.Player().getCurrentTime() - 15);
+        this.roomSeek(null, this.Player().getCurrentTime() - 10);
       } else if (e.key === 't') {
         this.localFullScreen(false);
       } else if (e.key === 'f') {
