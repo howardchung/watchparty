@@ -8,8 +8,8 @@ const HETZNER_TOKEN = config.HETZNER_TOKEN;
 const sshKeys = config.HETZNER_SSH_KEYS.split(',').map(Number);
 
 export class Hetzner extends VMManager {
-  size = 'cpx11'; // cx11, cpx11, cpx21, cpx31, ccx11
-  largeSize = 'cpx31';
+  size = 'cx22'; // cpx11, cx22
+  largeSize = 'cpx31'; // cpx21, cpx31, ccx13, ccx23, cx32
   minRetries = 5;
   reuseVMs = true;
   id = 'Hetzner';
