@@ -384,6 +384,17 @@ app.get('/resolveRoom/:vanity', async (req, res) => {
   return res.json(result?.rows[0]);
 });
 
+app.get('/roomData/:roomId', async (req, res) => {
+  // Returns the room data given a room ID
+  // Only return data if the room doesn't have a password
+  // If it does, we could accept it as a URL parameter but for now just don't support
+  const result = await postgres?.query(
+    `SELECT data from room WHERE "roomId" = $1 and password IS NULL`,
+    [req.params.roomId],
+  );
+  return res.json(result?.rows[0]?.data);
+});
+
 app.get('/resolveShard/:roomId', async (req, res) => {
   const shardNum = resolveShard(req.params.roomId);
   return res.send(String(config.SHARD ? shardNum : ''));
