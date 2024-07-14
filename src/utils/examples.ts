@@ -27,7 +27,7 @@ export const examples: SearchResult[] = [
   },
 ].map((urlOrObject: { url: string; img: string } | string) => {
   const url = typeof urlOrObject === 'object' ? urlOrObject.url : urlOrObject;
-  let type = 'file';
+  let type: SearchResult['type'] = 'file';
   if (isYouTube(url)) {
     type = 'youtube';
   } else if (isMagnet(url)) {
