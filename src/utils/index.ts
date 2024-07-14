@@ -283,14 +283,13 @@ export async function getMediaPathResults(
       .split('\n')
       .map((line) => ({ url: line, name: line, duration: 0, type: 'file' }));
   }
-  results = results
-    .filter(
-      (option: SearchResult) =>
-        // Exclude subtitles
-        !option.url.endsWith('.srt') &&
-        option.name.toLowerCase().includes(query.toLowerCase()),
-    )
-    .filter(Boolean);
+  results = results.filter(
+    (option: SearchResult) =>
+      // Exclude subtitles
+      !option.url.endsWith('.srt') &&
+      option.name.toLowerCase().includes(query.toLowerCase()) &&
+      option.url,
+  );
   return results;
 }
 
