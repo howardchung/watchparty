@@ -390,7 +390,7 @@ app.get('/roomData/:roomId', async (req, res) => {
   // If it does, we could accept it as a URL parameter but for now just don't support
   const result = await postgres?.query(
     `SELECT data from room WHERE "roomId" = $1 and password IS NULL`,
-    [req.params.roomId],
+    ['/' + req.params.roomId],
   );
   return res.json(result?.rows[0]?.data);
 });
