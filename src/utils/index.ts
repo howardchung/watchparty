@@ -275,6 +275,13 @@ export async function getMediaPathResults(
     );
     const data = await response.json();
     return data;
+  } else {
+    // Assume it's a text list of URLs
+    const response = await window.fetch(mediaPath);
+    const text = await response.text();
+    results = text
+      .split('\n')
+      .map((line) => ({ url: line, name: line, duration: 0, type: 'file' }));
   }
   results = results.filter(
     (option: SearchResult) =>
