@@ -214,7 +214,7 @@ export const SettingsTab = ({
           toggle={false}
           icon={'folder'}
           name={`Set Room Media Source`}
-          description="Set a media source URL with files to replace the default examples. Supports S3 buckets, YouTube playlists, or a text list of URLs."
+          description="Set a media source URL with files to replace the default examples. Supports S3 buckets, YouTube playlists, or a link to a text list of URLs."
           content={
             <Input
               value={mediaPath ?? ''}
