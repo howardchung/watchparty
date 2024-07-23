@@ -273,8 +273,7 @@ export async function getMediaPathResults(
     const response = await window.fetch(
       serverPath + '/youtubePlaylist/' + playlistID,
     );
-    const data = await response.json();
-    return data;
+    results = await response.json();
   } else {
     // Assume it's a text list of URLs
     const response = await window.fetch(mediaPath);
@@ -283,14 +282,7 @@ export async function getMediaPathResults(
       .split('\n')
       .map((line) => ({ url: line, name: line, duration: 0, type: 'file' }));
   }
-  results = results.filter(
-    (option: SearchResult) =>
-      // Exclude subtitles
-      !option.url.endsWith('.srt') &&
-      option.name.toLowerCase().includes(query.toLowerCase()) &&
-      option.url,
-  );
-  return results;
+  return results.filter((res) => res.url);
 }
 
 export async function getStreamPathResults(
