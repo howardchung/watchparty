@@ -134,6 +134,10 @@ export const isHls = (input: string) => {
   return input.includes('.m3u8');
 };
 
+export const isDash = (input: string) => {
+  return input.includes('.mpd');
+};
+
 export const isScreenShare = (input: string) => {
   return input.startsWith('screenshare://');
 };

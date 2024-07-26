@@ -16,7 +16,11 @@ export class HTML implements Player {
   };
 
   getDuration = () => {
-    return this.getVideoEl()?.duration ?? 0;
+    return (
+      window.watchparty.dashPlayer?.duration() ??
+      this.getVideoEl()?.duration ??
+      0
+    );
   };
 
   isMuted = () => {

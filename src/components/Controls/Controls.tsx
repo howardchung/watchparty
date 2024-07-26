@@ -18,7 +18,7 @@ interface ControlsProps {
   playbackRate: number;
   roomPlaybackRate: number;
   isYouTube: boolean;
-  isLiveHls: boolean;
+  isLiveStream: boolean;
   timeRanges: { start: number; end: number }[];
   loop: boolean;
   roomTogglePlay: () => void;
@@ -122,7 +122,7 @@ export class Controls extends React.Component<ControlsProps> {
           trigger={
             <div
               onClick={() => {
-                if (this.props.isLiveHls) {
+                if (this.props.isLiveStream) {
                   // do a regular seek rather than sync self if it's HLS since we're basically seeking to the live position
                   // Also, clear the room TS since we want to start at live again on refresh
                   this.props.roomSeek(null, Number.MAX_SAFE_INTEGER);

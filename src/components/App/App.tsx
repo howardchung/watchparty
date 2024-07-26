@@ -1,4 +1,5 @@
 import type MediasoupClient from 'mediasoup-client';
+import type { MediaPlayerClass } from 'dashjs';
 import axios from 'axios';
 import React from 'react';
 import {
@@ -37,6 +38,7 @@ import {
   isScreenShare,
   isFileShare,
   isVBrowser,
+  isDash,
 } from '../../utils';
 import { generateName } from '../../utils/generateName';
 import { Chat } from '../Chat';
@@ -72,6 +74,7 @@ declare global {
       videoRefs: HTMLVideoElementDict;
       videoPCs: PCDict;
       webtorrent: WebTorrent.Instance | null;
+      dashPlayer: MediaPlayerClass | undefined;
     };
   }
 }
@@ -81,6 +84,7 @@ window.watchparty = {
   videoRefs: {},
   videoPCs: {},
   webtorrent: null,
+  dashPlayer: undefined,
 };
 
 interface AppProps {
@@ -152,7 +156,7 @@ interface AppState {
   roomTitleColor: string | undefined;
   mediaPath: string | undefined;
   roomPlaybackRate: number;
-  isLiveHls: boolean;
+  isLiveStream: boolean;
 }
 
 export default class App extends React.Component<AppProps, AppState> {
@@ -218,7 +222,7 @@ export default class App extends React.Component<AppProps, AppState> {
     roomTitleColor: '',
     mediaPath: undefined,
     roomPlaybackRate: 0,
-    isLiveHls: false,
+    isLiveStream: false,
   };
   socket: Socket = null as any;
   mediasoupPubSocket: Socket | null = null;
@@ -435,7 +439,7 @@ export default class App extends React.Component<AppProps, AppState> {
           vBrowserResolution: '1280x720@30',
           vBrowserQuality: '1',
           controller: data.controller,
-          isLiveHls: false,
+          isLiveStream: false,
         },
         async () => {
           const leftVideo = this.HTMLInterface.getVideoEl();
@@ -447,6 +451,7 @@ export default class App extends React.Component<AppProps, AppState> {
           }
           this.YouTubeInterface.stopVideo();
 
+          window.watchparty.dashPlayer = undefined;
           if (!this.isLocalStreamAFile) {
             this.Player().clearState();
           }
@@ -551,6 +556,12 @@ export default class App extends React.Component<AppProps, AppState> {
                 },
               );
             });
+          } else if (isDash(src)) {
+            const Dash = await import('dashjs');
+            const dashPlayer = Dash.MediaPlayer().create();
+            this.setState({ isLiveStream: true });
+            dashPlayer.initialize(leftVideo, src);
+            window.watchparty.dashPlayer = dashPlayer;
           } else if (isHls(src) && window.MediaSource) {
             // Prefer using hls.js if MediaSource Extensions are supported
             // otherwise fallback to native HLS support using video tag (i.e. iPhones)
@@ -561,7 +572,7 @@ export default class App extends React.Component<AppProps, AppState> {
             hls.attachMedia(leftVideo);
             hls.once(Hls.Events.LEVEL_LOADED, (_, data) => {
               console.log('isLiveHls', data.details.live);
-              this.setState({ isLiveHls: data.details.live });
+              this.setState({ isLiveStream: data.details.live });
             });
           } else {
             await this.Player().setSrcAndTime(src, time);
@@ -575,7 +586,9 @@ export default class App extends React.Component<AppProps, AppState> {
             'canplay',
             () => {
               this.setLoadingFalse();
-              this.localSeek(this.state.isLiveHls ? data.videoTS : undefined);
+              this.localSeek(
+                this.state.isLiveStream ? data.videoTS : undefined,
+              );
               if (data.playbackRate) {
                 // Set playback rate again since it might have been lost
                 console.log('setting playback rate again', data.playbackRate);
@@ -681,7 +694,7 @@ export default class App extends React.Component<AppProps, AppState> {
         // Also not necessary for WebRTC sharing since it should be close to realtime
         if (
           !this.state.roomPaused &&
-          !this.state.isLiveHls &&
+          !this.state.isLiveStream &&
           this.hasDuration() &&
           this.state.roomPlaybackRate === 0
         ) {
@@ -1537,7 +1550,7 @@ export default class App extends React.Component<AppProps, AppState> {
     // Jump to the leader's position, or a custom one
     // for HLS the leader is the live stream position
     let target = customTime ?? this.getLeaderTime();
-    if (this.state.isLiveHls) {
+    if (this.state.isLiveStream) {
       console.log('syncing self for livehls');
       if (customTime) {
         // Translate the time back to video time
@@ -1577,7 +1590,11 @@ export default class App extends React.Component<AppProps, AppState> {
           await this.Player().playVideo();
         } catch (e: any) {
           console.warn(e, e.name);
-          if (e.name === 'NotSupportedError' && this.usingNative()) {
+          if (
+            e.name === 'NotSupportedError' &&
+            this.usingNative() &&
+            !this.state.isLiveStream
+          ) {
             this.setState({ loading: false, nonPlayableMedia: true });
           }
         }
@@ -1647,7 +1664,7 @@ export default class App extends React.Component<AppProps, AppState> {
     this.Player().seekVideo(target);
     const hlsTarget =
       Math.floor(Date.now() / 1000) - this.HTMLInterface.getDuration() + target;
-    this.socket.emit('CMD:seek', this.state.isLiveHls ? hlsTarget : target);
+    this.socket.emit('CMD:seek', this.state.isLiveStream ? hlsTarget : target);
   };
 
   onFullScreenChange = () => {
@@ -1787,7 +1804,7 @@ export default class App extends React.Component<AppProps, AppState> {
   };
 
   getLeaderTime = () => {
-    if (this.state.isLiveHls) {
+    if (this.state.isLiveStream) {
       // Pick a time near the end of the livestream
       return this.HTMLInterface.getDuration() - 5;
     }
@@ -1835,7 +1852,7 @@ export default class App extends React.Component<AppProps, AppState> {
         key={this.state.controlsTimestamp}
         paused={this.state.roomPaused}
         roomPlaybackRate={this.state.roomPlaybackRate}
-        isLiveHls={this.state.isLiveHls}
+        isLiveStream={this.state.isLiveStream}
         muted={this.Player().isMuted()}
         volume={this.Player().getVolume()}
         subtitled={this.Player().isSubtitled()}
@@ -1960,7 +1977,7 @@ export default class App extends React.Component<AppProps, AppState> {
           isChatDisabled={this.state.isChatDisabled}
           owner={this.state.owner}
           ref={this.chatRef}
-          isLiveHls={this.state.isLiveHls}
+          isLiveStream={this.state.isLiveStream}
         />
         {this.state.state === 'connected' && (
           <VideoChat
