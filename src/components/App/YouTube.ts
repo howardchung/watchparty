@@ -1,3 +1,4 @@
+import { MediaPlayerClass } from 'dashjs';
 import { Player } from './Player';
 
 export class YouTube implements Player {
@@ -5,6 +6,9 @@ export class YouTube implements Player {
   constructor(watchPartyYTPlayer: YT.Player | null) {
     this.watchPartyYTPlayer = watchPartyYTPlayer;
   }
+  clearDashState = () => {};
+  setDashState = (player: MediaPlayerClass) => {};
+
   getCurrentTime = () => {
     return this.watchPartyYTPlayer?.getCurrentTime() ?? 0;
   };

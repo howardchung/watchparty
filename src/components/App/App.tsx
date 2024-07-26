@@ -1,5 +1,4 @@
 import type MediasoupClient from 'mediasoup-client';
-import type { MediaPlayerClass } from 'dashjs';
 import axios from 'axios';
 import React from 'react';
 import {
@@ -74,7 +73,6 @@ declare global {
       videoRefs: HTMLVideoElementDict;
       videoPCs: PCDict;
       webtorrent: WebTorrent.Instance | null;
-      dashPlayer: MediaPlayerClass | undefined;
     };
   }
 }
@@ -84,7 +82,6 @@ window.watchparty = {
   videoRefs: {},
   videoPCs: {},
   webtorrent: null,
-  dashPlayer: undefined,
 };
 
 interface AppProps {
@@ -451,7 +448,7 @@ export default class App extends React.Component<AppProps, AppState> {
           }
           this.YouTubeInterface.stopVideo();
 
-          window.watchparty.dashPlayer = undefined;
+          this.Player().clearDashState();
           if (!this.isLocalStreamAFile) {
             this.Player().clearState();
           }
@@ -561,7 +558,7 @@ export default class App extends React.Component<AppProps, AppState> {
             const dashPlayer = Dash.MediaPlayer().create();
             this.setState({ isLiveStream: true });
             dashPlayer.initialize(leftVideo, src);
-            window.watchparty.dashPlayer = dashPlayer;
+            this.Player().setDashState(dashPlayer);
           } else if (isHls(src) && window.MediaSource) {
             // Prefer using hls.js if MediaSource Extensions are supported
             // otherwise fallback to native HLS support using video tag (i.e. iPhones)
