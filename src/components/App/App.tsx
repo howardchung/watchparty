@@ -1659,9 +1659,17 @@ export default class App extends React.Component<AppProps, AppState> {
     }
     target = Math.max(target, 0);
     this.Player().seekVideo(target);
-    const hlsTarget =
-      Math.floor(Date.now() / 1000) - this.HTMLInterface.getDuration() + target;
-    this.socket.emit('CMD:seek', this.state.isLiveStream ? hlsTarget : target);
+    // Livestreams sync to network using timestamp since video time may be different for each viewer
+    if (this.state.isLiveStream) {
+      const now = Math.floor(Date.now() / 1000);
+      let liveStreamTarget = now - this.HTMLInterface.getDuration() + target;
+      // If livestream and seeking close to edge, set target as max
+      if (now - liveStreamTarget <= 5) {
+        liveStreamTarget = Number.MAX_SAFE_INTEGER;
+      }
+      target = liveStreamTarget;
+    }
+    this.socket.emit('CMD:seek', target);
   };
 
   onFullScreenChange = () => {
