@@ -146,9 +146,11 @@ export class Controls extends React.Component<ControlsProps> {
         <Progress
           size="tiny"
           color="blue"
-          onClick={
-            duration < Infinity && !this.props.disabled ? roomSeek : undefined
-          }
+          onClick={(e: any, time: number) => {
+            if (duration < Infinity && !this.props.disabled) {
+              roomSeek(e, time);
+            }
+          }}
           onMouseOver={this.onMouseOver}
           onMouseOut={this.onMouseOut}
           onMouseMove={this.onMouseMove}
