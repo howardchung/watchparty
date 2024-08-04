@@ -6,7 +6,7 @@ import firebase from 'firebase/compat/app';
 import { XMLParser } from 'fast-xml-parser';
 import config from '../config';
 
-export function formatTimestamp(input: any) {
+export function formatTimestamp(input: any, wallClock?: boolean): string {
   if (
     input === null ||
     input === undefined ||
@@ -16,6 +16,12 @@ export function formatTimestamp(input: any) {
   ) {
     return '';
   }
+  if (Number(input) >= Number.MAX_SAFE_INTEGER) {
+    return 'live';
+  }
+  if (wallClock) {
+    return new Date(input * 1000).toLocaleTimeString();
+  }
   let hours = Math.floor(Number(input) / 3600);
   let minutes = (Math.floor(Number(input) / 60) % 60)
     .toString()
@@ -24,17 +30,6 @@ export function formatTimestamp(input: any) {
     .toString()
     .padStart(2, '0');
   return `${hours ? `${hours}:` : ''}${minutes}:${seconds}`;
-}
-
-export function formatUnixTime(input: string) {
-  try {
-    if (Number(input) >= Number.MAX_SAFE_INTEGER) {
-      return 'live';
-    }
-    return new Date(Number(input) * 1000).toISOString();
-  } catch {
-    return input;
-  }
 }
 
 export function formatSpeed(input: number) {

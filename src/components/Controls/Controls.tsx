@@ -19,10 +19,11 @@ interface ControlsProps {
   roomPlaybackRate: number;
   isYouTube: boolean;
   isLiveStream: boolean;
+  liveStreamStart: number | undefined;
   timeRanges: { start: number; end: number }[];
   loop: boolean;
   roomTogglePlay: () => void;
-  roomSeek: (e: any, time: number) => void;
+  roomSeek: (time: number) => void;
   roomSetPlaybackRate: (rate: number) => void;
   roomSetLoop: (loop: boolean) => void;
   localFullScreen: (fs: boolean) => void;
@@ -58,12 +59,27 @@ export class Controls extends React.Component<ControlsProps> {
     const max = rect.width;
     const pct = x / max;
     // console.log(x, max);
-    const target = pct * this.props.duration;
+    const target = this.getStart() + pct * this.getLength();
     // console.log(pct);
     if (pct >= 0) {
       this.setState({ hoverTimestamp: target, hoverPos: pct });
     }
   };
+
+  getEnd = () =>
+    this.props.isLiveStream
+      ? Math.floor(Date.now() / 1000)
+      : this.props.duration;
+  getStart = () =>
+    this.props.isLiveStream && this.props.liveStreamStart
+      ? this.props.liveStreamStart
+      : 0;
+  getLength = () => this.getEnd() - this.getStart();
+  getCurrent = () =>
+    this.props.isLiveStream && this.props.liveStreamStart
+      ? this.props.liveStreamStart + this.props.currentTime
+      : this.props.currentTime;
+  getPercent = () => (this.getCurrent() - this.getStart()) / this.getLength();
 
   render() {
     const {
@@ -74,7 +90,6 @@ export class Controls extends React.Component<ControlsProps> {
       localSubtitleModal,
       localSeek,
       currentTime,
-      duration,
       leaderTime,
       isPauseDisabled,
       disabled,
@@ -82,11 +97,17 @@ export class Controls extends React.Component<ControlsProps> {
       paused,
       muted,
       volume,
+      isLiveStream,
     } = this.props;
-    const isBehind = leaderTime && leaderTime - currentTime > 5;
+    // console.log(leaderTime, currentTime);
+    const behindThreshold = 5;
+    const isBehind =
+      leaderTime && leaderTime < Infinity
+        ? leaderTime - currentTime > behindThreshold
+        : this.getEnd() - this.getCurrent() > behindThreshold;
     const buffers = this.props.timeRanges.map(({ start, end }) => {
-      const buffStartPct = (start / duration) * 100;
-      const buffLengthPct = ((end - start) / duration) * 100;
+      const buffStartPct = (start / this.getLength()) * 100;
+      const buffLengthPct = ((end - start) / this.getLength()) * 100;
       return (
         <div
           key={start}
@@ -122,10 +143,10 @@ export class Controls extends React.Component<ControlsProps> {
           trigger={
             <div
               onClick={() => {
-                if (this.props.isLiveStream) {
+                if (isLiveStream) {
                   // do a regular seek rather than sync self if it's HLS since we're basically seeking to the live position
                   // Also, clear the room TS since we want to start at live again on refresh
-                  this.props.roomSeek(null, Number.MAX_SAFE_INTEGER);
+                  this.props.roomSeek(Number.MAX_SAFE_INTEGER);
                 } else {
                   localSeek();
                 }
@@ -141,14 +162,25 @@ export class Controls extends React.Component<ControlsProps> {
           }
         />
         <div className={`${styles.control} ${styles.text}`}>
-          {formatTimestamp(currentTime)}
+          {formatTimestamp(this.getCurrent(), isLiveStream)}
         </div>
         <Progress
           size="tiny"
           color="blue"
-          onClick={(e: any, time: number) => {
-            if (duration < Infinity && !this.props.disabled) {
-              roomSeek(e, time);
+          onClick={(e: any) => {
+            if (!this.props.disabled) {
+              // Read the time from the click event
+              if (e) {
+                const rect = e.target.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const max = rect.width;
+                const pct = x / max;
+                // roomseek operates on actual media element times, not timestamps
+                // for DASH we set getStart() value to when stream started, so left side is 0 video time
+                // even though it's not all seekable this makes the click to seek simple
+                let target = this.getLength() * pct;
+                roomSeek(target);
+              }
             }
           }}
           onMouseOver={this.onMouseOver}
@@ -163,8 +195,8 @@ export class Controls extends React.Component<ControlsProps> {
             position: 'relative',
             minWidth: '50px',
           }}
-          value={currentTime}
-          total={duration}
+          value={this.getPercent()}
+          total={1}
         >
           {buffers}
           {
@@ -172,15 +204,12 @@ export class Controls extends React.Component<ControlsProps> {
               style={{
                 position: 'absolute',
                 bottom: '0px',
-                left: `calc(${
-                  (this.props.currentTime / this.props.duration) * 100 +
-                  '% - 6px'
-                })`,
+                left: `calc(${this.getPercent() * 100 + '% - 6px'})`,
                 pointerEvents: 'none',
                 width: '12px',
                 height: '12px',
                 transform:
-                  duration < Infinity && this.state.showTimestamp
+                  this.getLength() < Infinity && this.state.showTimestamp
                     ? 'scale(1, 1)'
                     : 'scale(0, 0)',
                 transition: '0.25s all',
@@ -189,23 +218,26 @@ export class Controls extends React.Component<ControlsProps> {
               }}
             ></div>
           }
-          {duration < Infinity && this.state.showTimestamp && (
+          {this.getLength() < Infinity && this.state.showTimestamp && (
             <div
               style={{
                 position: 'absolute',
                 bottom: '0px',
-                left: `calc(${this.state.hoverPos * 100 + '% - 27px'})`,
+                left: `calc(${this.state.hoverPos * 100 + '%'})`,
+                transform: 'translate(-50%)',
                 pointerEvents: 'none',
               }}
             >
               <Label basic color="blue" pointing="below">
-                <div>{formatTimestamp(this.state.hoverTimestamp)}</div>
+                <div>
+                  {formatTimestamp(this.state.hoverTimestamp, isLiveStream)}
+                </div>
               </Label>
             </div>
           )}
         </Progress>
         <div className={`${styles.control} ${styles.text}`}>
-          {formatTimestamp(duration)}
+          {formatTimestamp(this.getEnd(), isLiveStream)}
         </div>
         <div style={{ fontSize: '10px', fontWeight: 700 }}>
           <Popup

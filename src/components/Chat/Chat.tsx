@@ -11,7 +11,6 @@ import styles from './Chat.module.css';
 
 import {
   formatTimestamp,
-  formatUnixTime,
   getColorForStringHex,
   getDefaultPicture,
   isEmojiString,
@@ -173,7 +172,9 @@ export class Chat extends React.Component<ChatProps> {
       );
     } else if (cmd === 'seek') {
       return `jumped to ${
-        this.props.isLiveStream ? formatUnixTime(msg) : formatTimestamp(msg)
+        this.props.isLiveStream
+          ? formatTimestamp(msg, true)
+          : formatTimestamp(msg)
       }`;
     } else if (cmd === 'play') {
       return `started the video at ${formatTimestamp(msg)}`;
