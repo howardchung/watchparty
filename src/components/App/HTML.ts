@@ -1,41 +1,21 @@
 import { default as toWebVTT } from 'srt-webvtt';
 import { Player } from './Player';
-import { MediaPlayerClass } from 'dashjs';
 
 export class HTML implements Player {
   elId: string;
-  dashStartUTC: number;
-  dashPlayer: MediaPlayerClass | undefined;
   constructor(elId: string) {
     this.elId = elId;
-    this.dashStartUTC = Math.floor(Date.now() / 1000);
-    this.dashPlayer = undefined;
   }
-
-  clearDashState = () => {
-    this.dashPlayer = undefined;
-  };
-
-  setDashState = (player: MediaPlayerClass) => {
-    this.dashPlayer = player;
-    this.dashStartUTC = Math.floor(Date.now() / 1000);
-  };
 
   getVideoEl = (): HTMLMediaElement => {
     return document.getElementById(this.elId) as HTMLMediaElement;
   };
 
   getCurrentTime = () => {
-    if (this.dashPlayer) {
-      return this.dashPlayer.time();
-    }
     return this.getVideoEl()?.currentTime ?? 0;
   };
 
   getDuration = () => {
-    if (this.dashPlayer) {
-      return this.dashPlayer.duration();
-    }
     return this.getVideoEl()?.duration ?? 0;
   };
 
@@ -78,9 +58,7 @@ export class HTML implements Player {
   };
 
   seekVideo = (time: number) => {
-    if (this.dashPlayer) {
-      this.dashPlayer.seek(time);
-    } else if (this.getVideoEl()) {
+    if (this.getVideoEl()) {
       this.getVideoEl().currentTime = time;
     }
   };

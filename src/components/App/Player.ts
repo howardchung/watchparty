@@ -1,5 +1,3 @@
-import type { MediaPlayerClass } from 'dashjs';
-
 export abstract class Player {
   public abstract getCurrentTime: () => number;
   public abstract getDuration: () => number;
@@ -24,6 +22,4 @@ export abstract class Player {
   public abstract getTimeRanges: () => { start: number; end: number }[];
   public abstract setLoop: (loop: boolean) => void;
   public abstract getVideoEl: () => HTMLMediaElement;
-  public abstract clearDashState: () => void;
-  public abstract setDashState: (player: MediaPlayerClass) => void;
 }
