@@ -585,8 +585,9 @@ export default class App extends React.Component<AppProps, AppState> {
             hls.once(Hls.Events.LEVEL_LOADED, (_, data) => {
               this.setState({ isLiveStream: data.details.live });
             });
-            hls.once(Hls.Events.MEDIA_ATTACHED, () => {
+            hls.once(Hls.Events.INIT_PTS_FOUND, (event, data) => {
               const now = Math.floor(Date.now() / 1000);
+              // console.log(data.initPTS);
               const liveStreamStart = now - this.Player().getDuration();
               console.log(
                 'hlsplayer time',
