@@ -1,0 +1,7632 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+	<title>dash.js Classes</title>
+
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/sunlight.default.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/site.spacelab.css">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top navbar-inverse">
+<div class="container">
+	<div class="navbar-header">
+		<a class="navbar-brand" href="index.html">dash.js</a>
+		<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#topNavigation">
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+        </button>
+	</div>
+	<div class="navbar-collapse collapse" id="topNavigation">
+		<ul class="nav navbar-nav">
+			
+			<li class="dropdown">
+				<a href="modules.list.html" class="dropdown-toggle" data-toggle="dropdown">Modules<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="module-DashAdapter.html">DashAdapter</a></li><li><a href="module-DashMetrics.html">DashMetrics</a></li><li><a href="module-MediaPlayer.html">MediaPlayer</a></li><li><a href="module-OfflineController.html">OfflineController</a></li><li><a href="module-ProtectionController.html">ProtectionController</a></li><li><a href="module-Settings.html">Settings</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="classes.list.html" class="dropdown-toggle" data-toggle="dropdown">Classes<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Errors.html">Errors</a></li><li><a href="MediaPlayerEvents.html">MediaPlayerEvents</a></li><li><a href="MediaPlayerModel.html">MediaPlayerModel</a></li><li><a href="MetricsReportingEvents.html">MetricsReportingEvents</a></li><li><a href="MssErrors.html">MssErrors</a></li><li><a href="OfflineErrors.html">OfflineErrors</a></li><li><a href="OfflineEvents.html">OfflineEvents</a></li><li><a href="ProtectionErrors.html">ProtectionErrors</a></li><li><a href="ProtectionEvents.html">ProtectionEvents</a></li><li><a href="ThroughputController.html">ThroughputController</a></li><li><a href="ThroughputModel.html">ThroughputModel</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="events.list.html" class="dropdown-toggle" data-toggle="dropdown">Events<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="MediaPlayerEvents.html#event:ADAPTATION_SET_REMOVED_NO_CAPABILITIES">MediaPlayerEvents#event:ADAPTATION_SET_REMOVED_NO_CAPABILITIES</a></li><li><a href="MediaPlayerEvents.html#event:AST_IN_FUTURE">MediaPlayerEvents#event:AST_IN_FUTURE</a></li><li><a href="MediaPlayerEvents.html#event:BASE_URLS_UPDATED">MediaPlayerEvents#event:BASE_URLS_UPDATED</a></li><li><a href="MediaPlayerEvents.html#event:BUFFER_EMPTY">MediaPlayerEvents#event:BUFFER_EMPTY</a></li><li><a href="MediaPlayerEvents.html#event:BUFFER_LEVEL_STATE_CHANGED">MediaPlayerEvents#event:BUFFER_LEVEL_STATE_CHANGED</a></li><li><a href="MediaPlayerEvents.html#event:BUFFER_LEVEL_UPDATED">MediaPlayerEvents#event:BUFFER_LEVEL_UPDATED</a></li><li><a href="MediaPlayerEvents.html#event:BUFFER_LOADED">MediaPlayerEvents#event:BUFFER_LOADED</a></li><li><a href="MediaPlayerEvents.html#event:CAN_PLAY">MediaPlayerEvents#event:CAN_PLAY</a></li><li><a href="MediaPlayerEvents.html#event:CAN_PLAY_THROUGH">MediaPlayerEvents#event:CAN_PLAY_THROUGH</a></li><li><a href="MediaPlayerEvents.html#event:CAPTION_CONTAINER_RESIZE">MediaPlayerEvents#event:CAPTION_CONTAINER_RESIZE</a></li><li><a href="MediaPlayerEvents.html#event:CAPTION_RENDERED">MediaPlayerEvents#event:CAPTION_RENDERED</a></li><li><a href="MediaPlayerEvents.html#event:CONFORMANCE_VIOLATION">MediaPlayerEvents#event:CONFORMANCE_VIOLATION</a></li><li><a href="MediaPlayerEvents.html#event:CONTENT_STEERING_REQUEST_COMPLETED">MediaPlayerEvents#event:CONTENT_STEERING_REQUEST_COMPLETED</a></li><li><a href="MediaPlayerEvents.html#event:DYNAMIC_TO_STATIC">MediaPlayerEvents#event:DYNAMIC_TO_STATIC</a></li><li><a href="MediaPlayerEvents.html#event:ERROR">MediaPlayerEvents#event:ERROR</a></li><li><a href="MediaPlayerEvents.html#event:EVENT_MODE_ON_RECEIVE">MediaPlayerEvents#event:EVENT_MODE_ON_RECEIVE</a></li><li><a href="MediaPlayerEvents.html#event:EVENT_MODE_ON_START">MediaPlayerEvents#event:EVENT_MODE_ON_START</a></li><li><a href="MediaPlayerEvents.html#event:FRAGMENT_LOADING_ABANDONED">MediaPlayerEvents#event:FRAGMENT_LOADING_ABANDONED</a></li><li><a href="MediaPlayerEvents.html#event:FRAGMENT_LOADING_COMPLETED">MediaPlayerEvents#event:FRAGMENT_LOADING_COMPLETED</a></li><li><a href="MediaPlayerEvents.html#event:FRAGMENT_LOADING_PROGRESS">MediaPlayerEvents#event:FRAGMENT_LOADING_PROGRESS</a></li><li><a href="MediaPlayerEvents.html#event:FRAGMENT_LOADING_STARTED">MediaPlayerEvents#event:FRAGMENT_LOADING_STARTED</a></li><li><a href="MediaPlayerEvents.html#event:INBAND_PRFT">MediaPlayerEvents#event:INBAND_PRFT</a></li><li><a href="MediaPlayerEvents.html#event:LOG">MediaPlayerEvents#event:LOG</a></li><li><a href="MediaPlayerEvents.html#event:MANIFEST_LOADED">MediaPlayerEvents#event:MANIFEST_LOADED</a></li><li><a href="MediaPlayerEvents.html#event:MANIFEST_LOADING_FINISHED">MediaPlayerEvents#event:MANIFEST_LOADING_FINISHED</a></li><li><a href="MediaPlayerEvents.html#event:MANIFEST_LOADING_STARTED">MediaPlayerEvents#event:MANIFEST_LOADING_STARTED</a></li><li><a href="MediaPlayerEvents.html#event:MANIFEST_VALIDITY_CHANGED">MediaPlayerEvents#event:MANIFEST_VALIDITY_CHANGED</a></li><li><a href="MediaPlayerEvents.html#event:METRIC_ADDED">MediaPlayerEvents#event:METRIC_ADDED</a></li><li><a href="MediaPlayerEvents.html#event:METRIC_CHANGED">MediaPlayerEvents#event:METRIC_CHANGED</a></li><li><a href="MediaPlayerEvents.html#event:METRIC_UPDATED">MediaPlayerEvents#event:METRIC_UPDATED</a></li><li><a href="MediaPlayerEvents.html#event:METRICS_CHANGED">MediaPlayerEvents#event:METRICS_CHANGED</a></li><li><a href="MediaPlayerEvents.html#event:PERIOD_SWITCH_COMPLETED">MediaPlayerEvents#event:PERIOD_SWITCH_COMPLETED</a></li><li><a href="MediaPlayerEvents.html#event:PERIOD_SWITCH_STARTED">MediaPlayerEvents#event:PERIOD_SWITCH_STARTED</a></li><li><a href="MediaPlayerEvents.html#event:PLAYBACK_ENDED">MediaPlayerEvents#event:PLAYBACK_ENDED</a></li><li><a href="MediaPlayerEvents.html#event:PLAYBACK_ERROR">MediaPlayerEvents#event:PLAYBACK_ERROR</a></li><li><a href="MediaPlayerEvents.html#event:PLAYBACK_LOADED_DATA">MediaPlayerEvents#event:PLAYBACK_LOADED_DATA</a></li><li><a href="MediaPlayerEvents.html#event:PLAYBACK_METADATA_LOADED">MediaPlayerEvents#event:PLAYBACK_METADATA_LOADED</a></li><li><a href="MediaPlayerEvents.html#event:PLAYBACK_NOT_ALLOWED">MediaPlayerEvents#event:PLAYBACK_NOT_ALLOWED</a></li><li><a href="MediaPlayerEvents.html#event:PLAYBACK_PAUSED">MediaPlayerEvents#event:PLAYBACK_PAUSED</a></li><li><a href="MediaPlayerEvents.html#event:PLAYBACK_PLAYING">MediaPlayerEvents#event:PLAYBACK_PLAYING</a></li><li><a href="MediaPlayerEvents.html#event:PLAYBACK_PROGRESS">MediaPlayerEvents#event:PLAYBACK_PROGRESS</a></li><li><a href="MediaPlayerEvents.html#event:PLAYBACK_RATE_CHANGED">MediaPlayerEvents#event:PLAYBACK_RATE_CHANGED</a></li><li><a href="MediaPlayerEvents.html#event:PLAYBACK_SEEKED">MediaPlayerEvents#event:PLAYBACK_SEEKED</a></li><li><a href="MediaPlayerEvents.html#event:PLAYBACK_SEEKING">MediaPlayerEvents#event:PLAYBACK_SEEKING</a></li><li><a href="MediaPlayerEvents.html#event:PLAYBACK_STALLED">MediaPlayerEvents#event:PLAYBACK_STALLED</a></li><li><a href="MediaPlayerEvents.html#event:PLAYBACK_STARTED">MediaPlayerEvents#event:PLAYBACK_STARTED</a></li><li><a href="MediaPlayerEvents.html#event:PLAYBACK_TIME_UPDATED">MediaPlayerEvents#event:PLAYBACK_TIME_UPDATED</a></li><li><a href="MediaPlayerEvents.html#event:PLAYBACK_VOLUME_CHANGED">MediaPlayerEvents#event:PLAYBACK_VOLUME_CHANGED</a></li><li><a href="MediaPlayerEvents.html#event:PLAYBACK_WAITING">MediaPlayerEvents#event:PLAYBACK_WAITING</a></li><li><a href="MediaPlayerEvents.html#event:QUALITY_CHANGE_RENDERED">MediaPlayerEvents#event:QUALITY_CHANGE_RENDERED</a></li><li><a href="MediaPlayerEvents.html#event:QUALITY_CHANGE_REQUESTED">MediaPlayerEvents#event:QUALITY_CHANGE_REQUESTED</a></li><li><a href="MediaPlayerEvents.html#event:REPRESENTATION_SWITCH">MediaPlayerEvents#event:REPRESENTATION_SWITCH</a></li><li><a href="MediaPlayerEvents.html#event:STREAM_ACTIVATED">MediaPlayerEvents#event:STREAM_ACTIVATED</a></li><li><a href="MediaPlayerEvents.html#event:STREAM_DEACTIVATED">MediaPlayerEvents#event:STREAM_DEACTIVATED</a></li><li><a href="MediaPlayerEvents.html#event:STREAM_INITIALIZED">MediaPlayerEvents#event:STREAM_INITIALIZED</a></li><li><a href="MediaPlayerEvents.html#event:STREAM_INITIALIZING">MediaPlayerEvents#event:STREAM_INITIALIZING</a></li><li><a href="MediaPlayerEvents.html#event:STREAM_TEARDOWN_COMPLETE">MediaPlayerEvents#event:STREAM_TEARDOWN_COMPLETE</a></li><li><a href="MediaPlayerEvents.html#event:STREAM_UPDATED">MediaPlayerEvents#event:STREAM_UPDATED</a></li><li><a href="MediaPlayerEvents.html#event:TEXT_TRACK_ADDED">MediaPlayerEvents#event:TEXT_TRACK_ADDED</a></li><li><a href="MediaPlayerEvents.html#event:TEXT_TRACKS_ADDED">MediaPlayerEvents#event:TEXT_TRACKS_ADDED</a></li><li><a href="MediaPlayerEvents.html#event:THROUGHPUT_MEASUREMENT_STORED">MediaPlayerEvents#event:THROUGHPUT_MEASUREMENT_STORED</a></li><li><a href="MediaPlayerEvents.html#event:TRACK_CHANGE_RENDERED">MediaPlayerEvents#event:TRACK_CHANGE_RENDERED</a></li><li><a href="MediaPlayerEvents.html#event:TTML_PARSED">MediaPlayerEvents#event:TTML_PARSED</a></li><li><a href="MediaPlayerEvents.html#event:TTML_TO_PARSE">MediaPlayerEvents#event:TTML_TO_PARSE</a></li><li><a href="MetricsReportingEvents.html#event:CMCD_DATA_GENERATED">MetricsReportingEvents#event:CMCD_DATA_GENERATED</a></li><li><a href="OfflineEvents.html#event:OFFLINE_RECORD_FINISHED">OfflineEvents#event:OFFLINE_RECORD_FINISHED</a></li><li><a href="OfflineEvents.html#event:OFFLINE_RECORD_LOADEDMETADATA">OfflineEvents#event:OFFLINE_RECORD_LOADEDMETADATA</a></li><li><a href="OfflineEvents.html#event:OFFLINE_RECORD_STARTED">OfflineEvents#event:OFFLINE_RECORD_STARTED</a></li><li><a href="OfflineEvents.html#event:OFFLINE_RECORD_STOPPED">OfflineEvents#event:OFFLINE_RECORD_STOPPED</a></li><li><a href="ProtectionEvents.html#event:KEY_ADDED">ProtectionEvents#event:KEY_ADDED</a></li><li><a href="ProtectionEvents.html#event:KEY_ERROR">ProtectionEvents#event:KEY_ERROR</a></li><li><a href="ProtectionEvents.html#event:KEY_MESSAGE">ProtectionEvents#event:KEY_MESSAGE</a></li><li><a href="ProtectionEvents.html#event:KEY_SESSION_CLOSED">ProtectionEvents#event:KEY_SESSION_CLOSED</a></li><li><a href="ProtectionEvents.html#event:KEY_SESSION_CREATED">ProtectionEvents#event:KEY_SESSION_CREATED</a></li><li><a href="ProtectionEvents.html#event:KEY_SESSION_REMOVED">ProtectionEvents#event:KEY_SESSION_REMOVED</a></li><li><a href="ProtectionEvents.html#event:KEY_STATUSES_CHANGED">ProtectionEvents#event:KEY_STATUSES_CHANGED</a></li><li><a href="ProtectionEvents.html#event:KEY_SYSTEM_ACCESS_COMPLETE">ProtectionEvents#event:KEY_SYSTEM_ACCESS_COMPLETE</a></li><li><a href="ProtectionEvents.html#event:KEY_SYSTEM_SELECTED">ProtectionEvents#event:KEY_SYSTEM_SELECTED</a></li><li><a href="ProtectionEvents.html#event:LICENSE_REQUEST_COMPLETE">ProtectionEvents#event:LICENSE_REQUEST_COMPLETE</a></li><li><a href="ProtectionEvents.html#event:LICENSE_REQUEST_SENDING">ProtectionEvents#event:LICENSE_REQUEST_SENDING</a></li><li><a href="ProtectionEvents.html#event:PROTECTION_CREATED">ProtectionEvents#event:PROTECTION_CREATED</a></li><li><a href="ProtectionEvents.html#event:PROTECTION_DESTROYED">ProtectionEvents#event:PROTECTION_DESTROYED</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Global<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="global.html#LICENSE_SERVER_MANIFEST_CONFIGURATIONS">LICENSE_SERVER_MANIFEST_CONFIGURATIONS</a></li>
+				</ul>
+			</li>
+			
+		</ul>
+        
+            <div class="col-sm-3 col-md-3">
+                <form class="navbar-form" role="search">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search" name="q" id="search-input">
+                        <div class="input-group-btn">
+                            <button class="btn btn-default" id="search-submit"><i class="glyphicon glyphicon-search"></i></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        
+	</div>
+
+</div>
+</div>
+
+
+<div class="container" id="toc-content">
+<div class="row">
+
+	
+	<div class="col-md-8">
+	
+		<div id="main">
+			
+
+	<h1 class="page-title">Classes</h1>
+<section>
+
+<header>
+    
+        <h2>
+        
+        </h2>
+        
+    
+</header>
+
+
+<article>
+    <div class="container-overview">
+    
+        
+
+        
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+        
+    
+    </div>
+
+    
+
+    
+
+    
+        <h3 class="subsection-title">Classes</h3>
+
+        <dl>
+            <dt><a href="Errors.html">Errors</a></dt>
+            <dd></dd>
+        
+            <dt><a href="MediaPlayerEvents.html">MediaPlayerEvents</a></dt>
+            <dd></dd>
+        
+            <dt><a href="MediaPlayerModel.html">MediaPlayerModel</a></dt>
+            <dd></dd>
+        
+            <dt><a href="MetricsReportingEvents.html">MetricsReportingEvents</a></dt>
+            <dd></dd>
+        
+            <dt><a href="MssErrors.html">MssErrors</a></dt>
+            <dd></dd>
+        
+            <dt><a href="OfflineErrors.html">OfflineErrors</a></dt>
+            <dd></dd>
+        
+            <dt><a href="OfflineEvents.html">OfflineEvents</a></dt>
+            <dd></dd>
+        
+            <dt><a href="ProtectionErrors.html">ProtectionErrors</a></dt>
+            <dd></dd>
+        
+            <dt><a href="ProtectionEvents.html">ProtectionEvents</a></dt>
+            <dd></dd>
+        
+            <dt><a href="ThroughputController.html">ThroughputController</a></dt>
+            <dd></dd>
+        
+            <dt><a href="ThroughputModel.html">ThroughputModel</a></dt>
+            <dd></dd>
+        </dl>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+        <h3 class="subsection-title">Events</h3>
+
+        <dl>
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:ADAPTATION_SET_REMOVED_NO_CAPABILITIES">ADAPTATION_SET_REMOVED_NO_CAPABILITIES</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Event that is dispatched whenever an adaptation set is removed due to all representations not being supported.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-424">line 424</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:AST_IN_FUTURE">AST_IN_FUTURE</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Triggered when playback will not start yet<br>
+as the MPD's availabilityStartTime is in the future.<br>
+Check delay property in payload to determine time before playback will start.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-44">line 44</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:BASE_URLS_UPDATED">BASE_URLS_UPDATED</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Triggered when the BaseURLs have been updated.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-52">line 52</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:BUFFER_EMPTY">BUFFER_EMPTY</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Triggered when the video element's buffer state changes to stalled.<br>
+Check mediaType in payload to determine type (Video, Audio, FragmentedText).</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-58">line 58</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:BUFFER_LEVEL_STATE_CHANGED">BUFFER_LEVEL_STATE_CHANGED</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Triggered when the video element's buffer state changes, either stalled or loaded. Check payload for state.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-72">line 72</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:BUFFER_LEVEL_UPDATED">BUFFER_LEVEL_UPDATED</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Triggered when the buffer level of a media type has been updated</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-78">line 78</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:BUFFER_LOADED">BUFFER_LOADED</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Triggered when the video element's buffer state changes to loaded.<br>
+Check mediaType in payload to determine type (Video, Audio, FragmentedText).</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-65">line 65</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:CAN_PLAY">CAN_PLAY</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Sent when enough data is available that the media can be played,<br>
+at least for a couple of frames.  This corresponds to the<br>
+HAVE_ENOUGH_DATA readyState.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-274">line 274</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:CAN_PLAY_THROUGH">CAN_PLAY_THROUGH</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>This corresponds to the CAN_PLAY_THROUGH readyState.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-282">line 282</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:CAPTION_CONTAINER_RESIZE">CAPTION_CONTAINER_RESIZE</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Triggered when the caption container is resized.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-268">line 268</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:CAPTION_RENDERED">CAPTION_RENDERED</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Triggered when a caption is rendered.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-262">line 262</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:CONFORMANCE_VIOLATION">CONFORMANCE_VIOLATION</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Event that is dispatched whenever the player encounters a potential conformance validation that might lead to unexpected/not optimal behavior</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-412">line 412</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:CONTENT_STEERING_REQUEST_COMPLETED">CONTENT_STEERING_REQUEST_COMPLETED</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Triggered when a content steering request has completed.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-430">line 430</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:DYNAMIC_TO_STATIC">DYNAMIC_TO_STATIC</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Triggered when a dynamic stream changed to static (transition phase between Live and On-Demand).</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-84">line 84</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:ERROR">ERROR</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Triggered when there is an error from the element or MSE source buffer.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-90">line 90</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:EVENT_MODE_ON_RECEIVE">EVENT_MODE_ON_RECEIVE</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Dash events are triggered as soon as they were parsed.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-406">line 406</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:EVENT_MODE_ON_START">EVENT_MODE_ON_START</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Dash events are triggered at their respective start points on the timeline.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-400">line 400</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:FRAGMENT_LOADING_ABANDONED">FRAGMENT_LOADING_ABANDONED</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Triggered when a fragment download is abandoned due to detection of slow download base on the ABR abandon rule..</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-112">line 112</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:FRAGMENT_LOADING_COMPLETED">FRAGMENT_LOADING_COMPLETED</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Triggered when a fragment download has completed.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-95">line 95</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:FRAGMENT_LOADING_PROGRESS">FRAGMENT_LOADING_PROGRESS</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Triggered when a partial fragment download has completed.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-101">line 101</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:FRAGMENT_LOADING_STARTED">FRAGMENT_LOADING_STARTED</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Triggered when a fragment download has started.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-106">line 106</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:INBAND_PRFT">INBAND_PRFT</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Triggered when an inband prft (ProducerReferenceTime) boxes has been received.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-436">line 436</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:LOG">LOG</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Triggered when <a href="module-Debug.html"><code>module:Debug</code></a> logger methods are called.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-118">line 118</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:MANIFEST_LOADED">MANIFEST_LOADED</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Triggered when the manifest load is complete, providing the payload</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-136">line 136</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:MANIFEST_LOADING_FINISHED">MANIFEST_LOADING_FINISHED</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Triggered when the manifest loading is finished, providing the request object information</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-130">line 130</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:MANIFEST_LOADING_STARTED">MANIFEST_LOADING_STARTED</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Triggered when the manifest load is started</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-124">line 124</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:MANIFEST_VALIDITY_CHANGED">MANIFEST_VALIDITY_CHANGED</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Manifest validity changed - As a result of an MPD validity expiration event.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-394">line 394</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:METRIC_ADDED">METRIC_ADDED</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Triggered every time a new metric is added.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-154">line 154</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:METRIC_CHANGED">METRIC_CHANGED</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Triggered when an individual metric is added, updated or cleared.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-148">line 148</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:METRIC_UPDATED">METRIC_UPDATED</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Triggered every time a metric is updated.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-160">line 160</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:METRICS_CHANGED">METRICS_CHANGED</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Triggered anytime there is a change to the overall metrics.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-142">line 142</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:PERIOD_SWITCH_COMPLETED">PERIOD_SWITCH_COMPLETED</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Triggered at the stream end of a period.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-172">line 172</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:PERIOD_SWITCH_STARTED">PERIOD_SWITCH_STARTED</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Triggered when a new stream (period) starts.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-166">line 166</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:PLAYBACK_ENDED">PLAYBACK_ENDED</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Sent when playback completes.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-288">line 288</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:PLAYBACK_ERROR">PLAYBACK_ERROR</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Sent when an error occurs.  The element's error<br>
+attribute contains more information.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-294">line 294</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:PLAYBACK_LOADED_DATA">PLAYBACK_LOADED_DATA</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>The event is fired when the frame at the current playback position of the media has finished loading;<br>
+often the first frame</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-314">line 314</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:PLAYBACK_METADATA_LOADED">PLAYBACK_METADATA_LOADED</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>The media's metadata has finished loading; all attributes now<br>
+contain as much useful information as they're going to.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-307">line 307</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:PLAYBACK_NOT_ALLOWED">PLAYBACK_NOT_ALLOWED</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Sent when playback is not allowed (for example if user gesture is needed).</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-301">line 301</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:PLAYBACK_PAUSED">PLAYBACK_PAUSED</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Sent when playback is paused.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-321">line 321</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:PLAYBACK_PLAYING">PLAYBACK_PLAYING</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Sent when the media begins to play (either for the first time, after having been paused,<br>
+or after ending and then restarting).</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-327">line 327</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:PLAYBACK_PROGRESS">PLAYBACK_PROGRESS</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Sent periodically to inform interested parties of progress downloading<br>
+the media. Information about the current amount of the media that has<br>
+been downloaded is available in the media element's buffered attribute.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-335">line 335</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:PLAYBACK_RATE_CHANGED">PLAYBACK_RATE_CHANGED</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Sent when the playback speed changes.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-343">line 343</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:PLAYBACK_SEEKED">PLAYBACK_SEEKED</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Sent when a seek operation completes.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-349">line 349</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:PLAYBACK_SEEKING">PLAYBACK_SEEKING</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Sent when a seek operation begins.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-355">line 355</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:PLAYBACK_STALLED">PLAYBACK_STALLED</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Sent when the video element reports stalled</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-361">line 361</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:PLAYBACK_STARTED">PLAYBACK_STARTED</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Sent when playback of the media starts after having been paused;<br>
+that is, when playback is resumed after a prior pause event.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-367">line 367</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:PLAYBACK_TIME_UPDATED">PLAYBACK_TIME_UPDATED</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>The time indicated by the element's currentTime attribute has changed.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-375">line 375</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:PLAYBACK_VOLUME_CHANGED">PLAYBACK_VOLUME_CHANGED</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Sent when the video element reports that the volume has changed</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-381">line 381</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:PLAYBACK_WAITING">PLAYBACK_WAITING</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Sent when the media playback has stopped because of a temporary lack of data.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-387">line 387</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:QUALITY_CHANGE_RENDERED">QUALITY_CHANGE_RENDERED</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Triggered when the new ABR quality is being rendered on-screen.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-184">line 184</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:QUALITY_CHANGE_REQUESTED">QUALITY_CHANGE_REQUESTED</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Triggered when an ABR up /down switch is initiated; either by user in manual mode or auto mode via ABR rules.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-178">line 178</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:REPRESENTATION_SWITCH">REPRESENTATION_SWITCH</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Event that is dispatched whenever the player switches to a different representation</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-418">line 418</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:STREAM_ACTIVATED">STREAM_ACTIVATED</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Triggered when a stream (period) is activated</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-208">line 208</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:STREAM_DEACTIVATED">STREAM_DEACTIVATED</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Triggered when a stream (period) is deactivated</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-214">line 214</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:STREAM_INITIALIZED">STREAM_INITIALIZED</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Triggered when a stream (period) is activated</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-220">line 220</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:STREAM_INITIALIZING">STREAM_INITIALIZING</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Triggered when a stream (period) is being loaded</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-196">line 196</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:STREAM_TEARDOWN_COMPLETE">STREAM_TEARDOWN_COMPLETE</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Triggered when the player has been reset.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-226">line 226</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:STREAM_UPDATED">STREAM_UPDATED</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Triggered when a stream (period) is loaded</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-202">line 202</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:TEXT_TRACK_ADDED">TEXT_TRACK_ADDED</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Triggered when a text track is added to the video element's TextTrackList</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-238">line 238</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:TEXT_TRACKS_ADDED">TEXT_TRACKS_ADDED</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Triggered once all text tracks detected in the MPD are added to the video element.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-232">line 232</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:THROUGHPUT_MEASUREMENT_STORED">THROUGHPUT_MEASUREMENT_STORED</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Triggered when a throughput measurement based on the last segment request has been stored</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-244">line 244</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:TRACK_CHANGE_RENDERED">TRACK_CHANGE_RENDERED</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Triggered when the new track is being rendered.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-190">line 190</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:TTML_PARSED">TTML_PARSED</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Triggered when a ttml chunk is parsed.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-250">line 250</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:TTML_TO_PARSE">TTML_TO_PARSE</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Triggered when a ttml chunk has to be parsed.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_MediaPlayerEvents.js.html">streaming/MediaPlayerEvents.js</a>,
+				 <a href="streaming_MediaPlayerEvents.js.html#sunlight-1-line-256">line 256</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:CMCD_DATA_GENERATED">CMCD_DATA_GENERATED</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Triggered when CMCD data was generated for a HTTP request</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_metrics_MetricsReportingEvents.js.html">streaming/metrics/MetricsReportingEvents.js</a>,
+				 <a href="streaming_metrics_MetricsReportingEvents.js.html#sunlight-1-line-44">line 44</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:OFFLINE_RECORD_FINISHED">OFFLINE_RECORD_FINISHED</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Triggered when all record has been downloaded</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="offline_events_OfflineEvents.js.html">offline/events/OfflineEvents.js</a>,
+				 <a href="offline_events_OfflineEvents.js.html#sunlight-1-line-28">line 28</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:OFFLINE_RECORD_LOADEDMETADATA">OFFLINE_RECORD_LOADEDMETADATA</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Triggered when all mediaInfo has been loaded</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="offline_events_OfflineEvents.js.html">offline/events/OfflineEvents.js</a>,
+				 <a href="offline_events_OfflineEvents.js.html#sunlight-1-line-10">line 10</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:OFFLINE_RECORD_STARTED">OFFLINE_RECORD_STARTED</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Triggered when a record is initialized and download is started</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="offline_events_OfflineEvents.js.html">offline/events/OfflineEvents.js</a>,
+				 <a href="offline_events_OfflineEvents.js.html#sunlight-1-line-16">line 16</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:OFFLINE_RECORD_STOPPED">OFFLINE_RECORD_STOPPED</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Triggered when the user stop downloading a record</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="offline_events_OfflineEvents.js.html">offline/events/OfflineEvents.js</a>,
+				 <a href="offline_events_OfflineEvents.js.html#sunlight-1-line-22">line 22</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:KEY_ADDED">KEY_ADDED</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Event ID for events delivered when a new key has been added</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+	<dt class="important tag-deprecated method-doc-label method-doc-details-label">Deprecated:</dt>
+	
+    <dd>
+        <ul class="dummy">
+            <li>The latest versions of the EME specification no longer
+use this event.  {@MediaPlayer.models.protectionModel.eventList.KEY_STATUSES_CHANGED}
+is preferred.</li>
+        </ul>
+    </dd>
+    
+    
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_protection_ProtectionEvents.js.html">streaming/protection/ProtectionEvents.js</a>,
+				 <a href="streaming_protection_ProtectionEvents.js.html#sunlight-1-line-59">line 59</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:KEY_ERROR">KEY_ERROR</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Event ID for events delivered when an error is encountered by the CDM<br>
+while processing a license server response message</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_protection_ProtectionEvents.js.html">streaming/protection/ProtectionEvents.js</a>,
+				 <a href="streaming_protection_ProtectionEvents.js.html#sunlight-1-line-69">line 69</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:KEY_MESSAGE">KEY_MESSAGE</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Event ID for events delivered when the protection set receives<br>
+a key message from the CDM</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_protection_ProtectionEvents.js.html">streaming/protection/ProtectionEvents.js</a>,
+				 <a href="streaming_protection_ProtectionEvents.js.html#sunlight-1-line-76">line 76</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:KEY_SESSION_CLOSED">KEY_SESSION_CLOSED</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Event ID for events delivered when a key session close<br>
+process has completed</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_protection_ProtectionEvents.js.html">streaming/protection/ProtectionEvents.js</a>,
+				 <a href="streaming_protection_ProtectionEvents.js.html#sunlight-1-line-83">line 83</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:KEY_SESSION_CREATED">KEY_SESSION_CREATED</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Event ID for events delivered when a new key sessions creation<br>
+process has completed</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_protection_ProtectionEvents.js.html">streaming/protection/ProtectionEvents.js</a>,
+				 <a href="streaming_protection_ProtectionEvents.js.html#sunlight-1-line-90">line 90</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:KEY_SESSION_REMOVED">KEY_SESSION_REMOVED</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Event ID for events delivered when a key session removal<br>
+process has completed</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_protection_ProtectionEvents.js.html">streaming/protection/ProtectionEvents.js</a>,
+				 <a href="streaming_protection_ProtectionEvents.js.html#sunlight-1-line-97">line 97</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:KEY_STATUSES_CHANGED">KEY_STATUSES_CHANGED</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Event ID for events delivered when the status of one or more<br>
+decryption keys has changed</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_protection_ProtectionEvents.js.html">streaming/protection/ProtectionEvents.js</a>,
+				 <a href="streaming_protection_ProtectionEvents.js.html#sunlight-1-line-104">line 104</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:KEY_SYSTEM_ACCESS_COMPLETE">KEY_SYSTEM_ACCESS_COMPLETE</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Event ID for events delivered when a key system access procedure<br>
+has completed</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_protection_ProtectionEvents.js.html">streaming/protection/ProtectionEvents.js</a>,
+				 <a href="streaming_protection_ProtectionEvents.js.html#sunlight-1-line-111">line 111</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:KEY_SYSTEM_SELECTED">KEY_SYSTEM_SELECTED</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Event ID for events delivered when a key system selection procedure<br>
+completes</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_protection_ProtectionEvents.js.html">streaming/protection/ProtectionEvents.js</a>,
+				 <a href="streaming_protection_ProtectionEvents.js.html#sunlight-1-line-118">line 118</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:LICENSE_REQUEST_COMPLETE">LICENSE_REQUEST_COMPLETE</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Event ID for events delivered when a license request procedure<br>
+has completed</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_protection_ProtectionEvents.js.html">streaming/protection/ProtectionEvents.js</a>,
+				 <a href="streaming_protection_ProtectionEvents.js.html#sunlight-1-line-125">line 125</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:LICENSE_REQUEST_SENDING">LICENSE_REQUEST_SENDING</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Sending a license rquest</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_protection_ProtectionEvents.js.html">streaming/protection/ProtectionEvents.js</a>,
+				 <a href="streaming_protection_ProtectionEvents.js.html#sunlight-1-line-132">line 132</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:PROTECTION_CREATED">PROTECTION_CREATED</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Event ID for events delivered when the Protection system is detected and created.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_protection_ProtectionEvents.js.html">streaming/protection/ProtectionEvents.js</a>,
+				 <a href="streaming_protection_ProtectionEvents.js.html#sunlight-1-line-144">line 144</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="event:PROTECTION_DESTROYED">PROTECTION_DESTROYED</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Event ID for events delivered when the Protection system is destroyed.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="streaming_protection_ProtectionEvents.js.html">streaming/protection/ProtectionEvents.js</a>,
+				 <a href="streaming_protection_ProtectionEvents.js.html#sunlight-1-line-150">line 150</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        </dl>
+    
+</article>
+
+</section>
+
+
+
+
+		</div>
+	</div>
+
+	<div class="clearfix"></div>
+
+	
+		<div class="col-md-3">
+			<div id="toc" class="col-md-3 hidden-xs hidden-sm hidden-md"></div>
+		</div>
+	
+
+</div>
+</div>
+
+
+    <div class="modal fade" id="searchResults">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Search results</h4>
+          </div>
+          <div class="modal-body"></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div>
+
+
+<footer>
+
+
+	<span class="copyright">
+	<h3>DASH Industry Forum</h3>
+	</span>
+
+<span class="jsdoc-message">
+	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.11</a>
+	
+		on Mon Jan 29th 2024
+	
+	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
+</span>
+</footer>
+
+<script src="scripts/docstrap.lib.js"></script>
+<script src="scripts/toc.js"></script>
+
+    <script type="text/javascript" src="scripts/fulltext-search-ui.js"></script>
+
+
+<script>
+$( function () {
+	$( "[id*='$']" ).each( function () {
+		var $this = $( this );
+
+		$this.attr( "id", $this.attr( "id" ).replace( "$", "__" ) );
+	} );
+
+	$( ".tutorial-section pre, .readme-section pre, pre.prettyprint.source" ).each( function () {
+		var $this = $( this );
+
+		var example = $this.find( "code" );
+		exampleText = example.html();
+		var lang = /{@lang (.*?)}/.exec( exampleText );
+		if ( lang && lang[1] ) {
+			exampleText = exampleText.replace( lang[0], "" );
+			example.html( exampleText );
+			lang = lang[1];
+		} else {
+			var langClassMatch = example.parent()[0].className.match(/lang\-(\S+)/);
+			lang = langClassMatch ? langClassMatch[1] : "javascript";
+		}
+
+		if ( lang ) {
+
+			$this
+			.addClass( "sunlight-highlight-" + lang )
+			.addClass( "linenums" )
+			.html( example.html() );
+
+		}
+	} );
+
+	Sunlight.highlightAll( {
+		lineNumbers : true,
+		showMenu : true,
+		enableDoclinks : true
+	} );
+
+	$.catchAnchorLinks( {
+        navbarOffset: 10
+	} );
+	$( "#toc" ).toc( {
+		anchorName  : function ( i, heading, prefix ) {
+			return $( heading ).attr( "id" ) || ( prefix + i );
+		},
+		selectors   : "#toc-content h1,#toc-content h2,#toc-content h3,#toc-content h4",
+		showAndHide : false,
+		smoothScrolling: true
+	} );
+
+	$( "#main span[id^='toc']" ).addClass( "toc-shim" );
+	$( '.dropdown-toggle' ).dropdown();
+
+    $( "table" ).each( function () {
+      var $this = $( this );
+      $this.addClass('table');
+    } );
+
+} );
+</script>
+
+
+
+<!--Navigation and Symbol Display-->
+
+<script>
+	$( function () {
+		$( '#main' ).localScroll( {
+			offset : { top : 60 } //offset by the height of your header (give or take a few px, see what works for you)
+		} );
+		$( "dt.name" ).each( function () {
+			var $this = $( this ).find("h4");
+			var icon = $( "<i/>" ).addClass( "icon-plus-sign" ).addClass( "pull-right" ).addClass( "icon-white" );
+			var dt = $(this);
+			var children = dt.next( "dd" );
+
+			dt.prepend( icon ).css( {cursor : "pointer"} );
+			dt.addClass( "member-collapsed" ).addClass( "member" );
+
+
+			children.hide();
+
+			dt.children().on( "click", function () {
+				children = dt.next( "dd" );
+				children.slideToggle( "fast", function () {
+
+					if ( children.is( ":visible" ) ) {
+						icon.addClass( "icon-minus-sign" ).removeClass( "icon-plus-sign" ).removeClass( "icon-white" );
+						dt.addClass( "member-open" ).animate( "member-collapsed" );
+					} else {
+						icon.addClass( "icon-plus-sign" ).removeClass( "icon-minus-sign" ).addClass( "icon-white" );
+						dt.addClass( "member-collapsed" ).removeClass( "member-open" );
+					}
+				} );
+			} );
+
+		} );
+	} );
+</script>
+
+
+<!--Google Analytics-->
+
+
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+            SearcherDisplay.init();
+        });
+    </script>
+
+
+</body>
+</html>

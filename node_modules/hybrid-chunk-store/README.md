@@ -1,0 +1,3 @@
+# Hybrid chunk store
+
+An abstract chunk store for the web which chooses the best storage solution. 

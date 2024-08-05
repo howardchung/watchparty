@@ -1,0 +1,35 @@
+{
+  "name": "ip-set",
+  "description": "Efficient mutable set for IP addresses",
+  "version": "2.1.0",
+  "author": "Travis Fischer <fisch0920@gmail.com>",
+  "dependencies": {
+    "ip": "^1.1.5"
+  },
+  "devDependencies": {
+    "standard": "^16.0.2",
+    "tape": "^5.0.1"
+  },
+  "homepage": "http://webtorrent.io",
+  "keywords": [
+    "IP",
+    "address",
+    "ipv4",
+    "ipv6",
+    "set",
+    "blacklist",
+    "blocklist"
+  ],
+  "license": "MIT",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/fisch0920/ip-set.git"
+  },
+  "bugs": {
+    "url": "https://github.com/fisch0920/ip-set/issues"
+  },
+  "scripts": {
+    "test": "standard && tape test/*.js"
+  }
+}
