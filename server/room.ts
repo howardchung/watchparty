@@ -1135,7 +1135,9 @@ export class Room {
           [owner, this.roomId],
         )
       ).rows[0].count;
-      const limit = isSubscriber ? config.SUBSCRIBER_ROOM_LIMIT : 1;
+      const limit = isSubscriber
+        ? config.SUBSCRIBER_ROOM_LIMIT
+        : config.FREE_ROOM_LIMIT;
       if (roomCount >= limit) {
         socket.emit(
           'errorMessage',

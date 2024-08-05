@@ -43,6 +43,7 @@ const defaults = {
   BUILD_DIRECTORY: 'build', // Name of the directory where the built React UI is served from
   VM_MIN_UPTIME_MINUTES: 0, // Number of minutes of the hour VMs must exist for before being eligible for termination
   SHARD: undefined, // Shard ID of the web server (configure in ecosystem.config.js)
+  FREE_ROOM_LIMIT: 1, // The maximum number of rooms a free user can have
   SUBSCRIBER_ROOM_LIMIT: 20, // The maximum number of rooms a subscriber can have
   VMWORKER_PORT: 3100, // Port to use for the vmWorker HTTP server
   VM_ASSIGNMENT_TIMEOUT: 75, // Number of seconds to wait for a VM before failing
