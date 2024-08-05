@@ -225,6 +225,7 @@ export class Controls extends React.Component<ControlsProps> {
                 bottom: '0px',
                 left: `calc(${this.state.hoverPos * 100 + '%'})`,
                 transform: 'translate(-50%)',
+                whiteSpace: 'nowrap',
                 pointerEvents: 'none',
               }}
             >
