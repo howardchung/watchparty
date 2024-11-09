@@ -231,10 +231,15 @@ export const iceServers = () => [
     credential: 'password',
   },
   {
-    urls: 'turn:numb.viagenie.ca',
-    credential: 'watchparty',
-    username: 'howardzchung@gmail.com',
+    urls: 'turn:5.78.83.26:3478',
+    username: 'username',
+    credential: 'password',
   },
+  // {
+  //   urls: 'turn:numb.viagenie.ca',
+  //   credential: 'watchparty',
+  //   username: 'howardzchung@gmail.com',
+  // },
 ];
 
 export const serverPath =
