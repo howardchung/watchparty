@@ -235,6 +235,11 @@ export const iceServers = () => [
     username: 'username',
     credential: 'password',
   },
+    {
+    urls: 'turn:5.223.48.157:3478',
+    username: 'username',
+    credential: 'password',
+  },
   // {
   //   urls: 'turn:numb.viagenie.ca',
   //   credential: 'watchparty',
