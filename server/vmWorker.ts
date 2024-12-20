@@ -37,10 +37,10 @@ app.post('/assignVM', async (req, res) => {
         return res.json(vm);
       }
     }
-    return res.json(null);
+    res.json(null);
   } catch (e) {
     console.warn(e);
-    return res.status(500).end();
+    res.status(500).end();
   }
 });
 
@@ -53,10 +53,10 @@ app.post('/releaseVM', async (req, res) => {
     if (req.body.id) {
       await pool?.resetVM(req.body.id, req.body.roomId);
     }
-    return res.end();
+    res.end();
   } catch (e) {
     console.warn(e);
-    return res.status(500).end();
+    res.status(500).end();
   }
 });
 
@@ -78,7 +78,7 @@ app.get('/stats', async (req, res) => {
       };
     }
   }
-  return res.json(vmManagerStats);
+  res.json(vmManagerStats);
 });
 
 app.get('/isFreePoolFull', async (req, res) => {
@@ -106,13 +106,13 @@ app.get('/isFreePoolFull', async (req, res) => {
     }),
   );
   const isFull = fullResult.every(Boolean);
-  return res.json({ isFull });
+  res.json({ isFull });
 });
 
 app.post('/updateSnapshot', async (req, res) => {
   const pool = vmManagers[req.body.provider + req.body.region];
   const result = await pool?.updateSnapshot();
-  return res.send(result?.toString() + '\n');
+  res.send(result?.toString() + '\n');
 });
 
 app.listen(config.VMWORKER_PORT, () => {
