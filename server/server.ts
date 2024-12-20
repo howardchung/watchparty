@@ -116,7 +116,8 @@ app.get('/ping', (_req, res) => {
 app.get('/subtitle/:hash', async (req, res) => {
   const gzipped = await redis?.getBuffer('subtitle:' + req.params.hash);
   if (!gzipped) {
-    return res.status(404).end('not found');
+    res.status(404).end('not found');
+    return;
   }
   res.setHeader('Content-Encoding', 'gzip');
   res.end(gzipped);
@@ -138,7 +139,7 @@ app.post('/subtitle', async (req, res) => {
   let gzipData = await gzip(data);
   await redis.setex('subtitle:' + hash, 24 * 60 * 60, gzipData);
   redisCount('subUploads');
-  return res.json({ hash });
+  res.json({ hash });
 });
 
 app.get('/downloadSubtitles', async (req, res) => {
@@ -205,7 +206,7 @@ app.get('/stats', async (req, res) => {
     const stats = await getStats();
     res.json(stats);
   } else {
-    return res.status(403).json({ error: 'Access Denied' });
+    res.status(403).json({ error: 'Access Denied' });
   }
 });
 
@@ -214,7 +215,7 @@ app.get('/statsAgg', async (req, res) => {
     const stats = await statsAgg();
     res.json(stats);
   } else {
-    return res.status(403).json({ error: 'Access Denied' });
+    res.status(403).json({ error: 'Access Denied' });
   }
 });
 
@@ -232,7 +233,7 @@ app.get('/timeSeries', async (req, res) => {
     const timeSeries = timeSeriesData.map((entry) => JSON.parse(entry));
     res.json(timeSeries);
   } else {
-    return res.status(403).json({ error: 'Access Denied' });
+    res.status(403).json({ error: 'Access Denied' });
   }
 });
 
@@ -243,10 +244,10 @@ app.get('/youtube', async (req, res) => {
       const items = await searchYoutube(req.query.q);
       res.json(items);
     } catch {
-      return res.status(500).json({ error: 'youtube error' });
+      res.status(500).json({ error: 'youtube error' });
     }
   } else {
-    return res.status(500).json({ error: 'query must be a string' });
+    res.status(500).json({ error: 'query must be a string' });
   }
 });
 
@@ -255,7 +256,7 @@ app.get('/youtubePlaylist/:playlistId', async (req, res) => {
     const items = await youtubePlaylist(req.params.playlistId);
     res.json(items);
   } catch {
-    return res.status(500).json({ error: 'youtube error' });
+    res.status(500).json({ error: 'youtube error' });
   }
 });
 
@@ -299,27 +300,31 @@ app.post('/createRoom', async (req, res) => {
 app.post('/manageSub', async (req, res) => {
   const decoded = await validateUserToken(req.body?.uid, req.body?.token);
   if (!decoded) {
-    return res.status(400).json({ error: 'invalid user token' });
+    res.status(400).json({ error: 'invalid user token' });
+    return;
   }
   if (!decoded.email) {
-    return res.status(400).json({ error: 'no email found' });
+    res.status(400).json({ error: 'no email found' });
+    return;
   }
   const customer = await getCustomerByEmail(decoded.email);
   if (!customer) {
-    return res.status(400).json({ error: 'customer not found' });
+    res.status(400).json({ error: 'customer not found' });
+    return;
   }
   const session = await createSelfServicePortal(
     customer.id,
     req.body?.return_url,
   );
-  return res.json(session);
+  res.json(session);
 });
 
 app.delete('/deleteAccount', async (req, res) => {
   // TODO pass this in req.query instead
   const decoded = await validateUserToken(req.body?.uid, req.body?.token);
   if (!decoded) {
-    return res.status(400).json({ error: 'invalid user token' });
+    res.status(400).json({ error: 'invalid user token' });
+    return;
   }
   if (postgres) {
     // Delete rooms
@@ -331,7 +336,7 @@ app.delete('/deleteAccount', async (req, res) => {
   }
   await deleteUser(decoded.uid);
   redisCount('deleteAccount');
-  return res.json({});
+  res.json({});
 });
 
 app.get('/metadata', async (req, res) => {
@@ -365,7 +370,7 @@ app.get('/metadata', async (req, res) => {
       { uid: true },
     );
   }
-  return res.json({
+  res.json({
     isSubscriber,
     isFreePoolFull,
     beta,
@@ -381,7 +386,7 @@ app.get('/resolveRoom/:vanity', async (req, res) => {
   );
   // console.log(vanity, result.rows);
   // We also use this for checking name availability, so just return empty response if it doesn't exist (http 200)
-  return res.json(result?.rows[0]);
+  res.json(result?.rows[0]);
 });
 
 app.get('/roomData/:roomId', async (req, res) => {
@@ -392,12 +397,12 @@ app.get('/roomData/:roomId', async (req, res) => {
     `SELECT data from room WHERE "roomId" = $1 and password IS NULL`,
     ['/' + req.params.roomId],
   );
-  return res.json(result?.rows[0]?.data);
+  res.json(result?.rows[0]?.data);
 });
 
 app.get('/resolveShard/:roomId', async (req, res) => {
   const shardNum = resolveShard(req.params.roomId);
-  return res.send(String(config.SHARD ? shardNum : ''));
+  res.send(String(config.SHARD ? shardNum : ''));
 });
 
 app.get('/listRooms', async (req, res) => {
@@ -406,13 +411,14 @@ app.get('/listRooms', async (req, res) => {
     req.query?.token as string,
   );
   if (!decoded) {
-    return res.status(400).json({ error: 'invalid user token' });
+    res.status(400).json({ error: 'invalid user token' });
+    return;
   }
   const result = await postgres?.query<PersistentRoom>(
     `SELECT "roomId", vanity from room WHERE owner = $1`,
     [decoded.uid],
   );
-  return res.json(result?.rows ?? []);
+  res.json(result?.rows ?? []);
 });
 
 app.delete('/deleteRoom', async (req, res) => {
@@ -421,13 +427,14 @@ app.delete('/deleteRoom', async (req, res) => {
     req.query?.token as string,
   );
   if (!decoded) {
-    return res.status(400).json({ error: 'invalid user token' });
+    res.status(400).json({ error: 'invalid user token' });
+    return;
   }
   const result = await postgres?.query(
     `DELETE from room WHERE owner = $1 and "roomId" = $2`,
     [decoded.uid, req.query.roomId],
   );
-  return res.json(result?.rows);
+  res.json(result?.rows);
 });
 
 app.get('/linkAccount', async (req, res) => {
@@ -436,10 +443,12 @@ app.get('/linkAccount', async (req, res) => {
     req.query?.token as string,
   );
   if (!decoded) {
-    return res.status(400).json({ error: 'invalid user token' });
+    res.status(400).json({ error: 'invalid user token' });
+    return;
   }
   if (!postgres) {
-    return res.status(400).json({ error: 'invalid database client' });
+    res.status(400).json({ error: 'invalid database client' });
+    return;
   }
   // Get the linked accounts for the user
   let linkAccounts: LinkAccount[] = [];
@@ -450,7 +459,7 @@ app.get('/linkAccount', async (req, res) => {
     );
     linkAccounts = rows;
   }
-  return res.json(linkAccounts);
+  res.json(linkAccounts);
 });
 
 app.post('/linkAccount', async (req, res) => {
@@ -459,10 +468,12 @@ app.post('/linkAccount', async (req, res) => {
     req.body?.token as string,
   );
   if (!decoded) {
-    return res.status(400).json({ error: 'invalid user token' });
+    res.status(400).json({ error: 'invalid user token' });
+    return;
   }
   if (!postgres) {
-    return res.status(400).json({ error: 'invalid database client' });
+    res.status(400).json({ error: 'invalid database client' });
+    return;
   }
   const kind = req.body?.kind;
   if (kind === 'discord') {
@@ -490,7 +501,9 @@ app.post('/linkAccount', async (req, res) => {
       },
       { uid: true, kind: true },
     );
-    return res.json({});
+    res.json({});
+  } else {
+    res.status(400).json({ error: 'unsupported kind' });
   }
 });
 
@@ -501,10 +514,12 @@ app.delete('/linkAccount', async (req, res) => {
     req.body?.token as string,
   );
   if (!decoded) {
-    return res.status(400).json({ error: 'invalid user token' });
+    res.status(400).json({ error: 'invalid user token' });
+    return;
   }
   if (!postgres) {
-    return res.status(400).json({ error: 'invalid database client' });
+    res.status(400).json({ error: 'invalid database client' });
+    return;
   }
   await postgres.query(
     'DELETE FROM link_account WHERE uid = $1 AND kind = $2',
@@ -514,7 +529,7 @@ app.delete('/linkAccount', async (req, res) => {
 });
 
 app.get('/generateName', async (req, res) => {
-  return res.send(makeUserName());
+  res.send(makeUserName());
 });
 
 // Proxy video segments

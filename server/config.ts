@@ -1,4 +1,4 @@
-require('dotenv').config();
+import 'dotenv/config';
 
 const defaults = {
   REDIS_URL: '', // Optional, for metrics
