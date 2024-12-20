@@ -1,0 +1,30 @@
+{
+  "name": "block-iterator",
+  "version": "1.1.1",
+  "description": "Transform input into equally-sized blocks of output",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ThaUnknown/block-iterator.git"
+  },
+  "keywords": [
+    "stream",
+    "block",
+    "chunk",
+    "size",
+    "asyncIterator",
+    "iterator"
+  ],
+  "author": "ThaUnknown",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ThaUnknown/block-iterator/issues"
+  },
+  "homepage": "https://github.com/ThaUnknown/block-iterator#readme",
+  "devDependencies": {
+    "tape": "^5.6.1"
+  },
+  "scripts": {
+    "test": "tape test/*.js"
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "name": "continuation-local-storage",
+  "version": "3.2.1",
+  "description": "userland implementation of https://github.com/joyent/node/issues/5243",
+  "main": "context.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "tap test/*.tap.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/othiym23/node-continuation-local-storage.git"
+  },
+  "keywords": [
+    "threading",
+    "shared",
+    "context",
+    "domains",
+    "tracing",
+    "logging"
+  ],
+  "author": "Forrest L Norvell <ogd@aoaioxxysz.net>",
+  "contributors": [
+    "Tim Caswell <tim@creationix.com>",
+    "Forrest L Norvell <ogd@aoaioxxysz.net>"
+  ],
+  "license": "BSD-2-Clause",
+  "devDependencies": {
+    "semver": "^5.4.1",
+    "tap": "^10.3.1"
+  },
+  "dependencies": {
+    "async-listener": "^0.6.0",
+    "emitter-listener": "^1.1.1"
+  }
+}
