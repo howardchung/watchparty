@@ -34,7 +34,8 @@ app.post('/assignVM', async (req, res) => {
       );
       vm = await pool.assignVM(req.body.roomId, req.body.uid);
       if (vm) {
-        return res.json(vm);
+        res.json(vm);
+        return;
       }
     }
     res.json(null);
