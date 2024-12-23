@@ -26,7 +26,7 @@ import {
   serverPath,
   testAutoplay,
   openFileSelector,
-  getAndSaveClientId,
+  getOrCreateClientId,
   calculateMedian,
   getUserImage,
   getColorForString,
@@ -167,7 +167,7 @@ export default class App extends React.Component<AppProps, AppState> {
     roomSubtitle: '',
     roomLoop: false,
     participants: [],
-    rosterUpdateTS: Number(new Date()),
+    rosterUpdateTS: Date.now(),
     chat: [],
     playlist: [],
     tsMap: {},
@@ -318,7 +318,7 @@ export default class App extends React.Component<AppProps, AppState> {
     const socket = io(serverPath + roomId, {
       transports: ['websocket'],
       query: {
-        clientId: getAndSaveClientId(),
+        clientId: getOrCreateClientId(),
         password,
         shard,
       },
@@ -666,7 +666,7 @@ export default class App extends React.Component<AppProps, AppState> {
       this.state.chat.push(data);
       this.setState({
         chat: this.state.chat,
-        scrollTimestamp: Number(new Date()),
+        scrollTimestamp: Date.now(),
         unreadCount:
           this.state.currentTab === 'chat'
             ? this.state.unreadCount
@@ -755,15 +755,12 @@ export default class App extends React.Component<AppProps, AppState> {
       this.setState({ roomLock: data });
     });
     socket.on('roster', (data: User[]) => {
-      this.setState(
-        { participants: data, rosterUpdateTS: Number(new Date()) },
-        () => {
-          this.setupRTCConnections();
-        },
-      );
+      this.setState({ participants: data, rosterUpdateTS: Date.now() }, () => {
+        this.setupRTCConnections();
+      });
     });
     socket.on('chatinit', (data: ChatMessage[]) => {
-      this.setState({ chat: data, scrollTimestamp: Number(new Date()) });
+      this.setState({ chat: data, scrollTimestamp: Date.now() });
     });
     socket.on('playlist', (data: PlaylistVideo[]) => {
       this.setState({ playlist: data });
@@ -1417,7 +1414,7 @@ export default class App extends React.Component<AppProps, AppState> {
       return;
     }
     const sharer = this.state.participants.find((p) => p.isScreenShare);
-    const selfId = getAndSaveClientId();
+    const selfId = getOrCreateClientId();
     const localTrack = this.localStreamToPublish?.getVideoTracks()[0];
     if (localTrack && !localTrack.onended) {
       // Stop sharing if the local stream stops
@@ -1864,7 +1861,7 @@ export default class App extends React.Component<AppProps, AppState> {
   };
 
   refreshControls = () => {
-    this.setState({ controlsTimestamp: Number(new Date()) });
+    this.setState({ controlsTimestamp: Date.now() });
   };
 
   render() {

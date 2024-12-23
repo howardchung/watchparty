@@ -36,7 +36,7 @@ export class ComboBox extends React.Component<ComboBoxProps> {
     inputMedia: undefined as string | undefined,
     results: undefined as JSX.Element[] | undefined,
     loading: false,
-    lastResultTimestamp: Number(new Date()),
+    lastResultTimestamp: Date.now(),
   };
   debounced: any = null;
 
@@ -55,7 +55,7 @@ export class ComboBox extends React.Component<ComboBoxProps> {
         this.debounced = debounce(async () => {
           this.setState({ loading: true });
           const query: string = this.state.inputMedia || '';
-          let timestamp = Number(new Date());
+          let timestamp = Date.now();
           let results: JSX.Element[] | undefined = undefined;
           if (
             query === '' ||

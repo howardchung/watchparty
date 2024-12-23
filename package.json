@@ -49,7 +49,7 @@
     "webtorrent": "^2.1.34"
   },
   "scripts": {
-    "react": "vite --host",
+    "ui": "vite --host",
     "build": "npm run buildReact && npm run buildServer",
     "buildReact": "vite build && npm run typecheck",
     "buildServer": "tsc --project server/tsconfig.json",

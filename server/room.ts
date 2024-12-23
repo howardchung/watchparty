@@ -352,7 +352,7 @@ export class Room {
     // Force a save because this might change in unattended rooms
     this.saveRoom();
     if (redis && assignTime) {
-      await redis.lpush('vBrowserSessionMS', Number(new Date()) - assignTime);
+      await redis.lpush('vBrowserSessionMS', Date.now() - assignTime);
       await redis.ltrim('vBrowserSessionMS', 0, 24);
     }
 
@@ -1004,7 +1004,7 @@ export class Room {
         this.vBrowser.controllerClient = clientId;
         this.vBrowser.creatorUID = uid;
         this.vBrowser.creatorClientID = clientId;
-        const assignEnd = Number(new Date());
+        const assignEnd = Date.now();
         const assignElapsed = assignEnd - Number(queueTime);
         await redis?.lpush('vBrowserStartMS', assignElapsed);
         await redis?.ltrim('vBrowserStartMS', 0, 24);

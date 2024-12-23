@@ -151,7 +151,7 @@ export abstract class VMManager {
     if (!vm) {
       return;
     }
-    return { ...vm, pass, assignTime: Number(new Date()) };
+    return { ...vm, pass, assignTime: Date.now() };
   };
 
   public resetVM = async (vmid: string, roomId?: string): Promise<void> => {
