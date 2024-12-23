@@ -27,7 +27,7 @@ An website for watching videos together.
 - Start the server via `npm run dev`
   - Defaults to port 8080, customize with `PORT` env var
   - Set `SSL_KEY_FILE` and `SSL_CRT_FILE` for HTTPS.
-- Start the React application in a separate shell and port via `npm run react`
+- Start the React application in a separate shell and port via `npm run ui`
   - Point to server using `VITE_SERVER_HOST` env var if you customized it above
   - Set `SSL_KEY_FILE` and `SSL_CRT_FILE` for HTTPS.
   - HTTPS is required by the browser for some WebRTC features (camera, etc.)
