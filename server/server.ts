@@ -63,7 +63,6 @@ if (config.SSL_KEY_FILE && config.SSL_CRT_FILE) {
 }
 const io = new Server(server, { cors: {}, transports: ['websocket'] });
 
-const launchTime = Number(new Date());
 const rooms = new Map<string, Room>();
 init();
 
@@ -621,7 +620,7 @@ async function release() {
     const room = roomArr[i];
     if (room.vBrowser && room.vBrowser.assignTime) {
       const maxTime = getSessionLimitSeconds(room.vBrowser.large) * 1000;
-      const elapsed = Number(new Date()) - room.vBrowser.assignTime;
+      const elapsed = Date.now() - room.vBrowser.assignTime;
       const ttl = maxTime - elapsed;
       const isTimedOut = ttl && ttl < releaseInterval;
       const isAlmostTimedOut = ttl && ttl < releaseInterval * 2;
@@ -727,7 +726,7 @@ async function getAllRooms() {
 
 async function getStats() {
   // Per-shard data is prefixed with "current"
-  const now = Number(new Date());
+  const now = Date.now();
   let currentUsers = 0;
   let currentHttp = 0;
   let currentVBrowser = 0;
@@ -826,7 +825,7 @@ async function getStats() {
     .filter(Boolean);
 
   // Per-shard data that we want to see in an array
-  const currentUptime = [Number(new Date()) - launchTime];
+  const currentUptime = process.uptime();
   const currentMemUsage = [process.memoryUsage().rss];
 
   // Singleton stats below (same for all shards so don't combine)

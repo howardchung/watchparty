@@ -4,7 +4,7 @@ import { Socket } from 'socket.io-client';
 
 import {
   formatTimestamp,
-  getAndSaveClientId,
+  getOrCreateClientId,
   getColorForStringHex,
   getDefaultPicture,
   iceServers,
@@ -161,7 +161,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
       // We haven't started video chat, exit
       return;
     }
-    const selfId = getAndSaveClientId();
+    const selfId = getOrCreateClientId();
 
     // Delete and close any connections that aren't in the current member list (maybe someone disconnected)
     // This allows them to rejoin later
@@ -235,7 +235,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
       borderRadius: '4px',
       objectFit: 'contain' as any, // ObjectFit
     };
-    const selfId = getAndSaveClientId();
+    const selfId = getOrCreateClientId();
     return (
       <div
         style={{

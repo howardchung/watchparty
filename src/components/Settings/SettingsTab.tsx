@@ -425,7 +425,7 @@ export const SettingsTab = ({
               disableChatSound: data.checked,
             }),
           );
-          setUpdateTS(Number(new Date()));
+          setUpdateTS(Date.now());
         }}
       />
     </div>

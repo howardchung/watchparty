@@ -20,9 +20,9 @@ export class SearchComponent extends React.Component<SearchComponentProps> {
   declare context: React.ContextType<typeof MetadataContext>;
   state = {
     results: [] as SearchResult[],
-    resetDropdown: Number(new Date()),
+    resetDropdown: Date.now(),
     loading: false,
-    lastResultTimestamp: Number(new Date()),
+    lastResultTimestamp: Date.now(),
     inputMedia: undefined,
   };
   debounced: any = null;
@@ -35,7 +35,7 @@ export class SearchComponent extends React.Component<SearchComponentProps> {
           this.setState({ loading: true });
           let query = this.state.inputMedia || '';
           let results: SearchResult[] = [];
-          let timestamp = Number(new Date());
+          let timestamp = Date.now();
           if (this.props.type === 'youtube') {
             results = await getYouTubeResults(query);
           } else if (this.props.type === 'stream' && this.context.streamPath) {
@@ -58,10 +58,7 @@ export class SearchComponent extends React.Component<SearchComponentProps> {
   };
 
   setMedia = (e: any, data: DropdownProps) => {
-    window.setTimeout(
-      () => this.setState({ resetDropdown: Number(new Date()) }),
-      300,
-    );
+    window.setTimeout(() => this.setState({ resetDropdown: Date.now() }), 300);
     this.props.setMedia(e, data);
   };
 

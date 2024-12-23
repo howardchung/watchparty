@@ -235,7 +235,7 @@ export const iceServers = () => [
     username: 'username',
     credential: 'password',
   },
-    {
+  {
     urls: 'turn:5.223.48.157:3478',
     username: 'username',
     credential: 'password',
@@ -339,7 +339,7 @@ export async function openFileSelector(accept?: string) {
   });
 }
 
-export function getAndSaveClientId() {
+export function getOrCreateClientId() {
   let clientId = window.localStorage.getItem('watchparty-clientid');
   if (!clientId) {
     // Generate a new clientID and save it
