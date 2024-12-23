@@ -1,0 +1,967 @@
+<!DOCTYPE html><html lang="en" style="font-size:16px"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="https://dashif.org/img/favicon.ico"><link type="text/css" rel="stylesheet" href="jsdoc-custom.css"><title>Source: streaming/controllers/AbrController.js</title><!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]--><script src="scripts/third-party/hljs.js" defer="defer"></script><script src="scripts/third-party/hljs-line-num.js" defer="defer"></script><script src="scripts/third-party/popper.js" defer="defer"></script><script src="scripts/third-party/tippy.js" defer="defer"></script><script src="scripts/third-party/tocbot.min.js"></script><script>var baseURL="/",locationPathname="";baseURL=(locationPathname=document.location.pathname).substr(0,locationPathname.lastIndexOf("/")+1)</script><link rel="stylesheet" href="styles/clean-jsdoc-theme.min.css"><svg aria-hidden="true" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="display:none"><defs><symbol id="copy-icon" viewbox="0 0 488.3 488.3"><g><path d="M314.25,85.4h-227c-21.3,0-38.6,17.3-38.6,38.6v325.7c0,21.3,17.3,38.6,38.6,38.6h227c21.3,0,38.6-17.3,38.6-38.6V124    C352.75,102.7,335.45,85.4,314.25,85.4z M325.75,449.6c0,6.4-5.2,11.6-11.6,11.6h-227c-6.4,0-11.6-5.2-11.6-11.6V124    c0-6.4,5.2-11.6,11.6-11.6h227c6.4,0,11.6,5.2,11.6,11.6V449.6z"/><path d="M401.05,0h-227c-21.3,0-38.6,17.3-38.6,38.6c0,7.5,6,13.5,13.5,13.5s13.5-6,13.5-13.5c0-6.4,5.2-11.6,11.6-11.6h227    c6.4,0,11.6,5.2,11.6,11.6v325.7c0,6.4-5.2,11.6-11.6,11.6c-7.5,0-13.5,6-13.5,13.5s6,13.5,13.5,13.5c21.3,0,38.6-17.3,38.6-38.6    V38.6C439.65,17.3,422.35,0,401.05,0z"/></g></symbol><symbol id="search-icon" viewBox="0 0 512 512"><g><g><path d="M225.474,0C101.151,0,0,101.151,0,225.474c0,124.33,101.151,225.474,225.474,225.474    c124.33,0,225.474-101.144,225.474-225.474C450.948,101.151,349.804,0,225.474,0z M225.474,409.323    c-101.373,0-183.848-82.475-183.848-183.848S124.101,41.626,225.474,41.626s183.848,82.475,183.848,183.848    S326.847,409.323,225.474,409.323z"/></g></g><g><g><path d="M505.902,476.472L386.574,357.144c-8.131-8.131-21.299-8.131-29.43,0c-8.131,8.124-8.131,21.306,0,29.43l119.328,119.328    c4.065,4.065,9.387,6.098,14.715,6.098c5.321,0,10.649-2.033,14.715-6.098C514.033,497.778,514.033,484.596,505.902,476.472z"/></g></g></symbol><symbol id="font-size-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M11.246 15H4.754l-2 5H.6L7 4h2l6.4 16h-2.154l-2-5zm-.8-2L8 6.885 5.554 13h4.892zM21 12.535V12h2v8h-2v-.535a4 4 0 1 1 0-6.93zM19 18a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/></symbol><symbol id="add-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z"/></symbol><symbol id="minus-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M5 11h14v2H5z"/></symbol><symbol id="dark-theme-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M10 7a7 7 0 0 0 12 4.9v.1c0 5.523-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2h.1A6.979 6.979 0 0 0 10 7zm-6 5a8 8 0 0 0 15.062 3.762A9 9 0 0 1 8.238 4.938 7.999 7.999 0 0 0 4 12z"/></symbol><symbol id="light-theme-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M12 18a6 6 0 1 1 0-12 6 6 0 0 1 0 12zm0-2a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM11 1h2v3h-2V1zm0 19h2v3h-2v-3zM3.515 4.929l1.414-1.414L7.05 5.636 5.636 7.05 3.515 4.93zM16.95 18.364l1.414-1.414 2.121 2.121-1.414 1.414-2.121-2.121zm2.121-14.85l1.414 1.415-2.121 2.121-1.414-1.414 2.121-2.121zM5.636 16.95l1.414 1.414-2.121 2.121-1.414-1.414 2.121-2.121zM23 11v2h-3v-2h3zM4 11v2H1v-2h3z"/></symbol><symbol id="reset-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M18.537 19.567A9.961 9.961 0 0 1 12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10c0 2.136-.67 4.116-1.81 5.74L17 12h3a8 8 0 1 0-2.46 5.772l.997 1.795z"/></symbol><symbol id="down-icon" viewBox="0 0 16 16"><path fill-rule="evenodd" clip-rule="evenodd" d="M12.7803 6.21967C13.0732 6.51256 13.0732 6.98744 12.7803 7.28033L8.53033 11.5303C8.23744 11.8232 7.76256 11.8232 7.46967 11.5303L3.21967 7.28033C2.92678 6.98744 2.92678 6.51256 3.21967 6.21967C3.51256 5.92678 3.98744 5.92678 4.28033 6.21967L8 9.93934L11.7197 6.21967C12.0126 5.92678 12.4874 5.92678 12.7803 6.21967Z"></path></symbol><symbol id="codepen-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M16.5 13.202L13 15.535v3.596L19.197 15 16.5 13.202zM14.697 12L12 10.202 9.303 12 12 13.798 14.697 12zM20 10.869L18.303 12 20 13.131V10.87zM19.197 9L13 4.869v3.596l3.5 2.333L19.197 9zM7.5 10.798L11 8.465V4.869L4.803 9 7.5 10.798zM4.803 15L11 19.131v-3.596l-3.5-2.333L4.803 15zM4 13.131L5.697 12 4 10.869v2.262zM2 9a1 1 0 0 1 .445-.832l9-6a1 1 0 0 1 1.11 0l9 6A1 1 0 0 1 22 9v6a1 1 0 0 1-.445.832l-9 6a1 1 0 0 1-1.11 0l-9-6A1 1 0 0 1 2 15V9z"/></symbol><symbol id="close-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M12 10.586l4.95-4.95 1.414 1.414-4.95 4.95 4.95 4.95-1.414 1.414-4.95-4.95-4.95 4.95-1.414-1.414 4.95-4.95-4.95-4.95L7.05 5.636z"/></symbol><symbol id="menu-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z"/></symbol></defs></svg></head><body data-theme="light"><div class="sidebar-container"><div class="sidebar" id="sidebar"><a href="/" class="sidebar-title sidebar-title-anchor">Home</a><div class="sidebar-items-container"><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-modules"><div>Modules</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="module-DashAdapter.html">DashAdapter</a></div><div class="sidebar-section-children"><a href="module-DashMetrics.html">DashMetrics</a></div><div class="sidebar-section-children"><a href="module-MediaPlayer.html">MediaPlayer</a></div><div class="sidebar-section-children"><a href="module-OfflineController.html">OfflineController</a></div><div class="sidebar-section-children"><a href="module-ProtectionController.html">ProtectionController</a></div><div class="sidebar-section-children"><a href="module-Settings.html">Settings</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-classes"><div>Classes</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="Errors.html">Errors</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html">MediaPlayerEvents</a></div><div class="sidebar-section-children"><a href="MediaPlayerModel.html">MediaPlayerModel</a></div><div class="sidebar-section-children"><a href="MetricsReportingEvents.html">MetricsReportingEvents</a></div><div class="sidebar-section-children"><a href="MssErrors.html">MssErrors</a></div><div class="sidebar-section-children"><a href="OfflineErrors.html">OfflineErrors</a></div><div class="sidebar-section-children"><a href="OfflineEvents.html">OfflineEvents</a></div><div class="sidebar-section-children"><a href="ProtectionErrors.html">ProtectionErrors</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html">ProtectionEvents</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-events"><div>Events</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:ADAPTATION_SET_REMOVED_NO_CAPABILITIES">ADAPTATION_SET_REMOVED_NO_CAPABILITIES</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:AST_IN_FUTURE">AST_IN_FUTURE</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:BASE_URLS_UPDATED">BASE_URLS_UPDATED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:BUFFER_EMPTY">BUFFER_EMPTY</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:BUFFER_LEVEL_STATE_CHANGED">BUFFER_LEVEL_STATE_CHANGED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:BUFFER_LEVEL_UPDATED">BUFFER_LEVEL_UPDATED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:BUFFER_LOADED">BUFFER_LOADED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:CAN_PLAY">CAN_PLAY</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:CAN_PLAY_THROUGH">CAN_PLAY_THROUGH</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:CAPTION_CONTAINER_RESIZE">CAPTION_CONTAINER_RESIZE</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:CAPTION_RENDERED">CAPTION_RENDERED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:CONFORMANCE_VIOLATION">CONFORMANCE_VIOLATION</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:CONTENT_STEERING_REQUEST_COMPLETED">CONTENT_STEERING_REQUEST_COMPLETED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:CUE_ENTER">CUE_ENTER</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:CUE_ENTER">CUE_ENTER</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:DVB_FONT_DOWNLOAD_ADDED">DVB_FONT_DOWNLOAD_ADDED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:DVB_FONT_DOWNLOAD_COMPLETE">DVB_FONT_DOWNLOAD_COMPLETE</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:DVB_FONT_DOWNLOAD_FAILED">DVB_FONT_DOWNLOAD_FAILED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:DYNAMIC_TO_STATIC">DYNAMIC_TO_STATIC</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:ERROR">ERROR</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:EVENT_MODE_ON_RECEIVE">EVENT_MODE_ON_RECEIVE</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:EVENT_MODE_ON_START">EVENT_MODE_ON_START</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:FRAGMENT_LOADING_ABANDONED">FRAGMENT_LOADING_ABANDONED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:FRAGMENT_LOADING_COMPLETED">FRAGMENT_LOADING_COMPLETED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:FRAGMENT_LOADING_PROGRESS">FRAGMENT_LOADING_PROGRESS</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:FRAGMENT_LOADING_STARTED">FRAGMENT_LOADING_STARTED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:INBAND_PRFT">INBAND_PRFT</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:LOG">LOG</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:MANIFEST_LOADED">MANIFEST_LOADED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:MANIFEST_LOADING_FINISHED">MANIFEST_LOADING_FINISHED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:MANIFEST_LOADING_STARTED">MANIFEST_LOADING_STARTED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:MANIFEST_VALIDITY_CHANGED">MANIFEST_VALIDITY_CHANGED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:METRIC_ADDED">METRIC_ADDED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:METRIC_CHANGED">METRIC_CHANGED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:METRIC_UPDATED">METRIC_UPDATED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:METRICS_CHANGED">METRICS_CHANGED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PERIOD_SWITCH_COMPLETED">PERIOD_SWITCH_COMPLETED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PERIOD_SWITCH_STARTED">PERIOD_SWITCH_STARTED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_ENDED">PLAYBACK_ENDED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_ERROR">PLAYBACK_ERROR</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_LOADED_DATA">PLAYBACK_LOADED_DATA</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_METADATA_LOADED">PLAYBACK_METADATA_LOADED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_NOT_ALLOWED">PLAYBACK_NOT_ALLOWED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_PAUSED">PLAYBACK_PAUSED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_PLAYING">PLAYBACK_PLAYING</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_PROGRESS">PLAYBACK_PROGRESS</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_RATE_CHANGED">PLAYBACK_RATE_CHANGED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_SEEKED">PLAYBACK_SEEKED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_SEEKING">PLAYBACK_SEEKING</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_STALLED">PLAYBACK_STALLED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_STARTED">PLAYBACK_STARTED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_TIME_UPDATED">PLAYBACK_TIME_UPDATED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_VOLUME_CHANGED">PLAYBACK_VOLUME_CHANGED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_WAITING">PLAYBACK_WAITING</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:QUALITY_CHANGE_RENDERED">QUALITY_CHANGE_RENDERED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:QUALITY_CHANGE_REQUESTED">QUALITY_CHANGE_REQUESTED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:REPRESENTATION_SWITCH">REPRESENTATION_SWITCH</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:STREAM_ACTIVATED">STREAM_ACTIVATED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:STREAM_DEACTIVATED">STREAM_DEACTIVATED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:STREAM_INITIALIZED">STREAM_INITIALIZED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:STREAM_INITIALIZING">STREAM_INITIALIZING</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:STREAM_TEARDOWN_COMPLETE">STREAM_TEARDOWN_COMPLETE</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:STREAM_UPDATED">STREAM_UPDATED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:TEXT_TRACK_ADDED">TEXT_TRACK_ADDED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:TEXT_TRACKS_ADDED">TEXT_TRACKS_ADDED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:THROUGHPUT_MEASUREMENT_STORED">THROUGHPUT_MEASUREMENT_STORED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:TRACK_CHANGE_RENDERED">TRACK_CHANGE_RENDERED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:TTML_PARSED">TTML_PARSED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:TTML_TO_PARSE">TTML_TO_PARSE</a></div><div class="sidebar-section-children"><a href="MetricsReportingEvents.html#event:CMCD_DATA_GENERATED">CMCD_DATA_GENERATED</a></div><div class="sidebar-section-children"><a href="OfflineEvents.html#event:OFFLINE_RECORD_FINISHED">OFFLINE_RECORD_FINISHED</a></div><div class="sidebar-section-children"><a href="OfflineEvents.html#event:OFFLINE_RECORD_LOADEDMETADATA">OFFLINE_RECORD_LOADEDMETADATA</a></div><div class="sidebar-section-children"><a href="OfflineEvents.html#event:OFFLINE_RECORD_STARTED">OFFLINE_RECORD_STARTED</a></div><div class="sidebar-section-children"><a href="OfflineEvents.html#event:OFFLINE_RECORD_STOPPED">OFFLINE_RECORD_STOPPED</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_ADDED">KEY_ADDED</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_ERROR">KEY_ERROR</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_MESSAGE">KEY_MESSAGE</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_SESSION_CLOSED">KEY_SESSION_CLOSED</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_SESSION_CREATED">KEY_SESSION_CREATED</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_SESSION_REMOVED">KEY_SESSION_REMOVED</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_STATUSES_CHANGED">KEY_STATUSES_CHANGED</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_SYSTEM_ACCESS_COMPLETE">KEY_SYSTEM_ACCESS_COMPLETE</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_SYSTEM_SELECTED">KEY_SYSTEM_SELECTED</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:LICENSE_REQUEST_COMPLETE">LICENSE_REQUEST_COMPLETE</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:LICENSE_REQUEST_SENDING">LICENSE_REQUEST_SENDING</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:PROTECTION_CREATED">PROTECTION_CREATED</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:PROTECTION_DESTROYED">PROTECTION_DESTROYED</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-global"><div>Global</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="global.html#LICENSE_SERVER_MANIFEST_CONFIGURATIONS">LICENSE_SERVER_MANIFEST_CONFIGURATIONS</a></div><div class="sidebar-section-children"><a href="global.html#MediaType">MediaType</a></div></div></div></div></div><div class="navbar-container" id="VuAckcnZhf"><nav class="navbar"><div class="navbar-left-items"></div><div class="navbar-right-items"><div class="navbar-right-item"><button class="icon-button search-button" aria-label="open-search"><svg><use xlink:href="#search-icon"></use></svg></button></div><div class="navbar-right-item"><button class="icon-button theme-toggle" aria-label="toggle-theme"><svg><use class="theme-svg-use" xlink:href="#dark-theme-icon"></use></svg></button></div><div class="navbar-right-item"><button class="icon-button font-size" aria-label="change-font-size"><svg><use xlink:href="#font-size-icon"></use></svg></button></div></div><nav></nav></nav></div><div class="toc-container"><div class="toc-content"><span class="bold">On this page</span><div id="eed4d2a0bfd64539bb9df78095dec881"></div></div></div><div class="body-wrapper"><div class="main-content"><div class="main-wrapper"><section id="source-page" class="source-page"><header><h1 id="title" class="has-anchor">streaming_controllers_AbrController.js</h1></header><article><pre class="prettyprint source lang-js"><code>/**
+ * The copyright in this software is being made available under the BSD License,
+ * included below. This software may be subject to other third party and contributor
+ * rights, including patent rights, and no such rights are granted under this license.
+ *
+ * Copyright (c) 2013, Dash Industry Forum.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *  * Redistributions of source code must retain the above copyright notice, this
+ *  list of conditions and the following disclaimer.
+ *  * Redistributions in binary form must reproduce the above copyright notice,
+ *  this list of conditions and the following disclaimer in the documentation and/or
+ *  other materials provided with the distribution.
+ *  * Neither the name of Dash Industry Forum nor the names of its
+ *  contributors may be used to endorse or promote products derived from this software
+ *  without specific prior written permission.
+ *
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS AS IS AND ANY
+ *  EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ *  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ *  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ *  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ *  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ *  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ *  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ *  POSSIBILITY OF SUCH DAMAGE.
+ */
+
+import ABRRulesCollection from '../rules/abr/ABRRulesCollection';
+import Constants from '../constants/Constants';
+import MetricsConstants from '../constants/MetricsConstants';
+import BitrateInfo from '../vo/BitrateInfo';
+import FragmentModel from '../models/FragmentModel';
+import EventBus from '../../core/EventBus';
+import Events from '../../core/events/Events';
+import FactoryMaker from '../../core/FactoryMaker';
+import RulesContext from '../rules/RulesContext';
+import SwitchRequest from '../rules/SwitchRequest';
+import SwitchRequestHistory from '../rules/SwitchRequestHistory';
+import DroppedFramesHistory from '../rules/DroppedFramesHistory';
+import ThroughputHistory from '../rules/ThroughputHistory';
+import Debug from '../../core/Debug';
+import {HTTPRequest} from '../vo/metrics/HTTPRequest';
+import {checkInteger} from '../utils/SupervisorTools';
+import MediaPlayerEvents from '../MediaPlayerEvents';
+
+const DEFAULT_VIDEO_BITRATE = 1000;
+const DEFAULT_AUDIO_BITRATE = 100;
+const QUALITY_DEFAULT = 0;
+
+function AbrController() {
+
+    const context = this.context;
+    const debug = Debug(context).getInstance();
+    const eventBus = EventBus(context).getInstance();
+
+    let instance,
+        logger,
+        abrRulesCollection,
+        streamController,
+        topQualities,
+        qualityDict,
+        streamProcessorDict,
+        abandonmentStateDict,
+        abandonmentTimeout,
+        windowResizeEventCalled,
+        elementWidth,
+        elementHeight,
+        adapter,
+        videoModel,
+        mediaPlayerModel,
+        customParametersModel,
+        cmsdModel,
+        domStorage,
+        playbackIndex,
+        switchHistoryDict,
+        droppedFramesHistory,
+        throughputHistory,
+        isUsingBufferOccupancyAbrDict,
+        isUsingL2AAbrDict,
+        isUsingLoLPAbrDict,
+        dashMetrics,
+        settings;
+
+    function setup() {
+        logger = debug.getLogger(instance);
+        resetInitialSettings();
+    }
+
+    /**
+     * Initialize everything that is not Stream specific. We only have one instance of the ABR Controller for all periods.
+     */
+    function initialize() {
+        droppedFramesHistory = DroppedFramesHistory(context).create();
+        throughputHistory = ThroughputHistory(context).create({
+            settings
+        });
+
+        abrRulesCollection = ABRRulesCollection(context).create({
+            dashMetrics,
+            customParametersModel,
+            mediaPlayerModel,
+            settings
+        });
+
+        abrRulesCollection.initialize();
+
+        eventBus.on(MediaPlayerEvents.QUALITY_CHANGE_RENDERED, _onQualityChangeRendered, instance);
+        eventBus.on(MediaPlayerEvents.METRIC_ADDED, _onMetricAdded, instance);
+        eventBus.on(Events.LOADING_PROGRESS, _onFragmentLoadProgress, instance);
+    }
+
+    /**
+     * Whenever a StreamProcessor is created it is added to the list of streamProcessorDict
+     * In addition, the corresponding objects for this object and its stream id are created
+     * @param {object} type
+     * @param {object} streamProcessor
+     */
+    function registerStreamType(type, streamProcessor) {
+        const streamId = streamProcessor.getStreamInfo().id;
+
+        if (!streamProcessorDict[streamId]) {
+            streamProcessorDict[streamId] = {};
+        }
+
+        if (!switchHistoryDict[streamId]) {
+            switchHistoryDict[streamId] = {};
+        }
+
+        if (!abandonmentStateDict[streamId]) {
+            abandonmentStateDict[streamId] = {};
+        }
+
+        switchHistoryDict[streamId][type] = SwitchRequestHistory(context).create();
+        streamProcessorDict[streamId][type] = streamProcessor;
+
+        abandonmentStateDict[streamId][type] = {};
+        abandonmentStateDict[streamId][type].state = MetricsConstants.ALLOW_LOAD;
+
+        _initializeAbrStrategy(type);
+
+        if (type === Constants.VIDEO) {
+            setElementSize();
+        }
+    }
+
+    function _initializeAbrStrategy(type) {
+        const strategy = settings.get().streaming.abr.ABRStrategy;
+
+        if (strategy === Constants.ABR_STRATEGY_L2A) {
+            isUsingBufferOccupancyAbrDict[type] = false;
+            isUsingLoLPAbrDict[type] = false;
+            isUsingL2AAbrDict[type] = true;
+        } else if (strategy === Constants.ABR_STRATEGY_LoLP) {
+            isUsingBufferOccupancyAbrDict[type] = false;
+            isUsingLoLPAbrDict[type] = true;
+            isUsingL2AAbrDict[type] = false;
+        } else if (strategy === Constants.ABR_STRATEGY_BOLA) {
+            isUsingBufferOccupancyAbrDict[type] = true;
+            isUsingLoLPAbrDict[type] = false;
+            isUsingL2AAbrDict[type] = false;
+        } else if (strategy === Constants.ABR_STRATEGY_THROUGHPUT) {
+            isUsingBufferOccupancyAbrDict[type] = false;
+            isUsingLoLPAbrDict[type] = false;
+            isUsingL2AAbrDict[type] = false;
+        } else if (strategy === Constants.ABR_STRATEGY_DYNAMIC) {
+            isUsingBufferOccupancyAbrDict[type] = isUsingBufferOccupancyAbrDict &amp;&amp; isUsingBufferOccupancyAbrDict[type] ? isUsingBufferOccupancyAbrDict[type] : false;
+            isUsingLoLPAbrDict[type] = false;
+            isUsingL2AAbrDict[type] = false;
+        }
+    }
+
+    function unRegisterStreamType(streamId, type) {
+        try {
+            if (streamProcessorDict[streamId] &amp;&amp; streamProcessorDict[streamId][type]) {
+                delete streamProcessorDict[streamId][type];
+            }
+
+            if (switchHistoryDict[streamId] &amp;&amp; switchHistoryDict[streamId][type]) {
+                delete switchHistoryDict[streamId][type];
+            }
+
+            if (abandonmentStateDict[streamId] &amp;&amp; abandonmentStateDict[streamId][type]) {
+                delete abandonmentStateDict[streamId][type];
+            }
+
+        } catch (e) {
+
+        }
+    }
+
+    function resetInitialSettings() {
+        topQualities = {};
+        qualityDict = {};
+        abandonmentStateDict = {};
+        streamProcessorDict = {};
+        switchHistoryDict = {};
+        isUsingBufferOccupancyAbrDict = {};
+        isUsingL2AAbrDict = {};
+        isUsingLoLPAbrDict = {};
+
+        if (windowResizeEventCalled === undefined) {
+            windowResizeEventCalled = false;
+        }
+        if (droppedFramesHistory) {
+            droppedFramesHistory.reset();
+        }
+
+        playbackIndex = undefined;
+        droppedFramesHistory = undefined;
+        throughputHistory = undefined;
+        clearTimeout(abandonmentTimeout);
+        abandonmentTimeout = null;
+    }
+
+    function reset() {
+
+        resetInitialSettings();
+
+        eventBus.off(Events.LOADING_PROGRESS, _onFragmentLoadProgress, instance);
+        eventBus.off(MediaPlayerEvents.QUALITY_CHANGE_RENDERED, _onQualityChangeRendered, instance);
+        eventBus.off(MediaPlayerEvents.METRIC_ADDED, _onMetricAdded, instance);
+
+        if (abrRulesCollection) {
+            abrRulesCollection.reset();
+        }
+    }
+
+    function setConfig(config) {
+        if (!config) return;
+
+        if (config.streamController) {
+            streamController = config.streamController;
+        }
+        if (config.domStorage) {
+            domStorage = config.domStorage;
+        }
+        if (config.mediaPlayerModel) {
+            mediaPlayerModel = config.mediaPlayerModel;
+        }
+        if (config.customParametersModel) {
+            customParametersModel = config.customParametersModel;
+        }
+        if (config.cmsdModel) {
+            cmsdModel = config.cmsdModel
+        }
+        if (config.dashMetrics) {
+            dashMetrics = config.dashMetrics;
+        }
+        if (config.adapter) {
+            adapter = config.adapter;
+        }
+        if (config.videoModel) {
+            videoModel = config.videoModel;
+        }
+        if (config.settings) {
+            settings = config.settings;
+        }
+    }
+
+    function checkConfig() {
+        if (!domStorage || !domStorage.hasOwnProperty('getSavedBitrateSettings')) {
+            throw new Error(Constants.MISSING_CONFIG_ERROR);
+        }
+    }
+
+    /**
+     * While fragment loading is in progress we check if we might need to abort the request
+     * @param {object} e
+     * @private
+     */
+    function _onFragmentLoadProgress(e) {
+        const type = e.request.mediaType;
+        const streamId = e.streamId;
+
+        if (!type || !streamId || !streamProcessorDict[streamId] || !settings.get().streaming.abr.autoSwitchBitrate[type]) {
+            return;
+        }
+
+        const streamProcessor = streamProcessorDict[streamId][type];
+        if (!streamProcessor) {
+            return;
+        }
+
+        const rulesContext = RulesContext(context).create({
+            abrController: instance,
+            streamProcessor: streamProcessor,
+            currentRequest: e.request,
+            useBufferOccupancyABR: isUsingBufferOccupancyAbrDict[type],
+            useL2AABR: isUsingL2AAbrDict[type],
+            useLoLPABR: isUsingLoLPAbrDict[type],
+            videoModel
+        });
+        const switchRequest = abrRulesCollection.shouldAbandonFragment(rulesContext, streamId);
+
+        if (switchRequest.quality > SwitchRequest.NO_CHANGE) {
+            const fragmentModel = streamProcessor.getFragmentModel();
+            const request = fragmentModel.getRequests({
+                state: FragmentModel.FRAGMENT_MODEL_LOADING,
+                index: e.request.index
+            })[0];
+            if (request) {
+                abandonmentStateDict[streamId][type].state = MetricsConstants.ABANDON_LOAD;
+                switchHistoryDict[streamId][type].reset();
+                switchHistoryDict[streamId][type].push({
+                    oldValue: getQualityFor(type, streamId),
+                    newValue: switchRequest.quality,
+                    confidence: 1,
+                    reason: switchRequest.reason
+                });
+                setPlaybackQuality(type, streamController.getActiveStreamInfo(), switchRequest.quality, switchRequest.reason);
+
+                clearTimeout(abandonmentTimeout);
+                abandonmentTimeout = setTimeout(
+                    () => {
+                        abandonmentStateDict[streamId][type].state = MetricsConstants.ALLOW_LOAD;
+                        abandonmentTimeout = null;
+                    },
+                    settings.get().streaming.abandonLoadTimeout
+                );
+            }
+        }
+    }
+
+    /**
+     * Update dropped frames history when the quality was changed
+     * @param {object} e
+     * @private
+     */
+    function _onQualityChangeRendered(e) {
+        if (e.mediaType === Constants.VIDEO) {
+            if (playbackIndex !== undefined) {
+                droppedFramesHistory.push(e.streamId, playbackIndex, videoModel.getPlaybackQuality());
+            }
+            playbackIndex = e.newQuality;
+        }
+    }
+
+    /**
+     * When the buffer level is updated we check if we need to change the ABR strategy
+     * @param e
+     * @private
+     */
+    function _onMetricAdded(e) {
+        if (e.metric === MetricsConstants.HTTP_REQUEST &amp;&amp; e.value &amp;&amp; e.value.type === HTTPRequest.MEDIA_SEGMENT_TYPE &amp;&amp; (e.mediaType === Constants.AUDIO || e.mediaType === Constants.VIDEO)) {
+            throughputHistory.push(e.mediaType, e.value, settings.get().streaming.abr.useDeadTimeLatency);
+        }
+
+        if (e.metric === MetricsConstants.BUFFER_LEVEL &amp;&amp; (e.mediaType === Constants.AUDIO || e.mediaType === Constants.VIDEO)) {
+            _updateAbrStrategy(e.mediaType, 0.001 * e.value.level);
+        }
+    }
+
+    /**
+     * Returns the highest possible index taking limitations like maxBitrate, representationRatio and portal size into account.
+     * @param {string} type
+     * @param {string} streamId
+     * @return {undefined|number}
+     */
+    function getMaxAllowedIndexFor(type, streamId) {
+        try {
+            let idx;
+            topQualities[streamId] = topQualities[streamId] || {};
+
+            if (!topQualities[streamId].hasOwnProperty(type)) {
+                topQualities[streamId][type] = 0;
+            }
+
+            idx = _checkMaxBitrate(type, streamId);
+            idx = _checkMaxRepresentationRatio(idx, type, streamId);
+            idx = _checkPortalSize(idx, type, streamId);
+            // Apply maximum suggested bitrate from CMSD headers if enabled 
+            if (settings.get().streaming.cmsd.enabled &amp;&amp; settings.get().streaming.cmsd.abr.applyMb) {
+                idx = _checkCmsdMaxBitrate(idx, type, streamId);
+            }
+            return idx;
+        } catch (e) {
+            return undefined
+        }
+    }
+
+    /**
+     * Returns the minimum allowed index. We consider thresholds defined in the settings, i.e. minBitrate for the corresponding media type.
+     * @param {string} type
+     * @param {string} streamId
+     * @return {undefined|number}
+     */
+    function getMinAllowedIndexFor(type, streamId) {
+        try {
+            return _getMinIndexBasedOnBitrateFor(type, streamId);
+        } catch (e) {
+            return undefined
+        }
+    }
+
+    /**
+     * Returns the maximum allowed index.
+     * @param {string} type
+     * @param {string} streamId
+     * @return {undefined|number}
+     */
+    function _getMaxIndexBasedOnBitrateFor(type, streamId) {
+        try {
+            const maxBitrate = mediaPlayerModel.getAbrBitrateParameter('maxBitrate', type);
+            if (maxBitrate > -1) {
+                return getQualityForBitrate(streamProcessorDict[streamId][type].getMediaInfo(), maxBitrate, streamId);
+            } else {
+                return undefined;
+            }
+        } catch (e) {
+            return undefined
+        }
+    }
+
+    /**
+     * Returns the minimum allowed index.
+     * @param {string} type
+     * @param {string} streamId
+     * @return {undefined|number}
+     */
+    function _getMinIndexBasedOnBitrateFor(type, streamId) {
+        try {
+            const minBitrate = mediaPlayerModel.getAbrBitrateParameter('minBitrate', type);
+
+            if (minBitrate > -1) {
+                const mediaInfo = streamProcessorDict[streamId][type].getMediaInfo();
+                const bitrateList = getBitrateList(mediaInfo);
+                // This returns the quality index &lt;= for the given bitrate
+                let minIdx = getQualityForBitrate(mediaInfo, minBitrate, streamId);
+                if (bitrateList[minIdx] &amp;&amp; minIdx &lt; bitrateList.length - 1 &amp;&amp; bitrateList[minIdx].bitrate &lt; minBitrate * 1000) {
+                    minIdx++; // Go to the next bitrate
+                }
+                return minIdx;
+            } else {
+                return undefined;
+            }
+        } catch (e) {
+            return undefined;
+        }
+    }
+
+    /**
+     * Returns the maximum possible index
+     * @param type
+     * @param streamId
+     * @return {number|*}
+     */
+    function _checkMaxBitrate(type, streamId) {
+        let idx = topQualities[streamId][type];
+        let newIdx = idx;
+
+        if (!streamProcessorDict[streamId] || !streamProcessorDict[streamId][type]) {
+            return newIdx;
+        }
+
+        const minIdx = getMinAllowedIndexFor(type, streamId);
+        if (minIdx !== undefined) {
+            newIdx = Math.max(idx, minIdx);
+        }
+
+        const maxIdx = _getMaxIndexBasedOnBitrateFor(type, streamId);
+        if (maxIdx !== undefined) {
+            newIdx = Math.min(newIdx, maxIdx);
+        }
+
+        return newIdx;
+    }
+
+    /**
+     * Returns the maximum possible index from CMSD model
+     * @param type
+     * @param streamId
+     * @return {number|*}
+     */
+    function _checkCmsdMaxBitrate(idx, type, streamId) {
+        // Check CMSD max suggested bitrate only for video segments
+        if (type !== 'video') {
+            return idx;
+        }
+        // Get max suggested bitrate
+        let maxCmsdBitrate = cmsdModel.getMaxBitrate(type);
+        if (maxCmsdBitrate &lt; 0) {
+            return idx;
+        }
+        // Substract audio bitrate
+        const audioBitrate = _getBitrateInfoForQuality(streamId, 'audio', getQualityFor('audio', streamId));
+        maxCmsdBitrate -= audioBitrate ? (audioBitrate.bitrate / 1000) : 0;
+        const maxIdx = getQualityForBitrate(streamProcessorDict[streamId][type].getMediaInfo(), maxCmsdBitrate, streamId);
+        logger.debug('Stream ID: ' + streamId + ' [' + type + '] Apply max bit rate from CMSD: ' + maxCmsdBitrate);
+        return Math.min(idx, maxIdx);
+    }
+
+    /**
+     * Returns the maximum index according to maximum representation ratio
+     * @param idx
+     * @param type
+     * @param streamId
+     * @return {number|*}
+     * @private
+     */
+    function _checkMaxRepresentationRatio(idx, type, streamId) {
+        let maxIdx = topQualities[streamId][type]
+        const maxRepresentationRatio = settings.get().streaming.abr.maxRepresentationRatio[type];
+
+        if (isNaN(maxRepresentationRatio) || maxRepresentationRatio >= 1 || maxRepresentationRatio &lt; 0) {
+            return idx;
+        }
+        return Math.min(idx, Math.round(maxIdx * maxRepresentationRatio));
+    }
+
+    /**
+     * Returns the maximum index according to the portal size
+     * @param idx
+     * @param type
+     * @param streamId
+     * @return {number|*}
+     * @private
+     */
+    function _checkPortalSize(idx, type, streamId) {
+        if (type !== Constants.VIDEO || !settings.get().streaming.abr.limitBitrateByPortal || !streamProcessorDict[streamId] || !streamProcessorDict[streamId][type]) {
+            return idx;
+        }
+
+        if (!windowResizeEventCalled) {
+            setElementSize();
+        }
+        const streamInfo = streamProcessorDict[streamId][type].getStreamInfo();
+        const representation = adapter.getAdaptationForType(streamInfo.index, type, streamInfo).Representation_asArray;
+        let newIdx = idx;
+
+        if (elementWidth > 0 &amp;&amp; elementHeight > 0) {
+            while (
+                newIdx > 0 &amp;&amp;
+                representation[newIdx] &amp;&amp;
+                elementWidth &lt; representation[newIdx].width &amp;&amp;
+                elementWidth - representation[newIdx - 1].width &lt; representation[newIdx].width - elementWidth) {
+                newIdx = newIdx - 1;
+            }
+
+            // Make sure that in case of multiple representation elements have same
+            // resolution, every such element is included
+            while (newIdx &lt; representation.length - 1 &amp;&amp; representation[newIdx].width === representation[newIdx + 1].width) {
+                newIdx = newIdx + 1;
+            }
+        }
+
+        return newIdx;
+    }
+
+    /**
+     * Gets top BitrateInfo for the player
+     * @param {string} type - 'video' or 'audio' are the type options.
+     * @param {string} streamId - Id of the stream
+     * @returns {BitrateInfo | null}
+     */
+    function getTopBitrateInfoFor(type, streamId = null) {
+        if (!streamId) {
+            streamId = streamController.getActiveStreamInfo().id;
+        }
+        if (type &amp;&amp; streamProcessorDict &amp;&amp; streamProcessorDict[streamId] &amp;&amp; streamProcessorDict[streamId][type]) {
+            const idx = getMaxAllowedIndexFor(type, streamId);
+            const bitrates = getBitrateList(streamProcessorDict[streamId][type].getMediaInfo());
+            return bitrates[idx] ? bitrates[idx] : null;
+        }
+        return null;
+    }
+
+    /**
+     * Returns the initial bitrate for a specific media type and stream id
+     * @param {string} type
+     * @param {string} streamId
+     * @returns {number} A value of the initial bitrate, kbps
+     * @memberof AbrController#
+     */
+    function getInitialBitrateFor(type, streamId) {
+        checkConfig();
+
+        if (type === Constants.TEXT) {
+            return NaN;
+        }
+
+        const savedBitrate = domStorage.getSavedBitrateSettings(type);
+        let configBitrate = mediaPlayerModel.getAbrBitrateParameter('initialBitrate', type);
+        let configRatio = settings.get().streaming.abr.initialRepresentationRatio[type];
+
+        if (configBitrate === -1) {
+            if (configRatio > -1) {
+                const streamInfo = streamProcessorDict[streamId][type].getStreamInfo();
+                const representation = adapter.getAdaptationForType(streamInfo.index, type, streamInfo).Representation_asArray;
+                if (Array.isArray(representation)) {
+                    const repIdx = Math.max(Math.round(representation.length * configRatio) - 1, 0);
+                    configBitrate = representation[repIdx].bandwidth / 1000;
+                } else {
+                    configBitrate = 0;
+                }
+            } else if (!isNaN(savedBitrate)) {
+                configBitrate = savedBitrate;
+            } else {
+                configBitrate = (type === Constants.VIDEO) ? DEFAULT_VIDEO_BITRATE : DEFAULT_AUDIO_BITRATE;
+            }
+        }
+
+        return configBitrate;
+    }
+
+    /**
+     * This function is called by the scheduleControllers to check if the quality should be changed.
+     * Consider this the main entry point for the ABR decision logic
+     * @param {string} type
+     * @param {string} streamId
+     */
+    function checkPlaybackQuality(type, streamId) {
+        try {
+            if (!type || !streamProcessorDict || !streamProcessorDict[streamId] || !streamProcessorDict[streamId][type]) {
+                return false;
+            }
+
+            if (droppedFramesHistory) {
+                const playbackQuality = videoModel.getPlaybackQuality();
+                if (playbackQuality) {
+                    droppedFramesHistory.push(streamId, playbackIndex, playbackQuality);
+                }
+            }
+
+            // ABR is turned off, do nothing
+            if (!settings.get().streaming.abr.autoSwitchBitrate[type]) {
+                return false;
+            }
+
+            const oldQuality = getQualityFor(type, streamId);
+            const rulesContext = RulesContext(context).create({
+                abrController: instance,
+                switchHistory: switchHistoryDict[streamId][type],
+                droppedFramesHistory: droppedFramesHistory,
+                streamProcessor: streamProcessorDict[streamId][type],
+                currentValue: oldQuality,
+                useBufferOccupancyABR: isUsingBufferOccupancyAbrDict[type],
+                useL2AABR: isUsingL2AAbrDict[type],
+                useLoLPABR: isUsingLoLPAbrDict[type],
+                videoModel
+            });
+            const minIdx = getMinAllowedIndexFor(type, streamId);
+            const maxIdx = getMaxAllowedIndexFor(type, streamId);
+            const switchRequest = abrRulesCollection.getMaxQuality(rulesContext);
+            let newQuality = switchRequest.quality;
+
+            if (minIdx !== undefined &amp;&amp; ((newQuality > SwitchRequest.NO_CHANGE) ? newQuality : oldQuality) &lt; minIdx) {
+                newQuality = minIdx;
+            }
+            if (newQuality > maxIdx) {
+                newQuality = maxIdx;
+            }
+
+            switchHistoryDict[streamId][type].push({ oldValue: oldQuality, newValue: newQuality });
+
+            if (newQuality > SwitchRequest.NO_CHANGE &amp;&amp; newQuality !== oldQuality &amp;&amp; (abandonmentStateDict[streamId][type].state === MetricsConstants.ALLOW_LOAD || newQuality &lt; oldQuality)) {
+                _changeQuality(type, oldQuality, newQuality, maxIdx, switchRequest.reason, streamId);
+                return true;
+            }
+
+            return false;
+        } catch (e) {
+            return false;
+        }
+
+    }
+
+    /**
+     * Returns the current quality for a specific media type and a specific streamId
+     * @param {string} type
+     * @param {string} streamId
+     * @return {number|*}
+     */
+    function getQualityFor(type, streamId = null) {
+        try {
+            if (!streamId) {
+                streamId = streamController.getActiveStreamInfo().id;
+            }
+            if (type &amp;&amp; streamProcessorDict[streamId] &amp;&amp; streamProcessorDict[streamId][type]) {
+                let quality;
+
+                if (streamId) {
+                    qualityDict[streamId] = qualityDict[streamId] || {};
+
+                    if (!qualityDict[streamId].hasOwnProperty(type)) {
+                        qualityDict[streamId][type] = QUALITY_DEFAULT;
+                    }
+
+                    quality = qualityDict[streamId][type];
+                    return quality;
+                }
+            }
+            return QUALITY_DEFAULT;
+        } catch (e) {
+            return QUALITY_DEFAULT;
+        }
+    }
+
+    /**
+     * Sets the new playback quality. Starts from index 0.
+     * If the index of the new quality is the same as the old one changeQuality will not be called.
+     * @param {string} type
+     * @param {object} streamInfo
+     * @param {number} newQuality
+     * @param {string} reason
+     */
+    function setPlaybackQuality(type, streamInfo, newQuality, reason = null) {
+        if (!streamInfo || !streamInfo.id || !type) {
+            return;
+        }
+        const streamId = streamInfo.id;
+        const oldQuality = getQualityFor(type, streamId);
+
+        checkInteger(newQuality);
+
+        const topQualityIdx = getMaxAllowedIndexFor(type, streamId);
+
+        if (newQuality !== oldQuality &amp;&amp; newQuality >= 0 &amp;&amp; newQuality &lt;= topQualityIdx) {
+            _changeQuality(type, oldQuality, newQuality, topQualityIdx, reason, streamId);
+        }
+    }
+
+    /**
+     *
+     * @param {string} streamId
+     * @param {type} type
+     * @return {*|null}
+     */
+    function getAbandonmentStateFor(streamId, type) {
+        return abandonmentStateDict[streamId] &amp;&amp; abandonmentStateDict[streamId][type] ? abandonmentStateDict[streamId][type].state : null;
+    }
+
+
+    /**
+     * Changes the internal qualityDict values according to the new quality
+     * @param {string} type
+     * @param {number} oldQuality
+     * @param {number} newQuality
+     * @param {number} maxIdx
+     * @param {string} reason
+     * @param {object} streamId
+     * @private
+     */
+    function _changeQuality(type, oldQuality, newQuality, maxIdx, reason, streamId) {
+        if (type &amp;&amp; streamProcessorDict[streamId] &amp;&amp; streamProcessorDict[streamId][type]) {
+            const streamInfo = streamProcessorDict[streamId][type].getStreamInfo();
+            const isDynamic = streamInfo &amp;&amp; streamInfo.manifestInfo &amp;&amp; streamInfo.manifestInfo.isDynamic;
+            const bufferLevel = dashMetrics.getCurrentBufferLevel(type);
+            logger.info('Stream ID: ' + streamId + ' [' + type + '] switch from ' + oldQuality + ' to ' + newQuality + '/' + maxIdx + ' (buffer: ' + bufferLevel + ') ' + (reason ? JSON.stringify(reason) : '.'));
+
+            qualityDict[streamId] = qualityDict[streamId] || {};
+            qualityDict[streamId][type] = newQuality;
+            const bitrateInfo = _getBitrateInfoForQuality(streamId, type, newQuality);
+            eventBus.trigger(Events.QUALITY_CHANGE_REQUESTED,
+                {
+                    oldQuality,
+                    newQuality,
+                    reason,
+                    streamInfo,
+                    bitrateInfo,
+                    maxIdx,
+                    mediaType: type
+                },
+                { streamId: streamInfo.id, mediaType: type }
+            );
+            const bitrate = throughputHistory.getAverageThroughput(type, isDynamic);
+            if (!isNaN(bitrate)) {
+                domStorage.setSavedBitrateSettings(type, bitrate);
+            }
+        }
+    }
+
+    function _getBitrateInfoForQuality(streamId, type, idx) {
+        if (type &amp;&amp; streamProcessorDict &amp;&amp; streamProcessorDict[streamId] &amp;&amp; streamProcessorDict[streamId][type]) {
+            const bitrates = getBitrateList(streamProcessorDict[streamId][type].getMediaInfo());
+            return bitrates[idx] ? bitrates[idx] : null;
+        }
+        return null;
+    }
+
+    /**
+     * @param {MediaInfo} mediaInfo
+     * @param {number} bitrate A bitrate value, kbps
+     * @param {String} streamId Period ID
+     * @param {number|null} latency Expected latency of connection, ms
+     * @returns {number} A quality index &lt;= for the given bitrate
+     * @memberof AbrController#
+     */
+    function getQualityForBitrate(mediaInfo, bitrate, streamId, latency = null) {
+        const voRepresentation = mediaInfo &amp;&amp; mediaInfo.type ? streamProcessorDict[streamId][mediaInfo.type].getRepresentationInfo() : null;
+
+        if (settings.get().streaming.abr.useDeadTimeLatency &amp;&amp; latency &amp;&amp; voRepresentation &amp;&amp; voRepresentation.fragmentDuration) {
+            latency = latency / 1000;
+            const fragmentDuration = voRepresentation.fragmentDuration;
+            if (latency > fragmentDuration) {
+                return 0;
+            } else {
+                const deadTimeRatio = latency / fragmentDuration;
+                bitrate = bitrate * (1 - deadTimeRatio);
+            }
+        }
+
+        const bitrateList = getBitrateList(mediaInfo);
+
+        for (let i = bitrateList.length - 1; i >= 0; i--) {
+            const bitrateInfo = bitrateList[i];
+            if (bitrate * 1000 >= bitrateInfo.bitrate) {
+                return i;
+            }
+        }
+        return QUALITY_DEFAULT;
+    }
+
+    /**
+     * @param {MediaInfo} mediaInfo
+     * @returns {Array|null} A list of {@link BitrateInfo} objects
+     * @memberof AbrController#
+     */
+    function getBitrateList(mediaInfo) {
+        const infoList = [];
+        if (!mediaInfo || !mediaInfo.bitrateList) return infoList;
+
+        const bitrateList = mediaInfo.bitrateList;
+        const type = mediaInfo.type;
+
+        let bitrateInfo;
+
+        for (let i = 0, ln = bitrateList.length; i &lt; ln; i++) {
+            bitrateInfo = new BitrateInfo();
+            bitrateInfo.mediaType = type;
+            bitrateInfo.qualityIndex = i;
+            bitrateInfo.bitrate = bitrateList[i].bandwidth;
+            bitrateInfo.width = bitrateList[i].width;
+            bitrateInfo.height = bitrateList[i].height;
+            bitrateInfo.scanType = bitrateList[i].scanType;
+            infoList.push(bitrateInfo);
+        }
+
+        return infoList;
+    }
+
+    function _updateAbrStrategy(mediaType, bufferLevel) {
+        // else ABR_STRATEGY_DYNAMIC
+        const strategy = settings.get().streaming.abr.ABRStrategy;
+
+        if (strategy === Constants.ABR_STRATEGY_DYNAMIC) {
+            _updateDynamicAbrStrategy(mediaType, bufferLevel);
+        }
+    }
+
+    function _updateDynamicAbrStrategy(mediaType, bufferLevel) {
+        try {
+            const stableBufferTime = mediaPlayerModel.getStableBufferTime();
+            const switchOnThreshold = stableBufferTime;
+            const switchOffThreshold = 0.5 * stableBufferTime;
+
+            const useBufferABR = isUsingBufferOccupancyAbrDict[mediaType];
+            const newUseBufferABR = bufferLevel > (useBufferABR ? switchOffThreshold : switchOnThreshold); // use hysteresis to avoid oscillating rules
+            isUsingBufferOccupancyAbrDict[mediaType] = newUseBufferABR;
+
+            if (newUseBufferABR !== useBufferABR) {
+                if (newUseBufferABR) {
+                    logger.info('[' + mediaType + '] switching from throughput to buffer occupancy ABR rule (buffer: ' + bufferLevel.toFixed(3) + ').');
+                } else {
+                    logger.info('[' + mediaType + '] switching from buffer occupancy to throughput ABR rule (buffer: ' + bufferLevel.toFixed(3) + ').');
+                }
+            }
+        } catch (e) {
+            logger.error(e);
+        }
+    }
+
+    function getThroughputHistory() {
+        return throughputHistory;
+    }
+
+    function updateTopQualityIndex(mediaInfo) {
+        const type = mediaInfo.type;
+        const streamId = mediaInfo.streamInfo.id;
+        const max = mediaInfo.representationCount - 1;
+
+        topQualities[streamId] = topQualities[streamId] || {};
+        topQualities[streamId][type] = max;
+
+        return max;
+    }
+
+    function isPlayingAtTopQuality(streamInfo) {
+        const streamId = streamInfo ? streamInfo.id : null;
+        const audioQuality = getQualityFor(Constants.AUDIO, streamId);
+        const videoQuality = getQualityFor(Constants.VIDEO, streamId);
+
+        const isAtTop = (audioQuality === getMaxAllowedIndexFor(Constants.AUDIO, streamId)) &amp;&amp;
+            (videoQuality === getMaxAllowedIndexFor(Constants.VIDEO, streamId));
+
+        return isAtTop;
+    }
+
+    function setWindowResizeEventCalled(value) {
+        windowResizeEventCalled = value;
+    }
+
+    function setElementSize() {
+        if (videoModel) {
+            const hasPixelRatio = settings.get().streaming.abr.usePixelRatioInLimitBitrateByPortal &amp;&amp; window.hasOwnProperty('devicePixelRatio');
+            const pixelRatio = hasPixelRatio ? window.devicePixelRatio : 1;
+            elementWidth = videoModel.getClientWidth() * pixelRatio;
+            elementHeight = videoModel.getClientHeight() * pixelRatio;
+        }
+    }
+
+    function clearDataForStream(streamId) {
+        if (droppedFramesHistory) {
+            droppedFramesHistory.clearForStream(streamId);
+        }
+        if (streamProcessorDict[streamId]) {
+            delete streamProcessorDict[streamId];
+        }
+        if (switchHistoryDict[streamId]) {
+            delete switchHistoryDict[streamId];
+        }
+
+        if (abandonmentStateDict[streamId]) {
+            delete abandonmentStateDict[streamId];
+        }
+    }
+
+    instance = {
+        initialize,
+        isPlayingAtTopQuality,
+        updateTopQualityIndex,
+        clearDataForStream,
+        getThroughputHistory,
+        getBitrateList,
+        getQualityForBitrate,
+        getTopBitrateInfoFor,
+        getMinAllowedIndexFor,
+        getMaxAllowedIndexFor,
+        getInitialBitrateFor,
+        getQualityFor,
+        getAbandonmentStateFor,
+        setPlaybackQuality,
+        checkPlaybackQuality,
+        setElementSize,
+        setWindowResizeEventCalled,
+        registerStreamType,
+        unRegisterStreamType,
+        setConfig,
+        reset
+    };
+
+    setup();
+
+    return instance;
+}
+
+AbrController.__dashjs_factory_name = 'AbrController';
+const factory = FactoryMaker.getSingletonFactory(AbrController);
+factory.QUALITY_DEFAULT = QUALITY_DEFAULT;
+FactoryMaker.updateSingletonFactory(AbrController.__dashjs_factory_name, factory);
+export default factory;
+</code></pre></article></section></div></div></div><div class="search-container" id="PkfLWpAbet" style="display:none"><div class="wrapper" id="iCxFxjkHbP"><button class="icon-button search-close-button" id="VjLlGakifb" aria-label="close search"><svg><use xlink:href="#close-icon"></use></svg></button><div class="search-box-c"><svg><use xlink:href="#search-icon"></use></svg> <input type="text" id="vpcKVYIppa" class="search-input" placeholder="Search..." autofocus></div><div class="search-result-c" id="fWwVHRuDuN"><span class="search-result-c-text">Type anything to view search result</span></div></div></div><div class="mobile-menu-icon-container"><button class="icon-button" id="mobile-menu" data-isopen="false" aria-label="menu"><svg><use xlink:href="#menu-icon"></use></svg></button></div><div id="mobile-sidebar" class="mobile-sidebar-container"><div class="mobile-sidebar-wrapper"><a href="/" class="sidebar-title sidebar-title-anchor">Home</a><div class="mobile-nav-links"></div><div class="mobile-sidebar-items-c"><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-modules"><div>Modules</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="module-DashAdapter.html">DashAdapter</a></div><div class="sidebar-section-children"><a href="module-DashMetrics.html">DashMetrics</a></div><div class="sidebar-section-children"><a href="module-MediaPlayer.html">MediaPlayer</a></div><div class="sidebar-section-children"><a href="module-OfflineController.html">OfflineController</a></div><div class="sidebar-section-children"><a href="module-ProtectionController.html">ProtectionController</a></div><div class="sidebar-section-children"><a href="module-Settings.html">Settings</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-classes"><div>Classes</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="Errors.html">Errors</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html">MediaPlayerEvents</a></div><div class="sidebar-section-children"><a href="MediaPlayerModel.html">MediaPlayerModel</a></div><div class="sidebar-section-children"><a href="MetricsReportingEvents.html">MetricsReportingEvents</a></div><div class="sidebar-section-children"><a href="MssErrors.html">MssErrors</a></div><div class="sidebar-section-children"><a href="OfflineErrors.html">OfflineErrors</a></div><div class="sidebar-section-children"><a href="OfflineEvents.html">OfflineEvents</a></div><div class="sidebar-section-children"><a href="ProtectionErrors.html">ProtectionErrors</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html">ProtectionEvents</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-events"><div>Events</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:ADAPTATION_SET_REMOVED_NO_CAPABILITIES">ADAPTATION_SET_REMOVED_NO_CAPABILITIES</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:AST_IN_FUTURE">AST_IN_FUTURE</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:BASE_URLS_UPDATED">BASE_URLS_UPDATED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:BUFFER_EMPTY">BUFFER_EMPTY</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:BUFFER_LEVEL_STATE_CHANGED">BUFFER_LEVEL_STATE_CHANGED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:BUFFER_LEVEL_UPDATED">BUFFER_LEVEL_UPDATED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:BUFFER_LOADED">BUFFER_LOADED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:CAN_PLAY">CAN_PLAY</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:CAN_PLAY_THROUGH">CAN_PLAY_THROUGH</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:CAPTION_CONTAINER_RESIZE">CAPTION_CONTAINER_RESIZE</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:CAPTION_RENDERED">CAPTION_RENDERED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:CONFORMANCE_VIOLATION">CONFORMANCE_VIOLATION</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:CONTENT_STEERING_REQUEST_COMPLETED">CONTENT_STEERING_REQUEST_COMPLETED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:CUE_ENTER">CUE_ENTER</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:CUE_ENTER">CUE_ENTER</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:DVB_FONT_DOWNLOAD_ADDED">DVB_FONT_DOWNLOAD_ADDED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:DVB_FONT_DOWNLOAD_COMPLETE">DVB_FONT_DOWNLOAD_COMPLETE</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:DVB_FONT_DOWNLOAD_FAILED">DVB_FONT_DOWNLOAD_FAILED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:DYNAMIC_TO_STATIC">DYNAMIC_TO_STATIC</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:ERROR">ERROR</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:EVENT_MODE_ON_RECEIVE">EVENT_MODE_ON_RECEIVE</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:EVENT_MODE_ON_START">EVENT_MODE_ON_START</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:FRAGMENT_LOADING_ABANDONED">FRAGMENT_LOADING_ABANDONED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:FRAGMENT_LOADING_COMPLETED">FRAGMENT_LOADING_COMPLETED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:FRAGMENT_LOADING_PROGRESS">FRAGMENT_LOADING_PROGRESS</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:FRAGMENT_LOADING_STARTED">FRAGMENT_LOADING_STARTED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:INBAND_PRFT">INBAND_PRFT</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:LOG">LOG</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:MANIFEST_LOADED">MANIFEST_LOADED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:MANIFEST_LOADING_FINISHED">MANIFEST_LOADING_FINISHED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:MANIFEST_LOADING_STARTED">MANIFEST_LOADING_STARTED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:MANIFEST_VALIDITY_CHANGED">MANIFEST_VALIDITY_CHANGED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:METRIC_ADDED">METRIC_ADDED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:METRIC_CHANGED">METRIC_CHANGED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:METRIC_UPDATED">METRIC_UPDATED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:METRICS_CHANGED">METRICS_CHANGED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PERIOD_SWITCH_COMPLETED">PERIOD_SWITCH_COMPLETED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PERIOD_SWITCH_STARTED">PERIOD_SWITCH_STARTED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_ENDED">PLAYBACK_ENDED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_ERROR">PLAYBACK_ERROR</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_LOADED_DATA">PLAYBACK_LOADED_DATA</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_METADATA_LOADED">PLAYBACK_METADATA_LOADED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_NOT_ALLOWED">PLAYBACK_NOT_ALLOWED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_PAUSED">PLAYBACK_PAUSED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_PLAYING">PLAYBACK_PLAYING</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_PROGRESS">PLAYBACK_PROGRESS</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_RATE_CHANGED">PLAYBACK_RATE_CHANGED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_SEEKED">PLAYBACK_SEEKED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_SEEKING">PLAYBACK_SEEKING</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_STALLED">PLAYBACK_STALLED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_STARTED">PLAYBACK_STARTED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_TIME_UPDATED">PLAYBACK_TIME_UPDATED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_VOLUME_CHANGED">PLAYBACK_VOLUME_CHANGED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_WAITING">PLAYBACK_WAITING</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:QUALITY_CHANGE_RENDERED">QUALITY_CHANGE_RENDERED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:QUALITY_CHANGE_REQUESTED">QUALITY_CHANGE_REQUESTED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:REPRESENTATION_SWITCH">REPRESENTATION_SWITCH</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:STREAM_ACTIVATED">STREAM_ACTIVATED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:STREAM_DEACTIVATED">STREAM_DEACTIVATED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:STREAM_INITIALIZED">STREAM_INITIALIZED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:STREAM_INITIALIZING">STREAM_INITIALIZING</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:STREAM_TEARDOWN_COMPLETE">STREAM_TEARDOWN_COMPLETE</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:STREAM_UPDATED">STREAM_UPDATED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:TEXT_TRACK_ADDED">TEXT_TRACK_ADDED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:TEXT_TRACKS_ADDED">TEXT_TRACKS_ADDED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:THROUGHPUT_MEASUREMENT_STORED">THROUGHPUT_MEASUREMENT_STORED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:TRACK_CHANGE_RENDERED">TRACK_CHANGE_RENDERED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:TTML_PARSED">TTML_PARSED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:TTML_TO_PARSE">TTML_TO_PARSE</a></div><div class="sidebar-section-children"><a href="MetricsReportingEvents.html#event:CMCD_DATA_GENERATED">CMCD_DATA_GENERATED</a></div><div class="sidebar-section-children"><a href="OfflineEvents.html#event:OFFLINE_RECORD_FINISHED">OFFLINE_RECORD_FINISHED</a></div><div class="sidebar-section-children"><a href="OfflineEvents.html#event:OFFLINE_RECORD_LOADEDMETADATA">OFFLINE_RECORD_LOADEDMETADATA</a></div><div class="sidebar-section-children"><a href="OfflineEvents.html#event:OFFLINE_RECORD_STARTED">OFFLINE_RECORD_STARTED</a></div><div class="sidebar-section-children"><a href="OfflineEvents.html#event:OFFLINE_RECORD_STOPPED">OFFLINE_RECORD_STOPPED</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_ADDED">KEY_ADDED</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_ERROR">KEY_ERROR</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_MESSAGE">KEY_MESSAGE</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_SESSION_CLOSED">KEY_SESSION_CLOSED</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_SESSION_CREATED">KEY_SESSION_CREATED</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_SESSION_REMOVED">KEY_SESSION_REMOVED</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_STATUSES_CHANGED">KEY_STATUSES_CHANGED</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_SYSTEM_ACCESS_COMPLETE">KEY_SYSTEM_ACCESS_COMPLETE</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_SYSTEM_SELECTED">KEY_SYSTEM_SELECTED</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:LICENSE_REQUEST_COMPLETE">LICENSE_REQUEST_COMPLETE</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:LICENSE_REQUEST_SENDING">LICENSE_REQUEST_SENDING</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:PROTECTION_CREATED">PROTECTION_CREATED</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:PROTECTION_DESTROYED">PROTECTION_DESTROYED</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-global"><div>Global</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="global.html#LICENSE_SERVER_MANIFEST_CONFIGURATIONS">LICENSE_SERVER_MANIFEST_CONFIGURATIONS</a></div><div class="sidebar-section-children"><a href="global.html#MediaType">MediaType</a></div></div></div><div class="mobile-navbar-actions"><div class="navbar-right-item"><button class="icon-button search-button" aria-label="open-search"><svg><use xlink:href="#search-icon"></use></svg></button></div><div class="navbar-right-item"><button class="icon-button theme-toggle" aria-label="toggle-theme"><svg><use class="theme-svg-use" xlink:href="#dark-theme-icon"></use></svg></button></div><div class="navbar-right-item"><button class="icon-button font-size" aria-label="change-font-size"><svg><use xlink:href="#font-size-icon"></use></svg></button></div></div></div></div><script type="text/javascript" src="scripts/core.min.js"></script><script src="scripts/search.min.js" defer="defer"></script><script src="scripts/third-party/fuse.js" defer="defer"></script><script type="text/javascript">var tocbotInstance=tocbot.init({tocSelector:"#eed4d2a0bfd64539bb9df78095dec881",contentSelector:".main-content",headingSelector:"h1, h2, h3",hasInnerContainers:!0,scrollContainer:".main-content",headingsOffset:130,onClick:bringLinkToView})</script></body></html>

@@ -1,0 +1,1300 @@
+<!DOCTYPE html><html lang="en" style="font-size:16px"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="https://dashif.org/img/favicon.ico"><link type="text/css" rel="stylesheet" href="jsdoc-custom.css"><title>Source: dash/DashAdapter.js</title><!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]--><script src="scripts/third-party/hljs.js" defer="defer"></script><script src="scripts/third-party/hljs-line-num.js" defer="defer"></script><script src="scripts/third-party/popper.js" defer="defer"></script><script src="scripts/third-party/tippy.js" defer="defer"></script><script src="scripts/third-party/tocbot.min.js"></script><script>var baseURL="/",locationPathname="";baseURL=(locationPathname=document.location.pathname).substr(0,locationPathname.lastIndexOf("/")+1)</script><link rel="stylesheet" href="styles/clean-jsdoc-theme.min.css"><svg aria-hidden="true" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="display:none"><defs><symbol id="copy-icon" viewbox="0 0 488.3 488.3"><g><path d="M314.25,85.4h-227c-21.3,0-38.6,17.3-38.6,38.6v325.7c0,21.3,17.3,38.6,38.6,38.6h227c21.3,0,38.6-17.3,38.6-38.6V124    C352.75,102.7,335.45,85.4,314.25,85.4z M325.75,449.6c0,6.4-5.2,11.6-11.6,11.6h-227c-6.4,0-11.6-5.2-11.6-11.6V124    c0-6.4,5.2-11.6,11.6-11.6h227c6.4,0,11.6,5.2,11.6,11.6V449.6z"/><path d="M401.05,0h-227c-21.3,0-38.6,17.3-38.6,38.6c0,7.5,6,13.5,13.5,13.5s13.5-6,13.5-13.5c0-6.4,5.2-11.6,11.6-11.6h227    c6.4,0,11.6,5.2,11.6,11.6v325.7c0,6.4-5.2,11.6-11.6,11.6c-7.5,0-13.5,6-13.5,13.5s6,13.5,13.5,13.5c21.3,0,38.6-17.3,38.6-38.6    V38.6C439.65,17.3,422.35,0,401.05,0z"/></g></symbol><symbol id="search-icon" viewBox="0 0 512 512"><g><g><path d="M225.474,0C101.151,0,0,101.151,0,225.474c0,124.33,101.151,225.474,225.474,225.474    c124.33,0,225.474-101.144,225.474-225.474C450.948,101.151,349.804,0,225.474,0z M225.474,409.323    c-101.373,0-183.848-82.475-183.848-183.848S124.101,41.626,225.474,41.626s183.848,82.475,183.848,183.848    S326.847,409.323,225.474,409.323z"/></g></g><g><g><path d="M505.902,476.472L386.574,357.144c-8.131-8.131-21.299-8.131-29.43,0c-8.131,8.124-8.131,21.306,0,29.43l119.328,119.328    c4.065,4.065,9.387,6.098,14.715,6.098c5.321,0,10.649-2.033,14.715-6.098C514.033,497.778,514.033,484.596,505.902,476.472z"/></g></g></symbol><symbol id="font-size-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M11.246 15H4.754l-2 5H.6L7 4h2l6.4 16h-2.154l-2-5zm-.8-2L8 6.885 5.554 13h4.892zM21 12.535V12h2v8h-2v-.535a4 4 0 1 1 0-6.93zM19 18a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/></symbol><symbol id="add-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z"/></symbol><symbol id="minus-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M5 11h14v2H5z"/></symbol><symbol id="dark-theme-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M10 7a7 7 0 0 0 12 4.9v.1c0 5.523-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2h.1A6.979 6.979 0 0 0 10 7zm-6 5a8 8 0 0 0 15.062 3.762A9 9 0 0 1 8.238 4.938 7.999 7.999 0 0 0 4 12z"/></symbol><symbol id="light-theme-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M12 18a6 6 0 1 1 0-12 6 6 0 0 1 0 12zm0-2a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM11 1h2v3h-2V1zm0 19h2v3h-2v-3zM3.515 4.929l1.414-1.414L7.05 5.636 5.636 7.05 3.515 4.93zM16.95 18.364l1.414-1.414 2.121 2.121-1.414 1.414-2.121-2.121zm2.121-14.85l1.414 1.415-2.121 2.121-1.414-1.414 2.121-2.121zM5.636 16.95l1.414 1.414-2.121 2.121-1.414-1.414 2.121-2.121zM23 11v2h-3v-2h3zM4 11v2H1v-2h3z"/></symbol><symbol id="reset-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M18.537 19.567A9.961 9.961 0 0 1 12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10c0 2.136-.67 4.116-1.81 5.74L17 12h3a8 8 0 1 0-2.46 5.772l.997 1.795z"/></symbol><symbol id="down-icon" viewBox="0 0 16 16"><path fill-rule="evenodd" clip-rule="evenodd" d="M12.7803 6.21967C13.0732 6.51256 13.0732 6.98744 12.7803 7.28033L8.53033 11.5303C8.23744 11.8232 7.76256 11.8232 7.46967 11.5303L3.21967 7.28033C2.92678 6.98744 2.92678 6.51256 3.21967 6.21967C3.51256 5.92678 3.98744 5.92678 4.28033 6.21967L8 9.93934L11.7197 6.21967C12.0126 5.92678 12.4874 5.92678 12.7803 6.21967Z"></path></symbol><symbol id="codepen-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M16.5 13.202L13 15.535v3.596L19.197 15 16.5 13.202zM14.697 12L12 10.202 9.303 12 12 13.798 14.697 12zM20 10.869L18.303 12 20 13.131V10.87zM19.197 9L13 4.869v3.596l3.5 2.333L19.197 9zM7.5 10.798L11 8.465V4.869L4.803 9 7.5 10.798zM4.803 15L11 19.131v-3.596l-3.5-2.333L4.803 15zM4 13.131L5.697 12 4 10.869v2.262zM2 9a1 1 0 0 1 .445-.832l9-6a1 1 0 0 1 1.11 0l9 6A1 1 0 0 1 22 9v6a1 1 0 0 1-.445.832l-9 6a1 1 0 0 1-1.11 0l-9-6A1 1 0 0 1 2 15V9z"/></symbol><symbol id="close-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M12 10.586l4.95-4.95 1.414 1.414-4.95 4.95 4.95 4.95-1.414 1.414-4.95-4.95-4.95 4.95-1.414-1.414 4.95-4.95-4.95-4.95L7.05 5.636z"/></symbol><symbol id="menu-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z"/></symbol></defs></svg></head><body data-theme="light"><div class="sidebar-container"><div class="sidebar" id="sidebar"><a href="/" class="sidebar-title sidebar-title-anchor">Home</a><div class="sidebar-items-container"><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-modules"><div>Modules</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="module-DashAdapter.html">DashAdapter</a></div><div class="sidebar-section-children"><a href="module-DashMetrics.html">DashMetrics</a></div><div class="sidebar-section-children"><a href="module-MediaPlayer.html">MediaPlayer</a></div><div class="sidebar-section-children"><a href="module-OfflineController.html">OfflineController</a></div><div class="sidebar-section-children"><a href="module-ProtectionController.html">ProtectionController</a></div><div class="sidebar-section-children"><a href="module-Settings.html">Settings</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-classes"><div>Classes</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="Errors.html">Errors</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html">MediaPlayerEvents</a></div><div class="sidebar-section-children"><a href="MediaPlayerModel.html">MediaPlayerModel</a></div><div class="sidebar-section-children"><a href="MetricsReportingEvents.html">MetricsReportingEvents</a></div><div class="sidebar-section-children"><a href="MssErrors.html">MssErrors</a></div><div class="sidebar-section-children"><a href="OfflineErrors.html">OfflineErrors</a></div><div class="sidebar-section-children"><a href="OfflineEvents.html">OfflineEvents</a></div><div class="sidebar-section-children"><a href="ProtectionErrors.html">ProtectionErrors</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html">ProtectionEvents</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-events"><div>Events</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:ADAPTATION_SET_REMOVED_NO_CAPABILITIES">ADAPTATION_SET_REMOVED_NO_CAPABILITIES</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:AST_IN_FUTURE">AST_IN_FUTURE</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:BASE_URLS_UPDATED">BASE_URLS_UPDATED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:BUFFER_EMPTY">BUFFER_EMPTY</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:BUFFER_LEVEL_STATE_CHANGED">BUFFER_LEVEL_STATE_CHANGED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:BUFFER_LEVEL_UPDATED">BUFFER_LEVEL_UPDATED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:BUFFER_LOADED">BUFFER_LOADED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:CAN_PLAY">CAN_PLAY</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:CAN_PLAY_THROUGH">CAN_PLAY_THROUGH</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:CAPTION_CONTAINER_RESIZE">CAPTION_CONTAINER_RESIZE</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:CAPTION_RENDERED">CAPTION_RENDERED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:CONFORMANCE_VIOLATION">CONFORMANCE_VIOLATION</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:CONTENT_STEERING_REQUEST_COMPLETED">CONTENT_STEERING_REQUEST_COMPLETED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:CUE_ENTER">CUE_ENTER</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:CUE_ENTER">CUE_ENTER</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:DVB_FONT_DOWNLOAD_ADDED">DVB_FONT_DOWNLOAD_ADDED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:DVB_FONT_DOWNLOAD_COMPLETE">DVB_FONT_DOWNLOAD_COMPLETE</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:DVB_FONT_DOWNLOAD_FAILED">DVB_FONT_DOWNLOAD_FAILED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:DYNAMIC_TO_STATIC">DYNAMIC_TO_STATIC</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:ERROR">ERROR</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:EVENT_MODE_ON_RECEIVE">EVENT_MODE_ON_RECEIVE</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:EVENT_MODE_ON_START">EVENT_MODE_ON_START</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:FRAGMENT_LOADING_ABANDONED">FRAGMENT_LOADING_ABANDONED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:FRAGMENT_LOADING_COMPLETED">FRAGMENT_LOADING_COMPLETED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:FRAGMENT_LOADING_PROGRESS">FRAGMENT_LOADING_PROGRESS</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:FRAGMENT_LOADING_STARTED">FRAGMENT_LOADING_STARTED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:INBAND_PRFT">INBAND_PRFT</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:LOG">LOG</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:MANIFEST_LOADED">MANIFEST_LOADED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:MANIFEST_LOADING_FINISHED">MANIFEST_LOADING_FINISHED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:MANIFEST_LOADING_STARTED">MANIFEST_LOADING_STARTED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:MANIFEST_VALIDITY_CHANGED">MANIFEST_VALIDITY_CHANGED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:METRIC_ADDED">METRIC_ADDED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:METRIC_CHANGED">METRIC_CHANGED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:METRIC_UPDATED">METRIC_UPDATED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:METRICS_CHANGED">METRICS_CHANGED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PERIOD_SWITCH_COMPLETED">PERIOD_SWITCH_COMPLETED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PERIOD_SWITCH_STARTED">PERIOD_SWITCH_STARTED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_ENDED">PLAYBACK_ENDED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_ERROR">PLAYBACK_ERROR</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_LOADED_DATA">PLAYBACK_LOADED_DATA</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_METADATA_LOADED">PLAYBACK_METADATA_LOADED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_NOT_ALLOWED">PLAYBACK_NOT_ALLOWED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_PAUSED">PLAYBACK_PAUSED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_PLAYING">PLAYBACK_PLAYING</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_PROGRESS">PLAYBACK_PROGRESS</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_RATE_CHANGED">PLAYBACK_RATE_CHANGED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_SEEKED">PLAYBACK_SEEKED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_SEEKING">PLAYBACK_SEEKING</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_STALLED">PLAYBACK_STALLED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_STARTED">PLAYBACK_STARTED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_TIME_UPDATED">PLAYBACK_TIME_UPDATED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_VOLUME_CHANGED">PLAYBACK_VOLUME_CHANGED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_WAITING">PLAYBACK_WAITING</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:QUALITY_CHANGE_RENDERED">QUALITY_CHANGE_RENDERED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:QUALITY_CHANGE_REQUESTED">QUALITY_CHANGE_REQUESTED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:REPRESENTATION_SWITCH">REPRESENTATION_SWITCH</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:STREAM_ACTIVATED">STREAM_ACTIVATED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:STREAM_DEACTIVATED">STREAM_DEACTIVATED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:STREAM_INITIALIZED">STREAM_INITIALIZED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:STREAM_INITIALIZING">STREAM_INITIALIZING</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:STREAM_TEARDOWN_COMPLETE">STREAM_TEARDOWN_COMPLETE</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:STREAM_UPDATED">STREAM_UPDATED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:TEXT_TRACK_ADDED">TEXT_TRACK_ADDED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:TEXT_TRACKS_ADDED">TEXT_TRACKS_ADDED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:THROUGHPUT_MEASUREMENT_STORED">THROUGHPUT_MEASUREMENT_STORED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:TRACK_CHANGE_RENDERED">TRACK_CHANGE_RENDERED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:TTML_PARSED">TTML_PARSED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:TTML_TO_PARSE">TTML_TO_PARSE</a></div><div class="sidebar-section-children"><a href="MetricsReportingEvents.html#event:CMCD_DATA_GENERATED">CMCD_DATA_GENERATED</a></div><div class="sidebar-section-children"><a href="OfflineEvents.html#event:OFFLINE_RECORD_FINISHED">OFFLINE_RECORD_FINISHED</a></div><div class="sidebar-section-children"><a href="OfflineEvents.html#event:OFFLINE_RECORD_LOADEDMETADATA">OFFLINE_RECORD_LOADEDMETADATA</a></div><div class="sidebar-section-children"><a href="OfflineEvents.html#event:OFFLINE_RECORD_STARTED">OFFLINE_RECORD_STARTED</a></div><div class="sidebar-section-children"><a href="OfflineEvents.html#event:OFFLINE_RECORD_STOPPED">OFFLINE_RECORD_STOPPED</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_ADDED">KEY_ADDED</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_ERROR">KEY_ERROR</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_MESSAGE">KEY_MESSAGE</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_SESSION_CLOSED">KEY_SESSION_CLOSED</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_SESSION_CREATED">KEY_SESSION_CREATED</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_SESSION_REMOVED">KEY_SESSION_REMOVED</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_STATUSES_CHANGED">KEY_STATUSES_CHANGED</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_SYSTEM_ACCESS_COMPLETE">KEY_SYSTEM_ACCESS_COMPLETE</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_SYSTEM_SELECTED">KEY_SYSTEM_SELECTED</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:LICENSE_REQUEST_COMPLETE">LICENSE_REQUEST_COMPLETE</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:LICENSE_REQUEST_SENDING">LICENSE_REQUEST_SENDING</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:PROTECTION_CREATED">PROTECTION_CREATED</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:PROTECTION_DESTROYED">PROTECTION_DESTROYED</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-global"><div>Global</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="global.html#LICENSE_SERVER_MANIFEST_CONFIGURATIONS">LICENSE_SERVER_MANIFEST_CONFIGURATIONS</a></div><div class="sidebar-section-children"><a href="global.html#MediaType">MediaType</a></div></div></div></div></div><div class="navbar-container" id="VuAckcnZhf"><nav class="navbar"><div class="navbar-left-items"></div><div class="navbar-right-items"><div class="navbar-right-item"><button class="icon-button search-button" aria-label="open-search"><svg><use xlink:href="#search-icon"></use></svg></button></div><div class="navbar-right-item"><button class="icon-button theme-toggle" aria-label="toggle-theme"><svg><use class="theme-svg-use" xlink:href="#dark-theme-icon"></use></svg></button></div><div class="navbar-right-item"><button class="icon-button font-size" aria-label="change-font-size"><svg><use xlink:href="#font-size-icon"></use></svg></button></div></div><nav></nav></nav></div><div class="toc-container"><div class="toc-content"><span class="bold">On this page</span><div id="eed4d2a0bfd64539bb9df78095dec881"></div></div></div><div class="body-wrapper"><div class="main-content"><div class="main-wrapper"><section id="source-page" class="source-page"><header><h1 id="title" class="has-anchor">dash_DashAdapter.js</h1></header><article><pre class="prettyprint source lang-js"><code>/**
+ * The copyright in this software is being made available under the BSD License,
+ * included below. This software may be subject to other third party and contributor
+ * rights, including patent rights, and no such rights are granted under this license.
+ *
+ * Copyright (c) 2013, Dash Industry Forum.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *  * Redistributions of source code must retain the above copyright notice, this
+ *  list of conditions and the following disclaimer.
+ *  * Redistributions in binary form must reproduce the above copyright notice,
+ *  this list of conditions and the following disclaimer in the documentation and/or
+ *  other materials provided with the distribution.
+ *  * Neither the name of Dash Industry Forum nor the names of its
+ *  contributors may be used to endorse or promote products derived from this software
+ *  without specific prior written permission.
+ *
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS AS IS AND ANY
+ *  EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ *  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ *  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ *  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ *  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ *  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ *  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ *  POSSIBILITY OF SUCH DAMAGE.
+ */
+
+import DashConstants from './constants/DashConstants';
+import RepresentationInfo from './vo/RepresentationInfo';
+import MediaInfo from './vo/MediaInfo';
+import StreamInfo from './vo/StreamInfo';
+import ManifestInfo from './vo/ManifestInfo';
+import Event from './vo/Event';
+import FactoryMaker from '../core/FactoryMaker';
+import DashManifestModel from './models/DashManifestModel';
+import PatchManifestModel from './models/PatchManifestModel';
+import bcp47Normalize from 'bcp-47-normalize';
+
+/**
+ * @module DashAdapter
+ * @description The DashAdapter module can be accessed using the MediaPlayer API getDashAdapter()
+ */
+
+function DashAdapter() {
+    let instance,
+        dashManifestModel,
+        patchManifestModel,
+        voPeriods,
+        currentMediaInfo,
+        constants,
+        cea608parser;
+
+    const context = this.context;
+
+    const PROFILE_DVB = 'urn:dvb:dash:profile:dvb-dash:2014';
+
+    function setup() {
+        dashManifestModel = DashManifestModel(context).getInstance();
+        patchManifestModel = PatchManifestModel(context).getInstance();
+        reset();
+    }
+
+    // #region PUBLIC FUNCTIONS
+    // --------------------------------------------------
+    function setConfig(config) {
+        if (!config) return;
+
+        if (config.constants) {
+            constants = config.constants;
+        }
+
+        if (config.cea608parser) {
+            cea608parser = config.cea608parser;
+        }
+
+        if (config.errHandler) {
+            dashManifestModel.setConfig({ errHandler: config.errHandler });
+        }
+
+        if (config.BASE64) {
+            dashManifestModel.setConfig({ BASE64: config.BASE64 });
+        }
+    }
+
+    /**
+     * Creates an instance of RepresentationInfo based on a representation value object
+     * @param {object} voRepresentation
+     * @returns {RepresentationInfo|null} representationInfo
+     * @memberOf module:DashAdapter
+     * @instance
+     * @ignore
+     */
+    function convertRepresentationToRepresentationInfo(voRepresentation) {
+        if (voRepresentation) {
+            let representationInfo = new RepresentationInfo();
+            const realAdaptation = voRepresentation.adaptation.period.mpd.manifest.Period_asArray[voRepresentation.adaptation.period.index].AdaptationSet_asArray[voRepresentation.adaptation.index];
+            const realRepresentation = dashManifestModel.getRepresentationFor(voRepresentation.index, realAdaptation);
+
+            representationInfo.id = voRepresentation.id;
+            representationInfo.quality = voRepresentation.index;
+            representationInfo.bandwidth = dashManifestModel.getBandwidth(realRepresentation);
+            representationInfo.fragmentDuration = voRepresentation.segmentDuration || (voRepresentation.segments &amp;&amp; voRepresentation.segments.length > 0 ? voRepresentation.segments[0].duration : NaN);
+            representationInfo.MSETimeOffset = voRepresentation.MSETimeOffset;
+            representationInfo.mediaInfo = convertAdaptationToMediaInfo(voRepresentation.adaptation);
+
+            return representationInfo;
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Returns a MediaInfo object for a given media type and the corresponding streamInfo.
+     * @param {object} streamInfo
+     * @param {MediaType }type
+     * @returns {null|MediaInfo} mediaInfo
+     * @memberOf module:DashAdapter
+     * @instance
+     */
+    function getMediaInfoForType(streamInfo, type) {
+        if (voPeriods.length === 0 || !streamInfo) {
+            return null;
+        }
+
+        let selectedVoPeriod = getPeriodForStreamInfo(streamInfo, voPeriods);
+        if (!selectedVoPeriod) return null;
+
+        const voAdaptations = dashManifestModel.getAdaptationsForPeriod(selectedVoPeriod);
+
+        let realAdaptation = getAdaptationForType(streamInfo.index, type, streamInfo);
+        if (!realAdaptation) return null;
+        let idx = dashManifestModel.getIndexForAdaptation(realAdaptation, voPeriods[0].mpd.manifest, streamInfo.index);
+
+        return convertAdaptationToMediaInfo(voAdaptations[idx]);
+    }
+
+    /**
+     * Checks if the role of the specified AdaptationSet is set to main
+     * @param {object} adaptation
+     * @returns {boolean}
+     * @memberOf module:DashAdapter
+     * @instance
+     */
+    function getIsMain(adaptation) {
+        return dashManifestModel.getRolesForAdaptation(adaptation).filter(function (role) {
+            return role.value === DashConstants.MAIN;
+        })[0];
+    }
+
+    /**
+     * Returns the AdaptationSet for a given period index and a given mediaType.
+     * @param {number} periodIndex
+     * @param {MediaType} type
+     * @param {object} streamInfo
+     * @returns {null|object} adaptation
+     * @memberOf module:DashAdapter
+     * @instance
+     */
+    function getAdaptationForType(periodIndex, type, streamInfo) {
+        const adaptations = dashManifestModel.getAdaptationsForType(voPeriods[0].mpd.manifest, periodIndex, type);
+
+        if (!adaptations || adaptations.length === 0) return null;
+
+        if (adaptations.length > 1 &amp;&amp; streamInfo) {
+            const allMediaInfoForType = getAllMediaInfoForType(streamInfo, type);
+
+            if (currentMediaInfo[streamInfo.id] &amp;&amp; currentMediaInfo[streamInfo.id][type]) {
+                for (let i = 0, ln = adaptations.length; i &lt; ln; i++) {
+                    if (areMediaInfosEqual(currentMediaInfo[streamInfo.id][type], allMediaInfoForType[i])) {
+                        return adaptations[i];
+                    }
+                }
+            }
+
+            for (let i = 0, ln = adaptations.length; i &lt; ln; i++) {
+                if (getIsMain(adaptations[i])) {
+                    return adaptations[i];
+                }
+            }
+        }
+
+        return adaptations[0];
+    }
+
+    /**
+     * Compares two mediaInfo objects
+     * @param {MediaInfo} mInfoOne
+     * @param {MediaInfo} mInfoTwo
+     * @returns {boolean}
+     * @memberof module:DashAdapter
+     * @instance
+     */
+    function areMediaInfosEqual(mInfoOne, mInfoTwo) {
+        if (!mInfoOne || !mInfoTwo) {
+            return false;
+        }
+
+        const sameId = mInfoOne.id === mInfoTwo.id;
+        const sameCodec = mInfoOne.codec === mInfoTwo.codec;
+        const sameViewpoint = mInfoOne.viewpoint === mInfoTwo.viewpoint;
+        const sameViewpointWithSchemeIdUri = JSON.stringify(mInfoOne.viewpointsWithSchemeIdUri) === JSON.stringify(mInfoTwo.viewpointsWithSchemeIdUri);
+        const sameLang = mInfoOne.lang === mInfoTwo.lang;
+        const sameRoles = mInfoOne.roles.toString() === mInfoTwo.roles.toString();
+        const sameRolesWithSchemeIdUri = JSON.stringify(mInfoOne.rolesWithSchemeIdUri) === JSON.stringify(mInfoTwo.rolesWithSchemeIdUri);
+        const sameAccessibility = mInfoOne.accessibility.toString() === mInfoTwo.accessibility.toString();
+        const sameAccessibilityWithSchemeIdUri = JSON.stringify(mInfoOne.accessibilitiesWithSchemeIdUri) === JSON.stringify(mInfoTwo.accessibilitiesWithSchemeIdUri);
+        const sameAudioChannelConfiguration = mInfoOne.audioChannelConfiguration.toString() === mInfoTwo.audioChannelConfiguration.toString();
+        const sameAudioChannelConfigurationWithSchemeIdUri = JSON.stringify(mInfoOne.audioChannelConfigurationsWithSchemeIdUri) === JSON.stringify(mInfoTwo.audioChannelConfigurationsWithSchemeIdUri);
+
+        return (sameId &amp;&amp; sameCodec &amp;&amp; sameViewpoint &amp;&amp; sameViewpointWithSchemeIdUri &amp;&amp; sameLang &amp;&amp; sameRoles &amp;&amp; sameRolesWithSchemeIdUri &amp;&amp; sameAccessibility &amp;&amp; sameAccessibilityWithSchemeIdUri &amp;&amp; sameAudioChannelConfiguration &amp;&amp; sameAudioChannelConfigurationWithSchemeIdUri);
+    }
+
+    function _getAllMediaInfo(manifest, period, streamInfo, adaptations, type, embeddedText) {
+        let mediaArr = [];
+        let data,
+            media,
+            idx,
+            i,
+            j,
+            ln;
+
+        if (!adaptations || adaptations.length === 0) {
+            return [];
+        }
+
+        const voAdaptations = dashManifestModel.getAdaptationsForPeriod(period);
+
+        for (i = 0, ln = adaptations.length; i &lt; ln; i++) {
+            data = adaptations[i];
+            idx = dashManifestModel.getIndexForAdaptation(data, manifest, streamInfo.index);
+            media = convertAdaptationToMediaInfo(voAdaptations[idx]);
+
+            if (embeddedText) {
+                let accessibilityLength = media.accessibility.length;
+                for (j = 0; j &lt; accessibilityLength; j++) {
+                    if (!media) {
+                        continue;
+                    }
+                    let accessibility = media.accessibility[j];
+                    if (accessibility.indexOf('cea-608:') === 0) {
+                        let value = accessibility.substring(8);
+                        let parts = value.split(';');
+                        if (parts[0].substring(0, 2) === 'CC') {
+                            for (j = 0; j &lt; parts.length; j++) {
+                                if (!media) {
+                                    media = convertAdaptationToMediaInfo.call(this, voAdaptations[idx]);
+                                }
+                                convertVideoInfoToEmbeddedTextInfo(media, parts[j].substring(0, 3), parts[j].substring(4));
+                                mediaArr.push(media);
+                                media = null;
+                            }
+                        } else {
+                            for (j = 0; j &lt; parts.length; j++) { // Only languages for CC1, CC2, ...
+                                if (!media) {
+                                    media = convertAdaptationToMediaInfo.call(this, voAdaptations[idx]);
+                                }
+                                convertVideoInfoToEmbeddedTextInfo(media, 'CC' + (j + 1), parts[j]);
+                                mediaArr.push(media);
+                                media = null;
+                            }
+                        }
+                    } else if (accessibility.indexOf('cea-608') === 0) { // Nothing known. We interpret it as CC1=eng
+                        convertVideoInfoToEmbeddedTextInfo(media, constants.CC1, 'eng');
+                        mediaArr.push(media);
+                        media = null;
+                    }
+                }
+            } else if (type === constants.IMAGE) {
+                convertVideoInfoToThumbnailInfo(media);
+                mediaArr.push(media);
+                media = null;
+            } else if (media) {
+                mediaArr.push(media);
+            }
+        }
+
+        return mediaArr;
+    }
+
+    /**
+     * Returns all the mediaInfos for a given mediaType and the corresponding streamInfo.
+     * @param {object} streamInfo
+     * @param {MediaType} type
+     * @param {object} externalManifest Set to null or undefined if no external manifest is to be used
+     * @returns {Array} mediaArr
+     * @memberOf module:DashAdapter
+     * @instance
+     */
+    function getAllMediaInfoForType(streamInfo, type, externalManifest) {
+        let voLocalPeriods = voPeriods;
+        let manifest = externalManifest;
+        let mediaArr = [];
+
+        if (manifest) {
+            checkConfig();
+
+            voLocalPeriods = getRegularPeriods(manifest);
+        } else {
+            if (voPeriods.length > 0) {
+                manifest = voPeriods[0].mpd.manifest;
+            } else {
+                return mediaArr;
+            }
+        }
+
+        const selectedVoPeriod = getPeriodForStreamInfo(streamInfo, voLocalPeriods);
+        let adaptationsForType = dashManifestModel.getAdaptationsForType(manifest, streamInfo ? streamInfo.index : null, type);
+
+        mediaArr = _getAllMediaInfo(manifest, selectedVoPeriod, streamInfo, adaptationsForType, type);
+
+        // Search for embedded text in video track
+        if (type === constants.TEXT) {
+            adaptationsForType = dashManifestModel.getAdaptationsForType(manifest, streamInfo ? streamInfo.index : null, constants.VIDEO);
+            mediaArr = mediaArr.concat(_getAllMediaInfo(manifest, selectedVoPeriod, streamInfo, adaptationsForType, type, true));
+        }
+
+        return mediaArr;
+    }
+
+    /**
+     * Update the internal voPeriods array with the information from the new manifest
+     * @param {object} newManifest
+     * @returns {*}
+     * @memberOf module:DashAdapter
+     * @instance
+     * @ignore
+     */
+    function updatePeriods(newManifest) {
+        if (!newManifest) return null;
+
+        checkConfig();
+
+        voPeriods = getRegularPeriods(newManifest);
+    }
+
+    /**
+     * Returns an array of streamInfo objects
+     * @param {object} externalManifest
+     * @param {number} maxStreamsInfo
+     * @returns {Array} streams
+     * @memberOf module:DashAdapter
+     * @instance
+     * @ignore
+     */
+    function getStreamsInfo(externalManifest, maxStreamsInfo) {
+        const streams = [];
+        let voLocalPeriods = voPeriods;
+
+        //if manifest is defined, getStreamsInfo is for an outside manifest, not the current one
+        if (externalManifest) {
+            checkConfig();
+            voLocalPeriods = getRegularPeriods(externalManifest);
+        }
+
+        if (voLocalPeriods.length > 0) {
+            if (!maxStreamsInfo || maxStreamsInfo > voLocalPeriods.length) {
+                maxStreamsInfo = voLocalPeriods.length;
+            }
+            for (let i = 0; i &lt; maxStreamsInfo; i++) {
+                streams.push(convertPeriodToStreamInfo(voLocalPeriods[i]));
+            }
+        }
+
+        return streams;
+    }
+
+    /**
+     * Returns the AdaptationSet as saved in the DashManifestModel
+     * @param {object} streamInfo
+     * @param {object} mediaInfo
+     * @returns {object} realAdaptation
+     * @memberOf module:DashAdapter
+     * @instance
+     */
+    function getRealAdaptation(streamInfo, mediaInfo) {
+        let id,
+            realAdaptation;
+
+        const selectedVoPeriod = getPeriodForStreamInfo(streamInfo, voPeriods);
+
+        id = mediaInfo ? mediaInfo.id : null;
+
+        if (voPeriods.length > 0 &amp;&amp; selectedVoPeriod) {
+            realAdaptation = id ? dashManifestModel.getAdaptationForId(id, voPeriods[0].mpd.manifest, selectedVoPeriod.index) : dashManifestModel.getAdaptationForIndex(mediaInfo ? mediaInfo.index : null, voPeriods[0].mpd.manifest, selectedVoPeriod.index);
+        }
+
+        return realAdaptation;
+    }
+
+    /**
+     * Returns the ProducerReferenceTimes as saved in the DashManifestModel if present
+     * @param {object} streamInfo
+     * @param {object} mediaInfo
+     * @returns {object} producerReferenceTimes
+     * @memberOf module:DashAdapter
+     * @instance
+     */
+    function getProducerReferenceTimes(streamInfo, mediaInfo) {
+        let id, realAdaptation;
+
+        const selectedVoPeriod = getPeriodForStreamInfo(streamInfo, voPeriods);
+        id = mediaInfo ? mediaInfo.id : null;
+
+        if (voPeriods.length > 0 &amp;&amp; selectedVoPeriod) {
+            realAdaptation = id ? dashManifestModel.getAdaptationForId(id, voPeriods[0].mpd.manifest, selectedVoPeriod.index) : dashManifestModel.getAdaptationForIndex(mediaInfo ? mediaInfo.index : null, voPeriods[0].mpd.manifest, selectedVoPeriod.index);
+        }
+
+        if (!realAdaptation) return [];
+        return dashManifestModel.getProducerReferenceTimesForAdaptation(realAdaptation);
+    }
+
+    /**
+     * Return all EssentialProperties of a Representation
+     * @param {object} representation
+     * @return {array}
+     */
+    function getEssentialPropertiesForRepresentation(representation) {
+        try {
+            return dashManifestModel.getEssentialPropertiesForRepresentation(representation);
+        } catch (e) {
+            return [];
+        }
+    }
+
+    /**
+     * Returns the period as defined in the DashManifestModel for a given index
+     * @param {number} index
+     * @return {object}
+     * @memberOf module:DashAdapter
+     * @instance
+     */
+    function getRealPeriodByIndex(index) {
+        return dashManifestModel.getRealPeriodForIndex(index, voPeriods[0].mpd.manifest);
+    }
+
+    /**
+     * Returns all voRepresentations for a given mediaInfo
+     * @param {object} mediaInfo
+     * @returns {Array} voReps
+     * @memberOf module:DashAdapter
+     * @instance
+     */
+    function getVoRepresentations(mediaInfo) {
+        let voReps;
+
+        const voAdaptation = getAdaptationForMediaInfo(mediaInfo);
+        voReps = dashManifestModel.getRepresentationsForAdaptation(voAdaptation);
+
+        return voReps;
+    }
+
+    /**
+     * Returns the event for the given parameters.
+     * @param {object} eventBox
+     * @param {object} eventStreams
+     * @param {number} mediaStartTime - Specified in seconds
+     * @param {object} voRepresentation
+     * @returns {null|Event}
+     * @memberOf module:DashAdapter
+     * @instance
+     * @ignore
+     */
+    function getEvent(eventBox, eventStreams, mediaStartTime, voRepresentation) {
+        try {
+            if (!eventBox || !eventStreams || isNaN(mediaStartTime) || !voRepresentation) {
+                return null;
+            }
+
+            const schemeIdUri = eventBox.scheme_id_uri;
+            const value = eventBox.value;
+
+            if (!eventStreams[schemeIdUri + '/' + value]) {
+                return null;
+            }
+
+            const event = new Event();
+            const timescale = eventBox.timescale || 1;
+            const periodStart = voRepresentation.adaptation.period.start;
+            const eventStream = eventStreams[schemeIdUri + '/' + value];
+            // The PTO in voRepresentation is already specified in seconds
+            const presentationTimeOffset = !isNaN(voRepresentation.presentationTimeOffset) ? voRepresentation.presentationTimeOffset : !isNaN(eventStream.presentationTimeOffset) ? eventStream.presentationTimeOffset : 0;
+            // In case of version 1 events the presentation_time is parsed as presentation_time_delta
+            let presentationTimeDelta = eventBox.presentation_time_delta / timescale;
+            let calculatedPresentationTime;
+
+            if (eventBox.version === 0) {
+                calculatedPresentationTime = periodStart + mediaStartTime - presentationTimeOffset + presentationTimeDelta;
+            } else {
+                calculatedPresentationTime = periodStart - presentationTimeOffset + presentationTimeDelta;
+            }
+
+            const duration = eventBox.event_duration / timescale;
+            const id = eventBox.id;
+            const messageData = eventBox.message_data;
+
+            event.eventStream = eventStream;
+            event.eventStream.value = value;
+            event.eventStream.timescale = timescale;
+            event.duration = duration;
+            event.id = id;
+            event.calculatedPresentationTime = calculatedPresentationTime;
+            event.messageData = messageData;
+            event.presentationTimeDelta = presentationTimeDelta;
+
+            return event;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    /**
+     * Returns the events for the given info object. info can either be an instance of StreamInfo, MediaInfo or RepresentationInfo
+     * @param {object} info
+     * @param {object} voRepresentation
+     * @returns {Array}
+     * @memberOf module:DashAdapter
+     * @instance
+     * @ignore
+     */
+    function getEventsFor(info, voRepresentation, streamInfo) {
+        let events = [];
+
+        if (voPeriods.length > 0) {
+            const manifest = voPeriods[0].mpd.manifest;
+
+            if (info instanceof StreamInfo) {
+                const period = getPeriodForStreamInfo(info, voPeriods)
+                events = dashManifestModel.getEventsForPeriod(period);
+            } else if (info instanceof MediaInfo) {
+                const period = getPeriodForStreamInfo(streamInfo, voPeriods)
+                events = dashManifestModel.getEventStreamForAdaptationSet(manifest, getAdaptationForMediaInfo(info), period);
+            } else if (info instanceof RepresentationInfo) {
+                const period = getPeriodForStreamInfo(streamInfo, voPeriods)
+                events = dashManifestModel.getEventStreamForRepresentation(manifest, voRepresentation, period);
+            }
+        }
+
+        return events;
+    }
+
+    /**
+     * Sets the current active mediaInfo for a given streamId and a given mediaType
+     * @param {number} streamId
+     * @param {MediaType} type
+     * @param {object} mediaInfo
+     * @memberOf module:DashAdapter
+     * @instance
+     * @ignore
+     */
+    function setCurrentMediaInfo(streamId, type, mediaInfo) {
+        currentMediaInfo[streamId] = currentMediaInfo[streamId] || {};
+        currentMediaInfo[streamId][type] = currentMediaInfo[streamId][type] || {};
+        currentMediaInfo[streamId][type] = mediaInfo;
+    }
+
+    /**
+     * Check if the given type is a text track
+     * @param {object} adaptation
+     * @returns {boolean}
+     * @memberOf module:DashAdapter
+     * @instance
+     * @ignore
+     */
+    function getIsTextTrack(adaptation) {
+        return dashManifestModel.getIsText(adaptation);
+    }
+
+    /**
+     * Returns the UTC Timing Sources specified in the manifest
+     * @returns {Array} utcTimingSources
+     * @memberOf module:DashAdapter
+     * @instance
+     */
+    function getUTCTimingSources() {
+        const manifest = getManifest();
+        return dashManifestModel.getUTCTimingSources(manifest);
+    }
+
+    /**
+     * Returns the suggestedPresentationDelay as specified in the manifest
+     * @returns {String} suggestedPresentationDelay
+     * @memberOf module:DashAdapter
+     * @instance
+     */
+    function getSuggestedPresentationDelay() {
+        const mpd = voPeriods.length > 0 ? voPeriods[0].mpd : null;
+        return dashManifestModel.getSuggestedPresentationDelay(mpd);
+    }
+
+    /**
+     * Returns the availabilityStartTime as specified in the manifest
+     * @param {object} externalManifest Omit this value if no external manifest should be used
+     * @returns {number} availabilityStartTime
+     * @memberOf module:DashAdapter
+     * @instance
+     */
+    function getAvailabilityStartTime(externalManifest) {
+        const mpd = getMpd(externalManifest);
+        return dashManifestModel.getAvailabilityStartTime(mpd);
+    }
+
+    /**
+     * Returns a boolean indicating if the manifest is dynamic or not
+     * @param {object} externalManifest Omit this value if no external manifest should be used
+     * @returns {boolean}
+     * @memberOf module:DashAdapter
+     * @instance
+     */
+    function getIsDynamic(externalManifest) {
+        const manifest = getManifest(externalManifest);
+        return dashManifestModel.getIsDynamic(manifest);
+    }
+
+    /**
+     * Returns the duration of the MPD
+     * @param {object} externalManifest Omit this value if no external manifest should be used
+     * @returns {number} duration
+     * @memberOf module:DashAdapter
+     * @instance
+     */
+    function getDuration(externalManifest) {
+        const manifest = getManifest(externalManifest);
+        return dashManifestModel.getDuration(manifest);
+    }
+
+    /**
+     * Returns all periods of the MPD
+     * @param {object} externalManifest Omit this value if no external manifest should be used
+     * @returns {Array} periods
+     * @memberOf module:DashAdapter
+     * @instance
+     */
+    function getRegularPeriods(externalManifest) {
+        const mpd = getMpd(externalManifest);
+        return dashManifestModel.getRegularPeriods(mpd);
+    }
+
+    /**
+     * Returns an MPD object
+     * @param {object} externalManifest Omit this value if no external manifest should be used
+     * @returns {object} MPD
+     * @memberOf module:DashAdapter
+     * @instance
+     */
+    function getMpd(externalManifest) {
+        const manifest = getManifest(externalManifest);
+        return dashManifestModel.getMpd(manifest);
+    }
+
+    /**
+     * Returns the ContentSteering element of the MPD
+     * @param {object} manifest
+     * @returns {object} contentSteering
+     * @memberOf module:DashAdapter
+     * @instance
+     */
+    function getContentSteering(manifest) {
+        return dashManifestModel.getContentSteering(manifest);
+    }
+
+    /**
+     * Returns the location element of the MPD
+     * @param {object} manifest
+     * @returns {String} location
+     * @memberOf module:DashAdapter
+     * @instance
+     */
+    function getLocation(manifest) {
+        return dashManifestModel.getLocation(manifest);
+    }
+
+    /**
+     * Returns the manifest update period used for dynamic manifests
+     * @param {object} manifest
+     * @param {number} latencyOfLastUpdate
+     * @returns {NaN|number} manifestUpdatePeriod
+     * @memberOf module:DashAdapter
+     * @instance
+     */
+    function getManifestUpdatePeriod(manifest, latencyOfLastUpdate = 0) {
+        return dashManifestModel.getManifestUpdatePeriod(manifest, latencyOfLastUpdate);
+    }
+
+    /**
+     * Returns the publish time from the manifest
+     * @param {object} manifest
+     * @returns {Date|null} publishTime
+     * @memberOf module:DashAdapter
+     * @instance
+     */
+    function getPublishTime(manifest) {
+        return dashManifestModel.getPublishTime(manifest);
+    }
+
+    /**
+     * Returns the patch locations of the MPD if existing and if they are still valid
+     * @param {object} manifest
+     * @returns {PatchLocation[]} patch location
+     * @memberOf module:DashAdapter
+     * @instance
+     */
+    function getPatchLocation(manifest) {
+        const patchLocations = dashManifestModel.getPatchLocation(manifest);
+        const publishTime = dashManifestModel.getPublishTime(manifest);
+
+        // short-circuit when no patch location or publish time exists
+        if (!patchLocations || patchLocations.length === 0 || !publishTime) {
+            return [];
+        }
+
+        return patchLocations.filter((patchLocation) => {
+            // check if the patch location has expired, if so do not consider it
+            return isNaN(patchLocation.ttl) || (publishTime.getTime() + patchLocation.ttl > new Date().getTime())
+        })
+    }
+
+    /**
+     * Checks if the manifest has a DVB profile
+     * @param {object} manifest
+     * @returns {boolean}
+     * @memberOf module:DashAdapter
+     * @instance
+     * @ignore
+     */
+    function getIsDVB(manifest) {
+        return dashManifestModel.hasProfile(manifest, PROFILE_DVB);
+    }
+
+    /**
+     * Checks if the manifest is actually just a patch manifest
+     * @param  {object} manifest
+     * @return {boolean}
+     * @memberOf module:DashAdapter
+     * @instance
+     */
+    function getIsPatch(manifest) {
+        return patchManifestModel.getIsPatch(manifest);
+    }
+
+    /**
+     * Returns the base urls for a given element
+     * @param {object} node
+     * @returns {BaseURL[]}
+     * @memberOf module:DashAdapter
+     * @instance
+     * @ignore
+     */
+    function getBaseURLsFromElement(node) {
+        return dashManifestModel.getBaseURLsFromElement(node);
+    }
+
+    /**
+     * Returns the function to sort the Representations
+     * @returns {function}
+     * @memberOf module:DashAdapter
+     * @instance
+     * @ignore
+     */
+    function getRepresentationSortFunction() {
+        return dashManifestModel.getRepresentationSortFunction();
+    }
+
+    /**
+     * Returns the codec for a given adaptation set and a given representation id.
+     * @param {object} adaptation
+     * @param {number} representationId
+     * @param {boolean} addResolutionInfo Defines whether to include resolution information in the output
+     * @returns {String} codec
+     * @memberOf module:DashAdapter
+     * @instance
+     */
+    function getCodec(adaptation, representationId, addResolutionInfo) {
+        return dashManifestModel.getCodec(adaptation, representationId, addResolutionInfo);
+    }
+
+    /**
+     * Returns the bandwidth for a given representation id and the corresponding period index
+     * @param {number} representationId
+     * @param {number} periodIdx
+     * @returns {number} bandwidth
+     * @memberOf module:DashAdapter
+     * @instance
+     */
+    function getBandwidthForRepresentation(representationId, periodIdx) {
+        let representation;
+        let period = getPeriod(periodIdx);
+
+        representation = findRepresentation(period, representationId);
+
+        return representation ? representation.bandwidth : null;
+    }
+
+    /**
+     * Returns the index for a given representation id
+     * @param {string} representationId
+     * @param {number} periodIdx
+     * @returns {number} index
+     * @memberOf module:DashAdapter
+     * @instance
+     */
+    function getIndexForRepresentation(representationId, periodIdx) {
+        let period = getPeriod(periodIdx);
+
+        return findRepresentationIndex(period, representationId);
+    }
+
+    /**
+     * This method returns the current max index based on what is defined in the MPD.
+     * @param {string} bufferType - String 'audio' or 'video',
+     * @param {number} periodIdx - Make sure this is the period index not id
+     * @return {number}
+     * @memberOf module:DashAdapter
+     * @instance
+     */
+    function getMaxIndexForBufferType(bufferType, periodIdx) {
+        let period = getPeriod(periodIdx);
+
+        return findMaxBufferIndex(period, bufferType);
+    }
+
+    /**
+     * Returns the voPeriod object for a given id
+     * @param {String} id
+     * @returns {object|null}
+     * @memberOf module:DashAdapter
+     * @instance
+     */
+    function getPeriodById(id) {
+        if (!id || voPeriods.length === 0) {
+            return null;
+        }
+        const periods = voPeriods.filter((p) => {
+            return p.id === id;
+        });
+
+        if (periods &amp;&amp; periods.length > 0) {
+            return periods[0];
+        }
+
+        return null;
+    }
+
+    /**
+     * Checks if the given AdaptationSet is from the given media type
+     * @param {object} adaptation
+     * @param {string} type
+     * @return {boolean}
+     * @memberOf module:DashAdapter
+     * @instance
+     */
+    function getIsTypeOf(adaptation, type) {
+        return dashManifestModel.getIsTypeOf(adaptation, type);
+    }
+
+    function reset() {
+        voPeriods = [];
+        currentMediaInfo = {};
+    }
+
+    /**
+     * Checks if the supplied manifest is compatible for application of the supplied patch
+     * @param  {object}  manifest
+     * @param  {object}  patch
+     * @return {boolean}
+     * @memberOf module:DashAdapter
+     * @instance
+     */
+    function isPatchValid(manifest, patch) {
+        let manifestId = dashManifestModel.getId(manifest);
+        let patchManifestId = patchManifestModel.getMpdId(patch);
+        let manifestPublishTime = dashManifestModel.getPublishTime(manifest);
+        let patchPublishTime = patchManifestModel.getPublishTime(patch);
+        let originalManifestPublishTime = patchManifestModel.getOriginalPublishTime(patch);
+
+        // Patches are considered compatible if the following are true
+        // - MPD@id == Patch@mpdId
+        // - MPD@publishTime == Patch@originalPublishTime
+        // - MPD@publishTime &lt; Patch@publishTime
+        // - All values in comparison exist
+        return !!(manifestId &amp;&amp; patchManifestId &amp;&amp; (manifestId == patchManifestId) &amp;&amp;
+            manifestPublishTime &amp;&amp; originalManifestPublishTime &amp;&amp; (manifestPublishTime.getTime() == originalManifestPublishTime.getTime()) &amp;&amp;
+            patchPublishTime &amp;&amp; (manifestPublishTime.getTime() &lt; patchPublishTime.getTime()));
+    }
+
+    /**
+     * Takes a given patch and applies it to the provided manifest, assumes patch is valid for manifest
+     * @param  {object} manifest
+     * @param  {object} patch
+     * @memberOf module:DashAdapter
+     * @instance
+     */
+    function applyPatchToManifest(manifest, patch) {
+        // get all operations from the patch and apply them in document order
+        patchManifestModel.getPatchOperations(patch)
+            .forEach((operation) => {
+                let result = operation.getMpdTarget(manifest);
+
+                // operation supplies a path that doesn't match mpd, skip
+                if (result === null) {
+                    return;
+                }
+
+                let { name, target, leaf } = result;
+
+                // short circuit for attribute selectors and text replacement
+                if (operation.xpath.findsAttribute() || name === '__text') {
+                    switch (operation.action) {
+                        case 'add':
+                        case 'replace':
+                            // add and replace are just setting the value
+                            target[name] = operation.value;
+                            break;
+                        case 'remove':
+                            // remove is deleting the value
+                            delete target[name];
+                            break;
+                    }
+                    return;
+                }
+
+                // determine the relative insert position prior to possible removal
+                let relativePosition = (target[name + '_asArray'] || []).indexOf(leaf);
+                let insertBefore = (operation.position === 'prepend' || operation.position === 'before');
+
+                // perform removal operation first, we have already capture the appropriate relative position
+                if (operation.action === 'remove' || operation.action === 'replace') {
+                    // note that we ignore the 'ws' attribute of patch operations as it does not effect parsed mpd operations
+
+                    // purge the directly named entity
+                    delete target[name];
+
+                    // if we did have a positional reference we need to purge from array set and restore X2JS proper semantics
+                    if (relativePosition != -1) {
+                        let targetArray = target[name + '_asArray'];
+                        targetArray.splice(relativePosition, 1);
+                        if (targetArray.length > 1) {
+                            target[name] = targetArray;
+                        } else if (targetArray.length == 1) {
+                            // xml parsing semantics, singular asArray must be non-array in the unsuffixed key
+                            target[name] = targetArray[0];
+                        } else {
+                            // all nodes of this type deleted, remove entry
+                            delete target[name + '_asArray'];
+                        }
+                    }
+                }
+
+                // Perform any add/replace operations now, technically RFC5261 only allows a single element to take the
+                // place of a replaced element while the add case allows an arbitrary number of children.
+                // Due to the both operations requiring the same insertion logic they have been combined here and we will
+                // not enforce single child operations for replace, assertions should be made at patch parse time if necessary
+                if (operation.action === 'add' || operation.action === 'replace') {
+                    // value will be an object with element name keys pointing to arrays of objects
+                    Object.keys(operation.value).forEach((insert) => {
+                        let insertNodes = operation.value[insert];
+
+                        let updatedNodes = target[insert + '_asArray'] || [];
+                        if (updatedNodes.length === 0 &amp;&amp; target[insert]) {
+                            updatedNodes.push(target[insert]);
+                        }
+
+                        if (updatedNodes.length === 0) {
+                            // no original nodes for this element type
+                            updatedNodes = insertNodes;
+                        } else {
+                            // compute the position we need to insert at, default to end of set
+                            let position = updatedNodes.length;
+                            if (insert == name &amp;&amp; relativePosition != -1) {
+                                // if the inserted element matches the operation target (not leaf) and there is a relative position we
+                                // want the inserted position to be set such that our insertion is relative to original position
+                                // since replace has modified the array length we reduce the insert point by 1
+                                position = relativePosition + (insertBefore ? 0 : 1) + (operation.action == 'replace' ? -1 : 0);
+                            } else {
+                                // otherwise we are in an add append/prepend case or replace case that removed the target name completely
+                                position = insertBefore ? 0 : updatedNodes.length;
+                            }
+
+                            // we dont have to perform element removal for the replace case as that was done above
+                            updatedNodes.splice.apply(updatedNodes, [position, 0].concat(insertNodes));
+                        }
+
+                        // now we properly reset the element keys on the target to match parsing semantics
+                        target[insert + '_asArray'] = updatedNodes;
+                        target[insert] = updatedNodes.length == 1 ? updatedNodes[0] : updatedNodes;
+                    });
+                }
+            });
+    }
+
+    // #endregion PUBLIC FUNCTIONS
+
+    // #region PRIVATE FUNCTIONS
+    // --------------------------------------------------
+    function getManifest(externalManifest) {
+        return externalManifest ? externalManifest : voPeriods.length > 0 ? voPeriods[0].mpd.manifest : null;
+    }
+
+    function getAdaptationForMediaInfo(mediaInfo) {
+        try {
+            const selectedVoPeriod = getPeriodForStreamInfo(mediaInfo.streamInfo, voPeriods);
+            const voAdaptations = dashManifestModel.getAdaptationsForPeriod(selectedVoPeriod);
+
+            if (!mediaInfo || !mediaInfo.streamInfo || mediaInfo.streamInfo.id === undefined || !voAdaptations) return null;
+            return voAdaptations[mediaInfo.index];
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function getPeriodForStreamInfo(streamInfo, voPeriodsArray) {
+        const ln = voPeriodsArray.length;
+
+        for (let i = 0; i &lt; ln; i++) {
+            let voPeriod = voPeriodsArray[i];
+
+            if (streamInfo &amp;&amp; streamInfo.id === voPeriod.id) return voPeriod;
+        }
+
+        return null;
+    }
+
+    function convertAdaptationToMediaInfo(adaptation) {
+        if (!adaptation) {
+            return null;
+        }
+
+        let mediaInfo = new MediaInfo();
+        const realAdaptation = adaptation.period.mpd.manifest.Period_asArray[adaptation.period.index].AdaptationSet_asArray[adaptation.index];
+        let viewpoint, acc, acc_rep, roles, accessibility;
+
+        mediaInfo.id = adaptation.id;
+        mediaInfo.index = adaptation.index;
+        mediaInfo.type = adaptation.type;
+        mediaInfo.streamInfo = convertPeriodToStreamInfo(adaptation.period);
+        mediaInfo.representationCount = dashManifestModel.getRepresentationCount(realAdaptation);
+        mediaInfo.labels = dashManifestModel.getLabelsForAdaptation(realAdaptation);
+        mediaInfo.lang = dashManifestModel.getLanguageForAdaptation(realAdaptation);
+        mediaInfo.segmentAlignment = dashManifestModel.getSegmentAlignment(realAdaptation);
+        mediaInfo.subSegmentAlignment = dashManifestModel.getSubSegmentAlignment(realAdaptation);
+
+        viewpoint = dashManifestModel.getViewpointForAdaptation(realAdaptation);
+        mediaInfo.viewpoint = viewpoint.length ? viewpoint[0].value : undefined;
+        mediaInfo.viewpointsWithSchemeIdUri = viewpoint;
+
+        accessibility = dashManifestModel.getAccessibilityForAdaptation(realAdaptation);
+        mediaInfo.accessibility = accessibility.map(function (accessibility) {
+            let accessibilityValue = accessibility.value;
+            let accessibilityData = accessibilityValue;
+            if (accessibility.schemeIdUri &amp;&amp; (accessibility.schemeIdUri.search('cea-608') >= 0) &amp;&amp; typeof (cea608parser) !== 'undefined') {
+                if (accessibilityValue) {
+                    accessibilityData = 'cea-608:' + accessibilityValue;
+                } else {
+                    accessibilityData = 'cea-608';
+                }
+                mediaInfo.embeddedCaptions = true;
+            }
+            return accessibilityData;
+        });
+        mediaInfo.accessibilitiesWithSchemeIdUri = accessibility;
+
+        acc = dashManifestModel.getAudioChannelConfigurationForAdaptation(realAdaptation);
+        mediaInfo.audioChannelConfiguration = acc.map(function (audioChannelConfiguration) {
+            return audioChannelConfiguration.value;
+        });
+        mediaInfo.audioChannelConfigurationsWithSchemeIdUri = acc;
+
+        if (mediaInfo.audioChannelConfiguration.length === 0 &amp;&amp; Array.isArray(realAdaptation.Representation_asArray) &amp;&amp; realAdaptation.Representation_asArray.length > 0) {
+            acc_rep = dashManifestModel.getAudioChannelConfigurationForRepresentation(realAdaptation.Representation_asArray[0]);
+            mediaInfo.audioChannelConfiguration = acc_rep.map(function (audioChannelConfiguration) {
+                return audioChannelConfiguration.value;
+            });
+            mediaInfo.audioChannelConfigurationsWithSchemeIdUri = acc_rep;
+        }
+
+        roles = dashManifestModel.getRolesForAdaptation(realAdaptation);
+        mediaInfo.roles = roles.map(function (role) {
+            return role.value;
+        });
+        mediaInfo.rolesWithSchemeIdUri = roles;
+
+        mediaInfo.codec = dashManifestModel.getCodec(realAdaptation);
+        mediaInfo.mimeType = dashManifestModel.getMimeType(realAdaptation);
+        mediaInfo.contentProtection = dashManifestModel.getContentProtectionData(realAdaptation);
+        mediaInfo.bitrateList = dashManifestModel.getBitrateListForAdaptation(realAdaptation);
+        mediaInfo.selectionPriority = dashManifestModel.getSelectionPriority(realAdaptation);
+
+        if (mediaInfo.contentProtection) {
+            // Get the default key ID and apply it to all key systems
+            const keyIds = mediaInfo.contentProtection.map(cp => dashManifestModel.getKID(cp)).filter(kid => kid !== null);
+            if (keyIds.length) {
+                const keyId = keyIds[0];
+                mediaInfo.contentProtection.forEach(cp => {
+                    cp.keyId = keyId;
+                });
+            }
+        }
+
+        mediaInfo.isText = dashManifestModel.getIsText(realAdaptation);
+        mediaInfo.supplementalProperties = dashManifestModel.getSupplementalPropertiesForAdaptation(realAdaptation);
+        if ( (!mediaInfo.supplementalProperties || Object.keys(mediaInfo.supplementalProperties).length === 0) &amp;&amp; Array.isArray(realAdaptation.Representation_asArray) &amp;&amp; realAdaptation.Representation_asArray.length > 0) {
+            let arr = realAdaptation.Representation_asArray.map( repr => {
+                return dashManifestModel.getSupplementalPropertiesForRepresentation(repr);
+            });
+            if ( arr.every( v => JSON.stringify(v) === JSON.stringify(arr[0]) ) ) {
+                // only output Representation.supplementalProperties to mediaInfo, if they are present on all Representations
+                mediaInfo.supplementalProperties = arr[0];
+            }
+        }
+        mediaInfo.supplementalPropertiesAsArray = dashManifestModel.getSupplementalPropertiesAsArrayForAdaptation(realAdaptation);
+        if ( (!mediaInfo.supplementalPropertiesAsArray || mediaInfo.supplementalPropertiesAsArray.length === 0) &amp;&amp; Array.isArray(realAdaptation.Representation_asArray) &amp;&amp; realAdaptation.Representation_asArray.length > 0) {
+            let arr = realAdaptation.Representation_asArray.map( repr => {
+                return dashManifestModel.getSupplementalPropertiesAsArrayForRepresentation(repr);
+            });
+            if ( arr.every( v => JSON.stringify(v) === JSON.stringify(arr[0]) ) ) {
+                // only output Representation.supplementalProperties to mediaInfo, if they are present on all Representations
+                mediaInfo.supplementalPropertiesAsArray = arr[0];
+            }
+        }
+
+        mediaInfo.essentialProperties = dashManifestModel.getEssentialPropertiesForAdaptation(realAdaptation);        
+        mediaInfo.essentialPropertiesAsArray = dashManifestModel.getEssentialPropertiesAsArrayForAdaptation(realAdaptation);
+        
+        mediaInfo.isFragmented = dashManifestModel.getIsFragmented(realAdaptation);
+        mediaInfo.isEmbedded = false;
+
+        return mediaInfo;
+    }
+
+    function convertVideoInfoToEmbeddedTextInfo(mediaInfo, channel, lang) {
+        mediaInfo.id = channel; // CC1, CC2, CC3, or CC4
+        mediaInfo.index = 100 + parseInt(channel.substring(2, 3));
+        mediaInfo.type = constants.TEXT;
+        mediaInfo.codec = 'cea-608-in-SEI';
+        mediaInfo.isEmbedded = true;
+        mediaInfo.isFragmented = false;
+        let normLang = bcp47Normalize(lang);
+        mediaInfo.lang = (normLang) ? normLang : lang;
+        mediaInfo.roles = ['caption'];
+        mediaInfo.rolesWithSchemeIdUri = [{schemeIdUri:'urn:mpeg:dash:role:2011', value:'caption'}];
+    }
+
+    function convertVideoInfoToThumbnailInfo(mediaInfo) {
+        mediaInfo.type = constants.IMAGE;
+    }
+
+    function convertPeriodToStreamInfo(period) {
+        let streamInfo = new StreamInfo();
+        const THRESHOLD = 1;
+
+        streamInfo.id = period.id;
+        streamInfo.index = period.index;
+        streamInfo.start = period.start;
+        streamInfo.duration = period.duration;
+        streamInfo.manifestInfo = convertMpdToManifestInfo(period.mpd);
+        streamInfo.isLast = period.mpd.manifest.Period_asArray.length === 1 || Math.abs((streamInfo.start + streamInfo.duration) - streamInfo.manifestInfo.duration) &lt; THRESHOLD;
+
+        return streamInfo;
+    }
+
+    function convertMpdToManifestInfo(mpd) {
+        let manifestInfo = new ManifestInfo();
+
+        manifestInfo.dvrWindowSize = mpd.timeShiftBufferDepth;
+        manifestInfo.loadedTime = mpd.manifest.loadedTime;
+        manifestInfo.availableFrom = mpd.availabilityStartTime;
+        manifestInfo.minBufferTime = mpd.manifest.minBufferTime;
+        manifestInfo.maxFragmentDuration = mpd.maxSegmentDuration;
+        manifestInfo.duration = dashManifestModel.getDuration(mpd.manifest);
+        manifestInfo.isDynamic = dashManifestModel.getIsDynamic(mpd.manifest);
+        manifestInfo.serviceDescriptions = dashManifestModel.getServiceDescriptions(mpd.manifest);
+        manifestInfo.protocol = mpd.manifest.protocol;
+
+        return manifestInfo;
+    }
+
+    function checkConfig() {
+        if (!constants) {
+            throw new Error('setConfig function has to be called previously');
+        }
+    }
+
+    function getPeriod(periodIdx) {
+        return voPeriods.length > 0 ? voPeriods[0].mpd.manifest.Period_asArray[periodIdx] : null;
+    }
+
+    function findRepresentationIndex(period, representationId) {
+        const index = findRepresentation(period, representationId, true);
+
+        return index !== null ? index : -1;
+    }
+
+    function findRepresentation(period, representationId, returnIndex) {
+        let adaptationSet,
+            adaptationSetArray,
+            representation,
+            representationArray,
+            adaptationSetArrayIndex,
+            representationArrayIndex;
+
+        if (period) {
+            adaptationSetArray = period.AdaptationSet_asArray;
+            for (adaptationSetArrayIndex = 0; adaptationSetArrayIndex &lt; adaptationSetArray.length; adaptationSetArrayIndex = adaptationSetArrayIndex + 1) {
+                adaptationSet = adaptationSetArray[adaptationSetArrayIndex];
+                representationArray = adaptationSet.Representation_asArray;
+                for (representationArrayIndex = 0; representationArrayIndex &lt; representationArray.length; representationArrayIndex = representationArrayIndex + 1) {
+                    representation = representationArray[representationArrayIndex];
+                    if (representationId === representation.id) {
+                        if (returnIndex) {
+                            return representationArrayIndex;
+                        } else {
+                            return representation;
+                        }
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    function findMaxBufferIndex(period, bufferType) {
+        let adaptationSet,
+            adaptationSetArray,
+            representationArray,
+            adaptationSetArrayIndex;
+
+        if (!period || !bufferType) return -1;
+
+        adaptationSetArray = period.AdaptationSet_asArray;
+        for (adaptationSetArrayIndex = 0; adaptationSetArrayIndex &lt; adaptationSetArray.length; adaptationSetArrayIndex = adaptationSetArrayIndex + 1) {
+            adaptationSet = adaptationSetArray[adaptationSetArrayIndex];
+            representationArray = adaptationSet.Representation_asArray;
+            if (dashManifestModel.getIsTypeOf(adaptationSet, bufferType)) {
+                return representationArray.length;
+            }
+        }
+
+        return -1;
+    }
+
+    // #endregion PRIVATE FUNCTIONS
+
+    instance = {
+        getBandwidthForRepresentation,
+        getIndexForRepresentation,
+        getMaxIndexForBufferType,
+        convertRepresentationToRepresentationInfo,
+        getStreamsInfo,
+        getMediaInfoForType,
+        getAllMediaInfoForType,
+        getAdaptationForType,
+        getRealAdaptation,
+        getProducerReferenceTimes,
+        getRealPeriodByIndex,
+        getEssentialPropertiesForRepresentation,
+        getVoRepresentations,
+        getEventsFor,
+        getEvent,
+        getMpd,
+        setConfig,
+        updatePeriods,
+        getIsTextTrack,
+        getUTCTimingSources,
+        getSuggestedPresentationDelay,
+        getAvailabilityStartTime,
+        getIsTypeOf,
+        getIsDynamic,
+        getDuration,
+        getRegularPeriods,
+        getContentSteering,
+        getLocation,
+        getPatchLocation,
+        getManifestUpdatePeriod,
+        getPublishTime,
+        getIsDVB,
+        getIsPatch,
+        getBaseURLsFromElement,
+        getRepresentationSortFunction,
+        getCodec,
+        getPeriodById,
+        setCurrentMediaInfo,
+        isPatchValid,
+        applyPatchToManifest,
+        areMediaInfosEqual,
+        reset
+    };
+
+    setup();
+    return instance;
+}
+
+DashAdapter.__dashjs_factory_name = 'DashAdapter';
+export default FactoryMaker.getSingletonFactory(DashAdapter);
+</code></pre></article></section></div></div></div><div class="search-container" id="PkfLWpAbet" style="display:none"><div class="wrapper" id="iCxFxjkHbP"><button class="icon-button search-close-button" id="VjLlGakifb" aria-label="close search"><svg><use xlink:href="#close-icon"></use></svg></button><div class="search-box-c"><svg><use xlink:href="#search-icon"></use></svg> <input type="text" id="vpcKVYIppa" class="search-input" placeholder="Search..." autofocus></div><div class="search-result-c" id="fWwVHRuDuN"><span class="search-result-c-text">Type anything to view search result</span></div></div></div><div class="mobile-menu-icon-container"><button class="icon-button" id="mobile-menu" data-isopen="false" aria-label="menu"><svg><use xlink:href="#menu-icon"></use></svg></button></div><div id="mobile-sidebar" class="mobile-sidebar-container"><div class="mobile-sidebar-wrapper"><a href="/" class="sidebar-title sidebar-title-anchor">Home</a><div class="mobile-nav-links"></div><div class="mobile-sidebar-items-c"><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-modules"><div>Modules</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="module-DashAdapter.html">DashAdapter</a></div><div class="sidebar-section-children"><a href="module-DashMetrics.html">DashMetrics</a></div><div class="sidebar-section-children"><a href="module-MediaPlayer.html">MediaPlayer</a></div><div class="sidebar-section-children"><a href="module-OfflineController.html">OfflineController</a></div><div class="sidebar-section-children"><a href="module-ProtectionController.html">ProtectionController</a></div><div class="sidebar-section-children"><a href="module-Settings.html">Settings</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-classes"><div>Classes</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="Errors.html">Errors</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html">MediaPlayerEvents</a></div><div class="sidebar-section-children"><a href="MediaPlayerModel.html">MediaPlayerModel</a></div><div class="sidebar-section-children"><a href="MetricsReportingEvents.html">MetricsReportingEvents</a></div><div class="sidebar-section-children"><a href="MssErrors.html">MssErrors</a></div><div class="sidebar-section-children"><a href="OfflineErrors.html">OfflineErrors</a></div><div class="sidebar-section-children"><a href="OfflineEvents.html">OfflineEvents</a></div><div class="sidebar-section-children"><a href="ProtectionErrors.html">ProtectionErrors</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html">ProtectionEvents</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-events"><div>Events</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:ADAPTATION_SET_REMOVED_NO_CAPABILITIES">ADAPTATION_SET_REMOVED_NO_CAPABILITIES</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:AST_IN_FUTURE">AST_IN_FUTURE</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:BASE_URLS_UPDATED">BASE_URLS_UPDATED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:BUFFER_EMPTY">BUFFER_EMPTY</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:BUFFER_LEVEL_STATE_CHANGED">BUFFER_LEVEL_STATE_CHANGED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:BUFFER_LEVEL_UPDATED">BUFFER_LEVEL_UPDATED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:BUFFER_LOADED">BUFFER_LOADED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:CAN_PLAY">CAN_PLAY</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:CAN_PLAY_THROUGH">CAN_PLAY_THROUGH</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:CAPTION_CONTAINER_RESIZE">CAPTION_CONTAINER_RESIZE</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:CAPTION_RENDERED">CAPTION_RENDERED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:CONFORMANCE_VIOLATION">CONFORMANCE_VIOLATION</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:CONTENT_STEERING_REQUEST_COMPLETED">CONTENT_STEERING_REQUEST_COMPLETED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:CUE_ENTER">CUE_ENTER</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:CUE_ENTER">CUE_ENTER</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:DVB_FONT_DOWNLOAD_ADDED">DVB_FONT_DOWNLOAD_ADDED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:DVB_FONT_DOWNLOAD_COMPLETE">DVB_FONT_DOWNLOAD_COMPLETE</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:DVB_FONT_DOWNLOAD_FAILED">DVB_FONT_DOWNLOAD_FAILED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:DYNAMIC_TO_STATIC">DYNAMIC_TO_STATIC</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:ERROR">ERROR</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:EVENT_MODE_ON_RECEIVE">EVENT_MODE_ON_RECEIVE</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:EVENT_MODE_ON_START">EVENT_MODE_ON_START</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:FRAGMENT_LOADING_ABANDONED">FRAGMENT_LOADING_ABANDONED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:FRAGMENT_LOADING_COMPLETED">FRAGMENT_LOADING_COMPLETED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:FRAGMENT_LOADING_PROGRESS">FRAGMENT_LOADING_PROGRESS</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:FRAGMENT_LOADING_STARTED">FRAGMENT_LOADING_STARTED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:INBAND_PRFT">INBAND_PRFT</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:LOG">LOG</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:MANIFEST_LOADED">MANIFEST_LOADED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:MANIFEST_LOADING_FINISHED">MANIFEST_LOADING_FINISHED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:MANIFEST_LOADING_STARTED">MANIFEST_LOADING_STARTED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:MANIFEST_VALIDITY_CHANGED">MANIFEST_VALIDITY_CHANGED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:METRIC_ADDED">METRIC_ADDED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:METRIC_CHANGED">METRIC_CHANGED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:METRIC_UPDATED">METRIC_UPDATED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:METRICS_CHANGED">METRICS_CHANGED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PERIOD_SWITCH_COMPLETED">PERIOD_SWITCH_COMPLETED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PERIOD_SWITCH_STARTED">PERIOD_SWITCH_STARTED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_ENDED">PLAYBACK_ENDED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_ERROR">PLAYBACK_ERROR</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_LOADED_DATA">PLAYBACK_LOADED_DATA</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_METADATA_LOADED">PLAYBACK_METADATA_LOADED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_NOT_ALLOWED">PLAYBACK_NOT_ALLOWED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_PAUSED">PLAYBACK_PAUSED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_PLAYING">PLAYBACK_PLAYING</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_PROGRESS">PLAYBACK_PROGRESS</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_RATE_CHANGED">PLAYBACK_RATE_CHANGED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_SEEKED">PLAYBACK_SEEKED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_SEEKING">PLAYBACK_SEEKING</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_STALLED">PLAYBACK_STALLED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_STARTED">PLAYBACK_STARTED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_TIME_UPDATED">PLAYBACK_TIME_UPDATED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_VOLUME_CHANGED">PLAYBACK_VOLUME_CHANGED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_WAITING">PLAYBACK_WAITING</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:QUALITY_CHANGE_RENDERED">QUALITY_CHANGE_RENDERED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:QUALITY_CHANGE_REQUESTED">QUALITY_CHANGE_REQUESTED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:REPRESENTATION_SWITCH">REPRESENTATION_SWITCH</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:STREAM_ACTIVATED">STREAM_ACTIVATED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:STREAM_DEACTIVATED">STREAM_DEACTIVATED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:STREAM_INITIALIZED">STREAM_INITIALIZED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:STREAM_INITIALIZING">STREAM_INITIALIZING</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:STREAM_TEARDOWN_COMPLETE">STREAM_TEARDOWN_COMPLETE</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:STREAM_UPDATED">STREAM_UPDATED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:TEXT_TRACK_ADDED">TEXT_TRACK_ADDED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:TEXT_TRACKS_ADDED">TEXT_TRACKS_ADDED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:THROUGHPUT_MEASUREMENT_STORED">THROUGHPUT_MEASUREMENT_STORED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:TRACK_CHANGE_RENDERED">TRACK_CHANGE_RENDERED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:TTML_PARSED">TTML_PARSED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:TTML_TO_PARSE">TTML_TO_PARSE</a></div><div class="sidebar-section-children"><a href="MetricsReportingEvents.html#event:CMCD_DATA_GENERATED">CMCD_DATA_GENERATED</a></div><div class="sidebar-section-children"><a href="OfflineEvents.html#event:OFFLINE_RECORD_FINISHED">OFFLINE_RECORD_FINISHED</a></div><div class="sidebar-section-children"><a href="OfflineEvents.html#event:OFFLINE_RECORD_LOADEDMETADATA">OFFLINE_RECORD_LOADEDMETADATA</a></div><div class="sidebar-section-children"><a href="OfflineEvents.html#event:OFFLINE_RECORD_STARTED">OFFLINE_RECORD_STARTED</a></div><div class="sidebar-section-children"><a href="OfflineEvents.html#event:OFFLINE_RECORD_STOPPED">OFFLINE_RECORD_STOPPED</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_ADDED">KEY_ADDED</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_ERROR">KEY_ERROR</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_MESSAGE">KEY_MESSAGE</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_SESSION_CLOSED">KEY_SESSION_CLOSED</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_SESSION_CREATED">KEY_SESSION_CREATED</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_SESSION_REMOVED">KEY_SESSION_REMOVED</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_STATUSES_CHANGED">KEY_STATUSES_CHANGED</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_SYSTEM_ACCESS_COMPLETE">KEY_SYSTEM_ACCESS_COMPLETE</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_SYSTEM_SELECTED">KEY_SYSTEM_SELECTED</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:LICENSE_REQUEST_COMPLETE">LICENSE_REQUEST_COMPLETE</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:LICENSE_REQUEST_SENDING">LICENSE_REQUEST_SENDING</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:PROTECTION_CREATED">PROTECTION_CREATED</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:PROTECTION_DESTROYED">PROTECTION_DESTROYED</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-global"><div>Global</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="global.html#LICENSE_SERVER_MANIFEST_CONFIGURATIONS">LICENSE_SERVER_MANIFEST_CONFIGURATIONS</a></div><div class="sidebar-section-children"><a href="global.html#MediaType">MediaType</a></div></div></div><div class="mobile-navbar-actions"><div class="navbar-right-item"><button class="icon-button search-button" aria-label="open-search"><svg><use xlink:href="#search-icon"></use></svg></button></div><div class="navbar-right-item"><button class="icon-button theme-toggle" aria-label="toggle-theme"><svg><use class="theme-svg-use" xlink:href="#dark-theme-icon"></use></svg></button></div><div class="navbar-right-item"><button class="icon-button font-size" aria-label="change-font-size"><svg><use xlink:href="#font-size-icon"></use></svg></button></div></div></div></div><script type="text/javascript" src="scripts/core.min.js"></script><script src="scripts/search.min.js" defer="defer"></script><script src="scripts/third-party/fuse.js" defer="defer"></script><script type="text/javascript">var tocbotInstance=tocbot.init({tocSelector:"#eed4d2a0bfd64539bb9df78095dec881",contentSelector:".main-content",headingSelector:"h1, h2, h3",hasInnerContainers:!0,scrollContainer:".main-content",headingsOffset:130,onClick:bringLinkToView})</script></body></html>

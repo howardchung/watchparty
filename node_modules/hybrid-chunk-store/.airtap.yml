@@ -1,0 +1,5 @@
+presets:
+  local:
+    providers: airtap-manual
+    browsers:
+      - name: manual
