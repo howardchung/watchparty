@@ -3,7 +3,6 @@ import { Modal, Button, Icon, Image, Popup } from 'semantic-ui-react';
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
 import { serverPath } from '../../utils';
-import axios from 'axios';
 import { ManageSubButton } from '../SubscribeButton/SubscribeButton';
 import config from '../../config';
 import { MetadataContext } from '../../MetadataContext';
@@ -22,17 +21,16 @@ export class ProfileModal extends React.Component<{
   };
 
   async componentDidMount() {
-    const token = await this.context.user?.getIdToken();
-    const response = await axios.get<LinkAccount[]>(
-      serverPath + '/linkAccount',
-      {
-        params: {
-          uid: this.context.user?.uid,
+    const token = (await this.context.user?.getIdToken()) ?? '';
+    const response = await fetch(
+      serverPath +
+        '/linkAccount?' +
+        new URLSearchParams({
+          uid: this.context.user?.uid ?? '',
           token,
-        },
-      },
+        }),
     );
-    const data = response.data;
+    const data: LinkAccount[] = await response.json();
     const linkedDiscord = data.find((d) => d.kind === 'discord');
     this.setState({ linkedDiscord });
   }
@@ -125,8 +123,9 @@ export class ProfileModal extends React.Component<{
               undone.
             </p>
             <p>
-              Note: If you have an active subscription, deleting your account will NOT
-              automatically cancel it and you will need to contact support@watchparty.me to cancel.
+              Note: If you have an active subscription, deleting your account
+              will NOT automatically cancel it and you will need to contact
+              support@watchparty.me to cancel.
             </p>
           </Modal.Content>
           <Modal.Actions>

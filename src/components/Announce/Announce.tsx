@@ -1,4 +1,3 @@
-import axios from 'axios';
 import React, { useCallback, useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Button } from 'semantic-ui-react';
@@ -17,20 +16,18 @@ const Announce = () => {
   const [announcement, setAnnouncement] = useState<Issue | null>(null);
   useEffect(() => {
     const fetch = async () => {
-      const response = await axios.get<{ items: Issue[] }>(
-        'https://api.github.com/search/issues',
-        {
-          params: {
+      const response = await window.fetch(
+        'https://api.github.com/search/issues?' +
+          new URLSearchParams({
             q: `repo:${GITHUB_REPO} label:${
               config.NODE_ENV === 'development' ? 'test' : 'release'
             }`,
             order: 'desc',
-            page: 1,
-            per_page: 1,
-          },
-        },
+            page: '1',
+            per_page: '1',
+          }),
       );
-      const data = response.data;
+      const data: { items: Issue[] } = await response.json();
       //   console.log(data);
       const top = data?.items?.[0];
       if (
