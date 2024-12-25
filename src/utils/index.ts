@@ -1,6 +1,5 @@
 //@ts-ignore
 import canAutoplay from 'can-autoplay';
-import { v4 as uuidv4 } from 'uuid';
 import { MD5 } from './md5';
 import firebase from 'firebase/compat/app';
 import { XMLParser } from 'fast-xml-parser';
@@ -343,7 +342,8 @@ export function getOrCreateClientId() {
   let clientId = window.localStorage.getItem('watchparty-clientid');
   if (!clientId) {
     // Generate a new clientID and save it
-    clientId = uuidv4();
+    // This requires https, so fallback to JS implementation if needed
+    clientId = crypto.randomUUID ? crypto.randomUUID() : uuidv4();
     window.localStorage.setItem('watchparty-clientid', clientId);
   }
   return clientId;
@@ -398,3 +398,12 @@ export const isEmojiString = (input: string): boolean => {
     input,
   );
 };
+
+function uuidv4() {
+  return '10000000-1000-4000-8000-100000000000'.replace(/[018]/g, (c) =>
+    (
+      +c ^
+      (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (+c / 4)))
+    ).toString(16),
+  );
+}
