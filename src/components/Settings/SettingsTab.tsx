@@ -117,8 +117,8 @@ export const SettingsTab = ({
       }
       setValidVanity(false);
       setValidVanityLoading(true);
-      const response = await axios.get(serverPath + '/resolveRoom/' + input);
-      const data = response.data;
+      const response = await fetch(serverPath + '/resolveRoom/' + input);
+      const data = await response.json();
       setValidVanityLoading(false);
       if (
         data &&

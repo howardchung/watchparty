@@ -190,10 +190,10 @@ export class ListRoomsButton extends React.Component<{}> {
   refreshRooms = async () => {
     if (this.context.user) {
       const token = await this.context.user.getIdToken();
-      const response = await axios.get(
+      const response = await fetch(
         serverPath + `/listRooms?uid=${this.context.user?.uid}&token=${token}`,
       );
-      this.setState({ rooms: response.data });
+      this.setState({ rooms: await response.json() });
     }
   };
 
