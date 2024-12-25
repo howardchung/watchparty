@@ -11,7 +11,6 @@ import {
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
 import { LoginModal } from '../Modal/LoginModal';
-import axios from 'axios';
 import { SubscribeButton } from '../SubscribeButton/SubscribeButton';
 import { ProfileModal } from '../Modal/ProfileModal';
 import Announce from '../Announce/Announce';
@@ -200,9 +199,10 @@ export class ListRoomsButton extends React.Component<{}> {
   deleteRoom = async (roomId: string) => {
     if (this.context.user) {
       const token = await this.context.user.getIdToken();
-      await axios.delete(
+      await fetch(
         serverPath +
           `/deleteRoom?uid=${this.context.user?.uid}&token=${token}&roomId=${roomId}`,
+        { method: 'DELETE' },
       );
       this.setState({
         rooms: this.state.rooms.filter((room) => room.roomId !== roomId),

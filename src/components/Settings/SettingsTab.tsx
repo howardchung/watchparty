@@ -13,7 +13,6 @@ import {
 } from 'semantic-ui-react';
 // import { SignInButton } from '../TopBar/TopBar';
 import { getCurrentSettings, updateSettings } from './LocalSettings';
-import axios from 'axios';
 import { serverPath } from '../../utils';
 import { PermanentRoomModal } from '../Modal/PermanentRoomModal';
 import firebase from 'firebase/compat/app';
