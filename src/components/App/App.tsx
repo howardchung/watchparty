@@ -282,11 +282,12 @@ export default class App extends React.Component<AppProps, AppState> {
     // if a vanity name, resolve the url to a room id
     if (this.props.vanity) {
       try {
-        const response = await axios.get(
+        const response = await fetch(
           serverPath + '/resolveRoom/' + this.props.vanity,
         );
-        if (response.data.roomId) {
-          roomId = response.data.roomId;
+        const data = await response.json();
+        if (data.roomId) {
+          roomId = data.roomId;
         } else {
           this.setState({ overlayMsg: "Couldn't load this room." });
         }
@@ -313,8 +314,8 @@ export default class App extends React.Component<AppProps, AppState> {
     } catch (e) {
       console.warn('[ALERT] Could not parse saved passwords');
     }
-    const response = await axios.get(serverPath + '/resolveShard' + roomId);
-    const shard = Number(response.data) || '';
+    const response = await fetch(serverPath + '/resolveShard' + roomId);
+    const shard = Number(await response.text()) || '';
     const socket = io(serverPath + roomId, {
       transports: ['websocket'],
       query: {
