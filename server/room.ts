@@ -10,7 +10,6 @@ import { AssignedVM } from './vm/base';
 import { getStartOfDay } from './utils/time';
 import { postgres, updateObject, upsertObject } from './utils/postgres';
 import { fetchYoutubeVideo, getYoutubeVideoID } from './utils/youtube';
-import { v4 as uuidv4 } from 'uuid';
 //@ts-ignore
 import twitch from 'twitch-m3u8';
 import { QueryResult } from 'pg';
@@ -806,7 +805,8 @@ export class Room {
     if (data?.mediasoup) {
       // TODO validate the user has permissions to ask for a mediasoup
       // TODO set up the room on the remote server rather than letting the remote server create
-      mediasoupSuffix = '@' + config.MEDIASOUP_SERVER + '/' + uuidv4();
+      mediasoupSuffix =
+        '@' + config.MEDIASOUP_SERVER + '/' + crypto.randomUUID();
       redisCount('mediasoupStarts');
     }
     if (data && data.file) {
@@ -977,7 +977,7 @@ export class Room {
       let assignment: AssignedVM | undefined = undefined;
       try {
         if (stateless) {
-          const pass = uuidv4();
+          const pass = crypto.randomUUID();
           const id = await stateless.startVM(pass);
           assignment = {
             ...(await stateless.getVM(id)),

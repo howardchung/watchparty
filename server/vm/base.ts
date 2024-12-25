@@ -1,6 +1,5 @@
 import config from '../config';
 import axios from 'axios';
-import { v4 as uuidv4 } from 'uuid';
 import { redis, redisCount } from '../utils/redis';
 import { postgres as pg } from '../utils/postgres';
 import { PoolConfig, PoolRegion } from './utils';
@@ -221,7 +220,7 @@ export abstract class VMManager {
 
   public startVMWrapper = async () => {
     // generate credentials and boot a VM
-    const password = uuidv4();
+    const password = crypto.randomUUID();
     const id = await this.startVM(password);
     // We might fail to record it if crashing here but cleanup will reset it
     await postgres.query(
