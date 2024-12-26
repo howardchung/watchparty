@@ -4,6 +4,7 @@ import { MD5 } from './md5';
 import firebase from 'firebase/compat/app';
 import { XMLParser } from 'fast-xml-parser';
 import config from '../config';
+import { cyrb53 } from './hash';
 
 export function formatTimestamp(input: any, wallClock?: boolean): string {
   if (
@@ -54,15 +55,6 @@ export function formatSize(input: number) {
   return input + ' B';
 }
 
-export function hashString(input: string) {
-  var hash = 0;
-  for (var i = 0; i < input.length; i++) {
-    var charCode = input.charCodeAt(i);
-    hash += charCode;
-  }
-  return hash;
-}
-
 export const colorMappings: StringDict = {
   red: 'B03060',
   orange: 'FE9A76',
@@ -98,7 +90,7 @@ export function getColorForString(id: string) {
   if (colorCache[id]) {
     return colors[colorCache[id]];
   }
-  colorCache[id] = Math.abs(hashString(id)) % colors.length;
+  colorCache[id] = Math.abs(cyrb53(id)) % colors.length;
   return colors[colorCache[id]];
 }
 

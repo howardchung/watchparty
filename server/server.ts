@@ -25,7 +25,6 @@ import { deleteUser, validateUserToken } from './utils/firebase';
 import path from 'path';
 import { getStartOfDay } from './utils/time';
 import { getBgVMManagers, getSessionLimitSeconds } from './vm/utils';
-import { hashString } from './utils/string';
 import { postgres, insertObject, upsertObject } from './utils/postgres';
 import axios from 'axios';
 import crypto from 'crypto';
@@ -51,7 +50,6 @@ if (process.env.NODE_ENV === 'development') {
 const gzip = util.promisify(zlib.gzip);
 
 const releaseInterval = 5 * 60 * 1000;
-const releaseBatches = config.NODE_ENV === 'development' ? 1 : 10;
 const app = express();
 let server: any = null;
 if (config.SSL_KEY_FILE && config.SSL_CRT_FILE) {
@@ -89,7 +87,7 @@ async function init() {
   server.listen(config.PORT, config.HOST);
   // Following functions iterate over in-memory rooms
   setInterval(minuteMetrics, 60 * 1000);
-  setInterval(release, releaseInterval / releaseBatches);
+  setInterval(release, releaseInterval);
   setInterval(freeUnusedRooms, 5 * 60 * 1000);
   saveRooms();
   if (process.env.NODE_ENV === 'development') {
@@ -607,15 +605,12 @@ async function saveRooms() {
   }
 }
 
-let currBatch = 0;
 async function release() {
   // Reset VMs in rooms that are:
   // older than the session limit
   // assigned to a room with no users
-  const roomArr = Array.from(rooms.values()).filter((room) => {
-    return hashString(room.roomId) % releaseBatches === currBatch;
-  });
-  console.log('[RELEASE][%s] %s rooms in batch', currBatch, roomArr.length);
+  const roomArr = Array.from(rooms.values());
+  console.log('[RELEASE] %s rooms in batch', roomArr.length);
   for (let i = 0; i < roomArr.length; i++) {
     const room = roomArr[i];
     if (room.vBrowser && room.vBrowser.assignTime) {
@@ -628,7 +623,7 @@ async function release() {
       const isRoomIdle =
         Date.now() - Number(room.lastUpdateTime) > 5 * 60 * 1000;
       if (isTimedOut || (isRoomEmpty && isRoomIdle)) {
-        console.log('[RELEASE][%s] VM in room:', currBatch, room.roomId);
+        console.log('[RELEASE] VM in room:', room.roomId);
         room.stopVBrowserInternal();
         if (isTimedOut) {
           room.addChatMessage(null, {
@@ -650,8 +645,11 @@ async function release() {
         });
       }
     }
+    // We want to spread out the jobs over about half the release interval
+    // This gives other jobs some CPU time
+    const waitTime = releaseInterval / 2 / roomArr.length;
+    await new Promise((resolve) => setTimeout(resolve, waitTime));
   }
-  currBatch = (currBatch + 1) % releaseBatches;
 }
 
 async function minuteMetrics() {
