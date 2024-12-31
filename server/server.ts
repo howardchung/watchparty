@@ -382,8 +382,8 @@ app.get('/resolveRoom/:vanity', async (req, res) => {
     [vanity?.toLowerCase() ?? ''],
   );
   // console.log(vanity, result.rows);
-  // We also use this for checking name availability, so just return empty response if it doesn't exist (http 200)
-  res.json(result?.rows[0]);
+  // We also use this for checking name availability, so just return null if it doesn't exist (http 200)
+  res.json(result?.rows[0] ?? null);
 });
 
 app.get('/roomData/:roomId', async (req, res) => {
