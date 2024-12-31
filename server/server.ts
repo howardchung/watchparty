@@ -823,7 +823,7 @@ async function getStats() {
     .filter(Boolean);
 
   // Per-shard data that we want to see in an array
-  const currentUptime = process.uptime();
+  const currentUptime = [process.uptime()];
   const currentMemUsage = [process.memoryUsage().rss];
 
   // Singleton stats below (same for all shards so don't combine)
