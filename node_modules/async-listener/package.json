@@ -1,0 +1,39 @@
+{
+  "name": "async-listener",
+  "version": "0.6.10",
+  "description": "Polyfill exporting trevnorris's 0.11+ asyncListener API.",
+  "author": "Forrest L Norvell <ogd@aoaioxxysz.net>",
+  "contributors": [
+    "Tim Caswell <tim@creationix.com>",
+    "Forrest L Norvell <ogd@aoaioxxysz.net>"
+  ],
+  "main": "index.js",
+  "scripts": {
+    "test": "tap test/*.tap.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/othiym23/async-listener.git"
+  },
+  "keywords": [
+    "polyfill",
+    "shim",
+    "zesty",
+    "crazed",
+    "experimental"
+  ],
+  "license": "BSD-2-Clause",
+  "bugs": {
+    "url": "https://github.com/othiym23/async-listener/issues"
+  },
+  "engines": {
+    "node": "<=0.11.8 || >0.11.10"
+  },
+  "dependencies": {
+    "semver": "^5.3.0",
+    "shimmer": "^1.1.0"
+  },
+  "devDependencies": {
+    "tap": "^0.7.1"
+  }
+}

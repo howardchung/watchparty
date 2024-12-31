@@ -1,0 +1,1 @@
+{"version":3,"file":"edgeUtils.d.ts","sourceRoot":"","sources":["../../../src/handlers/ortc/edgeUtils.ts"],"names":[],"mappings":"AACA,OAAO,EAAE,eAAe,EAAE,aAAa,EAAE,MAAM,qBAAqB,CAAC;AAErE;;;GAGG;AACH,wBAAgB,eAAe,IAAI,eAAe,CAuCjD;AAED;;GAEG;AACH,wBAAgB,mBAAmB,CAClC,aAAa,EAAE,aAAa,GAC1B,aAAa,CA+Bf"}
