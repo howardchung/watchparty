@@ -51,7 +51,7 @@ const gzip = util.promisify(zlib.gzip);
 
 const releaseInterval = 5 * 60 * 1000;
 const app = express();
-let server: any = null;
+let server = null as https.Server | http.Server | null;
 if (config.SSL_KEY_FILE && config.SSL_CRT_FILE) {
   const key = fs.readFileSync(config.SSL_KEY_FILE as string);
   const cert = fs.readFileSync(config.SSL_CRT_FILE as string);
@@ -84,7 +84,7 @@ async function init() {
     rooms.set('/default', new Room(io, '/default'));
   }
 
-  server.listen(config.PORT, config.HOST);
+  server?.listen(config.PORT, config.HOST);
   // Following functions iterate over in-memory rooms
   setInterval(minuteMetrics, 60 * 1000);
   setInterval(release, releaseInterval);
