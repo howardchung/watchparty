@@ -530,7 +530,7 @@ app.get('/generateName', async (req, res) => {
 });
 
 // Proxy video segments
-app.get('/proxy/*', async (req, res) => {
+app.get('/proxy/*splat', async (req, res) => {
   try {
     if (req.path.includes('index-dvr.m3u8')) {
       // VOD
@@ -585,7 +585,7 @@ app.get('/proxy/*', async (req, res) => {
 
 app.use(express.static(config.BUILD_DIRECTORY));
 // Send index.html for all other requests (SPA)
-app.use('/*', (_req, res) => {
+app.use('/*splat', (_req, res) => {
   res.sendFile(
     path.resolve(__dirname + `/../${config.BUILD_DIRECTORY}/index.html`),
   );

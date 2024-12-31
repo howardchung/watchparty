@@ -473,6 +473,7 @@ export abstract class VMManager {
           await redis?.lpush('vBrowserStageFails', vmid);
           await redis?.ltrim('vBrowserStageFails', 0, 24);
           await this.resetVM(vmid);
+          // TODO if we fail this too many times we should probably reimage it
           // await this.terminateVMWrapper(vmid);
         }
         if (retryCount >= 180) {
