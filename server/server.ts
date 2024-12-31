@@ -814,7 +814,7 @@ async function getStats() {
         lock: room.lock || undefined,
         creator: room.creator || undefined,
       };
-      if (obj.video || obj.rosterLength > 0) {
+      if ((obj.video && obj.creator) || obj.rosterLength > 0) {
         return obj;
       } else {
         return null;
