@@ -99,6 +99,60 @@ export class SubtitleModal extends React.Component<{
               {config.NODE_ENV === 'development' && (
                 <Input value={this.props.roomSubtitle} />
               )}
+              {
+                <Input
+                  value={this.state.titleQuery}
+                  onChange={(e, { value }) =>
+                    this.setState({ titleQuery: value })
+                  }
+                />
+              }
+              <div>
+                <Button
+                  loading={this.state.loading}
+                  color="green"
+                  disabled={!this.props.haveLock()}
+                  icon
+                  labelPosition="left"
+                  size="mini"
+                  onClick={async () => {
+                    this.setState({ loading: true });
+                    const resp = await window.fetch(
+                      serverPath +
+                        '/searchSubtitles?title=' +
+                        this.state.titleQuery,
+                    );
+                    const json = await resp.json();
+                    this.setState({ searchResults: json });
+                    this.setState({ loading: false });
+                  }}
+                >
+                  <Icon name="search" />
+                  OpenSubtitles by Title
+                </Button>
+                <Button
+                  loading={this.state.loading}
+                  color="blue"
+                  disabled={!this.props.haveLock()}
+                  icon
+                  labelPosition="left"
+                  size="mini"
+                  onClick={async () => {
+                    this.setState({ loading: true });
+                    const resp = await window.fetch(
+                      serverPath +
+                        '/searchSubtitles?url=' +
+                        this.props.roomMedia,
+                    );
+                    const json = await resp.json();
+                    this.setState({ searchResults: json });
+                    this.setState({ loading: false });
+                  }}
+                >
+                  <Icon name="search" />
+                  OpenSubtitles by Hash
+                </Button>
+              </div>
               <div>
                 <Radio
                   disabled={!this.props.haveLock()}
@@ -111,26 +165,6 @@ export class SubtitleModal extends React.Component<{
                   }}
                 />
               </div>
-              {this.context.beta && (
-                <div>
-                  <Radio
-                    disabled={!this.props.haveLock()}
-                    name="radioGroup"
-                    label=".srt extension appended to current video URL"
-                    value=""
-                    checked={Boolean(
-                      this.props.roomSubtitle &&
-                        this.props.roomSubtitle?.startsWith(
-                          this.props.roomMedia,
-                        ),
-                    )}
-                    onClick={(e, data) => {
-                      const subValue = this.props.roomMedia + '.srt';
-                      this.props.socket.emit('CMD:subtitle', subValue);
-                    }}
-                  />
-                </div>
-              )}
               <div>
                 <Radio
                   disabled={!this.props.haveLock()}
@@ -156,96 +190,34 @@ export class SubtitleModal extends React.Component<{
                   Upload (.srt)
                 </Button>
               </div>
-              {!this.state.searchResults.length && (
-                <div>
-                  <Radio
-                    disabled={!this.props.haveLock()}
-                    name="radioGroup"
-                    value=""
-                    checked={
-                      Boolean(this.props.roomSubtitle) &&
-                      this.props.roomSubtitle?.startsWith(
-                        serverPath + '/downloadSubtitle',
-                      )
-                    }
-                  />
-                  {this.context.beta && (
-                    <Input
-                      value={this.state.titleQuery}
-                      onChange={(e, { value }) =>
-                        this.setState({ titleQuery: value })
-                      }
-                    />
-                  )}
-                  <Button
-                    style={{ marginLeft: '8px' }}
-                    loading={this.state.loading}
-                    color="green"
-                    disabled={!this.props.haveLock()}
-                    icon
-                    labelPosition="left"
-                    size="mini"
-                    onClick={async () => {
-                      this.setState({ loading: true });
-                      const resp = await window.fetch(
-                        serverPath +
-                          '/searchSubtitles?title=' +
-                          this.state.titleQuery,
-                      );
-                      const json = await resp.json();
-                      this.setState({ searchResults: json });
-                      this.setState({ loading: false });
-                    }}
-                  >
-                    <Icon name="search" />
-                    Search by Title
-                  </Button>
-                  {this.context.beta && (
-                    <Button
-                      style={{ marginLeft: '8px' }}
-                      loading={this.state.loading}
-                      color="green"
+              {this.state.searchResults.map(
+                (result: {
+                  id: string;
+                  type: string;
+                  attributes: Record<string, any>;
+                }) => (
+                  <div>
+                    <Radio
                       disabled={!this.props.haveLock()}
-                      icon
-                      labelPosition="left"
-                      size="mini"
-                      onClick={async () => {
-                        this.setState({ loading: true });
-                        const resp = await window.fetch(
-                          serverPath +
-                            '/searchSubtitles?url=' +
-                            this.props.roomMedia,
+                      label={result.attributes.release}
+                      name="radioGroup"
+                      value={result.attributes.files[0]?.file_id}
+                      checked={
+                        this.props.roomSubtitle ===
+                        serverPath +
+                          '/downloadSubtitles?file_id=' +
+                          result.attributes.files[0]?.file_id
+                      }
+                      onChange={(e, { value }) => {
+                        this.props.socket.emit(
+                          'CMD:subtitle',
+                          serverPath + '/downloadSubtitles?file_id=' + value,
                         );
-                        const json = await resp.json();
-                        this.setState({ searchResults: json });
-                        this.setState({ loading: false });
                       }}
-                    >
-                      <Icon name="search" />
-                      Search by Hash
-                    </Button>
-                  )}
-                </div>
+                    />
+                  </div>
+                ),
               )}
-              {this.state.searchResults.map((result: any) => (
-                <div>
-                  <Radio
-                    disabled={!this.props.haveLock()}
-                    label={result.SubFileName}
-                    name="radioGroup"
-                    value={result.SubDownloadLink}
-                    checked={this.props.roomSubtitle?.includes(
-                      result.SubDownloadLink,
-                    )}
-                    onChange={(e, { value }) => {
-                      this.props.socket.emit(
-                        'CMD:subtitle',
-                        serverPath + '/downloadSubtitles?url=' + value,
-                      );
-                    }}
-                  />
-                </div>
-              ))}
             </div>
           </Modal.Description>
         </Modal.Content>

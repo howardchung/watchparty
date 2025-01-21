@@ -26,7 +26,7 @@ import path from 'path';
 import { getStartOfDay } from './utils/time';
 import { getBgVMManagers, getSessionLimitSeconds } from './vm/utils';
 import { postgres, insertObject, upsertObject } from './utils/postgres';
-import axios from 'axios';
+import axios, { isAxiosError } from 'axios';
 import crypto from 'crypto';
 import zlib from 'zlib';
 import util from 'util';
@@ -140,13 +140,39 @@ app.post('/subtitle', async (req, res) => {
 });
 
 app.get('/downloadSubtitles', async (req, res) => {
-  const response = await axios.get(req.query.url as string, {
-    responseType: 'arraybuffer',
-  });
-  res.append('Content-Encoding', 'gzip');
-  res.append('Content-Type', 'text/plain');
-  redisCount('subDownloadsOS');
-  res.end(response.data);
+  // Request the URL from OS
+  try {
+    const urlResp = await axios({
+      url: 'https://api.opensubtitles.com/api/v1/download',
+      method: 'POST',
+      headers: {
+        'User-Agent': 'watchparty v1',
+        'Api-Key': config.OPENSUBTITLES_KEY,
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        // 'Authorization': 'Bearer ' + config.OPENSUBTITLES_KEY,
+      },
+      data: {
+        file_id: req.query.file_id,
+        // sub_format: 'srt',
+      },
+    });
+    // console.log(urlResp.data);
+    const url = urlResp.data.link;
+    const response = await axios.get(url, {
+      responseType: 'arraybuffer',
+    });
+    // res.append('Content-Encoding', 'gzip');
+    res.append('Content-Type', 'text/plain');
+    redisCount('subDownloadsOS');
+    // console.log(response.data);
+    res.end(response.data);
+  } catch (e) {
+    if (isAxiosError(e)) {
+      console.log(e.response);
+    }
+    throw e;
+  }
 });
 
 app.get('/searchSubtitles', async (req, res) => {
@@ -178,19 +204,22 @@ app.get('/searchSubtitles', async (req, res) => {
       let hash = computeOpenSubtitlesHash(start, end, size);
       // hash = 'f65334e75574f00f';
       // Search API for subtitles by hash
-      subUrl = `https://rest.opensubtitles.org/search/moviebytesize-${size}/moviehash-${hash}/sublanguageid-eng`;
+      subUrl = `https://api.opensubtitles.com/api/v1/subtitles?moviehash=${hash}&languages=en`;
     } else if (title) {
-      subUrl = `https://rest.opensubtitles.org/search/query-${encodeURIComponent(
-        title,
-      )}/sublanguageid-eng`;
+      subUrl = `https://api.opensubtitles.com/api/v1/subtitles?query=${title}&languages=en`;
     }
-    console.log(subUrl);
+    // Alternative, web client calls this to get back some JS with the download URL embedded
+    // https://www.opensubtitles.com/nocache/download/7585196/subreq.js?file_name=Borgen.S04E01.en&locale=en&np=true&sub_frmt=srt&subtitle_id=6615808&ext_installed=false
+    // Up to 10 downloads per IP per day, but proxyable and doesn't require key
     const response = await axios.get(subUrl, {
-      headers: { 'User-Agent': 'VLSub 0.10.2' },
+      headers: {
+        'User-Agent': 'watchparty v1',
+        'Api-Key': config.OPENSUBTITLES_KEY,
+      },
     });
-    // console.log(response);
+    // console.log(subUrl, response.data);
     const subtitles = response.data;
-    res.json(subtitles);
+    res.json(subtitles.data);
   } catch (e: any) {
     console.error(e.message);
     res.json([]);
