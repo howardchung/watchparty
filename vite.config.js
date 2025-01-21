@@ -4,6 +4,7 @@ const fs = require('fs');
 export default {
   build: {
     outDir: 'build',
+    // sourcemap: true,
   },
   server: {
     https: process.env.SSL_CRT_FILE
