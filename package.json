@@ -13,7 +13,7 @@
     "compression": "^1.7.4",
     "cors": "^2.8.5",
     "dashjs": "^4.7.4",
-    "discord.js": "^14.14.1",
+    "discord.js": "^14.17.3",
     "dotenv": "^16.3.2",
     "eventemitter3": "^4.0.7",
     "express": "^5.0.1",
@@ -62,7 +62,7 @@
     "updateSnapshot": "curl -X POST localhost:3100/updateSnapshot -H 'Content-Type: application/json' -d '{\"provider\":\"Hetzner\",\"region\":\"US\"}'",
     "testvBrowser": "docker run -d --rm --name=vbrowser --log-opt max-size=1g --net=host --shm-size=1g --cap-add=\"SYS_ADMIN\" -e DISPLAY=\":99.0\" -e NEKO_PASSWORD=user -e NEKO_PASSWORD_ADMIN=admin -e NEKO_BIND=\":5100\" -e NEKO_EPR=\":59000-59100\" -e NEKO_H264=\"1\" howardc93/vbrowser",
     "testvlc": "docker run -d --rm --name=vlc --log-opt max-size=1g --net=host -e VLC_MEDIA=\"https://github.com/ietf-wg-cellar/matroska-test-files/raw/master/test_files/test1.mkv\" -e NEKO_PASSWORD=user -e NEKO_PASSWORD_ADMIN=admin -e NEKO_BIND=\":5100\" -e NEKO_EPR=\":59000-59100\" -e NEKO_H264=\"1\" m1k1o/neko:vlc",
-    "analyze": "source-map-explorer 'build/static/js/*.js' --html result.html"
+    "analyze": "source-map-explorer 'build/assets/*.js' --html result.html"
   },
   "husky": {
     "hooks": {
@@ -94,7 +94,7 @@
     "@types/cors": "^2.8.17",
     "@types/emoji-mart": "^3.0.14",
     "@types/express": "^5.0.0",
-    "@types/node": "^20.11.5",
+    "@types/node": "^22.10.7",
     "@types/pg": "^8.10.9",
     "@types/react": "^18.2.48",
     "@types/react-dom": "^18.2.18",
@@ -110,7 +110,7 @@
     "prettier": "^3.2.4",
     "source-map-explorer": "^2.5.3",
     "ts-node-dev": "^2.0.0",
-    "typescript": "^5.3.3",
-    "vite": "^5.0.12"
+    "typescript": "^5.7.3",
+    "vite": "^6.0.11"
   }
 }
