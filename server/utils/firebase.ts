@@ -17,11 +17,18 @@ export async function validateUserToken(uid: string, token: string) {
   if (!token) {
     return undefined;
   }
-  const decoded = await admin.auth().verifyIdToken(token);
-  if (uid !== decoded.uid) {
+  try {
+    const decoded = await admin.auth().verifyIdToken(token);
+    if (uid !== decoded.uid) {
+      // Valid but for wrong user
+      return undefined;
+    }
+    return decoded;
+  } catch (e) {
+    // Promise rejects if verification failed
+    console.log(e);
     return undefined;
   }
-  return decoded;
 }
 
 export async function writeData(key: string, value: string) {

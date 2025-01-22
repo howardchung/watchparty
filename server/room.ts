@@ -98,19 +98,32 @@ export class Room {
     }, 1000);
 
     io.of(roomId).use(async (socket, next) => {
-      // Validate the connector has the room password
-      const password = socket.handshake.query?.password;
-      // console.log(this.roomId, this.password, password);
       if (postgres) {
         const result = await postgres.query(
-          `SELECT password, "isSubRoom" FROM room where "roomId" = $1`,
+          `SELECT password, owner, "isSubRoom" FROM room where "roomId" = $1`,
           [this.roomId],
         );
+        const password = socket.handshake.query?.password;
+        // Check if user has the password
         const roomPassword = result.rows[0]?.password;
         if (roomPassword && password !== roomPassword) {
-          next(new Error('not authorized'));
-          return;
+          // User didn't have password, but check if they are owner
+          const uid = socket.handshake.query?.uid;
+          const token = socket.handshake.query?.token;
+          let isOwner = false;
+          const decoded = await validateUserToken(
+            uid as string,
+            token as string,
+          );
+          if (decoded) {
+            isOwner = result.rows[0]?.owner === decoded.uid;
+          }
+          if (!isOwner) {
+            next(new Error('not authorized'));
+            return;
+          }
         }
+        // Check if room is at capacity
         const isSubRoom = result.rows[0]?.isSubRoom;
         const roomCapacity = isSubRoom
           ? config.ROOM_CAPACITY_SUB
