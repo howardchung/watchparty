@@ -398,17 +398,10 @@ const ChatMessage = ({
   return (
     <Comment className={`${classes.comment} ${className}`}>
       {id ? (
-        <Popup
-          content="WatchParty Plus subscriber"
-          disabled={!isSub}
-          trigger={
-            <Comment.Avatar
-              className={isSub ? classes.subscriber : ''}
-              src={
-                pictureMap[id] ||
-                getDefaultPicture(nameMap[id], getColorForStringHex(id))
-              }
-            />
+        <Comment.Avatar
+          src={
+            pictureMap[id] ||
+            getDefaultPicture(nameMap[id], getColorForStringHex(id))
           }
         />
       ) : null}
@@ -421,7 +414,11 @@ const ChatMessage = ({
           isChatMessage
           disabled={!Boolean(owner && owner === user?.uid)}
           trigger={
-            <Comment.Author as="a" className={styles.light}>
+            <Comment.Author
+              title={isSub ? 'WatchParty Plus subscriber' : ''}
+              as="a"
+              className={isSub ? classes.subscriber : styles.light}
+            >
               {Boolean(system) && 'System'}
               {nameMap[id] || id}
             </Comment.Author>

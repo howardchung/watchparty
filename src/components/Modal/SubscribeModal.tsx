@@ -127,7 +127,7 @@ export class SubscribeModal extends React.Component<{
                   </Table.Cell>
                 </Table.Row>
                 <Table.Row>
-                  <Table.Cell>Custom Room URLs and Titles</Table.Cell>
+                  <Table.Cell>Custom room URLs and titles</Table.Cell>
                   <Table.Cell></Table.Cell>
                   <Table.Cell>
                     <Icon name="check" />
@@ -135,7 +135,7 @@ export class SubscribeModal extends React.Component<{
                 </Table.Row>
                 <Table.Row>
                   <Table.Cell>
-                    Discord Subscriber Role (with linked account)
+                    Discord subscriber role (with linked account)
                   </Table.Cell>
                   <Table.Cell></Table.Cell>
                   <Table.Cell>
@@ -143,7 +143,7 @@ export class SubscribeModal extends React.Component<{
                   </Table.Cell>
                 </Table.Row>
                 <Table.Row>
-                  <Table.Cell>Animated Chat Avatar Frame</Table.Cell>
+                  <Table.Cell>Colored names in chat</Table.Cell>
                   <Table.Cell></Table.Cell>
                   <Table.Cell>
                     <Icon name="check" />
