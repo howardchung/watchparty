@@ -7,6 +7,7 @@ import {
   Checkbox,
   Header,
   Input,
+  Label,
 } from 'semantic-ui-react';
 import { Socket } from 'socket.io-client';
 import { openFileSelector, serverPath } from '../../utils';
@@ -81,8 +82,9 @@ export class SubtitleModal extends React.Component<{
     return (
       <Modal open={true} onClose={closeModal}>
         <Modal.Header>Subtitles</Modal.Header>
-        <Modal.Content image>
+        <Modal.Content>
           <Modal.Description>
+            <Header>Local subtitle settings</Header>
             <Checkbox
               toggle
               checked={this.props.getSubtitleMode() === 'showing'}
@@ -91,30 +93,61 @@ export class SubtitleModal extends React.Component<{
                 this.props.setSubtitleMode();
               }}
             />
-            <hr />
+            <Header>Room subtitle settings</Header>
             <div
-              style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}
+              style={{ display: 'flex', gap: '4px', flexDirection: 'column' }}
             >
-              <Header>Room subtitle settings</Header>
-              {config.NODE_ENV === 'development' && (
-                <Input value={this.props.roomSubtitle} />
-              )}
-              {
-                <Input
-                  value={this.state.titleQuery}
-                  onChange={(e, { value }) =>
-                    this.setState({ titleQuery: value })
-                  }
-                />
-              }
-              <div>
+              <Input
+                value={this.props.roomSubtitle}
+                labelPosition="left"
+                action
+                disabled={!this.props.haveLock()}
+                onChange={(e, data) =>
+                  this.props.socket.emit('CMD:subtitle', data.value)
+                }
+              >
+                <Label>Current</Label>
+                <input />
+                <Button
+                  color="red"
+                  icon
+                  labelPosition="left"
+                  disabled={!this.props.haveLock()}
+                  onClick={() => {
+                    this.props.socket.emit('CMD:subtitle', '');
+                  }}
+                >
+                  <Icon name="trash" />
+                  Clear
+                </Button>
+                <Button
+                  color="violet"
+                  icon
+                  labelPosition="left"
+                  onClick={() => this.uploadSubtitle()}
+                  disabled={!this.props.haveLock()}
+                >
+                  <Icon name="upload" />
+                  Upload (.srt)
+                </Button>
+              </Input>
+              <Header>OpenSubtitles</Header>
+              <Input
+                value={this.state.titleQuery}
+                onChange={(e, { value }) =>
+                  this.setState({ titleQuery: value })
+                }
+                action
+                labelPosition="left"
+                disabled={!this.props.haveLock()}
+              >
+                <input />
                 <Button
                   loading={this.state.loading}
                   color="green"
                   disabled={!this.props.haveLock()}
                   icon
                   labelPosition="left"
-                  size="mini"
                   onClick={async () => {
                     this.setState({ loading: true });
                     const resp = await window.fetch(
@@ -128,7 +161,7 @@ export class SubtitleModal extends React.Component<{
                   }}
                 >
                   <Icon name="search" />
-                  OpenSubtitles by Title
+                  By title
                 </Button>
                 <Button
                   loading={this.state.loading}
@@ -136,7 +169,6 @@ export class SubtitleModal extends React.Component<{
                   disabled={!this.props.haveLock()}
                   icon
                   labelPosition="left"
-                  size="mini"
                   onClick={async () => {
                     this.setState({ loading: true });
                     const resp = await window.fetch(
@@ -150,74 +182,39 @@ export class SubtitleModal extends React.Component<{
                   }}
                 >
                   <Icon name="search" />
-                  OpenSubtitles by Hash
+                  By hash
                 </Button>
-              </div>
+              </Input>
               <div>
-                <Radio
-                  disabled={!this.props.haveLock()}
-                  name="radioGroup"
-                  label="No subtitles"
-                  value=""
-                  checked={!this.props.roomSubtitle}
-                  onClick={(e, { value }) => {
-                    this.props.socket.emit('CMD:subtitle', '');
-                  }}
-                />
+                {this.state.searchResults.map(
+                  (result: {
+                    id: string;
+                    type: string;
+                    attributes: Record<string, any>;
+                  }) => (
+                    <div key={result.id}>
+                      <Radio
+                        disabled={!this.props.haveLock()}
+                        label={result.attributes.release}
+                        name="radioGroup"
+                        value={result.attributes.files[0]?.file_id}
+                        checked={this.props.roomSubtitle?.includes(
+                          encodeURIComponent(
+                            result.attributes.files[0]?.file_name,
+                          ),
+                        )}
+                        onChange={async (e, { value }) => {
+                          const resp = await fetch(
+                            serverPath + '/downloadSubtitles?file_id=' + value,
+                          );
+                          const data = await resp.json();
+                          this.props.socket.emit('CMD:subtitle', data.link);
+                        }}
+                      />
+                    </div>
+                  ),
+                )}
               </div>
-              <div>
-                <Radio
-                  disabled={!this.props.haveLock()}
-                  name="radioGroup"
-                  label=""
-                  value=""
-                  checked={
-                    Boolean(this.props.roomSubtitle) &&
-                    this.props.roomSubtitle?.startsWith(
-                      serverPath + '/subtitle',
-                    )
-                  }
-                />
-                <Button
-                  color="violet"
-                  icon
-                  labelPosition="left"
-                  onClick={() => this.uploadSubtitle()}
-                  disabled={!this.props.haveLock()}
-                  size="mini"
-                >
-                  <Icon name="upload" />
-                  Upload (.srt)
-                </Button>
-              </div>
-              {this.state.searchResults.map(
-                (result: {
-                  id: string;
-                  type: string;
-                  attributes: Record<string, any>;
-                }) => (
-                  <div>
-                    <Radio
-                      disabled={!this.props.haveLock()}
-                      label={result.attributes.release}
-                      name="radioGroup"
-                      value={result.attributes.files[0]?.file_id}
-                      checked={
-                        this.props.roomSubtitle ===
-                        serverPath +
-                          '/downloadSubtitles?file_id=' +
-                          result.attributes.files[0]?.file_id
-                      }
-                      onChange={(e, { value }) => {
-                        this.props.socket.emit(
-                          'CMD:subtitle',
-                          serverPath + '/downloadSubtitles?file_id=' + value,
-                        );
-                      }}
-                    />
-                  </div>
-                ),
-              )}
             </div>
           </Modal.Description>
         </Modal.Content>

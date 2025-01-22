@@ -158,15 +158,14 @@ app.get('/downloadSubtitles', async (req, res) => {
       },
     });
     // console.log(urlResp.data);
-    const url = urlResp.data.link;
-    const response = await axios.get(url, {
-      responseType: 'arraybuffer',
-    });
-    // res.append('Content-Encoding', 'gzip');
-    res.append('Content-Type', 'text/plain');
+    // Return the link to the user
+    res.json(urlResp.data);
     redisCount('subDownloadsOS');
-    // console.log(response.data);
-    res.end(response.data);
+    // Alternative: Download the data, store in redis, and return the hash (same as upload)
+    // However, this will give no info about which subtitle option is selected
+    // const response = await axios.get(urlResp.data.link, {
+    //   responseType: 'arraybuffer',
+    // });
   } catch (e) {
     if (isAxiosError(e)) {
       console.log(e.response);
