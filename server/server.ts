@@ -885,6 +885,7 @@ async function getStats() {
   const vBrowserLaunches = await getRedisCountDay('vBrowserLaunches');
   const vBrowserFails = await getRedisCountDay('vBrowserFails');
   const vBrowserStagingFails = await getRedisCountDay('vBrowserStagingFails');
+  const vBrowserReimages = await getRedisCountDay('vBrowserReimage');
   const vBrowserStopTimeout = await getRedisCountDay(
     'vBrowserTerminateTimeout',
   );
@@ -1008,6 +1009,7 @@ async function getStats() {
     vBrowserLaunches,
     vBrowserFails,
     vBrowserStagingFails,
+    vBrowserReimages,
     vBrowserStopManual,
     vBrowserStopEmpty,
     vBrowserStopTimeout,
