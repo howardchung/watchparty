@@ -17,6 +17,7 @@ import Announce from '../Announce/Announce';
 import { InviteButton } from '../InviteButton/InviteButton';
 import appStyles from '../App/App.module.css';
 import { MetadataContext } from '../../MetadataContext';
+import config from '../../config';
 
 export async function createRoom(
   user: firebase.User | undefined,
@@ -133,6 +134,27 @@ export class SignInButton extends React.Component<SignInButtonProps> {
         </div>
       );
     }
+    const enabledOptions = config.VITE_FIREBASE_SIGNIN_METHODS.split(',');
+    const components: Record<string, JSX.Element> = {
+      facebook: (
+        <Dropdown.Item onClick={this.facebookSignIn}>
+          <Icon name="facebook" />
+          Facebook
+        </Dropdown.Item>
+      ),
+      google: (
+        <Dropdown.Item onClick={this.googleSignIn}>
+          <Icon name="google" />
+          Google
+        </Dropdown.Item>
+      ),
+      email: (
+        <Dropdown.Item onClick={() => this.setState({ isLoginOpen: true })}>
+          <Icon name="mail" />
+          Email
+        </Dropdown.Item>
+      ),
+    };
     return (
       <React.Fragment>
         {this.state.isLoginOpen && (
@@ -154,20 +176,9 @@ export class SignInButton extends React.Component<SignInButtonProps> {
               fluid={this.props.fluid}
             >
               <Dropdown.Menu>
-                <Dropdown.Item onClick={this.facebookSignIn}>
-                  <Icon name="facebook" />
-                  Facebook
-                </Dropdown.Item>
-                <Dropdown.Item onClick={this.googleSignIn}>
-                  <Icon name="google" />
-                  Google
-                </Dropdown.Item>
-                <Dropdown.Item
-                  onClick={() => this.setState({ isLoginOpen: true })}
-                >
-                  <Icon name="mail" />
-                  Email
-                </Dropdown.Item>
+                {enabledOptions.map((opt) => {
+                  return components[opt];
+                })}
               </Dropdown.Menu>
             </Dropdown>
           }

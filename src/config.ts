@@ -11,5 +11,6 @@ export default {
   VITE_RECAPTCHA_SITE_KEY:
     import.meta.env.VITE_RECAPTCHA_SITE_KEY ??
     '6LeDGP4UAAAAAGYZZenyU-3fRdhL3p0BaBmiK9mM',
+  VITE_FIREBASE_SIGNIN_METHODS: 'facebook,google,email',
   NODE_ENV: import.meta.env.DEV ? 'development' : 'production',
 };
