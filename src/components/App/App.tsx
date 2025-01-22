@@ -172,7 +172,7 @@ export default class App extends React.Component<AppProps, AppState> {
     tsMap: {},
     nameMap: {},
     pictureMap: {},
-    myName: '',
+    myName: window.localStorage.getItem('watchparty-username') ?? '',
     myPicture: '',
     loading: true,
     scrollTimestamp: 0,
@@ -332,9 +332,8 @@ export default class App extends React.Component<AppProps, AppState> {
         successMessage: '',
         warningMessage: '',
       });
-      // Load username from localstorage
-      let userName = window.localStorage.getItem('watchparty-username');
-      this.updateName(null, { value: userName || (await generateName()) });
+      // Use the name in our state, generate one if empty
+      this.updateName(this.state.myName || (await generateName()));
       this.loadSignInData(this.context.user);
     });
     socket.on('connect_error', (err: any) => {
@@ -848,7 +847,16 @@ export default class App extends React.Component<AppProps, AppState> {
       // If we want accurate surname/given name we'll need to save that somewhere
       const firstName = user.displayName?.split(' ')[0];
       if (firstName) {
-        this.updateName(null, { value: firstName });
+        // Don't update the username if the user wants to customize their own
+        // Set a flag in localstorage so we only update this once, if the user changes name manually later we won't overwrite
+        // Clear the flag on logout
+        if (!window.localStorage.getItem('watchparty-loginname')) {
+          this.updateName(firstName);
+          window.localStorage.setItem(
+            'watchparty-loginname',
+            Date.now().toString(),
+          );
+        }
       }
       const userImage = await getUserImage(user);
       if (userImage) {
@@ -1759,10 +1767,10 @@ export default class App extends React.Component<AppProps, AppState> {
     this.socket.emit('CMD:playlistDelete', index);
   };
 
-  updateName = (_e: any, data: { value: string }) => {
-    this.setState({ myName: data.value });
-    this.socket.emit('CMD:name', data.value);
-    window.localStorage.setItem('watchparty-username', data.value);
+  updateName = (name: string) => {
+    this.setState({ myName: name });
+    this.socket.emit('CMD:name', name);
+    window.localStorage.setItem('watchparty-username', name);
   };
 
   updatePicture = (url: string) => {
@@ -1915,13 +1923,16 @@ export default class App extends React.Component<AppProps, AppState> {
             fluid
             label={'My name is:'}
             value={this.state.myName}
-            onChange={this.updateName}
+            onChange={(_e, data) => {
+              this.updateName(data.value);
+            }}
             style={{ visibility: displayRightContent ? '' : 'hidden' }}
             icon={
               <Icon
-                onClick={async () =>
-                  this.updateName(null, { value: await generateName() })
-                }
+                onClick={async () => {
+                  const randName = await generateName();
+                  this.updateName(randName);
+                }}
                 name="random"
                 inverted
                 circular
