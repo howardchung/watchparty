@@ -320,6 +320,8 @@ export default class App extends React.Component<AppProps, AppState> {
       query: {
         clientId: getOrCreateClientId(),
         password,
+        uid: this.context.user?.uid,
+        token: await this.context.user?.getIdToken(),
         shard,
       },
     });
