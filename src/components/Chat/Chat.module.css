@@ -1,12 +1,17 @@
-.subscriber {
+.subscriber.subscriber.subscriber.subscriber.subscriber {
+  color: rgb(33, 186, 69);
+  font-weight: 700;
+}
+
+/* .subscriber {
   position: relative;
-}
+} */
 
-.subscriber img {
+/* .subscriber img {
   border: 3px solid transparent;
-}
+} */
 
-.subscriber:before {
+/* .subscriber:before {
   content: '';
   background: linear-gradient(
     60deg,
@@ -26,9 +31,9 @@
   border-radius: 2px;
   animation: animatedgradient 2.5s ease infinite;
   background-size: 200% 200%;
-}
+} */
 
-@keyframes animatedgradient {
+/* @keyframes animatedgradient {
   0% {
     background-position: 0% 50%;
   }
@@ -38,7 +43,7 @@
   100% {
     background-position: 0% 50%;
   }
-}
+} */
 
 .chatContainer {
   flex-grow: 1;
