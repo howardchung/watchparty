@@ -106,7 +106,7 @@ app.get('/isFreePoolFull', async (req, res) => {
       return isFull;
     }),
   );
-  const isFull = fullResult.every(Boolean);
+  const isFull = freePools.length && fullResult.every(Boolean);
   res.json({ isFull });
 });
 

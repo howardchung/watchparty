@@ -2368,6 +2368,25 @@ export default class App extends React.Component<AppProps, AppState> {
                             ]}
                           ></Dropdown>
                         )}
+                        {this.playingVBrowser() &&
+                          isMobile() &&
+                          this.state.controller === this.socket.id && (
+                            <Button
+                              fluid
+                              className="toolButton"
+                              icon
+                              labelPosition="left"
+                              color="blue"
+                              disabled={!this.haveLock()}
+                              onClick={() => {
+                                const dummy = document.getElementById('dummy');
+                                dummy?.focus();
+                              }}
+                            >
+                              <Icon name="keyboard" />
+                              Keyboard
+                            </Button>
+                          )}
                         {this.playingVBrowser() && (
                           <Button
                             fluid
