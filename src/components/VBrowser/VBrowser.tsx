@@ -18,6 +18,7 @@ export default class VBrowser extends React.Component<{
   setQuality: (quality: string) => void;
   doPlay: () => Promise<void>;
 }> {
+  state = { dummyValue: '' };
   // private observer = new ResizeObserver(this.onResize);
   private keyboard = GuacamoleKeyboard();
   private focused = false;
@@ -374,6 +375,80 @@ export default class VBrowser extends React.Component<{
             style={{ width: '100%' }}
           />
           <audio id="iPhoneAudio" />
+          <input
+            type="text"
+            id="dummy"
+            value={this.state.dummyValue}
+            style={{
+              position: 'absolute',
+              left: 0,
+              top: 0,
+              height: 0,
+              opacity: 0,
+            }}
+            onFocus={() => {
+              this.focused = true;
+              this.setState({ dummyValue: '' });
+            }}
+            onBlur={() => {
+              this.focused = false;
+              this.setState({ dummyValue: '' });
+            }}
+            onKeyDown={(e) => {
+              if (e.keyCode !== 229) {
+                document
+                  .getElementById('leftOverlay')
+                  ?.dispatchEvent(new KeyboardEvent('keydown', { key: e.key }));
+              }
+            }}
+            onKeyUp={(e) => {
+              if (e.keyCode !== 229) {
+                document
+                  .getElementById('leftOverlay')
+                  ?.dispatchEvent(new KeyboardEvent('keyup', { key: e.key }));
+              }
+            }}
+            onChange={(e) => {
+              const oldVal = this.state.dummyValue;
+              const newVal = e.target.value;
+              if (newVal.length > oldVal.length) {
+                //keyup/keydown don't work on Chrome mobile for alphanumeric chars
+                // see https://stackoverflow.com/questions/36753548/keycode-on-android-is-always-229
+                // grab the last value out of the textfield instead and send that event
+                document
+                  .getElementById('leftOverlay')
+                  ?.dispatchEvent(
+                    new KeyboardEvent('keydown', {
+                      key: newVal.slice(-1).toLowerCase(),
+                    }),
+                  );
+                document
+                  .getElementById('leftOverlay')
+                  ?.dispatchEvent(
+                    new KeyboardEvent('keyup', {
+                      key: newVal.slice(-1).toLowerCase(),
+                    }),
+                  );
+                // this.$client.sendData('keydown', { key: newVal.slice(-1).charCodeAt(0) });
+                // this.$client.sendData('keyup', { key: newVal.slice(-1).charCodeAt(0) });
+              } else {
+                document
+                  .getElementById('leftOverlay')
+                  ?.dispatchEvent(
+                    new KeyboardEvent('keydown', { key: 'Backspace' }),
+                  );
+                document
+                  .getElementById('leftOverlay')
+                  ?.dispatchEvent(
+                    new KeyboardEvent('keyup', { key: 'Backspace' }),
+                  );
+                // Backspace is 65288?
+                // this.$client.sendData('keydown', { key: 65288 });
+                // this.$client.sendData('keyup', { key: 65288 });
+              }
+              this.setState({ dummyValue: newVal });
+            }}
+          />
           <div
             ref={this._overlay}
             id={'leftOverlay'}

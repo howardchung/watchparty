@@ -52,17 +52,19 @@ function createVMManager(poolConfig: PoolConfig): VMManager {
 }
 
 export function getVMManagerConfig(): PoolConfig[] {
-  return config.VM_MANAGER_CONFIG.split(',').map((c) => {
-    const split = c.split(':');
-    return {
-      provider: split[0],
-      isLarge: split[1] === 'large',
-      region: split[2] as PoolRegion,
-      minSize: Number(split[3]),
-      limitSize: Number(split[4]),
-      hostname: split[5],
-    };
-  });
+  return config.VM_MANAGER_CONFIG.split(',')
+    .filter(Boolean)
+    .map((c) => {
+      const split = c.split(':');
+      return {
+        provider: split[0],
+        isLarge: split[1] === 'large',
+        region: split[2] as PoolRegion,
+        minSize: Number(split[3]),
+        limitSize: Number(split[4]),
+        hostname: split[5],
+      };
+    });
 }
 
 export function getBgVMManagers(): { [key: string]: VMManager } {
