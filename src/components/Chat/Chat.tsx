@@ -141,7 +141,7 @@ export class Chat extends React.Component<ChatProps> {
       this.messagesRef.current.scrollHeight -
         this.messagesRef.current.scrollTop -
         this.messagesRef.current.offsetHeight <
-        100
+        50
     );
   };
 
