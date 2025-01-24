@@ -1720,13 +1720,15 @@ export default class App extends React.Component<AppProps, AppState> {
   };
 
   localFullScreen = async (bVideoOnly: boolean) => {
-    let container = document.getElementById('theaterContainer') as HTMLElement;
+    // Default: fullscreen the body (theater mode)
+    let container = document.body as HTMLElement;
     if (bVideoOnly || isMobile()) {
       if (this.playingVBrowser() && !isMobile()) {
+        // vbrowser needs to fullscreen the control wrapper div
         // Can't really control the VBrowser on mobile anyway, so just fullscreen the video
-        // https://github.com/howardchung/watchparty/issues/208
         container = document.getElementById('leftVideoParent') as HTMLElement;
       } else {
+        // fullscreen just the video
         container = this.Player().getVideoEl();
       }
     }
@@ -1739,13 +1741,15 @@ export default class App extends React.Component<AppProps, AppState> {
       return;
     }
     if (!document.fullscreenElement) {
+      // not currently in fullscreen
       await container.requestFullscreen();
-      return;
-    }
-    const bChangeElements = document.fullscreenElement !== container;
-    await document.exitFullscreen();
-    if (bChangeElements) {
-      await container.requestFullscreen();
+    } else {
+      // e.g. switching from video fullscreen to theater mode
+      const bChangeElements = document.fullscreenElement !== container;
+      await document.exitFullscreen();
+      if (bChangeElements) {
+        await container.requestFullscreen();
+      }
     }
   };
 
@@ -2158,15 +2162,17 @@ export default class App extends React.Component<AppProps, AppState> {
             }}
           ></Message>
         )}
-        <TopBar
-          roomTitle={this.state.roomTitle}
-          roomDescription={this.state.roomDescription}
-          roomTitleColor={this.state.roomTitleColor}
-          showInviteButton
-        />
+        {!document.fullscreenElement && (
+          <TopBar
+            roomTitle={this.state.roomTitle}
+            roomDescription={this.state.roomDescription}
+            roomTitleColor={this.state.roomTitleColor}
+            showInviteButton
+          />
+        )}
         {
           <Grid stackable celled="internally">
-            <Grid.Row id="theaterContainer">
+            <Grid.Row>
               <Grid.Column
                 width={this.state.showRightBar ? 12 : 15}
                 className={
