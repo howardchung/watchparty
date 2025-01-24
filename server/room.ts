@@ -1249,11 +1249,9 @@ export class Room {
         return;
       }
     }
-    if (vanity) {
-      if (vanity.length > 100) {
-        socket.emit('errorMessage', 'Custom URL too long');
-        return;
-      }
+    if (vanity && vanity.length > 100) {
+      socket.emit('errorMessage', 'Custom URL too long');
+      return;
     }
     if (roomTitle && roomTitle.length > 50) {
       socket.emit('errorMessage', 'Room title too long');
@@ -1281,7 +1279,8 @@ export class Room {
     };
     if (isSubscriber) {
       // user must be sub to set certain properties
-      roomObj.vanity = vanity;
+      // If empty vanity, reset to null
+      roomObj.vanity = vanity ?? null;
       roomObj.roomTitle = roomTitle;
       roomObj.roomDescription = roomDescription;
       roomObj.roomTitleColor = roomTitleColor;
