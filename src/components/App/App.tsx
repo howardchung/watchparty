@@ -5,16 +5,12 @@ import {
   Dimmer,
   Dropdown,
   DropdownProps,
-  Grid,
   Icon,
   Input,
   Loader,
   Message,
   Popup,
-  Menu,
   Modal,
-  Label,
-  SemanticCOLORS,
   Form,
 } from 'semantic-ui-react';
 import io, { Socket } from 'socket.io-client';
@@ -49,7 +45,7 @@ import { ComboBox } from '../ComboBox/ComboBox';
 import { SearchComponent } from '../SearchComponent/SearchComponent';
 import { Controls } from '../Controls/Controls';
 import { VBrowserModal } from '../Modal/VBrowserModal';
-import { SettingsTab } from '../Settings/SettingsTab';
+import { SettingsModal } from '../Settings/SettingsModal';
 import { ErrorModal } from '../Modal/ErrorModal';
 import { PasswordModal } from '../Modal/PasswordModal';
 import { ScreenShareModal } from '../Modal/ScreenShareModal';
@@ -62,6 +58,7 @@ import type WebTorrent from 'webtorrent';
 import styles from './App.module.css';
 import config from '../../config';
 import { MetadataContext } from '../../MetadataContext';
+import ChatVideoCard from '../Playlist/ChatVideoCard';
 
 declare global {
   interface Window {
@@ -142,7 +139,8 @@ interface AppState {
   successMessage: string;
   warningMessage: string;
   isChatDisabled: boolean;
-  showRightBar: boolean;
+  showChatColumn: boolean;
+  showPeopleColumn: boolean;
   owner: string | undefined;
   vanity: string | undefined;
   password: string | undefined;
@@ -154,6 +152,7 @@ interface AppState {
   roomPlaybackRate: number;
   isLiveStream: boolean;
   liveStreamStart: number | undefined;
+  settingsModalOpen: boolean;
 }
 
 export default class App extends React.Component<AppProps, AppState> {
@@ -209,7 +208,8 @@ export default class App extends React.Component<AppProps, AppState> {
     successMessage: '',
     warningMessage: '',
     isChatDisabled: false,
-    showRightBar: true,
+    showChatColumn: true,
+    showPeopleColumn: isMobile(),
     owner: undefined,
     vanity: undefined,
     password: undefined,
@@ -221,6 +221,7 @@ export default class App extends React.Component<AppProps, AppState> {
     roomPlaybackRate: 0,
     isLiveStream: false,
     liveStreamStart: undefined,
+    settingsModalOpen: false,
   };
   socket: Socket = null as any;
   mediasoupPubSocket: Socket | null = null;
@@ -1698,6 +1699,7 @@ export default class App extends React.Component<AppProps, AppState> {
 
   onFullScreenChange = () => {
     this.setState({ fullScreen: Boolean(document.fullscreenElement) });
+    setTimeout(() => this.chatRef.current?.scrollToBottom(), 100);
   };
 
   onKeydown = (e: any) => {
@@ -1878,8 +1880,13 @@ export default class App extends React.Component<AppProps, AppState> {
     this.setState({ controlsTimestamp: Date.now() });
   };
 
+  setSettingsModalOpen = (settingsModalOpen: boolean) => {
+    this.setState({ settingsModalOpen });
+  };
+
   render() {
     const sharer = this.state.participants.find((p) => p.isScreenShare);
+    const playlist = this.state.playlist;
     const controls = (
       <Controls
         key={this.state.controlsTimestamp}
@@ -1910,151 +1917,6 @@ export default class App extends React.Component<AppProps, AppState> {
         localSeek={this.localSeek}
         localSetSubtitleMode={this.Player().setSubtitleMode}
       />
-    );
-    const displayRightContent =
-      this.state.showRightBar || this.state.fullScreen;
-    const rightBar = (
-      <Grid.Column
-        width={displayRightContent ? 4 : 1}
-        style={{ display: 'flex', flexDirection: 'column' }}
-        className={`${
-          this.state.fullScreen
-            ? styles.fullHeightColumnFullscreen
-            : styles.fullHeightColumn
-        }`}
-      >
-        <Form autoComplete="off">
-          <Input
-            inverted
-            fluid
-            label={'My name is:'}
-            value={this.state.myName}
-            onChange={(_e, data) => {
-              this.updateName(data.value);
-            }}
-            style={{ visibility: displayRightContent ? '' : 'hidden' }}
-            icon={
-              <Icon
-                onClick={async () => {
-                  const randName = await generateName();
-                  this.updateName(randName);
-                }}
-                name="random"
-                inverted
-                circular
-                link
-                title="Generate a random name"
-              />
-            }
-          />
-        </Form>
-        {
-          <Menu
-            inverted
-            widths={3}
-            style={{
-              marginTop: '4px',
-              marginBottom: '4px',
-              visibility: displayRightContent ? '' : 'hidden',
-              height: '40px',
-            }}
-          >
-            <Menu.Item
-              name="chat"
-              active={this.state.currentTab === 'chat'}
-              onClick={() => {
-                this.setState({ currentTab: 'chat', unreadCount: 0 });
-              }}
-              as="a"
-            >
-              Chat
-              {this.state.unreadCount > 0 && (
-                <Label circular color="red">
-                  {this.state.unreadCount}
-                </Label>
-              )}
-            </Menu.Item>
-            <Menu.Item
-              name="people"
-              active={this.state.currentTab === 'people'}
-              onClick={() => this.setState({ currentTab: 'people' })}
-              as="a"
-            >
-              People
-              <Label
-                circular
-                color={
-                  getColorForString(
-                    this.state.participants.length.toString(),
-                  ) as SemanticCOLORS
-                }
-              >
-                {this.state.participants.length}
-              </Label>
-            </Menu.Item>
-            <Menu.Item
-              name="settings"
-              active={this.state.currentTab === 'settings'}
-              onClick={() => this.setState({ currentTab: 'settings' })}
-              as="a"
-            >
-              {/* <Icon name="setting" /> */}
-              Settings
-            </Menu.Item>
-          </Menu>
-        }
-        <Chat
-          chat={this.state.chat}
-          nameMap={this.state.nameMap}
-          pictureMap={this.state.pictureMap}
-          socket={this.socket}
-          scrollTimestamp={this.state.scrollTimestamp}
-          getMediaDisplayName={this.getMediaDisplayName}
-          hide={this.state.currentTab !== 'chat' || !displayRightContent}
-          isChatDisabled={this.state.isChatDisabled}
-          owner={this.state.owner}
-          ref={this.chatRef}
-          isLiveStream={this.state.isLiveStream}
-        />
-        {this.state.state === 'connected' && (
-          <VideoChat
-            socket={this.socket}
-            participants={this.state.participants}
-            nameMap={this.state.nameMap}
-            pictureMap={this.state.pictureMap}
-            tsMap={this.state.tsMap}
-            rosterUpdateTS={this.state.rosterUpdateTS}
-            hide={this.state.currentTab !== 'people' || !displayRightContent}
-            owner={this.state.owner}
-            getLeaderTime={this.getLeaderTime}
-          />
-        )}
-        <SettingsTab
-          hide={this.state.currentTab !== 'settings' || !displayRightContent}
-          roomLock={this.state.roomLock}
-          setRoomLock={this.setRoomLock}
-          socket={this.socket}
-          roomId={this.state.roomId}
-          isChatDisabled={this.state.isChatDisabled}
-          setIsChatDisabled={this.setIsChatDisabled}
-          owner={this.state.owner}
-          setOwner={this.setOwner}
-          vanity={this.state.vanity}
-          setVanity={this.setVanity}
-          inviteLink={this.state.inviteLink}
-          password={this.state.password}
-          setPassword={this.setPassword}
-          clearChat={this.clearChat}
-          roomTitle={this.state.roomTitle}
-          setRoomTitle={this.setRoomTitle}
-          roomDescription={this.state.roomDescription}
-          setRoomDescription={this.setRoomDescription}
-          roomTitleColor={this.state.roomTitleColor}
-          setRoomTitleColor={this.setRoomTitleColor}
-          mediaPath={this.state.mediaPath}
-          setMediaPath={this.setMediaPath}
-        />
-      </Grid.Column>
     );
     return (
       <React.Fragment>
@@ -2162,7 +2024,33 @@ export default class App extends React.Component<AppProps, AppState> {
             }}
           ></Message>
         )}
-        {!document.fullscreenElement && (
+        <SettingsModal
+          modalOpen={this.state.settingsModalOpen}
+          setModalOpen={this.setSettingsModalOpen}
+          roomLock={this.state.roomLock}
+          setRoomLock={this.setRoomLock}
+          socket={this.socket}
+          roomId={this.state.roomId}
+          isChatDisabled={this.state.isChatDisabled}
+          setIsChatDisabled={this.setIsChatDisabled}
+          owner={this.state.owner}
+          setOwner={this.setOwner}
+          vanity={this.state.vanity}
+          setVanity={this.setVanity}
+          inviteLink={this.state.inviteLink}
+          password={this.state.password}
+          setPassword={this.setPassword}
+          clearChat={this.clearChat}
+          roomTitle={this.state.roomTitle}
+          setRoomTitle={this.setRoomTitle}
+          roomDescription={this.state.roomDescription}
+          setRoomDescription={this.setRoomDescription}
+          roomTitleColor={this.state.roomTitleColor}
+          setRoomTitleColor={this.setRoomTitleColor}
+          mediaPath={this.state.mediaPath}
+          setMediaPath={this.setMediaPath}
+        />
+        {!this.state.fullScreen && (
           <TopBar
             roomTitle={this.state.roomTitle}
             roomDescription={this.state.roomDescription}
@@ -2171,397 +2059,453 @@ export default class App extends React.Component<AppProps, AppState> {
           />
         )}
         {
-          <Grid stackable celled="internally">
-            <Grid.Row>
-              <Grid.Column
-                width={this.state.showRightBar ? 12 : 15}
-                className={
-                  this.state.fullScreen
-                    ? styles.fullHeightColumnFullscreen
-                    : styles.fullHeightColumn
-                }
+          <div
+            className={styles.mobileStack}
+            style={{ margin: '8px', display: 'flex' }}
+          >
+            <div
+              className={
+                (this.state.fullScreen
+                  ? styles.fullHeightColumnFullscreen
+                  : styles.fullHeightColumn) +
+                ' ' +
+                styles.leftColumn
+              }
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  height: '100%',
+                }}
               >
-                <div
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    height: '100%',
-                  }}
-                >
-                  {!this.state.fullScreen && (
-                    <React.Fragment>
+                {!this.state.fullScreen && (
+                  <React.Fragment>
+                    <div style={{ display: 'flex', gap: '4px' }}>
                       <ComboBox
                         roomSetMedia={this.roomSetMedia}
                         playlistAdd={this.roomPlaylistAdd}
-                        playlistDelete={this.roomPlaylistDelete}
-                        playlistMove={this.roomPlaylistMove}
                         roomMedia={this.state.roomMedia}
                         getMediaDisplayName={this.getMediaDisplayName}
                         launchMultiSelect={this.launchMultiSelect}
                         mediaPath={this.state.mediaPath}
                         disabled={!this.haveLock()}
-                        playlist={this.state.playlist}
                       />
-                      <Separator />
-                      <div
-                        className={styles.mobileStack}
-                        style={{ display: 'flex', gap: '4px' }}
+                      <Dropdown
+                        icon="list"
+                        labeled
+                        className="icon"
+                        button
+                        text={`Playlist (${playlist.length})`}
+                        scrolling
                       >
-                        {this.localStreamToPublish && (
-                          <Button
-                            fluid
-                            className="toolButton"
-                            icon
-                            labelPosition="left"
-                            color="red"
-                            onClick={this.stopPublishingLocalStream}
-                            disabled={sharer?.id !== this.socket?.id}
-                          >
-                            <Icon name="cancel" />
-                            Stop Share
-                          </Button>
-                        )}
-                        {!this.localStreamToPublish &&
-                          !sharer &&
-                          !this.playingVBrowser() && (
-                            <Popup
-                              content={`Share a tab or an application.`}
-                              trigger={
-                                <Button
-                                  fluid
-                                  className="toolButton"
-                                  disabled={!this.haveLock()}
-                                  icon
-                                  labelPosition="left"
-                                  color={'instagram'}
-                                  onClick={() => {
-                                    this.setState({
-                                      isScreenShareModalOpen: true,
-                                    });
-                                  }}
-                                >
-                                  <Icon name={'slideshare'} />
-                                  Screenshare
-                                </Button>
+                        <Dropdown.Menu direction="left">
+                          {playlist.length === 0 && (
+                            <Dropdown.Item disabled>
+                              There are no items in the playlist.
+                            </Dropdown.Item>
+                          )}
+                          {playlist.map(
+                            (item: PlaylistVideo, index: number) => {
+                              if (Boolean(item.img)) {
+                                item.type = 'youtube';
                               }
-                            />
+                              return (
+                                <Dropdown.Item>
+                                  <div style={{ maxWidth: '500px' }}>
+                                    <ChatVideoCard
+                                      video={item}
+                                      index={index}
+                                      controls
+                                      onPlay={(index) => {
+                                        this.roomSetMedia(null, {
+                                          value: playlist[index]?.url,
+                                        });
+                                        this.roomPlaylistDelete(index);
+                                      }}
+                                      onPlayNext={(index) => {
+                                        this.roomPlaylistMove(index, 0);
+                                      }}
+                                      onRemove={(index) => {
+                                        this.roomPlaylistDelete(index);
+                                      }}
+                                      disabled={!this.haveLock()}
+                                    />
+                                  </div>
+                                </Dropdown.Item>
+                              );
+                            },
                           )}
-                        {!this.localStreamToPublish &&
-                          !sharer &&
-                          !this.playingVBrowser() && (
-                            <Popup
-                              content="Launch a shared virtual browser"
-                              trigger={
-                                <Button
-                                  fluid
-                                  className="toolButton"
-                                  disabled={!this.haveLock()}
-                                  icon
-                                  labelPosition="left"
-                                  color="green"
-                                  onClick={() => {
-                                    this.setState({
-                                      isVBrowserModalOpen: true,
-                                    });
-                                  }}
-                                >
-                                  <Icon name="desktop" />
-                                  VBrowser
-                                </Button>
-                              }
-                            />
-                          )}
-                        {this.playingVBrowser() && (
-                          <Popup
-                            content="Choose the person controlling the VBrowser"
-                            trigger={
-                              <Dropdown
-                                icon="keyboard"
-                                labeled
-                                className="icon"
-                                style={{ height: '36px' }}
-                                button
-                                value={this.state.controller}
-                                placeholder="No controller"
-                                clearable
-                                onChange={this.changeController}
-                                selection
-                                disabled={!this.haveLock()}
-                                options={this.state.participants.map((p) => ({
-                                  text: this.state.nameMap[p.id] || p.id,
-                                  value: p.id,
-                                }))}
-                              ></Dropdown>
-                            }
-                          />
-                        )}
-                        {this.playingVBrowser() && (
-                          <Dropdown
-                            icon="desktop"
-                            labeled
-                            className="icon"
-                            style={{ height: '36px' }}
-                            button
-                            disabled={!this.haveLock()}
-                            value={this.state.vBrowserResolution}
-                            onChange={(_e, data) =>
-                              this.setState({
-                                vBrowserResolution: data.value as string,
-                              })
-                            }
-                            selection
-                            options={[
-                              {
-                                text: '1080p (Plus only)',
-                                value: '1920x1080@30',
-                                disabled: !this.state.isVBrowserLarge,
-                              },
-                              {
-                                text: '720p',
-                                value: '1280x720@30',
-                              },
-                              {
-                                text: '576p',
-                                value: '1024x576@60',
-                              },
-                              {
-                                text: '486p',
-                                value: '864x486@60',
-                              },
-                              {
-                                text: '360p',
-                                value: '640x360@60',
-                              },
-                            ]}
-                          ></Dropdown>
-                        )}
-                        {this.playingVBrowser() && (
-                          <Dropdown
-                            icon="chart area"
-                            labeled
-                            className="icon"
-                            style={{ height: '36px' }}
-                            button
-                            disabled={!this.haveLock()}
-                            value={this.state.vBrowserQuality}
-                            onChange={(_e, data) => {
-                              this.setState({
-                                vBrowserQuality: data.value as string,
-                              });
-                            }}
-                            selection
-                            options={[
-                              {
-                                text: 'Eco',
-                                value: '0.25',
-                              },
-                              {
-                                text: 'Low',
-                                value: '0.5',
-                              },
-                              {
-                                text: 'Standard',
-                                value: '1',
-                              },
-                              {
-                                text: 'High',
-                                value: '1.5',
-                              },
-                              {
-                                text: 'Ultra',
-                                value: '2',
-                              },
-                            ]}
-                          ></Dropdown>
-                        )}
-                        {this.playingVBrowser() &&
-                          isMobile() &&
-                          this.state.controller === this.socket.id && (
-                            <Button
-                              fluid
-                              className="toolButton"
-                              icon
-                              labelPosition="left"
-                              color="blue"
-                              disabled={!this.haveLock()}
-                              onClick={() => {
-                                const dummy = document.getElementById('dummy');
-                                dummy?.focus();
-                              }}
-                            >
-                              <Icon name="keyboard" />
-                              Keyboard
-                            </Button>
-                          )}
-                        {this.playingVBrowser() && (
-                          <Button
-                            fluid
-                            className="toolButton"
-                            icon
-                            labelPosition="left"
-                            color="red"
-                            disabled={!this.haveLock()}
-                            onClick={this.stopVBrowser}
-                          >
-                            <Icon name="cancel" />
-                            Stop VBrowser
-                          </Button>
-                        )}
-                        {!this.localStreamToPublish &&
-                          !sharer &&
-                          !this.playingVBrowser() && (
-                            <Popup
-                              content="Stream your own video file"
-                              trigger={
-                                <Button
-                                  fluid
-                                  className="toolButton"
-                                  disabled={!this.haveLock()}
-                                  icon
-                                  labelPosition="left"
-                                  onClick={() => {
-                                    this.setState({
-                                      isFileShareModalOpen: true,
-                                    });
-                                  }}
-                                >
-                                  <Icon name="file" />
-                                  File
-                                </Button>
-                              }
-                            />
-                          )}
-                        {false && (
-                          <SearchComponent
-                            setMedia={this.roomSetMedia}
-                            playlistAdd={this.roomPlaylistAdd}
-                            type={'youtube'}
-                            disabled={!this.haveLock()}
-                          />
-                        )}
-                        {Boolean(this.context.streamPath) && (
-                          <SearchComponent
-                            setMedia={this.roomSetMedia}
-                            playlistAdd={this.roomPlaylistAdd}
-                            type={'stream'}
-                            launchMultiSelect={this.launchMultiSelect}
-                            disabled={!this.haveLock()}
-                          />
-                        )}
-                      </div>
-                      <Separator />
-                    </React.Fragment>
-                  )}
-                  <div style={{ flexGrow: 1 }}>
-                    <div className={styles.playerContainer}>
-                      {(this.state.loading ||
-                        !this.state.roomMedia ||
-                        this.state.nonPlayableMedia) &&
-                        !this.state.isLiveStream && (
-                          <div
-                            id="loader"
-                            className={styles.videoContent}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                            }}
-                          >
-                            {this.state.loading && (
-                              <Dimmer active>
-                                <Loader>
-                                  {this.playingVBrowser()
-                                    ? 'Launching virtual browser. This can take up to a minute.'
-                                    : ''}
-                                </Loader>
-                              </Dimmer>
-                            )}
-                            {!this.state.loading && !this.state.roomMedia && (
-                              <Message
-                                color="yellow"
-                                icon="hand point up"
-                                header="You're not watching anything!"
-                                content="Pick something to watch above."
-                              />
-                            )}
-                            {!this.state.loading &&
-                              this.state.nonPlayableMedia && (
-                                <Message
-                                  color="red"
-                                  icon="frown"
-                                  header="It doesn't look like this is a media file!"
-                                  content="Maybe you meant to launch a VBrowser if you're trying to visit a web page?"
-                                />
-                              )}
-                          </div>
-                        )}
-                      <iframe
-                        style={{
-                          display:
-                            this.usingYoutube() && !this.state.loading
-                              ? 'block'
-                              : 'none',
+                        </Dropdown.Menu>
+                      </Dropdown>
+                      <Button
+                        style={{ marginLeft: -4 }}
+                        icon="setting"
+                        onClick={() => {
+                          this.setSettingsModalOpen(true);
                         }}
-                        title="YouTube"
-                        id="leftYt"
-                        className={styles.videoContent}
-                        allowFullScreen
-                        frameBorder="0"
-                        allow="autoplay"
-                        src="https://www.youtube.com/embed/?enablejsapi=1&controls=0&rel=0"
                       />
-                      {this.playingVBrowser() &&
-                      this.getVBrowserPass() &&
-                      this.getVBrowserHost() ? (
-                        <VBrowser
-                          username={this.socket.id}
-                          password={this.getVBrowserPass()}
-                          hostname={this.getVBrowserHost()}
-                          controlling={this.state.controller === this.socket.id}
-                          resolution={this.state.vBrowserResolution}
-                          quality={this.state.vBrowserQuality}
-                          doPlay={this.localPlay}
-                          setResolution={(data: string) =>
-                            this.setState({ vBrowserResolution: data })
+                    </div>
+                    <Separator />
+                    <div
+                      className={styles.mobileStack}
+                      style={{ display: 'flex', gap: '4px' }}
+                    >
+                      {this.localStreamToPublish && (
+                        <Button
+                          fluid
+                          className="toolButton"
+                          icon
+                          labelPosition="left"
+                          color="red"
+                          onClick={this.stopPublishingLocalStream}
+                          disabled={sharer?.id !== this.socket?.id}
+                        >
+                          <Icon name="cancel" />
+                          Stop Share
+                        </Button>
+                      )}
+                      {!this.localStreamToPublish &&
+                        !sharer &&
+                        !this.playingVBrowser() && (
+                          <Popup
+                            content={`Share a tab or an application.`}
+                            trigger={
+                              <Button
+                                fluid
+                                className="toolButton"
+                                disabled={!this.haveLock()}
+                                icon
+                                labelPosition="left"
+                                color={'instagram'}
+                                onClick={() => {
+                                  this.setState({
+                                    isScreenShareModalOpen: true,
+                                  });
+                                }}
+                              >
+                                <Icon name={'slideshare'} />
+                                Screenshare
+                              </Button>
+                            }
+                          />
+                        )}
+                      {!this.localStreamToPublish &&
+                        !sharer &&
+                        !this.playingVBrowser() && (
+                          <Popup
+                            content="Launch a shared virtual browser"
+                            trigger={
+                              <Button
+                                fluid
+                                className="toolButton"
+                                disabled={!this.haveLock()}
+                                icon
+                                labelPosition="left"
+                                color="green"
+                                onClick={() => {
+                                  this.setState({
+                                    isVBrowserModalOpen: true,
+                                  });
+                                }}
+                              >
+                                <Icon name="desktop" />
+                                VBrowser
+                              </Button>
+                            }
+                          />
+                        )}
+                      {this.playingVBrowser() && (
+                        <Popup
+                          content="Choose the person controlling the VBrowser"
+                          trigger={
+                            <Dropdown
+                              icon="keyboard"
+                              labeled
+                              className="icon"
+                              style={{ height: '36px' }}
+                              button
+                              value={this.state.controller}
+                              placeholder="No controller"
+                              clearable
+                              onChange={this.changeController}
+                              selection
+                              disabled={!this.haveLock()}
+                              options={this.state.participants.map((p) => ({
+                                text: this.state.nameMap[p.id] || p.id,
+                                value: p.id,
+                              }))}
+                            ></Dropdown>
                           }
-                          setQuality={(data: string) => {
-                            this.setState({ vBrowserQuality: data });
-                          }}
                         />
-                      ) : (
-                        <video
-                          style={{
-                            display:
-                              (this.usingNative() && !this.state.loading) ||
-                              this.state.fullScreen
-                                ? 'block'
-                                : 'none',
-                            width: '100%',
-                            maxHeight:
-                              'calc(100vh - 62px - 36px - 36px - 8px - 41px - 16px)',
-                          }}
-                          id="leftVideo"
-                          onEnded={(e) =>
-                            this.onVideoEnded(e, e.currentTarget.src)
+                      )}
+                      {this.playingVBrowser() && (
+                        <Dropdown
+                          icon="desktop"
+                          labeled
+                          className="icon"
+                          style={{ height: '36px' }}
+                          button
+                          disabled={!this.haveLock()}
+                          value={this.state.vBrowserResolution}
+                          onChange={(_e, data) =>
+                            this.setState({
+                              vBrowserResolution: data.value as string,
+                            })
                           }
-                          playsInline
-                          onClick={this.roomTogglePlay}
-                        ></video>
+                          selection
+                          options={[
+                            {
+                              text: '1080p (Plus only)',
+                              value: '1920x1080@30',
+                              disabled: !this.state.isVBrowserLarge,
+                            },
+                            {
+                              text: '720p',
+                              value: '1280x720@30',
+                            },
+                            {
+                              text: '576p',
+                              value: '1024x576@60',
+                            },
+                            {
+                              text: '486p',
+                              value: '864x486@60',
+                            },
+                            {
+                              text: '360p',
+                              value: '640x360@60',
+                            },
+                          ]}
+                        ></Dropdown>
+                      )}
+                      {this.playingVBrowser() && (
+                        <Dropdown
+                          icon="chart area"
+                          labeled
+                          className="icon"
+                          style={{ height: '36px' }}
+                          button
+                          disabled={!this.haveLock()}
+                          value={this.state.vBrowserQuality}
+                          onChange={(_e, data) => {
+                            this.setState({
+                              vBrowserQuality: data.value as string,
+                            });
+                          }}
+                          selection
+                          options={[
+                            {
+                              text: 'Eco',
+                              value: '0.25',
+                            },
+                            {
+                              text: 'Low',
+                              value: '0.5',
+                            },
+                            {
+                              text: 'Standard',
+                              value: '1',
+                            },
+                            {
+                              text: 'High',
+                              value: '1.5',
+                            },
+                            {
+                              text: 'Ultra',
+                              value: '2',
+                            },
+                          ]}
+                        ></Dropdown>
+                      )}
+                      {this.playingVBrowser() &&
+                        isMobile() &&
+                        this.state.controller === this.socket.id && (
+                          <Button
+                            fluid
+                            className="toolButton"
+                            icon
+                            labelPosition="left"
+                            color="blue"
+                            disabled={!this.haveLock()}
+                            onClick={() => {
+                              const dummy = document.getElementById('dummy');
+                              dummy?.focus();
+                            }}
+                          >
+                            <Icon name="keyboard" />
+                            Keyboard
+                          </Button>
+                        )}
+                      {this.playingVBrowser() && (
+                        <Button
+                          fluid
+                          className="toolButton"
+                          icon
+                          labelPosition="left"
+                          color="red"
+                          disabled={!this.haveLock()}
+                          onClick={this.stopVBrowser}
+                        >
+                          <Icon name="cancel" />
+                          Stop VBrowser
+                        </Button>
+                      )}
+                      {!this.localStreamToPublish &&
+                        !sharer &&
+                        !this.playingVBrowser() && (
+                          <Popup
+                            content="Stream your own video file"
+                            trigger={
+                              <Button
+                                fluid
+                                className="toolButton"
+                                disabled={!this.haveLock()}
+                                icon
+                                labelPosition="left"
+                                onClick={() => {
+                                  this.setState({
+                                    isFileShareModalOpen: true,
+                                  });
+                                }}
+                              >
+                                <Icon name="file" />
+                                File
+                              </Button>
+                            }
+                          />
+                        )}
+                      {false && (
+                        <SearchComponent
+                          setMedia={this.roomSetMedia}
+                          playlistAdd={this.roomPlaylistAdd}
+                          type={'youtube'}
+                          disabled={!this.haveLock()}
+                        />
+                      )}
+                      {Boolean(this.context.streamPath) && (
+                        <SearchComponent
+                          setMedia={this.roomSetMedia}
+                          playlistAdd={this.roomPlaylistAdd}
+                          type={'stream'}
+                          launchMultiSelect={this.launchMultiSelect}
+                          disabled={!this.haveLock()}
+                        />
                       )}
                     </div>
-                  </div>
-                  {this.state.roomMedia && controls}
-                  {Boolean(this.state.total) && (
-                    <div
+                    <Separator />
+                  </React.Fragment>
+                )}
+                <div style={{ flexGrow: 1 }}>
+                  <div className={styles.playerContainer}>
+                    {(this.state.loading ||
+                      !this.state.roomMedia ||
+                      this.state.nonPlayableMedia) &&
+                      !this.state.isLiveStream && (
+                        <div
+                          id="loader"
+                          className={styles.videoContent}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          {this.state.loading && (
+                            <Dimmer active>
+                              <Loader>
+                                {this.playingVBrowser()
+                                  ? 'Launching virtual browser. This can take up to a minute.'
+                                  : ''}
+                              </Loader>
+                            </Dimmer>
+                          )}
+                          {!this.state.loading && !this.state.roomMedia && (
+                            <Message
+                              color="yellow"
+                              icon="hand point up"
+                              header="You're not watching anything!"
+                              content="Pick something to watch above."
+                            />
+                          )}
+                          {!this.state.loading &&
+                            this.state.nonPlayableMedia && (
+                              <Message
+                                color="red"
+                                icon="frown"
+                                header="It doesn't look like this is a media file!"
+                                content="Maybe you meant to launch a VBrowser if you're trying to visit a web page?"
+                              />
+                            )}
+                        </div>
+                      )}
+                    <iframe
                       style={{
-                        color: 'white',
-                        textAlign: 'center',
-                        fontSize: 11,
-                        fontWeight: 700,
-                        marginTop: -10,
+                        display:
+                          this.usingYoutube() && !this.state.loading
+                            ? 'block'
+                            : 'none',
                       }}
-                    >
-                      {/* <Progress
+                      title="YouTube"
+                      id="leftYt"
+                      className={styles.videoContent}
+                      allowFullScreen
+                      frameBorder="0"
+                      allow="autoplay"
+                      src="https://www.youtube.com/embed/?enablejsapi=1&controls=0&rel=0"
+                    />
+                    {this.playingVBrowser() &&
+                    this.getVBrowserPass() &&
+                    this.getVBrowserHost() ? (
+                      <VBrowser
+                        username={this.socket.id}
+                        password={this.getVBrowserPass()}
+                        hostname={this.getVBrowserHost()}
+                        controlling={this.state.controller === this.socket.id}
+                        resolution={this.state.vBrowserResolution}
+                        quality={this.state.vBrowserQuality}
+                        doPlay={this.localPlay}
+                        setResolution={(data: string) =>
+                          this.setState({ vBrowserResolution: data })
+                        }
+                        setQuality={(data: string) => {
+                          this.setState({ vBrowserQuality: data });
+                        }}
+                      />
+                    ) : (
+                      <video
+                        style={{
+                          display:
+                            (this.usingNative() && !this.state.loading) ||
+                            this.state.fullScreen
+                              ? 'block'
+                              : 'none',
+                          width: '100%',
+                          maxHeight:
+                            'calc(100vh - 62px - 36px - 36px - 8px - 41px - 16px)',
+                        }}
+                        id="leftVideo"
+                        onEnded={(e) =>
+                          this.onVideoEnded(e, e.currentTarget.src)
+                        }
+                        playsInline
+                        onClick={this.roomTogglePlay}
+                      ></video>
+                    )}
+                  </div>
+                </div>
+                {this.state.roomMedia && controls}
+                {Boolean(this.state.total) && (
+                  <div
+                    style={{
+                      color: 'white',
+                      textAlign: 'center',
+                      fontSize: 11,
+                      fontWeight: 700,
+                      marginTop: -10,
+                    }}
+                  >
+                    {/* <Progress
                         size="tiny"
                         color="green"
                         inverted
@@ -2570,40 +2514,142 @@ export default class App extends React.Component<AppProps, AppState> {
                         // indicating
                         label={}
                       ></Progress> */}
-                      {Math.min(
-                        (this.state.downloaded / this.state.total) * 100,
-                        100,
-                      ).toFixed(2) +
-                        '% - ' +
-                        formatSpeed(this.state.speed) +
-                        ' - ' +
-                        this.state.connections +
-                        ' connections'}
-                    </div>
+                    {Math.min(
+                      (this.state.downloaded / this.state.total) * 100,
+                      100,
+                    ).toFixed(2) +
+                      '% - ' +
+                      formatSpeed(this.state.speed) +
+                      ' - ' +
+                      this.state.connections +
+                      ' connections'}
+                  </div>
+                )}
+              </div>
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                position: 'relative',
+                width: this.state.showChatColumn ? undefined : 0,
+                marginLeft: this.state.showChatColumn ? 4 : 0,
+              }}
+              className={`${
+                (this.state.fullScreen
+                  ? styles.fullHeightColumnFullscreen
+                  : styles.fullHeightColumn) +
+                ' ' +
+                styles.rightColumn
+              }`}
+            >
+              {!isMobile() && (
+                <div
+                  className={styles.expandButton}
+                  style={{
+                    top: 'calc(50% - 16px)',
+                  }}
+                  onClick={() =>
+                    this.setState({
+                      showChatColumn: !this.state.showChatColumn,
+                    })
+                  }
+                >
+                  {this.state.showChatColumn ? '>' : '<'}
+                  {!this.state.showChatColumn && (
+                    <span className={styles.hide}>Chat</span>
                   )}
                 </div>
-                {!isMobile() && (
-                  <Button
-                    style={{
-                      position: 'absolute',
-                      top: '50%',
-                      right: 'calc(0% - 18px)',
-                      zIndex: 900,
-                    }}
-                    circular
-                    size="mini"
-                    icon={
-                      this.state.showRightBar ? 'angle right' : 'angle left'
-                    }
-                    onClick={() =>
-                      this.setState({ showRightBar: !this.state.showRightBar })
-                    }
-                  />
-                )}
-              </Grid.Column>
-              {rightBar}
-            </Grid.Row>
-          </Grid>
+              )}
+              <Form autoComplete="off">
+                <Input
+                  style={{
+                    visibility: this.state.showChatColumn
+                      ? undefined
+                      : 'hidden',
+                  }}
+                  inverted
+                  fluid
+                  label={'My name is:'}
+                  value={this.state.myName}
+                  onChange={(_e, data) => {
+                    this.updateName(data.value);
+                  }}
+                  icon={
+                    <Icon
+                      onClick={async () => {
+                        const randName = await generateName();
+                        this.updateName(randName);
+                      }}
+                      name="random"
+                      inverted
+                      circular
+                      link
+                      title="Generate a random name"
+                    />
+                  }
+                />
+              </Form>
+              <Chat
+                chat={this.state.chat}
+                nameMap={this.state.nameMap}
+                pictureMap={this.state.pictureMap}
+                socket={this.socket}
+                scrollTimestamp={this.state.scrollTimestamp}
+                getMediaDisplayName={this.getMediaDisplayName}
+                isChatDisabled={this.state.isChatDisabled}
+                owner={this.state.owner}
+                ref={this.chatRef}
+                isLiveStream={this.state.isLiveStream}
+                hide={!this.state.showChatColumn}
+              />
+            </div>
+            <div
+              style={{
+                position: 'relative',
+                width: this.state.showPeopleColumn ? undefined : 0,
+                marginLeft: this.state.showChatColumn ? 4 : 0,
+              }}
+              className={
+                (this.state.fullScreen
+                  ? styles.fullHeightColumnFullscreen
+                  : styles.fullHeightColumn) +
+                ' ' +
+                styles.rightColumn2
+              }
+            >
+              {!isMobile() && (
+                <div
+                  className={styles.expandButton}
+                  style={{
+                    top: 'calc(50% + 16px)',
+                  }}
+                  onClick={() =>
+                    this.setState({
+                      showPeopleColumn: !this.state.showPeopleColumn,
+                    })
+                  }
+                >
+                  {this.state.showPeopleColumn ? '>' : '<'}
+                  {!this.state.showPeopleColumn && (
+                    <span className={styles.hide}>People</span>
+                  )}
+                </div>
+              )}
+              {this.state.state === 'connected' && (
+                <VideoChat
+                  socket={this.socket}
+                  participants={this.state.participants}
+                  nameMap={this.state.nameMap}
+                  pictureMap={this.state.pictureMap}
+                  tsMap={this.state.tsMap}
+                  rosterUpdateTS={this.state.rosterUpdateTS}
+                  owner={this.state.owner}
+                  getLeaderTime={this.getLeaderTime}
+                />
+              )}
+            </div>
+          </div>
         }
       </React.Fragment>
     );

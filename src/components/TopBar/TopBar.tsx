@@ -395,32 +395,6 @@ export class TopBar extends React.Component<{
               </a>
             </React.Fragment>
           )}
-          <div
-            style={{
-              display: 'flex',
-              marginLeft: '10px',
-              alignItems: 'center',
-            }}
-          >
-            <a
-              href="https://discord.gg/3rYj5HV"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="footerIcon"
-              title="Discord"
-            >
-              <Icon name="discord" size="big" link />
-            </a>
-            <a
-              href="https://github.com/howardchung/watchparty"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="footerIcon"
-              title="GitHub"
-            >
-              <Icon name="github" size="big" link />
-            </a>
-          </div>
           <Announce />
           <div
             className={appStyles.mobileStack}
@@ -430,6 +404,32 @@ export class TopBar extends React.Component<{
               gap: '4px',
             }}
           >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <a
+                href="https://discord.gg/3rYj5HV"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="footerIcon"
+                title="Discord"
+              >
+                <Icon name="discord" size="big" link />
+              </a>
+              <a
+                href="https://github.com/howardchung/watchparty"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="footerIcon"
+                title="GitHub"
+              >
+                <Icon name="github" size="big" link />
+              </a>
+            </div>
             {this.props.showInviteButton && <InviteButton />}
             {!this.props.hideNewRoom && <NewRoomButton openNewTab />}
             {!this.props.hideMyRooms && this.context.user && (
