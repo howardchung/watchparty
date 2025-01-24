@@ -8,6 +8,7 @@ import { init } from 'emoji-mart';
 import Linkify from 'react-linkify';
 import { SecureLink } from 'react-secure-link';
 import styles from './Chat.module.css';
+import Markdown from 'react-markdown';
 
 import {
   formatTimestamp,
@@ -453,6 +454,7 @@ const ChatMessage = ({
             {!cmd && msg}
           </Comment.Text>
         </Linkify>
+        {msg.startsWith('![') && <Markdown>{msg}</Markdown>}
         <div className={classes.commentMenu}>
           <Icon
             onClick={(e: MouseEvent) => {
