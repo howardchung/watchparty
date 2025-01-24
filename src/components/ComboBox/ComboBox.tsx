@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-  DropdownProps,
-  Menu,
-  Input,
-  Icon,
-  Dropdown,
-  Form,
-} from 'semantic-ui-react';
+import { DropdownProps, Menu, Input, Icon, Form } from 'semantic-ui-react';
 import {
   debounce,
   getMediaPathResults,
@@ -21,14 +14,11 @@ import ChatVideoCard from '../Playlist/ChatVideoCard';
 interface ComboBoxProps {
   roomSetMedia: (e: any, data: DropdownProps) => void;
   playlistAdd: (e: any, data: DropdownProps) => void;
-  playlistMove: (index: number, toIndex: number) => void;
-  playlistDelete: (index: number) => void;
   roomMedia: string;
   getMediaDisplayName: (input: string) => string;
   launchMultiSelect: (multi: []) => void;
   mediaPath: string | undefined;
   disabled?: boolean;
-  playlist: PlaylistVideo[];
 }
 
 export class ComboBox extends React.Component<ComboBoxProps> {
@@ -134,123 +124,76 @@ export class ComboBox extends React.Component<ComboBoxProps> {
     const { roomMedia: currentMedia, getMediaDisplayName } = this.props;
     const { results } = this.state;
     return (
-      <div style={{ position: 'relative' }}>
-        <div style={{ display: 'flex', gap: '4px' }}>
-          <Form style={{ flexGrow: 1 }} autoComplete="off">
-            <Input
-              inverted
-              fluid
-              focus
-              disabled={this.props.disabled}
-              onChange={this.doSearch}
-              onFocus={(e: any) => {
-                e.persist();
-                this.setState(
-                  {
-                    inputMedia:
-                      isHttp(currentMedia) || isMagnet(currentMedia)
-                        ? currentMedia
-                        : getMediaDisplayName(currentMedia),
-                  },
-                  () => {
-                    if (
-                      !this.state.inputMedia ||
-                      (this.state.inputMedia &&
-                        (isHttp(this.state.inputMedia) ||
-                          isMagnet(this.state.inputMedia)))
-                    ) {
-                      this.doSearch(e);
-                    }
-                  },
-                );
-                setTimeout(() => e.target.select(), 100);
-              }}
-              onBlur={() => {
-                setTimeout(
-                  () =>
-                    this.setState({
-                      inputMedia: undefined,
-                      results: undefined,
-                    }),
-                  200,
-                );
-              }}
-              onKeyPress={(e: any) => {
-                if (e.key === 'Enter') {
+      <div style={{ position: 'relative', display: 'flex', flexGrow: 1 }}>
+        <Form style={{ width: '100%' }} autoComplete="off">
+          <Input
+            inverted
+            fluid
+            focus
+            disabled={this.props.disabled}
+            onChange={this.doSearch}
+            onFocus={(e: any) => {
+              e.persist();
+              this.setState(
+                {
+                  inputMedia:
+                    isHttp(currentMedia) || isMagnet(currentMedia)
+                      ? currentMedia
+                      : getMediaDisplayName(currentMedia),
+                },
+                () => {
+                  if (
+                    !this.state.inputMedia ||
+                    (this.state.inputMedia &&
+                      (isHttp(this.state.inputMedia) ||
+                        isMagnet(this.state.inputMedia)))
+                  ) {
+                    this.doSearch(e);
+                  }
+                },
+              );
+              setTimeout(() => e.target.select(), 100);
+            }}
+            onBlur={() => {
+              setTimeout(
+                () =>
+                  this.setState({
+                    inputMedia: undefined,
+                    results: undefined,
+                  }),
+                200,
+              );
+            }}
+            onKeyPress={(e: any) => {
+              if (e.key === 'Enter') {
+                this.setMediaAndClose(e, {
+                  value: this.state.inputMedia,
+                });
+              }
+            }}
+            icon={
+              <Icon
+                onClick={(e: any) =>
                   this.setMediaAndClose(e, {
                     value: this.state.inputMedia,
-                  });
+                  })
                 }
-              }}
-              icon={
-                <Icon
-                  onClick={(e: any) =>
-                    this.setMediaAndClose(e, {
-                      value: this.state.inputMedia,
-                    })
-                  }
-                  name="arrow right"
-                  link
-                  circular
-                  //bordered
-                />
-              }
-              loading={this.state.loading}
-              label={'Now Watching:'}
-              placeholder="Enter video file URL, magnet link, YouTube link, or YouTube search term"
-              value={
-                this.state.inputMedia !== undefined
-                  ? this.state.inputMedia
-                  : getMediaDisplayName(currentMedia)
-              }
-            />
-          </Form>
-          <Dropdown
-            icon="list"
-            labeled
-            className="icon"
-            button
-            text={`Playlist (${this.props.playlist.length})`}
-            scrolling
-          >
-            <Dropdown.Menu direction="left">
-              {this.props.playlist.length === 0 && (
-                <Dropdown.Item disabled>
-                  There are no items in the playlist.
-                </Dropdown.Item>
-              )}
-              {this.props.playlist.map((item: PlaylistVideo, index: number) => {
-                if (Boolean(item.img)) {
-                  item.type = 'youtube';
-                }
-                return (
-                  <Dropdown.Item>
-                    <div style={{ maxWidth: '500px' }}>
-                      <ChatVideoCard
-                        video={item}
-                        index={index}
-                        controls
-                        onPlay={(index) => {
-                          this.props.roomSetMedia(null, {
-                            value: this.props.playlist[index]?.url,
-                          });
-                          this.props.playlistDelete(index);
-                        }}
-                        onPlayNext={(index) => {
-                          this.props.playlistMove(index, 0);
-                        }}
-                        onRemove={(index) => {
-                          this.props.playlistDelete(index);
-                        }}
-                        disabled={this.props.disabled}
-                      />
-                    </div>
-                  </Dropdown.Item>
-                );
-              })}
-            </Dropdown.Menu>
-          </Dropdown>
-        </div>
+                name="arrow right"
+                link
+                circular
+                //bordered
+              />
+            }
+            loading={this.state.loading}
+            label={'Watching'}
+            placeholder="Enter video file URL, magnet link, YouTube link, or YouTube search term"
+            value={
+              this.state.inputMedia !== undefined
+                ? this.state.inputMedia
+                : getMediaDisplayName(currentMedia)
+            }
+          />
+        </Form>
         {Boolean(results) && this.state.inputMedia !== undefined && (
           <Menu
             fluid

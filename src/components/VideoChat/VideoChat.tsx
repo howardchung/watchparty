@@ -231,7 +231,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
     const ourStream = window.watchparty.ourStream;
     const videoRefs = window.watchparty.videoRefs;
     const videoChatContentStyle = {
-      height: participants.length < 3 ? 220 : 110,
+      height: participants.length <= 3 ? 200 : 100,
       borderRadius: '4px',
       objectFit: 'contain' as any, // ObjectFit
     };
@@ -245,17 +245,10 @@ export class VideoChat extends React.Component<VideoChatProps> {
           overflow: 'auto',
         }}
       >
-        {!ourStream && (
-          <div
-            style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              marginTop: '8px',
-            }}
-          >
+        <div style={{ display: 'flex' }}>
+          {!ourStream && (
             <Button
               fluid
-              title="Join Video Chat"
               color={'purple'}
               size="medium"
               icon
@@ -263,36 +256,22 @@ export class VideoChat extends React.Component<VideoChatProps> {
               onClick={this.setupWebRTC}
             >
               <Icon name="video" />
-              {`Join Video Chat`}
+              {`Join Video`}
             </Button>
-          </div>
-        )}
-        {ourStream && (
-          <div
-            style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-            }}
-          >
-            <Button
-              fluid
-              color={'red'}
-              size="medium"
-              icon
-              labelPosition="left"
-              onClick={this.stopWebRTC}
-            >
-              <Icon name="external" />
-              {`Leave Video Chat`}
-            </Button>
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'center',
-                marginTop: '8px',
-                width: '100%',
-              }}
-            >
+          )}
+          {ourStream && (
+            <>
+              <Button
+                fluid
+                color={'red'}
+                size="medium"
+                icon
+                labelPosition="left"
+                onClick={this.stopWebRTC}
+              >
+                <Icon name="external" />
+                {`Leave`}
+              </Button>
               <Button
                 color={this.getVideoWebRTC() ? 'green' : 'red'}
                 fluid
@@ -319,9 +298,9 @@ export class VideoChat extends React.Component<VideoChatProps> {
                 />
                 {this.getAudioWebRTC() ? 'On' : 'Off'}
               </Button>
-            </div>
-          </div>
-        )}
+            </>
+          )}
+        </div>
         <div
           style={{
             display: 'flex',
