@@ -36,12 +36,14 @@
 }
 
 .rightColumn {
+  flex-shrink: 0;
   @media only screen and (max-width: 600px) {
     width: calc(100% - 8px);
   }
 }
 
 .rightColumn2 {
+  flex-shrink: 0;
   @media only screen and (max-width: 600px) {
     width: calc(100% - 8px);
   }
