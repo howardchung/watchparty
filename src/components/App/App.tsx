@@ -2495,17 +2495,16 @@ export default class App extends React.Component<AppProps, AppState> {
                     )}
                   </div>
                 </div>
-                {this.state.roomMedia && controls}
                 {Boolean(this.state.total) && (
                   <div
                     style={{
                       color: 'white',
-                      textAlign: 'center',
+                      textAlign: 'right',
                       fontSize: 11,
                       fontWeight: 700,
-                      position: 'absolute',
-                      bottom: 30,
+                      marginTop: '-12px',
                       width: '100%',
+                      zIndex: 1000,
                     }}
                   >
                     {/* <Progress
@@ -2528,6 +2527,7 @@ export default class App extends React.Component<AppProps, AppState> {
                       ' connections'}
                   </div>
                 )}
+                {this.state.roomMedia && controls}
               </div>
             </div>
             <div
@@ -2608,7 +2608,7 @@ export default class App extends React.Component<AppProps, AppState> {
             <div
               style={{
                 position: 'relative',
-                width: this.state.showPeopleColumn ? 350 : 30,
+                width: this.state.showPeopleColumn ? 300 : 30,
                 marginLeft: 4,
               }}
               className={
