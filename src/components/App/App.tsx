@@ -2547,7 +2547,10 @@ export default class App extends React.Component<AppProps, AppState> {
                 <div
                   className={styles.expandButton}
                   style={{
-                    top: 'calc(50% - 16px)',
+                    top: '80px',
+                    transform: this.state.showChatColumn
+                      ? 'translate(-50%, 0)'
+                      : 'translate(-100%, 0)',
                   }}
                   onClick={() =>
                     this.setState({
@@ -2622,7 +2625,10 @@ export default class App extends React.Component<AppProps, AppState> {
                 <div
                   className={styles.expandButton}
                   style={{
-                    top: 'calc(50% + 16px)',
+                    top: '114px',
+                    transform: this.state.showPeopleColumn
+                      ? 'translate(-50%, 0)'
+                      : 'translate(-100%, 0)',
                   }}
                   onClick={() =>
                     this.setState({
