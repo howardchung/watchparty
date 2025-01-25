@@ -2061,7 +2061,7 @@ export default class App extends React.Component<AppProps, AppState> {
         {
           <div
             className={styles.mobileStack}
-            style={{ margin: '8px', display: 'flex' }}
+            style={{ margin: '0 8px', display: 'flex' }}
           >
             <div
               className={
@@ -2077,6 +2077,7 @@ export default class App extends React.Component<AppProps, AppState> {
                   display: 'flex',
                   flexDirection: 'column',
                   height: '100%',
+                  position: 'relative',
                 }}
               >
                 {!this.state.fullScreen && (
@@ -2502,7 +2503,9 @@ export default class App extends React.Component<AppProps, AppState> {
                       textAlign: 'center',
                       fontSize: 11,
                       fontWeight: 700,
-                      marginTop: -10,
+                      position: 'absolute',
+                      bottom: 30,
+                      width: '100%',
                     }}
                   >
                     {/* <Progress
@@ -2532,8 +2535,8 @@ export default class App extends React.Component<AppProps, AppState> {
                 display: 'flex',
                 flexDirection: 'column',
                 position: 'relative',
-                width: this.state.showChatColumn ? undefined : 0,
-                marginLeft: this.state.showChatColumn ? 4 : 0,
+                width: this.state.showChatColumn ? 350 : 30,
+                marginLeft: 4,
               }}
               className={`${
                 (this.state.fullScreen
@@ -2546,22 +2549,17 @@ export default class App extends React.Component<AppProps, AppState> {
               {!isMobile() && (
                 <div
                   className={styles.expandButton}
-                  style={{
-                    top: '80px',
-                    transform: this.state.showChatColumn
-                      ? 'translate(-50%, 0)'
-                      : 'translate(-100%, 0)',
-                  }}
+                  style={{}}
                   onClick={() =>
                     this.setState({
                       showChatColumn: !this.state.showChatColumn,
                     })
                   }
                 >
-                  {this.state.showChatColumn ? '>' : '<'}
-                  {!this.state.showChatColumn && (
-                    <span className={styles.hide}>Chat</span>
-                  )}
+                  <span className={styles.hide}>
+                    {this.state.showChatColumn ? '»' : '«'}
+                  </span>
+                  <Icon circular fitted name="chat" />
                 </div>
               )}
               <Form autoComplete="off">
@@ -2610,8 +2608,8 @@ export default class App extends React.Component<AppProps, AppState> {
             <div
               style={{
                 position: 'relative',
-                width: this.state.showPeopleColumn ? undefined : 0,
-                marginLeft: this.state.showChatColumn ? 4 : 0,
+                width: this.state.showPeopleColumn ? 350 : 30,
+                marginLeft: 4,
               }}
               className={
                 (this.state.fullScreen
@@ -2624,26 +2622,22 @@ export default class App extends React.Component<AppProps, AppState> {
               {!isMobile() && (
                 <div
                   className={styles.expandButton}
-                  style={{
-                    top: '114px',
-                    transform: this.state.showPeopleColumn
-                      ? 'translate(-50%, 0)'
-                      : 'translate(-100%, 0)',
-                  }}
+                  style={{}}
                   onClick={() =>
                     this.setState({
                       showPeopleColumn: !this.state.showPeopleColumn,
                     })
                   }
                 >
-                  {this.state.showPeopleColumn ? '>' : '<'}
-                  {!this.state.showPeopleColumn && (
-                    <span className={styles.hide}>People</span>
-                  )}
+                  <span className={styles.hide}>
+                    {this.state.showPeopleColumn ? '»' : '«'}
+                  </span>
+                  <Icon circular fitted name="users" />
                 </div>
               )}
               {this.state.state === 'connected' && (
                 <VideoChat
+                  hide={!this.state.showPeopleColumn}
                   socket={this.socket}
                   participants={this.state.participants}
                   nameMap={this.state.nameMap}

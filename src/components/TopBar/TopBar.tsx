@@ -115,8 +115,9 @@ export class SignInButton extends React.Component<SignInButtonProps> {
         <div
           style={{
             margin: '4px',
-            width: '100px',
+            minWidth: '40px',
             alignItems: 'center',
+            justifyContent: 'center',
             cursor: 'pointer',
           }}
         >
@@ -234,6 +235,7 @@ export class ListRoomsButton extends React.Component<{}> {
         onClick={this.refreshRooms}
         scrolling
         pointing="top right"
+        fluid
       >
         <Dropdown.Menu>
           {this.state.rooms.length === 0 && (
@@ -294,8 +296,7 @@ export class TopBar extends React.Component<{
           style={{
             display: 'flex',
             flexWrap: 'wrap',
-            padding: '1em',
-            paddingBottom: '0px',
+            padding: '8px',
             rowGap: '8px',
           }}
         >
@@ -401,6 +402,7 @@ export class TopBar extends React.Component<{
             style={{
               display: 'flex',
               marginLeft: 'auto',
+              alignItems: 'center',
               gap: '4px',
             }}
           >
