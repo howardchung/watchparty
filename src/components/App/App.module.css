@@ -72,7 +72,6 @@
   font-weight: 700;
   min-width: 30px;
   min-height: 30px;
-  transform: translate(-100%, 0);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -83,7 +82,6 @@
 .expandButton .hide {
   width: 0px;
   visibility: hidden;
-  transition: width ease-out 0.5s;
   display: flex;
   justify-content: center;
 }
