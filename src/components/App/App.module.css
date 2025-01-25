@@ -36,14 +36,12 @@
 }
 
 .rightColumn {
-  width: 350px;
   @media only screen and (max-width: 600px) {
     width: calc(100% - 8px);
   }
 }
 
 .rightColumn2 {
-  width: 350px;
   @media only screen and (max-width: 600px) {
     width: calc(100% - 8px);
   }
@@ -74,20 +72,21 @@
   min-height: 30px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
+  top: 50%;
+  left: 15px;
+  transform: translate(-100%);
   cursor: pointer;
-  padding: 4px;
+  padding: 1px;
 }
 
 .expandButton .hide {
   width: 0px;
   visibility: hidden;
-  display: flex;
-  justify-content: center;
 }
 
 .expandButton:hover .hide {
-  width: 50px;
+  width: 10px;
   visibility: visible;
   transition: width ease-out 0.5s;
 }
