@@ -68,16 +68,11 @@
   z-index: 900;
   background-color: lightgrey;
   border-radius: 8px;
-  font-size: 1em;
-  font-weight: 700;
   min-width: 30px;
   min-height: 30px;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
   top: 50%;
-  left: 15px;
-  transform: translate(-100%);
   cursor: pointer;
   padding: 1px;
 }

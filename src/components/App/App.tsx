@@ -2535,7 +2535,7 @@ export default class App extends React.Component<AppProps, AppState> {
                 display: 'flex',
                 flexDirection: 'column',
                 position: 'relative',
-                width: this.state.showChatColumn ? 350 : 30,
+                width: this.state.showChatColumn ? 350 : 40,
                 marginLeft: 4,
               }}
               className={`${
@@ -2549,7 +2549,15 @@ export default class App extends React.Component<AppProps, AppState> {
               {!isMobile() && (
                 <div
                   className={styles.expandButton}
-                  style={{}}
+                  style={{
+                    transform: this.state.showChatColumn
+                      ? 'translate(0)'
+                      : 'translate(-100%)',
+                    left: this.state.showChatColumn ? -10 : 30,
+                    flexDirection: this.state.showChatColumn
+                      ? 'row-reverse'
+                      : 'row',
+                  }}
                   onClick={() =>
                     this.setState({
                       showChatColumn: !this.state.showChatColumn,
@@ -2608,7 +2616,7 @@ export default class App extends React.Component<AppProps, AppState> {
             <div
               style={{
                 position: 'relative',
-                width: this.state.showPeopleColumn ? 300 : 30,
+                width: this.state.showPeopleColumn ? 300 : 40,
                 marginLeft: 4,
               }}
               className={
@@ -2622,7 +2630,15 @@ export default class App extends React.Component<AppProps, AppState> {
               {!isMobile() && (
                 <div
                   className={styles.expandButton}
-                  style={{}}
+                  style={{
+                    transform: this.state.showPeopleColumn
+                      ? 'translate(0)'
+                      : 'translate(-100%)',
+                    left: this.state.showPeopleColumn ? -10 : 30,
+                    flexDirection: this.state.showPeopleColumn
+                      ? 'row-reverse'
+                      : 'row',
+                  }}
                   onClick={() =>
                     this.setState({
                       showPeopleColumn: !this.state.showPeopleColumn,
