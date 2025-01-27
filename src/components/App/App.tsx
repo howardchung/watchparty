@@ -209,8 +209,20 @@ export default class App extends React.Component<AppProps, AppState> {
     successMessage: '',
     warningMessage: '',
     isChatDisabled: false,
-    showChatColumn: true,
-    showPeopleColumn: isMobile(),
+    showChatColumn: isMobile()
+      ? true
+      : Boolean(
+          Number(
+            window.localStorage.getItem('watchparty-showchatcolumn') ?? '1',
+          ),
+        ),
+    showPeopleColumn: isMobile()
+      ? true
+      : Boolean(
+          Number(
+            window.localStorage.getItem('watchparty-showpeoplecolumn') ?? '0',
+          ),
+        ),
     owner: undefined,
     vanity: undefined,
     password: undefined,
@@ -2534,7 +2546,7 @@ export default class App extends React.Component<AppProps, AppState> {
                 display: 'flex',
                 flexDirection: 'column',
                 position: 'relative',
-                width: this.state.showChatColumn ? 360 : 30,
+                width: this.state.showChatColumn ? 360 : 40,
                 marginLeft: 4,
               }}
               className={`${
@@ -2557,11 +2569,16 @@ export default class App extends React.Component<AppProps, AppState> {
                       ? 'row-reverse'
                       : 'row',
                   }}
-                  onClick={() =>
+                  onClick={() => {
+                    const newVal = !this.state.showChatColumn;
                     this.setState({
-                      showChatColumn: !this.state.showChatColumn,
-                    })
-                  }
+                      showChatColumn: newVal,
+                    });
+                    window.localStorage.setItem(
+                      'watchparty-showchatcolumn',
+                      Number(newVal).toString(),
+                    );
+                  }}
                 >
                   <span className={styles.hide}>
                     {this.state.showChatColumn ? '»' : '«'}
@@ -2615,7 +2632,7 @@ export default class App extends React.Component<AppProps, AppState> {
             <div
               style={{
                 position: 'relative',
-                width: this.state.showPeopleColumn ? 330 : 30,
+                width: this.state.showPeopleColumn ? 330 : 40,
                 marginLeft: 4,
               }}
               className={
@@ -2638,11 +2655,16 @@ export default class App extends React.Component<AppProps, AppState> {
                       ? 'row-reverse'
                       : 'row',
                   }}
-                  onClick={() =>
+                  onClick={() => {
+                    const newVal = !this.state.showPeopleColumn;
                     this.setState({
-                      showPeopleColumn: !this.state.showPeopleColumn,
-                    })
-                  }
+                      showPeopleColumn: newVal,
+                    });
+                    window.localStorage.setItem(
+                      'watchparty-showpeoplecolumn',
+                      Number(newVal).toString(),
+                    );
+                  }}
                 >
                   <span className={styles.hide}>
                     {this.state.showPeopleColumn ? '»' : '«'}
