@@ -37,6 +37,7 @@
 
 .rightColumn {
   flex-shrink: 0;
+  padding-left: 30px;
   @media only screen and (max-width: 600px) {
     width: calc(100% - 8px);
   }
@@ -44,6 +45,7 @@
 
 .rightColumn2 {
   flex-shrink: 0;
+  padding-left: 30px;
   @media only screen and (max-width: 600px) {
     width: calc(100% - 8px);
   }
@@ -89,7 +91,7 @@
 }
 
 .fullHeightColumn.fullHeightColumn.fullHeightColumn {
-  height: calc(100vh - 62px);
+  height: calc(100vh - 64px);
   transition: width ease-out 0.5s;
 }
 

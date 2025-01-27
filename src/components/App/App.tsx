@@ -33,6 +33,7 @@ import {
   isFileShare,
   isVBrowser,
   isDash,
+  VIDEO_MAX_HEIGHT_CSS,
 } from '../../utils';
 import { generateName } from '../../utils/generateName';
 import { Chat } from '../Chat';
@@ -2217,140 +2218,139 @@ export default class App extends React.Component<AppProps, AppState> {
                           />
                         )}
                       {this.playingVBrowser() && (
-                        <Popup
-                          content="Choose the person controlling the VBrowser"
-                          trigger={
-                            <Dropdown
-                              icon="keyboard"
-                              labeled
-                              className="icon"
-                              style={{ height: '36px' }}
-                              button
-                              value={this.state.controller}
-                              placeholder="No controller"
-                              clearable
-                              onChange={this.changeController}
-                              selection
-                              disabled={!this.haveLock()}
-                              options={this.state.participants.map((p) => ({
-                                text: this.state.nameMap[p.id] || p.id,
-                                value: p.id,
-                              }))}
-                            ></Dropdown>
-                          }
-                        />
-                      )}
-                      {this.playingVBrowser() && (
-                        <Dropdown
-                          icon="desktop"
-                          labeled
-                          className="icon"
-                          style={{ height: '36px' }}
-                          button
-                          disabled={!this.haveLock()}
-                          value={this.state.vBrowserResolution}
-                          onChange={(_e, data) =>
-                            this.setState({
-                              vBrowserResolution: data.value as string,
-                            })
-                          }
-                          selection
-                          options={[
-                            {
-                              text: '1080p (Plus only)',
-                              value: '1920x1080@30',
-                              disabled: !this.state.isVBrowserLarge,
-                            },
-                            {
-                              text: '720p',
-                              value: '1280x720@30',
-                            },
-                            {
-                              text: '576p',
-                              value: '1024x576@60',
-                            },
-                            {
-                              text: '486p',
-                              value: '864x486@60',
-                            },
-                            {
-                              text: '360p',
-                              value: '640x360@60',
-                            },
-                          ]}
-                        ></Dropdown>
-                      )}
-                      {this.playingVBrowser() && (
-                        <Dropdown
-                          icon="chart area"
-                          labeled
-                          className="icon"
-                          style={{ height: '36px' }}
-                          button
-                          disabled={!this.haveLock()}
-                          value={this.state.vBrowserQuality}
-                          onChange={(_e, data) => {
-                            this.setState({
-                              vBrowserQuality: data.value as string,
-                            });
-                          }}
-                          selection
-                          options={[
-                            {
-                              text: 'Eco',
-                              value: '0.25',
-                            },
-                            {
-                              text: 'Low',
-                              value: '0.5',
-                            },
-                            {
-                              text: 'Standard',
-                              value: '1',
-                            },
-                            {
-                              text: 'High',
-                              value: '1.5',
-                            },
-                            {
-                              text: 'Ultra',
-                              value: '2',
-                            },
-                          ]}
-                        ></Dropdown>
-                      )}
-                      {this.playingVBrowser() &&
-                        isMobile() &&
-                        this.state.controller === this.socket.id && (
+                        <>
+                          <Popup
+                            content="Choose the person controlling the VBrowser"
+                            trigger={
+                              <Dropdown
+                                fluid
+                                icon="keyboard"
+                                labeled
+                                className="icon"
+                                style={{ height: '36px' }}
+                                button
+                                value={this.state.controller}
+                                placeholder="No controller"
+                                clearable
+                                onChange={this.changeController}
+                                selection
+                                disabled={!this.haveLock()}
+                                options={this.state.participants.map((p) => ({
+                                  text: this.state.nameMap[p.id] || p.id,
+                                  value: p.id,
+                                }))}
+                              ></Dropdown>
+                            }
+                          />
+                          <Dropdown
+                            fluid
+                            icon="desktop"
+                            labeled
+                            className="icon"
+                            style={{ height: '36px' }}
+                            button
+                            disabled={!this.haveLock()}
+                            value={this.state.vBrowserResolution}
+                            onChange={(_e, data) =>
+                              this.setState({
+                                vBrowserResolution: data.value as string,
+                              })
+                            }
+                            selection
+                            options={[
+                              {
+                                text: '1080p (Plus only)',
+                                value: '1920x1080@30',
+                                disabled: !this.state.isVBrowserLarge,
+                              },
+                              {
+                                text: '720p',
+                                value: '1280x720@30',
+                              },
+                              {
+                                text: '576p',
+                                value: '1024x576@60',
+                              },
+                              {
+                                text: '486p',
+                                value: '864x486@60',
+                              },
+                              {
+                                text: '360p',
+                                value: '640x360@60',
+                              },
+                            ]}
+                          ></Dropdown>
+                          <Dropdown
+                            fluid
+                            icon="chart area"
+                            labeled
+                            className="icon"
+                            style={{ height: '36px' }}
+                            button
+                            disabled={!this.haveLock()}
+                            value={this.state.vBrowserQuality}
+                            onChange={(_e, data) => {
+                              this.setState({
+                                vBrowserQuality: data.value as string,
+                              });
+                            }}
+                            selection
+                            options={[
+                              {
+                                text: 'Eco',
+                                value: '0.25',
+                              },
+                              {
+                                text: 'Low',
+                                value: '0.5',
+                              },
+                              {
+                                text: 'Standard',
+                                value: '1',
+                              },
+                              {
+                                text: 'High',
+                                value: '1.5',
+                              },
+                              {
+                                text: 'Ultra',
+                                value: '2',
+                              },
+                            ]}
+                          ></Dropdown>
+                          {isMobile() &&
+                            this.state.controller === this.socket.id && (
+                              <Button
+                                fluid
+                                className="toolButton"
+                                icon
+                                labelPosition="left"
+                                color="blue"
+                                disabled={!this.haveLock()}
+                                onClick={() => {
+                                  const dummy =
+                                    document.getElementById('dummy');
+                                  dummy?.focus();
+                                }}
+                              >
+                                <Icon name="keyboard" />
+                                Keyboard
+                              </Button>
+                            )}
                           <Button
                             fluid
                             className="toolButton"
                             icon
                             labelPosition="left"
-                            color="blue"
+                            color="red"
                             disabled={!this.haveLock()}
-                            onClick={() => {
-                              const dummy = document.getElementById('dummy');
-                              dummy?.focus();
-                            }}
+                            onClick={this.stopVBrowser}
                           >
-                            <Icon name="keyboard" />
-                            Keyboard
+                            <Icon name="cancel" />
+                            Stop VBrowser
                           </Button>
-                        )}
-                      {this.playingVBrowser() && (
-                        <Button
-                          fluid
-                          className="toolButton"
-                          icon
-                          labelPosition="left"
-                          color="red"
-                          disabled={!this.haveLock()}
-                          onClick={this.stopVBrowser}
-                        >
-                          <Icon name="cancel" />
-                          Stop VBrowser
-                        </Button>
+                        </>
                       )}
                       {!this.localStreamToPublish &&
                         !sharer &&
@@ -2482,8 +2482,7 @@ export default class App extends React.Component<AppProps, AppState> {
                               ? 'block'
                               : 'none',
                           width: '100%',
-                          maxHeight:
-                            'calc(100vh - 62px - 36px - 36px - 8px - 41px - 16px)',
+                          maxHeight: VIDEO_MAX_HEIGHT_CSS,
                         }}
                         id="leftVideo"
                         onEnded={(e) =>
@@ -2535,7 +2534,7 @@ export default class App extends React.Component<AppProps, AppState> {
                 display: 'flex',
                 flexDirection: 'column',
                 position: 'relative',
-                width: this.state.showChatColumn ? 350 : 40,
+                width: this.state.showChatColumn ? 360 : 30,
                 marginLeft: 4,
               }}
               className={`${
@@ -2553,7 +2552,7 @@ export default class App extends React.Component<AppProps, AppState> {
                     transform: this.state.showChatColumn
                       ? 'translate(0)'
                       : 'translate(-100%)',
-                    left: this.state.showChatColumn ? -10 : 30,
+                    left: this.state.showChatColumn ? 0 : 30,
                     flexDirection: this.state.showChatColumn
                       ? 'row-reverse'
                       : 'row',
@@ -2616,7 +2615,7 @@ export default class App extends React.Component<AppProps, AppState> {
             <div
               style={{
                 position: 'relative',
-                width: this.state.showPeopleColumn ? 300 : 40,
+                width: this.state.showPeopleColumn ? 330 : 30,
                 marginLeft: 4,
               }}
               className={
@@ -2634,7 +2633,7 @@ export default class App extends React.Component<AppProps, AppState> {
                     transform: this.state.showPeopleColumn
                       ? 'translate(0)'
                       : 'translate(-100%)',
-                    left: this.state.showPeopleColumn ? -10 : 30,
+                    left: this.state.showPeopleColumn ? 0 : 30,
                     flexDirection: this.state.showPeopleColumn
                       ? 'row-reverse'
                       : 'row',
