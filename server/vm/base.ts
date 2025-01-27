@@ -384,7 +384,7 @@ export abstract class VMManager {
       for (let i = 0; i < allVMs.length; i++) {
         const server = allVMs[i];
         if (!inUse.has(server.id)) {
-          // TODO log how many cleanups we do
+          redisCount('vBrowserCleanup');
           console.log('[CLEANUP]', this.getPoolName(), server.id);
           try {
             await this.resetVM(server.id);
@@ -476,7 +476,9 @@ export abstract class VMManager {
           // VM didn't come up. Try reimaging
           await this.reimageVM(vmid);
           redisCount('vBrowserReimage');
-          await this.resetVM(vmid);
+          // Don't reset here since reboot will fail while VM is reimaging
+          // Cleanup will process it eventually
+          // await this.resetVM(vmid);
         }
         if (retryCount >= 180) {
           throw new Error('too many attempts on vm ' + vmid);
