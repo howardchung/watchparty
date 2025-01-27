@@ -399,3 +399,7 @@ function uuidv4() {
     ).toString(16),
   );
 }
+
+// Subtract header, URL row, button row, 2 spacers, controls
+export const VIDEO_MAX_HEIGHT_CSS =
+  'calc(100vh - 64px - 38px - 36px - 4px - 4px - 41px)';

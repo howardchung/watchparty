@@ -4,6 +4,7 @@ import { EVENT } from './events';
 import { NekoClient } from '.';
 import GuacamoleKeyboard from './keyboard';
 import config from '../../config';
+import { VIDEO_MAX_HEIGHT_CSS } from '../../utils';
 
 // import { EVENT } from './events';
 
@@ -354,6 +355,8 @@ export default class VBrowser extends React.Component<{
   };
 
   render() {
+    // leftVideoParent is the target for fullscreen, which loses its style when set to fullscreenElement
+    // extra container layer is to be able to keep styling for overlay/video
     return (
       <div
         id="leftVideoParent"
@@ -364,15 +367,15 @@ export default class VBrowser extends React.Component<{
           width: '100%',
         }}
       >
-        <div
-          ref={this._container}
-          style={{ width: '100%', height: 'fit-content', position: 'relative' }}
-        >
+        <div ref={this._container} style={{ position: 'relative' }}>
           <video
             playsInline
             ref={this._video}
             id="leftVideo"
-            style={{ width: '100%' }}
+            style={{
+              width: '100%',
+              maxHeight: VIDEO_MAX_HEIGHT_CSS,
+            }}
           />
           <audio id="iPhoneAudio" />
           <input
@@ -415,20 +418,16 @@ export default class VBrowser extends React.Component<{
                 //keyup/keydown don't work on Chrome mobile for alphanumeric chars
                 // see https://stackoverflow.com/questions/36753548/keycode-on-android-is-always-229
                 // grab the last value out of the textfield instead and send that event
-                document
-                  .getElementById('leftOverlay')
-                  ?.dispatchEvent(
-                    new KeyboardEvent('keydown', {
-                      key: newVal.slice(-1).toLowerCase(),
-                    }),
-                  );
-                document
-                  .getElementById('leftOverlay')
-                  ?.dispatchEvent(
-                    new KeyboardEvent('keyup', {
-                      key: newVal.slice(-1).toLowerCase(),
-                    }),
-                  );
+                document.getElementById('leftOverlay')?.dispatchEvent(
+                  new KeyboardEvent('keydown', {
+                    key: newVal.slice(-1).toLowerCase(),
+                  }),
+                );
+                document.getElementById('leftOverlay')?.dispatchEvent(
+                  new KeyboardEvent('keyup', {
+                    key: newVal.slice(-1).toLowerCase(),
+                  }),
+                );
                 // this.$client.sendData('keydown', { key: newVal.slice(-1).charCodeAt(0) });
                 // this.$client.sendData('keyup', { key: newVal.slice(-1).charCodeAt(0) });
               } else {
