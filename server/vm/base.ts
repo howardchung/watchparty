@@ -264,7 +264,7 @@ export abstract class VMManager {
       // Check to make sure the VM was recently rebooted (we could also check on the password to ensure reset)
       const timeSinceBoot = Date.now() / 1000 - Number(resp.data);
       // console.log(timeSinceBoot);
-      return this.reuseVMs ? timeSinceBoot < 60 * 1000 : true;
+      return this.reuseVMs ? timeSinceBoot < 150 * 1000 : true;
     } catch (e) {
       // console.log(url, e.message, e.response?.status);
       return false;
