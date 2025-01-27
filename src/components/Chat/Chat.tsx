@@ -454,7 +454,7 @@ const ChatMessage = ({
             {!cmd && msg}
           </Comment.Text>
         </Linkify>
-        {msg.startsWith('![') && <Markdown>{msg}</Markdown>}
+        {msg?.startsWith('![') && <Markdown>{msg}</Markdown>}
         <div className={classes.commentMenu}>
           <Icon
             onClick={(e: MouseEvent) => {
