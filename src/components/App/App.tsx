@@ -12,6 +12,9 @@ import {
   Popup,
   Modal,
   Form,
+  Menu,
+  Label,
+  SemanticCOLORS,
 } from 'semantic-ui-react';
 import io, { Socket } from 'socket.io-client';
 import {
@@ -60,6 +63,7 @@ import styles from './App.module.css';
 import config from '../../config';
 import { MetadataContext } from '../../MetadataContext';
 import ChatVideoCard from '../Playlist/ChatVideoCard';
+import { timeStamp } from 'console';
 
 declare global {
   interface Window {
@@ -2546,8 +2550,7 @@ export default class App extends React.Component<AppProps, AppState> {
                 display: 'flex',
                 flexDirection: 'column',
                 position: 'relative',
-                width: this.state.showChatColumn ? 360 : 40,
-                marginLeft: 4,
+                width: this.state.showChatColumn ? 400 : 30,
               }}
               className={`${
                 (this.state.fullScreen
@@ -2561,13 +2564,8 @@ export default class App extends React.Component<AppProps, AppState> {
                 <div
                   className={styles.expandButton}
                   style={{
-                    transform: this.state.showChatColumn
-                      ? 'translate(0)'
-                      : 'translate(-100%)',
-                    left: this.state.showChatColumn ? 0 : 30,
-                    flexDirection: this.state.showChatColumn
-                      ? 'row-reverse'
-                      : 'row',
+                    top: '50%',
+                    left: '0px',
                   }}
                   onClick={() => {
                     const newVal = !this.state.showChatColumn;
@@ -2580,10 +2578,7 @@ export default class App extends React.Component<AppProps, AppState> {
                     );
                   }}
                 >
-                  <span className={styles.hide}>
-                    {this.state.showChatColumn ? '»' : '«'}
-                  </span>
-                  <Icon circular fitted name="chat" />
+                  {this.state.showChatColumn ? '»' : '«'}
                 </div>
               )}
               <Form autoComplete="off">
@@ -2615,6 +2610,98 @@ export default class App extends React.Component<AppProps, AppState> {
                   }
                 />
               </Form>
+              <div
+                style={{
+                  position: 'relative',
+                  visibility: this.state.showChatColumn ? undefined : 'hidden',
+                }}
+              >
+                <Menu
+                  inverted
+                  widths={1}
+                  style={{
+                    marginTop: '4px',
+                    marginBottom: '4px',
+                    height: '40px',
+                  }}
+                >
+                  {/* <Menu.Item
+              name="chat"
+              active={this.state.currentTab === 'chat'}
+              onClick={() => {
+                this.setState({ currentTab: 'chat', unreadCount: 0 });
+              }}
+              as="a"
+            >
+              Chat
+              {this.state.unreadCount > 0 && (
+                <Label circular color="red">
+                  {this.state.unreadCount}
+                </Label>
+              )}
+            </Menu.Item> */}
+                  <Menu.Item
+                    name="people"
+                    active={false}
+                    onClick={() => {
+                      const newVal = !this.state.showPeopleColumn;
+                      this.setState({ showPeopleColumn: newVal });
+                      window.localStorage.setItem(
+                        'watchparty-showpeoplecolumn',
+                        Number(newVal).toString(),
+                      );
+                    }}
+                    as="a"
+                  >
+                    People
+                    {this.state.showPeopleColumn ? '▴' : '▾'}
+                    <Label
+                      circular
+                      color={
+                        getColorForString(
+                          this.state.participants.length.toString(),
+                        ) as SemanticCOLORS
+                      }
+                    >
+                      {this.state.participants.length}
+                    </Label>
+                  </Menu.Item>
+                  {/* <Menu.Item
+              name="settings"
+              active={this.state.currentTab === 'settings'}
+              onClick={() => this.setState({ currentTab: 'settings' })}
+              as="a"
+            >
+              Settings
+            </Menu.Item> */}
+                </Menu>
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '40px',
+                    width: '100%',
+                    zIndex: 2,
+                    background: 'rgba(11, 11, 11, 0.9)',
+                    height: this.state.showPeopleColumn ? '600px' : '0px',
+                    maxHeight: '60vh',
+                    overflowY: 'scroll',
+                    transition: 'height ease-out 0.5s',
+                  }}
+                >
+                  {this.state.state === 'connected' && (
+                    <VideoChat
+                      socket={this.socket}
+                      participants={this.state.participants}
+                      nameMap={this.state.nameMap}
+                      pictureMap={this.state.pictureMap}
+                      tsMap={this.state.tsMap}
+                      rosterUpdateTS={this.state.rosterUpdateTS}
+                      owner={this.state.owner}
+                      getLeaderTime={this.getLeaderTime}
+                    />
+                  )}
+                </div>
+              </div>
               <Chat
                 chat={this.state.chat}
                 nameMap={this.state.nameMap}
@@ -2628,63 +2715,6 @@ export default class App extends React.Component<AppProps, AppState> {
                 isLiveStream={this.state.isLiveStream}
                 hide={!this.state.showChatColumn}
               />
-            </div>
-            <div
-              style={{
-                position: 'relative',
-                width: this.state.showPeopleColumn ? 330 : 40,
-                marginLeft: 4,
-              }}
-              className={
-                (this.state.fullScreen
-                  ? styles.fullHeightColumnFullscreen
-                  : styles.fullHeightColumn) +
-                ' ' +
-                styles.rightColumn2
-              }
-            >
-              {!isMobile() && (
-                <div
-                  className={styles.expandButton}
-                  style={{
-                    transform: this.state.showPeopleColumn
-                      ? 'translate(0)'
-                      : 'translate(-100%)',
-                    left: this.state.showPeopleColumn ? 0 : 30,
-                    flexDirection: this.state.showPeopleColumn
-                      ? 'row-reverse'
-                      : 'row',
-                  }}
-                  onClick={() => {
-                    const newVal = !this.state.showPeopleColumn;
-                    this.setState({
-                      showPeopleColumn: newVal,
-                    });
-                    window.localStorage.setItem(
-                      'watchparty-showpeoplecolumn',
-                      Number(newVal).toString(),
-                    );
-                  }}
-                >
-                  <span className={styles.hide}>
-                    {this.state.showPeopleColumn ? '»' : '«'}
-                  </span>
-                  <Icon circular fitted name="users" />
-                </div>
-              )}
-              {this.state.state === 'connected' && (
-                <VideoChat
-                  hide={!this.state.showPeopleColumn}
-                  socket={this.socket}
-                  participants={this.state.participants}
-                  nameMap={this.state.nameMap}
-                  pictureMap={this.state.pictureMap}
-                  tsMap={this.state.tsMap}
-                  rosterUpdateTS={this.state.rosterUpdateTS}
-                  owner={this.state.owner}
-                  getLeaderTime={this.getLeaderTime}
-                />
-              )}
             </div>
           </div>
         }

@@ -37,15 +37,8 @@
 
 .rightColumn {
   flex-shrink: 0;
-  padding-left: 30px;
-  @media only screen and (max-width: 600px) {
-    width: calc(100% - 8px);
-  }
-}
-
-.rightColumn2 {
-  flex-shrink: 0;
-  padding-left: 30px;
+  padding-left: 34px;
+  margin-left: 4px;
   @media only screen and (max-width: 600px) {
     width: calc(100% - 8px);
   }
@@ -69,25 +62,13 @@
   position: absolute;
   z-index: 900;
   background-color: lightgrey;
-  border-radius: 8px;
-  min-width: 30px;
-  min-height: 30px;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
   display: flex;
   align-items: center;
-  top: 50%;
+  justify-content: center;
   cursor: pointer;
-  padding: 1px;
-}
-
-.expandButton .hide {
-  width: 0px;
-  visibility: hidden;
-}
-
-.expandButton:hover .hide {
-  width: 10px;
-  visibility: visible;
-  transition: width ease-out 0.5s;
 }
 
 .fullHeightColumn.fullHeightColumn.fullHeightColumn {
@@ -97,4 +78,5 @@
 
 .fullHeightColumnFullscreen.fullHeightColumnFullscreen.fullHeightColumnFullscreen {
   height: calc(100vh);
+  transition: width ease-out 0.5s;
 }
