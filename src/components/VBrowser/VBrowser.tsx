@@ -367,7 +367,10 @@ export default class VBrowser extends React.Component<{
           width: '100%',
         }}
       >
-        <div ref={this._container} style={{ position: 'relative' }}>
+        <div
+          ref={this._container}
+          style={{ position: 'relative', width: '100%' }}
+        >
           <video
             playsInline
             ref={this._video}
