@@ -242,39 +242,40 @@ export class VideoChat extends React.Component<VideoChatProps> {
           display: this.props.hide ? 'none' : 'flex',
           width: '100%',
           flexDirection: 'column',
-          overflow: 'auto',
+          alignItems: 'center',
+          gap: '4px',
+          margin: '4px',
         }}
       >
-        <div style={{ display: 'flex' }}>
-          {!ourStream && (
-            <Button
-              fluid
-              color={'purple'}
-              size="medium"
-              icon
-              labelPosition="left"
-              onClick={this.setupWebRTC}
-            >
-              <Icon name="video" />
-              {`Join Video`}
-            </Button>
-          )}
+        {!ourStream && (
+          <Button
+            color={'purple'}
+            size="medium"
+            icon
+            labelPosition="left"
+            onClick={this.setupWebRTC}
+          >
+            <Icon name="video" />
+            {`Join Video`}
+          </Button>
+        )}
+        {ourStream && (
+          <Button
+            color={'red'}
+            size="medium"
+            icon
+            labelPosition="left"
+            onClick={this.stopWebRTC}
+          >
+            <Icon name="external" />
+            {`Leave`}
+          </Button>
+        )}
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
           {ourStream && (
             <>
               <Button
-                fluid
-                color={'red'}
-                size="medium"
-                icon
-                labelPosition="left"
-                onClick={this.stopWebRTC}
-              >
-                <Icon name="external" />
-                {`Leave`}
-              </Button>
-              <Button
                 color={this.getVideoWebRTC() ? 'green' : 'red'}
-                fluid
                 size="medium"
                 icon
                 labelPosition="left"
@@ -285,7 +286,6 @@ export class VideoChat extends React.Component<VideoChatProps> {
               </Button>
               <Button
                 color={this.getAudioWebRTC() ? 'green' : 'red'}
-                fluid
                 size="medium"
                 icon
                 labelPosition="left"
@@ -306,7 +306,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
             display: 'flex',
             flexWrap: 'wrap',
             justifyContent: 'center',
-            marginTop: '8px',
+            gap: '4px',
           }}
         >
           {participants.map((p) => {
