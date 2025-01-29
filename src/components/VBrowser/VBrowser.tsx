@@ -365,20 +365,50 @@ export default class VBrowser extends React.Component<{
           alignItems: 'center',
           justifyContent: 'center',
           width: '100%',
+          height: '100%',
         }}
       >
         <div
           ref={this._container}
-          style={{ position: 'relative', width: '100%' }}
+          style={{
+            position: 'relative',
+            width: '100%',
+            height: document.getElementById('leftVideo')?.clientHeight,
+          }}
         >
           <video
             playsInline
             ref={this._video}
             id="leftVideo"
             style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
               width: '100%',
-              maxHeight: VIDEO_MAX_HEIGHT_CSS,
+              // maxHeight: document.fullscreenElement ? undefined : VIDEO_MAX_HEIGHT_CSS,
             }}
+          />
+          <div
+            ref={this._overlay}
+            id={'leftOverlay'}
+            tabIndex={0}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: document.getElementById('leftVideo')?.clientWidth,
+              height: document.getElementById('leftVideo')?.clientHeight,
+              // disable firefox scrollbars?
+              scrollbarWidth: 'none',
+            }}
+            onClick={this.onClick}
+            onContextMenu={this.onContextMenu}
+            // onWheel={this.onWheel}
+            onMouseMove={this.onMouseMove}
+            onMouseDown={this.onMouseDown}
+            onMouseUp={this.onMouseUp}
+            onMouseEnter={this.onMouseEnter}
+            onMouseLeave={this.onMouseLeave}
           />
           <audio id="iPhoneAudio" />
           <input
@@ -450,28 +480,6 @@ export default class VBrowser extends React.Component<{
               }
               this.setState({ dummyValue: newVal });
             }}
-          />
-          <div
-            ref={this._overlay}
-            id={'leftOverlay'}
-            tabIndex={0}
-            style={{
-              width: document.getElementById('leftVideo')?.clientWidth,
-              height: document.getElementById('leftVideo')?.clientHeight,
-              position: 'absolute',
-              top: 0,
-              bottom: 0,
-              // disable firefox scrollbars?
-              scrollbarWidth: 'none',
-            }}
-            onClick={this.onClick}
-            onContextMenu={this.onContextMenu}
-            // onWheel={this.onWheel}
-            onMouseMove={this.onMouseMove}
-            onMouseDown={this.onMouseDown}
-            onMouseUp={this.onMouseUp}
-            onMouseEnter={this.onMouseEnter}
-            onMouseLeave={this.onMouseLeave}
           />
         </div>
       </div>
