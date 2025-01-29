@@ -473,12 +473,12 @@ export abstract class VMManager {
           redisCount('vBrowserStagingFails');
           await redis?.lpush('vBrowserStageFails', vmid);
           await redis?.ltrim('vBrowserStageFails', 0, 24);
-          // VM didn't come up. Try reimaging
-          await this.reimageVM(vmid);
-          redisCount('vBrowserReimage');
-          // Don't reset here since reboot will fail while VM is reimaging
-          // Cleanup will process it eventually
-          // await this.resetVM(vmid);
+          // VM didn't come up. set image to null so we reimage
+          await postgres.query(
+            `UPDATE vbrowser SET image = NULL WHERE pool = $1 AND vmid = $2`,
+            [this.getPoolName(), vmid],
+          );
+          await this.resetVM(vmid);
         }
         if (retryCount >= 180) {
           throw new Error('too many attempts on vm ' + vmid);

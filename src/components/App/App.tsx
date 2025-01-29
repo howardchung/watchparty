@@ -63,7 +63,6 @@ import styles from './App.module.css';
 import config from '../../config';
 import { MetadataContext } from '../../MetadataContext';
 import ChatVideoCard from '../Playlist/ChatVideoCard';
-import { timeStamp } from 'console';
 
 declare global {
   interface Window {
@@ -2041,32 +2040,6 @@ export default class App extends React.Component<AppProps, AppState> {
             }}
           ></Message>
         )}
-        <SettingsModal
-          modalOpen={this.state.settingsModalOpen}
-          setModalOpen={this.setSettingsModalOpen}
-          roomLock={this.state.roomLock}
-          setRoomLock={this.setRoomLock}
-          socket={this.socket}
-          roomId={this.state.roomId}
-          isChatDisabled={this.state.isChatDisabled}
-          setIsChatDisabled={this.setIsChatDisabled}
-          owner={this.state.owner}
-          setOwner={this.setOwner}
-          vanity={this.state.vanity}
-          setVanity={this.setVanity}
-          inviteLink={this.state.inviteLink}
-          password={this.state.password}
-          setPassword={this.setPassword}
-          clearChat={this.clearChat}
-          roomTitle={this.state.roomTitle}
-          setRoomTitle={this.setRoomTitle}
-          roomDescription={this.state.roomDescription}
-          setRoomDescription={this.setRoomDescription}
-          roomTitleColor={this.state.roomTitleColor}
-          setRoomTitleColor={this.setRoomTitleColor}
-          mediaPath={this.state.mediaPath}
-          setMediaPath={this.setMediaPath}
-        />
         {!this.state.fullScreen && (
           <TopBar
             roomTitle={this.state.roomTitle}
@@ -2078,7 +2051,7 @@ export default class App extends React.Component<AppProps, AppState> {
         {
           <div
             className={styles.mobileStack}
-            style={{ margin: '0 8px', display: 'flex' }}
+            style={{ margin: '0 8px', display: 'flex', columnGap: '32px' }}
           >
             <div
               className={
@@ -2156,13 +2129,6 @@ export default class App extends React.Component<AppProps, AppState> {
                           )}
                         </Dropdown.Menu>
                       </Dropdown>
-                      <Button
-                        style={{ marginLeft: -4 }}
-                        icon="setting"
-                        onClick={() => {
-                          this.setSettingsModalOpen(true);
-                        }}
-                      />
                     </div>
                     <Separator />
                     <div
@@ -2550,7 +2516,7 @@ export default class App extends React.Component<AppProps, AppState> {
                 display: 'flex',
                 flexDirection: 'column',
                 position: 'relative',
-                width: this.state.showChatColumn ? 400 : 30,
+                width: this.state.showChatColumn ? 400 : 0,
               }}
               className={`${
                 (this.state.fullScreen
@@ -2565,7 +2531,7 @@ export default class App extends React.Component<AppProps, AppState> {
                   className={styles.expandButton}
                   style={{
                     top: '50%',
-                    left: '0px',
+                    left: '-28px',
                   }}
                   onClick={() => {
                     const newVal = !this.state.showChatColumn;
@@ -2581,35 +2547,71 @@ export default class App extends React.Component<AppProps, AppState> {
                   {this.state.showChatColumn ? '»' : '«'}
                 </div>
               )}
-              <Form autoComplete="off">
-                <Input
-                  style={{
-                    visibility: this.state.showChatColumn
-                      ? undefined
-                      : 'hidden',
-                  }}
-                  inverted
-                  fluid
-                  label={'My name is:'}
-                  value={this.state.myName}
-                  onChange={(_e, data) => {
-                    this.updateName(data.value);
-                  }}
-                  icon={
-                    <Icon
-                      onClick={async () => {
-                        const randName = await generateName();
-                        this.updateName(randName);
+              <div style={{ display: 'flex', width: '100%', gap: '4px' }}>
+                <div style={{ flexGrow: 1 }}>
+                  <Form autoComplete="off">
+                    <Input
+                      style={{
+                        visibility: this.state.showChatColumn
+                          ? undefined
+                          : 'hidden',
                       }}
-                      name="random"
                       inverted
-                      circular
-                      link
-                      title="Generate a random name"
+                      fluid
+                      label={'My name is:'}
+                      value={this.state.myName}
+                      onChange={(_e, data) => {
+                        this.updateName(data.value);
+                      }}
+                      icon={
+                        <Icon
+                          onClick={async () => {
+                            const randName = await generateName();
+                            this.updateName(randName);
+                          }}
+                          name="random"
+                          inverted
+                          circular
+                          link
+                          title="Generate a random name"
+                        />
+                      }
                     />
-                  }
+                  </Form>
+                </div>
+                <Button
+                  icon="setting"
+                  onClick={() => {
+                    this.setSettingsModalOpen(true);
+                  }}
                 />
-              </Form>
+                <SettingsModal
+                  modalOpen={this.state.settingsModalOpen}
+                  setModalOpen={this.setSettingsModalOpen}
+                  roomLock={this.state.roomLock}
+                  setRoomLock={this.setRoomLock}
+                  socket={this.socket}
+                  roomId={this.state.roomId}
+                  isChatDisabled={this.state.isChatDisabled}
+                  setIsChatDisabled={this.setIsChatDisabled}
+                  owner={this.state.owner}
+                  setOwner={this.setOwner}
+                  vanity={this.state.vanity}
+                  setVanity={this.setVanity}
+                  inviteLink={this.state.inviteLink}
+                  password={this.state.password}
+                  setPassword={this.setPassword}
+                  clearChat={this.clearChat}
+                  roomTitle={this.state.roomTitle}
+                  setRoomTitle={this.setRoomTitle}
+                  roomDescription={this.state.roomDescription}
+                  setRoomDescription={this.setRoomDescription}
+                  roomTitleColor={this.state.roomTitleColor}
+                  setRoomTitleColor={this.setRoomTitleColor}
+                  mediaPath={this.state.mediaPath}
+                  setMediaPath={this.setMediaPath}
+                />
+              </div>
               <div
                 style={{
                   position: 'relative',
