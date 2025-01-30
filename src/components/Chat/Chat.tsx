@@ -454,7 +454,16 @@ const ChatMessage = ({
             {!cmd && msg}
           </Comment.Text>
         </Linkify>
-        {msg?.startsWith('![') && <Markdown>{msg}</Markdown>}
+        {msg?.startsWith('![') && (
+          <Markdown
+            children={msg}
+            components={{
+              img: ({ node, ...props }) => (
+                <img style={{ maxWidth: '100%' }} {...props} />
+              ),
+            }}
+          />
+        )}
         <div className={classes.commentMenu}>
           <Icon
             onClick={(e: MouseEvent) => {
