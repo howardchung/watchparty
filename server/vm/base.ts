@@ -226,9 +226,9 @@ export abstract class VMManager {
     // We might fail to record it if crashing here but cleanup will reset it
     await postgres.query(
       `
-    INSERT INTO vbrowser(pool, vmid, "creationTime", state) 
-    VALUES($1, $2, NOW(), 'staging')`,
-      [this.getPoolName(), id],
+    INSERT INTO vbrowser(pool, vmid, "creationTime", state, image) 
+    VALUES($1, $2, NOW(), 'staging', $3)`,
+      [this.getPoolName(), id, this.imageId],
     );
     redisCount('vBrowserLaunches');
     return id;
