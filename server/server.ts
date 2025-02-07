@@ -60,13 +60,14 @@ if (config.SSL_KEY_FILE && config.SSL_CRT_FILE) {
 }
 const io = new Server(server, { cors: {}, transports: ['websocket'] });
 io.engine.use(async (req: any, res: Response, next: () => void) => {
-  const key = req._query.roomId;
-  if (!key) {
+  const roomId = req._query.roomId;
+  if (!roomId) {
     return next();
   }
   // Attempt to ensure the room being connected to is loaded in memory
   // If it doesn't exist, we may fail later with "invalid namespace"
-  const shard = resolveShard(key.slice(1));
+  const shard = resolveShard(roomId);
+  const key = '/' + roomId;
   // Check to make sure this shard should load this room
   const isCorrectShard = !config.SHARD || shard === config.SHARD;
   if (isCorrectShard && postgres && !rooms.has(key)) {
@@ -82,7 +83,11 @@ io.engine.use(async (req: any, res: Response, next: () => void) => {
     if (data) {
       const room = new Room(io, key, data);
       rooms.set(key, room);
-      console.log('loading room %s into memory on shard %s', key, config.SHARD);
+      console.log(
+        'loading room %s into memory on shard %s',
+        roomId,
+        config.SHARD,
+      );
     }
   }
   next();

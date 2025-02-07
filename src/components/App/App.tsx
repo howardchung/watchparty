@@ -340,7 +340,7 @@ export default class App extends React.Component<AppProps, AppState> {
         uid: this.context.user?.uid,
         token: await this.context.user?.getIdToken(),
         shard,
-        roomId,
+        roomId: roomId.slice(1),
       },
     });
     this.socket = socket;
