@@ -61,6 +61,9 @@ if (config.SSL_KEY_FILE && config.SSL_CRT_FILE) {
 const io = new Server(server, { cors: {}, transports: ['websocket'] });
 io.engine.use(async (req: any, res: Response, next: () => void) => {
   const key = req._query.roomId;
+  if (!key) {
+    return next();
+  }
   // Attempt to ensure the room being connected to is loaded in memory
   // If it doesn't exist, we may fail later with "invalid namespace"
   const shard = resolveShard(key.slice(1));
