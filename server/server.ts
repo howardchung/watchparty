@@ -80,15 +80,13 @@ io.engine.use(async (req: any, res: Response, next: () => void) => {
     const data = persistedRoom?.data
       ? JSON.stringify(persistedRoom.data)
       : undefined;
-    if (data) {
-      const room = new Room(io, key, data);
-      rooms.set(key, room);
-      console.log(
-        'loading room %s into memory on shard %s',
-        roomId,
-        config.SHARD,
-      );
-    }
+    const room = new Room(io, key, data);
+    rooms.set(key, room);
+    console.log(
+      'loading room %s into memory on shard %s',
+      roomId,
+      config.SHARD,
+    );
   }
   next();
 });
