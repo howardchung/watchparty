@@ -1,6 +1,6 @@
 import config from './config';
 import fs from 'fs';
-import express from 'express';
+import express, { Response } from 'express';
 import bodyParser from 'body-parser';
 import compression from 'compression';
 import os from 'os';
@@ -24,13 +24,12 @@ import {
 import { deleteUser, validateUserToken } from './utils/firebase';
 import path from 'path';
 import { getStartOfDay } from './utils/time';
-import { getBgVMManagers, getSessionLimitSeconds } from './vm/utils';
+import { getSessionLimitSeconds } from './vm/utils';
 import { postgres, insertObject, upsertObject } from './utils/postgres';
 import axios, { isAxiosError } from 'axios';
 import crypto from 'crypto';
 import zlib from 'zlib';
 import util from 'util';
-import ecosystem from './ecosystem.config';
 import { statsAgg } from './utils/statsAgg';
 import { resolveShard } from './utils/resolveShard';
 import { makeRoomName, makeUserName } from './utils/moniker';
@@ -60,30 +59,36 @@ if (config.SSL_KEY_FILE && config.SSL_CRT_FILE) {
   server = new http.Server(app);
 }
 const io = new Server(server, { cors: {}, transports: ['websocket'] });
+io.engine.use(async (req: any, res: Response, next: () => void) => {
+  const key = req._query.roomId;
+  // Attempt to ensure the room being connected to is loaded in memory
+  // If it doesn't exist, we may fail later with "invalid namespace"
+  const shard = resolveShard(key.slice(1));
+  // Check to make sure this shard should load this room
+  const isCorrectShard = !config.SHARD || shard === config.SHARD;
+  if (isCorrectShard && postgres && !rooms.has(key)) {
+    // Get the room data from postgres
+    const { rows } = await postgres.query<PersistentRoom>(
+      `SELECT * from room where "roomId" = $1`,
+      [key],
+    );
+    const persistedRoom = rows[0];
+    const data = persistedRoom?.data
+      ? JSON.stringify(persistedRoom.data)
+      : undefined;
+    if (data) {
+      const room = new Room(io, key, data);
+      rooms.set(key, room);
+      console.log('loading room %s into memory on shard %s', key, config.SHARD);
+    }
+  }
+  next();
+});
 
 const rooms = new Map<string, Room>();
 init();
 
 async function init() {
-  if (postgres) {
-    console.time('[LOADROOMSPOSTGRES]');
-    const persistedRooms = await getAllRooms();
-    console.log('found %s rooms in postgres', persistedRooms.length);
-    for (let i = 0; i < persistedRooms.length; i++) {
-      const key = persistedRooms[i].roomId;
-      const data = persistedRooms[i].data
-        ? JSON.stringify(persistedRooms[i].data)
-        : undefined;
-      const room = new Room(io, key, data);
-      rooms.set(key, room);
-    }
-    console.timeEnd('[LOADROOMSPOSTGRES]');
-  }
-
-  if (!rooms.has('/default')) {
-    rooms.set('/default', new Room(io, '/default'));
-  }
-
   server?.listen(config.PORT, config.HOST);
   // Following functions iterate over in-memory rooms
   setInterval(minuteMetrics, 60 * 1000);
@@ -301,6 +306,7 @@ app.post('/createRoom', async (req, res) => {
       await insertObject(postgres, 'room', roomObj);
     } catch (e) {
       redisCount('createRoomError');
+      throw e;
     }
   }
   const decoded = await validateUserToken(req.body?.uid, req.body?.token);
@@ -713,41 +719,22 @@ async function minuteMetrics() {
 }
 
 async function freeUnusedRooms() {
-  // Clean up rooms that are no longer persisted and empty
+  // Unload rooms that are empty and idle
   // Frees up some JS memory space when process is long-running
-  const persistedRooms = await getAllRooms();
-  const persistedSet = new Set(persistedRooms.map((room) => room.roomId));
+  // On reconnect, we'll attempt to reload the room
   rooms.forEach(async (room, key) => {
-    if (room.roster.length === 0) {
-      if (!persistedSet.has(room.roomId)) {
-        room.destroy();
-        rooms.delete(key);
-      }
+    if (
+      room.roster.length === 0 &&
+      !room.vBrowser &&
+      Number(room.lastUpdateTime) < Date.now() - 60 * 60 * 1000
+    ) {
+      console.log('freeing room %s from memory on shard %s', key, config.SHARD);
+      room.destroy();
+      rooms.delete(key);
+      // Unregister the namespace to avoid dupes
+      io._nsps.delete(key);
     }
   });
-}
-
-async function getAllRooms() {
-  if (!postgres) {
-    return [];
-  }
-  let range = '/%';
-  if (config.SHARD) {
-    const numShards = ecosystem.apps.filter((app) => app.env?.SHARD).length;
-    const selection = [];
-    for (let i = 97; i < 123; i++) {
-      const letterShard = (i % numShards) + 1;
-      if (letterShard === Number(config.SHARD)) {
-        selection.push(String.fromCharCode(i));
-      }
-    }
-    range = `/(${selection.join('|')})%`;
-  }
-  return (
-    await postgres.query<PersistentRoom>(
-      `SELECT * from room where "roomId" SIMILAR TO '${range}'`,
-    )
-  ).rows;
 }
 
 async function getStats() {
@@ -763,7 +750,7 @@ async function getStats() {
   let currentVideoChat = 0;
   let currentRoomSizeCounts: NumberDict = {};
   let currentVBrowserUIDCounts: NumberDict = {};
-  let currentRoomCount = rooms.size;
+  let currentRoomCount = [rooms.size];
   rooms.forEach((room) => {
     const obj = {
       video: room.video,
@@ -871,6 +858,9 @@ async function getStats() {
     (await postgres?.query('SELECT count(1) from room WHERE owner IS NOT NULL'))
       ?.rows[0].count,
   );
+  const numAllRooms = Number(
+    (await postgres?.query('SELECT count(1) from room'))?.rows[0].count,
+  );
   const numSubs = Number(
     (await postgres?.query('SELECT count(1) from subscriber'))?.rows[0].count,
   );
@@ -968,7 +958,6 @@ async function getStats() {
   const createRoomPreloads = await getRedisCountDay('createRoomPreload');
 
   return {
-    currentRoomCount,
     currentRoomSizeCounts,
     currentUsers,
     currentVBrowser,
@@ -980,11 +969,13 @@ async function getStats() {
     currentVideoChat,
     currentVBrowserUIDCounts,
     currentUptime,
+    currentRoomCount,
     currentMemUsage,
     cpuUsage,
     redisUsage,
     postgresUsage,
     numPermaRooms,
+    numAllRooms,
     numSubs,
     discordBotWatch,
     createRoomErrors,

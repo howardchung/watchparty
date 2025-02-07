@@ -25,7 +25,6 @@ async function statsTimeSeries() {
         currentScreenShare: stats.currentScreenShare,
         currentFileShare: stats.currentFileShare,
         currentVideoChat: stats.currentVideoChat,
-        currentRoomCount: stats.currentRoomCount,
         chatMessages: stats.chatMessages,
         redisUsage: stats.redisUsage,
         hetznerApiRemaining: stats.hetznerApiRemaining,

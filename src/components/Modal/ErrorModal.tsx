@@ -12,13 +12,25 @@ export const ErrorModal = ({ error }: { error: string }) => {
           primary
           size="huge"
           onClick={() => {
+            window.location.reload();
+          }}
+          icon
+          labelPosition="left"
+        >
+          <Icon name="refresh" />
+          Try again
+        </Button>
+        <Button
+          primary
+          size="huge"
+          onClick={() => {
             window.location.href = '/';
           }}
           icon
           labelPosition="left"
         >
           <Icon name="home" />
-          Go to home page
+          Go to home
         </Button>
       </div>
     </Modal>

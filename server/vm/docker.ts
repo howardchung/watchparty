@@ -49,7 +49,7 @@ export class Docker extends VMManager {
       `
       #!/bin/bash
       set -e
-      PORT=$(comm -23 <(seq 5000 5063 | sort) <(ss -Htan | awk '{print $4}' | cut -d':' -f2 | sort -u) | head -n 1)
+      PORT=$(comm -23 <(seq 5000 5063 | sort) <(ss -Htan | awk '{print $4}' | cut -d':' -f2 | sort -u) | sort -n | head -n 1)
       INDEX=$(($PORT - 5000))
       UDP_START=$((59000+$INDEX*100))
       UDP_END=$((59099+$INDEX*100))
