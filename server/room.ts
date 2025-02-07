@@ -283,13 +283,12 @@ export class Room {
   };
 
   public saveRoom = async () => {
-    this.lastUpdateTime = new Date();
     if (postgres) {
       try {
         const roomString = this.serialize();
         await postgres.query(
           `UPDATE room SET "lastUpdateTime" = $1, data = $2 WHERE "roomId" = $3`,
-          [this.lastUpdateTime, roomString, this.roomId],
+          [this.lastUpdateTime ?? new Date(), roomString, this.roomId],
         );
       } catch (e) {
         console.warn(e);
@@ -362,6 +361,7 @@ export class Room {
     this.vBrowser = undefined;
     this.cmdHost(null, '');
     // Force a save because this might change in unattended rooms
+    this.lastUpdateTime = new Date();
     this.saveRoom();
     if (redis && assignTime) {
       await redis.lpush('vBrowserSessionMS', Date.now() - assignTime);

@@ -99,7 +99,6 @@ async function init() {
   // Following functions iterate over in-memory rooms
   setInterval(minuteMetrics, 60 * 1000);
   setInterval(release, releaseInterval);
-  setInterval(freeUnusedRooms, 5 * 60 * 1000);
   saveRooms();
   if (process.env.NODE_ENV === 'development') {
     try {
@@ -633,14 +632,30 @@ app.use('/*splat', (_req, res) => {
 
 async function saveRooms() {
   while (true) {
-    // console.time('[SAVEROOMS]');
-    const roomArr = Array.from(rooms.values());
-    for (let i = 0; i < roomArr.length; i++) {
-      if (roomArr[i].roster.length) {
-        await roomArr[i].saveRoom();
+    // Unload rooms that are empty and idle
+    // Frees up some JS memory space when process is long-running
+    // On reconnect, we'll attempt to reload the room
+    rooms.forEach((room, key) => {
+      if (
+        room.roster.length === 0 &&
+        !room.vBrowser &&
+        Number(room.lastUpdateTime) < Date.now() - 24 * 60 * 60 * 1000
+      ) {
+        console.log(
+          'freeing room %s from memory on shard %s',
+          key,
+          config.SHARD,
+        );
+        room.saveRoom();
+        room.destroy();
+        rooms.delete(key);
+        // Unregister the namespace to avoid dupes on reload
+        io._nsps.delete(key);
+      } else if (room.roster.length) {
+        room.lastUpdateTime = new Date();
+        room.saveRoom();
       }
-    }
-    // console.timeEnd('[SAVEROOMS]');
+    });
     await new Promise((resolve) => setTimeout(resolve, 1000));
   }
 }
@@ -722,25 +737,6 @@ async function minuteMetrics() {
       }
     }
   }
-}
-
-async function freeUnusedRooms() {
-  // Unload rooms that are empty and idle
-  // Frees up some JS memory space when process is long-running
-  // On reconnect, we'll attempt to reload the room
-  rooms.forEach(async (room, key) => {
-    if (
-      room.roster.length === 0 &&
-      !room.vBrowser &&
-      Number(room.lastUpdateTime) < Date.now() - 60 * 60 * 1000
-    ) {
-      console.log('freeing room %s from memory on shard %s', key, config.SHARD);
-      room.destroy();
-      rooms.delete(key);
-      // Unregister the namespace to avoid dupes
-      io._nsps.delete(key);
-    }
-  });
 }
 
 async function getStats() {
