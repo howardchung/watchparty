@@ -69,7 +69,7 @@ io.engine.use(async (req: any, res: Response, next: () => void) => {
   const shard = resolveShard(roomId);
   const key = '/' + roomId;
   // Check to make sure this shard should load this room
-  const isCorrectShard = !config.SHARD || shard === config.SHARD;
+  const isCorrectShard = !config.SHARD || shard === Number(config.SHARD);
   if (isCorrectShard && postgres && !rooms.has(key)) {
     // Get the room data from postgres
     const { rows } = await postgres.query<PersistentRoom>(
