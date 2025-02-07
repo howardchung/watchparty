@@ -1839,7 +1839,10 @@ export default class App extends React.Component<AppProps, AppState> {
       const magnetUrl = searchParsed.get('torrent') ?? '';
       const magnetParsed = new URLSearchParams(magnetUrl);
       const index = searchParsed.get('fileIndex');
-      return magnetParsed.get('dn') + (index != null ? ` (file ${index})` : '');
+      return (
+        (magnetParsed.get('dn') ?? searchParsed.get('dn')) +
+        (index != null ? ` (file ${index})` : '')
+      );
     }
     if (input.includes('/proxy')) {
       const urlParsed = new URLSearchParams(input);
