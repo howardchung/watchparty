@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta
+      name="description"
+      content="Watch together with friends. Chat and react in real time to the same stream, whether it's YouTube, your own video, or a virtual browser."
+    />
+    <meta
+      name="company"
+      content="Gravitech LLC"
+    />
+    <meta property="og:image" content="/screenshot4.png" />
+    <title>WatchParty</title>
+    <script type="module" crossorigin src="/assets/index-DOtglJXI.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-Do7WWCEw.css">
+  </head>
+  <body>
+    <script>
+      // Remove fbclid parameter
+      (function () {
+        var param = 'fbclid';
+        if (location.search.indexOf(param + '=') !== -1) {
+          var replace = '';
+          try {
+            var url = new URL(location);
+            url.searchParams.delete(param);
+            replace = url.href;
+          } catch (ex) {
+            var regExp = new RegExp('[?&]' + param + '=.*$');
+            replace = location.search.replace(regExp, '');
+            replace = location.pathname + replace + location.hash;
+          }
+          history.replaceState(null, '', replace);
+        }
+      })();
+    </script>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+    <!--
+      This HTML file is a template.
+      If you open it directly in the browser, you will see an empty page.
+
+      You can add webfonts, meta tags, or analytics to this file.
+      The build step will place the bundled scripts into the <body> tag.
+
+      To begin the development, run `npm start` or `yarn start`.
+      To create a production bundle, use `npm run build` or `yarn build`.
+    -->
+  </body>
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script
+    async
+    src="https://www.googletagmanager.com/gtag/js?id=UA-45337794-6"
+  ></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() {
+      dataLayer.push(arguments);
+    }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-45337794-6');
+  </script>
+</html>
