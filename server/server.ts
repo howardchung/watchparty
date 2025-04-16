@@ -641,7 +641,7 @@ async function saveRooms() {
       if (
         room.roster.length === 0 &&
         !room.vBrowser &&
-        Number(room.lastUpdateTime) < Date.now() - 24 * 60 * 60 * 1000
+        Number(room.lastUpdateTime) < Date.now() - 8 * 60 * 60 * 1000
       ) {
         console.log(
           'freeing room %s from memory on shard %s',
