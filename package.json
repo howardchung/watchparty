@@ -33,7 +33,7 @@
     "react-linkify": "^1.0.0-alpha",
     "react-markdown": "^8.0.7",
     "react-onclickoutside": "^6.13.0",
-    "react-router-dom": "^5.3.4",
+    "react-router-dom": "^7.5.2",
     "react-secure-link": "^3.2.0",
     "react-semantic-ui-range": "^0.7.1",
     "react-transition-group": "^4.4.5",
