@@ -94,7 +94,7 @@
     "@types/cors": "^2.8.17",
     "@types/emoji-mart": "^3.0.14",
     "@types/express": "^5.0.0",
-    "@types/node": "^22.10.7",
+    "@types/node": "^22.15.3",
     "@types/pg": "^8.10.9",
     "@types/react": "^18.2.48",
     "@types/react-dom": "^18.2.18",
