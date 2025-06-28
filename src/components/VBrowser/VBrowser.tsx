@@ -434,19 +434,14 @@ export default class VBrowser extends React.Component<{
             onKeyDown={(e) => {
               e.nativeEvent.preventDefault();
               // document.getElementById('debug')!.innerHTML = e.key;
-              // On mobile this is "unidentified" except for backspace
-              if (e.key === 'Backspace') {
-                // simulate a delete
+              // On mobile this is "unidentified" for content chars, so this is meant for backspace/enter
+              if (e.key !== 'Unidentified') {
                 document
                   .getElementById('leftOverlay')
-                  ?.dispatchEvent(
-                    new KeyboardEvent('keydown', { key: 'Backspace' }),
-                  );
+                  ?.dispatchEvent(new KeyboardEvent('keydown', { key: e.key }));
                 document
                   .getElementById('leftOverlay')
-                  ?.dispatchEvent(
-                    new KeyboardEvent('keyup', { key: 'Backspace' }),
-                  );
+                  ?.dispatchEvent(new KeyboardEvent('keyup', { key: e.key }));
               }
             }}
             onBeforeInputCapture={(
