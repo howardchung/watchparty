@@ -118,3 +118,10 @@ export const getVideoDuration = (string: string): number => {
   const totalSeconds = seconds + minutes * 60 + hours * 60 * 60;
   return totalSeconds;
 };
+
+export const isYouTube = (input: string) => {
+  return (
+    input.startsWith('https://www.youtube.com/') ||
+    input.startsWith('https://youtu.be/')
+  );
+};
