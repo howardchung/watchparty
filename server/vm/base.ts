@@ -138,7 +138,7 @@ export abstract class VMManager {
       FROM vbrowser
       WHERE state = 'available'
       AND pool = $3
-      ORDER BY id ASC
+      ORDER BY "creationTime" DESC
       FOR UPDATE SKIP LOCKED
       LIMIT 1
     )
