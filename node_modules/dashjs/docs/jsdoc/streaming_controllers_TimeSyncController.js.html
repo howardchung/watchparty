@@ -1,0 +1,654 @@
+<!DOCTYPE html><html lang="en" style="font-size:16px"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="https://dashif.org/img/favicon.ico"><link type="text/css" rel="stylesheet" href="jsdoc-custom.css"><title>Source: streaming/controllers/TimeSyncController.js</title><!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]--><script src="scripts/third-party/hljs.js" defer="defer"></script><script src="scripts/third-party/hljs-line-num.js" defer="defer"></script><script src="scripts/third-party/popper.js" defer="defer"></script><script src="scripts/third-party/tippy.js" defer="defer"></script><script src="scripts/third-party/tocbot.min.js"></script><script>var baseURL="/",locationPathname="";baseURL=(locationPathname=document.location.pathname).substr(0,locationPathname.lastIndexOf("/")+1)</script><link rel="stylesheet" href="styles/clean-jsdoc-theme.min.css"><svg aria-hidden="true" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="display:none"><defs><symbol id="copy-icon" viewbox="0 0 488.3 488.3"><g><path d="M314.25,85.4h-227c-21.3,0-38.6,17.3-38.6,38.6v325.7c0,21.3,17.3,38.6,38.6,38.6h227c21.3,0,38.6-17.3,38.6-38.6V124    C352.75,102.7,335.45,85.4,314.25,85.4z M325.75,449.6c0,6.4-5.2,11.6-11.6,11.6h-227c-6.4,0-11.6-5.2-11.6-11.6V124    c0-6.4,5.2-11.6,11.6-11.6h227c6.4,0,11.6,5.2,11.6,11.6V449.6z"/><path d="M401.05,0h-227c-21.3,0-38.6,17.3-38.6,38.6c0,7.5,6,13.5,13.5,13.5s13.5-6,13.5-13.5c0-6.4,5.2-11.6,11.6-11.6h227    c6.4,0,11.6,5.2,11.6,11.6v325.7c0,6.4-5.2,11.6-11.6,11.6c-7.5,0-13.5,6-13.5,13.5s6,13.5,13.5,13.5c21.3,0,38.6-17.3,38.6-38.6    V38.6C439.65,17.3,422.35,0,401.05,0z"/></g></symbol><symbol id="search-icon" viewBox="0 0 512 512"><g><g><path d="M225.474,0C101.151,0,0,101.151,0,225.474c0,124.33,101.151,225.474,225.474,225.474    c124.33,0,225.474-101.144,225.474-225.474C450.948,101.151,349.804,0,225.474,0z M225.474,409.323    c-101.373,0-183.848-82.475-183.848-183.848S124.101,41.626,225.474,41.626s183.848,82.475,183.848,183.848    S326.847,409.323,225.474,409.323z"/></g></g><g><g><path d="M505.902,476.472L386.574,357.144c-8.131-8.131-21.299-8.131-29.43,0c-8.131,8.124-8.131,21.306,0,29.43l119.328,119.328    c4.065,4.065,9.387,6.098,14.715,6.098c5.321,0,10.649-2.033,14.715-6.098C514.033,497.778,514.033,484.596,505.902,476.472z"/></g></g></symbol><symbol id="font-size-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M11.246 15H4.754l-2 5H.6L7 4h2l6.4 16h-2.154l-2-5zm-.8-2L8 6.885 5.554 13h4.892zM21 12.535V12h2v8h-2v-.535a4 4 0 1 1 0-6.93zM19 18a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/></symbol><symbol id="add-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z"/></symbol><symbol id="minus-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M5 11h14v2H5z"/></symbol><symbol id="dark-theme-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M10 7a7 7 0 0 0 12 4.9v.1c0 5.523-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2h.1A6.979 6.979 0 0 0 10 7zm-6 5a8 8 0 0 0 15.062 3.762A9 9 0 0 1 8.238 4.938 7.999 7.999 0 0 0 4 12z"/></symbol><symbol id="light-theme-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M12 18a6 6 0 1 1 0-12 6 6 0 0 1 0 12zm0-2a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM11 1h2v3h-2V1zm0 19h2v3h-2v-3zM3.515 4.929l1.414-1.414L7.05 5.636 5.636 7.05 3.515 4.93zM16.95 18.364l1.414-1.414 2.121 2.121-1.414 1.414-2.121-2.121zm2.121-14.85l1.414 1.415-2.121 2.121-1.414-1.414 2.121-2.121zM5.636 16.95l1.414 1.414-2.121 2.121-1.414-1.414 2.121-2.121zM23 11v2h-3v-2h3zM4 11v2H1v-2h3z"/></symbol><symbol id="reset-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M18.537 19.567A9.961 9.961 0 0 1 12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10c0 2.136-.67 4.116-1.81 5.74L17 12h3a8 8 0 1 0-2.46 5.772l.997 1.795z"/></symbol><symbol id="down-icon" viewBox="0 0 16 16"><path fill-rule="evenodd" clip-rule="evenodd" d="M12.7803 6.21967C13.0732 6.51256 13.0732 6.98744 12.7803 7.28033L8.53033 11.5303C8.23744 11.8232 7.76256 11.8232 7.46967 11.5303L3.21967 7.28033C2.92678 6.98744 2.92678 6.51256 3.21967 6.21967C3.51256 5.92678 3.98744 5.92678 4.28033 6.21967L8 9.93934L11.7197 6.21967C12.0126 5.92678 12.4874 5.92678 12.7803 6.21967Z"></path></symbol><symbol id="codepen-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M16.5 13.202L13 15.535v3.596L19.197 15 16.5 13.202zM14.697 12L12 10.202 9.303 12 12 13.798 14.697 12zM20 10.869L18.303 12 20 13.131V10.87zM19.197 9L13 4.869v3.596l3.5 2.333L19.197 9zM7.5 10.798L11 8.465V4.869L4.803 9 7.5 10.798zM4.803 15L11 19.131v-3.596l-3.5-2.333L4.803 15zM4 13.131L5.697 12 4 10.869v2.262zM2 9a1 1 0 0 1 .445-.832l9-6a1 1 0 0 1 1.11 0l9 6A1 1 0 0 1 22 9v6a1 1 0 0 1-.445.832l-9 6a1 1 0 0 1-1.11 0l-9-6A1 1 0 0 1 2 15V9z"/></symbol><symbol id="close-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M12 10.586l4.95-4.95 1.414 1.414-4.95 4.95 4.95 4.95-1.414 1.414-4.95-4.95-4.95 4.95-1.414-1.414 4.95-4.95-4.95-4.95L7.05 5.636z"/></symbol><symbol id="menu-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z"/></symbol></defs></svg></head><body data-theme="light"><div class="sidebar-container"><div class="sidebar" id="sidebar"><a href="/" class="sidebar-title sidebar-title-anchor">Home</a><div class="sidebar-items-container"><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-modules"><div>Modules</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="module-DashAdapter.html">DashAdapter</a></div><div class="sidebar-section-children"><a href="module-DashMetrics.html">DashMetrics</a></div><div class="sidebar-section-children"><a href="module-MediaPlayer.html">MediaPlayer</a></div><div class="sidebar-section-children"><a href="module-OfflineController.html">OfflineController</a></div><div class="sidebar-section-children"><a href="module-ProtectionController.html">ProtectionController</a></div><div class="sidebar-section-children"><a href="module-Settings.html">Settings</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-classes"><div>Classes</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="Errors.html">Errors</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html">MediaPlayerEvents</a></div><div class="sidebar-section-children"><a href="MediaPlayerModel.html">MediaPlayerModel</a></div><div class="sidebar-section-children"><a href="MetricsReportingEvents.html">MetricsReportingEvents</a></div><div class="sidebar-section-children"><a href="MssErrors.html">MssErrors</a></div><div class="sidebar-section-children"><a href="OfflineErrors.html">OfflineErrors</a></div><div class="sidebar-section-children"><a href="OfflineEvents.html">OfflineEvents</a></div><div class="sidebar-section-children"><a href="ProtectionErrors.html">ProtectionErrors</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html">ProtectionEvents</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-events"><div>Events</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:ADAPTATION_SET_REMOVED_NO_CAPABILITIES">ADAPTATION_SET_REMOVED_NO_CAPABILITIES</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:AST_IN_FUTURE">AST_IN_FUTURE</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:BASE_URLS_UPDATED">BASE_URLS_UPDATED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:BUFFER_EMPTY">BUFFER_EMPTY</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:BUFFER_LEVEL_STATE_CHANGED">BUFFER_LEVEL_STATE_CHANGED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:BUFFER_LEVEL_UPDATED">BUFFER_LEVEL_UPDATED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:BUFFER_LOADED">BUFFER_LOADED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:CAN_PLAY">CAN_PLAY</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:CAN_PLAY_THROUGH">CAN_PLAY_THROUGH</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:CAPTION_CONTAINER_RESIZE">CAPTION_CONTAINER_RESIZE</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:CAPTION_RENDERED">CAPTION_RENDERED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:CONFORMANCE_VIOLATION">CONFORMANCE_VIOLATION</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:CONTENT_STEERING_REQUEST_COMPLETED">CONTENT_STEERING_REQUEST_COMPLETED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:CUE_ENTER">CUE_ENTER</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:CUE_ENTER">CUE_ENTER</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:DVB_FONT_DOWNLOAD_ADDED">DVB_FONT_DOWNLOAD_ADDED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:DVB_FONT_DOWNLOAD_COMPLETE">DVB_FONT_DOWNLOAD_COMPLETE</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:DVB_FONT_DOWNLOAD_FAILED">DVB_FONT_DOWNLOAD_FAILED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:DYNAMIC_TO_STATIC">DYNAMIC_TO_STATIC</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:ERROR">ERROR</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:EVENT_MODE_ON_RECEIVE">EVENT_MODE_ON_RECEIVE</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:EVENT_MODE_ON_START">EVENT_MODE_ON_START</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:FRAGMENT_LOADING_ABANDONED">FRAGMENT_LOADING_ABANDONED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:FRAGMENT_LOADING_COMPLETED">FRAGMENT_LOADING_COMPLETED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:FRAGMENT_LOADING_PROGRESS">FRAGMENT_LOADING_PROGRESS</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:FRAGMENT_LOADING_STARTED">FRAGMENT_LOADING_STARTED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:INBAND_PRFT">INBAND_PRFT</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:LOG">LOG</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:MANIFEST_LOADED">MANIFEST_LOADED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:MANIFEST_LOADING_FINISHED">MANIFEST_LOADING_FINISHED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:MANIFEST_LOADING_STARTED">MANIFEST_LOADING_STARTED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:MANIFEST_VALIDITY_CHANGED">MANIFEST_VALIDITY_CHANGED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:METRIC_ADDED">METRIC_ADDED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:METRIC_CHANGED">METRIC_CHANGED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:METRIC_UPDATED">METRIC_UPDATED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:METRICS_CHANGED">METRICS_CHANGED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PERIOD_SWITCH_COMPLETED">PERIOD_SWITCH_COMPLETED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PERIOD_SWITCH_STARTED">PERIOD_SWITCH_STARTED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_ENDED">PLAYBACK_ENDED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_ERROR">PLAYBACK_ERROR</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_LOADED_DATA">PLAYBACK_LOADED_DATA</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_METADATA_LOADED">PLAYBACK_METADATA_LOADED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_NOT_ALLOWED">PLAYBACK_NOT_ALLOWED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_PAUSED">PLAYBACK_PAUSED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_PLAYING">PLAYBACK_PLAYING</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_PROGRESS">PLAYBACK_PROGRESS</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_RATE_CHANGED">PLAYBACK_RATE_CHANGED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_SEEKED">PLAYBACK_SEEKED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_SEEKING">PLAYBACK_SEEKING</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_STALLED">PLAYBACK_STALLED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_STARTED">PLAYBACK_STARTED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_TIME_UPDATED">PLAYBACK_TIME_UPDATED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_VOLUME_CHANGED">PLAYBACK_VOLUME_CHANGED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_WAITING">PLAYBACK_WAITING</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:QUALITY_CHANGE_RENDERED">QUALITY_CHANGE_RENDERED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:QUALITY_CHANGE_REQUESTED">QUALITY_CHANGE_REQUESTED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:REPRESENTATION_SWITCH">REPRESENTATION_SWITCH</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:STREAM_ACTIVATED">STREAM_ACTIVATED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:STREAM_DEACTIVATED">STREAM_DEACTIVATED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:STREAM_INITIALIZED">STREAM_INITIALIZED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:STREAM_INITIALIZING">STREAM_INITIALIZING</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:STREAM_TEARDOWN_COMPLETE">STREAM_TEARDOWN_COMPLETE</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:STREAM_UPDATED">STREAM_UPDATED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:TEXT_TRACK_ADDED">TEXT_TRACK_ADDED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:TEXT_TRACKS_ADDED">TEXT_TRACKS_ADDED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:THROUGHPUT_MEASUREMENT_STORED">THROUGHPUT_MEASUREMENT_STORED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:TRACK_CHANGE_RENDERED">TRACK_CHANGE_RENDERED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:TTML_PARSED">TTML_PARSED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:TTML_TO_PARSE">TTML_TO_PARSE</a></div><div class="sidebar-section-children"><a href="MetricsReportingEvents.html#event:CMCD_DATA_GENERATED">CMCD_DATA_GENERATED</a></div><div class="sidebar-section-children"><a href="OfflineEvents.html#event:OFFLINE_RECORD_FINISHED">OFFLINE_RECORD_FINISHED</a></div><div class="sidebar-section-children"><a href="OfflineEvents.html#event:OFFLINE_RECORD_LOADEDMETADATA">OFFLINE_RECORD_LOADEDMETADATA</a></div><div class="sidebar-section-children"><a href="OfflineEvents.html#event:OFFLINE_RECORD_STARTED">OFFLINE_RECORD_STARTED</a></div><div class="sidebar-section-children"><a href="OfflineEvents.html#event:OFFLINE_RECORD_STOPPED">OFFLINE_RECORD_STOPPED</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_ADDED">KEY_ADDED</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_ERROR">KEY_ERROR</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_MESSAGE">KEY_MESSAGE</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_SESSION_CLOSED">KEY_SESSION_CLOSED</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_SESSION_CREATED">KEY_SESSION_CREATED</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_SESSION_REMOVED">KEY_SESSION_REMOVED</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_STATUSES_CHANGED">KEY_STATUSES_CHANGED</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_SYSTEM_ACCESS_COMPLETE">KEY_SYSTEM_ACCESS_COMPLETE</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_SYSTEM_SELECTED">KEY_SYSTEM_SELECTED</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:LICENSE_REQUEST_COMPLETE">LICENSE_REQUEST_COMPLETE</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:LICENSE_REQUEST_SENDING">LICENSE_REQUEST_SENDING</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:PROTECTION_CREATED">PROTECTION_CREATED</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:PROTECTION_DESTROYED">PROTECTION_DESTROYED</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-global"><div>Global</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="global.html#LICENSE_SERVER_MANIFEST_CONFIGURATIONS">LICENSE_SERVER_MANIFEST_CONFIGURATIONS</a></div><div class="sidebar-section-children"><a href="global.html#MediaType">MediaType</a></div></div></div></div></div><div class="navbar-container" id="VuAckcnZhf"><nav class="navbar"><div class="navbar-left-items"></div><div class="navbar-right-items"><div class="navbar-right-item"><button class="icon-button search-button" aria-label="open-search"><svg><use xlink:href="#search-icon"></use></svg></button></div><div class="navbar-right-item"><button class="icon-button theme-toggle" aria-label="toggle-theme"><svg><use class="theme-svg-use" xlink:href="#dark-theme-icon"></use></svg></button></div><div class="navbar-right-item"><button class="icon-button font-size" aria-label="change-font-size"><svg><use xlink:href="#font-size-icon"></use></svg></button></div></div><nav></nav></nav></div><div class="toc-container"><div class="toc-content"><span class="bold">On this page</span><div id="eed4d2a0bfd64539bb9df78095dec881"></div></div></div><div class="body-wrapper"><div class="main-content"><div class="main-wrapper"><section id="source-page" class="source-page"><header><h1 id="title" class="has-anchor">streaming_controllers_TimeSyncController.js</h1></header><article><pre class="prettyprint source lang-js"><code>/**
+ * The copyright in this software is being made available under the BSD License,
+ * included below. This software may be subject to other third party and contributor
+ * rights, including patent rights, and no such rights are granted under this license.
+ *
+ * Copyright (c) 2013, Dash Industry Forum.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *  * Redistributions of source code must retain the above copyright notice, this
+ *  list of conditions and the following disclaimer.
+ *  * Redistributions in binary form must reproduce the above copyright notice,
+ *  this list of conditions and the following disclaimer in the documentation and/or
+ *  other materials provided with the distribution.
+ *  * Neither the name of Dash Industry Forum nor the names of its
+ *  contributors may be used to endorse or promote products derived from this software
+ *  without specific prior written permission.
+ *
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS AS IS AND ANY
+ *  EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ *  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ *  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ *  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ *  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ *  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ *  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ *  POSSIBILITY OF SUCH DAMAGE.
+ */
+import DashJSError from './../vo/DashJSError';
+import {HTTPRequest} from '../vo/metrics/HTTPRequest';
+import EventBus from './../../core/EventBus';
+import Events from './../../core/events/Events';
+import Errors from './../../core/errors/Errors';
+import FactoryMaker from '../../core/FactoryMaker';
+import Debug from '../../core/Debug';
+import URLUtils from '../utils/URLUtils';
+
+const HTTP_TIMEOUT_MS = 5000;
+const DEFAULT_MAXIMUM_ALLOWED_DRIFT = 100;
+const DEFAULT_TIME_BETWEEN_SYNC_ATTEMPTS_ADJUSTMENT_FACTOR = 2;
+const DEFAULT_BACKGROUND_ATTEMPTS = 2;
+const DEFAULT_TIME_BETWEEN_SYNC_ATTEMPTS = 30;
+const DEFAULT_MINIMUM_TIME_BETWEEN_BACKGROUND_SYNC_ATTEMPTS = 30;
+const DEFAULT_MAXIMUM_TIME_BETWEEN_SYNC = 600;
+const DEFAULT_MINIMUM_TIME_BETWEEN_SYNC = 2;
+
+function TimeSyncController() {
+
+    const context = this.context;
+    const eventBus = EventBus(context).getInstance();
+    const urlUtils = URLUtils(context).getInstance();
+
+    let instance,
+        logger,
+        isSynchronizing,
+        isBackgroundSynchronizing,
+        settings,
+        handlers,
+        dashMetrics,
+        backgroundSyncTimeOffsets,
+        timingSources,
+        timeOfLastSync,
+        timeOfLastBackgroundSync,
+        lastOffset,
+        lastTimingSource,
+        internalTimeBetweenSyncAttempts,
+        errHandler,
+        baseURLController;
+
+    function setup() {
+        logger = Debug(context).getInstance().getLogger(instance);
+
+        eventBus.on(Events.ATTEMPT_BACKGROUND_SYNC, _onAttemptBackgroundSync, instance);
+    }
+
+    function setConfig(config) {
+        if (!config) return;
+
+        if (config.dashMetrics) {
+            dashMetrics = config.dashMetrics;
+        }
+
+        if (config.baseURLController) {
+            baseURLController = config.baseURLController;
+        }
+
+        if (config.errHandler) {
+            errHandler = config.errHandler;
+        }
+
+        if (config.settings) {
+            settings = config.settings;
+        }
+    }
+
+    function _resetInitialSettings() {
+        backgroundSyncTimeOffsets = [];
+        timingSources = [];
+        timeOfLastSync = null;
+        timeOfLastBackgroundSync = null;
+        lastTimingSource = null;
+        lastOffset = NaN;
+        isSynchronizing = false;
+        isBackgroundSynchronizing = false;
+        internalTimeBetweenSyncAttempts = settings.get().streaming.utcSynchronization.timeBetweenSyncAttempts;
+    }
+
+    /**
+     * Register the timing handler depending on the schemeIdUris. This method is called once when the StreamController is initialized
+     */
+    function initialize() {
+        _resetInitialSettings();
+
+        // a list of known schemeIdUris and a method to call with @value
+        handlers = {
+            'urn:mpeg:dash:utc:http-head:2014': _httpHeadHandler,
+            'urn:mpeg:dash:utc:http-xsdate:2014': _httpHandler.bind(null, _xsdatetimeDecoder),
+            'urn:mpeg:dash:utc:http-iso:2014': _httpHandler.bind(null, _iso8601Decoder),
+            'urn:mpeg:dash:utc:direct:2014': _directHandler,
+
+            // some specs referencing early ISO23009-1 drafts incorrectly use
+            // 2012 in the URI, rather than 2014. support these for now.
+            'urn:mpeg:dash:utc:http-head:2012': _httpHeadHandler,
+            'urn:mpeg:dash:utc:http-xsdate:2012': _httpHandler.bind(null, _xsdatetimeDecoder),
+            'urn:mpeg:dash:utc:http-iso:2012': _httpHandler.bind(null, _iso8601Decoder),
+            'urn:mpeg:dash:utc:direct:2012': _directHandler,
+
+            // it isn't clear how the data returned would be formatted, and
+            // no public examples available so http-ntp not supported for now.
+            // presumably you would do an arraybuffer type xhr and decode the
+            // binary data returned but I would want to see a sample first.
+            'urn:mpeg:dash:utc:http-ntp:2014': _notSupportedHandler,
+
+            // not clear how this would be supported in javascript (in browser)
+            'urn:mpeg:dash:utc:ntp:2014': _notSupportedHandler,
+            'urn:mpeg:dash:utc:sntp:2014': _notSupportedHandler
+        };
+
+    }
+
+    /**
+     * Sync against a timing source. T
+     * @param {array} tSources
+     * @param {boolean} isDynamic
+     */
+    function attemptSync(tSources, isDynamic) {
+
+        timingSources = tSources;
+
+        // Stop if we are already synchronizing
+        if (isSynchronizing) {
+            return;
+        }
+
+        // No synchronization required we can signal the completion immediately
+        if (!_shouldPerformSynchronization(isDynamic)) {
+            eventBus.trigger(Events.TIME_SYNCHRONIZATION_COMPLETED);
+            return;
+        }
+
+        isSynchronizing = true;
+        _attemptRecursiveSync();
+    }
+
+    /**
+     * Does a synchronization in the background in case the last offset should be verified or a 404 occurs
+     */
+    function _onAttemptBackgroundSync() {
+        if (!settings.get().streaming.utcSynchronization.enabled || isSynchronizing || isBackgroundSynchronizing || !lastTimingSource || !lastTimingSource.value || !lastTimingSource.schemeIdUri || isNaN(lastOffset) || isNaN(settings.get().streaming.utcSynchronization.backgroundAttempts)) {
+            return;
+        }
+
+        if (timeOfLastBackgroundSync &amp;&amp; ((Date.now() - timeOfLastBackgroundSync) / 1000) &lt; DEFAULT_MINIMUM_TIME_BETWEEN_BACKGROUND_SYNC_ATTEMPTS) {
+            return;
+        }
+
+        backgroundSyncTimeOffsets = [];
+        isBackgroundSynchronizing = true;
+        const backgroundAttempts = !isNaN(settings.get().streaming.utcSynchronization.backgroundAttempts) ? settings.get().streaming.utcSynchronization.backgroundAttempts : DEFAULT_BACKGROUND_ATTEMPTS;
+        _attemptBackgroundSync(backgroundAttempts);
+    }
+
+    /**
+     * Perform a defined number of background attempts
+     * @param {number} attempts
+     * @private
+     */
+    function _attemptBackgroundSync(attempts) {
+        try {
+            if (attempts &lt;= 0) {
+                _completeBackgroundTimeSyncSequence();
+                return;
+            }
+
+            const deviceTimeBeforeSync = Date.now();
+            handlers[lastTimingSource.schemeIdUri](
+                lastTimingSource.value,
+                function (serverTime) {
+                    // the timing source returned something useful
+                    const deviceTimeAfterSync = Date.now();
+                    const offset = _calculateOffset(deviceTimeBeforeSync, deviceTimeAfterSync, serverTime);
+
+                    backgroundSyncTimeOffsets.push(offset);
+                    _attemptBackgroundSync(attempts - 1);
+                },
+                function () {
+                    _completeBackgroundTimeSyncSequence();
+                }
+            );
+        } catch (e) {
+            _completeBackgroundTimeSyncSequence();
+        }
+    }
+
+    /**
+     * Sync against a timing source. This method is called recursively if the time sync for the first entry in timingSources fails.
+     * @param {number} sourceIndex
+     */
+    function _attemptRecursiveSync(sourceIndex = null) {
+        // if called with no sourceIndex, use zero (highest priority)
+        let index = sourceIndex || 0;
+
+        // the sources should be ordered in priority from the manifest.
+        // try each in turn, from the top, until either something
+        // sensible happens, or we run out of sources to try.
+        if (!timingSources || timingSources.length === 0 || index >= timingSources.length) {
+            _onComplete();
+            return;
+        }
+        let source = timingSources[index];
+
+        if (source) {
+            // check if there is a handler for this @schemeIdUri
+            if (handlers.hasOwnProperty(source.schemeIdUri)) {
+                // if so, call it with its @value
+                const deviceTimeBeforeSync = new Date().getTime();
+                handlers[source.schemeIdUri](
+                    source.value,
+                    function (serverTime) {
+                        // the timing source returned something useful
+                        const deviceTimeAfterSync = new Date().getTime();
+                        const offset = _calculateOffset(deviceTimeBeforeSync, deviceTimeAfterSync, serverTime);
+                        lastTimingSource = source;
+
+                        _onComplete(offset);
+                    },
+                    function () {
+                        // the timing source was probably uncontactable
+                        // or returned something we can't use - try again
+                        // with the remaining sources
+                        _attemptRecursiveSync(index + 1);
+                    }
+                );
+            } else {
+                // an unknown schemeIdUri must have been found
+                // try again with the remaining sources
+                _attemptRecursiveSync(index + 1);
+            }
+        } else {
+            // no valid time source could be found, just use device time
+            _onComplete();
+        }
+
+    }
+
+    /**
+     * Calculate the offset between client and server. Account for the roundtrip time
+     * @param {number} deviceTimeBeforeSync
+     * @param {number} deviceTimeAfterSync
+     * @param {number} serverTime
+     * @return {number}
+     * @private
+     */
+    function _calculateOffset(deviceTimeBeforeSync, deviceTimeAfterSync, serverTime) {
+        const deviceReferenceTime = deviceTimeAfterSync - ((deviceTimeAfterSync - deviceTimeBeforeSync) / 2);
+
+        return serverTime - deviceReferenceTime;
+    }
+
+    /**
+     * Checks if a synchronization is required
+     * @param {boolean} isDynamic
+     * @return {boolean}
+     * @private
+     */
+    function _shouldPerformSynchronization(isDynamic) {
+        try {
+            if (!isDynamic || !settings.get().streaming.utcSynchronization.enabled) {
+                return false;
+            }
+            const timeBetweenSyncAttempts = !isNaN(internalTimeBetweenSyncAttempts) ? internalTimeBetweenSyncAttempts : DEFAULT_TIME_BETWEEN_SYNC_ATTEMPTS;
+
+            if (!timeOfLastSync || !timeBetweenSyncAttempts || isNaN(timeBetweenSyncAttempts)) {
+                return true;
+            }
+
+            return ((Date.now() - timeOfLastSync) / 1000) >= timeBetweenSyncAttempts;
+        } catch (e) {
+            return true;
+        }
+    }
+
+    /**
+     * Callback after sync has been completed
+     * @param {number} offset
+     * @private
+     */
+    function _onComplete(offset = NaN) {
+        let failed = isNaN(offset);
+        if (failed &amp;&amp; settings.get().streaming.utcSynchronization.useManifestDateHeaderTimeSource) {
+            //Before falling back to binary search , check if date header exists on MPD. if so, use for a time source.
+            _checkForDateHeader();
+        } else {
+            _completeTimeSyncSequence(failed, offset);
+        }
+    }
+
+    /**
+     * Takes xsdatetime and returns milliseconds since UNIX epoch. May not be necessary as xsdatetime is very similar to ISO 8601 which is natively understood by javascript Date parser
+     * @param {string} xsdatetimeStr
+     * @return {number}
+     * @private
+     */
+    function _alternateXsdatetimeDecoder(xsdatetimeStr) {
+        // taken from DashParser - should probably refactor both uses
+        const SECONDS_IN_MIN = 60;
+        const MINUTES_IN_HOUR = 60;
+        const MILLISECONDS_IN_SECONDS = 1000;
+        let datetimeRegex = /^([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2})(?::([0-9]*)(\.[0-9]*)?)?(?:([+\-])([0-9]{2})([0-9]{2}))?/;
+
+        let utcDate,
+            timezoneOffset;
+
+        let match = datetimeRegex.exec(xsdatetimeStr);
+
+        // If the string does not contain a timezone offset different browsers can interpret it either
+        // as UTC or as a local time so we have to parse the string manually to normalize the given date value for
+        // all browsers
+        utcDate = Date.UTC(
+            parseInt(match[1], 10),
+            parseInt(match[2], 10) - 1, // months start from zero
+            parseInt(match[3], 10),
+            parseInt(match[4], 10),
+            parseInt(match[5], 10),
+            (match[6] &amp;&amp; (parseInt(match[6], 10) || 0)),
+            (match[7] &amp;&amp; parseFloat(match[7]) * MILLISECONDS_IN_SECONDS) || 0
+        );
+        // If the date has timezone offset take it into account as well
+        if (match[9] &amp;&amp; match[10]) {
+            timezoneOffset = parseInt(match[9], 10) * MINUTES_IN_HOUR + parseInt(match[10], 10);
+            utcDate += (match[8] === '+' ? -1 : +1) * timezoneOffset * SECONDS_IN_MIN * MILLISECONDS_IN_SECONDS;
+        }
+
+        return new Date(utcDate).getTime();
+    }
+
+
+    /**
+     * Try to use the built in parser, since xsdate is a constrained ISO8601 which is supported natively by Date.parse. if that fails, try a regex-based version used elsewhere in this application.
+     * @param {string} xsdatetimeStr
+     * @return {number}
+     */
+    function _xsdatetimeDecoder(xsdatetimeStr) {
+        let parsedDate = Date.parse(xsdatetimeStr);
+
+        if (isNaN(parsedDate)) {
+            parsedDate = _alternateXsdatetimeDecoder(xsdatetimeStr);
+        }
+
+        return parsedDate;
+    }
+
+    /**
+     * Takes ISO 8601 timestamp and returns milliseconds since UNIX epoch
+     * @param {string} isoStr
+     * @return {number}
+     */
+    function _iso8601Decoder(isoStr) {
+        return Date.parse(isoStr);
+    }
+
+    /**
+     * Takes RFC 1123 timestamp (which is same as ISO8601) and returns milliseconds since UNIX epoch
+     * @param {string} dateStr
+     * @return {number}
+     */
+    function _rfc1123Decoder(dateStr) {
+        return Date.parse(dateStr);
+    }
+
+    /**
+     * Handler for unsupported scheme ids.
+     * @param {string} url
+     * @param {function} onSuccessCB
+     * @param {function} onFailureCB
+     * @private
+     */
+    function _notSupportedHandler(url, onSuccessCB, onFailureCB) {
+        onFailureCB();
+    }
+
+    /**
+     * Direct handler
+     * @param {string} xsdatetimeStr
+     * @param {function} onSuccessCB
+     * @param {function} onFailureCB
+     */
+    function _directHandler(xsdatetimeStr, onSuccessCB, onFailureCB) {
+        let time = _xsdatetimeDecoder(xsdatetimeStr);
+
+        if (!isNaN(time)) {
+            onSuccessCB(time);
+            return;
+        }
+
+        onFailureCB();
+    }
+
+    /**
+     * Generic http handler
+     * @param {function} decoder
+     * @param {string} url
+     * @param {function} onSuccessCB
+     * @param {function} onFailureCB
+     * @param {boolean} isHeadRequest
+     * @private
+     */
+    function _httpHandler(decoder, url, onSuccessCB, onFailureCB, isHeadRequest) {
+        let oncomplete,
+            onload;
+        let complete = false;
+        let req = new XMLHttpRequest();
+
+        let verb = isHeadRequest ? HTTPRequest.HEAD : HTTPRequest.GET;
+        let urls = url.match(/\S+/g);
+
+        // according to ISO 23009-1, url could be a white-space
+        // separated list of URLs. just handle one at a time.
+        url = urls.shift();
+
+        oncomplete = function () {
+            if (complete) {
+                return;
+            }
+
+            // we only want to pass through here once per xhr,
+            // regardless of whether the load was successful.
+            complete = true;
+
+            // if there are more urls to try, call self.
+            if (urls.length) {
+                _httpHandler(decoder, urls.join(' '), onSuccessCB, onFailureCB, isHeadRequest);
+            } else {
+                onFailureCB();
+            }
+        };
+
+        onload = function () {
+            let time,
+                result;
+
+            if (req.status === 200) {
+                time = isHeadRequest ?
+                    req.getResponseHeader('Date') :
+                    req.response;
+
+                result = decoder(time);
+
+                // decoder returns NaN if non-standard input
+                if (!isNaN(result)) {
+                    onSuccessCB(result);
+                    complete = true;
+                }
+            }
+        };
+
+        if (urlUtils.isRelative(url)) {
+            // passing no path to resolve will return just MPD BaseURL/baseUri
+            const baseUrl = baseURLController.resolve();
+            if (baseUrl) {
+                url = urlUtils.resolve(url, baseUrl.url);
+            }
+        }
+
+        req.open(verb, url);
+        req.timeout = HTTP_TIMEOUT_MS || 0;
+        req.onload = onload;
+        req.onloadend = oncomplete;
+        req.send();
+    }
+
+    /**
+     * Handler for http-head schemeIdUri
+     * @param {string} url
+     * @param {function} onSuccessCB
+     * @param {function} onFailureCB
+     * @private
+     */
+    function _httpHeadHandler(url, onSuccessCB, onFailureCB) {
+        _httpHandler(_rfc1123Decoder, url, onSuccessCB, onFailureCB, true);
+    }
+
+    /**
+     * Checks if a date header is present in the MPD response and calculates the offset based on the header
+     * @private
+     */
+    function _checkForDateHeader() {
+        let dateHeaderValue = dashMetrics.getLatestMPDRequestHeaderValueByID('Date');
+        let dateHeaderTime = dateHeaderValue !== null ? new Date(dateHeaderValue).getTime() : Number.NaN;
+
+        if (!isNaN(dateHeaderTime)) {
+            const offsetToDeviceTimeMs = dateHeaderTime - Date.now();
+            _completeTimeSyncSequence(false, offsetToDeviceTimeMs);
+        } else {
+            _completeTimeSyncSequence(true);
+        }
+    }
+
+    /**
+     * Triggers the event to signal that the time synchronization was completed
+     * @param {boolean} failed
+     * @param {number} offset
+     * @private
+     */
+    function _completeTimeSyncSequence(failed, offset) {
+
+        // Adjust the time of the next sync based on the drift between current offset and last offset
+        if (!isNaN(lastOffset) &amp;&amp; !isNaN(offset) &amp;&amp; !failed) {
+            _adjustTimeBetweenSyncAttempts(offset);
+        }
+
+        // Update the internal data
+        if (!failed &amp;&amp; !isNaN(offset)) {
+            timeOfLastSync = Date.now();
+            isSynchronizing = false;
+
+            // if this is the first sync we are doing perform background syncs as well to confirm current offset
+            const shouldAttemptBackgroundSync = isNaN(lastOffset);
+            lastOffset = offset;
+            if (shouldAttemptBackgroundSync) {
+                _onAttemptBackgroundSync();
+            }
+            logger.debug(`Completed UTC sync. Setting client - server offset to ${offset}`);
+        }
+
+        if (failed) {
+            lastTimingSource = null;
+            isSynchronizing = false;
+            errHandler.error(new DashJSError(Errors.TIME_SYNC_FAILED_ERROR_CODE, Errors.TIME_SYNC_FAILED_ERROR_MESSAGE));
+        }
+
+        // Notify other classes
+        eventBus.trigger(Events.UPDATE_TIME_SYNC_OFFSET, {
+            offset: offset,
+        });
+        eventBus.trigger(Events.TIME_SYNCHRONIZATION_COMPLETED);
+    }
+
+    function _adjustTimeBetweenSyncAttempts(offset) {
+        try {
+            const isOffsetDriftWithinThreshold = _isOffsetDriftWithinThreshold(offset);
+            const timeBetweenSyncAttempts = !isNaN(internalTimeBetweenSyncAttempts) ? internalTimeBetweenSyncAttempts : DEFAULT_TIME_BETWEEN_SYNC_ATTEMPTS;
+            const timeBetweenSyncAttemptsAdjustmentFactor = !isNaN(settings.get().streaming.utcSynchronization.timeBetweenSyncAttemptsAdjustmentFactor) ? settings.get().streaming.utcSynchronization.timeBetweenSyncAttemptsAdjustmentFactor : DEFAULT_TIME_BETWEEN_SYNC_ATTEMPTS_ADJUSTMENT_FACTOR;
+            const maximumTimeBetweenSyncAttempts = !isNaN(settings.get().streaming.utcSynchronization.maximumTimeBetweenSyncAttempts) ? settings.get().streaming.utcSynchronization.maximumTimeBetweenSyncAttempts : DEFAULT_MAXIMUM_TIME_BETWEEN_SYNC;
+            const minimumTimeBetweenSyncAttempts = !isNaN(settings.get().streaming.utcSynchronization.minimumTimeBetweenSyncAttempts) ? settings.get().streaming.utcSynchronization.minimumTimeBetweenSyncAttempts : DEFAULT_MINIMUM_TIME_BETWEEN_SYNC;
+            let adjustedTimeBetweenSyncAttempts;
+
+            if (isOffsetDriftWithinThreshold) {
+                // The drift between the current offset and the last offset is within the allowed threshold. Increase sync time
+                adjustedTimeBetweenSyncAttempts = Math.min(timeBetweenSyncAttempts * timeBetweenSyncAttemptsAdjustmentFactor, maximumTimeBetweenSyncAttempts);
+                logger.debug(`Increasing timeBetweenSyncAttempts to ${adjustedTimeBetweenSyncAttempts}`);
+            } else {
+                // Drift between the current offset and the last offset is not within the allowed threshold. Decrease sync time
+                adjustedTimeBetweenSyncAttempts = Math.max(timeBetweenSyncAttempts / timeBetweenSyncAttemptsAdjustmentFactor, minimumTimeBetweenSyncAttempts);
+                logger.debug(`Decreasing timeBetweenSyncAttempts to ${adjustedTimeBetweenSyncAttempts}`);
+            }
+
+            internalTimeBetweenSyncAttempts = adjustedTimeBetweenSyncAttempts;
+        } catch (e) {
+
+        }
+    }
+
+    /**
+     * Callback after all background syncs have been completed.
+     * @private
+     */
+    function _completeBackgroundTimeSyncSequence() {
+        if (!backgroundSyncTimeOffsets || backgroundSyncTimeOffsets.length === 0) {
+            return;
+        }
+
+        const averageOffset = backgroundSyncTimeOffsets.reduce((acc, curr) => {
+            return acc + curr;
+        }, 0) / backgroundSyncTimeOffsets.length;
+
+        if (!_isOffsetDriftWithinThreshold(averageOffset)) {
+            logger.debug(`Completed background UTC sync. Setting client - server offset to ${averageOffset}`);
+            lastOffset = averageOffset;
+            eventBus.trigger(Events.UPDATE_TIME_SYNC_OFFSET, {
+                offset: lastOffset
+            });
+        } else {
+            logger.debug(`Completed background UTC sync. Offset is within allowed threshold and is not adjusted.`);
+        }
+
+        isBackgroundSynchronizing = false;
+        timeOfLastBackgroundSync = Date.now();
+    }
+
+    function _isOffsetDriftWithinThreshold(offset) {
+        try {
+            if (isNaN(lastOffset)) {
+                return true;
+            }
+
+            const maxAllowedDrift = settings.get().streaming.utcSynchronization.maximumAllowedDrift &amp;&amp; !isNaN(settings.get().streaming.utcSynchronization.maximumAllowedDrift) ? settings.get().streaming.utcSynchronization.maximumAllowedDrift : DEFAULT_MAXIMUM_ALLOWED_DRIFT;
+            const lowerBound = lastOffset - maxAllowedDrift;
+            const upperBound = lastOffset + maxAllowedDrift;
+
+            return offset >= lowerBound &amp;&amp; offset &lt;= upperBound;
+        } catch (e) {
+            return true;
+        }
+    }
+
+    function reset() {
+        _resetInitialSettings();
+
+        eventBus.off(Events.ATTEMPT_BACKGROUND_SYNC, _onAttemptBackgroundSync, instance);
+    }
+
+    instance = {
+        initialize,
+        attemptSync,
+        setConfig,
+        reset
+    };
+
+    setup();
+
+    return instance;
+}
+
+TimeSyncController.__dashjs_factory_name = 'TimeSyncController';
+const factory = FactoryMaker.getSingletonFactory(TimeSyncController);
+factory.HTTP_TIMEOUT_MS = HTTP_TIMEOUT_MS;
+FactoryMaker.updateSingletonFactory(TimeSyncController.__dashjs_factory_name, factory);
+export default factory;
+</code></pre></article></section></div></div></div><div class="search-container" id="PkfLWpAbet" style="display:none"><div class="wrapper" id="iCxFxjkHbP"><button class="icon-button search-close-button" id="VjLlGakifb" aria-label="close search"><svg><use xlink:href="#close-icon"></use></svg></button><div class="search-box-c"><svg><use xlink:href="#search-icon"></use></svg> <input type="text" id="vpcKVYIppa" class="search-input" placeholder="Search..." autofocus></div><div class="search-result-c" id="fWwVHRuDuN"><span class="search-result-c-text">Type anything to view search result</span></div></div></div><div class="mobile-menu-icon-container"><button class="icon-button" id="mobile-menu" data-isopen="false" aria-label="menu"><svg><use xlink:href="#menu-icon"></use></svg></button></div><div id="mobile-sidebar" class="mobile-sidebar-container"><div class="mobile-sidebar-wrapper"><a href="/" class="sidebar-title sidebar-title-anchor">Home</a><div class="mobile-nav-links"></div><div class="mobile-sidebar-items-c"><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-modules"><div>Modules</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="module-DashAdapter.html">DashAdapter</a></div><div class="sidebar-section-children"><a href="module-DashMetrics.html">DashMetrics</a></div><div class="sidebar-section-children"><a href="module-MediaPlayer.html">MediaPlayer</a></div><div class="sidebar-section-children"><a href="module-OfflineController.html">OfflineController</a></div><div class="sidebar-section-children"><a href="module-ProtectionController.html">ProtectionController</a></div><div class="sidebar-section-children"><a href="module-Settings.html">Settings</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-classes"><div>Classes</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="Errors.html">Errors</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html">MediaPlayerEvents</a></div><div class="sidebar-section-children"><a href="MediaPlayerModel.html">MediaPlayerModel</a></div><div class="sidebar-section-children"><a href="MetricsReportingEvents.html">MetricsReportingEvents</a></div><div class="sidebar-section-children"><a href="MssErrors.html">MssErrors</a></div><div class="sidebar-section-children"><a href="OfflineErrors.html">OfflineErrors</a></div><div class="sidebar-section-children"><a href="OfflineEvents.html">OfflineEvents</a></div><div class="sidebar-section-children"><a href="ProtectionErrors.html">ProtectionErrors</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html">ProtectionEvents</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-events"><div>Events</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:ADAPTATION_SET_REMOVED_NO_CAPABILITIES">ADAPTATION_SET_REMOVED_NO_CAPABILITIES</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:AST_IN_FUTURE">AST_IN_FUTURE</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:BASE_URLS_UPDATED">BASE_URLS_UPDATED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:BUFFER_EMPTY">BUFFER_EMPTY</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:BUFFER_LEVEL_STATE_CHANGED">BUFFER_LEVEL_STATE_CHANGED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:BUFFER_LEVEL_UPDATED">BUFFER_LEVEL_UPDATED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:BUFFER_LOADED">BUFFER_LOADED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:CAN_PLAY">CAN_PLAY</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:CAN_PLAY_THROUGH">CAN_PLAY_THROUGH</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:CAPTION_CONTAINER_RESIZE">CAPTION_CONTAINER_RESIZE</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:CAPTION_RENDERED">CAPTION_RENDERED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:CONFORMANCE_VIOLATION">CONFORMANCE_VIOLATION</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:CONTENT_STEERING_REQUEST_COMPLETED">CONTENT_STEERING_REQUEST_COMPLETED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:CUE_ENTER">CUE_ENTER</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:CUE_ENTER">CUE_ENTER</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:DVB_FONT_DOWNLOAD_ADDED">DVB_FONT_DOWNLOAD_ADDED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:DVB_FONT_DOWNLOAD_COMPLETE">DVB_FONT_DOWNLOAD_COMPLETE</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:DVB_FONT_DOWNLOAD_FAILED">DVB_FONT_DOWNLOAD_FAILED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:DYNAMIC_TO_STATIC">DYNAMIC_TO_STATIC</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:ERROR">ERROR</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:EVENT_MODE_ON_RECEIVE">EVENT_MODE_ON_RECEIVE</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:EVENT_MODE_ON_START">EVENT_MODE_ON_START</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:FRAGMENT_LOADING_ABANDONED">FRAGMENT_LOADING_ABANDONED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:FRAGMENT_LOADING_COMPLETED">FRAGMENT_LOADING_COMPLETED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:FRAGMENT_LOADING_PROGRESS">FRAGMENT_LOADING_PROGRESS</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:FRAGMENT_LOADING_STARTED">FRAGMENT_LOADING_STARTED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:INBAND_PRFT">INBAND_PRFT</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:LOG">LOG</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:MANIFEST_LOADED">MANIFEST_LOADED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:MANIFEST_LOADING_FINISHED">MANIFEST_LOADING_FINISHED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:MANIFEST_LOADING_STARTED">MANIFEST_LOADING_STARTED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:MANIFEST_VALIDITY_CHANGED">MANIFEST_VALIDITY_CHANGED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:METRIC_ADDED">METRIC_ADDED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:METRIC_CHANGED">METRIC_CHANGED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:METRIC_UPDATED">METRIC_UPDATED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:METRICS_CHANGED">METRICS_CHANGED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PERIOD_SWITCH_COMPLETED">PERIOD_SWITCH_COMPLETED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PERIOD_SWITCH_STARTED">PERIOD_SWITCH_STARTED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_ENDED">PLAYBACK_ENDED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_ERROR">PLAYBACK_ERROR</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_LOADED_DATA">PLAYBACK_LOADED_DATA</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_METADATA_LOADED">PLAYBACK_METADATA_LOADED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_NOT_ALLOWED">PLAYBACK_NOT_ALLOWED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_PAUSED">PLAYBACK_PAUSED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_PLAYING">PLAYBACK_PLAYING</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_PROGRESS">PLAYBACK_PROGRESS</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_RATE_CHANGED">PLAYBACK_RATE_CHANGED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_SEEKED">PLAYBACK_SEEKED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_SEEKING">PLAYBACK_SEEKING</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_STALLED">PLAYBACK_STALLED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_STARTED">PLAYBACK_STARTED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_TIME_UPDATED">PLAYBACK_TIME_UPDATED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_VOLUME_CHANGED">PLAYBACK_VOLUME_CHANGED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:PLAYBACK_WAITING">PLAYBACK_WAITING</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:QUALITY_CHANGE_RENDERED">QUALITY_CHANGE_RENDERED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:QUALITY_CHANGE_REQUESTED">QUALITY_CHANGE_REQUESTED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:REPRESENTATION_SWITCH">REPRESENTATION_SWITCH</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:STREAM_ACTIVATED">STREAM_ACTIVATED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:STREAM_DEACTIVATED">STREAM_DEACTIVATED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:STREAM_INITIALIZED">STREAM_INITIALIZED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:STREAM_INITIALIZING">STREAM_INITIALIZING</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:STREAM_TEARDOWN_COMPLETE">STREAM_TEARDOWN_COMPLETE</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:STREAM_UPDATED">STREAM_UPDATED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:TEXT_TRACK_ADDED">TEXT_TRACK_ADDED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:TEXT_TRACKS_ADDED">TEXT_TRACKS_ADDED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:THROUGHPUT_MEASUREMENT_STORED">THROUGHPUT_MEASUREMENT_STORED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:TRACK_CHANGE_RENDERED">TRACK_CHANGE_RENDERED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:TTML_PARSED">TTML_PARSED</a></div><div class="sidebar-section-children"><a href="MediaPlayerEvents.html#event:TTML_TO_PARSE">TTML_TO_PARSE</a></div><div class="sidebar-section-children"><a href="MetricsReportingEvents.html#event:CMCD_DATA_GENERATED">CMCD_DATA_GENERATED</a></div><div class="sidebar-section-children"><a href="OfflineEvents.html#event:OFFLINE_RECORD_FINISHED">OFFLINE_RECORD_FINISHED</a></div><div class="sidebar-section-children"><a href="OfflineEvents.html#event:OFFLINE_RECORD_LOADEDMETADATA">OFFLINE_RECORD_LOADEDMETADATA</a></div><div class="sidebar-section-children"><a href="OfflineEvents.html#event:OFFLINE_RECORD_STARTED">OFFLINE_RECORD_STARTED</a></div><div class="sidebar-section-children"><a href="OfflineEvents.html#event:OFFLINE_RECORD_STOPPED">OFFLINE_RECORD_STOPPED</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_ADDED">KEY_ADDED</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_ERROR">KEY_ERROR</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_MESSAGE">KEY_MESSAGE</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_SESSION_CLOSED">KEY_SESSION_CLOSED</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_SESSION_CREATED">KEY_SESSION_CREATED</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_SESSION_REMOVED">KEY_SESSION_REMOVED</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_STATUSES_CHANGED">KEY_STATUSES_CHANGED</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_SYSTEM_ACCESS_COMPLETE">KEY_SYSTEM_ACCESS_COMPLETE</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:KEY_SYSTEM_SELECTED">KEY_SYSTEM_SELECTED</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:LICENSE_REQUEST_COMPLETE">LICENSE_REQUEST_COMPLETE</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:LICENSE_REQUEST_SENDING">LICENSE_REQUEST_SENDING</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:PROTECTION_CREATED">PROTECTION_CREATED</a></div><div class="sidebar-section-children"><a href="ProtectionEvents.html#event:PROTECTION_DESTROYED">PROTECTION_DESTROYED</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-global"><div>Global</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="global.html#LICENSE_SERVER_MANIFEST_CONFIGURATIONS">LICENSE_SERVER_MANIFEST_CONFIGURATIONS</a></div><div class="sidebar-section-children"><a href="global.html#MediaType">MediaType</a></div></div></div><div class="mobile-navbar-actions"><div class="navbar-right-item"><button class="icon-button search-button" aria-label="open-search"><svg><use xlink:href="#search-icon"></use></svg></button></div><div class="navbar-right-item"><button class="icon-button theme-toggle" aria-label="toggle-theme"><svg><use class="theme-svg-use" xlink:href="#dark-theme-icon"></use></svg></button></div><div class="navbar-right-item"><button class="icon-button font-size" aria-label="change-font-size"><svg><use xlink:href="#font-size-icon"></use></svg></button></div></div></div></div><script type="text/javascript" src="scripts/core.min.js"></script><script src="scripts/search.min.js" defer="defer"></script><script src="scripts/third-party/fuse.js" defer="defer"></script><script type="text/javascript">var tocbotInstance=tocbot.init({tocSelector:"#eed4d2a0bfd64539bb9df78095dec881",contentSelector:".main-content",headingSelector:"h1, h2, h3",hasInnerContainers:!0,scrollContainer:".main-content",headingsOffset:130,onClick:bringLinkToView})</script></body></html>
