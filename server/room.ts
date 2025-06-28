@@ -9,7 +9,11 @@ import { getIsSubscriberByEmail } from './utils/stripe';
 import { AssignedVM } from './vm/base';
 import { getStartOfDay } from './utils/time';
 import { postgres, updateObject, upsertObject } from './utils/postgres';
-import { fetchYoutubeVideo, getYoutubeVideoID } from './utils/youtube';
+import {
+  fetchYoutubeVideo,
+  getYoutubeVideoID,
+  isYouTube,
+} from './utils/youtube';
 //@ts-ignore
 import twitch from 'twitch-m3u8';
 import { QueryResult } from 'pg';
@@ -49,7 +53,6 @@ export class Room {
   public roster: User[] = [];
   private lastTsMap = Date.now();
   private tsMap: NumberDict = {};
-  private nextVotes: StringDict = {};
   private io: Server;
   private clientIdMap: StringDict = {};
   private uidMap: StringDict = {};
@@ -398,7 +401,6 @@ export class Room {
     this.loop = false;
     this.playbackRate = 0;
     this.tsMap = {};
-    this.nextVotes = {};
     this.preventTSUpdate = true;
     setTimeout(() => (this.preventTSUpdate = false), 1000);
     this.io.of(this.roomId).emit('REC:tsMap', this.tsMap);
@@ -564,12 +566,9 @@ export class Room {
       data &&
       this.video &&
       (data === this.video ||
-        getYoutubeVideoID(data) === getYoutubeVideoID(this.video))
+        (isYouTube(data) &&
+          getYoutubeVideoID(data) === getYoutubeVideoID(this.video)))
     ) {
-      this.nextVotes[socket.id] = data;
-    }
-    const votes = this.roster.filter((user) => this.nextVotes[user.id]).length;
-    if (!socket || votes >= Math.floor(this.roster.length / 2)) {
       const next = this.playlist.shift();
       this.io.of(this.roomId).emit('playlist', this.playlist);
       if (next) {
