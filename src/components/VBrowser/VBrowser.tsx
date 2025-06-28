@@ -411,6 +411,7 @@ export default class VBrowser extends React.Component<{
             onMouseLeave={this.onMouseLeave}
           />
           <audio id="iPhoneAudio" />
+          {/* <div id="debug" style={{ position: 'fixed', top: 0, fontSize: 24 }} /> */}
           <input
             type="text"
             id="dummy"
@@ -431,39 +432,11 @@ export default class VBrowser extends React.Component<{
               this.setState({ dummyValue: '' });
             }}
             onKeyDown={(e) => {
-              if (e.keyCode !== 229) {
-                document
-                  .getElementById('leftOverlay')
-                  ?.dispatchEvent(new KeyboardEvent('keydown', { key: e.key }));
-              }
-            }}
-            onKeyUp={(e) => {
-              if (e.keyCode !== 229) {
-                document
-                  .getElementById('leftOverlay')
-                  ?.dispatchEvent(new KeyboardEvent('keyup', { key: e.key }));
-              }
-            }}
-            onChange={(e) => {
-              const oldVal = this.state.dummyValue;
-              const newVal = e.target.value;
-              if (newVal.length > oldVal.length) {
-                //keyup/keydown don't work on Chrome mobile for alphanumeric chars
-                // see https://stackoverflow.com/questions/36753548/keycode-on-android-is-always-229
-                // grab the last value out of the textfield instead and send that event
-                document.getElementById('leftOverlay')?.dispatchEvent(
-                  new KeyboardEvent('keydown', {
-                    key: newVal.slice(-1).toLowerCase(),
-                  }),
-                );
-                document.getElementById('leftOverlay')?.dispatchEvent(
-                  new KeyboardEvent('keyup', {
-                    key: newVal.slice(-1).toLowerCase(),
-                  }),
-                );
-                // this.$client.sendData('keydown', { key: newVal.slice(-1).charCodeAt(0) });
-                // this.$client.sendData('keyup', { key: newVal.slice(-1).charCodeAt(0) });
-              } else {
+              e.nativeEvent.preventDefault();
+              // document.getElementById('debug')!.innerHTML = e.key;
+              // On mobile this is "unidentified" except for backspace
+              if (e.key === 'Backspace') {
+                // simulate a delete
                 document
                   .getElementById('leftOverlay')
                   ?.dispatchEvent(
@@ -474,11 +447,26 @@ export default class VBrowser extends React.Component<{
                   ?.dispatchEvent(
                     new KeyboardEvent('keyup', { key: 'Backspace' }),
                   );
-                // Backspace is 65288?
-                // this.$client.sendData('keydown', { key: 65288 });
-                // this.$client.sendData('keyup', { key: 65288 });
               }
-              this.setState({ dummyValue: newVal });
+            }}
+            onBeforeInputCapture={(
+              e: React.CompositionEvent<HTMLInputElement>,
+            ) => {
+              e.nativeEvent.preventDefault();
+              // document.getElementById('debug')!.innerHTML = e.type + ' ' + e.data;
+              if (e.type === 'beforeinput') {
+                document.getElementById('leftOverlay')?.dispatchEvent(
+                  new KeyboardEvent('keydown', {
+                    key: e.data,
+                    shiftKey: e.data === e.data.toUpperCase(),
+                  }),
+                );
+                document.getElementById('leftOverlay')?.dispatchEvent(
+                  new KeyboardEvent('keyup', {
+                    key: e.data,
+                  }),
+                );
+              }
             }}
           />
         </div>
