@@ -296,6 +296,10 @@ app.get('/youtubePlaylist/:playlistId', async (req, res) => {
 });
 
 app.post('/createRoom', async (req, res) => {
+  if (req.body.auth == null || req.body.auth != process.env.AUTH) {
+    res.status(401).send("no");
+    return;
+  }
   const genName = () => '/' + makeRoomName(config.SHARD);
   let name = genName();
   console.log('createRoom: ', name);
