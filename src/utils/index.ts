@@ -56,19 +56,19 @@ export function formatSize(input: number) {
 }
 
 export const colorMappings: StringDict = {
-  red: 'B03060',
-  orange: 'FE9A76',
-  yellow: 'FFD700',
-  olive: '32CD32',
-  green: '016936',
-  teal: '008080',
-  blue: '0E6EB8',
-  violet: 'EE82EE',
-  purple: 'B413EC',
-  pink: 'FF1493',
-  brown: 'A52A2A',
-  grey: 'A0A0A0',
-  black: '000000',
+  red: '7B2143',  // was B03060
+  orange: 'B16B52',  // was FE9A76
+  yellow: 'B29600',  // was FFD700
+  olive: '238F23',  // was 32CD32
+  green: '004925',  // was 016936
+  teal: '005959',  // was 008080
+  blue: '094D80',  // was 0E6EB8
+  violet: 'A65BA6',  // was EE82EE
+  purple: '7D0DA5',  // was B413EC
+  pink: 'B20E66',  // was FF1493
+  brown: '731D1D',  // was A52A2A
+  grey: '707070',  // was A0A0A0
+  black: '000000',  // unchanged
 };
 
 let colorCache = {} as NumberDict;

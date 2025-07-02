@@ -153,7 +153,7 @@ export class Controls extends React.Component<ControlsProps> {
               }}
               className={`${styles.control} ${styles.action} ${styles.text}`}
               style={{
-                color: isBehind ? 'gray' : 'red',
+                color: isBehind ? 'gray' : '#c0392b',
               }}
             >
               <Icon size="small" name={'circle'} />
@@ -166,7 +166,7 @@ export class Controls extends React.Component<ControlsProps> {
         </div>
         <Progress
           size="tiny"
-          color="blue"
+          color="black"
           onClick={(e: any) => {
             if (!this.props.disabled) {
               // Read the time from the click event
@@ -214,7 +214,7 @@ export class Controls extends React.Component<ControlsProps> {
                     : 'scale(0, 0)',
                 transition: '0.25s all',
                 borderRadius: '50%',
-                backgroundColor: '#54c8ff',
+                backgroundColor: '#ffffff',
               }}
             ></div>
           }
@@ -357,7 +357,7 @@ export class Controls extends React.Component<ControlsProps> {
         <div style={{ width: '100px', marginRight: '10px' }}>
           <Slider
             value={volume}
-            color={'blue'}
+            color={'grey'}
             disabled={muted}
             settings={{
               min: 0,

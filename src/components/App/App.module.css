@@ -40,6 +40,7 @@
   @media only screen and (max-width: 600px) {
     width: calc(100% - 8px);
   }
+  max-width: 300px;
 }
 
 .toolToggle {
@@ -70,7 +71,7 @@
 }
 
 .fullHeightColumn.fullHeightColumn.fullHeightColumn {
-  height: calc(100vh - 64px);
+  height: calc(100vh);
   transition: width ease-out 0.5s;
 }
 

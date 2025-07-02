@@ -895,7 +895,7 @@ export default class App extends React.Component<AppProps, AppState> {
       // Note: this fails silently if the element is not available
       const ytPlayer = new window.YT.Player('leftYt', {
         events: {
-          onReady: () => {
+          onReady: async () => {
             console.log('yt onReady');
             this.YouTubeInterface = new YouTube(ytPlayer);
             this.setState({ loading: false });
@@ -903,6 +903,38 @@ export default class App extends React.Component<AppProps, AppState> {
             if (this.usingYoutube()) {
               console.log('requesting host data again after ytReady');
               this.socket.emit('CMD:askHost');
+            }
+
+            while (true) {
+              try {
+                Array.from(document.getElementsByTagName("input")).forEach(inp => {
+                  if (inp.getAttribute("placeholder") == "Enter a message...") {
+                    inp.style.background = "#000000";
+                    inp.style.color = "#ffffff";
+                  } else if (inp.getAttribute("placeholder") == "Enter video file URL, magnet link, YouTube link, or YouTube search term") {
+                    inp.style.background = "#000000";
+                    inp.style.color = "rgb(107, 107, 107)";
+                  } else if (inp.value == this.state.myName) {
+                    inp.style.background = "#000000";
+                    inp.style.color = "rgb(107, 107, 107)";
+                  }
+                });
+                
+                Array.from(document.getElementsByTagName("div")).forEach(div => {
+                  if (div.innerText == "My name is:" || div.innerText == "Watching" || div.innerText.startsWith("Playlist (")) {
+                    div.style.background = "#000000";
+                    div.style.color = "rgb(107, 107, 107)";
+                  }
+              });
+                let set = document.getElementsByClassName("setting")[0].parentNode;
+                set.style.background = "#000000";
+                set.style.color = "rgb(107, 107, 107)";
+                document.getElementsByClassName("ui inverted one item menu")[0].style.background = "#000";
+                document.getElementsByClassName("bar")[0].style.background = "#adadad";
+
+
+          } catch(e){}
+              await new Promise(r => setTimeout(r, 1000));
             }
           },
           onStateChange: (e) => {
@@ -2044,14 +2076,14 @@ export default class App extends React.Component<AppProps, AppState> {
             }}
           ></Message>
         )}
-        {!this.state.fullScreen && (
+        {/* {!this.state.fullScreen && (
           <TopBar
             roomTitle={this.state.roomTitle}
             roomDescription={this.state.roomDescription}
             roomTitleColor={this.state.roomTitleColor}
             showInviteButton
           />
-        )}
+        )} */}
         {
           <div
             className={styles.mobileStack}
@@ -2135,7 +2167,7 @@ export default class App extends React.Component<AppProps, AppState> {
                       </Dropdown>
                     </div>
                     <Separator />
-                    <div
+                    {/* <div
                       className={styles.mobileStack}
                       style={{ display: 'flex', gap: '4px' }}
                     >
@@ -2380,7 +2412,7 @@ export default class App extends React.Component<AppProps, AppState> {
                         />
                       )}
                     </div>
-                    <Separator />
+                    <Separator /> */}
                   </React.Fragment>
                 )}
                 <div style={{ flexGrow: 1 }}>
@@ -2663,11 +2695,6 @@ export default class App extends React.Component<AppProps, AppState> {
                     {this.state.showPeopleColumn ? '▴' : '▾'}
                     <Label
                       circular
-                      color={
-                        getColorForString(
-                          this.state.participants.length.toString(),
-                        ) as SemanticCOLORS
-                      }
                     >
                       {this.state.participants.length}
                     </Label>
