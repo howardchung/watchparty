@@ -18,7 +18,7 @@ app.post('/assignVM', async (req, res) => {
     const pools = Object.values(vmManagers).filter((mgr) => {
       return (
         mgr.getIsLarge() === Boolean(req.body.isLarge) &&
-        mgr.getRegion() === req.body.region
+        (mgr.getRegion() === req.body.region || !req.body.region)
       );
     });
     let vm = null;
@@ -84,11 +84,7 @@ app.get('/stats', async (req, res) => {
 
 app.get('/isFreePoolFull', async (req, res) => {
   const freePools = Object.values(vmManagers).filter((mgr) => {
-    return (
-      mgr?.getIsLarge() === false &&
-      mgr?.getRegion() === config.DEFAULT_VM_REGION &&
-      mgr?.getLimitSize() > 0
-    );
+    return mgr?.getIsLarge() === false && mgr?.getLimitSize() > 0;
   });
   const fullResult = await Promise.all<Boolean>(
     freePools.map(async (freePool) => {

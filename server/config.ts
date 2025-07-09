@@ -47,7 +47,6 @@ const defaults = {
   SUBSCRIBER_ROOM_LIMIT: 20, // The maximum number of rooms a subscriber can have
   VMWORKER_PORT: 3100, // Port to use for the vmWorker HTTP server
   VM_ASSIGNMENT_TIMEOUT: 75, // Number of seconds to wait for a VM before failing
-  DEFAULT_VM_REGION: 'US', // The default region to use for free VM/pool selection
   DISCORD_BOT_TOKEN: '', // Token for the Discord bot that generates WatchParty links
   DISCORD_ADMIN_BOT_TOKEN: '', // Optional, for Discord bot to set subscriber roles
   DISCORD_ADMIN_BOT_SERVER_ID: '708181150220156929', // Optional, ID of the Discord server
