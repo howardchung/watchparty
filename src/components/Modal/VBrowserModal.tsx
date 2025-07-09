@@ -6,7 +6,6 @@ import {
 } from 'react-google-recaptcha-v3';
 import { SignInButton } from '../TopBar/TopBar';
 import { serverPath } from '../../utils';
-import firebase from 'firebase/compat/app';
 import { SubscribeButton } from '../SubscribeButton/SubscribeButton';
 import config from '../../config';
 import { MetadataContext } from '../../MetadataContext';
@@ -22,7 +21,7 @@ export class VBrowserModal extends React.Component<{
   declare context: React.ContextType<typeof MetadataContext>;
   state = {
     isFreePoolFull: false,
-    region: 'US',
+    region: 'any',
   };
 
   async componentDidMount() {
@@ -33,9 +32,21 @@ export class VBrowserModal extends React.Component<{
   render() {
     const regionOptions = [
       {
+        key: 'Any',
+        text: 'Any available',
+        value: 'any',
+        image: { avatar: false, src: '' },
+      },
+      {
         key: 'US',
         text: 'US East',
         value: 'US',
+        image: { avatar: false, src: '/flag-united-states.png' },
+      },
+      {
+        key: 'USW',
+        text: 'US West',
+        value: 'USW',
         image: { avatar: false, src: '/flag-united-states.png' },
       },
       {
@@ -45,14 +56,6 @@ export class VBrowserModal extends React.Component<{
         image: { avatar: false, src: '/flag-european-union.png' },
       },
     ];
-    if (this.context.beta) {
-      regionOptions.push({
-        key: 'USW',
-        text: 'US West',
-        value: 'USW',
-        image: { avatar: false, src: '/flag-united-states.png' },
-      });
-    }
     const { closeModal, startVBrowser } = this.props;
     const LaunchButton = ({ large }: { large: boolean }) => {
       const { executeRecaptcha } = useGoogleReCaptcha();
@@ -64,7 +67,7 @@ export class VBrowserModal extends React.Component<{
               executeRecaptcha && (await executeRecaptcha('launchVBrowser'));
             startVBrowser(rcToken ?? '', {
               size: large ? 'large' : '',
-              region: large ? this.state.region : 'US',
+              region: this.state.region === 'any' ? '' : this.state.region,
             });
             closeModal();
           }}

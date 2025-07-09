@@ -931,7 +931,7 @@ export class Room {
       }
     }
     let isLarge = false;
-    let region = config.DEFAULT_VM_REGION;
+    let region = '';
     let isSubscriber = false;
     if (data && data.uid && data.token) {
       const decoded = await validateUserToken(data.uid, data.token);
