@@ -212,6 +212,11 @@ export function shuffle(array: any[]) {
 export const iceServers = () => [
   { urls: 'stun:stun.l.google.com:19302' },
   {
+    urls: 'turn:5.161.207.54:3478',
+    username: 'username',
+    credential: 'password',
+  },
+  {
     urls: 'turn:5.161.49.183:3478',
     username: 'username',
     credential: 'password',
