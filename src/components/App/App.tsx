@@ -1706,7 +1706,7 @@ export default class App extends React.Component<AppProps, AppState> {
       const now = Math.floor(Date.now() / 1000);
       let liveStreamTarget = now - this.HTMLInterface.getDuration() + target;
       // If livestream and seeking close to edge, set target as max
-      if (now - liveStreamTarget <= 5) {
+      if (now - liveStreamTarget <= 10) {
         liveStreamTarget = Number.MAX_SAFE_INTEGER;
       }
       target = liveStreamTarget;
@@ -1861,7 +1861,7 @@ export default class App extends React.Component<AppProps, AppState> {
   getLeaderTime = () => {
     if (this.state.isLiveStream) {
       // Pick a time near the end of the livestream
-      return this.HTMLInterface.getDuration() - 5;
+      return this.HTMLInterface.getDuration() - 10;
     }
     if (this.state.participants.length > 2) {
       return calculateMedian(Object.values(this.state.tsMap));
