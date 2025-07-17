@@ -91,7 +91,11 @@ export class HTML implements Player {
 
   setSubtitleMode = (mode?: TextTrackMode) => {
     if (this.getVideoEl()) {
-      for (var i = 0; i < this.getVideoEl().textTracks.length; i++) {
+      for (
+        var i = 0;
+        i < Math.min(this.getVideoEl().textTracks.length, 1);
+        i++
+      ) {
         this.getVideoEl().textTracks[i].mode =
           mode ??
           (this.getVideoEl().textTracks[i].mode === 'hidden'
