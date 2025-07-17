@@ -1,0 +1,22 @@
+{
+  "name": "throughput",
+  "version": "1.0.1",
+  "description": "Speed measurment",
+  "main": "index.js",
+  "author": "ThaUnknown",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ThaUnknown/throughput.git"
+  },
+  "keywords": [
+    "throughput",
+    "speedometer",
+    "bandwidth",
+    "meter"
+  ],
+  "bugs": {
+    "url": "https://github.com/ThaUnknown/throughput/issues"
+  },
+  "homepage": "https://github.com/ThaUnknown/throughput#readme"
+}

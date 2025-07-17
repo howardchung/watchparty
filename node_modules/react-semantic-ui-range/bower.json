@@ -1,0 +1,24 @@
+{
+  "name"        : "semantic-ui-range",
+  "description" : "Add-on range slider for Semantic UI",
+  "homepage"    : "https://github.com/tyleryasaka/semantic-ui-range",
+  "author": {
+    "name" : "Tyler Yasaka",
+    "web"  : "https://tyleryasaka.me/"
+  },
+  "dependencies": {
+    "semantic"      : ">=2.2.0"
+  },
+  "main": [
+    "range.css",
+    "range.js"
+  ],
+  "keywords": [
+    "semantic",
+    "ui",
+    "css3",
+    "range",
+    "slider"
+  ],
+  "license" : "MIT"
+}

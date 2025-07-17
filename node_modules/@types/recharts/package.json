@@ -1,0 +1,28 @@
+{
+    "name": "@types/recharts",
+    "version": "1.8.29",
+    "description": "TypeScript definitions for recharts",
+    "homepage": "https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/recharts",
+    "license": "MIT",
+    "contributors": [
+        {
+            "name": "Dmitriy Serdtsev",
+            "githubUsername": "in19farkt",
+            "url": "https://github.com/in19farkt"
+        }
+    ],
+    "main": "",
+    "types": "index.d.ts",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/DefinitelyTyped/DefinitelyTyped.git",
+        "directory": "types/recharts"
+    },
+    "scripts": {},
+    "dependencies": {
+        "@types/d3-shape": "^1",
+        "@types/react": "*"
+    },
+    "typesPublisherContentHash": "3cf9dafe2f4a2fb02f57fd76a2e81d8fab2a3be93c0955900db49046c717e550",
+    "typeScriptVersion": "4.6"
+}
