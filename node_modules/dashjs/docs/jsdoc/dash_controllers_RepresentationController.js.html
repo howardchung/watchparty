@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+	<title>dash.js Source: dash/controllers/RepresentationController.js</title>
+
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/sunlight.default.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/site.spacelab.css">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top navbar-inverse">
+<div class="container">
+	<div class="navbar-header">
+		<a class="navbar-brand" href="index.html">dash.js</a>
+		<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#topNavigation">
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+        </button>
+	</div>
+	<div class="navbar-collapse collapse" id="topNavigation">
+		<ul class="nav navbar-nav">
+			
+			<li class="dropdown">
+				<a href="modules.list.html" class="dropdown-toggle" data-toggle="dropdown">Modules<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="module-DashAdapter.html">DashAdapter</a></li><li><a href="module-DashMetrics.html">DashMetrics</a></li><li><a href="module-MediaPlayer.html">MediaPlayer</a></li><li><a href="module-OfflineController.html">OfflineController</a></li><li><a href="module-ProtectionController.html">ProtectionController</a></li><li><a href="module-Settings.html">Settings</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="classes.list.html" class="dropdown-toggle" data-toggle="dropdown">Classes<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Errors.html">Errors</a></li><li><a href="MediaPlayerEvents.html">MediaPlayerEvents</a></li><li><a href="MediaPlayerModel.html">MediaPlayerModel</a></li><li><a href="MetricsReportingEvents.html">MetricsReportingEvents</a></li><li><a href="MssErrors.html">MssErrors</a></li><li><a href="OfflineErrors.html">OfflineErrors</a></li><li><a href="OfflineEvents.html">OfflineEvents</a></li><li><a href="ProtectionErrors.html">ProtectionErrors</a></li><li><a href="ProtectionEvents.html">ProtectionEvents</a></li><li><a href="ThroughputController.html">ThroughputController</a></li><li><a href="ThroughputModel.html">ThroughputModel</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="events.list.html" class="dropdown-toggle" data-toggle="dropdown">Events<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="MediaPlayerEvents.html#event:ADAPTATION_SET_REMOVED_NO_CAPABILITIES">MediaPlayerEvents#event:ADAPTATION_SET_REMOVED_NO_CAPABILITIES</a></li><li><a href="MediaPlayerEvents.html#event:AST_IN_FUTURE">MediaPlayerEvents#event:AST_IN_FUTURE</a></li><li><a href="MediaPlayerEvents.html#event:BASE_URLS_UPDATED">MediaPlayerEvents#event:BASE_URLS_UPDATED</a></li><li><a href="MediaPlayerEvents.html#event:BUFFER_EMPTY">MediaPlayerEvents#event:BUFFER_EMPTY</a></li><li><a href="MediaPlayerEvents.html#event:BUFFER_LEVEL_STATE_CHANGED">MediaPlayerEvents#event:BUFFER_LEVEL_STATE_CHANGED</a></li><li><a href="MediaPlayerEvents.html#event:BUFFER_LEVEL_UPDATED">MediaPlayerEvents#event:BUFFER_LEVEL_UPDATED</a></li><li><a href="MediaPlayerEvents.html#event:BUFFER_LOADED">MediaPlayerEvents#event:BUFFER_LOADED</a></li><li><a href="MediaPlayerEvents.html#event:CAN_PLAY">MediaPlayerEvents#event:CAN_PLAY</a></li><li><a href="MediaPlayerEvents.html#event:CAN_PLAY_THROUGH">MediaPlayerEvents#event:CAN_PLAY_THROUGH</a></li><li><a href="MediaPlayerEvents.html#event:CAPTION_CONTAINER_RESIZE">MediaPlayerEvents#event:CAPTION_CONTAINER_RESIZE</a></li><li><a href="MediaPlayerEvents.html#event:CAPTION_RENDERED">MediaPlayerEvents#event:CAPTION_RENDERED</a></li><li><a href="MediaPlayerEvents.html#event:CONFORMANCE_VIOLATION">MediaPlayerEvents#event:CONFORMANCE_VIOLATION</a></li><li><a href="MediaPlayerEvents.html#event:CONTENT_STEERING_REQUEST_COMPLETED">MediaPlayerEvents#event:CONTENT_STEERING_REQUEST_COMPLETED</a></li><li><a href="MediaPlayerEvents.html#event:DYNAMIC_TO_STATIC">MediaPlayerEvents#event:DYNAMIC_TO_STATIC</a></li><li><a href="MediaPlayerEvents.html#event:ERROR">MediaPlayerEvents#event:ERROR</a></li><li><a href="MediaPlayerEvents.html#event:EVENT_MODE_ON_RECEIVE">MediaPlayerEvents#event:EVENT_MODE_ON_RECEIVE</a></li><li><a href="MediaPlayerEvents.html#event:EVENT_MODE_ON_START">MediaPlayerEvents#event:EVENT_MODE_ON_START</a></li><li><a href="MediaPlayerEvents.html#event:FRAGMENT_LOADING_ABANDONED">MediaPlayerEvents#event:FRAGMENT_LOADING_ABANDONED</a></li><li><a href="MediaPlayerEvents.html#event:FRAGMENT_LOADING_COMPLETED">MediaPlayerEvents#event:FRAGMENT_LOADING_COMPLETED</a></li><li><a href="MediaPlayerEvents.html#event:FRAGMENT_LOADING_PROGRESS">MediaPlayerEvents#event:FRAGMENT_LOADING_PROGRESS</a></li><li><a href="MediaPlayerEvents.html#event:FRAGMENT_LOADING_STARTED">MediaPlayerEvents#event:FRAGMENT_LOADING_STARTED</a></li><li><a href="MediaPlayerEvents.html#event:INBAND_PRFT">MediaPlayerEvents#event:INBAND_PRFT</a></li><li><a href="MediaPlayerEvents.html#event:LOG">MediaPlayerEvents#event:LOG</a></li><li><a href="MediaPlayerEvents.html#event:MANIFEST_LOADED">MediaPlayerEvents#event:MANIFEST_LOADED</a></li><li><a href="MediaPlayerEvents.html#event:MANIFEST_LOADING_FINISHED">MediaPlayerEvents#event:MANIFEST_LOADING_FINISHED</a></li><li><a href="MediaPlayerEvents.html#event:MANIFEST_LOADING_STARTED">MediaPlayerEvents#event:MANIFEST_LOADING_STARTED</a></li><li><a href="MediaPlayerEvents.html#event:MANIFEST_VALIDITY_CHANGED">MediaPlayerEvents#event:MANIFEST_VALIDITY_CHANGED</a></li><li><a href="MediaPlayerEvents.html#event:METRIC_ADDED">MediaPlayerEvents#event:METRIC_ADDED</a></li><li><a href="MediaPlayerEvents.html#event:METRIC_CHANGED">MediaPlayerEvents#event:METRIC_CHANGED</a></li><li><a href="MediaPlayerEvents.html#event:METRIC_UPDATED">MediaPlayerEvents#event:METRIC_UPDATED</a></li><li><a href="MediaPlayerEvents.html#event:METRICS_CHANGED">MediaPlayerEvents#event:METRICS_CHANGED</a></li><li><a href="MediaPlayerEvents.html#event:PERIOD_SWITCH_COMPLETED">MediaPlayerEvents#event:PERIOD_SWITCH_COMPLETED</a></li><li><a href="MediaPlayerEvents.html#event:PERIOD_SWITCH_STARTED">MediaPlayerEvents#event:PERIOD_SWITCH_STARTED</a></li><li><a href="MediaPlayerEvents.html#event:PLAYBACK_ENDED">MediaPlayerEvents#event:PLAYBACK_ENDED</a></li><li><a href="MediaPlayerEvents.html#event:PLAYBACK_ERROR">MediaPlayerEvents#event:PLAYBACK_ERROR</a></li><li><a href="MediaPlayerEvents.html#event:PLAYBACK_LOADED_DATA">MediaPlayerEvents#event:PLAYBACK_LOADED_DATA</a></li><li><a href="MediaPlayerEvents.html#event:PLAYBACK_METADATA_LOADED">MediaPlayerEvents#event:PLAYBACK_METADATA_LOADED</a></li><li><a href="MediaPlayerEvents.html#event:PLAYBACK_NOT_ALLOWED">MediaPlayerEvents#event:PLAYBACK_NOT_ALLOWED</a></li><li><a href="MediaPlayerEvents.html#event:PLAYBACK_PAUSED">MediaPlayerEvents#event:PLAYBACK_PAUSED</a></li><li><a href="MediaPlayerEvents.html#event:PLAYBACK_PLAYING">MediaPlayerEvents#event:PLAYBACK_PLAYING</a></li><li><a href="MediaPlayerEvents.html#event:PLAYBACK_PROGRESS">MediaPlayerEvents#event:PLAYBACK_PROGRESS</a></li><li><a href="MediaPlayerEvents.html#event:PLAYBACK_RATE_CHANGED">MediaPlayerEvents#event:PLAYBACK_RATE_CHANGED</a></li><li><a href="MediaPlayerEvents.html#event:PLAYBACK_SEEKED">MediaPlayerEvents#event:PLAYBACK_SEEKED</a></li><li><a href="MediaPlayerEvents.html#event:PLAYBACK_SEEKING">MediaPlayerEvents#event:PLAYBACK_SEEKING</a></li><li><a href="MediaPlayerEvents.html#event:PLAYBACK_STALLED">MediaPlayerEvents#event:PLAYBACK_STALLED</a></li><li><a href="MediaPlayerEvents.html#event:PLAYBACK_STARTED">MediaPlayerEvents#event:PLAYBACK_STARTED</a></li><li><a href="MediaPlayerEvents.html#event:PLAYBACK_TIME_UPDATED">MediaPlayerEvents#event:PLAYBACK_TIME_UPDATED</a></li><li><a href="MediaPlayerEvents.html#event:PLAYBACK_VOLUME_CHANGED">MediaPlayerEvents#event:PLAYBACK_VOLUME_CHANGED</a></li><li><a href="MediaPlayerEvents.html#event:PLAYBACK_WAITING">MediaPlayerEvents#event:PLAYBACK_WAITING</a></li><li><a href="MediaPlayerEvents.html#event:QUALITY_CHANGE_RENDERED">MediaPlayerEvents#event:QUALITY_CHANGE_RENDERED</a></li><li><a href="MediaPlayerEvents.html#event:QUALITY_CHANGE_REQUESTED">MediaPlayerEvents#event:QUALITY_CHANGE_REQUESTED</a></li><li><a href="MediaPlayerEvents.html#event:REPRESENTATION_SWITCH">MediaPlayerEvents#event:REPRESENTATION_SWITCH</a></li><li><a href="MediaPlayerEvents.html#event:STREAM_ACTIVATED">MediaPlayerEvents#event:STREAM_ACTIVATED</a></li><li><a href="MediaPlayerEvents.html#event:STREAM_DEACTIVATED">MediaPlayerEvents#event:STREAM_DEACTIVATED</a></li><li><a href="MediaPlayerEvents.html#event:STREAM_INITIALIZED">MediaPlayerEvents#event:STREAM_INITIALIZED</a></li><li><a href="MediaPlayerEvents.html#event:STREAM_INITIALIZING">MediaPlayerEvents#event:STREAM_INITIALIZING</a></li><li><a href="MediaPlayerEvents.html#event:STREAM_TEARDOWN_COMPLETE">MediaPlayerEvents#event:STREAM_TEARDOWN_COMPLETE</a></li><li><a href="MediaPlayerEvents.html#event:STREAM_UPDATED">MediaPlayerEvents#event:STREAM_UPDATED</a></li><li><a href="MediaPlayerEvents.html#event:TEXT_TRACK_ADDED">MediaPlayerEvents#event:TEXT_TRACK_ADDED</a></li><li><a href="MediaPlayerEvents.html#event:TEXT_TRACKS_ADDED">MediaPlayerEvents#event:TEXT_TRACKS_ADDED</a></li><li><a href="MediaPlayerEvents.html#event:THROUGHPUT_MEASUREMENT_STORED">MediaPlayerEvents#event:THROUGHPUT_MEASUREMENT_STORED</a></li><li><a href="MediaPlayerEvents.html#event:TRACK_CHANGE_RENDERED">MediaPlayerEvents#event:TRACK_CHANGE_RENDERED</a></li><li><a href="MediaPlayerEvents.html#event:TTML_PARSED">MediaPlayerEvents#event:TTML_PARSED</a></li><li><a href="MediaPlayerEvents.html#event:TTML_TO_PARSE">MediaPlayerEvents#event:TTML_TO_PARSE</a></li><li><a href="MetricsReportingEvents.html#event:CMCD_DATA_GENERATED">MetricsReportingEvents#event:CMCD_DATA_GENERATED</a></li><li><a href="OfflineEvents.html#event:OFFLINE_RECORD_FINISHED">OfflineEvents#event:OFFLINE_RECORD_FINISHED</a></li><li><a href="OfflineEvents.html#event:OFFLINE_RECORD_LOADEDMETADATA">OfflineEvents#event:OFFLINE_RECORD_LOADEDMETADATA</a></li><li><a href="OfflineEvents.html#event:OFFLINE_RECORD_STARTED">OfflineEvents#event:OFFLINE_RECORD_STARTED</a></li><li><a href="OfflineEvents.html#event:OFFLINE_RECORD_STOPPED">OfflineEvents#event:OFFLINE_RECORD_STOPPED</a></li><li><a href="ProtectionEvents.html#event:KEY_ADDED">ProtectionEvents#event:KEY_ADDED</a></li><li><a href="ProtectionEvents.html#event:KEY_ERROR">ProtectionEvents#event:KEY_ERROR</a></li><li><a href="ProtectionEvents.html#event:KEY_MESSAGE">ProtectionEvents#event:KEY_MESSAGE</a></li><li><a href="ProtectionEvents.html#event:KEY_SESSION_CLOSED">ProtectionEvents#event:KEY_SESSION_CLOSED</a></li><li><a href="ProtectionEvents.html#event:KEY_SESSION_CREATED">ProtectionEvents#event:KEY_SESSION_CREATED</a></li><li><a href="ProtectionEvents.html#event:KEY_SESSION_REMOVED">ProtectionEvents#event:KEY_SESSION_REMOVED</a></li><li><a href="ProtectionEvents.html#event:KEY_STATUSES_CHANGED">ProtectionEvents#event:KEY_STATUSES_CHANGED</a></li><li><a href="ProtectionEvents.html#event:KEY_SYSTEM_ACCESS_COMPLETE">ProtectionEvents#event:KEY_SYSTEM_ACCESS_COMPLETE</a></li><li><a href="ProtectionEvents.html#event:KEY_SYSTEM_SELECTED">ProtectionEvents#event:KEY_SYSTEM_SELECTED</a></li><li><a href="ProtectionEvents.html#event:LICENSE_REQUEST_COMPLETE">ProtectionEvents#event:LICENSE_REQUEST_COMPLETE</a></li><li><a href="ProtectionEvents.html#event:LICENSE_REQUEST_SENDING">ProtectionEvents#event:LICENSE_REQUEST_SENDING</a></li><li><a href="ProtectionEvents.html#event:PROTECTION_CREATED">ProtectionEvents#event:PROTECTION_CREATED</a></li><li><a href="ProtectionEvents.html#event:PROTECTION_DESTROYED">ProtectionEvents#event:PROTECTION_DESTROYED</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Global<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="global.html#LICENSE_SERVER_MANIFEST_CONFIGURATIONS">LICENSE_SERVER_MANIFEST_CONFIGURATIONS</a></li>
+				</ul>
+			</li>
+			
+		</ul>
+        
+            <div class="col-sm-3 col-md-3">
+                <form class="navbar-form" role="search">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search" name="q" id="search-input">
+                        <div class="input-group-btn">
+                            <button class="btn btn-default" id="search-submit"><i class="glyphicon glyphicon-search"></i></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        
+	</div>
+
+</div>
+</div>
+
+
+<div class="container" id="toc-content">
+<div class="row">
+
+	
+	<div class="col-md-12">
+	
+		<div id="main">
+			
+
+		<h1 class="page-title">Source: dash/controllers/RepresentationController.js</h1>
+    
+<section>
+    <article>
+        <pre
+            class="sunlight-highlight-javascript linenums">/**
+ * The copyright in this software is being made available under the BSD License,
+ * included below. This software may be subject to other third party and contributor
+ * rights, including patent rights, and no such rights are granted under this license.
+ *
+ * Copyright (c) 2013, Dash Industry Forum.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *  * Redistributions of source code must retain the above copyright notice, this
+ *  list of conditions and the following disclaimer.
+ *  * Redistributions in binary form must reproduce the above copyright notice,
+ *  this list of conditions and the following disclaimer in the documentation and/or
+ *  other materials provided with the distribution.
+ *  * Neither the name of Dash Industry Forum nor the names of its
+ *  contributors may be used to endorse or promote products derived from this software
+ *  without specific prior written permission.
+ *
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS AS IS AND ANY
+ *  EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ *  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ *  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ *  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ *  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ *  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ *  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ *  POSSIBILITY OF SUCH DAMAGE.
+ */
+import Constants from '../../streaming/constants/Constants.js';
+import FactoryMaker from '../../core/FactoryMaker.js';
+import MediaPlayerEvents from '../../streaming/MediaPlayerEvents.js';
+import {getTimeBasedSegment} from '../utils/SegmentsUtils.js';
+
+function RepresentationController(config) {
+
+    config = config || {};
+    const eventBus = config.eventBus;
+    const events = config.events;
+    const abrController = config.abrController;
+    const dashMetrics = config.dashMetrics;
+    const playbackController = config.playbackController;
+    const timelineConverter = config.timelineConverter;
+    const type = config.type;
+    const streamInfo = config.streamInfo;
+    const segmentsController = config.segmentsController;
+    const isDynamic = config.isDynamic;
+
+    let instance,
+        voAvailableRepresentations,
+        currentVoRepresentation;
+
+    function setup() {
+        resetInitialSettings();
+
+        eventBus.on(MediaPlayerEvents.MANIFEST_VALIDITY_CHANGED, onManifestValidityChanged, instance);
+    }
+
+    function getStreamId() {
+        return streamInfo.id;
+    }
+
+    function getType() {
+        return type;
+    }
+
+    function checkConfig() {
+        if (!abrController || !dashMetrics || !playbackController || !timelineConverter) {
+            throw new Error(Constants.MISSING_CONFIG_ERROR);
+        }
+    }
+
+    function getCurrentRepresentation() {
+        return currentVoRepresentation;
+    }
+
+    function resetInitialSettings() {
+        voAvailableRepresentations = [];
+    }
+
+    function reset() {
+        eventBus.off(MediaPlayerEvents.MANIFEST_VALIDITY_CHANGED, onManifestValidityChanged, instance);
+
+        resetInitialSettings();
+    }
+
+    function updateData(availableRepresentations, isFragmented, selectedRepresentationId) {
+        return new Promise((resolve, reject) => {
+            voAvailableRepresentations = availableRepresentations;
+            const selectedRepresentation = getRepresentationById(selectedRepresentationId);
+            _setCurrentVoRepresentation(selectedRepresentation);
+
+
+            if (type !== Constants.VIDEO &amp;&amp; type !== Constants.AUDIO &amp;&amp; (type !== Constants.TEXT || !isFragmented)) {
+                endDataUpdate();
+                resolve();
+                return;
+            }
+
+            const promises = [];
+            for (let i = 0, ln = voAvailableRepresentations.length; i &lt; ln; i++) {
+                const currentRep = voAvailableRepresentations[i];
+                promises.push(_updateRepresentation(currentRep));
+            }
+
+            Promise.all(promises)
+                .then(() => {
+                    _onAllRepresentationsUpdated();
+                    resolve();
+                })
+                .catch((e) => {
+                    reject(e);
+                })
+        })
+    }
+
+    function _onAllRepresentationsUpdated() {
+        abrController.setPlaybackQuality(type, streamInfo, currentVoRepresentation);
+        const dvrInfo = dashMetrics.getCurrentDVRInfo(type);
+        if (dvrInfo) {
+            dashMetrics.updateManifestUpdateInfo({ latency: dvrInfo.range.end - playbackController.getTime() });
+        }
+
+        endDataUpdate();
+    }
+
+    function _updateRepresentation(currentRep) {
+        return new Promise((resolve, reject) => {
+            const hasInitialization = currentRep.hasInitialization();
+            const hasSegments = currentRep.hasSegments();
+
+            // If representation has initialization and segments information we are done
+            // otherwise, it means that a request has to be made to get initialization and/or segments information
+            const promises = [];
+
+            promises.push(segmentsController.updateInitData(currentRep, hasInitialization));
+            promises.push(segmentsController.updateSegmentData(currentRep, hasSegments));
+
+            Promise.all(promises)
+                .then((data) => {
+                    if (data[0] &amp;&amp; !data[0].error) {
+                        currentRep = _onInitLoaded(currentRep, data[0]);
+                    }
+                    if (data[1] &amp;&amp; !data[1].error) {
+                        currentRep = _onSegmentsLoaded(currentRep, data[1]);
+                    }
+                    currentRep.fragmentDuration = currentRep.segmentDuration ? currentRep.segmentDuration : currentRep.segments &amp;&amp; currentRep.segments.length > 0 ? currentRep.segments[0].duration : NaN;
+                    _setMediaFinishedInformation(currentRep);
+                    _onRepresentationUpdated(currentRep);
+                    resolve();
+                })
+                .catch((e) => {
+                    reject(e);
+                });
+        });
+    }
+
+    function _setMediaFinishedInformation(representation) {
+        representation.mediaFinishedInformation = segmentsController.getMediaFinishedInformation(representation);
+    }
+
+    function _onInitLoaded(representation, e) {
+        if (!e || e.error || !e.representation) {
+            return representation;
+        }
+        return e.representation;
+    }
+
+    function _onSegmentsLoaded(representation, e) {
+        if (!e || e.error) return;
+
+        const fragments = e.segments;
+        const segments = [];
+        let count = 0;
+
+        let i,
+            len,
+            s,
+            seg;
+
+        for (i = 0, len = fragments ? fragments.length : 0; i &lt; len; i++) {
+            s = fragments[i];
+
+            seg = getTimeBasedSegment(
+                timelineConverter,
+                isDynamic,
+                representation,
+                s.startTime,
+                s.duration,
+                s.timescale,
+                s.media,
+                s.mediaRange,
+                count);
+
+            if (seg) {
+                segments.push(seg);
+                seg = null;
+                count++;
+            }
+        }
+
+        if (segments.length > 0) {
+            representation.segments = segments;
+        }
+
+        return representation;
+    }
+
+    function _addRepresentationSwitch(currentRepresentation) {
+        checkConfig();
+        const now = new Date();
+        const currentVideoTimeMs = playbackController.getTime() * 1000;
+        if (currentRepresentation) {
+            dashMetrics.addRepresentationSwitch(currentRepresentation.adaptation.type, now, currentVideoTimeMs, currentRepresentation.id);
+        }
+
+        eventBus.trigger(MediaPlayerEvents.REPRESENTATION_SWITCH, {
+            mediaType: type,
+            streamId: streamInfo.id,
+            currentRepresentation,
+        }, { streamId: streamInfo.id, mediaType: type })
+    }
+
+    function getRepresentationById(id) {
+        if (!voAvailableRepresentations || voAvailableRepresentations.length === 0) {
+            return null;
+        }
+
+        const reps = voAvailableRepresentations.filter((rep) => {
+            return rep.id === id;
+        })
+
+        if (reps.length > 0) {
+            return reps[0]
+        }
+
+        return null;
+    }
+
+    function endDataUpdate(error) {
+        eventBus.trigger(events.DATA_UPDATE_COMPLETED,
+            {
+                currentRepresentation: currentVoRepresentation,
+                error: error
+            },
+            { streamId: streamInfo.id, mediaType: type }
+        );
+    }
+
+    function _onRepresentationUpdated(r) {
+        let manifestUpdateInfo = dashMetrics.getCurrentManifestUpdate();
+        let alreadyAdded = false;
+        let repInfo;
+
+
+        if (manifestUpdateInfo) {
+            for (let i = 0; i &lt; manifestUpdateInfo.representationInfo.length; i++) {
+                repInfo = manifestUpdateInfo.representationInfo[i];
+                if (repInfo.index === r.index &amp;&amp; repInfo.mediaType === getType()) {
+                    alreadyAdded = true;
+                    break;
+                }
+            }
+
+            if (!alreadyAdded) {
+                dashMetrics.addManifestUpdateRepresentationInfo(r, getType());
+            }
+        }
+    }
+
+    /**
+     * We get the new selected Representation which will not hold the ranges and the segment references in case of SegmentBase.
+     * In any case use the id to find the right Representation instance in our array of Representations.
+     * @param newRep
+     */
+    function prepareQualityChange(newRep) {
+        const voRepresentations = voAvailableRepresentations.filter((rep) => {
+            return rep.id === newRep.id;
+        })
+
+        if (voRepresentations.length > 0) {
+            _setCurrentVoRepresentation(voRepresentations[0]);
+        }
+    }
+
+    function _setCurrentVoRepresentation(value) {
+        if (!currentVoRepresentation || currentVoRepresentation.id !== value.id) {
+            _addRepresentationSwitch(value);
+        }
+        currentVoRepresentation = value;
+    }
+
+    function onManifestValidityChanged(e) {
+        if (e.newDuration) {
+            const representation = getCurrentRepresentation();
+            if (representation &amp;&amp; representation.adaptation.period) {
+                const period = representation.adaptation.period;
+                period.duration = e.newDuration;
+            }
+        }
+    }
+
+    instance = {
+        getCurrentRepresentation,
+        getRepresentationById,
+        getStreamId,
+        getType,
+        prepareQualityChange,
+        reset,
+        updateData,
+    };
+
+    setup();
+    return instance;
+}
+
+RepresentationController.__dashjs_factory_name = 'RepresentationController';
+export default FactoryMaker.getClassFactory(RepresentationController);
+</pre>
+    </article>
+</section>
+
+
+
+
+
+		</div>
+	</div>
+
+	<div class="clearfix"></div>
+
+	
+
+</div>
+</div>
+
+
+    <div class="modal fade" id="searchResults">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Search results</h4>
+          </div>
+          <div class="modal-body"></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div>
+
+
+<footer>
+
+
+	<span class="copyright">
+	<h3>DASH Industry Forum</h3>
+	</span>
+
+<span class="jsdoc-message">
+	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.11</a>
+	
+		on Mon Jan 29th 2024
+	
+	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
+</span>
+</footer>
+
+<script src="scripts/docstrap.lib.js"></script>
+<script src="scripts/toc.js"></script>
+
+    <script type="text/javascript" src="scripts/fulltext-search-ui.js"></script>
+
+
+<script>
+$( function () {
+	$( "[id*='$']" ).each( function () {
+		var $this = $( this );
+
+		$this.attr( "id", $this.attr( "id" ).replace( "$", "__" ) );
+	} );
+
+	$( ".tutorial-section pre, .readme-section pre, pre.prettyprint.source" ).each( function () {
+		var $this = $( this );
+
+		var example = $this.find( "code" );
+		exampleText = example.html();
+		var lang = /{@lang (.*?)}/.exec( exampleText );
+		if ( lang && lang[1] ) {
+			exampleText = exampleText.replace( lang[0], "" );
+			example.html( exampleText );
+			lang = lang[1];
+		} else {
+			var langClassMatch = example.parent()[0].className.match(/lang\-(\S+)/);
+			lang = langClassMatch ? langClassMatch[1] : "javascript";
+		}
+
+		if ( lang ) {
+
+			$this
+			.addClass( "sunlight-highlight-" + lang )
+			.addClass( "linenums" )
+			.html( example.html() );
+
+		}
+	} );
+
+	Sunlight.highlightAll( {
+		lineNumbers : true,
+		showMenu : true,
+		enableDoclinks : true
+	} );
+
+	$.catchAnchorLinks( {
+        navbarOffset: 10
+	} );
+	$( "#toc" ).toc( {
+		anchorName  : function ( i, heading, prefix ) {
+			return $( heading ).attr( "id" ) || ( prefix + i );
+		},
+		selectors   : "#toc-content h1,#toc-content h2,#toc-content h3,#toc-content h4",
+		showAndHide : false,
+		smoothScrolling: true
+	} );
+
+	$( "#main span[id^='toc']" ).addClass( "toc-shim" );
+	$( '.dropdown-toggle' ).dropdown();
+
+    $( "table" ).each( function () {
+      var $this = $( this );
+      $this.addClass('table');
+    } );
+
+} );
+</script>
+
+
+
+<!--Navigation and Symbol Display-->
+
+<script>
+	$( function () {
+		$( '#main' ).localScroll( {
+			offset : { top : 60 } //offset by the height of your header (give or take a few px, see what works for you)
+		} );
+		$( "dt.name" ).each( function () {
+			var $this = $( this ).find("h4");
+			var icon = $( "<i/>" ).addClass( "icon-plus-sign" ).addClass( "pull-right" ).addClass( "icon-white" );
+			var dt = $(this);
+			var children = dt.next( "dd" );
+
+			dt.prepend( icon ).css( {cursor : "pointer"} );
+			dt.addClass( "member-collapsed" ).addClass( "member" );
+
+
+			children.hide();
+
+			dt.children().on( "click", function () {
+				children = dt.next( "dd" );
+				children.slideToggle( "fast", function () {
+
+					if ( children.is( ":visible" ) ) {
+						icon.addClass( "icon-minus-sign" ).removeClass( "icon-plus-sign" ).removeClass( "icon-white" );
+						dt.addClass( "member-open" ).animate( "member-collapsed" );
+					} else {
+						icon.addClass( "icon-plus-sign" ).removeClass( "icon-minus-sign" ).addClass( "icon-white" );
+						dt.addClass( "member-collapsed" ).removeClass( "member-open" );
+					}
+				} );
+			} );
+
+		} );
+	} );
+</script>
+
+
+<!--Google Analytics-->
+
+
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+            SearcherDisplay.init();
+        });
+    </script>
+
+
+</body>
+</html>
