@@ -1,4 +1,4 @@
-import config from '../config';
+import config from '../config.ts';
 import Stripe from 'stripe';
 
 const stripe = new Stripe(config.STRIPE_SECRET_KEY as string, {

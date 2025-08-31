@@ -1,8 +1,8 @@
-import config from '../config';
+import config from '../config.ts';
 import axios from 'axios';
-import { redis, redisCount } from '../utils/redis';
-import { postgres as pg } from '../utils/postgres';
-import { PoolConfig, PoolRegion } from './utils';
+import { redis, redisCount } from '../utils/redis.ts';
+import { postgres as pg } from '../utils/postgres.ts';
+import { PoolConfig, PoolRegion } from './utils.ts';
 import type { Client } from 'pg';
 const incrInterval = 5 * 1000;
 const decrInterval = 15 * 1000;

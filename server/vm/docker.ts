@@ -1,8 +1,8 @@
 // This assumes an installation of Docker exists on the given host
 // and that host is configured to accept our SSH key
-import config from '../config';
-import { VMManager, VM } from './base';
-import { imageName } from './utils';
+import config from '../config.ts';
+import { VMManager, VM } from './base.ts';
+import { imageName } from './utils.ts';
 import fs from 'fs';
 import { homedir } from 'os';
 import { NodeSSH } from 'node-ssh';

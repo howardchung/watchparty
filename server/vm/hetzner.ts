@@ -1,8 +1,8 @@
-import config from '../config';
+import config from '../config.ts';
 import axios from 'axios';
-import { VMManager, VM } from './base';
+import { VMManager, VM } from './base.ts';
 import fs from 'fs';
-import { redis } from '../utils/redis';
+import { redis } from '../utils/redis.ts';
 
 const HETZNER_TOKEN = config.HETZNER_TOKEN;
 const sshKeys = config.HETZNER_SSH_KEYS.split(',').map(Number);

@@ -1,5 +1,5 @@
-import config from './config';
-import { getBgVMManagers } from './vm/utils';
+import config from './config.ts';
+import { getBgVMManagers } from './vm/utils.ts';
 import express from 'express';
 import bodyParser from 'body-parser';
 

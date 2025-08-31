@@ -1,4 +1,4 @@
-import config from './config';
+import config from './config.ts';
 import fs from 'fs';
 import express, { Response } from 'express';
 import bodyParser from 'body-parser';
@@ -8,31 +8,31 @@ import cors from 'cors';
 import https from 'https';
 import http from 'http';
 import { Server } from 'socket.io';
-import { searchYoutube, youtubePlaylist } from './utils/youtube';
-import { Room } from './room';
+import { searchYoutube, youtubePlaylist } from './utils/youtube.ts';
+import { Room } from './room.ts';
 import {
   redis,
   getRedisCountDay,
   getRedisCountDayDistinct,
   redisCount,
-} from './utils/redis';
+} from './utils/redis.ts';
 import {
   getCustomerByEmail,
   createSelfServicePortal,
   getIsSubscriberByEmail,
-} from './utils/stripe';
-import { deleteUser, validateUserToken } from './utils/firebase';
+} from './utils/stripe.ts';
+import { deleteUser, validateUserToken } from './utils/firebase.ts';
 import path from 'path';
-import { getStartOfDay } from './utils/time';
-import { getSessionLimitSeconds } from './vm/utils';
-import { postgres, insertObject, upsertObject } from './utils/postgres';
+import { getStartOfDay } from './utils/time.ts';
+import { getSessionLimitSeconds } from './vm/utils.ts';
+import { postgres, insertObject, upsertObject } from './utils/postgres.ts';
 import axios, { isAxiosError } from 'axios';
 import crypto from 'crypto';
 import zlib from 'zlib';
 import util from 'util';
-import { statsAgg } from './utils/statsAgg';
-import { resolveShard } from './utils/resolveShard';
-import { makeRoomName, makeUserName } from './utils/moniker';
+import { statsAgg } from './utils/statsAgg.ts';
+import { resolveShard } from './utils/resolveShard.ts';
+import { makeRoomName, makeUserName } from './utils/moniker.ts';
 
 if (process.env.NODE_ENV === 'development') {
   axios.interceptors.request.use(
