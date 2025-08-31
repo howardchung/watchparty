@@ -1,7 +1,7 @@
-import config from './config';
-import { getUserByEmail } from './utils/firebase';
-import { insertObject, newPostgres, updateObject } from './utils/postgres';
-import { getAllActiveSubscriptions, getAllCustomers } from './utils/stripe';
+import config from './config.ts';
+import { getUserByEmail } from './utils/firebase.ts';
+import { insertObject, newPostgres, updateObject } from './utils/postgres.ts';
+import { getAllActiveSubscriptions, getAllCustomers } from './utils/stripe.ts';
 import { Client as DiscordClient, IntentsBitField } from 'discord.js';
 
 let lastSubs = '';

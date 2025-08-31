@@ -1,4 +1,4 @@
-import config from '../config';
+import config from '../config.ts';
 import * as admin from 'firebase-admin';
 
 if (config.FIREBASE_ADMIN_SDK_CONFIG) {

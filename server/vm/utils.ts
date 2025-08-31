@@ -1,9 +1,9 @@
-import { AssignedVM, VMManager } from './base';
-import config from '../config';
-import { Scaleway } from './scaleway';
-import { Hetzner } from './hetzner';
-import { DigitalOcean } from './digitalocean';
-import { Docker } from './docker';
+import { AssignedVM, VMManager } from './base.ts';
+import config from '../config.ts';
+import { Scaleway } from './scaleway.ts';
+import { Hetzner } from './hetzner.ts';
+import { DigitalOcean } from './digitalocean.ts';
+import { Docker } from './docker.ts';
 
 // Chromium on ARM: ghcr.io/howardchung/vbrowser/arm-chromium
 export const imageName = 'howardc93/vbrowser';

@@ -1,7 +1,7 @@
-import config from './config';
-import { statsAgg } from './utils/statsAgg';
+import config from './config.ts';
+import { statsAgg } from './utils/statsAgg.ts';
 import axios from 'axios';
-import { redis } from './utils/redis';
+import { redis } from './utils/redis.ts';
 
 statsTimeSeries();
 setInterval(statsTimeSeries, 5 * 60 * 1000);
