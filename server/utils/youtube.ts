@@ -1,10 +1,10 @@
-import config from '../config';
+import config from '../config.ts';
 import {
   PT_HOURS_REGEX,
   PT_MINUTES_REGEX,
   PT_SECONDS_REGEX,
   YOUTUBE_VIDEO_ID_REGEX,
-} from './regex';
+} from './regex.ts';
 import { youtube, youtube_v3 } from '@googleapis/youtube';
 
 let Youtube = config.YOUTUBE_API_KEY

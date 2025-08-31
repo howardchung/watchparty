@@ -1,7 +1,7 @@
 import { Client, IntentsBitField, Events } from 'discord.js';
-import config from './config';
+import config from './config.ts';
 import axios from 'axios';
-import { redisCount } from './utils/redis';
+import { redisCount } from './utils/redis.ts';
 
 // URL to invite bot: https://discord.com/api/oauth2/authorize?client_id=1071394728513380372&permissions=2147485696&scope=bot
 

@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { resolveShard } from './resolveShard';
+import { resolveShard } from './resolveShard.ts';
 
 let adjectives = fs
   .readFileSync(process.cwd() + '/words/adjectives.txt')

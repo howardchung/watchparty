@@ -1,5 +1,5 @@
 import { Client, QueryResult } from 'pg';
-import config from '../config';
+import config from '../config.ts';
 
 export let postgres: Client | undefined = undefined;
 if (config.DATABASE_URL) {
