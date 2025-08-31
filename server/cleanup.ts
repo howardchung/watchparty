@@ -1,4 +1,4 @@
-import { postgres } from './utils/postgres';
+import { postgres } from './utils/postgres.ts';
 
 cleanupPostgres();
 setInterval(cleanupPostgres, 5 * 60 * 1000);

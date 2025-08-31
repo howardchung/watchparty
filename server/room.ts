@@ -1,23 +1,23 @@
-import config from './config';
+import config from './config.ts';
 
 import axios from 'axios';
 import { Server, Socket } from 'socket.io';
 
-import { getUser, validateUserToken } from './utils/firebase';
-import { redis, redisCount, redisCountDistinct } from './utils/redis';
-import { getIsSubscriberByEmail } from './utils/stripe';
-import { AssignedVM } from './vm/base';
-import { getStartOfDay } from './utils/time';
-import { postgres, updateObject, upsertObject } from './utils/postgres';
+import { getUser, validateUserToken } from './utils/firebase.ts';
+import { redis, redisCount, redisCountDistinct } from './utils/redis.ts';
+import { getIsSubscriberByEmail } from './utils/stripe.ts';
+import { AssignedVM } from './vm/base.ts';
+import { getStartOfDay } from './utils/time.ts';
+import { postgres, updateObject, upsertObject } from './utils/postgres.ts';
 import {
   fetchYoutubeVideo,
   getYoutubeVideoID,
   isYouTube,
-} from './utils/youtube';
+} from './utils/youtube.ts';
 //@ts-ignore
 import twitch from 'twitch-m3u8';
 import { QueryResult } from 'pg';
-import { Docker } from './vm/docker';
+import { Docker } from './vm/docker.ts';
 
 // Stateless pool instance to use for VMs if full management isn't needed
 let stateless: Docker | undefined = undefined;

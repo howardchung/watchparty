@@ -1,12 +1,12 @@
 import axios from 'axios';
-import config from '../config';
-import ecosystem from '../ecosystem.config';
+import config from '../config.ts';
+import { apps } from '../ecosystem.config.js';
 
 export async function statsAgg() {
   const ports =
     process.env.NODE_ENV === 'development'
       ? [8080]
-      : ecosystem.apps.map((app) => app.env?.PORT).filter(Boolean);
+      : apps.map((app) => app.env?.PORT).filter(Boolean);
 
   const shardReqs = ports.map((port) =>
     axios({
