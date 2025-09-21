@@ -1,5 +1,5 @@
 import config from '../config.ts';
-import * as admin from 'firebase-admin';
+import admin from 'firebase-admin';
 
 if (config.FIREBASE_ADMIN_SDK_CONFIG) {
   admin.initializeApp({
