@@ -1,4 +1,4 @@
-import { Client, QueryResult } from 'pg';
+import { Client, type QueryResult } from 'pg';
 import config from '../config.ts';
 
 export let postgres: Client | undefined = undefined;

@@ -1,6 +1,6 @@
 import config from '../config.ts';
 import axios from 'axios';
-import { VMManager, VM } from './base.ts';
+import { VMManager, type VM } from './base.ts';
 
 const DO_TOKEN = config.DO_TOKEN;
 const region = 'sfo3';

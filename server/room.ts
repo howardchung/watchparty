@@ -6,7 +6,7 @@ import { Server, Socket } from 'socket.io';
 import { getUser, validateUserToken } from './utils/firebase.ts';
 import { redis, redisCount, redisCountDistinct } from './utils/redis.ts';
 import { getIsSubscriberByEmail } from './utils/stripe.ts';
-import { AssignedVM } from './vm/base.ts';
+import { type AssignedVM } from './vm/base.ts';
 import { getStartOfDay } from './utils/time.ts';
 import { postgres, updateObject, upsertObject } from './utils/postgres.ts';
 import {
@@ -16,7 +16,7 @@ import {
 } from './utils/youtube.ts';
 //@ts-ignore
 import twitch from 'twitch-m3u8';
-import { QueryResult } from 'pg';
+import { type QueryResult } from 'pg';
 import { Docker } from './vm/docker.ts';
 
 // Stateless pool instance to use for VMs if full management isn't needed
