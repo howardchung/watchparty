@@ -626,7 +626,7 @@ app.use(express.static(config.BUILD_DIRECTORY));
 // Send index.html for all other requests (SPA)
 app.use('/*splat', (_req, res) => {
   res.sendFile(
-    path.resolve(__dirname + `/../${config.BUILD_DIRECTORY}/index.html`),
+    path.resolve(import.meta.dirname + `/../${config.BUILD_DIRECTORY}/index.html`),
   );
 });
 
