@@ -57,7 +57,7 @@
     "deploy": "git fetch && git reset --hard origin/release && pm2 flush && pm2 reload server/ecosystem.config.js",
     "prettier": "npx prettier --write .",
     "typecheckServer": "tsc --project server/tsconfig.json",
-    "typecheck": "tsc --project tsconfig.json --noEmit",
+    "typecheck": "tsc --project src/tsconfig.json --noEmit",
     "ncu": "ncu --semverLevel major -u",
     "updateSnapshot": "curl -X POST localhost:3100/updateSnapshot -H 'Content-Type: application/json' -d '{\"provider\":\"Hetzner\",\"region\":\"US\"}'",
     "testvBrowser": "docker run -d --rm --name=vbrowser --log-opt max-size=1g --net=host --shm-size=1g --cap-add=\"SYS_ADMIN\" -e DISPLAY=\":99.0\" -e NEKO_PASSWORD=user -e NEKO_PASSWORD_ADMIN=admin -e NEKO_BIND=\":5100\" -e NEKO_EPR=\":59000-59100\" -e NEKO_H264=\"1\" howardc93/vbrowser",
