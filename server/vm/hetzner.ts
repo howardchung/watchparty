@@ -203,7 +203,7 @@ export class Hetzner extends VMManager {
         image: 'docker-ce', // 15512617 for Ubuntu 20.04
         ssh_keys: sshKeys,
         user_data: fs
-          .readFileSync(__dirname + '/../../dev/vbrowser.sh')
+          .readFileSync(import.meta.dirname + '/../../dev/vbrowser.sh')
           .toString()
           .replace('{VBROWSER_ADMIN_KEY}', config.VBROWSER_ADMIN_KEY),
         location: this.getRandomDatacenter(),
