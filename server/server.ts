@@ -102,9 +102,9 @@ async function init() {
   setInterval(saveRooms, 1000);
   if (process.env.NODE_ENV === 'development') {
     try {
-      require('./vmWorker');
-      // require('./syncSubs');
-      // require('./timeSeries');
+      import('./vmWorker.ts');
+      // import('./syncSubs.ts');
+      // import('./timeSeries.ts');
     } catch (e) {
       console.error(e);
     }
