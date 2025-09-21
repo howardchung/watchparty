@@ -1,6 +1,6 @@
 import config from './config.ts';
 import fs from 'fs';
-import express, { Response } from 'express';
+import express, { type Response } from 'express';
 import bodyParser from 'body-parser';
 import compression from 'compression';
 import os from 'os';

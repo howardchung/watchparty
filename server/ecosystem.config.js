@@ -1,7 +1,7 @@
 export const apps = [
   // {
   //   name: 'server',
-  //   script: './buildServer/server.js',
+  //   script: './server/server.ts',
   //   log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
   //   interpreter: 'node',
   //   env: {
@@ -10,7 +10,7 @@ export const apps = [
   // },
   {
     name: 'shard1',
-    script: './buildServer/server.js',
+    script: './server/server.ts',
     log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
     interpreter: 'node',
     env: {
@@ -20,7 +20,7 @@ export const apps = [
   },
   {
     name: 'shard2',
-    script: './buildServer/server.js',
+    script: './server/server.ts',
     log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
     interpreter: 'node',
     env: {
@@ -30,7 +30,7 @@ export const apps = [
   },
   // {
   //   name: 'shard3',
-  //   script: './buildServer/server.js',
+  //   script: './server/server.ts',
   //   log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
   //    interpreter: 'node',
   //   env: {
@@ -40,7 +40,7 @@ export const apps = [
   // },
   {
     name: 'vmWorker',
-    script: './buildServer/vmWorker.js',
+    script: './server/vmWorker.ts',
     log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
     interpreter: 'node',
     env: {
@@ -56,25 +56,25 @@ export const apps = [
   },
   {
     name: 'syncSubs',
-    script: './buildServer/syncSubs.js',
+    script: './server/syncSubs.ts',
     log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
     interpreter: 'node',
   },
   {
     name: 'timeSeries',
-    script: './buildServer/timeSeries.js',
+    script: './server/timeSeries.ts',
     log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
     interpreter: 'node',
   },
   {
     name: 'cleanup',
-    script: './buildServer/cleanup.js',
+    script: './server/cleanup.ts',
     log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
     interpreter: 'node',
   },
   {
     name: 'discordBot',
-    script: './buildServer/discordBot.js',
+    script: './server/discordBot.ts',
     log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
     interpreter: 'node',
   },

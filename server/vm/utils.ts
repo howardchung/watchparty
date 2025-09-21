@@ -1,4 +1,4 @@
-import { AssignedVM, VMManager } from './base.ts';
+import { type AssignedVM, VMManager } from './base.ts';
 import config from '../config.ts';
 import { Scaleway } from './scaleway.ts';
 import { Hetzner } from './hetzner.ts';

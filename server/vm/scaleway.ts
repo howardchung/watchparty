@@ -1,6 +1,6 @@
 import config from '../config.ts';
 import axios from 'axios';
-import { VMManager, VM } from './base.ts';
+import { VMManager, type VM } from './base.ts';
 
 const SCW_SECRET_KEY = config.SCW_SECRET_KEY;
 const SCW_ORGANIZATION_ID = config.SCW_ORGANIZATION_ID;
