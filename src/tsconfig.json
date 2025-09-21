@@ -10,17 +10,11 @@
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "module": "esnext",
-    "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
     "types": ["vite/client", "youtube"],
   },
-  "include": ["./**/*", "../global.d.ts"],
-  "ts-node": {
-    "compilerOptions": {
-      "module": "commonjs",
-    },
-  },
+  "include": ["./**/*", "../global.d.ts"]
 }
