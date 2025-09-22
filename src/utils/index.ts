@@ -124,6 +124,10 @@ export const isDash = (input: string) => {
   return input.includes('.mpd');
 };
 
+export const isMpegTs = (input: string) => {
+  return input.includes('.ts');
+};
+
 export const isScreenShare = (input: string) => {
   return input.startsWith('screenshare://');
 };
@@ -340,10 +344,14 @@ export function getOrCreateClientId() {
   if (!clientId) {
     // Generate a new clientID and save it
     // This requires https, so fallback to JS implementation if needed
-    clientId = crypto.randomUUID ? crypto.randomUUID() : uuidv4();
+    clientId = createUuid();
     window.localStorage.setItem('watchparty-clientid', clientId);
   }
   return clientId;
+}
+
+export function createUuid() {
+  return crypto.randomUUID ? crypto.randomUUID() : uuidv4();
 }
 
 export function calculateMedian(array: number[]): number {
