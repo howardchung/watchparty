@@ -43,7 +43,7 @@
     "socket.io": "^4.6.1",
     "socket.io-client": "^4.6.1",
     "srt-webvtt": "^2.0.0",
-    "stripe": "^8.222.0",
+    "stripe": "^19.1.0",
     "twitch-m3u8": "^1.1.5",
     "webtorrent": "^2.8.4"
   },
