@@ -1,0 +1,16 @@
+export declare const TIMESCALE_90000 = 90000;
+export declare const TIMESCALE_48000 = 48000;
+export declare const TIMESCALE_1000 = 1000;
+export declare const VIDEO_SAMPLE_RATE = 90000;
+export declare const TEXT_SAMPLE_RATE = 1000;
+export declare const FRAME_RATE_NUMERATOR_30 = 30;
+export declare const WHITE_SPACE = " ";
+export declare const WHITE_SPACE_ENCODED = "%20";
+export declare const NEW_LINE = "\n";
+export declare const HYPHEN_MINUS_SEPARATOR = "-";
+export declare const AT_SEPARATOR = "@";
+export declare const FRAME_RATE_SEPARATOR = "/";
+export declare const NUMERATOR = 0;
+export declare const DENOMINATOR = 1;
+export declare const ZERO = 0;
+//# sourceMappingURL=constants.d.ts.map
