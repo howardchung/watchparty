@@ -6,6 +6,7 @@ import { MetadataContext } from '../../MetadataContext';
 export class FileShareModal extends React.Component<{
   closeModal: () => void;
   startFileShare: (useMediaSoup: boolean) => void;
+  startConvert: () => void;
 }> {
   static contextType = MetadataContext;
   declare context: React.ContextType<typeof MetadataContext>;
@@ -87,6 +88,15 @@ export class FileShareModal extends React.Component<{
                     ) : (
                       subscribeButton
                     )}
+                      {this.context.beta ? <Button
+                        color="green"
+                        onClick={() => {
+                          this.props.startConvert();
+                          this.props.closeModal();
+                        }}
+                      >
+                        Start Fileshare w/Convert
+                      </Button> : null}
                   </Table.Cell>
                 </Table.Row>
               </Table.Body>

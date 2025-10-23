@@ -96,9 +96,9 @@ export class YouTube implements Player {
     // console.log(this.watchPartyYTPlayer?.getOptions('captions'));
     if (mode === 'showing') {
       console.log(lang);
-      //@ts-ignore
+      //@ts-expect-error
       this.watchPartyYTPlayer?.setOption('captions', 'reload', true);
-      //@ts-ignore
+      //@ts-expect-error
       this.watchPartyYTPlayer?.setOption('captions', 'track', {
         languageCode: lang ?? 'en',
       });
@@ -107,7 +107,7 @@ export class YouTube implements Player {
       // BUG this doesn't actually set the value of track
       // so we can't determine if subtitles are on or off
       // need to provide separate menu options
-      //@ts-ignore
+      //@ts-expect-error
       this.watchPartyYTPlayer?.setOption('captions', 'track', {});
     }
   };

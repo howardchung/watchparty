@@ -4,7 +4,7 @@ import { Button, Comment, Form, Icon, Input, Popup } from 'semantic-ui-react';
 import Picker from '@emoji-mart/react';
 import { init } from 'emoji-mart';
 // import onClickOutside from 'react-onclickoutside';
-//@ts-ignore
+//@ts-expect-error
 import Linkify from 'react-linkify';
 import { SecureLink } from 'react-secure-link';
 import styles from './Chat.module.css';

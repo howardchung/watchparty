@@ -14,7 +14,7 @@ import {
   getYoutubeVideoID,
   isYouTube,
 } from './utils/youtube.ts';
-//@ts-ignore
+//@ts-expect-error
 import twitch from 'twitch-m3u8';
 import { type QueryResult } from 'pg';
 import { Docker } from './vm/docker.ts';
