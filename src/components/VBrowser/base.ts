@@ -193,7 +193,7 @@ export abstract class BaseClient extends EventEmitter<any> {
         this.emit('warn', `unknown data event: ${event}`);
     }
 
-    // @ts-ignore
+    // @ts-expect-error
     if (typeof buffer !== 'undefined') {
       this._channel!.send(buffer);
     }
@@ -413,9 +413,9 @@ export abstract class BaseClient extends EventEmitter<any> {
       return;
     }
 
-    // @ts-ignore
+    // @ts-expect-error
     if (typeof this[event] === 'function') {
-      // @ts-ignore
+      // @ts-expect-error
       this[event](payload);
     } else {
       this[EVENT.MESSAGE](event, payload);

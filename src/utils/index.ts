@@ -1,4 +1,4 @@
-//@ts-ignore
+//@ts-expect-error
 import canAutoplay from 'can-autoplay';
 import { MD5 } from './md5';
 import firebase from 'firebase/compat/app';
@@ -125,7 +125,7 @@ export const isDash = (input: string) => {
 };
 
 export const isMpegTs = (input: string) => {
-  return input.includes('.ts');
+  return input.startsWith('ws://') || input.startsWith('wss://');
 };
 
 export const isScreenShare = (input: string) => {
@@ -162,7 +162,7 @@ export function debounce(func: Function, wait: number, immediate?: boolean) {
   return function executedFunction() {
     // Store the context of this and any
     // parameters passed to executedFunction
-    //@ts-ignore
+    //@ts-expect-error
     var context = this;
     var args = arguments;
 

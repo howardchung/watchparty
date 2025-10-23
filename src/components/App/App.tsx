@@ -37,6 +37,8 @@ import {
   isVBrowser,
   isDash,
   VIDEO_MAX_HEIGHT_CSS,
+  createUuid,
+  isMpegTs,
 } from '../../utils';
 import { generateName } from '../../utils/generateName';
 import { Chat } from '../Chat';
@@ -63,6 +65,7 @@ import styles from './App.module.css';
 import config from '../../config';
 import { MetadataContext } from '../../MetadataContext';
 import ChatVideoCard from '../Playlist/ChatVideoCard';
+import { randomUUID } from 'crypto';
 
 declare global {
   interface Window {
@@ -506,10 +509,9 @@ export default class App extends React.Component<AppProps, AppState> {
             // WebTorrent
             // magnet:?xt=urn:btih:08ada5a7a6183aae1e09d831df6748d566095a10&dn=Sintel&tr=udp%3A%2F%2Fexplodie.org%3A6969&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Ftracker.empire-js.us%3A1337&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=wss%3A%2F%2Ftracker.btorrent.xyz&tr=wss%3A%2F%2Ftracker.fastcast.nz&tr=wss%3A%2F%2Ftracker.openwebtorrent.com&ws=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2F&xs=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2Fsintel.torrent
             // Can't import webtorrent directly due to vite build error
-            //@ts-ignore
-            const WebTorrent = //@ts-ignore
+            const WebTorrent = //@ts-expect-error
               (await import('webtorrent/dist/webtorrent.min.js')).default;
-            //@ts-ignore
+            //@ts-expect-error
             window.watchparty.webtorrent?._server?.close();
             window.watchparty.webtorrent?.destroy();
             window.watchparty.webtorrent = new WebTorrent();
@@ -518,7 +520,7 @@ export default class App extends React.Component<AppProps, AppState> {
             await new Promise((resolve) => setTimeout(resolve, 500));
             console.log(controller, controller.active?.state);
             // createServer is only in v2, types are outdated
-            //@ts-ignore
+            //@ts-expect-error
             const server = await window.watchparty.webtorrent.createServer({
               controller,
             });
@@ -537,7 +539,7 @@ export default class App extends React.Component<AppProps, AppState> {
                   path: '/tmp/webtorrent/',
                   storeCacheSlots: 20,
                   strategy: 'sequential',
-                  //@ts-ignore
+                  //@ts-expect-error
                   noPeersIntervalTime: 30,
                 },
                 async (torrent: WebTorrent.Torrent) => {
@@ -566,7 +568,7 @@ export default class App extends React.Component<AppProps, AppState> {
                       })),
                     );
                   } else {
-                    //@ts-ignore
+                    //@ts-expect-error
                     target.streamTo(leftVideo);
                     leftVideo.currentTime = time;
                   }
@@ -616,6 +618,16 @@ export default class App extends React.Component<AppProps, AppState> {
               );
               this.setState({ liveStreamStart });
             });
+          } else if (isMpegTs(src)) {
+            const mpegts = (await import('mpegts.js')).default;
+            let player = mpegts.createPlayer({
+              type: 'mse',  // could also be mpegts, m2ts, flv
+              // isLive: true,
+              url: src,
+            });
+            player.attachMediaElement(leftVideo);
+            player.load();
+            player.play();
           } else {
             await this.Player().setSrcAndTime(src, time);
           }
@@ -1009,6 +1021,45 @@ export default class App extends React.Component<AppProps, AppState> {
     this.socket.emit('CMD:deleteChatMessages', { uid, token });
   };
 
+  startConvert = async () => {
+    const files = await openFileSelector();
+    if (!files) {
+      return;
+    }
+    const file = files[0];
+    // Start uploading stream
+    const stream = file.stream();
+    const uuid = createUuid();
+    const convertUrl = 'azure.howardchung.net:5001';
+    const websocket = new WebSocket('wss://' + convertUrl + '/' + uuid);
+    websocket.addEventListener("open", async () => {
+      const reader = stream.getReader();
+      const chunk = await reader.read();
+      if (chunk.value) {
+        websocket.send(chunk.value);
+      }
+      if (chunk.done) {
+        websocket.close();
+      }
+      websocket.addEventListener("message", async (msg) => {
+        if (msg.data === '1') {
+          // Send the next chunk
+          const chunk = await reader.read();
+          if (chunk.value) {
+            websocket.send(chunk.value);
+          }
+          if (chunk.done) {
+            websocket.close();
+          }
+        } else {
+          // Set room URL to download url when ready
+          this.roomSetMedia(null, { value: msg.data });
+        }
+      });
+    });
+    // TODO provide some button to abort/cancel upload (controller.abort())
+  };
+
   startFileShare = async (useMediaSoup: boolean) => {
     const files = await openFileSelector();
     if (!files) {
@@ -1019,7 +1070,7 @@ export default class App extends React.Component<AppProps, AppState> {
     const leftVideo = this.HTMLInterface.getVideoEl();
     leftVideo.src = URL.createObjectURL(file);
     leftVideo.play();
-    //@ts-ignore
+    //@ts-expect-error
     this.localStreamToPublish = leftVideo?.captureStream();
     this.isLocalStreamAFile = true;
     if (this.localStreamToPublish) {
@@ -1033,7 +1084,7 @@ export default class App extends React.Component<AppProps, AppState> {
   startScreenShare = async (useMediaSoup: boolean) => {
     if (navigator.mediaDevices.getDisplayMedia) {
       const stream = await navigator.mediaDevices.getDisplayMedia({
-        //@ts-ignore
+        //@ts-expect-error
         video: { height: 720, logicalSurface: true },
         audio: {
           autoGainControl: false,
@@ -1333,7 +1384,7 @@ export default class App extends React.Component<AppProps, AppState> {
           producerId,
           kind,
           rtpParameters,
-          //@ts-ignore
+          //@ts-expect-error
           codecOptions,
         });
 
@@ -1983,6 +2034,7 @@ export default class App extends React.Component<AppProps, AppState> {
           <FileShareModal
             closeModal={() => this.setState({ isFileShareModalOpen: false })}
             startFileShare={this.startFileShare}
+            startConvert={this.startConvert}
           />
         )}
         {this.state.isSubtitleModalOpen && (
