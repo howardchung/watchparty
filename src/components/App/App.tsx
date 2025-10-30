@@ -2588,6 +2588,7 @@ export default class App extends React.Component<AppProps, AppState> {
                   style={{
                     top: '50%',
                     left: '-28px',
+                    color: 'black',
                   }}
                   onClick={() => {
                     const newVal = !this.state.showChatColumn;

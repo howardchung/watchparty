@@ -51,7 +51,6 @@ export class SubscribeModal extends React.Component<{
       <Modal open={true} onClose={closeSubscribe}>
         <Modal.Header>Subscribe to WatchParty Plus</Modal.Header>
         <Modal.Content image>
-          {/* <Image wrapped size='medium' src='https://react.semantic-ui.com/images/avatar/large/rachel.png' /> */}
           <Modal.Description>
             <div>
               Subscriptions help us maintain the service and build new features!

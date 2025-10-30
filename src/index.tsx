@@ -1,4 +1,6 @@
 import './index.css';
+import 'semantic-ui-css/semantic.min.css';
+import '@mantine/core/styles.css';
 
 import React, { lazy, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -14,9 +16,13 @@ import 'firebase/auth';
 import { serverPath } from './utils';
 import { Create } from './components/Create/Create';
 import { Discord } from './components/Discord/Discord';
-import 'semantic-ui-css/semantic.min.css';
 import config from './config';
 import { DEFAULT_STATE, MetadataContext } from './MetadataContext';
+import { createTheme, MantineProvider } from '@mantine/core';
+
+const theme = createTheme({
+  /** Your theme override here */
+});
 
 const Debug = lazy(() => import('./components/Debug/Debug'));
 
@@ -61,6 +67,7 @@ class WatchParty extends React.Component {
   render() {
     return (
       // <React.StrictMode>
+      <MantineProvider theme={theme} forceColorScheme="dark">
       <MetadataContext.Provider value={this.state}>
         <BrowserRouter>
           <Route
@@ -129,6 +136,7 @@ class WatchParty extends React.Component {
           </Route>
         </BrowserRouter>
       </MetadataContext.Provider>
+      </MantineProvider>
       // </React.StrictMode>
     );
   }
