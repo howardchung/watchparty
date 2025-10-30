@@ -1,0 +1,1 @@
+{"version":3,"file":"CMCD_SESSION.js","sourceRoot":"","sources":["../../../src/cmcd/CMCD_SESSION.ts"],"names":[],"mappings":";;;AAAA;;;;;;GAMG;AACU,QAAA,YAAY,GAAG,cAAc,CAAC","sourcesContent":["/**\n * CMCD session header name.\n *\n * @group CMCD\n *\n * @beta\n */\nexport const CMCD_SESSION = 'CMCD-Session';\n"]}

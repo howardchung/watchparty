@@ -1,0 +1,1 @@
+{"version":3,"file":"CmcdKey.js","sourceRoot":"","sources":["../../../src/cmcd/CmcdKey.ts"],"names":[],"mappings":"","sourcesContent":["import type { Cmcd } from './Cmcd.js';\n\n/**\n * A CMCD key.\n *\n * @group CMCD\n *\n * @beta\n */\nexport type CmcdKey = keyof Cmcd;\n"]}
