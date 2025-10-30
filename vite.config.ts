@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import fs from 'fs';
+import fs from 'node:fs';
 
 export default {
   build: {
@@ -7,7 +7,7 @@ export default {
     // sourcemap: true,
   },
   server: {
-    https: process.env.SSL_CRT_FILE
+    https: (process.env.SSL_CRT_FILE && process.env.SSL_KEY_FILE)
       ? {
           key: fs.readFileSync(process.env.SSL_KEY_FILE),
           cert: fs.readFileSync(process.env.SSL_CRT_FILE),

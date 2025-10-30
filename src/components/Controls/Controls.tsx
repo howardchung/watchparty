@@ -1,6 +1,6 @@
 import React from 'react';
 import { Icon, Progress, Label, Popup, Dropdown } from 'semantic-ui-react';
-import { Slider } from 'react-semantic-ui-range';
+import { Slider } from '@mantine/core';
 import { formatTimestamp } from '../../utils';
 import styles from './Controls.module.css';
 import { MetadataContext } from '../../MetadataContext';
@@ -354,20 +354,15 @@ export class Controls extends React.Component<ControlsProps> {
           name={muted ? 'volume off' : 'volume up'}
           title="Mute"
         />
-        <div style={{ width: '100px', marginRight: '10px' }}>
+        <div style={{ width: '100px' }}>
           <Slider
-            value={volume}
-            color={'blue'}
+            defaultValue={volume}
             disabled={muted}
-            settings={{
-              min: 0,
-              max: 1,
-              step: 0.01,
-              onChange: (value: number) => {
-                if (value !== this.props.volume && !isNaN(value)) {
-                  this.props.localSetVolume(value);
-                }
-              },
+            min={0}
+            max={1}
+            step={0.01}
+            onChangeEnd={(value: number) => {
+              this.props.localSetVolume(value);
             }}
           />
         </div>

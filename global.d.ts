@@ -1,12 +1,11 @@
-declare module 'react-semantic-ui-range';
 declare module 'srt-webvtt';
 
-type StringDict = { [key: string]: string };
-type NumberDict = { [key: string]: number };
-type BooleanDict = { [key: string]: boolean };
-type AnyDict = { [key: string]: any };
-type PCDict = { [key: string]: RTCPeerConnection };
-type HTMLVideoElementDict = { [key: string]: HTMLVideoElement };
+type StringDict = Record<string, string>;
+type NumberDict = Record<string, number>;
+type BooleanDict = Record<string, boolean>;
+type AnyDict = Record<string, any>
+type PCDict = Record<string, RTCPeerConnection>;
+type HTMLVideoElementDict = Record<string, HTMLVideoElement>;
 type MediaType = 'vbrowser' | 'screenshare' | 'video' | 'youtube';
 
 interface User {
