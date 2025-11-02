@@ -177,14 +177,19 @@ export default class VBrowser extends React.Component<{
   }
   onFocus = async (e: React.MouseEvent) => {
     if (
-      this.props.controlling &&
-      navigator.clipboard &&
-      typeof navigator.clipboard.readText === 'function'
+      this.props.controlling
     ) {
-      const text = await navigator.clipboard.readText();
-      // console.log('[FOCUS]', text);
-      // send clipboard contents to vbrowser
-      this.$client.sendMessage(EVENT.CONTROL.CLIPBOARD, { text });
+      if (navigator.clipboard &&
+      typeof navigator.clipboard.readText === 'function') {
+        try {
+          const text = await navigator.clipboard.readText();
+          // console.log('[FOCUS]', text);
+          // send clipboard contents to vbrowser
+          this.$client.sendMessage(EVENT.CONTROL.CLIPBOARD, { text });
+        } catch(e) {
+          console.warn(e);
+        }
+      }
       this.$client.sendMessage(EVENT.CONTROL.KEYBOARD, {
         capsLock: e.getModifierState('CapsLock'),
         numLock: e.getModifierState('NumLock'),

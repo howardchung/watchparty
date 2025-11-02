@@ -1,6 +1,6 @@
 import type MediasoupClient from 'mediasoup-client';
 import React from 'react';
-import { Alert, Loader, Menu, Overlay, Select } from '@mantine/core';
+import { Alert, Loader, Menu, Overlay, Select, Title } from '@mantine/core';
 import io, { Socket } from 'socket.io-client';
 import {
   formatSpeed,
@@ -96,7 +96,7 @@ interface AppProps {
 }
 
 interface AppState {
-  state: 'init' | 'starting' | 'connected';
+  state: 'starting' | 'connected';
   roomMedia: string;
   roomSubtitle: string;
   roomPaused: boolean;
@@ -2025,6 +2025,9 @@ export default class App extends React.Component<AppProps, AppState> {
             getSubtitleMode={this.Player().getSubtitleMode}
           />
         )}
+        {this.state.state === 'starting' && <Overlay style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <Title order={2}>Loading...</Title>
+        </Overlay>}
         {this.state.overlayMsg && <ErrorModal error={this.state.overlayMsg} />}
         {this.state.isErrorAuth && (
           <PasswordModal
