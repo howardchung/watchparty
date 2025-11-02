@@ -3,7 +3,7 @@ declare module 'srt-webvtt';
 type StringDict = Record<string, string>;
 type NumberDict = Record<string, number>;
 type BooleanDict = Record<string, boolean>;
-type AnyDict = Record<string, any>
+type AnyDict = Record<string, any>;
 type PCDict = Record<string, RTCPeerConnection>;
 type HTMLVideoElementDict = Record<string, HTMLVideoElement>;
 type MediaType = 'vbrowser' | 'screenshare' | 'video' | 'youtube';

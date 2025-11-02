@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { Button } from 'semantic-ui-react';
+import { Button } from '@mantine/core';
 import styles from './Announce.module.css';
 import config from '../../config';
 

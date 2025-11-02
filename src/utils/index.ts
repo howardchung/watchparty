@@ -2,7 +2,6 @@
 import canAutoplay from 'can-autoplay';
 import { MD5 } from './md5';
 import firebase from 'firebase/compat/app';
-import { XMLParser } from 'fast-xml-parser';
 import config from '../config';
 import { cyrb53 } from './hash';
 
@@ -150,51 +149,15 @@ export function decodeEntities(input: string) {
   return doc.documentElement.textContent;
 }
 
-// Returns a function, that, as long as it continues to be invoked, will not
-// be triggered. The function will be called after it stops being called for
-// N milliseconds. If `immediate` is passed, trigger the function on the
-// leading edge, instead of the trailing.
-export function debounce(func: Function, wait: number, immediate?: boolean) {
-  var timeout: any;
-
-  // This is the function that is actually executed when
-  // the DOM event is triggered.
-  return function executedFunction() {
-    // Store the context of this and any
-    // parameters passed to executedFunction
-    //@ts-expect-error
-    var context = this;
-    var args = arguments;
-
-    // The function to be called after
-    // the debounce time has elapsed
-    var later = function () {
-      // null timeout to indicate the debounce ended
-      timeout = null;
-
-      // Call function now if you did not on the leading end
-      if (!immediate) func.apply(context, args);
-    };
-
-    // Determine if you should call the function
-    // on the leading or trail end
-    var callNow = immediate && !timeout;
-
-    // This will reset the waiting every function execution.
-    // This is the step that prevents the function from
-    // being executed because it will never reach the
-    // inside of the previous setTimeout
-    clearTimeout(timeout);
-
-    // Restart the debounce waiting period.
-    // setTimeout returns a truthy value (it differs in web vs node)
-    timeout = setTimeout(later, wait);
-
-    // Call immediately if you're dong a leading
-    // end execution
-    if (callNow) func.apply(context, args);
+export const debounce = (callback: Function, wait = 500) => {
+  let timeoutId: any = null;
+  return (...args: any[]) => {
+    window.clearTimeout(timeoutId);
+    timeoutId = window.setTimeout(() => {
+      callback(...args);
+    }, wait);
   };
-}
+};
 
 export const getDefaultPicture = (name: string, background = 'a0a0a0') => {
   return `https://ui-avatars.com/api/?name=${name}&background=${background}&size=256&color=ffffff`;
@@ -260,21 +223,22 @@ export async function getMediaPathResults(
   query: string,
 ): Promise<SearchResult[]> {
   let results: SearchResult[] = [];
-  if (mediaPath.includes('s3.')) {
-    const response = await window.fetch(mediaPath);
-    // S3-style buckets return data in XML
-    const xml = await response.text();
-    const parser = new XMLParser();
-    const data = parser.parse(xml);
-    let filtered = data.ListBucketResult.Contents.filter(
-      // Exclude subdirectories
-      (file: any) => !file.Key.includes('/'),
-    );
-    results = filtered.map((file: any) => ({
-      url: mediaPath + '/' + file.Key,
-      name: mediaPath + '/' + file.Key,
-    }));
-  } else if (mediaPath.startsWith('https://www.youtube.com/playlist?list=')) {
+  // if (mediaPath.includes('s3.')) {
+  //   const response = await window.fetch(mediaPath);
+  //   // S3-style buckets return data in XML
+  //   const xml = await response.text();
+  //   const parser = new XMLParser();
+  //   const data = parser.parse(xml);
+  //   let filtered = data.ListBucketResult.Contents.filter(
+  //     // Exclude subdirectories
+  //     (file: any) => !file.Key.includes('/'),
+  //   );
+  //   results = filtered.map((file: any) => ({
+  //     url: mediaPath + '/' + file.Key,
+  //     name: mediaPath + '/' + file.Key,
+  //   }));
+  // } else
+  if (mediaPath.startsWith('https://www.youtube.com/playlist?list=')) {
     // https://www.youtube.com/playlist?list=<playlist ID>
     const playlistID = mediaPath.split(
       'https://www.youtube.com/playlist?list=',
@@ -302,7 +266,7 @@ export async function getStreamPathResults(
     streamPath + `/${query ? 'search' : 'top'}?q=` + encodeURIComponent(query),
   );
   const data = await response.json();
-  return data;
+  return data.map((d: any) => ({ ...d, url: d.magnet }));
 }
 
 export async function getYouTubeResults(
@@ -413,6 +377,6 @@ function uuidv4() {
   );
 }
 
-// Subtract header, URL row, button row, 2 spacers, controls
+// Subtract header, URL row, button row, 3 gaps, controls
 export const VIDEO_MAX_HEIGHT_CSS =
-  'calc(100vh - 64px - 38px - 36px - 4px - 4px - 41px)';
+  'calc(100vh - 64px - 36px - 36px - 4px - 4px - 4px - 32px)';

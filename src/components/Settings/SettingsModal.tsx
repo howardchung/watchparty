@@ -1,24 +1,31 @@
 import React, { useState, useCallback, useContext } from 'react';
 import {
-  Icon,
-  Divider,
-  Radio,
-  CheckboxProps,
-  Message,
-  Input,
   Button,
-  Label,
-  Popup,
-  SemanticICONS,
   Modal,
-} from 'semantic-ui-react';
-// import { SignInButton } from '../TopBar/TopBar';
+  Alert,
+  ActionIcon,
+  Popover,
+  TextInput,
+  Badge,
+  Switch,
+  Loader,
+  Text,
+} from '@mantine/core';
 import { getCurrentSettings, updateSettings } from './LocalSettings';
 import { serverPath } from '../../utils';
 import { PermanentRoomModal } from '../Modal/PermanentRoomModal';
 import { Socket } from 'socket.io-client';
 import { HexColorPicker } from 'react-colorful';
 import { MetadataContext } from '../../MetadataContext';
+import {
+  IconCheck,
+  IconDeviceFloppy,
+  IconHelpCircle,
+  IconPaintFilled,
+  IconTrash,
+  IconX,
+} from '@tabler/icons-react';
+import styles from './Settings.module.css';
 
 const defaultRoomTitleColor = '#FFFFFF';
 const roomTitleMaxCharLength = 50;
@@ -144,298 +151,276 @@ export const SettingsModal = ({
           closeModal={() => setPermModalOpen(false)}
         ></PermanentRoomModal>
       )}
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)}>
-        <Modal.Content>
-          <div className="sectionHeader">Room Settings</div>
+      <Modal
+        opened={modalOpen}
+        onClose={() => setModalOpen(false)}
+        centered
+        title={'Settings'}
+      >
+        <div>
+          <div className={styles.sectionHeader}>Room Settings</div>
           <SettingRow
             toggle
-            icon={roomLock ? 'lock' : 'lock open'}
             name={`Lock Room`}
             description="Only the person who locked the room can control the video."
             checked={Boolean(roomLock)}
             disabled={disableLocking && disableOwning}
-            onChange={(_e, data) => setRoomLock(Boolean(data.checked))}
+            onChange={(e) => setRoomLock(Boolean(e.currentTarget.checked))}
             label={!user ? 'requires login' : ''}
           />
           <SettingRow
             toggle
-            icon={'clock'}
             name={`Make Room Permanent`}
             description={
               'Prevent this room from expiring. This also unlocks additional room features.'
             }
             helpIcon={
-              <Icon
-                name="help circle"
+              <IconHelpCircle
                 onClick={() => setPermModalOpen(true)}
                 style={{ cursor: 'pointer' }}
-              ></Icon>
+              />
             }
             checked={Boolean(owner)}
             disabled={disableOwning}
-            onChange={(_e, data) => setRoomOwner({ undo: !data.checked })}
+            onChange={(e) => setRoomOwner({ undo: !e.currentTarget.checked })}
             label={!user ? 'requires login' : ''}
           />
-          {owner && <div className="sectionHeader">Admin Settings</div>}
-          {owner && owner !== user?.uid && (
-            <Message color="yellow" size="tiny">
-              Only the room owner can change admin settings.
-            </Message>
-          )}
-          {owner && owner === user?.uid && (
-            <SettingRow
-              toggle={false}
-              icon={'key'}
-              name={`Set Room Password`}
-              description="Users must know this password in order to join the room."
-              content={
-                <Input
-                  value={password ?? ''}
-                  size="mini"
-                  onChange={(e) => {
-                    setAdminSettingsChanged(true);
-                    setPassword(e.target.value);
-                  }}
-                  fluid
-                />
-              }
-              disabled={false}
-            />
-          )}
-          {owner && owner === user?.uid && (
-            <SettingRow
-              toggle={false}
-              icon={'folder'}
-              name={`Set Room Media Source`}
-              description="Set a media source URL with files to replace the default examples. Supports S3 buckets, YouTube playlists, or a link to a text list of URLs."
-              content={
-                <Input
-                  value={mediaPath ?? ''}
-                  size="mini"
-                  onChange={(e) => {
-                    setAdminSettingsChanged(true);
-                    setMediaPath(e.target.value);
-                  }}
-                  fluid
-                />
-              }
-              disabled={false}
-            />
-          )}
-          {owner && owner === user?.uid && (
-            <SettingRow
-              toggle
-              icon={'i cursor'}
-              name={`Disable Chat`}
-              description="Prevent users from sending messages in chat."
-              checked={Boolean(isChatDisabled)}
-              disabled={false}
-              onChange={(_e, data) => {
-                setAdminSettingsChanged(true);
-                setIsChatDisabled(Boolean(data.checked));
-              }}
-            />
-          )}
-          {owner && owner === user?.uid && (
-            <SettingRow
-              toggle={false}
-              icon={'trash'}
-              name={`Clear Chat`}
-              description="Delete all existing chat messages"
-              disabled={false}
-              content=" "
-              rightContent={
-                <Button
-                  color="red"
-                  icon
-                  size="mini"
-                  onClick={() => clearChat()}
-                >
-                  <Icon name="trash" />
-                </Button>
-              }
-            />
-          )}
-          {owner && owner === user?.uid && (
-            <SettingRow
-              toggle={false}
-              icon={'linkify'}
-              name={`Set Custom Room URL`}
-              description="Set a custom URL for this room. Inappropriate names may be revoked."
-              checked={Boolean(roomLock)}
-              disabled={!isSubscriber}
-              subOnly={true}
-              content={
-                <React.Fragment>
-                  <Input
-                    value={vanity ?? ''}
-                    disabled={!isSubscriber}
-                    onChange={(e) => {
-                      setAdminSettingsChanged(true);
-                      checkValidVanity(e.target.value);
-                      setVanity(e.target.value);
-                    }}
-                    label={<Label>{`${window.location.origin}/r/`}</Label>}
-                    loading={validVanityLoading}
-                    fluid
-                    size="mini"
-                    icon
-                    action={
-                      validVanity ? (
-                        <Icon name="checkmark" color="green" />
-                      ) : (
-                        <Icon name="close" color="red" />
-                      )
-                    }
-                  ></Input>
-                </React.Fragment>
-              }
-            />
-          )}
-          {owner && owner === user?.uid && (
-            <SettingRow
-              toggle={false}
-              icon={'pencil'}
-              name={`Set Room Title, Description & Color`}
-              description="Set the room title, description and title color to be displayed in the top bar."
-              disabled={!isSubscriber}
-              subOnly={true}
-              content={
-                <React.Fragment>
-                  <div style={{ display: 'flex', marginBottom: 2 }}>
-                    <Input
-                      style={{ marginRight: 3, flexGrow: 1 }}
-                      value={roomTitleInput ?? roomTitle ?? ''}
-                      disabled={!isSubscriber}
-                      maxLength={roomTitleMaxCharLength}
-                      onChange={(e) => {
-                        setAdminSettingsChanged(true);
-                        setRoomTitleInput(e.target.value);
-                      }}
-                      placeholder={`Title (max. ${roomTitleMaxCharLength} characters)`}
-                      fluid
-                      size="mini"
-                      icon
-                    ></Input>
-                    <Popup
-                      content={
-                        <React.Fragment>
-                          <h5>Edit Title Color</h5>
-                          <HexColorPicker
-                            color={
-                              roomTitleColorInput ||
-                              roomTitleColor ||
-                              defaultRoomTitleColor
-                            }
-                            onChange={(e) => {
-                              setAdminSettingsChanged(true);
-                              setRoomTitleColorInput(e);
-                            }}
-                          />
-                          <div
-                            style={{
-                              marginTop: 8,
-                              paddingLeft: 4,
-                              borderLeft: `24px solid ${roomTitleColorInput}`,
-                            }}
-                          >
-                            {roomTitleColorInput?.toUpperCase()}
-                          </div>
-                        </React.Fragment>
-                      }
-                      on="click"
-                      trigger={
-                        <Button
-                          icon
-                          color="teal"
-                          size="tiny"
-                          style={{ margin: 0 }}
-                          disabled={!isSubscriber}
-                        >
-                          <Icon name="paint brush" />
-                        </Button>
-                      }
-                    />
-                  </div>
-                  <Input
-                    style={{ marginBottom: 2 }}
-                    value={roomDescriptionInput ?? roomDescription ?? ''}
-                    disabled={!isSubscriber}
-                    maxLength={roomDescriptionMaxCharLength}
-                    onChange={(e) => {
-                      setAdminSettingsChanged(true);
-                      setRoomDescriptionInput(e.target.value);
-                    }}
-                    placeholder={`Description (max. ${roomDescriptionMaxCharLength} characters)`}
-                    fluid
-                    size="mini"
-                    icon
-                  ></Input>
-                </React.Fragment>
-              }
-            />
-          )}
-          <div
-            style={{
-              borderTop: '3px dashed white',
-              marginTop: 10,
-              marginBottom: 10,
-            }}
-          />
-          {owner && owner === user?.uid && (
-            <Button
-              primary
-              disabled={!validVanity || !adminSettingsChanged}
-              labelPosition="left"
-              icon
-              fluid
-              onClick={() => {
-                setRoomState({
-                  vanity: vanity,
-                  password: password,
-                  isChatDisabled: isChatDisabled,
-                  roomTitle: roomTitleInput ?? roomTitle,
-                  roomDescription: roomDescriptionInput ?? roomDescription,
-                  roomTitleColor:
-                    roomTitleColorInput ||
-                    roomTitleColor ||
-                    defaultRoomTitleColor,
-                  mediaPath: mediaPath,
-                });
-                setAdminSettingsChanged(false);
-              }}
-            >
-              <Icon name="save" />
-              Save Admin Settings
-            </Button>
-          )}
-          <div className="sectionHeader">Local Settings</div>
+
+          <Divider />
+          <div className={styles.sectionHeader}>Local Settings</div>
           <SettingRow
             toggle
             updateTS={updateTS}
-            icon="bell"
             name="Disable chat notification sound"
             description="Don't play a sound when a chat message is sent while you're on another tab"
             checked={Boolean(getCurrentSettings().disableChatSound)}
             disabled={false}
-            onChange={(_e, data) => {
+            onChange={(e) => {
               updateSettings(
                 JSON.stringify({
                   ...getCurrentSettings(),
-                  disableChatSound: data.checked,
+                  disableChatSound: e.currentTarget.checked,
                 }),
               );
               setUpdateTS(Date.now());
             }}
           />
-        </Modal.Content>
+        </div>
+
+        <Divider />
+        {<div className={styles.sectionHeader}>Permanent Room Settings</div>}
+        {!owner && (
+          <Alert color="yellow">
+            The room must be permanent to modify these settings.
+          </Alert>
+        )}
+        {owner && owner !== user?.uid && (
+          <Alert color="yellow">
+            Only the room owner can change permanent room settings.
+          </Alert>
+        )}
+        {owner && owner === user?.uid && (
+          <SettingRow
+            toggle={false}
+            content={
+              <TextInput
+                label={`Set Room Password`}
+                description="Users must know this password in order to join the room."
+                value={password ?? ''}
+                placeholder="Password"
+                onChange={(e) => {
+                  setAdminSettingsChanged(true);
+                  setPassword(e.target.value);
+                }}
+              />
+            }
+            disabled={false}
+          />
+        )}
+        {owner && owner === user?.uid && (
+          <SettingRow
+            content={
+              <TextInput
+                label={`Set Room Media Source`}
+                description="Set a media source URL to replace the default examples"
+                placeholder="YouTube playlist or link to text list of URLs"
+                value={mediaPath ?? ''}
+                onChange={(e) => {
+                  setAdminSettingsChanged(true);
+                  setMediaPath(e.target.value);
+                }}
+              />
+            }
+            disabled={false}
+          />
+        )}
+        {owner && owner === user?.uid && (
+          <SettingRow
+            toggle
+            name={`Disable Chat`}
+            description="Prevent users from sending messages in chat."
+            checked={Boolean(isChatDisabled)}
+            disabled={false}
+            onChange={(e) => {
+              setAdminSettingsChanged(true);
+              setIsChatDisabled(Boolean(e.currentTarget.checked));
+            }}
+          />
+        )}
+        {owner && owner === user?.uid && (
+          <SettingRow
+            disabled={false}
+            content={
+              <div style={{ display: 'flex', gap: '14px' }}>
+                <ActionIcon color="red" size="lg" onClick={() => clearChat()}>
+                  <IconTrash />
+                </ActionIcon>
+                <div>
+                  <Text>Clear Chat</Text>
+                  <Text size="xs" c="grey">
+                    Delete all existing chat messages
+                  </Text>
+                </div>
+              </div>
+            }
+          />
+        )}
+        {owner && owner === user?.uid && (
+          <SettingRow
+            toggle={false}
+            // name={`Set Custom Room URL`}
+            // description="Set a custom URL for this room. Inappropriate names may be revoked."
+            checked={Boolean(roomLock)}
+            disabled={!isSubscriber}
+            subOnly={true}
+            content={
+              <TextInput
+                label={`Set Custom Room URL`}
+                description="Set a custom URL for this room. Inappropriate names may be revoked."
+                value={vanity ?? ''}
+                disabled={!isSubscriber}
+                onChange={(e: any) => {
+                  setAdminSettingsChanged(true);
+                  checkValidVanity(e.target.value);
+                  setVanity(e.target.value);
+                }}
+                // `${window.location.origin}/r/`
+                rightSection={
+                  <>
+                    {validVanityLoading && <Loader />}
+                    {validVanity ? (
+                      <IconCheck color="green" />
+                    ) : (
+                      <IconX color="red" />
+                    )}
+                  </>
+                }
+              ></TextInput>
+            }
+          />
+        )}
+        {owner && owner === user?.uid && (
+          <SettingRow
+            toggle={false}
+            disabled={!isSubscriber}
+            subOnly={true}
+            content={
+              <React.Fragment>
+                <div>
+                  <TextInput
+                    label={`Set Room Title, Description & Color`}
+                    description="Set the room title, description and title color to be displayed in the top bar."
+                    value={roomTitleInput ?? roomTitle ?? ''}
+                    disabled={!isSubscriber}
+                    maxLength={roomTitleMaxCharLength}
+                    onChange={(e) => {
+                      setAdminSettingsChanged(true);
+                      setRoomTitleInput(e.target.value);
+                    }}
+                    placeholder={`Title (max. ${roomTitleMaxCharLength} characters)`}
+                    rightSection={
+                      <Popover>
+                        <Popover.Dropdown>
+                          <React.Fragment>
+                            <h5>Edit Title Color</h5>
+                            <HexColorPicker
+                              color={
+                                roomTitleColorInput ||
+                                roomTitleColor ||
+                                defaultRoomTitleColor
+                              }
+                              onChange={(e) => {
+                                setAdminSettingsChanged(true);
+                                setRoomTitleColorInput(e);
+                              }}
+                            />
+                            <div
+                              style={{
+                                marginTop: 8,
+                                paddingLeft: 4,
+                                borderLeft: `24px solid ${roomTitleColorInput}`,
+                              }}
+                            >
+                              {roomTitleColorInput?.toUpperCase()}
+                            </div>
+                          </React.Fragment>
+                        </Popover.Dropdown>
+                        <Popover.Target>
+                          <ActionIcon
+                            color={roomTitleColorInput}
+                            disabled={!isSubscriber}
+                          >
+                            <IconPaintFilled size={16} />
+                          </ActionIcon>
+                        </Popover.Target>
+                      </Popover>
+                    }
+                  ></TextInput>
+                </div>
+                <TextInput
+                  value={roomDescriptionInput ?? roomDescription ?? ''}
+                  disabled={!isSubscriber}
+                  maxLength={roomDescriptionMaxCharLength}
+                  onChange={(e: any) => {
+                    setAdminSettingsChanged(true);
+                    setRoomDescriptionInput(e.target.value);
+                  }}
+                  placeholder={`Description (max. ${roomDescriptionMaxCharLength} characters)`}
+                />
+              </React.Fragment>
+            }
+          />
+        )}
+        {owner && owner === user?.uid && (
+          <Button
+            style={{ marginTop: '8px' }}
+            disabled={!validVanity || !adminSettingsChanged}
+            onClick={() => {
+              setRoomState({
+                vanity: vanity,
+                password: password,
+                isChatDisabled: isChatDisabled,
+                roomTitle: roomTitleInput ?? roomTitle,
+                roomDescription: roomDescriptionInput ?? roomDescription,
+                roomTitleColor:
+                  roomTitleColorInput ||
+                  roomTitleColor ||
+                  defaultRoomTitleColor,
+                mediaPath: mediaPath,
+              });
+              setAdminSettingsChanged(false);
+            }}
+            leftSection={<IconDeviceFloppy />}
+          >
+            Save Settings
+          </Button>
+        )}
       </Modal>
     </>
   );
 };
 
 const SettingRow = ({
-  icon,
   name,
   description,
   checked,
@@ -444,61 +429,69 @@ const SettingRow = ({
   content,
   subOnly,
   helpIcon,
-  rightContent,
   toggle,
   label,
 }: {
-  icon: string;
-  name: string;
+  name?: string;
   description?: React.ReactNode;
   checked?: boolean;
   disabled: boolean;
   updateTS?: number;
-  onChange?: (e: React.FormEvent, data: CheckboxProps) => void;
+  onChange?: React.ChangeEventHandler<HTMLInputElement>;
   content?: React.ReactNode;
   subOnly?: boolean;
   helpIcon?: React.ReactNode;
-  rightContent?: React.ReactNode;
-  toggle: boolean;
+  toggle?: boolean;
   label?: string;
 }) => {
   return (
-    <React.Fragment>
-      <Divider inverted horizontal />
-      <div>
-        <div style={{ display: 'flex' }}>
-          <Icon size="large" name={icon as SemanticICONS} />
-          <div>
-            {name} {helpIcon}
-            {label ? (
-              <Label size="mini" color="red">
-                {label}
-              </Label>
-            ) : null}
-            {subOnly ? (
-              <Label size="mini" color="orange">
-                Subscriber only
-              </Label>
-            ) : null}
-          </div>
+    <>
+      <div
+        style={{
+          display: 'flex',
+          marginTop: '4px',
+          width: '100%',
+          position: 'relative',
+        }}
+      >
+        <div style={{ position: 'absolute', top: 0, right: 0 }}>
+          {label ? (
+            <Badge size="xs" color="red">
+              {label}
+            </Badge>
+          ) : null}
+          {subOnly ? (
+            <Badge size="xs" color="orange">
+              Subscriber only
+            </Badge>
+          ) : null}
+        </div>
+        <div>
           {toggle && (
-            <Radio
-              style={{ marginLeft: 'auto' }}
-              toggle
+            <Switch
+              label={name}
+              description={description}
               checked={checked}
               disabled={disabled}
               onChange={onChange}
             />
           )}
-          {rightContent && (
-            <span style={{ marginLeft: 'auto' }}>{rightContent}</span>
-          )}
+          {content}
         </div>
-        <div className="smallText" style={{ marginBottom: '8px' }}>
-          {description}
+        <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+          {helpIcon}
         </div>
-        {content}
       </div>
-    </React.Fragment>
+    </>
   );
 };
+
+const Divider = () => (
+  <div
+    style={{
+      borderTop: '2px dashed white',
+      marginTop: 10,
+      marginBottom: 10,
+    }}
+  />
+);

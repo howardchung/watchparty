@@ -1,9 +1,20 @@
 import React from 'react';
-import { Icon, Progress, Label, Popup, Dropdown } from 'semantic-ui-react';
-import { Slider } from '@mantine/core';
+import { Badge, Menu, Progress, Slider } from '@mantine/core';
 import { formatTimestamp } from '../../utils';
 import styles from './Controls.module.css';
 import { MetadataContext } from '../../MetadataContext';
+import {
+  IconPlayerPlayFilled,
+  IconPlayerPauseFilled,
+  IconRefresh,
+  IconCheck,
+  IconRepeat,
+  IconBadgeCc,
+  IconVolumeOff,
+  IconVolume,
+  IconTheater,
+  IconMaximize,
+} from '@tabler/icons-react';
 
 interface ControlsProps {
   duration: number;
@@ -113,60 +124,50 @@ export class Controls extends React.Component<ControlsProps> {
           key={start}
           style={{
             position: 'absolute',
-            height: '6px',
+            height: '8px',
             backgroundColor: 'grey',
             left: buffStartPct + '%',
             width: buffLengthPct + '%',
-            bottom: '0.2em',
-            zIndex: -1,
+            bottom: '0em',
+            zIndex: 0,
+            pointerEvents: 'none',
           }}
         ></div>
       );
     });
+    const playPauseProps = {
+      onClick: () => {
+        roomTogglePlay();
+      },
+      className: ` ${styles.action}`,
+      disabled: disabled || isPauseDisabled,
+    };
     return (
       <div className={styles.controls}>
-        <Icon
-          size="large"
+        {paused ? (
+          <IconPlayerPlayFilled {...playPauseProps} />
+        ) : (
+          <IconPlayerPauseFilled {...playPauseProps} />
+        )}
+        <IconRefresh
+          color={isBehind ? 'orange' : 'white'}
+          title="Sync to leader"
+          className={` ${styles.action}`}
           onClick={() => {
-            roomTogglePlay();
+            if (isLiveStream) {
+              // do a regular seek rather than sync self if it's HLS since we're basically seeking to the live position
+              // Also, clear the room TS since we want to start at live again on refresh
+              this.props.roomSeek(Number.MAX_SAFE_INTEGER);
+            } else {
+              localSeek();
+            }
           }}
-          className={`${styles.control} ${styles.action}`}
-          disabled={disabled || isPauseDisabled}
-          name={paused ? 'play' : 'pause'}
         />
-        <Popup
-          content={
-            isBehind
-              ? 'Skip to the live stream position'
-              : "You're at the live stream position"
-          }
-          trigger={
-            <div
-              onClick={() => {
-                if (isLiveStream) {
-                  // do a regular seek rather than sync self if it's HLS since we're basically seeking to the live position
-                  // Also, clear the room TS since we want to start at live again on refresh
-                  this.props.roomSeek(Number.MAX_SAFE_INTEGER);
-                } else {
-                  localSeek();
-                }
-              }}
-              className={`${styles.control} ${styles.action} ${styles.text}`}
-              style={{
-                color: isBehind ? 'gray' : 'red',
-              }}
-            >
-              <Icon size="small" name={'circle'} />
-              LIVE
-            </div>
-          }
-        />
-        <div className={`${styles.control} ${styles.text}`}>
+        <div className={` ${styles.text}`}>
           {formatTimestamp(this.getCurrent(), isLiveStream)}
         </div>
-        <Progress
-          size="tiny"
-          color="blue"
+        <Progress.Root
+          radius="0px"
           onClick={(e: any) => {
             if (!this.props.disabled) {
               // Read the time from the click event
@@ -186,20 +187,22 @@ export class Controls extends React.Component<ControlsProps> {
           onMouseOver={this.onMouseOver}
           onMouseOut={this.onMouseOut}
           onMouseMove={this.onMouseMove}
-          className={`${styles.control} ${styles.action}`}
-          inverted
           style={{
             flexGrow: 1,
             marginTop: 0,
             marginBottom: 0,
             position: 'relative',
             minWidth: '50px',
+            overflow: 'visible',
+            cursor: 'pointer',
           }}
-          value={this.getPercent()}
-          total={1}
         >
+          <Progress.Section
+            style={{ pointerEvents: 'none', zIndex: 1 }}
+            value={this.getPercent() * 100}
+          ></Progress.Section>
           {buffers}
-          {
+          {/* {
             <div
               style={{
                 position: 'absolute',
@@ -217,52 +220,43 @@ export class Controls extends React.Component<ControlsProps> {
                 backgroundColor: '#54c8ff',
               }}
             ></div>
-          }
+          } */}
           {this.getLength() < Infinity && this.state.showTimestamp && (
-            <div
+            <Badge
               style={{
                 position: 'absolute',
-                bottom: '0px',
+                bottom: '10px',
                 left: `calc(${this.state.hoverPos * 100 + '%'})`,
                 transform: 'translate(-50%)',
-                whiteSpace: 'nowrap',
-                pointerEvents: 'none',
+                // whiteSpace: 'nowrap',
+                // pointerEvents: 'none',
+                minWidth: '60px',
+                // textOverflow: 'initial',
               }}
             >
-              <Label basic color="blue" pointing="below">
-                <div>
-                  {formatTimestamp(this.state.hoverTimestamp, isLiveStream)}
-                </div>
-              </Label>
-            </div>
+              {formatTimestamp(this.state.hoverTimestamp, isLiveStream)}
+            </Badge>
           )}
-        </Progress>
-        <div className={`${styles.control} ${styles.text}`}>
+        </Progress.Root>
+        <div className={` ${styles.text}`}>
           {formatTimestamp(this.getEnd(), isLiveStream)}
         </div>
-        <div style={{ fontSize: '10px', fontWeight: 700 }}>
-          <Popup
-            content={
-              this.props.roomPlaybackRate === 0
-                ? 'Playing at a dynamic rate to keep you in sync'
-                : 'Playing at a manually selected rate'
-            }
-            trigger={
-              <Icon
-                name="sync alternate"
-                loading={this.props.roomPlaybackRate === 0}
-              />
-            }
-          />
-          {this.props.playbackRate?.toFixed(2)}x
-        </div>
         {
-          <Dropdown
-            style={{ marginLeft: -8 }}
-            className={`${styles.control}`}
-            disabled={this.props.disabled}
-          >
-            <Dropdown.Menu>
+          <Menu disabled={this.props.disabled}>
+            <Menu.Target>
+              <div
+                className={`${styles.text} ${styles.action}`}
+                style={{
+                  backgroundColor: 'rgba(100,100,100, 0.6)',
+                  fontSize: 10,
+                  borderRadius: '4px',
+                  padding: '2px',
+                }}
+              >
+                {this.props.playbackRate?.toFixed(2)}x
+              </div>
+            </Menu.Target>
+            <Menu.Dropdown>
               {[
                 { key: 'Auto', text: 'Auto', value: 0 },
                 { key: '0.25', text: '0.25x', value: 0.25 },
@@ -275,85 +269,91 @@ export class Controls extends React.Component<ControlsProps> {
                 { key: '2', text: '2x', value: 2 },
                 { key: '3', text: '3x', value: 3 },
               ].map((item) => (
-                <Dropdown.Item
+                <Menu.Item
                   key={item.key}
-                  text={item.text}
                   onClick={() => this.props.roomSetPlaybackRate(item.value)}
-                  active={this.props.roomPlaybackRate === item.value}
-                />
+                  rightSection={
+                    this.props.roomPlaybackRate === item.value ? (
+                      <IconCheck />
+                    ) : null
+                  }
+                >
+                  {item.text}
+                </Menu.Item>
               ))}
-            </Dropdown.Menu>
-          </Dropdown>
+            </Menu.Dropdown>
+          </Menu>
         }
-        <Icon
+        <IconRepeat
           onClick={() => {
-            this.props.roomSetLoop(Boolean(!this.props.loop));
+            if (!disabled) {
+              this.props.roomSetLoop(Boolean(!this.props.loop));
+            }
           }}
-          className={`${styles.control} ${styles.action}`}
-          name={'repeat'}
+          className={` ${styles.action}`}
           title="Loop"
-          loading={this.props.loop}
-          disabled={this.props.disabled}
+          color={this.props.loop ? 'green' : 'white'}
         />
         {this.props.isYouTube ? (
-          <Dropdown
-            icon="closed captioning outline large"
-            className={`${styles.control}`}
-          >
-            <Dropdown.Menu>
+          <Menu>
+            <Menu.Target>
+              <IconBadgeCc className={styles.action} />
+            </Menu.Target>
+            <Menu.Dropdown>
               {[
                 { key: 'hidden', text: 'Off', value: 'hidden' },
                 { key: 'en', text: 'English', value: 'showing' },
                 { key: 'es', text: 'Spanish', value: 'showing' },
               ].map((item) => (
-                <Dropdown.Item
+                <Menu.Item
                   key={item.key}
-                  text={item.text}
                   onClick={() =>
                     this.props.localSetSubtitleMode(
                       item.value as TextTrackMode,
                       item.key,
                     )
                   }
-                />
+                >
+                  {item.text}
+                </Menu.Item>
               ))}
-            </Dropdown.Menu>
-          </Dropdown>
+            </Menu.Dropdown>
+          </Menu>
         ) : (
-          <Icon
-            size="large"
+          <IconBadgeCc
             onClick={() => {
               localSubtitleModal();
             }}
-            className={`${styles.control} ${styles.action}`}
-            name={subtitled ? 'closed captioning' : 'closed captioning outline'}
+            className={` ${styles.action}`}
             title="Captions"
+            color={subtitled ? 'green' : 'white'}
           />
         )}
-        <Icon
-          size="large"
+        <IconTheater
           onClick={() => localFullScreen(false)}
-          className={`${styles.control} ${styles.action}`}
-          style={{ transform: 'rotate(90deg)' }}
-          name="window maximize outline"
+          className={` ${styles.action}`}
           title="Theater Mode"
         />
-        <Icon
-          size="large"
+        <IconMaximize
           onClick={() => localFullScreen(true)}
-          className={`${styles.control} ${styles.action}`}
-          name="expand"
+          className={` ${styles.action}`}
           title="Fullscreen"
         />
-        <Icon
-          size="large"
-          onClick={() => {
-            localToggleMute();
-          }}
-          className={`${styles.control} ${styles.action}`}
-          name={muted ? 'volume off' : 'volume up'}
-          title="Mute"
-        />
+        {muted ? (
+          <IconVolumeOff
+            onClick={() => {
+              localToggleMute();
+            }}
+            className={` ${styles.action}`}
+          />
+        ) : (
+          <IconVolume
+            onClick={() => {
+              localToggleMute();
+            }}
+            className={` ${styles.action}`}
+          />
+        )}
         <div style={{ width: '100px' }}>
           <Slider
             defaultValue={volume}

@@ -1,10 +1,7 @@
 .Card {
-  color: inherit;
-  display: block;
   background: rgba(0, 0, 0, 0.1);
   border-radius: 8px;
   padding: 8px;
-  margin: 4px 0;
 }
 
 .Wrapper {
@@ -33,25 +30,21 @@
 }
 
 .Content {
-  overflow: hidden;
-  flex: 1 1 auto;
+  flex-grow: 1;
 }
 
 .Title {
-  color: #000;
   line-height: 1.5;
+  /* max-width: 400px; */
   overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  width: 100%;
-  display: block;
+  /* text-overflow: ellipsis;
+  white-space: nowrap; */
+  overflow-wrap: anywhere;
 }
 
 .ChannelName {
-  color: #000;
-  opacity: 0.5;
   margin-top: 4px;
-  display: block;
+  overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
@@ -71,4 +64,6 @@
 
 .Controls {
   margin-left: auto;
+  display: flex;
+  gap: 4px;
 }

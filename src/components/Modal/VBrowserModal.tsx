@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, Button, Table, Message, Dropdown } from 'semantic-ui-react';
+import { Modal, Button, Table, Alert, Select, Avatar } from '@mantine/core';
 import {
   GoogleReCaptchaProvider,
   useGoogleReCaptcha,
@@ -9,6 +9,7 @@ import { serverPath } from '../../utils';
 import { SubscribeButton } from '../SubscribeButton/SubscribeButton';
 import config from '../../config';
 import { MetadataContext } from '../../MetadataContext';
+import { IconHourglass } from '@tabler/icons-react';
 
 export class VBrowserModal extends React.Component<{
   closeModal: () => void;
@@ -32,26 +33,22 @@ export class VBrowserModal extends React.Component<{
   render() {
     const regionOptions = [
       {
-        key: 'Any',
-        text: 'Any available',
+        label: 'Any available',
         value: 'any',
         image: { avatar: false, src: '' },
       },
       {
-        key: 'US',
-        text: 'US East',
+        label: 'US East',
         value: 'US',
         image: { avatar: false, src: '/flag-united-states.png' },
       },
       {
-        key: 'USW',
-        text: 'US West',
+        label: 'US West',
         value: 'USW',
         image: { avatar: false, src: '/flag-united-states.png' },
       },
       {
-        key: 'EU',
-        text: 'Europe',
+        label: 'Europe',
         value: 'EU',
         image: { avatar: false, src: '/flag-european-union.png' },
       },
@@ -77,22 +74,20 @@ export class VBrowserModal extends React.Component<{
       );
     };
     const vmPoolFullMessage = (
-      <Message
-        size="small"
+      <Alert
+        style={{ maxWidth: '300px' }}
         color="red"
-        icon="hourglass two"
-        style={{ width: '380px' }}
-        header="No Free VBrowsers Available"
-        content={
+        icon={<IconHourglass />}
+        title="No Free VBrowsers Available"
+      >
+        <div>
+          <div>All of the free VBrowsers are currently being used.</div>
           <div>
-            <div>All of the free VBrowsers are currently being used.</div>
-            <div>
-              Please consider subscribing for anytime access to faster
-              VBrowsers, or try again later.
-            </div>
+            Please consider subscribing for anytime access to faster VBrowsers,
+            or try again later.
           </div>
-        }
-      />
+        </div>
+      </Alert>
     );
 
     const subscribeButton = <SubscribeButton />;
@@ -103,82 +98,95 @@ export class VBrowserModal extends React.Component<{
         reCaptchaKey={config.VITE_RECAPTCHA_SITE_KEY as string}
         useRecaptchaNet
       >
-        <Modal open={true} onClose={closeModal}>
-          <Modal.Header>Launch a VBrowser</Modal.Header>
-          <Modal.Content image>
-            <Modal.Description>
-              <div>
-                You're about to launch a virtual browser to share in this room.
-              </div>
-              <Table definition unstackable striped celled>
-                <Table.Header>
-                  <Table.Row>
-                    <Table.HeaderCell />
-                    <Table.HeaderCell>WatchParty Free</Table.HeaderCell>
-                    <Table.HeaderCell>WatchParty Plus</Table.HeaderCell>
-                  </Table.Row>
-                </Table.Header>
+        <Modal
+          opened
+          onClose={closeModal}
+          title="Launch a VBrowser"
+          centered
+          size="auto"
+        >
+          <div>
+            You're about to launch a virtual browser to share in this room.
+          </div>
+          <Table striped>
+            <Table.Thead>
+              <Table.Tr>
+                <Table.Th />
+                <Table.Th>WatchParty Free</Table.Th>
+                <Table.Th>WatchParty Plus</Table.Th>
+              </Table.Tr>
+            </Table.Thead>
 
-                <Table.Body>
-                  <Table.Row>
-                    <Table.Cell>VBrowser Max Resolution</Table.Cell>
-                    <Table.Cell>720p</Table.Cell>
-                    <Table.Cell>1080p</Table.Cell>
-                  </Table.Row>
-                  <Table.Row>
-                    <Table.Cell>VBrowser CPU/RAM</Table.Cell>
-                    <Table.Cell>Standard</Table.Cell>
-                    <Table.Cell>Extra</Table.Cell>
-                  </Table.Row>
-                  <Table.Row>
-                    <Table.Cell>VBrowser Session Length</Table.Cell>
-                    <Table.Cell>3 hours</Table.Cell>
-                    <Table.Cell>24 hours</Table.Cell>
-                  </Table.Row>
-                  <Table.Row>
-                    <Table.Cell>Recommended Max Viewers</Table.Cell>
-                    <Table.Cell>15</Table.Cell>
-                    <Table.Cell>30</Table.Cell>
-                  </Table.Row>
-                  <Table.Row>
-                    <Table.Cell>Region</Table.Cell>
-                    <Table.Cell>Where available </Table.Cell>
-                    <Table.Cell>
-                      <Dropdown
-                        selection
-                        onChange={(e, { value }) =>
-                          this.setState({ region: value })
-                        }
-                        value={this.state.region}
-                        options={regionOptions}
-                      ></Dropdown>
-                    </Table.Cell>
-                  </Table.Row>
-                  <Table.Row>
-                    <Table.Cell></Table.Cell>
-                    <Table.Cell>
-                      {canLaunch ? (
-                        this.state.isFreePoolFull ? (
-                          vmPoolFullMessage
-                        ) : (
-                          <LaunchButton large={false} />
-                        )
-                      ) : (
-                        <SignInButton fluid />
-                      )}
-                    </Table.Cell>
-                    <Table.Cell>
-                      {this.context.isSubscriber ? (
-                        <LaunchButton large />
-                      ) : (
-                        subscribeButton
-                      )}
-                    </Table.Cell>
-                  </Table.Row>
-                </Table.Body>
-              </Table>
-            </Modal.Description>
-          </Modal.Content>
+            <Table.Tbody>
+              <Table.Tr>
+                <Table.Td>VBrowser Max Resolution</Table.Td>
+                <Table.Td>720p</Table.Td>
+                <Table.Td>1080p</Table.Td>
+              </Table.Tr>
+              <Table.Tr>
+                <Table.Td>VBrowser CPU/RAM</Table.Td>
+                <Table.Td>Standard</Table.Td>
+                <Table.Td>Extra</Table.Td>
+              </Table.Tr>
+              <Table.Tr>
+                <Table.Td>VBrowser Session Length</Table.Td>
+                <Table.Td>3 hours</Table.Td>
+                <Table.Td>24 hours</Table.Td>
+              </Table.Tr>
+              <Table.Tr>
+                <Table.Td>Recommended Max Viewers</Table.Td>
+                <Table.Td>15</Table.Td>
+                <Table.Td>30</Table.Td>
+              </Table.Tr>
+              <Table.Tr>
+                <Table.Td>Region</Table.Td>
+                <Table.Td>Where available </Table.Td>
+                <Table.Td>
+                  <Select
+                    onChange={(value, option) =>
+                      this.setState({ region: value })
+                    }
+                    value={this.state.region}
+                    data={regionOptions}
+                    renderOption={({ option }: { option: any }) => (
+                      <div
+                        key={option.value}
+                        style={{
+                          display: 'flex',
+                          gap: '8px',
+                          alignItems: 'center',
+                        }}
+                      >
+                        <Avatar radius="xs" src={option.image.src} />
+                        {option.label}
+                      </div>
+                    )}
+                  />
+                </Table.Td>
+              </Table.Tr>
+              <Table.Tr>
+                <Table.Td></Table.Td>
+                <Table.Td>
+                  {canLaunch ? (
+                    this.state.isFreePoolFull ? (
+                      vmPoolFullMessage
+                    ) : (
+                      <LaunchButton large={false} />
+                    )
+                  ) : (
+                    <SignInButton fluid />
+                  )}
+                </Table.Td>
+                <Table.Td>
+                  {this.context.isSubscriber ? (
+                    <LaunchButton large />
+                  ) : (
+                    subscribeButton
+                  )}
+                </Table.Td>
+              </Table.Tr>
+            </Table.Tbody>
+          </Table>
         </Modal>
       </GoogleReCaptchaProvider>
     );

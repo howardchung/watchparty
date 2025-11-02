@@ -6,26 +6,14 @@ export const Footer = () => (
     style={{
       margin: '1em',
       paddingBottom: '1em',
-      fontSize: '18px',
+      fontSize: '14px',
       color: 'white',
     }}
   >
-    <Link style={{ color: 'white' }} to="/terms">
-      Terms
-    </Link>
+    <Link to="/terms">Terms</Link>
     {' · '}
-    <Link style={{ color: 'white' }} to="/privacy">
-      Privacy
-    </Link>
+    <Link to="/privacy">Privacy</Link>
     {' · '}
-    <Link style={{ color: 'white' }} to="/faq">
-      FAQ
-    </Link>
-    {' · '}
-    <Link style={{ color: 'white' }} to="/discordBot">
-      Discord Bot
-    </Link>
-    {' · '}
-    <span>Gravitech LLC</span>
+    <Link to="/faq">FAQ</Link>
   </div>
 );

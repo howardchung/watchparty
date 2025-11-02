@@ -9,10 +9,7 @@
       name="description"
       content="Watch together with friends. Chat and react in real time to the same stream, whether it's YouTube, your own video, or a virtual browser."
     />
-    <meta
-      name="company"
-      content="Gravitech LLC"
-    />
+    <meta name="company" content="Gravitech LLC" />
     <meta property="og:image" content="/screenshot4.png" />
     <title>WatchParty</title>
     <script type="module" src="./src/index.tsx"></script>
@@ -20,22 +17,22 @@
   <body>
     <script>
       // Remove fbclid parameter
-      (function () {
-        var param = 'fbclid';
-        if (location.search.indexOf(param + '=') !== -1) {
-          var replace = '';
-          try {
-            var url = new URL(location);
-            url.searchParams.delete(param);
-            replace = url.href;
-          } catch (ex) {
-            var regExp = new RegExp('[?&]' + param + '=.*$');
-            replace = location.search.replace(regExp, '');
-            replace = location.pathname + replace + location.hash;
-          }
-          history.replaceState(null, '', replace);
-        }
-      })();
+      // (function () {
+      //   var param = 'fbclid';
+      //   if (location.search.indexOf(param + '=') !== -1) {
+      //     var replace = '';
+      //     try {
+      //       var url = new URL(location);
+      //       url.searchParams.delete(param);
+      //       replace = url.href;
+      //     } catch (ex) {
+      //       var regExp = new RegExp('[?&]' + param + '=.*$');
+      //       replace = location.search.replace(regExp, '');
+      //       replace = location.pathname + replace + location.hash;
+      //     }
+      //     history.replaceState(null, '', replace);
+      //   }
+      // })();
     </script>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>

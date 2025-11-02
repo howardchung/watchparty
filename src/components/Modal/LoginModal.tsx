@@ -1,7 +1,15 @@
 import React from 'react';
-import { Modal, Button, Form, Message } from 'semantic-ui-react';
+import {
+  Modal,
+  Button,
+  Alert,
+  TextInput,
+  PasswordInput,
+  Divider,
+} from '@mantine/core';
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
+import styles from './LoginModal.module.css';
 
 export class LoginModal extends React.Component<{
   closeModal: () => void;
@@ -44,60 +52,53 @@ export class LoginModal extends React.Component<{
         {this.state.showReset && (
           <ResetModal closeModal={() => this.setState({ showReset: false })} />
         )}
-        <Modal open={true} onClose={closeModal}>
-          <Modal.Header>{'Login'}</Modal.Header>
-          <Modal.Content>
+        <Modal opened onClose={closeModal} title="Login" size="auto" centered>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {this.state.error && (
-              <Message color="red" header="Error" content={this.state.error} />
+              <Alert color="red" title="Error">
+                {this.state.error}
+              </Alert>
             )}
-            <Form>
-              <Form.Field>
-                <label>Email</label>
-                <input
-                  placeholder="Email"
-                  value={this.state.email}
-                  onChange={(e) => this.setState({ email: e.target.value })}
-                />
-              </Form.Field>
-              <Form.Field>
-                <label>Password</label>
-                <input
-                  type="password"
-                  placeholder="Password"
-                  value={this.state.password}
-                  onChange={(e) => this.setState({ password: e.target.value })}
-                />
-              </Form.Field>
-              {!this.state.showCreate && (
-                <div>
-                  Don't have an account?{' '}
-                  <button
-                    type="button"
-                    className="linkButton"
+            <TextInput
+              label="Email"
+              placeholder="Email"
+              value={this.state.email}
+              onChange={(e) => this.setState({ email: e.target.value })}
+            />
+            <PasswordInput
+              label="Password"
+              placeholder="Password"
+              value={this.state.password}
+              onChange={(e) => this.setState({ password: e.target.value })}
+            />
+            <Button
+              type="submit"
+              onClick={() =>
+                this.emailSignIn(this.state.email, this.state.password)
+              }
+            >
+              Login
+            </Button>
+            {!this.state.showCreate && (
+              <>
+                <Divider />
+                <div style={{ display: 'flex', gap: '4px' }}>
+                  <Button
+                    size="xs"
                     onClick={() => this.setState({ showCreate: true })}
                   >
-                    Create one.
-                  </button>{' '}
-                  Forgot your password?{' '}
-                  <button
-                    type="button"
-                    className="linkButton"
+                    Create account
+                  </Button>
+                  <Button
+                    size="xs"
                     onClick={() => this.setState({ showReset: true })}
                   >
-                    Reset it.
-                  </button>
+                    Reset password
+                  </Button>
                 </div>
-              )}
-              <Button
-                type="submit"
-                onClick={() =>
-                  this.emailSignIn(this.state.email, this.state.password)
-                }
-              >
-                Login
-              </Button>
-            </Form>
-          </Modal.Content>
+              </>
+            )}
+          </div>
         </Modal>
       </>
     );
@@ -121,40 +122,40 @@ export class CreateModal extends React.Component<{
   render() {
     const { closeModal } = this.props;
     return (
-      <Modal open={true} onClose={closeModal}>
-        <Modal.Header>{'Create an account'}</Modal.Header>
-        <Modal.Content>
+      <Modal
+        opened
+        onClose={closeModal}
+        title="Create an account"
+        size="auto"
+        centered
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {this.state.error && (
-            <Message color="red" header="Error" content={this.state.error} />
+            <Alert color="red" title="Error">
+              {this.state.error}
+            </Alert>
           )}
-          <Form>
-            <Form.Field>
-              <label>Email</label>
-              <input
-                placeholder="Email"
-                value={this.state.email}
-                onChange={(e) => this.setState({ email: e.target.value })}
-              />
-            </Form.Field>
-            <Form.Field>
-              <label>Password</label>
-              <input
-                type="password"
-                placeholder="Password"
-                value={this.state.password}
-                onChange={(e) => this.setState({ password: e.target.value })}
-              />
-            </Form.Field>
-            <Button
-              type="submit"
-              onClick={() =>
-                this.createAccount(this.state.email, this.state.password)
-              }
-            >
-              Create
-            </Button>
-          </Form>
-        </Modal.Content>
+          <TextInput
+            label="Email"
+            placeholder="Email"
+            value={this.state.email}
+            onChange={(e) => this.setState({ email: e.target.value })}
+          />
+          <PasswordInput
+            label="Password"
+            placeholder="Password"
+            value={this.state.password}
+            onChange={(e) => this.setState({ password: e.target.value })}
+          />
+          <Button
+            type="submit"
+            onClick={() =>
+              this.createAccount(this.state.email, this.state.password)
+            }
+          >
+            Create
+          </Button>
+        </div>
       </Modal>
     );
   }
@@ -178,26 +179,25 @@ export class ResetModal extends React.Component<{
   render() {
     const { closeModal } = this.props;
     return (
-      <Modal open={true} onClose={closeModal}>
-        <Modal.Header>Reset Password</Modal.Header>
-        <Modal.Content>
-          {this.state.error && (
-            <Message color="red" header="Error" content={this.state.error} />
-          )}
-          <Form>
-            <Form.Field>
-              <label>Email</label>
-              <input
-                placeholder="Email"
-                value={this.state.email}
-                onChange={(e) => this.setState({ email: e.target.value })}
-              />
-            </Form.Field>
-            <Button type="submit" onClick={() => this.resetPassword()}>
-              Reset
-            </Button>
-          </Form>
-        </Modal.Content>
+      <Modal opened onClose={closeModal} title="Reset password" centered>
+        {this.state.error && (
+          <Alert color="red" title="Error">
+            {this.state.error}
+          </Alert>
+        )}
+        <TextInput
+          label="Email"
+          placeholder="Email"
+          value={this.state.email}
+          onChange={(e) => this.setState({ email: e.target.value })}
+        />
+        <Button
+          style={{ marginTop: '8px' }}
+          type="submit"
+          onClick={() => this.resetPassword()}
+        >
+          Reset
+        </Button>
       </Modal>
     );
   }

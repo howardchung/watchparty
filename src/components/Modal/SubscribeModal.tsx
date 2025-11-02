@@ -1,9 +1,10 @@
 import React from 'react';
-import { Modal, Header, Table, Button, Icon } from 'semantic-ui-react';
+import { Modal, Title, Table, Button } from '@mantine/core';
 import { loadStripe } from '@stripe/stripe-js';
 import { SignInButton } from '../TopBar/TopBar';
 import config from '../../config';
 import { MetadataContext } from '../../MetadataContext';
+import { IconBrandStripeFilled, IconCheck } from '@tabler/icons-react';
 
 // Make sure to call `loadStripe` outside of a component’s render to avoid
 // recreating the `Stripe` object on every render.
@@ -48,134 +49,127 @@ export class SubscribeModal extends React.Component<{
   render() {
     const { closeSubscribe } = this.props;
     return (
-      <Modal open={true} onClose={closeSubscribe}>
-        <Modal.Header>Subscribe to WatchParty Plus</Modal.Header>
-        <Modal.Content image>
-          <Modal.Description>
-            <div>
-              Subscriptions help us maintain the service and build new features!
-              Please consider supporting us if you're enjoying WatchParty.
-            </div>
-            <Header>Features</Header>
-            <Table definition unstackable striped celled>
-              <Table.Header>
-                <Table.Row>
-                  <Table.HeaderCell />
-                  <Table.HeaderCell>WatchParty Free</Table.HeaderCell>
-                  <Table.HeaderCell>WatchParty Plus</Table.HeaderCell>
-                </Table.Row>
-              </Table.Header>
+      <Modal
+        opened
+        onClose={closeSubscribe}
+        centered
+        size="auto"
+        title="Subscribe to WatchParty Plus"
+      >
+        <div>
+          Subscriptions help us maintain the service and build new features!
+          Please consider supporting us if you're enjoying WatchParty.
+        </div>
+        <Title order={6}>Features</Title>
+        <Table striped>
+          <Table.Thead>
+            <Table.Tr>
+              <Table.Th />
+              <Table.Th>WatchParty Free</Table.Th>
+              <Table.Th>WatchParty Plus</Table.Th>
+            </Table.Tr>
+          </Table.Thead>
 
-              <Table.Body>
-                {/* Priority support */}
-                <Table.Row>
-                  <Table.Cell>
-                    Synchronized watching, chat, screenshare
-                  </Table.Cell>
-                  <Table.Cell>
-                    <Icon name="check" />
-                  </Table.Cell>
-                  <Table.Cell>
-                    <Icon name="check" />
-                  </Table.Cell>
-                </Table.Row>
-                <Table.Row>
-                  <Table.Cell>Number of Permanent Rooms</Table.Cell>
-                  <Table.Cell>1</Table.Cell>
-                  <Table.Cell>20</Table.Cell>
-                </Table.Row>
-                {/* <Table.Row>
-                  <Table.Cell>Max Room Capacity</Table.Cell>
-                  <Table.Cell>20</Table.Cell>
-                  <Table.Cell>100</Table.Cell>
-                </Table.Row> */}
-                <Table.Row>
-                  <Table.Cell>VBrowser Access</Table.Cell>
-                  <Table.Cell>When capacity allows</Table.Cell>
-                  <Table.Cell>Anytime</Table.Cell>
-                </Table.Row>
-                <Table.Row>
-                  <Table.Cell>VBrowser Max Resolution</Table.Cell>
-                  <Table.Cell>720p</Table.Cell>
-                  <Table.Cell>1080p</Table.Cell>
-                </Table.Row>
-                <Table.Row>
-                  <Table.Cell>VBrowser CPU/RAM</Table.Cell>
-                  <Table.Cell>Standard</Table.Cell>
-                  <Table.Cell>Extra</Table.Cell>
-                </Table.Row>
-                <Table.Row>
-                  <Table.Cell>VBrowser Session Length</Table.Cell>
-                  <Table.Cell>3 hours</Table.Cell>
-                  <Table.Cell>24 hours</Table.Cell>
-                </Table.Row>
-                <Table.Row>
-                  <Table.Cell>VBrowser Region Selection</Table.Cell>
-                  <Table.Cell></Table.Cell>
-                  <Table.Cell>
-                    <Icon name="check" />
-                  </Table.Cell>
-                </Table.Row>
-                <Table.Row>
-                  <Table.Cell>
-                    Share your screen/file to more viewers with Relay
-                  </Table.Cell>
-                  <Table.Cell></Table.Cell>
-                  <Table.Cell>
-                    <Icon name="check" />
-                  </Table.Cell>
-                </Table.Row>
-                <Table.Row>
-                  <Table.Cell>Custom room URLs and titles</Table.Cell>
-                  <Table.Cell></Table.Cell>
-                  <Table.Cell>
-                    <Icon name="check" />
-                  </Table.Cell>
-                </Table.Row>
-                <Table.Row>
-                  <Table.Cell>
-                    Discord subscriber role (with linked account)
-                  </Table.Cell>
-                  <Table.Cell></Table.Cell>
-                  <Table.Cell>
-                    <Icon name="check" />
-                  </Table.Cell>
-                </Table.Row>
-                <Table.Row>
-                  <Table.Cell>Colored names in chat</Table.Cell>
-                  <Table.Cell></Table.Cell>
-                  <Table.Cell>
-                    <Icon name="check" />
-                  </Table.Cell>
-                </Table.Row>
-                <Table.Row>
-                  <Table.Cell>Price</Table.Cell>
-                  <Table.Cell>$0 / month</Table.Cell>
-                  <Table.Cell>$5 / month</Table.Cell>
-                </Table.Row>
-              </Table.Body>
-            </Table>
-            <div style={{ textAlign: 'right' }}>
-              {/* if user isn't logged in, provide login prompt */}
-              {this.context.user && this.context.user.email ? (
-                <Button
-                  icon
-                  labelPosition="left"
-                  color="blue"
-                  size="large"
-                  onClick={this.onSubscribe}
-                >
-                  <Icon name="cc stripe" />
-                  Subscribe with Stripe
-                </Button>
-              ) : (
-                <div>
-                  Please sign in to subscribe: <SignInButton />
-                </div>
-              )}
+          <Table.Tbody>
+            {/* Priority support */}
+            <Table.Tr>
+              <Table.Td>Synchronized watching, chat, screenshare</Table.Td>
+              <Table.Td>
+                <IconCheck />
+              </Table.Td>
+              <Table.Td>
+                <IconCheck />
+              </Table.Td>
+            </Table.Tr>
+            <Table.Tr>
+              <Table.Td>Number of Permanent Rooms</Table.Td>
+              <Table.Td>1</Table.Td>
+              <Table.Td>20</Table.Td>
+            </Table.Tr>
+            {/* <Table.Tr>
+                  <Table.Td>Max Room Capacity</Table.Td>
+                  <Table.Td>20</Table.Td>
+                  <Table.Td>100</Table.Td>
+                </Table.Tr> */}
+            <Table.Tr>
+              <Table.Td>VBrowser Access</Table.Td>
+              <Table.Td>When capacity allows</Table.Td>
+              <Table.Td>Anytime</Table.Td>
+            </Table.Tr>
+            <Table.Tr>
+              <Table.Td>VBrowser Max Resolution</Table.Td>
+              <Table.Td>720p</Table.Td>
+              <Table.Td>1080p</Table.Td>
+            </Table.Tr>
+            <Table.Tr>
+              <Table.Td>VBrowser CPU/RAM</Table.Td>
+              <Table.Td>Standard</Table.Td>
+              <Table.Td>Extra</Table.Td>
+            </Table.Tr>
+            <Table.Tr>
+              <Table.Td>VBrowser Session Length</Table.Td>
+              <Table.Td>3 hours</Table.Td>
+              <Table.Td>24 hours</Table.Td>
+            </Table.Tr>
+            <Table.Tr>
+              <Table.Td>VBrowser Region Selection</Table.Td>
+              <Table.Td></Table.Td>
+              <Table.Td>
+                <IconCheck />
+              </Table.Td>
+            </Table.Tr>
+            <Table.Tr>
+              <Table.Td>
+                Share your screen/file to more viewers with Relay
+              </Table.Td>
+              <Table.Td></Table.Td>
+              <Table.Td>
+                <IconCheck />
+              </Table.Td>
+            </Table.Tr>
+            <Table.Tr>
+              <Table.Td>Custom room URLs and titles</Table.Td>
+              <Table.Td></Table.Td>
+              <Table.Td>
+                <IconCheck />
+              </Table.Td>
+            </Table.Tr>
+            <Table.Tr>
+              <Table.Td>Discord subscriber role (with linked account)</Table.Td>
+              <Table.Td></Table.Td>
+              <Table.Td>
+                <IconCheck />
+              </Table.Td>
+            </Table.Tr>
+            <Table.Tr>
+              <Table.Td>Colored names in chat</Table.Td>
+              <Table.Td></Table.Td>
+              <Table.Td>
+                <IconCheck />
+              </Table.Td>
+            </Table.Tr>
+            <Table.Tr>
+              <Table.Td>Price</Table.Td>
+              <Table.Td>$0 / month</Table.Td>
+              <Table.Td>$5 / month</Table.Td>
+            </Table.Tr>
+          </Table.Tbody>
+        </Table>
+        <div style={{ textAlign: 'right' }}>
+          {/* if user isn't logged in, provide login prompt */}
+          {this.context.user && this.context.user.email ? (
+            <Button
+              leftSection={<IconBrandStripeFilled />}
+              onClick={this.onSubscribe}
+            >
+              Subscribe with Stripe
+            </Button>
+          ) : (
+            <div>
+              Please sign in to subscribe: <SignInButton />
             </div>
-          </Modal.Description>
-        </Modal.Content>
+          )}
+        </div>
       </Modal>
     );
   }

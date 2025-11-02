@@ -80,13 +80,15 @@ io.engine.use(async (req: any, res: Response, next: () => void) => {
     const data = persistedRoom?.data
       ? JSON.stringify(persistedRoom.data)
       : undefined;
-    const room = new Room(io, key, data);
-    rooms.set(key, room);
-    console.log(
-      'loading room %s into memory on shard %s',
-      roomId,
-      config.SHARD,
-    );
+    if (data) {
+      const room = new Room(io, key, data);
+      rooms.set(key, room);
+      console.log(
+        'loading room %s into memory on shard %s',
+        roomId,
+        config.SHARD,
+      );
+    }
   }
   next();
 });
@@ -626,7 +628,9 @@ app.use(express.static(config.BUILD_DIRECTORY));
 // Send index.html for all other requests (SPA)
 app.use('/*splat', (_req, res) => {
   res.sendFile(
-    path.resolve(import.meta.dirname + `/../${config.BUILD_DIRECTORY}/index.html`),
+    path.resolve(
+      import.meta.dirname + `/../${config.BUILD_DIRECTORY}/index.html`,
+    ),
   );
 });
 

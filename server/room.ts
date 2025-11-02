@@ -37,7 +37,7 @@ export class Room {
   public video: string | null = '';
   public videoTS = 0;
   public subtitle = '';
-  public playbackRate = 0;
+  public playbackRate = 1;
   public paused = false;
   public loop = false;
   private chat: ChatMessage[] = [];
@@ -399,7 +399,7 @@ export class Room {
     this.paused = false;
     this.subtitle = '';
     this.loop = false;
-    this.playbackRate = 0;
+    this.playbackRate = 1;
     this.tsMap = {};
     this.preventTSUpdate = true;
     setTimeout(() => (this.preventTSUpdate = false), 1000);
@@ -500,7 +500,9 @@ export class Room {
     }
     const sharer = this.getRosterForApp().find((user) => user.isScreenShare);
     if (sharer || this.vBrowser) {
-      // Can't update the video while someone is screensharing/filesharing or vbrowser is running
+      console.log(
+        `Can't update the video while someone is screensharing/filesharing or vbrowser is running`,
+      );
       return;
     }
     redisCount('urlStarts');

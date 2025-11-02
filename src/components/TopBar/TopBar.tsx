@@ -1,13 +1,6 @@
-import React from 'react';
-import { serverPath, colorMappings, getUserImage } from '../../utils';
-import {
-  Icon,
-  Popup,
-  Button,
-  Dropdown,
-  Image,
-  SemanticSIZES,
-} from 'semantic-ui-react';
+import React, { useCallback, useContext } from 'react';
+import { serverPath, getUserImage } from '../../utils';
+import { ActionIcon, Avatar, Button, Menu, Text } from '@mantine/core';
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
 import { LoginModal } from '../Modal/LoginModal';
@@ -18,6 +11,18 @@ import { InviteButton } from '../InviteButton/InviteButton';
 import appStyles from '../App/App.module.css';
 import { MetadataContext } from '../../MetadataContext';
 import config from '../../config';
+import {
+  IconBrandDiscord,
+  IconBrandFacebookFilled,
+  IconBrandGithub,
+  IconBrandGoogleFilled,
+  IconCirclePlusFilled,
+  IconDatabase,
+  IconLogin,
+  IconMailFilled,
+  IconTrash,
+} from '@tabler/icons-react';
+import styles from './TopBar.module.css';
 
 export async function createRoom(
   user: firebase.User | undefined,
@@ -46,37 +51,24 @@ export async function createRoom(
   }
 }
 
-export class NewRoomButton extends React.Component<{
-  size?: SemanticSIZES;
+export const NewRoomButton = (props: {
+  size?: string;
   openNewTab?: boolean;
-}> {
-  static contextType = MetadataContext;
-  declare context: React.ContextType<typeof MetadataContext>;
-  createRoom = async () => {
-    await createRoom(this.context.user, this.props.openNewTab);
-  };
-  render() {
-    return (
-      <Popup
-        content="Create a new room with a random URL that you can share with friends"
-        trigger={
-          <Button
-            color="blue"
-            size={this.props.size}
-            icon
-            labelPosition="left"
-            onClick={this.createRoom}
-            className={this.props.size ? '' : 'toolButton'}
-            fluid
-          >
-            <Icon name="certificate" />
-            New Room
-          </Button>
-        }
-      />
-    );
-  }
-}
+}) => {
+  const context = useContext(MetadataContext);
+  const onClick = useCallback(async () => {
+    await createRoom(context.user, props.openNewTab);
+  }, [context.user, props.openNewTab]);
+  return (
+    <Button
+      size={props.size}
+      onClick={onClick}
+      leftSection={<IconCirclePlusFilled />}
+    >
+      New Room
+    </Button>
+  );
+};
 
 type SignInButtonProps = {
   fluid?: boolean;
@@ -121,8 +113,7 @@ export class SignInButton extends React.Component<SignInButtonProps> {
             cursor: 'pointer',
           }}
         >
-          <Image
-            avatar
+          <Avatar
             src={this.state.userImage}
             onClick={() => this.setState({ isProfileOpen: true })}
           />
@@ -138,22 +129,31 @@ export class SignInButton extends React.Component<SignInButtonProps> {
     const enabledOptions = config.VITE_FIREBASE_SIGNIN_METHODS.split(',');
     const components: Record<string, JSX.Element> = {
       facebook: (
-        <Dropdown.Item onClick={this.facebookSignIn}>
-          <Icon name="facebook" />
+        <Menu.Item
+          key="facebook"
+          leftSection={<IconBrandFacebookFilled />}
+          onClick={this.facebookSignIn}
+        >
           Facebook
-        </Dropdown.Item>
+        </Menu.Item>
       ),
       google: (
-        <Dropdown.Item onClick={this.googleSignIn}>
-          <Icon name="google" />
+        <Menu.Item
+          key="google"
+          leftSection={<IconBrandGoogleFilled />}
+          onClick={this.googleSignIn}
+        >
           Google
-        </Dropdown.Item>
+        </Menu.Item>
       ),
       email: (
-        <Dropdown.Item onClick={() => this.setState({ isLoginOpen: true })}>
-          <Icon name="mail" />
+        <Menu.Item
+          key="email"
+          leftSection={<IconMailFilled />}
+          onClick={() => this.setState({ isLoginOpen: true })}
+        >
           Email
-        </Dropdown.Item>
+        </Menu.Item>
       ),
     };
     return (
@@ -163,27 +163,16 @@ export class SignInButton extends React.Component<SignInButtonProps> {
             closeModal={() => this.setState({ isLoginOpen: false })}
           />
         )}
-        <Popup
-          basic
-          content="Sign in for additional features"
-          trigger={
-            <Dropdown
-              style={{ height: '36px' }}
-              icon="sign in"
-              labeled
-              className="icon"
-              button
-              text="Sign in"
-              fluid={this.props.fluid}
-            >
-              <Dropdown.Menu>
-                {enabledOptions.map((opt) => {
-                  return components[opt];
-                })}
-              </Dropdown.Menu>
-            </Dropdown>
-          }
-        />
+        <Menu>
+          <Menu.Target>
+            <Button leftSection={<IconLogin />}>Sign in</Button>
+          </Menu.Target>
+          <Menu.Dropdown>
+            {enabledOptions.map((opt) => {
+              return components[opt];
+            })}
+          </Menu.Dropdown>
+        </Menu>
       </React.Fragment>
     );
   }
@@ -225,36 +214,38 @@ export class ListRoomsButton extends React.Component<{}> {
 
   render() {
     return (
-      <Dropdown
-        style={{ height: '36px' }}
-        icon="group"
-        labeled
-        className="icon"
-        button
-        text="My Rooms"
-        onClick={this.refreshRooms}
-        scrolling
-        pointing="top right"
-        fluid
-      >
-        <Dropdown.Menu>
+      <Menu>
+        <Menu.Target>
+          <Button onClick={this.refreshRooms} leftSection={<IconDatabase />}>
+            My rooms
+          </Button>
+        </Menu.Target>
+        <Menu.Dropdown>
           {this.state.rooms.length === 0 && (
-            <Dropdown.Item disabled>You have no permanent rooms.</Dropdown.Item>
+            <Menu.Item disabled>You have no permanent rooms.</Menu.Item>
           )}
           {this.state.rooms.map((room: any) => {
             return (
-              <Dropdown.Item
+              <Menu.Item
                 key={room.roomId}
-                link="true"
+                component="a"
                 href={
                   room.vanity ? '/r/' + room.vanity : '/watch' + room.roomId
                 }
               >
                 <div style={{ display: 'flex', alignItems: 'center' }}>
-                  {room.vanity ? `/r/${room.vanity}` : room.roomId}
+                  <div>
+                    <Text>
+                      {room.vanity
+                        ? `/r/${room.vanity}`
+                        : `/watch${room.roomId}`}
+                    </Text>
+                    <Text size="xs" c="grey">
+                      {room.roomId}
+                    </Text>
+                  </div>
                   <div style={{ marginLeft: 'auto', paddingLeft: '20px' }}>
-                    <Button
-                      icon
+                    <ActionIcon
                       onClick={(e: React.MouseEvent) => {
                         e.stopPropagation();
                         e.nativeEvent.stopImmediatePropagation();
@@ -262,46 +253,43 @@ export class ListRoomsButton extends React.Component<{}> {
                         this.deleteRoom(room.roomId);
                       }}
                       color="red"
-                      size="mini"
                     >
-                      <Icon name="trash" />
-                    </Button>
+                      <IconTrash size={16} />
+                    </ActionIcon>
                   </div>
                 </div>
-              </Dropdown.Item>
+              </Menu.Item>
             );
           })}
-        </Dropdown.Menu>
-      </Dropdown>
+        </Menu.Dropdown>
+      </Menu>
     );
   }
 }
 
-export class TopBar extends React.Component<{
+export const TopBar = (props: {
   hideNewRoom?: boolean;
   hideSignin?: boolean;
   hideMyRooms?: boolean;
   roomTitle?: string;
   roomDescription?: string;
   roomTitleColor?: string;
-  showInviteButton?: boolean;
-}> {
-  static contextType = MetadataContext;
-  declare context: React.ContextType<typeof MetadataContext>;
-  render() {
-    const subscribeButton = <SubscribeButton />;
-    return (
-      <React.Fragment>
-        <div
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            padding: '8px',
-            rowGap: '8px',
-          }}
-        >
-          <a href="/" style={{ display: 'flex' }}>
-            <div
+}) => {
+  const context = useContext(MetadataContext);
+  const subscribeButton = <SubscribeButton />;
+  return (
+    <React.Fragment>
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          padding: '4px 8px',
+          rowGap: '8px',
+        }}
+      >
+        <a href="/" style={{ display: 'flex' }}>
+          <img style={{ width: '56px', height: '56px' }} src="/logo192.png" />
+          {/* <div
               style={{
                 height: '48px',
                 width: '48px',
@@ -334,114 +322,114 @@ export class TopBar extends React.Component<{
                   margin: '0 auto',
                 }}
               />
-            </div>
-          </a>
-          {this.props.roomTitle || this.props.roomDescription ? (
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                marginRight: 10,
-                marginLeft: 10,
-              }}
-            >
-              <div
-                style={{
-                  fontSize: 30,
-                  color: this.props.roomTitleColor || 'white',
-                  fontWeight: 'bold',
-                  letterSpacing: 1,
-                }}
-              >
-                {this.props.roomTitle?.toUpperCase()}
-              </div>
-              <div style={{ marginTop: 4, color: 'rgb(255 255 255 / 63%)' }}>
-                {this.props.roomDescription}
-              </div>
-            </div>
-          ) : (
-            <React.Fragment>
-              <a href="/" style={{ display: 'flex' }}>
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                  }}
-                >
-                  <div
-                    style={{
-                      textTransform: 'uppercase',
-                      fontWeight: 700,
-                      color: '#2185d0',
-                      fontSize: '30px',
-                      lineHeight: '30px',
-                    }}
-                  >
-                    Watch
-                  </div>
-                  <div
-                    style={{
-                      textTransform: 'uppercase',
-                      fontWeight: 700,
-                      color: '#21ba45',
-                      fontSize: '30px',
-                      lineHeight: '30px',
-                      marginLeft: 'auto',
-                    }}
-                  >
-                    Party
-                  </div>
-                </div>
-              </a>
-            </React.Fragment>
-          )}
-          <Announce />
+            </div> */}
+        </a>
+        {props.roomTitle || props.roomDescription ? (
           <div
-            className={appStyles.mobileStack}
             style={{
               display: 'flex',
-              marginLeft: 'auto',
-              alignItems: 'center',
-              gap: '4px',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              marginRight: 10,
+              marginLeft: 10,
             }}
           >
             <div
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
+                fontSize: '30px',
+                lineHeight: '30px',
+                color: props.roomTitleColor || 'white',
+                fontWeight: 700,
+                letterSpacing: 1,
               }}
             >
-              <a
-                href="https://discord.gg/3rYj5HV"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="footerIcon"
-                title="Discord"
-              >
-                <Icon name="discord" size="big" link />
-              </a>
-              <a
-                href="https://github.com/howardchung/watchparty"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="footerIcon"
-                title="GitHub"
-              >
-                <Icon name="github" size="big" link />
-              </a>
+              {props.roomTitle?.toUpperCase()}
             </div>
-            {this.props.showInviteButton && <InviteButton />}
-            {!this.props.hideNewRoom && <NewRoomButton openNewTab />}
-            {!this.props.hideMyRooms && this.context.user && (
-              <ListRoomsButton />
-            )}
-            {subscribeButton}
-            {!this.props.hideSignin && <SignInButton />}
+            <Text size="sm" style={{}}>
+              {props.roomDescription}
+            </Text>
           </div>
+        ) : (
+          <React.Fragment>
+            <a href="/" style={{ display: 'flex', textDecoration: 'none' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                }}
+              >
+                <div
+                  style={{
+                    textTransform: 'uppercase',
+                    fontWeight: 700,
+                    color: '#2185d0',
+                    fontSize: '30px',
+                    lineHeight: '30px',
+                  }}
+                >
+                  Watch
+                </div>
+                <div
+                  style={{
+                    textTransform: 'uppercase',
+                    fontWeight: 700,
+                    color: '#21ba45',
+                    fontSize: '30px',
+                    lineHeight: '30px',
+                    marginLeft: 'auto',
+                  }}
+                >
+                  Party
+                </div>
+              </div>
+            </a>
+          </React.Fragment>
+        )}
+        <Announce />
+        <div
+          className={appStyles.mobileStack}
+          style={{
+            display: 'flex',
+            marginLeft: 'auto',
+            alignItems: 'center',
+            gap: '4px',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '4px',
+            }}
+          >
+            <ActionIcon
+              component="a"
+              color="grey"
+              href="https://discord.gg/3rYj5HV"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Discord"
+            >
+              <IconBrandDiscord />
+            </ActionIcon>
+            <ActionIcon
+              component="a"
+              color="grey"
+              href="https://github.com/howardchung/watchparty"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="GitHub"
+            >
+              <IconBrandGithub />
+            </ActionIcon>
+          </div>
+          {!props.hideNewRoom && <NewRoomButton openNewTab />}
+          {!props.hideMyRooms && context.user && <ListRoomsButton />}
+          {subscribeButton}
+          {!props.hideSignin && <SignInButton />}
         </div>
-      </React.Fragment>
-    );
-  }
-}
+      </div>
+    </React.Fragment>
+  );
+};

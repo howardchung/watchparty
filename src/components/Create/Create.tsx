@@ -1,6 +1,6 @@
 import React, { useContext, useRef } from 'react';
 import { createRoom } from '../TopBar/TopBar';
-import { Dimmer, Loader } from 'semantic-ui-react';
+import { Loader } from '@mantine/core';
 import { MetadataContext } from '../../MetadataContext';
 
 export const Create = () => {
@@ -10,8 +10,18 @@ export const Create = () => {
     buttonEl?.current?.click();
   }, 1000);
   return (
-    <Dimmer active>
-      <Loader>Creating room. . .</Loader>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        width: '100vw',
+        height: '100vh',
+      }}
+    >
+      <Loader></Loader>
+      <div>Creating room. . .</div>
       <button
         style={{ display: 'none' }}
         ref={buttonEl}
@@ -24,6 +34,6 @@ export const Create = () => {
           );
         }}
       />
-    </Dimmer>
+    </div>
   );
 };

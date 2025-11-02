@@ -1,35 +1,27 @@
 import React from 'react';
-import { Modal, Header, Button, Icon } from 'semantic-ui-react';
+import { Modal, Button } from '@mantine/core';
+import { IconHome, IconRefresh } from '@tabler/icons-react';
 
 export const ErrorModal = ({ error }: { error: string }) => {
   return (
-    <Modal inverted="true" basic open>
-      <Header as="h1" style={{ textAlign: 'center' }}>
-        {error}
-      </Header>
-      <div style={{ display: 'flex', justifyContent: 'center' }}>
+    <Modal opened onClose={() => {}} title={error} centered>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '8px' }}>
         <Button
-          primary
-          size="huge"
+          size="xl"
           onClick={() => {
             window.location.reload();
           }}
-          icon
-          labelPosition="left"
+          leftSection={<IconRefresh />}
         >
-          <Icon name="refresh" />
           Try again
         </Button>
         <Button
-          primary
-          size="huge"
+          size="xl"
           onClick={() => {
             window.location.href = '/';
           }}
-          icon
-          labelPosition="left"
+          leftSection={<IconHome />}
         >
-          <Icon name="home" />
           Go to home
         </Button>
       </div>

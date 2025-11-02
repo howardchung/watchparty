@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Button, Icon, Popup } from 'semantic-ui-react';
+import { ActionIcon } from '@mantine/core';
 import { InviteModal } from '../Modal/InviteModal';
+import { IconUserPlus } from '@tabler/icons-react';
 
 export const InviteButton = () => {
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
@@ -10,23 +11,14 @@ export const InviteButton = () => {
       {inviteModalOpen && (
         <InviteModal closeInviteModal={() => setInviteModalOpen(false)} />
       )}
-      <Popup
-        content="Invite friends!"
-        trigger={
-          <Button
-            color="green"
-            icon
-            labelPosition="left"
-            fluid
-            className="toolButton"
-            style={{ minWidth: '12em' }}
-            onClick={() => setInviteModalOpen(true)}
-          >
-            <Icon name="add user" />
-            Invite Friends
-          </Button>
-        }
-      />
+      <ActionIcon
+        size="36px"
+        color="green"
+        title="Invite friends"
+        onClick={() => setInviteModalOpen(true)}
+      >
+        <IconUserPlus />
+      </ActionIcon>
     </>
   );
 };

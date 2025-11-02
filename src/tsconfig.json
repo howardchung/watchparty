@@ -10,7 +10,7 @@
     "skipLibCheck": true,
     "lib": ["dom", "dom.iterable", "esnext"],
     "jsx": "react-jsx",
-    "types": ["vite/client", "youtube"],
+    "types": ["vite/client", "youtube"]
   },
   "include": ["./**/*", "../global.d.ts"]
 }

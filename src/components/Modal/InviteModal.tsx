@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Modal, Header, Input } from 'semantic-ui-react';
+import { Modal, TextInput, ActionIcon } from '@mantine/core';
+import { IconCopy } from '@tabler/icons-react';
 
 export const InviteModal = ({
   closeInviteModal,
@@ -14,28 +15,27 @@ export const InviteModal = ({
   };
 
   return (
-    <Modal open centered={false} size="tiny" onClose={closeInviteModal}>
-      <Modal.Header as="h3">Invite friends and watch together!</Modal.Header>
-      <Modal.Content>
-        <Header as="h5">Copy and share this link:</Header>
-        <Input
-          fluid
-          readOnly
-          action={{
-            color: 'teal',
-            labelPosition: 'right',
-            icon: 'copy',
-            content: 'Copy',
-            onClick: handleCopyInviteLink,
-          }}
-          defaultValue={window.location.href}
-        />
-        {inviteLinkCopied && (
-          <div style={{ marginTop: 15 }}>
-            <b style={{ color: 'green' }}>Link copied to clipboard.</b>
-          </div>
-        )}
-      </Modal.Content>
+    <Modal
+      opened
+      centered
+      onClose={closeInviteModal}
+      title="Invite friends and watch together!"
+    >
+      <TextInput
+        label="Copy and share this link:"
+        readOnly
+        rightSection={
+          <ActionIcon onClick={handleCopyInviteLink} color="teal">
+            <IconCopy size={16} />
+          </ActionIcon>
+        }
+        defaultValue={window.location.href}
+      />
+      {inviteLinkCopied && (
+        <div style={{ marginTop: 15 }}>
+          <b style={{ color: 'green' }}>Link copied to clipboard.</b>
+        </div>
+      )}
     </Modal>
   );
 };
