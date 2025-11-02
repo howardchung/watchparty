@@ -198,6 +198,8 @@ export default class VBrowser extends React.Component<{
       return;
     }
 
+    // Reset the vbrowser clipboard (it will be repopulated the next time the controller focuses)
+    this.$client.sendMessage(EVENT.CONTROL.CLIPBOARD, { text: '' });
     this.activeKeys.forEach((key) => {
       this.$client.sendData('keyup', { key });
       this.activeKeys.delete(key);
