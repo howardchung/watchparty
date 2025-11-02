@@ -28,6 +28,12 @@
   }
 }
 
+@media only screen and (max-width: 600px) {
+  .mobileWrap {
+    flex-wrap: wrap;
+  }
+}
+
 .leftColumn {
   flex-grow: 1;
   @media only screen and (max-width: 600px) {
@@ -42,39 +48,25 @@
   }
 }
 
-.toolToggle {
-  display: flex;
-  gap: 4px;
-  white-space: nowrap;
-  align-items: center;
-  justify-content: center;
-  min-width: 130px;
-  width: 130px;
-  color: white;
-  background-color: gray;
-  border-radius: 4px;
-  padding: 4px;
-}
-
 .expandButton {
   position: absolute;
-  z-index: 900;
-  background-color: lightgrey;
-  border-radius: 50%;
-  width: 30px;
-  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
+  top: 50%;
+  right: -32px;
 }
 
-.fullHeightColumn.fullHeightColumn.fullHeightColumn {
-  height: calc(100vh - 64px);
+.fullHeightColumn {
+  height: calc(100vh - 72px);
   transition: width ease-out 0.5s;
 }
 
-.fullHeightColumnFullscreen.fullHeightColumnFullscreen.fullHeightColumnFullscreen {
+.fullHeightColumnFullscreen {
   height: calc(100vh);
   transition: width ease-out 0.5s;
+}
+
+.shareButton {
+  min-width: 150px;
 }

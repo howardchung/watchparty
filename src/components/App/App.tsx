@@ -1,21 +1,6 @@
 import type MediasoupClient from 'mediasoup-client';
 import React from 'react';
-import {
-  Button,
-  Dimmer,
-  Dropdown,
-  DropdownProps,
-  Icon,
-  Input,
-  Loader,
-  Message,
-  Popup,
-  Modal,
-  Form,
-  Menu,
-  Label,
-  SemanticCOLORS,
-} from 'semantic-ui-react';
+import { Alert, Loader, Menu, Overlay, Select } from '@mantine/core';
 import io, { Socket } from 'socket.io-client';
 import {
   formatSpeed,
@@ -45,7 +30,7 @@ import { Chat } from '../Chat';
 import { TopBar } from '../TopBar';
 import { VBrowser } from '../VBrowser';
 import { VideoChat } from '../VideoChat';
-import { getCurrentSettings } from '../Settings';
+import { getCurrentSettings } from '../Settings/LocalSettings';
 import { MultiStreamModal } from '../Modal/MultiStreamModal';
 import { ComboBox } from '../ComboBox/ComboBox';
 import { SearchComponent } from '../SearchComponent/SearchComponent';
@@ -60,12 +45,30 @@ import firebase from 'firebase/compat/app';
 import { SubtitleModal } from '../Modal/SubtitleModal';
 import { HTML } from './HTML';
 import { YouTube } from './YouTube';
-import type WebTorrent from 'webtorrent';
 import styles from './App.module.css';
 import config from '../../config';
 import { MetadataContext } from '../../MetadataContext';
 import ChatVideoCard from '../Playlist/ChatVideoCard';
-import { randomUUID } from 'crypto';
+import { ActionIcon, Badge, TextInput, Button } from '@mantine/core';
+import {
+  IconAntennaBars5,
+  IconArrowsShuffle,
+  IconBrowser,
+  IconChevronLeft,
+  IconChevronRight,
+  IconFile,
+  IconKeyboardFilled,
+  IconList,
+  IconScreenShare,
+  IconSettings,
+  IconUser,
+  IconUserScreen,
+  IconUsersGroup,
+  IconVolume,
+  IconX,
+} from '@tabler/icons-react';
+import { InviteButton } from '../InviteButton/InviteButton';
+import type WebTorrent from 'webtorrent';
 
 declare global {
   interface Window {
@@ -222,13 +225,12 @@ export default class App extends React.Component<AppProps, AppState> {
             window.localStorage.getItem('watchparty-showchatcolumn') ?? '1',
           ),
         ),
-    showPeopleColumn: isMobile()
-      ? true
-      : Boolean(
-          Number(
-            window.localStorage.getItem('watchparty-showpeoplecolumn') ?? '0',
-          ),
-        ),
+    showPeopleColumn: false,
+    // Boolean(
+    //       Number(
+    //         window.localStorage.getItem('watchparty-showpeoplecolumn') ?? '0',
+    //       ),
+    //     ),
     owner: undefined,
     vanity: undefined,
     password: undefined,
@@ -508,24 +510,13 @@ export default class App extends React.Component<AppProps, AppState> {
           if (isMagnet(src)) {
             // WebTorrent
             // magnet:?xt=urn:btih:08ada5a7a6183aae1e09d831df6748d566095a10&dn=Sintel&tr=udp%3A%2F%2Fexplodie.org%3A6969&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Ftracker.empire-js.us%3A1337&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=wss%3A%2F%2Ftracker.btorrent.xyz&tr=wss%3A%2F%2Ftracker.fastcast.nz&tr=wss%3A%2F%2Ftracker.openwebtorrent.com&ws=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2F&xs=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2Fsintel.torrent
-            // Can't import webtorrent directly due to vite build error
             const WebTorrent = //@ts-expect-error
-              (await import('webtorrent/dist/webtorrent.min.js')).default;
-            //@ts-expect-error
-            window.watchparty.webtorrent?._server?.close();
+            (await import('webtorrent/dist/webtorrent.min.js')).default;
             window.watchparty.webtorrent?.destroy();
             window.watchparty.webtorrent = new WebTorrent();
             await navigator.serviceWorker?.register('/sw.min.js');
             const controller = await navigator.serviceWorker.ready;
-            await new Promise((resolve) => setTimeout(resolve, 500));
-            console.log(controller, controller.active?.state);
-            // createServer is only in v2, types are outdated
-            //@ts-expect-error
-            const server = await window.watchparty.webtorrent.createServer({
-              controller,
-            });
-            console.log(server);
-            await new Promise((resolve) => setTimeout(resolve, 500));
+            window.watchparty.webtorrent?.createServer({ controller });
             await new Promise((resolve) => {
               window.watchparty.webtorrent?.add(
                 src,
@@ -539,10 +530,9 @@ export default class App extends React.Component<AppProps, AppState> {
                   path: '/tmp/webtorrent/',
                   storeCacheSlots: 20,
                   strategy: 'sequential',
-                  //@ts-expect-error
-                  noPeersIntervalTime: 30,
+                  // noPeersIntervalTime: 30,
                 },
-                async (torrent: WebTorrent.Torrent) => {
+                async (torrent) => {
                   // Got torrent metadata!
                   console.log('Client is downloading:', torrent.infoHash);
 
@@ -551,13 +541,14 @@ export default class App extends React.Component<AppProps, AppState> {
                   const filtered = files.filter(
                     (f: WebTorrent.TorrentFile) => f.length >= 10 * 1024 * 1024,
                   );
-                  const fileIndex = Number(
-                    new URLSearchParams(src).get('fileIndex'),
-                  );
+                  const fileIndex = new URLSearchParams(src).get('fileIndex');
                   // Try to find a single large file to play
-                  const target =
-                    files[fileIndex] ??
-                    (filtered.length > 1 ? null : filtered[0]);
+                  let target;
+                  if (fileIndex != null && fileIndex !== '') {
+                    target = files[Number(fileIndex)];
+                  } else if (filtered.length === 1) {
+                    target = filtered[0];
+                  }
                   if (!target) {
                     // Open the selector
                     this.launchMultiSelect(
@@ -570,9 +561,8 @@ export default class App extends React.Component<AppProps, AppState> {
                   } else {
                     //@ts-expect-error
                     target.streamTo(leftVideo);
-                    leftVideo.currentTime = time;
                   }
-                  resolve(null);
+                  resolve(undefined);
                 },
               );
             });
@@ -621,7 +611,7 @@ export default class App extends React.Component<AppProps, AppState> {
           } else if (isMpegTs(src)) {
             const mpegts = (await import('mpegts.js')).default;
             let player = mpegts.createPlayer({
-              type: 'mse',  // could also be mpegts, m2ts, flv
+              type: 'mse', // could also be mpegts, m2ts, flv
               // isLive: true,
               url: src,
             });
@@ -635,14 +625,17 @@ export default class App extends React.Component<AppProps, AppState> {
           if (!data.paused) {
             this.localPlay();
           }
-          // One time, when we're ready to play
+          // One time, resync when we're ready to play
           leftVideo?.addEventListener(
             'canplay',
             () => {
               this.setLoadingFalse();
-              this.localSeek(
-                this.state.isLiveStream ? data.videoTS : undefined,
-              );
+              let ts = this.state.isLiveStream ? data.videoTS : undefined;
+              // WebTorrent resets position back to 0 so set it back here
+              if (isMagnet(src)) {
+                ts = time;
+              }
+              this.localSeek(ts);
               if (data.playbackRate) {
                 // Set playback rate again since it might have been lost
                 console.log('setting playback rate again', data.playbackRate);
@@ -695,6 +688,9 @@ export default class App extends React.Component<AppProps, AppState> {
         new Audio('/clearly.mp3').play();
       }
       this.state.chat.push(data);
+      if (this.state.chat.length > 100) {
+        this.state.chat.shift();
+      }
       this.setState({
         chat: this.state.chat,
         scrollTimestamp: Date.now(),
@@ -753,7 +749,7 @@ export default class App extends React.Component<AppProps, AppState> {
           this.state.roomPlaybackRate === 0
         ) {
           const leader = this.getLeaderTime();
-          const delta = leader - data[this.socket.id];
+          const delta = leader - data[this.socket.id!];
           // Set leader pbr to 1
           let pbr = 1;
           // Add .01 pbr for each 100ms delay
@@ -1032,7 +1028,7 @@ export default class App extends React.Component<AppProps, AppState> {
     const uuid = createUuid();
     const convertUrl = 'azure.howardchung.net:5001';
     const websocket = new WebSocket('wss://' + convertUrl + '/' + uuid);
-    websocket.addEventListener("open", async () => {
+    websocket.addEventListener('open', async () => {
       const reader = stream.getReader();
       const chunk = await reader.read();
       if (chunk.value) {
@@ -1041,7 +1037,7 @@ export default class App extends React.Component<AppProps, AppState> {
       if (chunk.done) {
         websocket.close();
       }
-      websocket.addEventListener("message", async (msg) => {
+      websocket.addEventListener('message', async (msg) => {
         if (msg.data === '1') {
           // Send the next chunk
           const chunk = await reader.read();
@@ -1597,9 +1593,9 @@ export default class App extends React.Component<AppProps, AppState> {
     this.socket.emit('CMD:stopVBrowser');
   };
 
-  changeController = async (_e: any, data: DropdownProps) => {
+  changeController = async (value: string | null) => {
     // console.log(data);
-    this.socket.emit('CMD:changeController', data.value);
+    this.socket.emit('CMD:changeController', value);
   };
 
   sendSignalSS = async (to: string, data: any, sharer?: boolean) => {
@@ -1827,11 +1823,11 @@ export default class App extends React.Component<AppProps, AppState> {
     this.localSetMute(!this.Player().isMuted());
   };
 
-  roomSetMedia = (_e: any, data: DropdownProps) => {
+  roomSetMedia = (_e: any, data: any) => {
     this.socket.emit('CMD:host', data.value);
   };
 
-  roomPlaylistAdd = (_e: any, data: DropdownProps) => {
+  roomPlaylistAdd = (_e: any, data: any) => {
     this.socket.emit('CMD:playlistAdd', data.value);
   };
 
@@ -1991,26 +1987,6 @@ export default class App extends React.Component<AppProps, AppState> {
     );
     return (
       <React.Fragment>
-        {!this.state.isAutoPlayable && (
-          <Modal inverted="true" basic open>
-            <div style={{ display: 'flex', justifyContent: 'center' }}>
-              <Button
-                primary
-                size="large"
-                onClick={() => {
-                  this.setState({ isAutoPlayable: true });
-                  this.localSetMute(false);
-                  this.localSetVolume(1);
-                }}
-                icon
-                labelPosition="left"
-              >
-                <Icon name="volume up" />
-                Click to unmute
-              </Button>
-            </div>
-          </Modal>
-        )}
         {this.state.multiStreamSelection && (
           <MultiStreamModal
             streams={this.state.multiStreamSelection}
@@ -2056,37 +2032,64 @@ export default class App extends React.Component<AppProps, AppState> {
             roomId={this.state.roomId}
           />
         )}
+        <SettingsModal
+          modalOpen={this.state.settingsModalOpen}
+          setModalOpen={this.setSettingsModalOpen}
+          roomLock={this.state.roomLock}
+          setRoomLock={this.setRoomLock}
+          socket={this.socket}
+          roomId={this.state.roomId}
+          isChatDisabled={this.state.isChatDisabled}
+          setIsChatDisabled={this.setIsChatDisabled}
+          owner={this.state.owner}
+          setOwner={this.setOwner}
+          vanity={this.state.vanity}
+          setVanity={this.setVanity}
+          inviteLink={this.state.inviteLink}
+          password={this.state.password}
+          setPassword={this.setPassword}
+          clearChat={this.clearChat}
+          roomTitle={this.state.roomTitle}
+          setRoomTitle={this.setRoomTitle}
+          roomDescription={this.state.roomDescription}
+          setRoomDescription={this.setRoomDescription}
+          roomTitleColor={this.state.roomTitleColor}
+          setRoomTitleColor={this.setRoomTitleColor}
+          mediaPath={this.state.mediaPath}
+          setMediaPath={this.setMediaPath}
+        />
         {this.state.errorMessage && (
-          <Message
-            negative
-            header="Error"
-            content={this.state.errorMessage}
+          <Alert
+            title="Error"
+            color="red"
             style={{
               position: 'fixed',
               bottom: '10px',
               right: '10px',
               zIndex: 1000,
             }}
-          ></Message>
+          >
+            {this.state.errorMessage}
+          </Alert>
         )}
         {this.state.successMessage && (
-          <Message
-            positive
-            header="Success"
-            content={this.state.successMessage}
+          <Alert
+            title="Success"
+            color="green"
             style={{
               position: 'fixed',
               bottom: '10px',
               right: '10px',
               zIndex: 1000,
             }}
-          ></Message>
+          >
+            {this.state.successMessage}
+          </Alert>
         )}
         {this.state.warningMessage && (
-          <Message
-            warning
+          <Alert
+            color="yellow"
             // header={this.state.warningMessage}
-            content={this.state.warningMessage}
             style={{
               position: 'fixed',
               top: '10px',
@@ -2094,14 +2097,15 @@ export default class App extends React.Component<AppProps, AppState> {
               transform: 'translate(-50%, 0)',
               zIndex: 1000,
             }}
-          ></Message>
+          >
+            {this.state.warningMessage}
+          </Alert>
         )}
         {!this.state.fullScreen && (
           <TopBar
             roomTitle={this.state.roomTitle}
             roomDescription={this.state.roomDescription}
             roomTitleColor={this.state.roomTitleColor}
-            showInviteButton
           />
         )}
         {
@@ -2124,246 +2128,158 @@ export default class App extends React.Component<AppProps, AppState> {
                   flexDirection: 'column',
                   height: '100%',
                   position: 'relative',
+                  gap: '4px',
                 }}
               >
                 {!this.state.fullScreen && (
                   <React.Fragment>
-                    <div style={{ display: 'flex', gap: '4px' }}>
-                      <ComboBox
-                        roomSetMedia={this.roomSetMedia}
-                        playlistAdd={this.roomPlaylistAdd}
-                        roomMedia={this.state.roomMedia}
-                        getMediaDisplayName={this.getMediaDisplayName}
-                        launchMultiSelect={this.launchMultiSelect}
-                        mediaPath={this.state.mediaPath}
-                        disabled={!this.haveLock()}
-                      />
-                      <Dropdown
-                        icon="list"
-                        labeled
-                        className="icon"
-                        button
-                        text={`Playlist (${playlist.length})`}
-                        scrolling
-                      >
-                        <Dropdown.Menu direction="left">
-                          {playlist.length === 0 && (
-                            <Dropdown.Item disabled>
-                              There are no items in the playlist.
-                            </Dropdown.Item>
-                          )}
-                          {playlist.map(
-                            (item: PlaylistVideo, index: number) => {
-                              if (Boolean(item.img)) {
-                                item.type = 'youtube';
-                              }
-                              return (
-                                <Dropdown.Item>
-                                  <div style={{ maxWidth: '500px' }}>
-                                    <ChatVideoCard
-                                      video={item}
-                                      index={index}
-                                      controls
-                                      onPlay={(index) => {
-                                        this.roomSetMedia(null, {
-                                          value: playlist[index]?.url,
-                                        });
-                                        this.roomPlaylistDelete(index);
-                                      }}
-                                      onPlayNext={(index) => {
-                                        this.roomPlaylistMove(index, 0);
-                                      }}
-                                      onRemove={(index) => {
-                                        this.roomPlaylistDelete(index);
-                                      }}
-                                      disabled={!this.haveLock()}
-                                    />
-                                  </div>
-                                </Dropdown.Item>
-                              );
-                            },
-                          )}
-                        </Dropdown.Menu>
-                      </Dropdown>
-                    </div>
-                    <Separator />
+                    <ComboBox
+                      roomSetMedia={this.roomSetMedia}
+                      playlistAdd={this.roomPlaylistAdd}
+                      roomMedia={this.state.roomMedia}
+                      getMediaDisplayName={this.getMediaDisplayName}
+                      launchMultiSelect={this.launchMultiSelect}
+                      mediaPath={this.state.mediaPath}
+                      disabled={!this.haveLock()}
+                    />
                     <div
                       className={styles.mobileStack}
                       style={{ display: 'flex', gap: '4px' }}
                     >
                       {this.localStreamToPublish && (
                         <Button
-                          fluid
-                          className="toolButton"
-                          icon
-                          labelPosition="left"
                           color="red"
                           onClick={this.stopPublishingLocalStream}
                           disabled={sharer?.id !== this.socket?.id}
+                          leftSection={<IconX />}
                         >
-                          <Icon name="cancel" />
                           Stop Share
                         </Button>
                       )}
                       {!this.localStreamToPublish &&
                         !sharer &&
                         !this.playingVBrowser() && (
-                          <Popup
-                            content={`Share a tab or an application.`}
-                            trigger={
-                              <Button
-                                fluid
-                                className="toolButton"
-                                disabled={!this.haveLock()}
-                                icon
-                                labelPosition="left"
-                                color={'instagram'}
-                                onClick={() => {
-                                  this.setState({
-                                    isScreenShareModalOpen: true,
-                                  });
-                                }}
-                              >
-                                <Icon name={'slideshare'} />
-                                Screenshare
-                              </Button>
-                            }
-                          />
+                          <Button
+                            className={styles.shareButton}
+                            color="purple"
+                            disabled={!this.haveLock()}
+                            onClick={() => {
+                              this.setState({
+                                isScreenShareModalOpen: true,
+                              });
+                            }}
+                            leftSection={<IconScreenShare />}
+                          >
+                            Screenshare
+                          </Button>
                         )}
                       {!this.localStreamToPublish &&
                         !sharer &&
                         !this.playingVBrowser() && (
-                          <Popup
-                            content="Launch a shared virtual browser"
-                            trigger={
-                              <Button
-                                fluid
-                                className="toolButton"
-                                disabled={!this.haveLock()}
-                                icon
-                                labelPosition="left"
-                                color="green"
-                                onClick={() => {
-                                  this.setState({
-                                    isVBrowserModalOpen: true,
-                                  });
-                                }}
-                              >
-                                <Icon name="desktop" />
-                                VBrowser
-                              </Button>
-                            }
-                          />
+                          <Button
+                            className={styles.shareButton}
+                            disabled={!this.haveLock()}
+                            color="green"
+                            onClick={() => {
+                              this.setState({
+                                isVBrowserModalOpen: true,
+                              });
+                            }}
+                            leftSection={<IconBrowser />}
+                          >
+                            VBrowser
+                          </Button>
                         )}
                       {this.playingVBrowser() && (
                         <>
-                          <Popup
-                            content="Choose the person controlling the VBrowser"
-                            trigger={
-                              <Dropdown
-                                fluid
-                                icon="keyboard"
-                                labeled
-                                className="icon"
-                                style={{ height: '36px' }}
-                                button
-                                value={this.state.controller}
-                                placeholder="No controller"
-                                clearable
-                                onChange={this.changeController}
-                                selection
-                                disabled={!this.haveLock()}
-                                options={this.state.participants.map((p) => ({
-                                  text: this.state.nameMap[p.id] || p.id,
-                                  value: p.id,
-                                }))}
-                              ></Dropdown>
-                            }
-                          />
-                          <Dropdown
-                            fluid
-                            icon="desktop"
-                            labeled
-                            className="icon"
-                            style={{ height: '36px' }}
-                            button
+                          <Button
+                            color="red"
+                            disabled={!this.haveLock()}
+                            onClick={this.stopVBrowser}
+                            leftSection={<IconX />}
+                          >
+                            Stop VBrowser
+                          </Button>
+                          <Select
+                            leftSection={<IconKeyboardFilled />}
+                            value={this.state.controller}
+                            placeholder="No controller"
+                            clearable
+                            onChange={this.changeController}
+                            disabled={!this.haveLock()}
+                            data={this.state.participants.map((p) => ({
+                              label: this.state.nameMap[p.id] || p.id,
+                              value: p.id,
+                            }))}
+                          ></Select>
+                          <Select
+                            leftSection={<IconUserScreen />}
                             disabled={!this.haveLock()}
                             value={this.state.vBrowserResolution}
-                            onChange={(_e, data) =>
+                            onChange={(value) =>
                               this.setState({
-                                vBrowserResolution: data.value as string,
+                                vBrowserResolution: value as string,
                               })
                             }
-                            selection
-                            options={[
+                            data={[
                               {
-                                text: '1080p (Plus only)',
+                                label: '1080p (Plus only)',
                                 value: '1920x1080@30',
                                 disabled: !this.state.isVBrowserLarge,
                               },
                               {
-                                text: '720p',
+                                label: '720p',
                                 value: '1280x720@30',
                               },
                               {
-                                text: '576p',
+                                label: '576p',
                                 value: '1024x576@60',
                               },
                               {
-                                text: '486p',
+                                label: '486p',
                                 value: '864x486@60',
                               },
                               {
-                                text: '360p',
+                                label: '360p',
                                 value: '640x360@60',
                               },
                             ]}
-                          ></Dropdown>
-                          <Dropdown
-                            fluid
-                            icon="chart area"
-                            labeled
-                            className="icon"
-                            style={{ height: '36px' }}
-                            button
+                          ></Select>
+                          <Select
+                            leftSection={<IconAntennaBars5 />}
                             disabled={!this.haveLock()}
                             value={this.state.vBrowserQuality}
-                            onChange={(_e, data) => {
+                            onChange={(value) => {
                               this.setState({
-                                vBrowserQuality: data.value as string,
+                                vBrowserQuality: value as string,
                               });
                             }}
-                            selection
-                            options={[
+                            data={[
                               {
-                                text: 'Eco',
+                                label: 'Eco (0.25x)',
                                 value: '0.25',
                               },
                               {
-                                text: 'Low',
+                                label: 'Low (0.5x)',
                                 value: '0.5',
                               },
                               {
-                                text: 'Standard',
+                                label: 'Standard (1x)',
                                 value: '1',
                               },
                               {
-                                text: 'High',
+                                label: 'High (1.5x)',
                                 value: '1.5',
                               },
                               {
-                                text: 'Ultra',
+                                label: 'Ultra (2x)',
                                 value: '2',
                               },
                             ]}
-                          ></Dropdown>
+                          ></Select>
                           {isMobile() &&
                             this.state.controller === this.socket.id && (
                               <Button
-                                fluid
-                                className="toolButton"
-                                icon
-                                labelPosition="left"
                                 color="blue"
                                 disabled={!this.haveLock()}
                                 onClick={() => {
@@ -2371,49 +2287,90 @@ export default class App extends React.Component<AppProps, AppState> {
                                     document.getElementById('dummy');
                                   dummy?.focus();
                                 }}
+                                leftSection={<IconKeyboardFilled />}
                               >
-                                <Icon name="keyboard" />
                                 Keyboard
                               </Button>
                             )}
-                          <Button
-                            fluid
-                            className="toolButton"
-                            icon
-                            labelPosition="left"
-                            color="red"
-                            disabled={!this.haveLock()}
-                            onClick={this.stopVBrowser}
-                          >
-                            <Icon name="cancel" />
-                            Stop VBrowser
-                          </Button>
                         </>
                       )}
                       {!this.localStreamToPublish &&
                         !sharer &&
                         !this.playingVBrowser() && (
-                          <Popup
-                            content="Stream your own video file"
-                            trigger={
-                              <Button
-                                fluid
-                                className="toolButton"
-                                disabled={!this.haveLock()}
-                                icon
-                                labelPosition="left"
-                                onClick={() => {
-                                  this.setState({
-                                    isFileShareModalOpen: true,
-                                  });
-                                }}
-                              >
-                                <Icon name="file" />
-                                File
-                              </Button>
-                            }
-                          />
+                          <Button
+                            className={styles.shareButton}
+                            color="cyan"
+                            disabled={!this.haveLock()}
+                            onClick={() => {
+                              this.setState({
+                                isFileShareModalOpen: true,
+                              });
+                            }}
+                            leftSection={<IconFile />}
+                          >
+                            File
+                          </Button>
                         )}
+                      <Menu>
+                        <Menu.Target>
+                          <Button
+                            leftSection={<IconList />}
+                            rightSection={<Badge>{playlist.length}</Badge>}
+                          >
+                            Playlist
+                          </Button>
+                        </Menu.Target>
+                        <Menu.Dropdown
+                          style={{
+                            overflowY: 'scroll',
+                            height: 400,
+                            width: isMobile() ? 400 : 600,
+                          }}
+                        >
+                          {playlist.length === 0 && (
+                            <Menu.Item disabled>
+                              There are no items in the playlist.
+                            </Menu.Item>
+                          )}
+                          {playlist.map(
+                            (item: PlaylistVideo, index: number) => {
+                              if (Boolean(item.img)) {
+                                item.type = 'youtube';
+                              }
+                              return (
+                                <Menu.Item key={index}>
+                                  <ChatVideoCard
+                                    video={item}
+                                    index={index}
+                                    controls
+                                    onPlay={(index) => {
+                                      this.roomSetMedia(null, {
+                                        value: playlist[index]?.url,
+                                      });
+                                      this.roomPlaylistDelete(index);
+                                    }}
+                                    onPlayNext={(index) => {
+                                      this.roomPlaylistMove(index, 0);
+                                    }}
+                                    onRemove={(index) => {
+                                      this.roomPlaylistDelete(index);
+                                    }}
+                                    disabled={!this.haveLock()}
+                                  />
+                                </Menu.Item>
+                              );
+                            },
+                          )}
+                        </Menu.Dropdown>
+                      </Menu>
+                      <Button
+                        leftSection={<IconSettings />}
+                        onClick={() => {
+                          this.setSettingsModalOpen(true);
+                        }}
+                      >
+                        Settings
+                      </Button>
                       {false && (
                         <SearchComponent
                           setMedia={this.roomSetMedia}
@@ -2432,11 +2389,31 @@ export default class App extends React.Component<AppProps, AppState> {
                         />
                       )}
                     </div>
-                    <Separator />
                   </React.Fragment>
                 )}
-                <div style={{ flexGrow: 1 }}>
+                <div style={{ flexGrow: 1, position: 'relative' }}>
                   <div className={styles.playerContainer}>
+                    {!this.state.isAutoPlayable && this.state.roomMedia && (
+                      <Overlay
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <Button
+                          onClick={() => {
+                            this.setState({ isAutoPlayable: true });
+                            this.localSetMute(false);
+                            this.localSetVolume(1);
+                          }}
+                          leftSection={<IconVolume />}
+                          size="xl"
+                        >
+                          Unmute
+                        </Button>
+                      </Overlay>
+                    )}
                     {(this.state.loading ||
                       !this.state.roomMedia ||
                       this.state.nonPlayableMedia) &&
@@ -2451,30 +2428,38 @@ export default class App extends React.Component<AppProps, AppState> {
                           }}
                         >
                           {this.state.loading && (
-                            <Dimmer active>
-                              <Loader>
+                            <div
+                              style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                              }}
+                            >
+                              <Loader />
+                              <div>
                                 {this.playingVBrowser()
                                   ? 'Launching virtual browser. This can take up to a minute.'
                                   : ''}
-                              </Loader>
-                            </Dimmer>
+                              </div>
+                            </div>
                           )}
                           {!this.state.loading && !this.state.roomMedia && (
-                            <Message
+                            <Alert
                               color="yellow"
-                              icon="hand point up"
-                              header="You're not watching anything!"
-                              content="Pick something to watch above."
-                            />
+                              title="You're not watching anything!"
+                            >
+                              Pick something to watch above.
+                            </Alert>
                           )}
                           {!this.state.loading &&
                             this.state.nonPlayableMedia && (
-                              <Message
+                              <Alert
                                 color="red"
-                                icon="frown"
-                                header="It doesn't look like this is a media file!"
-                                content="Maybe you meant to launch a VBrowser if you're trying to visit a web page?"
-                              />
+                                title="It doesn't look like this is a media file!"
+                              >
+                                Maybe you meant to launch a VBrowser if you're
+                                trying to visit a web page?
+                              </Alert>
                             )}
                         </div>
                       )}
@@ -2497,7 +2482,7 @@ export default class App extends React.Component<AppProps, AppState> {
                     this.getVBrowserPass() &&
                     this.getVBrowserHost() ? (
                       <VBrowser
-                        username={this.socket.id}
+                        username={this.socket.id!}
                         password={this.getVBrowserPass()}
                         hostname={this.getVBrowserHost()}
                         controlling={this.state.controller === this.socket.id}
@@ -2531,40 +2516,53 @@ export default class App extends React.Component<AppProps, AppState> {
                       ></video>
                     )}
                   </div>
+                  {Boolean(this.state.total) && (
+                    <div
+                      style={{
+                        color: 'white',
+                        fontWeight: 700,
+                        fontSize: 12,
+                        position: 'absolute',
+                        right: 0,
+                        bottom: 0,
+                        zIndex: 1,
+                      }}
+                    >
+                      {Math.min(
+                        (this.state.downloaded / this.state.total) * 100,
+                        100,
+                      ).toFixed(2) +
+                        '% - ' +
+                        formatSpeed(this.state.speed) +
+                        ' - ' +
+                        this.state.connections +
+                        ' connections'}
+                    </div>
+                  )}
                 </div>
-                {Boolean(this.state.total) && (
-                  <div
-                    style={{
-                      color: 'white',
-                      textAlign: 'right',
-                      fontSize: 11,
-                      fontWeight: 700,
-                      marginTop: '-12px',
-                      width: '100%',
-                      zIndex: 1000,
-                    }}
-                  >
-                    {/* <Progress
-                        size="tiny"
-                        color="green"
-                        inverted
-                        value={this.state.downloaded}
-                        total={this.state.total}
-                        // indicating
-                        label={}
-                      ></Progress> */}
-                    {Math.min(
-                      (this.state.downloaded / this.state.total) * 100,
-                      100,
-                    ).toFixed(2) +
-                      '% - ' +
-                      formatSpeed(this.state.speed) +
-                      ' - ' +
-                      this.state.connections +
-                      ' connections'}
+                {this.state.roomMedia && controls}
+                {!isMobile() && (
+                  <div className={styles.expandButton}>
+                    <ActionIcon
+                      onClick={() => {
+                        const newVal = !this.state.showChatColumn;
+                        this.setState({
+                          showChatColumn: newVal,
+                        });
+                        window.localStorage.setItem(
+                          'watchparty-showchatcolumn',
+                          Number(newVal).toString(),
+                        );
+                      }}
+                    >
+                      {this.state.showChatColumn ? (
+                        <IconChevronRight size={16} />
+                      ) : (
+                        <IconChevronLeft size={16} />
+                      )}
+                    </ActionIcon>
                   </div>
                 )}
-                {this.state.roomMedia && controls}
               </div>
             </div>
             <div
@@ -2573,6 +2571,7 @@ export default class App extends React.Component<AppProps, AppState> {
                 flexDirection: 'column',
                 position: 'relative',
                 width: this.state.showChatColumn ? 400 : 0,
+                overflow: 'hidden',
               }}
               className={`${
                 (this.state.fullScreen
@@ -2582,184 +2581,83 @@ export default class App extends React.Component<AppProps, AppState> {
                 styles.rightColumn
               }`}
             >
-              {!isMobile() && (
-                <div
-                  className={styles.expandButton}
-                  style={{
-                    top: '50%',
-                    left: '-28px',
-                    color: 'black',
-                  }}
-                  onClick={() => {
-                    const newVal = !this.state.showChatColumn;
-                    this.setState({
-                      showChatColumn: newVal,
-                    });
-                    window.localStorage.setItem(
-                      'watchparty-showchatcolumn',
-                      Number(newVal).toString(),
-                    );
-                  }}
-                >
-                  {this.state.showChatColumn ? '»' : '«'}
-                </div>
-              )}
-              <div style={{ display: 'flex', width: '100%', gap: '4px' }}>
-                <div style={{ flexGrow: 1 }}>
-                  <Form autoComplete="off">
-                    <Input
-                      style={{
-                        visibility: this.state.showChatColumn
-                          ? undefined
-                          : 'hidden',
-                      }}
-                      inverted
-                      fluid
-                      label={'My name is:'}
-                      value={this.state.myName}
-                      onChange={(_e, data) => {
-                        this.updateName(data.value);
-                      }}
-                      icon={
-                        <Icon
-                          onClick={async () => {
-                            const randName = await generateName();
-                            this.updateName(randName);
-                          }}
-                          name="random"
-                          inverted
-                          circular
-                          link
-                          title="Generate a random name"
-                        />
-                      }
-                    />
-                  </Form>
-                </div>
-                <Button
-                  icon="setting"
-                  onClick={() => {
-                    this.setSettingsModalOpen(true);
-                  }}
-                />
-                <SettingsModal
-                  modalOpen={this.state.settingsModalOpen}
-                  setModalOpen={this.setSettingsModalOpen}
-                  roomLock={this.state.roomLock}
-                  setRoomLock={this.setRoomLock}
-                  socket={this.socket}
-                  roomId={this.state.roomId}
-                  isChatDisabled={this.state.isChatDisabled}
-                  setIsChatDisabled={this.setIsChatDisabled}
-                  owner={this.state.owner}
-                  setOwner={this.setOwner}
-                  vanity={this.state.vanity}
-                  setVanity={this.setVanity}
-                  inviteLink={this.state.inviteLink}
-                  password={this.state.password}
-                  setPassword={this.setPassword}
-                  clearChat={this.clearChat}
-                  roomTitle={this.state.roomTitle}
-                  setRoomTitle={this.setRoomTitle}
-                  roomDescription={this.state.roomDescription}
-                  setRoomDescription={this.setRoomDescription}
-                  roomTitleColor={this.state.roomTitleColor}
-                  setRoomTitleColor={this.setRoomTitleColor}
-                  mediaPath={this.state.mediaPath}
-                  setMediaPath={this.setMediaPath}
-                />
-              </div>
-              <div
-                style={{
-                  position: 'relative',
-                  visibility: this.state.showChatColumn ? undefined : 'hidden',
-                }}
-              >
-                <Menu
-                  inverted
-                  widths={1}
-                  style={{
-                    marginTop: '4px',
-                    marginBottom: '4px',
-                    height: '40px',
-                  }}
-                >
-                  {/* <Menu.Item
-              name="chat"
-              active={this.state.currentTab === 'chat'}
-              onClick={() => {
-                this.setState({ currentTab: 'chat', unreadCount: 0 });
-              }}
-              as="a"
-            >
-              Chat
-              {this.state.unreadCount > 0 && (
-                <Label circular color="red">
-                  {this.state.unreadCount}
-                </Label>
-              )}
-            </Menu.Item> */}
-                  <Menu.Item
-                    name="people"
-                    active={false}
-                    onClick={() => {
-                      const newVal = !this.state.showPeopleColumn;
-                      this.setState({ showPeopleColumn: newVal });
-                      window.localStorage.setItem(
-                        'watchparty-showpeoplecolumn',
-                        Number(newVal).toString(),
-                      );
-                    }}
-                    as="a"
-                  >
-                    People
-                    {this.state.showPeopleColumn ? '▴' : '▾'}
-                    <Label
-                      circular
-                      color={
-                        getColorForString(
-                          this.state.participants.length.toString(),
-                        ) as SemanticCOLORS
-                      }
-                    >
-                      {this.state.participants.length}
-                    </Label>
-                  </Menu.Item>
-                  {/* <Menu.Item
-              name="settings"
-              active={this.state.currentTab === 'settings'}
-              onClick={() => this.setState({ currentTab: 'settings' })}
-              as="a"
-            >
-              Settings
-            </Menu.Item> */}
-                </Menu>
+              {this.state.state === 'connected' && (
                 <div
                   style={{
                     position: 'absolute',
-                    top: '40px',
+                    background: 'rgba(10, 10, 10, 0.6)',
+                    zIndex: 200,
+                    left: 0,
+                    top: 36,
+                    height: this.state.showPeopleColumn
+                      ? 'calc(100% - 80px)'
+                      : '0%',
                     width: '100%',
-                    zIndex: 2,
-                    background: 'rgba(11, 11, 11, 0.9)',
-                    height: this.state.showPeopleColumn ? '600px' : '0px',
-                    maxHeight: '60vh',
-                    overflowY: 'scroll',
+                    overflow: 'hidden',
+                    // visibility: this.state.showPeopleColumn ? 'visible' : 'hidden',
                     transition: 'height ease-out 0.5s',
                   }}
                 >
-                  {this.state.state === 'connected' && (
-                    <VideoChat
-                      socket={this.socket}
-                      participants={this.state.participants}
-                      nameMap={this.state.nameMap}
-                      pictureMap={this.state.pictureMap}
-                      tsMap={this.state.tsMap}
-                      rosterUpdateTS={this.state.rosterUpdateTS}
-                      owner={this.state.owner}
-                      getLeaderTime={this.getLeaderTime}
-                    />
-                  )}
+                  <VideoChat
+                    socket={this.socket}
+                    participants={this.state.participants}
+                    nameMap={this.state.nameMap}
+                    pictureMap={this.state.pictureMap}
+                    tsMap={this.state.tsMap}
+                    rosterUpdateTS={this.state.rosterUpdateTS}
+                    owner={this.state.owner}
+                    getLeaderTime={this.getLeaderTime}
+                  />
                 </div>
+              )}
+              <div style={{ display: 'flex', width: '100%', gap: '4px' }}>
+                <TextInput
+                  // description="Name"
+                  style={{
+                    visibility: this.state.showChatColumn
+                      ? undefined
+                      : 'hidden',
+                    flexGrow: 1,
+                  }}
+                  value={this.state.myName}
+                  onChange={(e) => {
+                    this.updateName(e.target.value);
+                  }}
+                  onFocus={(e) => e.target.select()}
+                  leftSection={<IconUser />}
+                  rightSection={
+                    <ActionIcon
+                      onClick={async () => {
+                        const randName = await generateName();
+                        this.updateName(randName);
+                      }}
+                      title="Generate a random name"
+                    >
+                      <IconArrowsShuffle size={16} />
+                    </ActionIcon>
+                  }
+                />
+                <Button
+                  onClick={() =>
+                    this.setState({
+                      showPeopleColumn: !this.state.showPeopleColumn,
+                    })
+                  }
+                  leftSection={<IconUsersGroup />}
+                  rightSection={
+                    <Badge
+                      circle
+                      color={getColorForString(
+                        this.state.participants.length.toString(),
+                      )}
+                    >
+                      {this.state.participants.length}
+                    </Badge>
+                  }
+                >
+                  People
+                </Button>
+                <InviteButton />
               </div>
               <Chat
                 chat={this.state.chat}
@@ -2781,5 +2679,3 @@ export default class App extends React.Component<AppProps, AppState> {
     );
   }
 }
-
-export const Separator = () => <div style={{ height: '4px', flexShrink: 0 }} />;

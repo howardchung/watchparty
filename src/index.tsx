@@ -1,6 +1,5 @@
-import './index.css';
-import 'semantic-ui-css/semantic.min.css';
 import '@mantine/core/styles.css';
+import './index.css';
 
 import React, { lazy, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -8,7 +7,7 @@ import { BrowserRouter, Route } from 'react-router-dom';
 
 import App from './components/App';
 import { Home } from './components/Home';
-import { Privacy, Terms, FAQ, DiscordBot } from './components/Pages/Pages';
+import { Privacy, Terms, FAQ } from './components/Pages/Pages';
 import { TopBar } from './components/TopBar/TopBar';
 import { Footer } from './components/Footer/Footer';
 import firebase from 'firebase/compat/app';
@@ -68,74 +67,69 @@ class WatchParty extends React.Component {
     return (
       // <React.StrictMode>
       <MantineProvider theme={theme} forceColorScheme="dark">
-      <MetadataContext.Provider value={this.state}>
-        <BrowserRouter>
-          <Route
-            path="/"
-            exact
-            render={(props) => {
-              return (
-                <React.Fragment>
-                  <TopBar hideNewRoom />
-                  <Home />
-                  <Footer />
-                </React.Fragment>
-              );
-            }}
-          />
-          <Route
-            path="/create"
-            exact
-            render={() => {
-              return <Create />;
-            }}
-          />
-          <Route
-            path="/watch/:roomId"
-            exact
-            render={(props) => {
-              return <App urlRoomId={props.match.params.roomId} />;
-            }}
-          />
-          <Route
-            path="/r/:vanity"
-            exact
-            render={(props) => {
-              return <App vanity={props.match.params.vanity} />;
-            }}
-          />
-          <Route path="/terms">
-            <TopBar />
-            <Terms />
-            <Footer />
-          </Route>
-          <Route path="/privacy">
-            <TopBar />
-            <Privacy />
-            <Footer />
-          </Route>
-          <Route path="/faq">
-            <TopBar />
-            <FAQ />
-            <Footer />
-          </Route>
-          <Route path="/discordBot">
-            <TopBar />
-            <DiscordBot />
-            <Footer />
-          </Route>
-          <Route path="/discord/auth" exact>
-            <Discord />
-          </Route>
-          <Route path="/debug">
-            <TopBar />
-            <Suspense fallback={null}>
-              <Debug />
-            </Suspense>
-            <Footer />
-          </Route>
-        </BrowserRouter>
-      </MetadataContext.Provider>
+        <MetadataContext.Provider value={this.state}>
+          <BrowserRouter>
+            <Route
+              path="/"
+              exact
+              render={(props) => {
+                return (
+                  <React.Fragment>
+                    <TopBar hideNewRoom />
+                    <Home />
+                    <Footer />
+                  </React.Fragment>
+                );
+              }}
+            />
+            <Route
+              path="/create"
+              exact
+              render={() => {
+                return <Create />;
+              }}
+            />
+            <Route
+              path="/watch/:roomId"
+              exact
+              render={(props) => {
+                return <App urlRoomId={props.match.params.roomId} />;
+              }}
+            />
+            <Route
+              path="/r/:vanity"
+              exact
+              render={(props) => {
+                return <App vanity={props.match.params.vanity} />;
+              }}
+            />
+            <Route path="/terms">
+              <TopBar />
+              <Terms />
+              <Footer />
+            </Route>
+            <Route path="/privacy">
+              <TopBar />
+              <Privacy />
+              <Footer />
+            </Route>
+            <Route path="/faq">
+              <TopBar />
+              <FAQ />
+              <Footer />
+            </Route>
+            <Route path="/discord/auth" exact>
+              <Discord />
+            </Route>
+            <Route path="/debug">
+              <TopBar />
+              <Suspense fallback={null}>
+                <Debug />
+              </Suspense>
+              <Footer />
+            </Route>
+          </BrowserRouter>
+        </MetadataContext.Provider>
       </MantineProvider>
       // </React.StrictMode>
     );

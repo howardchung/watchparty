@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
-import { Modal, Header, Input, Icon } from 'semantic-ui-react';
+import { Modal, PasswordInput, ActionIcon } from '@mantine/core';
+import { IconKey } from '@tabler/icons-react';
 
 export const PasswordModal = ({
   savedPasswords,
@@ -20,21 +21,23 @@ export const PasswordModal = ({
     window.location.reload();
   }, [savedPasswords, roomId]);
   return (
-    <Modal inverted="true" basic open>
-      <Header as="h1" style={{ textAlign: 'center' }}>
-        This room requires a password.
-      </Header>
-      <div style={{ display: 'flex', justifyContent: 'center' }}>
-        <Input
-          id="roomPassword"
-          type="password"
-          size="large"
-          onKeyPress={(e: any) => e.key === 'Enter' && setPassword()}
-          icon={
-            <Icon onClick={setPassword} name="key" inverted circular link />
-          }
-        />
-      </div>
+    <Modal
+      onClose={() => {}}
+      withCloseButton={false}
+      opened
+      centered
+      size="md"
+      title="This room requires a password"
+    >
+      <PasswordInput
+        id="roomPassword"
+        onKeyDown={(e: any) => e.key === 'Enter' && setPassword()}
+        rightSection={
+          <ActionIcon onClick={setPassword}>
+            <IconKey size={16} />
+          </ActionIcon>
+        }
+      />
     </Modal>
   );
 };

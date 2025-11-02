@@ -1,8 +1,17 @@
 import React from 'react';
-import { Button, ButtonGroup, DropdownProps, Icon } from 'semantic-ui-react';
+import { ActionIcon } from '@mantine/core';
 import { decodeEntities, formatTimestamp } from '../../utils';
 
 import classes from './ChatVideoCard.module.css';
+import {
+  IconArrowUp,
+  IconBrandYoutubeFilled,
+  IconFile,
+  IconMagnetFilled,
+  IconPlayerPlayFilled,
+  IconPlaylistAdd,
+  IconTrash,
+} from '@tabler/icons-react';
 
 const ChatVideoCard: React.FC<{
   video: PlaylistVideo;
@@ -11,8 +20,8 @@ const ChatVideoCard: React.FC<{
   onPlay?: (index: number) => void;
   onRemove?: (index: number) => void;
   onPlayNext?: (index: number) => void;
-  onSetMedia?: (e: any, data: DropdownProps) => void;
-  onPlaylistAdd?: (e: any, data: DropdownProps) => void;
+  onSetMedia?: (e: any, data: any) => void;
+  onPlaylistAdd?: (e: any, data: any) => void;
   disabled?: boolean;
 }> = (props) => {
   const {
@@ -58,10 +67,8 @@ const ChatVideoCard: React.FC<{
     [onRemove, index],
   );
 
-  const Element = 'div';
-
   return (
-    <Element
+    <div
       title={video.name}
       className={classes.Card}
       onClick={
@@ -87,70 +94,59 @@ const ChatVideoCard: React.FC<{
             />
           )}
         </div>
-        {video.type === 'youtube' && (
-          <Icon color="red" size="large" name="youtube" />
-        )}
-        {video.type === 'file' && (
-          <Icon color="black" size="large" name="linkify" />
-        )}
-        {video.type === 'magnet' && (
-          <Icon color="red" size="large" name="magnet" />
-        )}
+        <div style={{ flexShrink: 0 }}>
+          {video.type === 'youtube' && <IconBrandYoutubeFilled color="red" />}
+          {video.type === 'file' && <IconFile />}
+          {video.type === 'magnet' && <IconMagnetFilled />}
+        </div>
         <div className={classes.Content}>
           <div className={classes.Title}>{decodeEntities(video.name)}</div>
           <div className={classes.ChannelName}>{video.channel}</div>
         </div>
         {onPlaylistAdd && (
           <div className={classes.Controls}>
-            <div style={{ marginLeft: 'auto' }}>
-              <Button
-                className="playlistAddButton"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.nativeEvent.stopImmediatePropagation();
-                  onPlaylistAdd(e, { value: video.url });
-                }}
-              >
-                Add To Playlist
-              </Button>
-            </div>
+            <ActionIcon
+              title="Add to Playlist"
+              onClick={(e) => {
+                e.stopPropagation();
+                e.nativeEvent.stopImmediatePropagation();
+                onPlaylistAdd(e, { value: video.url });
+              }}
+            >
+              <IconPlaylistAdd />
+            </ActionIcon>
           </div>
         )}
         {controls && (
           <div className={classes.Controls}>
-            <ButtonGroup size="mini">
-              <Button
-                icon
-                color="green"
-                title="Play now"
-                onClick={handlePlayClick}
-                disabled={disabled}
-              >
-                <Icon name="play" />
-              </Button>
-              <Button
-                icon
-                color="black"
-                title="Play next"
-                onClick={handlePlayNextClick}
-                disabled={disabled}
-              >
-                <Icon name="arrow up" />
-              </Button>
-              <Button
-                icon
-                color="red"
-                title="Remove"
-                onClick={handleRemoveClick}
-                disabled={disabled}
-              >
-                <Icon name="trash" />
-              </Button>
-            </ButtonGroup>
+            <ActionIcon
+              color="green"
+              title="Play now"
+              onClick={handlePlayClick}
+              disabled={disabled}
+            >
+              <IconPlayerPlayFilled size={16} />
+            </ActionIcon>
+            <ActionIcon
+              color="black"
+              title="Play next"
+              onClick={handlePlayNextClick}
+              disabled={disabled}
+            >
+              <IconArrowUp size={16} />
+            </ActionIcon>
+            <ActionIcon
+              color="red"
+              title="Remove"
+              onClick={handleRemoveClick}
+              disabled={disabled}
+            >
+              <IconTrash size={16} />
+            </ActionIcon>
           </div>
         )}
       </div>
-    </Element>
+    </div>
   );
 };
 

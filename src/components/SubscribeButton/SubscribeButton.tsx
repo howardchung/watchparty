@@ -1,13 +1,14 @@
 import React, { useCallback, useContext, useState } from 'react';
-import { Button, Icon, Popup } from 'semantic-ui-react';
+import { Button } from '@mantine/core';
 import { serverPath } from '../../utils';
 import { SubscribeModal } from '../Modal/SubscribeModal';
 import { MetadataContext } from '../../MetadataContext';
+import { IconStarFilled, IconTool } from '@tabler/icons-react';
 
 export const SubscribeButton = () => {
   const { isSubscriber } = useContext(MetadataContext);
   const [isSubscribeModalOpen, setIsSubscribeModalOpen] = useState(false);
-  if (isSubscriber) {
+  if (isSubscriber === undefined || isSubscriber) {
     return null;
   }
   return (
@@ -15,22 +16,13 @@ export const SubscribeButton = () => {
       {isSubscribeModalOpen && (
         <SubscribeModal closeSubscribe={() => setIsSubscribeModalOpen(false)} />
       )}
-      <Popup
-        content="Subscribe to help support us and enable additional features!"
-        trigger={
-          <Button
-            fluid
-            color="orange"
-            className="toolButton"
-            icon
-            labelPosition="left"
-            onClick={() => setIsSubscribeModalOpen(true)}
-          >
-            <Icon name="plus" />
-            Subscribe
-          </Button>
-        }
-      />
+      <Button
+        leftSection={<IconStarFilled />}
+        color="orange"
+        onClick={() => setIsSubscribeModalOpen(true)}
+      >
+        Subscribe
+      </Button>
     </>
   );
 };
@@ -54,15 +46,7 @@ export const ManageSubButton = ({}: {}) => {
     window.location.assign(session.url);
   }, [user]);
   return (
-    <Button
-      fluid
-      color="orange"
-      className="toolButton"
-      icon
-      labelPosition="left"
-      onClick={onManage}
-    >
-      <Icon name="wrench" />
+    <Button leftSection={<IconTool />} color="orange" onClick={onManage}>
       Manage Subscription
     </Button>
   );

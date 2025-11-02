@@ -1,4 +1,4 @@
-.subscriber.subscriber.subscriber.subscriber.subscriber {
+.subscriber {
   color: rgb(33, 186, 69);
   font-weight: 700;
 }
@@ -50,19 +50,24 @@
   overflow: auto;
 }
 
-.light.light.light.light.light {
+.light {
   color: gainsboro;
+  font-size: 14px;
 }
 
-.light.light.light.light.light.emoji {
+.light.emoji {
   font-size: 24px;
 }
 
-.dark.dark.dark.dark.dark {
+.dark {
   color: gray;
 }
 
-.system.system.system.system.system {
+.small {
+  font-size: 12px;
+}
+
+.system {
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -76,7 +81,6 @@
   top: -13px;
   padding: 4px !important;
   border-radius: 3px;
-  background: rgb(146, 146, 146);
   cursor: pointer;
 }
 

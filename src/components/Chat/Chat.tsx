@@ -1,5 +1,11 @@
 import React, { RefObject, useContext } from 'react';
-import { Button, Comment, Form, Icon, Input, Popup } from 'semantic-ui-react';
+import {
+  ActionIcon,
+  Avatar,
+  Button,
+  HoverCard,
+  TextInput,
+} from '@mantine/core';
 // import data from '@emoji-mart/data';
 import Picker from '@emoji-mart/react';
 import { init } from 'emoji-mart';
@@ -16,7 +22,6 @@ import {
   getDefaultPicture,
   isEmojiString,
 } from '../../utils';
-import { Separator } from '../App/App';
 import { UserMenu } from '../UserMenu/UserMenu';
 import { Socket } from 'socket.io-client';
 import firebase from 'firebase/compat/app';
@@ -104,16 +109,16 @@ export class Chat extends React.Component<ChatProps> {
       msgId: id || this.state.reactionMenu.selectedMsgId,
       msgTimestamp: timestamp || this.state.reactionMenu.selectedMsgTimestamp,
     };
-    if (msg?.reactions?.[value].includes(this.props.socket.id)) {
+    if (msg?.reactions?.[value].includes(this.props.socket.id!)) {
       this.props.socket.emit('CMD:removeReaction', data);
     } else {
       this.props.socket.emit('CMD:addReaction', data);
     }
   };
 
-  updateChatMsg = (_e: any, data: { value: string }) => {
+  updateChatMsg = (e: any) => {
     // console.log(e.target.selectionStart);
-    this.setState({ chatMsg: data.value });
+    this.setState({ chatMsg: e.target.value });
   };
 
   sendChatMsg = () => {
@@ -228,9 +233,9 @@ export class Chat extends React.Component<ChatProps> {
         <div
           className={styles.chatContainer}
           ref={this.messagesRef}
-          style={{ position: 'relative', paddingTop: 13 }}
+          style={{ position: 'relative' }}
         >
-          <Comment.Group>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {this.props.chat.map((msg) => (
               <ChatMessage
                 key={msg.timestamp + msg.id}
@@ -252,10 +257,10 @@ export class Chat extends React.Component<ChatProps> {
               />
             ))}
             {/* <div ref={this.messagesEndRef} /> */}
-          </Comment.Group>
+          </div>
           {!this.state.isNearBottom && (
             <Button
-              size="tiny"
+              size="xs"
               onClick={this.scrollToBottom}
               style={{
                 position: 'sticky',
@@ -268,7 +273,6 @@ export class Chat extends React.Component<ChatProps> {
             </Button>
           )}
         </div>
-        <Separator />
         {this.state.isPickerOpen && (
           <div style={{ position: 'absolute', bottom: '60px' }}>
             <Picker
@@ -320,44 +324,35 @@ export class Chat extends React.Component<ChatProps> {
             xPosition={this.state.reactionMenu.xPosition}
           /> */}
         </CSSTransition>
-        <Form autoComplete="off">
-          <Input
-            inverted
-            fluid
-            onKeyPress={(e: any) => e.key === 'Enter' && this.sendChatMsg()}
-            onChange={this.updateChatMsg}
-            value={this.state.chatMsg}
-            error={this.chatTooLong()}
-            icon
-            disabled={this.props.isChatDisabled}
-            placeholder={
-              this.props.isChatDisabled
-                ? 'The chat was disabled by the room owner.'
-                : 'Enter a message...'
-            }
-          >
-            <input />
-            <Icon
-              // style={{ right: '40px' }}
+        <TextInput
+          style={{ marginTop: '10px' }}
+          onKeyDown={(e: any) => e.key === 'Enter' && this.sendChatMsg()}
+          onChange={this.updateChatMsg}
+          value={this.state.chatMsg}
+          error={this.chatTooLong()}
+          disabled={this.props.isChatDisabled}
+          placeholder={
+            this.props.isChatDisabled
+              ? 'The chat was disabled by the room owner.'
+              : 'Enter a message...'
+          }
+          rightSection={
+            <ActionIcon
               onClick={() => {
                 // Add a delay to prevent the click from triggering onClickOutside
                 const curr = this.state.isPickerOpen;
                 setTimeout(() => this.setState({ isPickerOpen: !curr }), 100);
               }}
-              name={undefined}
-              inverted
-              circular
-              link
               disabled={this.props.isChatDisabled}
-              style={{ opacity: 1 }}
             >
               <span role="img" aria-label="Emoji">
                 😀
               </span>
-            </Icon>
-            {/* <Icon onClick={this.sendChatMsg} name="send" inverted circular link /> */}
-          </Input>
-        </Form>
+            </ActionIcon>
+          }
+        >
+          {/* <Icon onClick={this.sendChatMsg} name="send" inverted circular link /> */}
+        </TextInput>
       </div>
     );
   }
@@ -397,44 +392,62 @@ const ChatMessage = ({
     message;
   const spellFull = 5; // the number of people whose names should be written out in full in the reaction popup
   return (
-    <Comment className={`${classes.comment} ${className}`}>
+    <div
+      style={{
+        display: 'flex',
+        gap: '8px',
+        alignItems: 'center',
+        position: 'relative',
+        overflowWrap: 'anywhere',
+      }}
+      className={`${classes.comment} ${className}`}
+    >
       {id ? (
-        <Comment.Avatar
+        <Avatar
           src={
             pictureMap[id] ||
             getDefaultPicture(nameMap[id], getColorForStringHex(id))
           }
         />
       ) : null}
-      <Comment.Content>
-        <UserMenu
-          displayName={nameMap[id] || id}
-          timestamp={timestamp}
-          socket={socket}
-          userToManage={id}
-          isChatMessage
-          disabled={!Boolean(owner && owner === user?.uid)}
-          trigger={
-            <Comment.Author
-              title={isSub ? 'WatchParty Plus subscriber' : ''}
-              as="a"
-              className={isSub ? classes.subscriber : styles.light}
-            >
-              {Boolean(system) && 'System'}
-              {nameMap[id] || id}
-            </Comment.Author>
-          }
-        />
-        <Comment.Metadata className={styles.dark}>
-          <div title={new Date(timestamp).toLocaleDateString()}>
-            {new Date(timestamp).toLocaleTimeString()}
-            {Boolean(videoTS) && ' @ '}
-            {formatTimestamp(videoTS)}
+      <div>
+        <div
+          style={{
+            display: 'flex',
+            gap: '8px',
+            alignItems: 'flex-end',
+            fontSize: 14,
+          }}
+        >
+          <UserMenu
+            displayName={nameMap[id] || id}
+            timestamp={timestamp}
+            socket={socket}
+            userToManage={id}
+            isChatMessage
+            disabled={!Boolean(owner && owner === user?.uid)}
+            trigger={
+              <div
+                style={{ cursor: 'pointer' }}
+                title={isSub ? 'WatchParty Plus subscriber' : ''}
+                className={isSub ? classes.subscriber : styles.light}
+              >
+                {Boolean(system) && 'System'}
+                {nameMap[id] || id}
+              </div>
+            }
+          />
+          <div className={styles.small + ' ' + styles.dark}>
+            <div title={new Date(timestamp).toLocaleDateString()}>
+              {new Date(timestamp).toLocaleTimeString()}
+              {/* {Boolean(videoTS) && ' @ '}
+              {formatTimestamp(videoTS)} */}
+            </div>
           </div>
-        </Comment.Metadata>
-        <Comment.Text className={styles.light + ' ' + styles.system}>
+        </div>
+        <div className={styles.light + ' ' + styles.system}>
           {cmd && formatMessage(cmd, msg)}
-        </Comment.Text>
+        </div>
         <Linkify
           componentDecorator={(
             decoratedHref: string,
@@ -446,13 +459,13 @@ const ChatMessage = ({
             </SecureLink>
           )}
         >
-          <Comment.Text
+          <div
             className={`${styles.light} ${
               isEmojiString(msg) ? styles.emoji : ''
             }`}
           >
             {!cmd && msg}
-          </Comment.Text>
+          </div>
         </Linkify>
         {msg?.startsWith('![') && (
           <Markdown
@@ -465,8 +478,8 @@ const ChatMessage = ({
           />
         )}
         <div className={classes.commentMenu}>
-          <Icon
-            onClick={(e: MouseEvent) => {
+          <ActionIcon
+            onClick={(e) => {
               const viewportOffset = (e.target as any).getBoundingClientRect();
               setTimeout(() => {
                 setReactionMenu(
@@ -478,16 +491,13 @@ const ChatMessage = ({
                 );
               }, 100);
             }}
-            name={undefined}
-            inverted
-            link
             disabled={isChatDisabled}
             style={{
               opacity: 1,
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
-              padding: 10,
+              padding: 0,
               margin: 0,
             }}
           >
@@ -498,7 +508,7 @@ const ChatMessage = ({
             >
               😀
             </span>
-          </Icon>
+          </ActionIcon>
         </div>
         <TransitionGroup>
           {Object.keys(reactions ?? []).map((key) =>
@@ -514,24 +524,11 @@ const ChatMessage = ({
                 }}
                 unmountOnExit
               >
-                <Popup
-                  content={`${reactions[key]
-                    .slice(0, spellFull)
-                    .map((id) => nameMap[id] || 'Unknown')
-                    .concat(
-                      reactions[key].length > spellFull
-                        ? [`${reactions[key].length - spellFull} more`]
-                        : [],
-                    )
-                    .reduce(
-                      (text, value, i, array) =>
-                        text + (i < array.length - 1 ? ', ' : ' and ') + value,
-                    )} reacted.`}
-                  offset={[0, 6]}
-                  trigger={
+                <HoverCard>
+                  <HoverCard.Target>
                     <div
                       className={`${classes.reactionContainer} ${
-                        reactions[key].includes(socket.id)
+                        reactions[key].includes(socket.id!)
                           ? classes.highlighted
                           : ''
                       }`}
@@ -575,14 +572,30 @@ const ChatMessage = ({
                         </CSSTransition>
                       </SwitchTransition>
                     </div>
-                  }
-                />
+                  </HoverCard.Target>
+                  <HoverCard.Dropdown>
+                    {`${reactions[key]
+                      .slice(0, spellFull)
+                      .map((id) => nameMap[id] || 'Unknown')
+                      .concat(
+                        reactions[key].length > spellFull
+                          ? [`${reactions[key].length - spellFull} more`]
+                          : [],
+                      )
+                      .reduce(
+                        (text, value, i, array) =>
+                          text +
+                          (i < array.length - 1 ? ', ' : ' and ') +
+                          value,
+                      )} reacted.`}
+                  </HoverCard.Dropdown>
+                </HoverCard>
               </CSSTransition>
             ) : null,
           )}
         </TransitionGroup>
-      </Comment.Content>
-    </Comment>
+      </div>
+    </div>
   );
 };
 

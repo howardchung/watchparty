@@ -1,11 +1,20 @@
 import React from 'react';
-import { Modal, Button, Icon, Image, Popup } from 'semantic-ui-react';
+import { Modal, Button, Avatar, HoverCard, Text } from '@mantine/core';
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
 import { serverPath } from '../../utils';
 import { ManageSubButton } from '../SubscribeButton/SubscribeButton';
 import config from '../../config';
 import { MetadataContext } from '../../MetadataContext';
+import {
+  IconBrandDiscordFilled,
+  IconBrandGravatar,
+  IconCircleCheck,
+  IconCircleCheckFilled,
+  IconKeyFilled,
+  IconLogout,
+  IconTrashFilled,
+} from '@tabler/icons-react';
 
 export class ProfileModal extends React.Component<{
   close: () => void;
@@ -109,29 +118,24 @@ export class ProfileModal extends React.Component<{
   render() {
     const { close, userImage } = this.props;
     return (
-      <Modal open={true} onClose={close} size="tiny">
+      <Modal opened onClose={close} centered>
         <Modal
-          open={this.state.deleteConfirmOpen}
+          opened={this.state.deleteConfirmOpen}
           onClose={() => {
             this.setState({ deleteConfirmOpen: false });
           }}
-          size="tiny"
+          title="Delete Your Account"
         >
-          <Modal.Header>Delete Your Account</Modal.Header>
-          <Modal.Content>
-            <p>
-              Are you sure you want to delete your account? This can't be
-              undone.
-            </p>
-            <p>
-              Note: If you have an active subscription, deleting your account
-              will NOT automatically cancel it and you will need to contact
-              support@watchparty.me to cancel.
-            </p>
-          </Modal.Content>
-          <Modal.Actions>
+          <p>
+            Are you sure you want to delete your account? This can't be undone.
+          </p>
+          <p>
+            Note: If you have an active subscription, deleting your account will
+            NOT automatically cancel it and you will need to contact
+            support@watchparty.me to cancel.
+          </p>
+          <div style={{ display: 'flex', gap: '4px' }}>
             <Button
-              positive
               onClick={async () => {
                 await this.deleteAccount();
               }}
@@ -139,120 +143,106 @@ export class ProfileModal extends React.Component<{
               Yes
             </Button>
             <Button
-              negative
               onClick={() => {
                 this.setState({ deleteConfirmOpen: false });
               }}
             >
               No
             </Button>
-          </Modal.Actions>
+          </div>
         </Modal>
-        <Modal.Header>
-          <Image avatar src={userImage} />
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+          }}
+        >
+          <Avatar src={userImage} />
           {this.context.user?.email}
           {this.context.user?.emailVerified && (
-            <Icon
-              style={{ marginLeft: '8px' }}
-              title="Thie email is verified"
-              name="check circle"
-            ></Icon>
-          )}
-        </Modal.Header>
-        <Modal.Content>
-          <div
-            style={{
-              width: '300px',
-              display: 'flex',
-              alignItems: 'center',
-              flexDirection: 'column',
-              gap: '10px',
-            }}
-          >
-            <Button
-              icon
-              labelPosition="left"
-              fluid
-              href="https://gravatar.com"
-              target="_blank"
-              color="blue"
-            >
-              <Icon name="image" />
-              Edit Gravatar
-            </Button>
-            <Button
-              disabled={
-                this.context.user?.emailVerified || this.state.verifyDisabled
-              }
-              icon
-              labelPosition="left"
-              fluid
-              color="purple"
-              onClick={this.verifyEmail}
-            >
-              <Icon name="check circle" />
-              Verify Email
-            </Button>
-            {this.context.isSubscriber && <ManageSubButton />}
-            {this.state.linkedDiscord ? (
-              <Button
-                icon
-                labelPosition="left"
-                fluid
-                color="red"
-                animated="fade"
-                onClick={this.deleteDiscord}
-              >
-                <Icon name="discord" />
-                Unlink Discord {this.state.linkedDiscord.accountname}#
-                {this.state.linkedDiscord.discriminator}
-              </Button>
-            ) : (
-              <React.Fragment>
-                <Popup
-                  content="Link your Discord account to automatically receive your Subscriber role if you're subscribed"
-                  trigger={
-                    <Button
-                      icon
-                      labelPosition="left"
-                      fluid
-                      color="orange"
-                      onClick={this.authDiscord}
-                    >
-                      <Icon name="discord" />
-                      Link Discord Account
-                    </Button>
-                  }
-                />
-              </React.Fragment>
-            )}
-            <Button
-              disabled={this.state.resetDisabled}
-              icon
-              labelPosition="left"
-              fluid
+            <IconCircleCheckFilled
+              title="This email is verified"
               color="green"
-              onClick={this.resetPassword}
-            >
-              <Icon name="key" />
-              Reset Password
-            </Button>
+            />
+          )}
+        </div>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '10px',
+            margin: '10px',
+          }}
+        >
+          <Button
+            component="a"
+            leftSection={<IconBrandGravatar />}
+            href="https://gravatar.com"
+            target="_blank"
+            color="blue"
+          >
+            Edit Gravatar
+          </Button>
+          <Button
+            disabled={
+              this.context.user?.emailVerified || this.state.verifyDisabled
+            }
+            leftSection={<IconCircleCheck />}
+            color="purple"
+            onClick={this.verifyEmail}
+          >
+            Verify Email
+          </Button>
+          {this.context.isSubscriber && <ManageSubButton />}
+          {this.state.linkedDiscord ? (
             <Button
-              icon
-              labelPosition="left"
-              fluid
+              leftSection={<IconBrandDiscordFilled />}
               color="red"
-              onClick={this.deleteAccountConfirm}
+              onClick={this.deleteDiscord}
             >
-              <Icon name="trash" />
-              Delete Account
+              Unlink Discord {this.state.linkedDiscord.accountname}#
+              {this.state.linkedDiscord.discriminator}
             </Button>
-            <Button icon labelPosition="left" onClick={this.onSignOut} fluid>
-              <Icon name="sign out" />
-              Sign out
-            </Button>
-          </div>
-        </Modal.Content>
+          ) : (
+            <HoverCard>
+              <HoverCard.Dropdown>
+                <Text>
+                  Link your Discord account to automatically receive your
+                  Subscriber role if you're subscribed
+                </Text>
+              </HoverCard.Dropdown>
+              <HoverCard.Target>
+                <Button
+                  leftSection={<IconBrandDiscordFilled />}
+                  color="orange"
+                  onClick={this.authDiscord}
+                >
+                  Link Discord Account
+                </Button>
+              </HoverCard.Target>
+            </HoverCard>
+          )}
+          <Button
+            disabled={this.state.resetDisabled}
+            leftSection={<IconKeyFilled />}
+            color="green"
+            onClick={this.resetPassword}
+          >
+            Reset Password
+          </Button>
+          <Button
+            leftSection={<IconTrashFilled />}
+            color="red"
+            onClick={this.deleteAccountConfirm}
+          >
+            Delete Account
+          </Button>
+          <Button leftSection={<IconLogout />} onClick={this.onSignOut}>
+            Sign out
+          </Button>
+        </div>
       </Modal>
     );
   }
