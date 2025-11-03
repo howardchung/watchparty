@@ -1827,6 +1827,13 @@ export default class App extends React.Component<AppProps, AppState> {
     this.socket.emit('CMD:host', data.value);
   };
 
+  roomPlaylistPlay = (index: number) => {
+    this.roomSetMedia(null, {
+      value: this.state.playlist[index]?.url,
+    });
+    this.roomPlaylistDelete(index);
+  }
+
   roomPlaylistAdd = (_e: any, data: any) => {
     this.socket.emit('CMD:playlistAdd', data.value);
   };
@@ -1983,6 +1990,8 @@ export default class App extends React.Component<AppProps, AppState> {
         localSetVolume={this.localSetVolume}
         localSeek={this.localSeek}
         localSetSubtitleMode={this.Player().setSubtitleMode}
+        roomPlaylistPlay={this.roomPlaylistPlay}
+        playlist={this.state.playlist}
       />
     );
     return (
@@ -2318,9 +2327,9 @@ export default class App extends React.Component<AppProps, AppState> {
                         </Menu.Target>
                         <Menu.Dropdown
                           style={{
-                            overflowY: 'scroll',
-                            height: 400,
-                            width: isMobile() ? 400 : 600,
+                            overflowY: playlist.length > 0 ? 'scroll' : undefined,
+                            maxHeight: 400,
+                            maxWidth: isMobile() ? 400 : 600,
                           }}
                         >
                           {playlist.length === 0 && (
@@ -2339,12 +2348,7 @@ export default class App extends React.Component<AppProps, AppState> {
                                     video={item}
                                     index={index}
                                     controls
-                                    onPlay={(index) => {
-                                      this.roomSetMedia(null, {
-                                        value: playlist[index]?.url,
-                                      });
-                                      this.roomPlaylistDelete(index);
-                                    }}
+                                    onPlay={this.roomPlaylistPlay}
                                     onPlayNext={(index) => {
                                       this.roomPlaylistMove(index, 0);
                                     }}
