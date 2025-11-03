@@ -157,7 +157,13 @@ export class Controls extends React.Component<ControlsProps> {
         ) : (
           <IconPlayerPauseFilled {...playPauseProps} />
         )}
-        {playlist.length > 0 && <IconPlayerSkipForwardFilled title="Skip to next" className={styles.action} onClick={() => roomPlaylistPlay(0)} />}
+        {playlist.length > 0 && (
+          <IconPlayerSkipForwardFilled
+            title="Skip to next"
+            className={styles.action}
+            onClick={() => roomPlaylistPlay(0)}
+          />
+        )}
         <IconRefresh
           color={isBehind ? 'orange' : 'white'}
           title="Sync to leader"
@@ -282,9 +288,7 @@ export class Controls extends React.Component<ControlsProps> {
                   key={item.key}
                   onClick={() => roomSetPlaybackRate(item.value)}
                   rightSection={
-                    roomPlaybackRate === item.value ? (
-                      <IconCheck />
-                    ) : null
+                    roomPlaybackRate === item.value ? <IconCheck /> : null
                   }
                 >
                   {item.text}

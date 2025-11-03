@@ -1832,7 +1832,7 @@ export default class App extends React.Component<AppProps, AppState> {
       value: this.state.playlist[index]?.url,
     });
     this.roomPlaylistDelete(index);
-  }
+  };
 
   roomPlaylistAdd = (_e: any, data: any) => {
     this.socket.emit('CMD:playlistAdd', data.value);
@@ -2035,13 +2035,7 @@ export default class App extends React.Component<AppProps, AppState> {
           />
         )}
         {this.state.state === 'starting' && (
-          <Overlay
-            style={{
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}
-          >
+          <Overlay className={styles.flexCenter}>
             <Title order={2}>Loading...</Title>
           </Overlay>
         )}
@@ -2153,19 +2147,76 @@ export default class App extends React.Component<AppProps, AppState> {
               >
                 {!this.state.fullScreen && (
                   <React.Fragment>
-                    <ComboBox
-                      roomSetMedia={this.roomSetMedia}
-                      playlistAdd={this.roomPlaylistAdd}
-                      roomMedia={this.state.roomMedia}
-                      getMediaDisplayName={this.getMediaDisplayName}
-                      launchMultiSelect={this.launchMultiSelect}
-                      mediaPath={this.state.mediaPath}
-                      disabled={!this.haveLock()}
-                    />
-                    <div
-                      className={styles.mobileStack}
-                      style={{ display: 'flex', gap: '4px' }}
-                    >
+                    <div className={styles.mobileStack}>
+                      <ComboBox
+                        roomSetMedia={this.roomSetMedia}
+                        playlistAdd={this.roomPlaylistAdd}
+                        roomMedia={this.state.roomMedia}
+                        getMediaDisplayName={this.getMediaDisplayName}
+                        launchMultiSelect={this.launchMultiSelect}
+                        mediaPath={this.state.mediaPath}
+                        disabled={!this.haveLock()}
+                      />
+                      <Menu>
+                        <Menu.Target>
+                          <Button
+                            className={styles.shareButton}
+                            leftSection={<IconList />}
+                            rightSection={<Badge>{playlist.length}</Badge>}
+                          >
+                            Playlist
+                          </Button>
+                        </Menu.Target>
+                        <Menu.Dropdown
+                          style={{
+                            overflowY:
+                              playlist.length > 0 ? 'scroll' : undefined,
+                            maxHeight: 400,
+                            maxWidth: isMobile() ? 400 : 600,
+                          }}
+                        >
+                          {playlist.length === 0 && (
+                            <Menu.Item disabled>
+                              There are no items in the playlist.
+                            </Menu.Item>
+                          )}
+                          {playlist.map(
+                            (item: PlaylistVideo, index: number) => {
+                              if (Boolean(item.img)) {
+                                item.type = 'youtube';
+                              }
+                              return (
+                                <Menu.Item key={index}>
+                                  <ChatVideoCard
+                                    video={item}
+                                    index={index}
+                                    controls
+                                    onPlay={this.roomPlaylistPlay}
+                                    onPlayNext={(index) => {
+                                      this.roomPlaylistMove(index, 0);
+                                    }}
+                                    onRemove={(index) => {
+                                      this.roomPlaylistDelete(index);
+                                    }}
+                                    disabled={!this.haveLock()}
+                                  />
+                                </Menu.Item>
+                              );
+                            },
+                          )}
+                        </Menu.Dropdown>
+                      </Menu>
+                      <Button
+                        className={styles.shareButton}
+                        leftSection={<IconSettings />}
+                        onClick={() => {
+                          this.setSettingsModalOpen(true);
+                        }}
+                      >
+                        Settings
+                      </Button>
+                    </div>
+                    <div className={styles.mobileStack}>
                       {this.localStreamToPublish && (
                         <Button
                           color="red"
@@ -2316,61 +2367,6 @@ export default class App extends React.Component<AppProps, AppState> {
                             File
                           </Button>
                         )}
-                      <Menu>
-                        <Menu.Target>
-                          <Button
-                            leftSection={<IconList />}
-                            rightSection={<Badge>{playlist.length}</Badge>}
-                          >
-                            Playlist
-                          </Button>
-                        </Menu.Target>
-                        <Menu.Dropdown
-                          style={{
-                            overflowY: playlist.length > 0 ? 'scroll' : undefined,
-                            maxHeight: 400,
-                            maxWidth: isMobile() ? 400 : 600,
-                          }}
-                        >
-                          {playlist.length === 0 && (
-                            <Menu.Item disabled>
-                              There are no items in the playlist.
-                            </Menu.Item>
-                          )}
-                          {playlist.map(
-                            (item: PlaylistVideo, index: number) => {
-                              if (Boolean(item.img)) {
-                                item.type = 'youtube';
-                              }
-                              return (
-                                <Menu.Item key={index}>
-                                  <ChatVideoCard
-                                    video={item}
-                                    index={index}
-                                    controls
-                                    onPlay={this.roomPlaylistPlay}
-                                    onPlayNext={(index) => {
-                                      this.roomPlaylistMove(index, 0);
-                                    }}
-                                    onRemove={(index) => {
-                                      this.roomPlaylistDelete(index);
-                                    }}
-                                    disabled={!this.haveLock()}
-                                  />
-                                </Menu.Item>
-                              );
-                            },
-                          )}
-                        </Menu.Dropdown>
-                      </Menu>
-                      <Button
-                        leftSection={<IconSettings />}
-                        onClick={() => {
-                          this.setSettingsModalOpen(true);
-                        }}
-                      >
-                        Settings
-                      </Button>
                       {false && (
                         <SearchComponent
                           setMedia={this.roomSetMedia}
@@ -2394,13 +2390,7 @@ export default class App extends React.Component<AppProps, AppState> {
                 <div style={{ flexGrow: 1, position: 'relative' }}>
                   <div className={styles.playerContainer}>
                     {!this.state.isAutoPlayable && this.state.roomMedia && (
-                      <Overlay
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
+                      <Overlay className={styles.flexCenter}>
                         <Button
                           onClick={() => {
                             this.setState({ isAutoPlayable: true });
@@ -2420,19 +2410,13 @@ export default class App extends React.Component<AppProps, AppState> {
                       !this.state.isLiveStream && (
                         <div
                           id="loader"
-                          className={styles.videoContent}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}
+                          className={`${styles.videoContent} ${styles.flexCenter}`}
                         >
                           {this.state.loading && (
                             <div
+                              className={styles.flexCenter}
                               style={{
-                                display: 'flex',
                                 flexDirection: 'column',
-                                alignItems: 'center',
                               }}
                             >
                               <Loader />
