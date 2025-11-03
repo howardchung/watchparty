@@ -362,9 +362,9 @@ export const getFileName = (input: string) => {
   return input.split('/').slice(-1)[0];
 };
 
-export const isEmojiString = (input: string): boolean => {
+export const isEmojiString = (input?: string): boolean => {
   return /^(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])+$/g.test(
-    input,
+    input ?? '',
   );
 };
 

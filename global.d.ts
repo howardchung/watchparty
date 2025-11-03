@@ -27,7 +27,7 @@ interface Reaction {
 interface ChatMessageBase {
   id: string;
   cmd?: string;
-  msg: string;
+  msg?: string;
   system?: boolean;
   isSub?: boolean;
 }

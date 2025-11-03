@@ -40,7 +40,7 @@ interface ChatProps {
   socket: Socket;
   scrollTimestamp: number;
   className?: string;
-  getMediaDisplayName: (input: string) => string;
+  getMediaDisplayName: (input?: string) => string;
   hide?: boolean;
   isChatDisabled?: boolean;
   owner: string | undefined;
@@ -157,7 +157,7 @@ export class Chat extends React.Component<ChatProps> {
     }
   };
 
-  formatMessage = (cmd: string, msg: string): React.ReactNode | string => {
+  formatMessage = (cmd: string, msg?: string): React.ReactNode | string => {
     if (cmd === 'host') {
       return (
         <React.Fragment>
@@ -374,7 +374,7 @@ const ChatMessage = ({
   message: ChatMessage;
   nameMap: StringDict;
   pictureMap: StringDict;
-  formatMessage: (cmd: string, msg: string) => React.ReactNode;
+  formatMessage: (cmd: string, msg?: string) => React.ReactNode;
   socket: Socket;
   owner: string | undefined;
   isChatDisabled: boolean | undefined;
@@ -392,6 +392,7 @@ const ChatMessage = ({
   const { id, timestamp, cmd, msg, system, isSub, reactions, videoTS } =
     message;
   const spellFull = 5; // the number of people whose names should be written out in full in the reaction popup
+  const wrappedMsg = wrapImageStringInMarkdown(msg);
   return (
     <div
       style={{
@@ -468,9 +469,9 @@ const ChatMessage = ({
             {!cmd && msg}
           </div>
         </Linkify>
-        {wrapImageStringInMarkdown(msg)?.startsWith('![') && (
+        {wrappedMsg?.startsWith('![') && (
           <Markdown
-            children={wrapImageStringInMarkdown(msg)}
+            children={wrappedMsg as string}
             components={{
               img: ({ node, ...props }) => (
                 <img style={{ maxWidth: '100%' }} {...props} />

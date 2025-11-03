@@ -1861,7 +1861,7 @@ export default class App extends React.Component<AppProps, AppState> {
     this.socket.emit('CMD:uid', { uid, token });
   };
 
-  getMediaDisplayName = (input: string) => {
+  getMediaDisplayName = (input?: string) => {
     if (!input) {
       return '';
     }
