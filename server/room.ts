@@ -563,6 +563,9 @@ export class Room {
     if (data && data.length > 20000) {
       return;
     }
+    if (socket && !this.validateLock(socket.id)) {
+      return;
+    }
     if (
       socket &&
       data &&
@@ -581,6 +584,9 @@ export class Room {
 
   public playlistAdd = async (socket: Socket | null, data: string) => {
     if (data && data.length > 20000) {
+      return;
+    }
+    if (socket && !this.validateLock(socket.id)) {
       return;
     }
     redisCount('playlistAdds');
@@ -614,6 +620,9 @@ export class Room {
   };
 
   private playlistDelete = (socket: Socket, index: number) => {
+    if (!this.validateLock(socket.id)) {
+      return;
+    }
     if (index !== -1) {
       this.playlist.splice(index, 1);
       this.io.of(this.roomId).emit('playlist', this.playlist);
@@ -624,6 +633,9 @@ export class Room {
     socket: Socket,
     data: { index: number; toIndex: number },
   ) => {
+    if (!this.validateLock(socket.id)) {
+      return;
+    }
     if (data.index !== -1) {
       const items = this.playlist.splice(data.index, 1);
       this.playlist.splice(data.toIndex, 0, items[0]);
