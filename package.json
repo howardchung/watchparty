@@ -86,7 +86,6 @@
     "@types/react-onclickoutside": "^6.7.10",
     "@types/react-router-dom": "^5.3.3",
     "@types/react-transition-group": "^4.4.10",
-    "@types/ssh2-streams": "^0.1.12",
     "@types/webtorrent": "^0.110.1",
     "@types/youtube": "^0.1.2",
     "typescript": "^5.9.3",
