@@ -370,7 +370,7 @@ export const isEmojiString = (input: string): boolean => {
 
 export const wrapImageStringInMarkdown = (input: string): string => {
   // If a valid image string, wrap it in markdown tags
-  let regex = /^https?:\/\/.*\/.*\.(png|gif|webp|jpeg|jpg)\??.*$/gmi;
+  let regex = /^https?:\/\/.*\/.*\.(png|gif|webp|jpeg|jpg)\??.*$/gim;
   if (input.match(regex)) {
     return `![](${input})`;
   }

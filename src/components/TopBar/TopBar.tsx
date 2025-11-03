@@ -406,6 +406,7 @@ export const TopBar = (props: {
             <ActionIcon
               component="a"
               color="grey"
+              size="lg"
               href="https://discord.gg/3rYj5HV"
               target="_blank"
               rel="noopener noreferrer"
@@ -416,6 +417,7 @@ export const TopBar = (props: {
             <ActionIcon
               component="a"
               color="grey"
+              size="lg"
               href="https://github.com/howardchung/watchparty"
               target="_blank"
               rel="noopener noreferrer"

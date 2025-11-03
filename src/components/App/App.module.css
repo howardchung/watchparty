@@ -20,10 +20,20 @@
   min-height: 48vh;
 }
 
+.flexCenter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobileStack {
+  display: flex;
+  gap: 4px;
+}
+
 @media only screen and (max-width: 600px) {
   .mobileStack {
     flex-direction: column;
-    gap: 4px;
     width: calc(100% - 8px);
   }
 }
@@ -54,7 +64,7 @@
   align-items: center;
   justify-content: center;
   top: 50%;
-  right: -32px;
+  right: -30px;
 }
 
 .fullHeightColumn {
