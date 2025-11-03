@@ -5,8 +5,8 @@ import { NekoClient } from '.';
 import GuacamoleKeyboard from './keyboard';
 import config from '../../config';
 import { VIDEO_MAX_HEIGHT_CSS } from '../../utils';
-
-// import { EVENT } from './events';
+import { Button } from '@mantine/core';
+import { IconClipboard, IconKeyboardFilled } from '@tabler/icons-react';
 
 export default class VBrowser extends React.Component<{
   username: string;
@@ -18,6 +18,7 @@ export default class VBrowser extends React.Component<{
   quality: string;
   setQuality: (quality: string) => void;
   doPlay: () => Promise<void>;
+  isMobile: boolean;
 }> {
   state = { dummyValue: '' };
   // private observer = new ResizeObserver(this.onResize);
@@ -111,7 +112,8 @@ export default class VBrowser extends React.Component<{
       if (!this.focused || !this.controlling) {
         return true;
       }
-      this.$client.sendData('keydown', { key: this.keyMap(key) });
+      const keyToSend = this.keyMap(key);
+      this.$client.sendData('keydown', { key: keyToSend });
       return false;
     };
     this.keyboard.onkeyup = (key: number) => {
@@ -146,9 +148,11 @@ export default class VBrowser extends React.Component<{
   takeControl = () => {
     if (this.$client.connected) {
       this.$client.sendMessage(EVENT.ADMIN.CONTROL);
+      this.$client.sendMessage(EVENT.CONTROL.CLIPBOARD, { text: '' });
     } else {
       this.$client.once(EVENT.CONNECTED, () => {
         this.$client.sendMessage(EVENT.ADMIN.CONTROL);
+        this.$client.sendMessage(EVENT.CONTROL.CLIPBOARD, { text: '' });
       });
     }
   };
@@ -176,17 +180,16 @@ export default class VBrowser extends React.Component<{
     }
   }
   onFocus = async (e: React.MouseEvent) => {
-    if (
-      this.props.controlling
-    ) {
-      if (navigator.clipboard &&
-      typeof navigator.clipboard.readText === 'function') {
+    if (this.props.controlling) {
+      if (
+        navigator.clipboard &&
+        typeof navigator.clipboard.readText === 'function'
+      ) {
         try {
           const text = await navigator.clipboard.readText();
-          // console.log('[FOCUS]', text);
           // send clipboard contents to vbrowser
           this.$client.sendMessage(EVENT.CONTROL.CLIPBOARD, { text });
-        } catch(e) {
+        } catch (e) {
           console.warn(e);
         }
       }
@@ -365,114 +368,153 @@ export default class VBrowser extends React.Component<{
     // leftVideoParent is the target for fullscreen, which loses its style when set to fullscreenElement
     // extra container layer is to be able to keep styling for overlay/video
     return (
-      <div
-        id="leftVideoParent"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: '100%',
-          height: '100%',
-        }}
-      >
+      <>
         <div
-          ref={this._container}
           style={{
-            position: 'relative',
-            width: '100%',
-            height: document.getElementById('leftVideo')?.clientHeight,
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            display: 'flex',
+            gap: '4px',
           }}
         >
-          <video
-            playsInline
-            ref={this._video}
-            id="leftVideo"
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              // maxHeight: document.fullscreenElement ? undefined : VIDEO_MAX_HEIGHT_CSS,
-            }}
-          />
-          <div
-            ref={this._overlay}
-            id={'leftOverlay'}
-            tabIndex={0}
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: document.getElementById('leftVideo')?.clientWidth,
-              height: document.getElementById('leftVideo')?.clientHeight,
-              // disable firefox scrollbars?
-              scrollbarWidth: 'none',
-            }}
-            onClick={this.onClick}
-            onContextMenu={this.onContextMenu}
-            // onWheel={this.onWheel}
-            onMouseMove={this.onMouseMove}
-            onMouseDown={this.onMouseDown}
-            onMouseUp={this.onMouseUp}
-            onMouseEnter={this.onMouseEnter}
-            onMouseLeave={this.onMouseLeave}
-          />
-          <audio id="iPhoneAudio" />
-          {/* <div id="debug" style={{ position: 'fixed', top: 0, fontSize: 24 }} /> */}
-          <input
-            type="text"
-            id="dummy"
-            value={this.state.dummyValue}
-            style={{
-              position: 'absolute',
-              left: 0,
-              top: 0,
-              height: 0,
-              opacity: 0,
-            }}
-            onFocus={() => {
-              this.focused = true;
-              this.setState({ dummyValue: '' });
-            }}
-            onBlur={() => {
-              this.focused = false;
-              this.setState({ dummyValue: '' });
-            }}
-            onKeyDown={(e) => {
-              e.nativeEvent.preventDefault();
-              // document.getElementById('debug')!.innerHTML = e.key;
-              // On mobile this is "unidentified" for content chars, so this is meant for backspace/enter
-              if (e.key !== 'Unidentified') {
-                document
-                  .getElementById('leftOverlay')
-                  ?.dispatchEvent(new KeyboardEvent('keydown', { key: e.key }));
-                document
-                  .getElementById('leftOverlay')
-                  ?.dispatchEvent(new KeyboardEvent('keyup', { key: e.key }));
-              }
-            }}
-            onBeforeInputCapture={(
-              e: React.CompositionEvent<HTMLInputElement>,
-            ) => {
-              e.nativeEvent.preventDefault();
-              // document.getElementById('debug')!.innerHTML = e.type + ' ' + e.data;
-              if (e.type === 'beforeinput') {
-                document.getElementById('leftOverlay')?.dispatchEvent(
-                  new KeyboardEvent('keydown', {
-                    key: e.data,
-                    shiftKey: e.data === e.data.toUpperCase(),
-                  }),
-                );
-                document.getElementById('leftOverlay')?.dispatchEvent(
-                  new KeyboardEvent('keyup', {
-                    key: e.data,
-                  }),
-                );
-              }
-            }}
-          />
+          {this.props.isMobile && this.props.controlling && (
+            <Button
+              onClick={() => {
+                const dummy = document.getElementById('dummy');
+                dummy?.focus();
+              }}
+              leftSection={<IconKeyboardFilled />}
+            >
+              Open Keyboard
+            </Button>
+          )}
+          {this.props.isMobile && this.props.controlling && (
+            <Button
+              onClick={async () => {
+                // Guacamole ctrl v codes
+                this.$client.sendData('keydown', { key: 65507 });
+                this.$client.sendData('keydown', { key: 118 });
+                this.$client.sendData('keyup', { key: 65507 });
+                this.$client.sendData('keyup', { key: 118 });
+              }}
+              leftSection={<IconClipboard />}
+            >
+              Paste
+            </Button>
+          )}
         </div>
-      </div>
+        <div
+          id="leftVideoParent"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '100%',
+            height: '100%',
+          }}
+        >
+          <div
+            ref={this._container}
+            style={{
+              position: 'relative',
+              width: '100%',
+              height: document.getElementById('leftVideo')?.clientHeight,
+            }}
+          >
+            <video
+              playsInline
+              ref={this._video}
+              id="leftVideo"
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                // maxHeight: document.fullscreenElement ? undefined : VIDEO_MAX_HEIGHT_CSS,
+              }}
+            />
+            <div
+              ref={this._overlay}
+              id={'leftOverlay'}
+              tabIndex={0}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: document.getElementById('leftVideo')?.clientWidth,
+                height: document.getElementById('leftVideo')?.clientHeight,
+                // disable firefox scrollbars?
+                scrollbarWidth: 'none',
+              }}
+              onClick={this.onClick}
+              onContextMenu={this.onContextMenu}
+              // onWheel={this.onWheel}
+              onMouseMove={this.onMouseMove}
+              onMouseDown={this.onMouseDown}
+              onMouseUp={this.onMouseUp}
+              onMouseEnter={this.onMouseEnter}
+              onMouseLeave={this.onMouseLeave}
+            />
+            <audio id="iPhoneAudio" />
+            {/* <div id="debug" style={{ position: 'fixed', top: 0, fontSize: 24 }} /> */}
+            <input
+              type="text"
+              id="dummy"
+              value={this.state.dummyValue}
+              style={{
+                position: 'absolute',
+                left: 0,
+                top: 0,
+                height: 0,
+                opacity: 0,
+              }}
+              onFocus={() => {
+                this.focused = true;
+                this.setState({ dummyValue: '' });
+              }}
+              onBlur={() => {
+                this.focused = false;
+                this.setState({ dummyValue: '' });
+              }}
+              onKeyDown={(e) => {
+                e.nativeEvent.preventDefault();
+                // document.getElementById('debug')!.innerHTML = e.key;
+                // On mobile this is "unidentified" for content chars, so this is meant for backspace/enter
+                if (e.key !== 'Unidentified') {
+                  document
+                    .getElementById('leftOverlay')
+                    ?.dispatchEvent(
+                      new KeyboardEvent('keydown', { key: e.key }),
+                    );
+                  document
+                    .getElementById('leftOverlay')
+                    ?.dispatchEvent(new KeyboardEvent('keyup', { key: e.key }));
+                }
+              }}
+              onBeforeInputCapture={(
+                e: React.CompositionEvent<HTMLInputElement>,
+              ) => {
+                e.nativeEvent.preventDefault();
+                // document.getElementById('debug')!.innerHTML = e.type + ' ' + e.data;
+                if (e.type === 'beforeinput') {
+                  document.getElementById('leftOverlay')?.dispatchEvent(
+                    new KeyboardEvent('keydown', {
+                      key: e.data,
+                      shiftKey: e.data === e.data.toUpperCase(),
+                    }),
+                  );
+                  document.getElementById('leftOverlay')?.dispatchEvent(
+                    new KeyboardEvent('keyup', {
+                      key: e.data,
+                    }),
+                  );
+                }
+              }}
+            />
+          </div>
+        </div>
+      </>
     );
   }
 }
