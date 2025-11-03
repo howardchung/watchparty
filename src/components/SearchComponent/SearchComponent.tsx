@@ -9,8 +9,8 @@ import { MetadataContext } from '../../MetadataContext';
 import { IconBrandYoutubeFilled, IconMovie } from '@tabler/icons-react';
 
 interface SearchComponentProps {
-  setMedia: (_e: any, data: any) => void;
-  playlistAdd: (_e: any, data: any) => void;
+  setMedia: (value: string) => void;
+  playlistAdd: (value: string) => void;
   type?: 'youtube' | 'media' | 'stream';
   launchMultiSelect?: (multi?: []) => void;
   disabled?: boolean;
@@ -46,8 +46,8 @@ export class SearchComponent extends React.Component<SearchComponentProps> {
     }
   };
 
-  setMedia = (e: any, data: any) => {
-    this.props.setMedia(e, data);
+  setMedia = (value: string) => {
+    this.props.setMedia(value);
   };
 
   render() {

@@ -2,12 +2,12 @@ import React, { useContext } from 'react';
 import { Button, Text } from '@mantine/core';
 import { decodeEntities, formatSize } from '../../utils';
 import { MetadataContext } from '../../MetadataContext';
-import { IconBrandYoutubeFilled, IconFile } from '@tabler/icons-react';
+import { IconBrandYoutubeFilled } from '@tabler/icons-react';
 
 export const YouTubeSearchResult = (
   props: SearchResult & {
-    setMedia: (_e: any, data: any) => void;
-    playlistAdd: (_e: any, data: any) => void;
+    setMedia: (value: string) => void;
+    playlistAdd: (value: string) => void;
   },
 ) => {
   const result = props;
@@ -15,7 +15,7 @@ export const YouTubeSearchResult = (
   return (
     <div
       onClick={(e) => {
-        setMedia(e, { value: result.url });
+        setMedia(result.url);
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -27,7 +27,7 @@ export const YouTubeSearchResult = (
             onClick={(e) => {
               e.stopPropagation();
               e.nativeEvent.stopImmediatePropagation();
-              props.playlistAdd(e, { value: result.url });
+              props.playlistAdd(result.url);
             }}
           >
             Add To Playlist

@@ -18,8 +18,8 @@ import {
 } from '@mantine/core';
 
 type ComboBoxProps = {
-  roomSetMedia: (e: any, data: any) => void;
-  playlistAdd: (e: any, data: any) => void;
+  roomSetMedia: (value: string) => void;
+  playlistAdd: (value: string) => void;
   roomMedia: string;
   getMediaDisplayName: (input: string) => string;
   launchMultiSelect: (multi: []) => void;
@@ -40,8 +40,8 @@ export class ComboBox extends React.Component<ComboBoxProps, ComboBoxState> {
     loading: false,
   };
 
-  setMediaAndClose = (e: any, data: any) => {
-    this.props.roomSetMedia(e, data);
+  setMediaAndClose = (value: string) => {
+    this.props.roomSetMedia(value);
     this.setState({ inputMedia: undefined, items: [] });
   };
 
@@ -93,7 +93,7 @@ export class ComboBox extends React.Component<ComboBoxProps, ComboBoxState> {
         <div
           key={option.value}
           onClick={(e: any) =>
-            this.setMediaAndClose(e, { value: option.value })
+            this.setMediaAndClose(option.value)
           }
           style={{ width: '100%' }}
         >
@@ -146,9 +146,7 @@ export class ComboBox extends React.Component<ComboBoxProps, ComboBoxState> {
         }}
         onKeyDown={(e: any) => {
           if (e.key === 'Enter') {
-            this.setMediaAndClose(e, {
-              value: this.state.inputMedia,
-            });
+            this.setMediaAndClose(this.state.inputMedia ?? '');
           }
         }}
         // rightSection={
