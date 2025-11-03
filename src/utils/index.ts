@@ -368,6 +368,16 @@ export const isEmojiString = (input: string): boolean => {
   );
 };
 
+export const wrapImageStringInMarkdown = (input: string): string => {
+  // If a valid image string, wrap it in markdown tags
+  let regex = /^https?:\/\/.*\/.*\.(png|gif|webp|jpeg|jpg)\??.*$/gmi;
+  if (input.match(regex)) {
+    return `![](${input})`;
+  }
+  // Otherwise just return the original input
+  return input;
+};
+
 function uuidv4() {
   return '10000000-1000-4000-8000-100000000000'.replace(/[018]/g, (c) =>
     (

@@ -20,11 +20,11 @@ import {
   formatTimestamp,
   getColorForStringHex,
   getDefaultPicture,
+  wrapImageStringInMarkdown,
   isEmojiString,
 } from '../../utils';
 import { UserMenu } from '../UserMenu/UserMenu';
 import { Socket } from 'socket.io-client';
-import firebase from 'firebase/compat/app';
 import classes from './Chat.module.css';
 import {
   CSSTransition,
@@ -467,9 +467,9 @@ const ChatMessage = ({
             {!cmd && msg}
           </div>
         </Linkify>
-        {msg?.startsWith('![') && (
+        {wrapImageStringInMarkdown(msg)?.startsWith('![') && (
           <Markdown
-            children={msg}
+            children={wrapImageStringInMarkdown(msg)}
             components={{
               img: ({ node, ...props }) => (
                 <img style={{ maxWidth: '100%' }} {...props} />
