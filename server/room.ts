@@ -591,19 +591,26 @@ export class Room {
     }
     redisCount('playlistAdds');
     const youtubeVideoId = getYoutubeVideoID(data);
-    if (youtubeVideoId) {
-      const video = await fetchYoutubeVideo(youtubeVideoId);
-      if (video) {
-        this.playlist.push(video);
+    const item = {
+      name: data,
+      channel: 'Video URL',
+      duration: 0,
+      url: data,
+      type: data.startsWith('magnet:') ? 'magnet' : 'file',
+    };
+    let video: PlaylistVideo | null = null;
+    try {
+      if (youtubeVideoId) {
+        video = await fetchYoutubeVideo(youtubeVideoId);
       }
+    } catch (e) {
+      // Failed to fetch YouTube video info but can still add the URL
+      console.warn(e);
+    }
+    if (video) {
+      this.playlist.push(video);
     } else {
-      this.playlist.push({
-        name: data,
-        channel: 'Video URL',
-        duration: 0,
-        url: data,
-        type: data.startsWith('magnet:') ? 'magnet' : 'file',
-      });
+      this.playlist.push(item);
     }
     this.io.of(this.roomId).emit('playlist', this.playlist);
     if (socket) {
