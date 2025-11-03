@@ -20,8 +20,8 @@ const ChatVideoCard: React.FC<{
   onPlay?: (index: number) => void;
   onRemove?: (index: number) => void;
   onPlayNext?: (index: number) => void;
-  onSetMedia?: (e: any, data: any) => void;
-  onPlaylistAdd?: (e: any, data: any) => void;
+  onSetMedia?: (value: string) => void;
+  onPlaylistAdd?: (value: string) => void;
   disabled?: boolean;
 }> = (props) => {
   const {
@@ -74,7 +74,7 @@ const ChatVideoCard: React.FC<{
       onClick={
         onSetMedia
           ? (e) => {
-              onSetMedia(e, { value: video.url });
+              onSetMedia(video.url);
             }
           : undefined
       }
@@ -110,7 +110,7 @@ const ChatVideoCard: React.FC<{
               onClick={(e) => {
                 e.stopPropagation();
                 e.nativeEvent.stopImmediatePropagation();
-                onPlaylistAdd(e, { value: video.url });
+                onPlaylistAdd(video.url);
               }}
             >
               <IconPlaylistAdd />

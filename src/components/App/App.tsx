@@ -1049,7 +1049,7 @@ export default class App extends React.Component<AppProps, AppState> {
           }
         } else {
           // Set room URL to download url when ready
-          this.roomSetMedia(null, { value: msg.data });
+          this.roomSetMedia(msg.data);
         }
       });
     });
@@ -1823,19 +1823,17 @@ export default class App extends React.Component<AppProps, AppState> {
     this.localSetMute(!this.Player().isMuted());
   };
 
-  roomSetMedia = (_e: any, data: any) => {
-    this.socket.emit('CMD:host', data.value);
+  roomSetMedia = (value: string) => {
+    this.socket.emit('CMD:host', value);
   };
 
   roomPlaylistPlay = (index: number) => {
-    this.roomSetMedia(null, {
-      value: this.state.playlist[index]?.url,
-    });
+    this.roomSetMedia(this.state.playlist[index]?.url);
     this.roomPlaylistDelete(index);
   };
 
-  roomPlaylistAdd = (_e: any, data: any) => {
-    this.socket.emit('CMD:playlistAdd', data.value);
+  roomPlaylistAdd = (value: string) => {
+    this.socket.emit('CMD:playlistAdd', value);
   };
 
   roomPlaylistMove = (index: number, toIndex: number) => {
@@ -1946,7 +1944,7 @@ export default class App extends React.Component<AppProps, AppState> {
         /&fileIndex=(\d+)$/,
         `&fileIndex=${nextNum}`,
       );
-      this.roomSetMedia(null, { value: nextUrl });
+      this.roomSetMedia(nextUrl);
     }
   };
 

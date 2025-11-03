@@ -8,7 +8,7 @@ export const MultiStreamModal = ({
   resetMultiSelect,
 }: {
   streams: { name: string; url: string; length: number; playFn?: () => void }[];
-  setMedia: (_e: any, data: any) => void;
+  setMedia: (value: string) => void;
   resetMultiSelect: () => void;
 }) => (
   <Modal opened onClose={resetMultiSelect} centered title="Select a file">
@@ -19,7 +19,7 @@ export const MultiStreamModal = ({
           <Menu.Item
             leftSection={<IconFile />}
             onClick={() => {
-              setMedia(null, { value: file.url });
+              setMedia(file.url);
               resetMultiSelect();
             }}
           >
