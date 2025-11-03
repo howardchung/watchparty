@@ -14,6 +14,7 @@ import {
   IconVolume,
   IconTheater,
   IconMaximize,
+  IconPlayerSkipForwardFilled,
 } from '@tabler/icons-react';
 
 interface ControlsProps {
@@ -43,6 +44,8 @@ interface ControlsProps {
   localSeek: () => void;
   localSetVolume: (volume: number) => void;
   localSetSubtitleMode: (mode: TextTrackMode, lang?: string) => void;
+  roomPlaylistPlay: (index: number) => void;
+  playlist: PlaylistVideo[];
 }
 
 export class Controls extends React.Component<ControlsProps> {
@@ -109,6 +112,11 @@ export class Controls extends React.Component<ControlsProps> {
       muted,
       volume,
       isLiveStream,
+      playlist,
+      roomPlaylistPlay,
+      timeRanges,
+      roomSetPlaybackRate,
+      roomPlaybackRate,
     } = this.props;
     // console.log(leaderTime, currentTime);
     const behindThreshold = 5;
@@ -116,7 +124,7 @@ export class Controls extends React.Component<ControlsProps> {
       leaderTime && leaderTime < Infinity
         ? leaderTime - currentTime > behindThreshold
         : this.getEnd() - this.getCurrent() > behindThreshold;
-    const buffers = this.props.timeRanges.map(({ start, end }) => {
+    const buffers = timeRanges.map(({ start, end }) => {
       const buffStartPct = (start / this.getLength()) * 100;
       const buffLengthPct = ((end - start) / this.getLength()) * 100;
       return (
@@ -149,15 +157,16 @@ export class Controls extends React.Component<ControlsProps> {
         ) : (
           <IconPlayerPauseFilled {...playPauseProps} />
         )}
+        {playlist.length > 0 && <IconPlayerSkipForwardFilled title="Skip to next" className={styles.action} onClick={() => roomPlaylistPlay(0)} />}
         <IconRefresh
           color={isBehind ? 'orange' : 'white'}
           title="Sync to leader"
-          className={` ${styles.action}`}
+          className={`${styles.action}`}
           onClick={() => {
             if (isLiveStream) {
               // do a regular seek rather than sync self if it's HLS since we're basically seeking to the live position
               // Also, clear the room TS since we want to start at live again on refresh
-              this.props.roomSeek(Number.MAX_SAFE_INTEGER);
+              roomSeek(Number.MAX_SAFE_INTEGER);
             } else {
               localSeek();
             }
@@ -169,7 +178,7 @@ export class Controls extends React.Component<ControlsProps> {
         <Progress.Root
           radius="0px"
           onClick={(e: any) => {
-            if (!this.props.disabled) {
+            if (!disabled) {
               // Read the time from the click event
               if (e) {
                 const rect = e.target.getBoundingClientRect();
@@ -242,7 +251,7 @@ export class Controls extends React.Component<ControlsProps> {
           {formatTimestamp(this.getEnd(), isLiveStream)}
         </div>
         {
-          <Menu disabled={this.props.disabled}>
+          <Menu disabled={disabled}>
             <Menu.Target>
               <div
                 className={`${styles.text} ${styles.action}`}
@@ -271,9 +280,9 @@ export class Controls extends React.Component<ControlsProps> {
               ].map((item) => (
                 <Menu.Item
                   key={item.key}
-                  onClick={() => this.props.roomSetPlaybackRate(item.value)}
+                  onClick={() => roomSetPlaybackRate(item.value)}
                   rightSection={
-                    this.props.roomPlaybackRate === item.value ? (
+                    roomPlaybackRate === item.value ? (
                       <IconCheck />
                     ) : null
                   }
