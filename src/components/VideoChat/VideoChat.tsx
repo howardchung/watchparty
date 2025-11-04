@@ -241,7 +241,6 @@ export class VideoChat extends React.Component<VideoChatProps> {
       width: 190,
       objectFit: 'cover',
       position: 'relative',
-      zIndex: -1,
     };
     const selfId = getOrCreateClientId();
     return (
@@ -355,6 +354,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
                       fontSize: '10px',
                       fontWeight: 700,
                       display: 'flex',
+                      zIndex: 1,
                     }}
                   >
                     <div
