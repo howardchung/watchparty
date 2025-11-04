@@ -7,6 +7,7 @@ import {
   Title,
   TextInput,
   ActionIcon,
+  Divider,
 } from '@mantine/core';
 import { Socket } from 'socket.io-client';
 import { openFileSelector, serverPath } from '../../utils';
@@ -95,6 +96,7 @@ export class SubtitleModal extends React.Component<{
               this.props.setSubtitleMode();
             }}
           />
+          <Divider my="lg" />
           <Title order={6}>Room subtitles</Title>
           <div style={{ display: 'flex', gap: '4px', flexDirection: 'column' }}>
             <TextInput
@@ -124,6 +126,7 @@ export class SubtitleModal extends React.Component<{
             >
               Upload (.srt)
             </Button>
+            <Divider my="lg" />
             <Title order={6}>OpenSubtitles</Title>
             <TextInput
               value={this.state.titleQuery}
