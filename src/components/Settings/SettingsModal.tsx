@@ -10,6 +10,7 @@ import {
   Switch,
   Loader,
   Text,
+  Divider,
 } from '@mantine/core';
 import { getCurrentSettings, updateSettings } from './LocalSettings';
 import { serverPath } from '../../utils';
@@ -186,7 +187,7 @@ export const SettingsModal = ({
             label={!user ? 'requires login' : ''}
           />
 
-          <Divider />
+          <Divider my="lg" />
           <div className={styles.sectionHeader}>Local Settings</div>
           <SettingRow
             toggle
@@ -207,7 +208,7 @@ export const SettingsModal = ({
           />
         </div>
 
-        <Divider />
+        <Divider my="lg" />
         {<div className={styles.sectionHeader}>Permanent Room Settings</div>}
         {!owner && (
           <Alert color="yellow">
@@ -485,13 +486,3 @@ const SettingRow = ({
     </>
   );
 };
-
-const Divider = () => (
-  <div
-    style={{
-      borderTop: '2px dashed white',
-      marginTop: 10,
-      marginBottom: 10,
-    }}
-  />
-);
