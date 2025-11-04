@@ -2621,6 +2621,7 @@ export default class App extends React.Component<AppProps, AppState> {
                   }
                 />
                 <Button
+                  className={styles.shareButton}
                   onClick={() =>
                     this.setState({
                       showPeopleColumn: !this.state.showPeopleColumn,

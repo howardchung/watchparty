@@ -174,7 +174,7 @@ export class VBrowserModal extends React.Component<{
                       <LaunchButton large={false} />
                     )
                   ) : (
-                    <SignInButton fluid />
+                    <SignInButton />
                   )}
                 </Table.Td>
                 <Table.Td>

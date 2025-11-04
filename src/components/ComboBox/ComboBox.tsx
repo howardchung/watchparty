@@ -92,9 +92,7 @@ export class ComboBox extends React.Component<ComboBoxProps, ComboBoxState> {
       return (
         <div
           key={option.value}
-          onClick={(e: any) =>
-            this.setMediaAndClose(option.value)
-          }
+          onClick={(e: any) => this.setMediaAndClose(option.value)}
           style={{ width: '100%' }}
         >
           {video && (
