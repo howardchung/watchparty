@@ -70,9 +70,7 @@ export const NewRoomButton = (props: {
   );
 };
 
-type SignInButtonProps = {
-  fluid?: boolean;
-};
+type SignInButtonProps = {};
 
 export class SignInButton extends React.Component<SignInButtonProps> {
   static contextType = MetadataContext;
@@ -84,22 +82,6 @@ export class SignInButton extends React.Component<SignInButtonProps> {
       this.setState({ userImage: await getUserImage(this.context.user) });
     }
   }
-
-  facebookSignIn = async () => {
-    const provider = new firebase.auth.FacebookAuthProvider();
-    await firebase.auth().signInWithPopup(provider);
-  };
-
-  googleSignIn = async () => {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    await firebase.auth().signInWithPopup(provider);
-  };
-
-  signOut = () => {
-    firebase.auth().signOut();
-    window.location.reload();
-    this.setState({ userImage: null });
-  };
 
   render() {
     if (this.context.user) {
@@ -126,36 +108,6 @@ export class SignInButton extends React.Component<SignInButtonProps> {
         </div>
       );
     }
-    const enabledOptions = config.VITE_FIREBASE_SIGNIN_METHODS.split(',');
-    const components: Record<string, JSX.Element> = {
-      facebook: (
-        <Menu.Item
-          key="facebook"
-          leftSection={<IconBrandFacebookFilled />}
-          onClick={this.facebookSignIn}
-        >
-          Facebook
-        </Menu.Item>
-      ),
-      google: (
-        <Menu.Item
-          key="google"
-          leftSection={<IconBrandGoogleFilled />}
-          onClick={this.googleSignIn}
-        >
-          Google
-        </Menu.Item>
-      ),
-      email: (
-        <Menu.Item
-          key="email"
-          leftSection={<IconMailFilled />}
-          onClick={() => this.setState({ isLoginOpen: true })}
-        >
-          Email
-        </Menu.Item>
-      ),
-    };
     return (
       <React.Fragment>
         {this.state.isLoginOpen && (
@@ -163,16 +115,12 @@ export class SignInButton extends React.Component<SignInButtonProps> {
             closeModal={() => this.setState({ isLoginOpen: false })}
           />
         )}
-        <Menu>
-          <Menu.Target>
-            <Button leftSection={<IconLogin />}>Sign in</Button>
-          </Menu.Target>
-          <Menu.Dropdown>
-            {enabledOptions.map((opt) => {
-              return components[opt];
-            })}
-          </Menu.Dropdown>
-        </Menu>
+        <Button
+          leftSection={<IconLogin />}
+          onClick={() => this.setState({ isLoginOpen: true })}
+        >
+          Sign in
+        </Button>
       </React.Fragment>
     );
   }
