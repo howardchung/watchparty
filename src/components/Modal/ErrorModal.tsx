@@ -5,7 +5,14 @@ import { IconHome, IconRefresh } from '@tabler/icons-react';
 export const ErrorModal = ({ error }: { error: string }) => {
   return (
     <Modal opened onClose={() => {}} title={error} centered>
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '8px' }}>
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          justifyContent: 'center',
+          gap: '8px',
+        }}
+      >
         <Button
           size="xl"
           onClick={() => {

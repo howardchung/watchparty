@@ -305,7 +305,7 @@ export const SettingsModal = ({
                   checkValidVanity(e.target.value);
                   setVanity(e.target.value);
                 }}
-                // `${window.location.origin}/r/`
+                leftSection={`/r/`}
                 rightSection={
                   <>
                     {validVanityLoading && <Loader />}
@@ -326,58 +326,58 @@ export const SettingsModal = ({
             disabled={!isSubscriber}
             subOnly={true}
             content={
-              <React.Fragment>
-                <div>
-                  <TextInput
-                    label={`Set Room Title, Description & Color`}
-                    description="Set the room title, description and title color to be displayed in the top bar."
-                    value={roomTitleInput ?? roomTitle ?? ''}
-                    disabled={!isSubscriber}
-                    maxLength={roomTitleMaxCharLength}
-                    onChange={(e) => {
-                      setAdminSettingsChanged(true);
-                      setRoomTitleInput(e.target.value);
-                    }}
-                    placeholder={`Title (max. ${roomTitleMaxCharLength} characters)`}
-                    rightSection={
-                      <Popover>
-                        <Popover.Dropdown>
-                          <React.Fragment>
-                            <h5>Edit Title Color</h5>
-                            <HexColorPicker
-                              color={
-                                roomTitleColorInput ||
-                                roomTitleColor ||
-                                defaultRoomTitleColor
-                              }
-                              onChange={(e) => {
-                                setAdminSettingsChanged(true);
-                                setRoomTitleColorInput(e);
-                              }}
-                            />
-                            <div
-                              style={{
-                                marginTop: 8,
-                                paddingLeft: 4,
-                                borderLeft: `24px solid ${roomTitleColorInput}`,
-                              }}
-                            >
-                              {roomTitleColorInput?.toUpperCase()}
-                            </div>
-                          </React.Fragment>
-                        </Popover.Dropdown>
-                        <Popover.Target>
-                          <ActionIcon
-                            color={roomTitleColorInput}
-                            disabled={!isSubscriber}
+              <div
+                style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}
+              >
+                <TextInput
+                  label={`Set Room Title, Description & Color`}
+                  description="Set the room title, description and title color to be displayed in the top bar."
+                  value={roomTitleInput ?? roomTitle ?? ''}
+                  disabled={!isSubscriber}
+                  maxLength={roomTitleMaxCharLength}
+                  onChange={(e) => {
+                    setAdminSettingsChanged(true);
+                    setRoomTitleInput(e.target.value);
+                  }}
+                  placeholder={`Title (max. ${roomTitleMaxCharLength} characters)`}
+                  rightSection={
+                    <Popover>
+                      <Popover.Dropdown>
+                        <React.Fragment>
+                          <h5>Edit Title Color</h5>
+                          <HexColorPicker
+                            color={
+                              roomTitleColorInput ||
+                              roomTitleColor ||
+                              defaultRoomTitleColor
+                            }
+                            onChange={(e) => {
+                              setAdminSettingsChanged(true);
+                              setRoomTitleColorInput(e);
+                            }}
+                          />
+                          <div
+                            style={{
+                              marginTop: 8,
+                              paddingLeft: 4,
+                              borderLeft: `24px solid ${roomTitleColorInput}`,
+                            }}
                           >
-                            <IconPaintFilled size={16} />
-                          </ActionIcon>
-                        </Popover.Target>
-                      </Popover>
-                    }
-                  ></TextInput>
-                </div>
+                            {roomTitleColorInput?.toUpperCase()}
+                          </div>
+                        </React.Fragment>
+                      </Popover.Dropdown>
+                      <Popover.Target>
+                        <ActionIcon
+                          color={roomTitleColorInput}
+                          disabled={!isSubscriber}
+                        >
+                          <IconPaintFilled size={16} />
+                        </ActionIcon>
+                      </Popover.Target>
+                    </Popover>
+                  }
+                ></TextInput>
                 <TextInput
                   value={roomDescriptionInput ?? roomDescription ?? ''}
                   disabled={!isSubscriber}
@@ -388,7 +388,7 @@ export const SettingsModal = ({
                   }}
                   placeholder={`Description (max. ${roomDescriptionMaxCharLength} characters)`}
                 />
-              </React.Fragment>
+              </div>
             }
           />
         )}

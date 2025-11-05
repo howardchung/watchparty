@@ -551,8 +551,7 @@ const ChatMessage = ({
                           key={key + '-' + reactions[key].length}
                           classNames={{
                             enter: styles['reactionCounter-enter'],
-                            enterActive:
-                              styles['reactionCounter-enter-active'],
+                            enterActive: styles['reactionCounter-enter-active'],
                             exit: styles['reactionCounter-exit'],
                             exitActive: styles['reactionCounter-exit-active'],
                           }}

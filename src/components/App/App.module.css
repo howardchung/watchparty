@@ -45,12 +45,8 @@
   flex-grow: 1;
 }
 
-.rightColumn.fullHeightColumn {
-  /* flex-shrink: 0; */
-  @media only screen and (max-width: 600px) {
-    /* we don't want chat to be too small or too big on mobile */
-    height: 800px;
-  }
+.rightColumn {
+  flex-shrink: 0;
 }
 
 .expandButton {
@@ -65,9 +61,11 @@
 .fullHeightColumn {
   height: calc(100vh - 72px);
   transition: width ease-out 0.5s;
-  @media only screen and (max-width: 600px) {
-    /* height doesn't matter on mobile since things are stacked */
-    height: initial;
+  &.leftColumn {
+    @media only screen and (max-width: 600px) {
+      /* video height doesn't matter on mobile since things are stacked */
+      height: initial;
+    }
   }
 }
 

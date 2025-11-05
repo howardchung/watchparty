@@ -2161,7 +2161,9 @@ export default class App extends React.Component<AppProps, AppState> {
                             color="pink"
                             className={styles.shareButton}
                             leftSection={<IconList />}
-                            rightSection={<Badge circle>{playlist.length}</Badge>}
+                            rightSection={
+                              <Badge circle>{playlist.length}</Badge>
+                            }
                           >
                             Playlist
                           </Button>
