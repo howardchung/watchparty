@@ -63,7 +63,7 @@ export const UserMenu = ({
         >
           Delete User's Messages
         </Menu.Item>
-         <Menu.Item
+        <Menu.Item
           leftSection={<IconBan />}
           onClick={async () => {
             const token = await user?.getIdToken();

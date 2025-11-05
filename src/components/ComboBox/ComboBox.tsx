@@ -9,7 +9,7 @@ import {
 } from '../../utils';
 import { examples } from '../../utils/examples';
 import ChatVideoCard from '../Playlist/ChatVideoCard';
-import { IconCornerDownRight, IconLink } from '@tabler/icons-react';
+import { IconLink, IconX } from '@tabler/icons-react';
 import {
   ActionIcon,
   Autocomplete,
@@ -147,17 +147,14 @@ export class ComboBox extends React.Component<ComboBoxProps, ComboBoxState> {
             this.setMediaAndClose(this.state.inputMedia ?? '');
           }
         }}
-        // rightSection={
-        //   <ActionIcon
-        //     onClick={(e: any) =>
-        //       this.setMediaAndClose(e, {
-        //         value: this.state.inputMedia,
-        //       })
-        //     }
-        //   >
-        //     <IconCornerDownRight />
-        //   </ActionIcon>
-        // }
+        rightSection={
+          <ActionIcon
+            color="red"
+            onClick={(e: any) => this.setMediaAndClose('')}
+          >
+            <IconX />
+          </ActionIcon>
+        }
         leftSection={this.state.loading ? <Loader size="sm" /> : <IconLink />}
         placeholder="Enter video file URL, magnet link, YouTube link, or YouTube search term"
         value={

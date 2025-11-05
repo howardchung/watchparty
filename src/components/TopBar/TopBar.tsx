@@ -164,7 +164,11 @@ export class ListRoomsButton extends React.Component<{}> {
     return (
       <Menu>
         <Menu.Target>
-          <Button color="grape" onClick={this.refreshRooms} leftSection={<IconDatabase />}>
+          <Button
+            color="grape"
+            onClick={this.refreshRooms}
+            leftSection={<IconDatabase />}
+          >
             My rooms
           </Button>
         </Menu.Target>
