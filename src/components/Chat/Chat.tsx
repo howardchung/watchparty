@@ -430,7 +430,7 @@ const ChatMessage = ({
             disabled={!Boolean(owner && owner === user?.uid)}
             trigger={
               <div
-                style={{ cursor: 'pointer' }}
+                style={{ cursor: 'pointer', fontWeight: 700 }}
                 title={isSub ? 'WatchParty Plus subscriber' : ''}
                 className={isSub ? classes.subscriber : styles.light}
               >
