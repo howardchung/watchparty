@@ -2158,9 +2158,10 @@ export default class App extends React.Component<AppProps, AppState> {
                       <Menu>
                         <Menu.Target>
                           <Button
+                            color="pink"
                             className={styles.shareButton}
                             leftSection={<IconList />}
-                            rightSection={<Badge>{playlist.length}</Badge>}
+                            rightSection={<Badge circle>{playlist.length}</Badge>}
                           >
                             Playlist
                           </Button>
@@ -2205,6 +2206,7 @@ export default class App extends React.Component<AppProps, AppState> {
                         </Menu.Dropdown>
                       </Menu>
                       <Button
+                        color="grey"
                         className={styles.shareButton}
                         leftSection={<IconSettings />}
                         onClick={() => {
@@ -2230,7 +2232,7 @@ export default class App extends React.Component<AppProps, AppState> {
                         !this.playingVBrowser() && (
                           <Button
                             className={styles.shareButton}
-                            color="purple"
+                            color="blue"
                             disabled={!this.haveLock()}
                             onClick={() => {
                               this.setState({
@@ -2353,7 +2355,7 @@ export default class App extends React.Component<AppProps, AppState> {
                         !this.playingVBrowser() && (
                           <Button
                             className={styles.shareButton}
-                            color="cyan"
+                            color="violet"
                             disabled={!this.haveLock()}
                             onClick={() => {
                               this.setState({
@@ -2610,6 +2612,7 @@ export default class App extends React.Component<AppProps, AppState> {
                   leftSection={<IconUser />}
                   rightSection={
                     <ActionIcon
+                      color="gray"
                       onClick={async () => {
                         const randName = await generateName();
                         this.updateName(randName);
@@ -2622,6 +2625,7 @@ export default class App extends React.Component<AppProps, AppState> {
                 />
                 <Button
                   className={styles.shareButton}
+                  color="indigo"
                   onClick={() =>
                     this.setState({
                       showPeopleColumn: !this.state.showPeopleColumn,

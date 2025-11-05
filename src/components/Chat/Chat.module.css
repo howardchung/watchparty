@@ -49,6 +49,10 @@
   overflow: auto;
 }
 
+.hoverEffect:hover {
+  filter: brightness(0.8);
+}
+
 .light {
   color: gainsboro;
   font-size: 14px;

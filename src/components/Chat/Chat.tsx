@@ -25,7 +25,6 @@ import {
 } from '../../utils';
 import { UserMenu } from '../UserMenu/UserMenu';
 import { Socket } from 'socket.io-client';
-import classes from './Chat.module.css';
 import {
   CSSTransition,
   SwitchTransition,
@@ -243,7 +242,7 @@ export class Chat extends React.Component<ChatProps> {
                 className={
                   msg.id === this.state.reactionMenu.selectedMsgId &&
                   msg.timestamp === this.state.reactionMenu.selectedMsgTimestamp
-                    ? classes.selected
+                    ? styles.selected
                     : ''
                 }
                 message={msg}
@@ -289,10 +288,10 @@ export class Chat extends React.Component<ChatProps> {
           in={this.state.reactionMenu.isOpen}
           timeout={300}
           classNames={{
-            enter: classes['reactionMenu-enter'],
-            enterActive: classes['reactionMenu-enter-active'],
-            exit: classes['reactionMenu-exit'],
-            exitActive: classes['reactionMenu-exit-active'],
+            enter: styles['reactionMenu-enter'],
+            enterActive: styles['reactionMenu-enter-active'],
+            exit: styles['reactionMenu-exit'],
+            exitActive: styles['reactionMenu-exit-active'],
           }}
           unmountOnExit
         >
@@ -402,7 +401,7 @@ const ChatMessage = ({
         position: 'relative',
         overflowWrap: 'anywhere',
       }}
-      className={`${classes.comment} ${className}`}
+      className={`${styles.comment} ${className}`}
     >
       {id ? (
         <Avatar
@@ -432,7 +431,7 @@ const ChatMessage = ({
               <div
                 style={{ cursor: 'pointer', fontWeight: 700 }}
                 title={isSub ? 'WatchParty Plus subscriber' : ''}
-                className={isSub ? classes.subscriber : styles.light}
+                className={`${isSub ? styles.subscriber : styles.light} ${styles.hoverEffect}`}
               >
                 {Boolean(system) && 'System'}
                 {nameMap[id] || id}
@@ -479,7 +478,7 @@ const ChatMessage = ({
             }}
           />
         )}
-        <div className={classes.commentMenu}>
+        <div className={styles.commentMenu}>
           <ActionIcon
             onClick={(e) => {
               const viewportOffset = (e.target as any).getBoundingClientRect();
@@ -519,19 +518,19 @@ const ChatMessage = ({
                 key={key}
                 timeout={200}
                 classNames={{
-                  enter: classes['reaction-enter'],
-                  enterActive: classes['reaction-enter-active'],
-                  exit: classes['reaction-exit'],
-                  exitActive: classes['reaction-exit-active'],
+                  enter: styles['reaction-enter'],
+                  enterActive: styles['reaction-enter-active'],
+                  exit: styles['reaction-exit'],
+                  exitActive: styles['reaction-exit-active'],
                 }}
                 unmountOnExit
               >
                 <HoverCard>
                   <HoverCard.Target>
                     <div
-                      className={`${classes.reactionContainer} ${
+                      className={`${styles.reactionContainer} ${
                         reactions[key].includes(socket.id!)
-                          ? classes.highlighted
+                          ? styles.highlighted
                           : ''
                       }`}
                       onClick={() =>
@@ -551,11 +550,11 @@ const ChatMessage = ({
                         <CSSTransition
                           key={key + '-' + reactions[key].length}
                           classNames={{
-                            enter: classes['reactionCounter-enter'],
+                            enter: styles['reactionCounter-enter'],
                             enterActive:
-                              classes['reactionCounter-enter-active'],
-                            exit: classes['reactionCounter-exit'],
-                            exitActive: classes['reactionCounter-exit-active'],
+                              styles['reactionCounter-enter-active'],
+                            exit: styles['reactionCounter-exit'],
+                            exitActive: styles['reactionCounter-exit-active'],
                           }}
                           addEndListener={(node, done) =>
                             node.addEventListener('transitionend', done, false)
@@ -563,7 +562,7 @@ const ChatMessage = ({
                           unmountOnExit
                         >
                           <span
-                            className={classes.reactionCounter}
+                            className={styles.reactionCounter}
                             style={{
                               color: 'rgba(255, 255, 255, 0.85)',
                               marginLeft: 3,
@@ -621,7 +620,7 @@ const ChatMessage = ({
 //     return (
 //       <div
 //         ref={this.containerRef}
-//         className={classes.reactionMenuContainer}
+//         className={styles.reactionMenuContainer}
 //         style={{
 //           top: this.props.yPosition - 9,
 //           left: this.props.xPosition - this.state.containerWidth - 35,
