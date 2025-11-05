@@ -22,7 +22,7 @@ export const ScreenShareModal = ({
     >
       <div>You're about to share your screen.</div>
       <ul>
-        <li>This feature is only supported on Chrome and Edge.</li>
+        <li>This feature is only supported on Chrome and Edge on desktop.</li>
         <li>
           Audio sharing only works if sharing your entire screen or a browser
           tab, not an application.
