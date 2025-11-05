@@ -6,9 +6,9 @@ import {
   isHttp,
   isMagnet,
   isYouTube,
-} from '../../utils';
+} from '../../utils/utils';
 import { examples } from '../../utils/examples';
-import ChatVideoCard from '../Playlist/ChatVideoCard';
+import ChatVideoCard from '../ChatVideoCard/ChatVideoCard';
 import { IconLink, IconX } from '@tabler/icons-react';
 import {
   ActionIcon,

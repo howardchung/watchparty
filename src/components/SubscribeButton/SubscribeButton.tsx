@@ -1,6 +1,6 @@
 import React, { useCallback, useContext, useState } from 'react';
 import { Button } from '@mantine/core';
-import { serverPath } from '../../utils';
+import { serverPath } from '../../utils/utils';
 import { SubscribeModal } from '../Modal/SubscribeModal';
 import { MetadataContext } from '../../MetadataContext';
 import { IconStarFilled, IconTool } from '@tabler/icons-react';

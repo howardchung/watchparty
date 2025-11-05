@@ -5,7 +5,7 @@ import {
   useGoogleReCaptcha,
 } from 'react-google-recaptcha-v3';
 import { SignInButton } from '../TopBar/TopBar';
-import { serverPath } from '../../utils';
+import { serverPath } from '../../utils/utils';
 import { SubscribeButton } from '../SubscribeButton/SubscribeButton';
 import config from '../../config';
 import { MetadataContext } from '../../MetadataContext';

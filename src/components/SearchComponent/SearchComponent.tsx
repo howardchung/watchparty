@@ -1,5 +1,5 @@
 import React from 'react';
-import { debounce, getYouTubeResults, getStreamPathResults } from '../../utils';
+import { debounce, getYouTubeResults, getStreamPathResults } from '../../utils/utils';
 import { Loader, Select } from '@mantine/core';
 import {
   YouTubeSearchResult,

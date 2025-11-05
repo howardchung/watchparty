@@ -1,14 +1,14 @@
 import React from 'react';
 
 import { EVENT } from './events';
-import { NekoClient } from '.';
+import { NekoClient } from './client';
 import GuacamoleKeyboard from './keyboard';
 import config from '../../config';
-import { VIDEO_MAX_HEIGHT_CSS } from '../../utils';
+import { VIDEO_MAX_HEIGHT_CSS } from '../../utils/utils';
 import { Button } from '@mantine/core';
 import { IconClipboard, IconKeyboardFilled } from '@tabler/icons-react';
 
-export default class VBrowser extends React.Component<{
+export class VBrowser extends React.Component<{
   username: string;
   password: string;
   hostname: string;

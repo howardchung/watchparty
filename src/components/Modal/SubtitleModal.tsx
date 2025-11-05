@@ -10,7 +10,7 @@ import {
   Divider,
 } from '@mantine/core';
 import { Socket } from 'socket.io-client';
-import { openFileSelector, serverPath } from '../../utils';
+import { openFileSelector, serverPath } from '../../utils/utils';
 import config from '../../config';
 import { MetadataContext } from '../../MetadataContext';
 import { IconSearch, IconUpload, IconX } from '@tabler/icons-react';

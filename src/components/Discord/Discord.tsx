@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from 'react';
 import firebase from 'firebase/compat/app';
-import { serverPath } from '../../utils';
+import { serverPath } from '../../utils/utils';
 import { MetadataContext } from '../../MetadataContext';
 
 export const Discord = () => {

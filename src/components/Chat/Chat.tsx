@@ -22,7 +22,7 @@ import {
   getDefaultPicture,
   wrapImageStringInMarkdown,
   isEmojiString,
-} from '../../utils';
+} from '../../utils/utils';
 import { UserMenu } from '../UserMenu/UserMenu';
 import { Socket } from 'socket.io-client';
 import {

@@ -13,7 +13,7 @@ import {
   IconScreenShare,
   IconVideo,
 } from '@tabler/icons-react';
-import { NewRoomButton } from '../TopBar';
+import { NewRoomButton } from '../TopBar/TopBar';
 import styles from './Home.module.css';
 import { MetadataContext } from '../../MetadataContext';
 
