@@ -625,16 +625,17 @@ export default class App extends React.Component<AppProps, AppState> {
           if (!data.paused) {
             this.localPlay();
           }
-          // One time, resync when we're ready to play
+          // Do right before playing
           leftVideo?.addEventListener(
             'canplay',
             () => {
               this.setLoadingFalse();
-              let ts = this.state.isLiveStream ? data.videoTS : undefined;
-              // WebTorrent resets position back to 0 so set it back here
-              if (isMagnet(src)) {
+              let ts = undefined;
+              // WebTorrent and Hls and Dash reset position back to 0 so set it back here
+              if (isMagnet(src) || isHls(src) || isDash(src) || this.state.isLiveStream) {
                 ts = time;
               }
+              // Resync to leader since the loading might have taken some time
               this.localSeek(ts);
               if (data.playbackRate) {
                 // Set playback rate again since it might have been lost
@@ -1753,7 +1754,7 @@ export default class App extends React.Component<AppProps, AppState> {
       const now = Math.floor(Date.now() / 1000);
       let liveStreamTarget = now - this.HTMLInterface.getDuration() + target;
       // If livestream and seeking close to edge, set target as max
-      if (now - liveStreamTarget <= 10) {
+      if (now - liveStreamTarget <= 5) {
         liveStreamTarget = Number.MAX_SAFE_INTEGER;
       }
       target = liveStreamTarget;
@@ -1913,7 +1914,7 @@ export default class App extends React.Component<AppProps, AppState> {
   getLeaderTime = () => {
     if (this.state.isLiveStream) {
       // Pick a time near the end of the livestream
-      return this.HTMLInterface.getDuration() - 10;
+      return this.HTMLInterface.getDuration() - 5;
     }
     if (this.state.participants.length > 2) {
       return calculateMedian(Object.values(this.state.tsMap));
