@@ -13,7 +13,7 @@ import {
   Divider,
 } from '@mantine/core';
 import { getCurrentSettings, updateSettings } from './LocalSettings';
-import { serverPath } from '../../utils';
+import { serverPath } from '../../utils/utils';
 import { PermanentRoomModal } from '../Modal/PermanentRoomModal';
 import { Socket } from 'socket.io-client';
 import { HexColorPicker } from 'react-colorful';

@@ -8,7 +8,7 @@ import {
   getColorForStringHex,
   getDefaultPicture,
   iceServers,
-} from '../../utils';
+} from '../../utils/utils';
 import { UserMenu } from '../UserMenu/UserMenu';
 import { MetadataContext } from '../../MetadataContext';
 import {

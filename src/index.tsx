@@ -5,14 +5,14 @@ import React, { lazy, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Route } from 'react-router-dom';
 
-import App from './components/App';
-import { Home } from './components/Home';
+import { App } from './components/App/App';
+import { Home } from './components/Home/Home';
 import { Privacy, Terms, FAQ } from './components/Pages/Pages';
 import { TopBar } from './components/TopBar/TopBar';
 import { Footer } from './components/Footer/Footer';
 import firebase from 'firebase/compat/app';
 import 'firebase/auth';
-import { serverPath } from './utils';
+import { serverPath } from './utils/utils';
 import { Create } from './components/Create/Create';
 import { Discord } from './components/Discord/Discord';
 import config from './config';

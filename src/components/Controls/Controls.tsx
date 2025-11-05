@@ -1,6 +1,6 @@
 import React from 'react';
 import { Badge, Menu, Progress, Slider } from '@mantine/core';
-import { formatTimestamp } from '../../utils';
+import { formatTimestamp } from '../../utils/utils';
 import styles from './Controls.module.css';
 import { MetadataContext } from '../../MetadataContext';
 import {

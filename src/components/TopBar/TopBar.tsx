@@ -1,5 +1,5 @@
 import React, { useCallback, useContext } from 'react';
-import { serverPath, getUserImage } from '../../utils';
+import { serverPath, getUserImage } from '../../utils/utils';
 import { ActionIcon, Avatar, Button, Menu, Text } from '@mantine/core';
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';

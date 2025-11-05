@@ -103,5 +103,3 @@ export class NekoClient extends BaseClient implements EventEmitter<any> {
     this.emit(EVENT.SCREEN.RESOLUTION, { width, height, rate, quality });
   }
 }
-
-export { default as VBrowser } from './VBrowser';

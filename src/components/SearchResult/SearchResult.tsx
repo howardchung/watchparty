@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
 import { Button, Text } from '@mantine/core';
-import { decodeEntities, formatSize } from '../../utils';
+import { decodeEntities, formatSize } from '../../utils/utils';
 import { MetadataContext } from '../../MetadataContext';
 import { IconBrandYoutubeFilled } from '@tabler/icons-react';
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { ActionIcon } from '@mantine/core';
-import { decodeEntities, formatTimestamp } from '../../utils';
+import { decodeEntities, formatTimestamp } from '../../utils/utils';
 
 import classes from './ChatVideoCard.module.css';
 import {

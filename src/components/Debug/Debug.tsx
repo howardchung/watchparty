@@ -8,7 +8,7 @@ import {
   Tooltip,
   Legend,
 } from 'recharts';
-import { serverPath } from '../../utils';
+import { serverPath } from '../../utils/utils';
 
 const timeSeriesUrl = serverPath + `/timeSeries${window.location.search}`;
 // const timeSeriesUrl = 'https://www.watchparty.me' + `/timeSeries${window.location.search}`;

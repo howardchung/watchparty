@@ -2,7 +2,7 @@ import React from 'react';
 import { Modal, Button, Avatar, HoverCard, Text } from '@mantine/core';
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
-import { serverPath } from '../../utils';
+import { serverPath } from '../../utils/utils';
 import { ManageSubButton } from '../SubscribeButton/SubscribeButton';
 import config from '../../config';
 import { MetadataContext } from '../../MetadataContext';

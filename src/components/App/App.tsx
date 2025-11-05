@@ -24,12 +24,12 @@ import {
   VIDEO_MAX_HEIGHT_CSS,
   createUuid,
   isMpegTs,
-} from '../../utils';
+} from '../../utils/utils';
 import { generateName } from '../../utils/generateName';
-import { Chat } from '../Chat';
-import { TopBar } from '../TopBar';
-import { VBrowser } from '../VBrowser';
-import { VideoChat } from '../VideoChat';
+import { Chat } from '../Chat/Chat';
+import { TopBar } from '../TopBar/TopBar';
+import { VBrowser } from '../VBrowser/VBrowser';
+import { VideoChat } from '../VideoChat/VideoChat';
 import { getCurrentSettings } from '../Settings/LocalSettings';
 import { MultiStreamModal } from '../Modal/MultiStreamModal';
 import { ComboBox } from '../ComboBox/ComboBox';
@@ -48,7 +48,7 @@ import { YouTube } from './YouTube';
 import styles from './App.module.css';
 import config from '../../config';
 import { MetadataContext } from '../../MetadataContext';
-import ChatVideoCard from '../Playlist/ChatVideoCard';
+import ChatVideoCard from '../ChatVideoCard/ChatVideoCard';
 import { ActionIcon, Badge, TextInput, Button } from '@mantine/core';
 import {
   IconAntennaBars5,
@@ -165,7 +165,7 @@ interface AppState {
   settingsModalOpen: boolean;
 }
 
-export default class App extends React.Component<AppProps, AppState> {
+export class App extends React.Component<AppProps, AppState> {
   static contextType = MetadataContext;
   declare context: React.ContextType<typeof MetadataContext>;
   state: AppState = {

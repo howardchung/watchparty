@@ -1,4 +1,4 @@
-import { isMagnet, isYouTube } from '.';
+import { isMagnet, isYouTube } from './utils';
 
 export const examples: SearchResult[] = [
   {
