@@ -34,19 +34,6 @@ export const UserMenu = ({
       <Menu.Target>{trigger}</Menu.Target>
       <Menu.Dropdown>
         <Menu.Label>{displayName}</Menu.Label>
-        <Menu.Item
-          leftSection={<IconBan />}
-          onClick={async () => {
-            const token = await user?.getIdToken();
-            socket.emit('kickUser', {
-              userToBeKicked: userToManage,
-              uid: user?.uid,
-              token,
-            });
-          }}
-        >
-          Kick
-        </Menu.Item>
         {isChatMessage && (
           <Menu.Item
             leftSection={<IconX />}
@@ -75,6 +62,19 @@ export const UserMenu = ({
           }}
         >
           Delete User's Messages
+        </Menu.Item>
+         <Menu.Item
+          leftSection={<IconBan />}
+          onClick={async () => {
+            const token = await user?.getIdToken();
+            socket.emit('kickUser', {
+              userToBeKicked: userToManage,
+              uid: user?.uid,
+              token,
+            });
+          }}
+        >
+          Kick User
         </Menu.Item>
       </Menu.Dropdown>
     </Menu>

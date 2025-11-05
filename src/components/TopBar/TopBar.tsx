@@ -164,7 +164,7 @@ export class ListRoomsButton extends React.Component<{}> {
     return (
       <Menu>
         <Menu.Target>
-          <Button onClick={this.refreshRooms} leftSection={<IconDatabase />}>
+          <Button color="grape" onClick={this.refreshRooms} leftSection={<IconDatabase />}>
             My rooms
           </Button>
         </Menu.Target>
@@ -353,7 +353,7 @@ export const TopBar = (props: {
           >
             <ActionIcon
               component="a"
-              color="grey"
+              color="gray"
               size="lg"
               href="https://discord.gg/3rYj5HV"
               target="_blank"
@@ -364,7 +364,7 @@ export const TopBar = (props: {
             </ActionIcon>
             <ActionIcon
               component="a"
-              color="grey"
+              color="gray"
               size="lg"
               href="https://github.com/howardchung/watchparty"
               target="_blank"
