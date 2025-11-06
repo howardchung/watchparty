@@ -1,7 +1,7 @@
 import config from '../config.ts';
 import axios from 'axios';
 import { VMManager, type VM } from './base.ts';
-import fs from 'fs';
+import fs from 'node:fs';
 import { redis } from '../utils/redis.ts';
 
 const HETZNER_TOKEN = config.HETZNER_TOKEN;

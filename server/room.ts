@@ -1,8 +1,6 @@
 import config from './config.ts';
-
 import axios from 'axios';
 import { Server, Socket } from 'socket.io';
-
 import { getUser, validateUserToken } from './utils/firebase.ts';
 import { redis, redisCount, redisCountDistinct } from './utils/redis.ts';
 import { getIsSubscriberByEmail } from './utils/stripe.ts';
