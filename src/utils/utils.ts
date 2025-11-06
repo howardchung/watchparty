@@ -4,6 +4,7 @@ import { MD5 } from './md5';
 import firebase from 'firebase/compat/app';
 import config from '../config';
 import { cyrb53 } from './hash';
+import React from 'react';
 
 export function formatTimestamp(input: any, wallClock?: boolean): string {
   if (
@@ -366,18 +367,6 @@ export const isEmojiString = (input?: string): boolean => {
   return /^(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])+$/g.test(
     input ?? '',
   );
-};
-
-export const wrapImageStringInMarkdown = (
-  input: string | undefined,
-): string | undefined => {
-  // If a valid image string, wrap it in markdown tags
-  let regex = /^https?:\/\/.*\/.*\.(png|gif|webp|jpeg|jpg)\??.*$/gim;
-  if (input?.match(regex)) {
-    return `![](${input})`;
-  }
-  // Otherwise just return the original input
-  return input;
 };
 
 function uuidv4() {

@@ -1,12 +1,11 @@
 import React from 'react';
-import ReactMarkdown from 'react-markdown';
 
 const mdStyle = { color: 'white', margin: '50px', maxWidth: '800px' };
 
 export const Privacy = () => {
   return (
     <div style={mdStyle}>
-      <ReactMarkdown>
+      <pre>
         {`
 Privacy Policy
 ====
@@ -38,7 +37,7 @@ YouTube
 ----
 - The service provides the ability to search and play YouTube videos. Google/YouTube may use data provided to the search service in accordance with the [Google Privacy Policy](https://policies.google.com/privacy).
 `}
-      </ReactMarkdown>
+      </pre>
     </div>
   );
 };
@@ -46,7 +45,7 @@ YouTube
 export const Terms = () => {
   return (
     <div style={mdStyle}>
-      <ReactMarkdown>
+      <pre>
         {`
 Terms of Service
 ====
@@ -65,7 +64,7 @@ YouTube
 ----
 The service provides the ability to search and play YouTube videos. By using the YouTube search you agree to the [YouTube Terms of Service](https://www.youtube.com/t/terms).
 `}
-      </ReactMarkdown>
+      </pre>
     </div>
   );
 };
@@ -73,7 +72,7 @@ The service provides the ability to search and play YouTube videos. By using the
 export const FAQ = () => {
   return (
     <div style={mdStyle}>
-      <ReactMarkdown>
+      <pre>
         {`
 FAQ
 ====
@@ -107,7 +106,7 @@ I own a website and I'd like to have a link that generates a WatchParty room wit
 You can link to https://www.watchparty.me/create?video=URL_HERE to do this!
 
 `}
-      </ReactMarkdown>
+      </pre>
     </div>
   );
 };

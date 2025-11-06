@@ -1,6 +1,6 @@
 import type MediasoupClient from 'mediasoup-client';
 import React from 'react';
-import { Alert, Loader, Menu, Overlay, Select, Title } from '@mantine/core';
+import { Alert, Divider, Loader, Menu, Overlay, Select, Title } from '@mantine/core';
 import io, { Socket } from 'socket.io-client';
 import {
   formatSpeed,
@@ -2650,6 +2650,7 @@ export class App extends React.Component<AppProps, AppState> {
                 </Button>
                 <InviteButton />
               </div>
+              <Divider my="sm" />
               <Chat
                 chat={this.state.chat}
                 nameMap={this.state.nameMap}

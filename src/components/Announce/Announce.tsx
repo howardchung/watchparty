@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import ReactMarkdown from 'react-markdown';
 import { Button } from '@mantine/core';
 import styles from './Announce.module.css';
 import config from '../../config';
@@ -48,12 +47,10 @@ const Announce = () => {
 
   return announcement != null ? (
     <div className={styles.announce}>
-      <main>
-        {/* <h4>{announcement.title}</h4> */}
-        {announcement.body && (
-          <ReactMarkdown>{announcement.body}</ReactMarkdown>
-        )}
-      </main>
+      {/* <h4>{announcement.title}</h4> */}
+      <pre>
+        {announcement.body}
+      </pre>
       <aside>
         <Button color="blue" onClick={() => onDismiss(announcement.number)}>
           Dismiss

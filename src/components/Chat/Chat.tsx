@@ -14,13 +14,11 @@ import { init } from 'emoji-mart';
 import Linkify from 'react-linkify';
 import { SecureLink } from 'react-secure-link';
 import styles from './Chat.module.css';
-import Markdown from 'react-markdown';
 
 import {
   formatTimestamp,
   getColorForStringHex,
   getDefaultPicture,
-  wrapImageStringInMarkdown,
   isEmojiString,
 } from '../../utils/utils';
 import { UserMenu } from '../UserMenu/UserMenu';
@@ -391,7 +389,7 @@ const ChatMessage = ({
   const { id, timestamp, cmd, msg, system, isSub, reactions, videoTS } =
     message;
   const spellFull = 5; // the number of people whose names should be written out in full in the reaction popup
-  const wrappedMsg = wrapImageStringInMarkdown(msg);
+  const imageMsg = renderImageString(msg);
   return (
     <div
       style={{
@@ -468,16 +466,7 @@ const ChatMessage = ({
             {!cmd && msg}
           </div>
         </Linkify>
-        {wrappedMsg?.startsWith('![') && (
-          <Markdown
-            children={wrappedMsg as string}
-            components={{
-              img: ({ node, ...props }) => (
-                <img style={{ maxWidth: '100%' }} {...props} />
-              ),
-            }}
-          />
-        )}
+        {imageMsg}
         <div className={styles.commentMenu}>
           <ActionIcon
             onClick={(e) => {
@@ -597,6 +586,17 @@ const ChatMessage = ({
       </div>
     </div>
   );
+};
+
+export const renderImageString = (
+  input: string | undefined,
+): React.ReactNode | null => {
+  // If a valid image string, return an image
+  let regex = /^https?:\/\/.*\/.*\.(png|gif|webp|jpeg|jpg)\??.*$/gim;
+  if (input?.match(regex)) {
+    return <img style={{ maxWidth: '100%' }} src={input} />
+  }
+  return null;
 };
 
 // class ReactionMenuInner extends React.Component<{
