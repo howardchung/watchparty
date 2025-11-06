@@ -151,6 +151,7 @@ export class ComboBox extends React.Component<ComboBoxProps, ComboBoxState> {
           <ActionIcon
             color="red"
             onClick={(e: any) => this.setMediaAndClose('')}
+            title="Clear"
           >
             <IconX />
           </ActionIcon>

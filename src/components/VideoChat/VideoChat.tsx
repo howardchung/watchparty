@@ -237,8 +237,8 @@ export class VideoChat extends React.Component<VideoChatProps> {
     const ourStream = window.watchparty.ourStream;
     const videoRefs = window.watchparty.videoRefs;
     const videoChatContentStyle: React.CSSProperties = {
-      height: 190,
-      width: 190,
+      height: 180,
+      width: 180,
       objectFit: 'cover',
       position: 'relative',
     };
