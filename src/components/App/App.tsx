@@ -2156,68 +2156,6 @@ export class App extends React.Component<AppProps, AppState> {
                         mediaPath={this.state.mediaPath}
                         disabled={!this.haveLock()}
                       />
-                      <Menu>
-                        <Menu.Target>
-                          <Button
-                            color="pink"
-                            className={styles.shareButton}
-                            leftSection={<IconList />}
-                            rightSection={
-                              <Badge circle>{playlist.length}</Badge>
-                            }
-                          >
-                            Playlist
-                          </Button>
-                        </Menu.Target>
-                        <Menu.Dropdown
-                          style={{
-                            overflowY:
-                              playlist.length > 0 ? 'scroll' : undefined,
-                            maxHeight: 400,
-                            maxWidth: isMobile() ? 400 : 600,
-                          }}
-                        >
-                          {playlist.length === 0 && (
-                            <Menu.Item disabled>
-                              There are no items in the playlist.
-                            </Menu.Item>
-                          )}
-                          {playlist.map(
-                            (item: PlaylistVideo, index: number) => {
-                              if (Boolean(item.img)) {
-                                item.type = 'youtube';
-                              }
-                              return (
-                                <Menu.Item key={index}>
-                                  <ChatVideoCard
-                                    video={item}
-                                    index={index}
-                                    controls
-                                    onPlay={this.roomPlaylistPlay}
-                                    onPlayNext={(index) => {
-                                      this.roomPlaylistMove(index, 0);
-                                    }}
-                                    onRemove={(index) => {
-                                      this.roomPlaylistDelete(index);
-                                    }}
-                                    disabled={!this.haveLock()}
-                                  />
-                                </Menu.Item>
-                              );
-                            },
-                          )}
-                        </Menu.Dropdown>
-                      </Menu>
-                      <Button
-                        color="grey"
-                        className={styles.shareButton}
-                        leftSection={<IconSettings />}
-                        onClick={() => {
-                          this.setSettingsModalOpen(true);
-                        }}
-                      >
-                        Settings
-                      </Button>
                     </div>
                     <div className={styles.mobileStack}>
                       {this.localStreamToPublish && (
@@ -2559,7 +2497,9 @@ export class App extends React.Component<AppProps, AppState> {
                 flexDirection: 'column',
                 position: 'relative',
                 width: this.state.showChatColumn ? 400 : 0,
+                maxWidth: 400,
                 overflow: 'hidden',
+                gap: '4px',
               }}
               className={`${
                 (this.state.fullScreen
@@ -2569,35 +2509,6 @@ export class App extends React.Component<AppProps, AppState> {
                 styles.rightColumn
               }`}
             >
-              {this.state.state === 'connected' && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    background: 'rgba(10, 10, 10, 0.6)',
-                    zIndex: 200,
-                    left: 0,
-                    top: 36,
-                    height: this.state.showPeopleColumn
-                      ? 'calc(100% - 80px)'
-                      : '0%',
-                    width: '100%',
-                    overflow: 'hidden',
-                    // visibility: this.state.showPeopleColumn ? 'visible' : 'hidden',
-                    transition: 'height ease-out 0.5s',
-                  }}
-                >
-                  <VideoChat
-                    socket={this.socket}
-                    participants={this.state.participants}
-                    nameMap={this.state.nameMap}
-                    pictureMap={this.state.pictureMap}
-                    tsMap={this.state.tsMap}
-                    rosterUpdateTS={this.state.rosterUpdateTS}
-                    owner={this.state.owner}
-                    getLeaderTime={this.getLeaderTime}
-                  />
-                </div>
-              )}
               <div style={{ display: 'flex', width: '100%', gap: '4px' }}>
                 <TextInput
                   // description="Name"
@@ -2626,9 +2537,12 @@ export class App extends React.Component<AppProps, AppState> {
                     </ActionIcon>
                   }
                 />
+                <InviteButton />
+              </div>
+              <div style={{ display: 'flex', gap: '4px' }}>
                 <Button
                   className={styles.shareButton}
-                  color="indigo"
+                  color="grey"
                   onClick={() =>
                     this.setState({
                       showPeopleColumn: !this.state.showPeopleColumn,
@@ -2648,9 +2562,99 @@ export class App extends React.Component<AppProps, AppState> {
                 >
                   People
                 </Button>
-                <InviteButton />
+                <Menu>
+                        <Menu.Target>
+                          <Button
+                            color="grey"
+                            className={styles.shareButton}
+                            leftSection={<IconList />}
+                            rightSection={
+                              <Badge circle>{playlist.length}</Badge>
+                            }
+                          >
+                            Playlist
+                          </Button>
+                        </Menu.Target>
+                        <Menu.Dropdown
+                          style={{
+                            overflowY:
+                              playlist.length > 0 ? 'scroll' : undefined,
+                            maxHeight: 400,
+                            maxWidth: isMobile() ? 400 : 600,
+                          }}
+                        >
+                          {playlist.length === 0 && (
+                            <Menu.Item disabled>
+                              There are no items in the playlist.
+                            </Menu.Item>
+                          )}
+                          {playlist.map(
+                            (item: PlaylistVideo, index: number) => {
+                              if (Boolean(item.img)) {
+                                item.type = 'youtube';
+                              }
+                              return (
+                                <Menu.Item key={index}>
+                                  <ChatVideoCard
+                                    video={item}
+                                    index={index}
+                                    controls
+                                    onPlay={this.roomPlaylistPlay}
+                                    onPlayNext={(index) => {
+                                      this.roomPlaylistMove(index, 0);
+                                    }}
+                                    onRemove={(index) => {
+                                      this.roomPlaylistDelete(index);
+                                    }}
+                                    disabled={!this.haveLock()}
+                                  />
+                                </Menu.Item>
+                              );
+                            },
+                          )}
+                        </Menu.Dropdown>
+                      </Menu>
+                      <Button
+                        style={{ flexGrow: 1 }}
+                        color="grey"
+                        title="Settings"
+                        // className={styles.shareButton}
+                        onClick={() => {
+                          this.setSettingsModalOpen(true);
+                        }}
+                      >
+                    <IconSettings />
+                  </Button>
               </div>
-              <Divider my="sm" />
+              {this.state.state === 'connected' && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    background: 'rgba(10, 10, 10, 0.6)',
+                    zIndex: 200,
+                    left: 0,
+                    top: 76,
+                    height: this.state.showPeopleColumn
+                      ? 'calc(100% - 120px)'
+                      : '0%',
+                    width: '100%',
+                    overflowY: 'auto',
+                    // visibility: this.state.showPeopleColumn ? 'visible' : 'hidden',
+                    transition: 'height ease-out 0.5s',
+                  }}
+                >
+                  <VideoChat
+                    socket={this.socket}
+                    participants={this.state.participants}
+                    nameMap={this.state.nameMap}
+                    pictureMap={this.state.pictureMap}
+                    tsMap={this.state.tsMap}
+                    rosterUpdateTS={this.state.rosterUpdateTS}
+                    owner={this.state.owner}
+                    getLeaderTime={this.getLeaderTime}
+                  />
+                </div>
+              )}
               <Chat
                 chat={this.state.chat}
                 nameMap={this.state.nameMap}
