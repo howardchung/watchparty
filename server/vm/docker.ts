@@ -3,8 +3,8 @@
 import config from '../config.ts';
 import { VMManager, type VM } from './base.ts';
 import { imageName } from './utils.ts';
-import fs from 'fs';
-import { homedir } from 'os';
+import fs from 'node:fs';
+import { homedir } from 'node:os';
 import { NodeSSH } from 'node-ssh';
 
 export class Docker extends VMManager {

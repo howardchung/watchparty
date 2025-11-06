@@ -1,12 +1,12 @@
 import config from './config.ts';
-import fs from 'fs';
+import fs from 'node:fs';
 import express, { type Response } from 'express';
 import bodyParser from 'body-parser';
 import compression from 'compression';
-import os from 'os';
+import os from 'node:os';
 import cors from 'cors';
-import https from 'https';
-import http from 'http';
+import https from 'node:https';
+import http from 'node:http';
 import { Server } from 'socket.io';
 import { searchYoutube, youtubePlaylist } from './utils/youtube.ts';
 import { Room } from './room.ts';
@@ -22,14 +22,14 @@ import {
   getIsSubscriberByEmail,
 } from './utils/stripe.ts';
 import { deleteUser, validateUserToken } from './utils/firebase.ts';
-import path from 'path';
+import path from 'node:path';
 import { getStartOfDay } from './utils/time.ts';
 import { getSessionLimitSeconds } from './vm/utils.ts';
 import { postgres, insertObject, upsertObject } from './utils/postgres.ts';
 import axios, { isAxiosError } from 'axios';
-import crypto from 'crypto';
-import zlib from 'zlib';
-import util from 'util';
+import crypto from 'node:crypto';
+import zlib from 'node:zlib';
+import util from 'node:util';
 import { statsAgg } from './utils/statsAgg.ts';
 import { resolveShard } from './utils/resolveShard.ts';
 import { makeRoomName, makeUserName } from './utils/moniker.ts';
