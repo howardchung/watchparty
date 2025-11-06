@@ -45,7 +45,8 @@ export class ComboBox extends React.Component<ComboBoxProps, ComboBoxState> {
     this.setState({ inputMedia: undefined, items: [] });
   };
 
-  doSearch = async (value?: string) => {
+  doSearch = async () => {
+    const value = this.state.inputMedia;
     this.setState({ loading: true });
     const query: string = value || '';
     let items = examples;
@@ -85,6 +86,15 @@ export class ComboBox extends React.Component<ComboBoxProps, ComboBoxState> {
     });
   };
 
+  debouncedSearch = debounce(this.doSearch);
+
+  onChange = (value: string) => {
+    this.setState(
+      { inputMedia: value },
+      this.debouncedSearch,
+    );
+  };
+
   render() {
     const { roomMedia: currentMedia, getMediaDisplayName } = this.props;
     const renderOption: AutocompleteProps['renderOption'] = ({ option }) => {
@@ -92,7 +102,7 @@ export class ComboBox extends React.Component<ComboBoxProps, ComboBoxState> {
       return (
         <div
           key={option.value}
-          onClick={(e: any) => this.setMediaAndClose(option.value)}
+          onClick={(e) => this.setMediaAndClose(option.value)}
           style={{ width: '100%' }}
         >
           {video && (
@@ -110,10 +120,7 @@ export class ComboBox extends React.Component<ComboBoxProps, ComboBoxState> {
         maxDropdownHeight={400}
         style={{ width: '100%' }}
         disabled={this.props.disabled}
-        onChange={(value) => {
-          this.setState({ inputMedia: value });
-          debounce(() => this.doSearch(value))();
-        }}
+        onChange={this.onChange}
         onFocus={(e: any) => {
           this.setState(
             {
@@ -130,7 +137,7 @@ export class ComboBox extends React.Component<ComboBoxProps, ComboBoxState> {
                   (isHttp(this.state.inputMedia) ||
                     isMagnet(this.state.inputMedia)))
               ) {
-                this.doSearch(this.state.inputMedia);
+                this.doSearch();
               }
               e.target.select();
             },
