@@ -439,8 +439,8 @@ const ChatMessage = ({
           <div className={styles.small + ' ' + styles.dark}>
             <div title={new Date(timestamp).toLocaleDateString()}>
               {new Date(timestamp).toLocaleTimeString()}
-              {/* {Boolean(videoTS) && ' @ '}
-              {formatTimestamp(videoTS)} */}
+              {Boolean(videoTS) && ' @ '}
+              {formatTimestamp(videoTS)}
             </div>
           </div>
         </div>
