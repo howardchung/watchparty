@@ -68,25 +68,11 @@ export const colorMappings: StringDict = {
   pink: 'FF1493',
   brown: 'A52A2A',
   grey: 'A0A0A0',
-  black: '000000',
 };
 
 let colorCache = {} as NumberDict;
 export function getColorForString(id: string) {
-  let colors = [
-    'red',
-    'orange',
-    'yellow',
-    'olive',
-    'green',
-    'teal',
-    'blue',
-    'violet',
-    'purple',
-    'pink',
-    'brown',
-    'grey',
-  ];
+  let colors = Object.keys(colorMappings);
   if (colorCache[id]) {
     return colors[colorCache[id]];
   }
