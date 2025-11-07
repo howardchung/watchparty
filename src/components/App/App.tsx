@@ -2552,9 +2552,6 @@ export class App extends React.Component<AppProps, AppState> {
                   rightSection={
                     <Badge
                       circle
-                      color={getColorForString(
-                        this.state.participants.length.toString(),
-                      )}
                     >
                       {this.state.participants.length}
                     </Badge>
