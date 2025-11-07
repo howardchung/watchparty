@@ -8,6 +8,7 @@ import {
   getColorForStringHex,
   getDefaultPicture,
   iceServers,
+  softWhite,
 } from '../../utils/utils';
 import { UserMenu } from '../UserMenu/UserMenu';
 import { MetadataContext } from '../../MetadataContext';
@@ -334,13 +335,13 @@ export class VideoChat extends React.Component<VideoChatProps> {
                     )}
                     {p.clientId !== selfId && (
                       <>
-                        {p.isVideoChat && <IconVideo color="white" />}
+                        {p.isVideoChat && <IconVideo color={softWhite} />}
                         {p.isVideoChat && (
-                          <IconMicrophone color={p.isMuted ? 'red' : 'white'} />
+                          <IconMicrophone color={p.isMuted ? 'red' : softWhite} />
                         )}
                       </>
                     )}
-                    {p.isScreenShare && <IconScreenShare color="white" />}
+                    {p.isScreenShare && <IconScreenShare color={softWhite} />}
                   </div>
                   <div
                     style={{
@@ -349,7 +350,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
                       left: '0px',
                       width: '100%',
                       backgroundColor: 'rgba(0,0,0,0)',
-                      color: 'white',
+                      color: softWhite,
                       borderRadius: '4px',
                       fontSize: '10px',
                       fontWeight: 700,

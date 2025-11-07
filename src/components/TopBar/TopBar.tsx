@@ -1,5 +1,5 @@
 import React, { useCallback, useContext } from 'react';
-import { serverPath, getUserImage } from '../../utils/utils';
+import { serverPath, getUserImage, softWhite } from '../../utils/utils';
 import { ActionIcon, Avatar, Button, Menu, Text } from '@mantine/core';
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
@@ -290,7 +290,7 @@ export const TopBar = (props: {
               style={{
                 fontSize: '30px',
                 lineHeight: '30px',
-                color: props.roomTitleColor || 'white',
+                color: props.roomTitleColor || softWhite,
                 fontWeight: 700,
                 letterSpacing: 1,
               }}

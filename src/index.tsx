@@ -12,7 +12,7 @@ import { TopBar } from './components/TopBar/TopBar';
 import { Footer } from './components/Footer/Footer';
 import firebase from 'firebase/compat/app';
 import 'firebase/auth';
-import { serverPath } from './utils/utils';
+import { serverPath, softWhite } from './utils/utils';
 import { Create } from './components/Create/Create';
 import { Discord } from './components/Discord/Discord';
 import config from './config';
@@ -21,6 +21,7 @@ import { createTheme, MantineProvider } from '@mantine/core';
 
 const theme = createTheme({
   /** Your theme override here */
+  white: softWhite,
 });
 
 const Debug = lazy(() => import('./components/Debug/Debug'));

@@ -24,6 +24,7 @@ import {
   VIDEO_MAX_HEIGHT_CSS,
   createUuid,
   isMpegTs,
+  softWhite,
 } from '../../utils/utils';
 import { generateName } from '../../utils/generateName';
 import { Chat } from '../Chat/Chat';
@@ -2445,7 +2446,7 @@ export class App extends React.Component<AppProps, AppState> {
                   {Boolean(this.state.total) && (
                     <div
                       style={{
-                        color: 'white',
+                        color: softWhite,
                         fontWeight: 700,
                         fontSize: 12,
                         position: 'absolute',
