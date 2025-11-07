@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { softWhite } from '../../utils/utils';
 
 export const Footer = () => (
   <div
@@ -7,7 +8,7 @@ export const Footer = () => (
       margin: '1em',
       paddingBottom: '1em',
       fontSize: '14px',
-      color: 'white',
+      color: softWhite,
     }}
   >
     <Link to="/terms">Terms</Link>

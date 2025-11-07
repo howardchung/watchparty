@@ -380,7 +380,7 @@ glue
 goat
 gold
 goldfish
-good-bye
+goodbye
 goose
 government
 governor

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Badge, Menu, Progress, Slider } from '@mantine/core';
-import { formatTimestamp } from '../../utils/utils';
+import { formatTimestamp, softWhite } from '../../utils/utils';
 import styles from './Controls.module.css';
 import { MetadataContext } from '../../MetadataContext';
 import {
@@ -165,7 +165,7 @@ export class Controls extends React.Component<ControlsProps> {
           />
         )}
         <IconRefresh
-          color={isBehind ? 'orange' : 'white'}
+          color={isBehind ? 'orange' : softWhite}
           title="Sync to leader"
           className={`${styles.action}`}
           onClick={() => {
@@ -305,7 +305,7 @@ export class Controls extends React.Component<ControlsProps> {
           }}
           className={` ${styles.action}`}
           title="Loop"
-          color={this.props.loop ? 'green' : 'white'}
+          color={this.props.loop ? 'green' : softWhite}
         />
         {this.props.isYouTube ? (
           <Menu>
@@ -339,7 +339,7 @@ export class Controls extends React.Component<ControlsProps> {
             }}
             className={` ${styles.action}`}
             title="Captions"
-            color={subtitled ? 'green' : 'white'}
+            color={subtitled ? 'green' : softWhite}
           />
         )}
         <IconTheater
