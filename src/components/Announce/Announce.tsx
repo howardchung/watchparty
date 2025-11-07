@@ -48,7 +48,7 @@ const Announce = () => {
   return announcement != null ? (
     <div className={styles.announce}>
       {/* <h4>{announcement.title}</h4> */}
-      <pre>
+      <pre style={{ whiteSpace: 'pre-wrap' }}>
         {announcement.body}
       </pre>
       <aside>
