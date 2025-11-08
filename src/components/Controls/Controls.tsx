@@ -119,7 +119,7 @@ export class Controls extends React.Component<ControlsProps> {
       roomPlaybackRate,
     } = this.props;
     // console.log(leaderTime, currentTime);
-    const behindThreshold = 5;
+    const behindThreshold = 10;
     const isBehind =
       leaderTime && leaderTime < Infinity
         ? leaderTime - currentTime > behindThreshold
