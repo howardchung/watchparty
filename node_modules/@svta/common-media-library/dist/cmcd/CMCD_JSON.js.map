@@ -1,0 +1,1 @@
+{"version":3,"file":"CMCD_JSON.js","sourceRoot":"","sources":["../../src/cmcd/CMCD_JSON.ts"],"names":[],"mappings":"AAAA;;;;;;GAMG;AACH,MAAM,CAAC,MAAM,SAAS,GAAG,MAAM,CAAC","sourcesContent":["/**\n * CMCD `json` transmission mode.\n *\n * @group CMCD\n *\n * @beta\n */\nexport const CMCD_JSON = 'json';\n"]}

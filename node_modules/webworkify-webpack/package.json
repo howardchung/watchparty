@@ -1,0 +1,40 @@
+{
+  "name": "webworkify-webpack",
+  "version": "2.1.5",
+  "description": "launch a web worker at runtime that can require() in the browser with webpack",
+  "main": "index.js",
+  "scripts": {
+    "build": "webpack --config example/webpack.config.js",
+    "serve": "http-server",
+    "example": "npm run build && npm run serve"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/borisirota/webworkify-webpack.git"
+  },
+  "keywords": [
+    "web",
+    "worker",
+    "webworker",
+    "background",
+    "browser",
+    "inline",
+    "runtime",
+    "webpack"
+  ],
+  "author": "Boris Sirota <borisirota@gmail.com> (https://github.com/borisirota)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/borisirota/webworkify-webpack/issues"
+  },
+  "homepage": "https://github.com/borisirota/webworkify-webpack",
+  "devDependencies": {
+    "babel-core": "^6.9.0",
+    "babel-loader": "^7.1.2",
+    "babel-preset-es2015": "^6.9.0",
+    "gamma": "^1.0.0",
+    "http-server": "^0.11.1",
+    "webpack": "^4.29.6",
+    "webpack-cli": "^3.2.3"
+  }
+}

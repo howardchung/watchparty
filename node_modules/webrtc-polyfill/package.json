@@ -1,0 +1,73 @@
+{
+  "name": "webrtc-polyfill",
+  "version": "1.1.10",
+  "description": "High performance WebRTC polyfill for Node.JS via libdatachannel using Node Native/NAPI.",
+  "type": "module",
+  "types": "./types.d.ts",
+  "browser": "./browser.js",
+  "chromeapp": "./browser.js",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "exports": {
+    "node": {
+      "types": "./types.d.ts",
+      "import": "./index.js",
+      "polyfill": "./polyfill.js"
+    },
+    "browser": {
+      "types": "./types.d.ts",
+      "import": "./browser.js",
+      "polyfill": "./polyfill-browser.js"
+    },
+    "default": {
+      "types": "./types.d.ts",
+      "import": "./index.js",
+      "polyfill": "./polyfill.js"
+    }
+  },
+  "files": [
+    "lib/*",
+    "index.js",
+    "browser.js",
+    "polyfill.js",
+    "polyfill-browser.js",
+    "types.d.ts"
+  ],
+  "keywords": [
+    "webrtc",
+    "w3c",
+    "nodejs",
+    "polyfill",
+    "p2p",
+    "peer",
+    "libdatachannel",
+    "peer-to-peer",
+    "datachannel",
+    "data channel"
+  ],
+  "author": "ThaUnknown",
+  "license": "MIT",
+  "homepage": "https://github.com/ThaUnknown/webrtc-polyfill#readme",
+  "bugs": "https://github.com/ThaUnknown/webrtc-polyfill/issues",
+  "repository": "https://github.com/ThaUnknown/webrtc-polyfill.git",
+  "dependencies": {
+    "node-datachannel": "^v0.12.0",
+    "node-domexception": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/webrtc": "^0.0.44",
+    "concurrently": "^9.1.0",
+    "jsdom": "^25.0.1",
+    "tap-spec": "^5.0.0",
+    "tape": "^5.9.0",
+    "typescript": "^5.6.3",
+    "uint8-util": "^2.2.5"
+  },
+  "scripts": {
+    "test": "concurrently --kill-others --raw \"npm run wpt:server\" \"npm run wrtc:test\"",
+    "wrtc:test": "tape test/wpt.js | tap-spec",
+    "wpt:server": "python test/wpt/wpt.py serve",
+    "wpt:make-hosts": "python test/wpt/wpt.py make-hosts-file"
+  }
+}
