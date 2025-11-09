@@ -337,7 +337,9 @@ export class VideoChat extends React.Component<VideoChatProps> {
                       <>
                         {p.isVideoChat && <IconVideo color={softWhite} />}
                         {p.isVideoChat && (
-                          <IconMicrophone color={p.isMuted ? 'red' : softWhite} />
+                          <IconMicrophone
+                            color={p.isMuted ? 'red' : softWhite}
+                          />
                         )}
                       </>
                     )}

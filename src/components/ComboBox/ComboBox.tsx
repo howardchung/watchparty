@@ -89,10 +89,7 @@ export class ComboBox extends React.Component<ComboBoxProps, ComboBoxState> {
   debouncedSearch = debounce(this.doSearch);
 
   onChange = (value: string) => {
-    this.setState(
-      { inputMedia: value },
-      this.debouncedSearch,
-    );
+    this.setState({ inputMedia: value }, this.debouncedSearch);
   };
 
   render() {

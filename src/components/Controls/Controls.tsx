@@ -120,10 +120,11 @@ export class Controls extends React.Component<ControlsProps> {
     } = this.props;
     // console.log(leaderTime, currentTime);
     const behindThreshold = 10;
-    const isBehind =
+    const behindTime =
       leaderTime && leaderTime < Infinity
-        ? leaderTime - currentTime > behindThreshold
-        : this.getEnd() - this.getCurrent() > behindThreshold;
+        ? leaderTime - currentTime
+        : this.getEnd() - this.getCurrent();
+    const isBehind = behindTime > behindThreshold;
     const buffers = timeRanges.map(({ start, end }) => {
       const buffStartPct = (start / this.getLength()) * 100;
       const buffLengthPct = ((end - start) / this.getLength()) * 100;
@@ -164,20 +165,32 @@ export class Controls extends React.Component<ControlsProps> {
             onClick={() => roomPlaylistPlay(0)}
           />
         )}
-        <IconRefresh
-          color={isBehind ? 'orange' : softWhite}
-          title="Sync to leader"
-          className={`${styles.action}`}
-          onClick={() => {
-            if (isLiveStream) {
-              // do a regular seek rather than sync self if it's HLS since we're basically seeking to the live position
-              // Also, clear the room TS since we want to start at live again on refresh
-              roomSeek(Number.MAX_SAFE_INTEGER);
-            } else {
-              localSeek();
-            }
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexDirection: 'column',
+            position: 'relative',
           }}
-        />
+        >
+          <IconRefresh
+            color={isBehind ? 'orange' : softWhite}
+            className={`${styles.action}`}
+            onClick={() => {
+              if (isLiveStream) {
+                // do a regular seek rather than sync self if it's HLS since we're basically seeking to the live position
+                // Also, clear the room TS since we want to start at live again on refresh
+                roomSeek(Number.MAX_SAFE_INTEGER);
+              } else {
+                localSeek();
+              }
+            }}
+          />
+            <div style={{ position: 'absolute', fontSize: '6px', zIndex: -1 }}>
+              {Math.max(Math.floor(behindTime), 0)}
+            </div>
+        </div>
         <div className={` ${styles.text}`}>
           {formatTimestamp(this.getCurrent(), isLiveStream)}
         </div>
