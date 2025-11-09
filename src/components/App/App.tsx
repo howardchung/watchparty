@@ -1,6 +1,14 @@
 import type MediasoupClient from 'mediasoup-client';
 import React from 'react';
-import { Alert, Divider, Loader, Menu, Overlay, Select, Title } from '@mantine/core';
+import {
+  Alert,
+  Divider,
+  Loader,
+  Menu,
+  Overlay,
+  Select,
+  Title,
+} from '@mantine/core';
 import io, { Socket } from 'socket.io-client';
 import {
   formatSpeed,
@@ -633,7 +641,12 @@ export class App extends React.Component<AppProps, AppState> {
               this.setLoadingFalse();
               let ts = undefined;
               // WebTorrent and Hls and Dash reset position back to 0 so set it back here
-              if (isMagnet(src) || isHls(src) || isDash(src) || this.state.isLiveStream) {
+              if (
+                isMagnet(src) ||
+                isHls(src) ||
+                isDash(src) ||
+                this.state.isLiveStream
+              ) {
                 ts = time;
               }
               // Resync to leader since the loading might have taken some time
@@ -2551,78 +2564,69 @@ export class App extends React.Component<AppProps, AppState> {
                   }
                   leftSection={<IconUsersGroup />}
                   rightSection={
-                    <Badge
-                      circle
-                    >
-                      {this.state.participants.length}
-                    </Badge>
+                    <Badge circle>{this.state.participants.length}</Badge>
                   }
                 >
                   People
                 </Button>
                 <Menu>
-                        <Menu.Target>
-                          <Button
-                            color="grey"
-                            className={styles.shareButton}
-                            leftSection={<IconList />}
-                            rightSection={
-                              <Badge circle>{playlist.length}</Badge>
-                            }
-                          >
-                            Playlist
-                          </Button>
-                        </Menu.Target>
-                        <Menu.Dropdown
-                          style={{
-                            overflowY:
-                              playlist.length > 0 ? 'scroll' : undefined,
-                            maxHeight: 400,
-                            maxWidth: isMobile() ? 400 : 600,
-                          }}
-                        >
-                          {playlist.length === 0 && (
-                            <Menu.Item disabled>
-                              There are no items in the playlist.
-                            </Menu.Item>
-                          )}
-                          {playlist.map(
-                            (item: PlaylistVideo, index: number) => {
-                              if (Boolean(item.img)) {
-                                item.type = 'youtube';
-                              }
-                              return (
-                                <Menu.Item key={index}>
-                                  <ChatVideoCard
-                                    video={item}
-                                    index={index}
-                                    controls
-                                    onPlay={this.roomPlaylistPlay}
-                                    onPlayNext={(index) => {
-                                      this.roomPlaylistMove(index, 0);
-                                    }}
-                                    onRemove={(index) => {
-                                      this.roomPlaylistDelete(index);
-                                    }}
-                                    disabled={!this.haveLock()}
-                                  />
-                                </Menu.Item>
-                              );
-                            },
-                          )}
-                        </Menu.Dropdown>
-                      </Menu>
-                      <Button
-                        style={{ flexGrow: 1 }}
-                        color="grey"
-                        title="Settings"
-                        // className={styles.shareButton}
-                        onClick={() => {
-                          this.setSettingsModalOpen(true);
-                        }}
-                      >
-                    <IconSettings />
-                  </Button>
+                  <Menu.Target>
+                    <Button
+                      color="grey"
+                      className={styles.shareButton}
+                      leftSection={<IconList />}
+                      rightSection={<Badge circle>{playlist.length}</Badge>}
+                    >
+                      Playlist
+                    </Button>
+                  </Menu.Target>
+                  <Menu.Dropdown
+                    style={{
+                      overflowY: playlist.length > 0 ? 'scroll' : undefined,
+                      maxHeight: 400,
+                      maxWidth: isMobile() ? 400 : 600,
+                    }}
+                  >
+                    {playlist.length === 0 && (
+                      <Menu.Item disabled>
+                        There are no items in the playlist.
+                      </Menu.Item>
+                    )}
+                    {playlist.map((item: PlaylistVideo, index: number) => {
+                      if (Boolean(item.img)) {
+                        item.type = 'youtube';
+                      }
+                      return (
+                        <Menu.Item key={index}>
+                          <ChatVideoCard
+                            video={item}
+                            index={index}
+                            controls
+                            onPlay={this.roomPlaylistPlay}
+                            onPlayNext={(index) => {
+                              this.roomPlaylistMove(index, 0);
+                            }}
+                            onRemove={(index) => {
+                              this.roomPlaylistDelete(index);
+                            }}
+                            disabled={!this.haveLock()}
+                          />
+                        </Menu.Item>
+                      );
+                    })}
+                  </Menu.Dropdown>
+                </Menu>
+                <Button
+                  style={{ flexGrow: 1 }}
+                  color="grey"
+                  title="Settings"
+                  // className={styles.shareButton}
+                  onClick={() => {
+                    this.setSettingsModalOpen(true);
+                  }}
+                >
+                  <IconSettings />
+                </Button>
               </div>
               {this.state.state === 'connected' && (
                 <div

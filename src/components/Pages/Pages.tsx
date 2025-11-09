@@ -1,6 +1,10 @@
 import React from 'react';
 
-const mdStyle: React.CSSProperties = { maxWidth: '100vw', width: '800px', padding: '10px' };
+const mdStyle: React.CSSProperties = {
+  maxWidth: '100vw',
+  width: '800px',
+  padding: '10px',
+};
 
 export const Privacy = () => {
   return (
