@@ -19,7 +19,7 @@
     "dotenv": "^17.2.3",
     "eventemitter3": "^4.0.7",
     "express": "^5.1.0",
-    "firebase": "^9.23.0",
+    "firebase": "^10.9.0",
     "firebase-admin": "^11.11.1",
     "hls.js": "^1.6.14",
     "ioredis": "^5.8.2",
