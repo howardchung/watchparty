@@ -940,7 +940,7 @@ export class App extends React.Component<AppProps, AppState> {
               e.data === window.YT?.PlayerState?.ENDED
             ) {
               console.log(e.data, e.target.getVideoUrl());
-              this.onVideoEnded(null, e.target.getVideoUrl());
+              this.onVideoEnded(e.target.getVideoUrl());
             }
             if (
               this.ytDebounce &&
@@ -1936,7 +1936,7 @@ export class App extends React.Component<AppProps, AppState> {
     return Math.max(...Object.values(this.state.tsMap));
   };
 
-  onVideoEnded = (e: React.SyntheticEvent | null, url: string) => {
+  onVideoEnded = (url: string) => {
     this.localPause();
     // check if looping is on, if so set time back to 0 and restart
     if (this.state.roomLoop) {
@@ -2449,22 +2449,26 @@ export class App extends React.Component<AppProps, AppState> {
                         }}
                         id="leftVideo"
                         onEnded={(e) =>
-                          this.onVideoEnded(e, e.currentTarget.src)
+                          this.onVideoEnded(e.currentTarget.src)
                         }
                         playsInline
                         onClick={this.roomTogglePlay}
                       ></video>
                     )}
                   </div>
-                  {Boolean(this.state.total) && (
+                </div>
+                {this.state.roomMedia && controls}
+                {Boolean(this.state.total) && (
                     <div
                       style={{
                         color: softWhite,
-                        fontWeight: 700,
-                        fontSize: 12,
+                        fontWeight: 400,
+                        fontSize: 10,
+                        lineHeight: '8px',
                         position: 'absolute',
-                        right: 0,
                         bottom: 0,
+                        width: '100%',
+                        textAlign: 'center',
                         zIndex: 1,
                       }}
                     >
@@ -2479,8 +2483,6 @@ export class App extends React.Component<AppProps, AppState> {
                         ' connections'}
                     </div>
                   )}
-                </div>
-                {this.state.roomMedia && controls}
                 {!isMobile() && (
                   <div className={styles.expandButton}>
                     <ActionIcon

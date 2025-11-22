@@ -1,7 +1,6 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import { Button, Text } from '@mantine/core';
 import { decodeEntities, formatSize } from '../../utils/utils';
-import { MetadataContext } from '../../MetadataContext';
 import { IconBrandYoutubeFilled } from '@tabler/icons-react';
 
 export const YouTubeSearchResult = (
@@ -39,14 +38,14 @@ export const YouTubeSearchResult = (
 };
 
 export const MediaPathSearchResult = (
-  props: SearchResult & { setMedia: (_e: any, data: any) => void },
+  props: SearchResult & { setMedia: (value: string) => void },
 ) => {
   const result = props;
   const setMedia = props.setMedia;
   return (
     <div
       onClick={(e) => {
-        setMedia(e, { value: result.url });
+        setMedia(result.url);
       }}
       key={result.url}
       // leftSection={<IconFile />}
@@ -58,62 +57,12 @@ export const MediaPathSearchResult = (
 
 export const StreamPathSearchResult = (
   props: SearchResult & {
-    setMedia: (_e: any, data: any) => void;
-    launchMultiSelect?: (multi?: []) => void;
+    onSelectItem: (result: SearchResult) => void;
   },
 ) => {
-  const context = useContext(MetadataContext);
   const result = props;
-  const setMedia = props.setMedia;
   return (
-    <div
-      key={result.url}
-      onClick={async (e) => {
-        if (props.launchMultiSelect) {
-          props.launchMultiSelect([]);
-        }
-        let response = await window.fetch(
-          context.streamPath +
-            '/data?torrent=' +
-            encodeURIComponent(result.magnet!),
-        );
-        let metadata = await response.json();
-        // console.log(metadata);
-        if (
-          metadata.files.filter((file: any) => file.length > 10 * 1024 * 1024)
-            .length > 1
-        ) {
-          // Multiple large files, present user selection
-          const multiStreamSelection = metadata.files.map(
-            (file: any, i: number) => ({
-              ...file,
-              url:
-                context.streamPath +
-                '/stream?torrent=' +
-                encodeURIComponent(result.magnet!) +
-                '&fileIndex=' +
-                i,
-            }),
-          );
-          // multiStreamSelection.sort((a: any, b: any) =>
-          //   a.name.localeCompare(b.name)
-          // );
-          if (props.launchMultiSelect) {
-            props.launchMultiSelect(multiStreamSelection);
-          }
-        } else {
-          if (props.launchMultiSelect) {
-            props.launchMultiSelect(undefined);
-          }
-          setMedia(e, {
-            value:
-              context.streamPath +
-              '/stream?torrent=' +
-              encodeURIComponent(result.magnet!),
-          });
-        }
-      }}
-    >
+    <div key={result.url} onClick={() => props.onSelectItem(result)}>
       {/* <Badge
             circle
             size="xs"

@@ -187,9 +187,9 @@ export class Controls extends React.Component<ControlsProps> {
               }
             }}
           />
-            <div style={{ position: 'absolute', fontSize: '6px', zIndex: -1 }}>
-              {Math.max(Math.floor(behindTime), 0)}
-            </div>
+          <div style={{ position: 'absolute', fontSize: '6px', zIndex: -1 }}>
+            {Math.max(Math.floor(behindTime), 0)}
+          </div>
         </div>
         <div className={` ${styles.text}`}>
           {formatTimestamp(this.getCurrent(), isLiveStream)}
