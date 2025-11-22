@@ -50,13 +50,46 @@ export class SearchComponent extends React.Component<SearchComponentProps> {
     }
   };
 
-  setMedia = (value: string) => {
-    this.props.setMedia(value);
+  onSelectItem = async (result: SearchResult) => {
+    let response = await window.fetch(
+      this.context.streamPath +
+        '/data?torrent=' +
+        encodeURIComponent(result.magnet!),
+    );
+    let metadata = await response.json();
+    // console.log(metadata);
+    if (
+      metadata.files.filter((file: any) => file.length > 10 * 1024 * 1024)
+        .length > 1 &&
+      this.props.launchMultiSelect
+    ) {
+      // Multiple large files, present user selection
+      const multiStreamSelection = metadata.files.map(
+        (file: any, i: number) => ({
+          ...file,
+          url:
+            this.context.streamPath +
+            '/stream?torrent=' +
+            encodeURIComponent(result.magnet!) +
+            '&fileIndex=' +
+            i,
+        }),
+      );
+      // multiStreamSelection.sort((a: any, b: any) =>
+      //   a.name.localeCompare(b.name)
+      // );
+      this.props.launchMultiSelect(multiStreamSelection);
+    } else {
+      this.props.setMedia(
+        this.context.streamPath +
+          '/stream?torrent=' +
+          encodeURIComponent(result.magnet!),
+      );
+    }
   };
 
   render() {
-    const setMedia = this.setMedia;
-    let placeholder = '[BETA] Search streams';
+    let placeholder = 'Search or enter magnet';
     let icon = <IconMovie />;
     if (this.props.type === 'youtube') {
       placeholder = 'Search YouTube';
@@ -76,7 +109,7 @@ export class SearchComponent extends React.Component<SearchComponentProps> {
           <YouTubeSearchResult
             key={result.url}
             {...result}
-            setMedia={setMedia}
+            setMedia={this.props.setMedia}
             playlistAdd={this.props.playlistAdd}
           />
         );
@@ -84,9 +117,8 @@ export class SearchComponent extends React.Component<SearchComponentProps> {
       return (
         <StreamPathSearchResult
           key={result.url}
+          onSelectItem={this.onSelectItem}
           {...result}
-          setMedia={setMedia}
-          launchMultiSelect={this.props.launchMultiSelect}
         />
       );
     };
@@ -97,6 +129,17 @@ export class SearchComponent extends React.Component<SearchComponentProps> {
         leftSection={this.state.loading ? <Loader size="sm" /> : icon}
         placeholder={placeholder}
         onSearchChange={debounce(this.doSearch, 500)}
+        onKeyDown={(e: any) => {
+          if (e.key === 'Enter') {
+            this.onSelectItem({
+              magnet: this.state.inputMedia,
+              type: 'magnet',
+              url: '',
+              name: '',
+              duration: 0,
+            });
+          }
+        }}
         value={this.state.inputMedia}
         onFocus={() => this.doSearch()}
         disabled={this.props.disabled}
