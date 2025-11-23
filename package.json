@@ -10,7 +10,7 @@
     "@stripe/stripe-js": "^1.54.2",
     "@tabler/icons-react": "^3.35.0",
     "axios": "^1.13.2",
-    "body-parser": "^1.20.2",
+    "body-parser": "^1.20.3",
     "can-autoplay": "^3.0.2",
     "compression": "^1.8.1",
     "cors": "^2.8.5",
