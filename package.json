@@ -7,7 +7,7 @@
     "@emoji-mart/react": "^1.1.1",
     "@googleapis/youtube": "^8.0.2",
     "@mantine/core": "^8.3.9",
-    "@stripe/stripe-js": "^1.54.2",
+    "@stripe/stripe-js": "^8.5.2",
     "@tabler/icons-react": "^3.35.0",
     "axios": "^1.13.2",
     "body-parser": "^1.20.2",
