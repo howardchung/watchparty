@@ -1,4 +1,10 @@
-import 'dotenv/config';
+import { loadEnvFile } from 'node:process';
+
+try {
+  loadEnvFile();
+} catch (e) {
+  console.log(e);
+}
 
 const defaults = {
   REDIS_URL: '', // Optional, for metrics
