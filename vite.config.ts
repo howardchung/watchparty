@@ -1,5 +1,11 @@
-import 'dotenv/config';
+import { loadEnvFile } from 'node:process';
 import fs from 'node:fs';
+
+try {
+  loadEnvFile();
+} catch (e) {
+  console.log(e);
+}
 
 export default {
   build: {

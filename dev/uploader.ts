@@ -1,4 +1,3 @@
-import 'dotenv/config';
 const axios = require('axios');
 const fs = require('fs');
 var s3 = require('s3-client');
