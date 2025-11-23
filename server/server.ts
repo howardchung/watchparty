@@ -58,6 +58,8 @@ if (config.SSL_KEY_FILE && config.SSL_CRT_FILE) {
 } else {
   server = new http.Server(app);
 }
+server?.listen(config.PORT, config.HOST);
+
 const io = new Server(server, { cors: {}, transports: ['websocket'] });
 io.engine.use(async (req: any, res: Response, next: () => void) => {
   const roomId = req._query.roomId;
@@ -94,22 +96,17 @@ io.engine.use(async (req: any, res: Response, next: () => void) => {
 });
 
 const rooms = new Map<string, Room>();
-init();
-
-async function init() {
-  server?.listen(config.PORT, config.HOST);
-  // Following functions iterate over in-memory rooms
-  setInterval(minuteMetrics, 60 * 1000);
-  setInterval(release, releaseInterval);
-  setInterval(saveRooms, 1000);
-  if (process.env.NODE_ENV === 'development') {
-    try {
-      import('./vmWorker.ts');
-      // import('./syncSubs.ts');
-      // import('./timeSeries.ts');
-    } catch (e) {
-      console.error(e);
-    }
+// Following functions iterate over in-memory rooms
+setInterval(minuteMetrics, 60 * 1000);
+setInterval(release, releaseInterval);
+setInterval(saveRooms, 1000);
+if (process.env.NODE_ENV === 'development') {
+  try {
+    import('./vmWorker.ts');
+    // import('./syncSubs.ts');
+    // import('./timeSeries.ts');
+  } catch (e) {
+    console.error(e);
   }
 }
 
