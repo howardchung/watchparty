@@ -255,7 +255,7 @@ export async function getStreamPathResults(
     streamPath + `/${query ? 'search' : 'top'}?q=` + encodeURIComponent(query),
   );
   const data = await response.json();
-  return data.map((d: any) => ({ ...d, url: d.magnet }));
+  return data.map((d: any, i: number) => ({ ...d, url: d.magnet ?? String(i) }));
 }
 
 export async function getYouTubeResults(
