@@ -1,5 +1,6 @@
-const http = require('http');
-const net = require('net');
+import http from 'node:http';
+import net from 'node:net';
+
 const port = 5902;
 
 const client = new net.Socket();
@@ -10,10 +11,6 @@ const server = http.createServer((req, res) => {
   client.pipe(res);
 });
 
-server.listen(port, (err) => {
-  if (err) {
-    return console.log('something bad happened', err);
-  }
-
+server.listen(port, () => {
   console.log(`server is listening on ${port}`);
 });
