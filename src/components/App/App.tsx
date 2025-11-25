@@ -172,6 +172,7 @@ interface AppState {
   isLiveStream: boolean;
   liveStreamStart: number | undefined;
   settingsModalOpen: boolean;
+  uploadController: AbortController | undefined;
 }
 
 export class App extends React.Component<AppProps, AppState> {
@@ -252,6 +253,7 @@ export class App extends React.Component<AppProps, AppState> {
     isLiveStream: false,
     liveStreamStart: undefined,
     settingsModalOpen: false,
+    uploadController: undefined,
   };
   socket: Socket = null as any;
   mediasoupPubSocket: Socket | null = null;
@@ -282,7 +284,7 @@ export class App extends React.Component<AppProps, AppState> {
     // Send heartbeat to the server
     this.heartbeat = window.setInterval(
       () => {
-        window.fetch(serverPath + '/ping');
+        fetch(serverPath + '/ping');
       },
       10 * 60 * 1000,
     );
@@ -1041,34 +1043,20 @@ export class App extends React.Component<AppProps, AppState> {
     // Start uploading stream
     const stream = file.stream();
     const uuid = createUuid();
-    const convertUrl = 'azure.howardchung.net:5001';
-    const websocket = new WebSocket('wss://' + convertUrl + '/' + uuid);
-    websocket.addEventListener('open', async () => {
-      const reader = stream.getReader();
-      const chunk = await reader.read();
-      if (chunk.value) {
-        websocket.send(chunk.value);
-      }
-      if (chunk.done) {
-        websocket.close();
-      }
-      websocket.addEventListener('message', async (msg) => {
-        if (msg.data === '1') {
-          // Send the next chunk
-          const chunk = await reader.read();
-          if (chunk.value) {
-            websocket.send(chunk.value);
-          }
-          if (chunk.done) {
-            websocket.close();
-          }
-        } else {
-          // Set room URL to download url when ready
-          this.roomSetMedia(msg.data);
-        }
-      });
+    const convertUrl = 'https://azure.howardchung.net:5001/' + uuid + '.mpegts';
+    const controller = new AbortController();
+    this.setState({
+      uploadController: controller,
     });
-    // TODO provide some button to abort/cancel upload (controller.abort())
+    fetch(convertUrl, {
+      method: 'POST',
+      body: stream,
+      signal: controller.signal,
+      //@ts-expect-error
+      duplex: 'half',
+    });
+    // Same URL but GET
+    this.roomSetMedia(convertUrl);
   };
 
   startFileShare = async (useMediaSoup: boolean) => {
@@ -2322,6 +2310,18 @@ export class App extends React.Component<AppProps, AppState> {
                             File
                           </Button>
                         )}
+                      {this.state.uploadController && (
+                        <Button
+                          color="red"
+                          onClick={() => {
+                            this.state.uploadController?.abort();
+                            this.setState({ uploadController: undefined });
+                          }}
+                          leftSection={<IconX />}
+                        >
+                          Stop Upload
+                        </Button>
+                      )}
                       {false && (
                         <SearchComponent
                           setMedia={this.roomSetMedia}
@@ -2448,9 +2448,7 @@ export class App extends React.Component<AppProps, AppState> {
                           maxHeight: VIDEO_MAX_HEIGHT_CSS,
                         }}
                         id="leftVideo"
-                        onEnded={(e) =>
-                          this.onVideoEnded(e.currentTarget.src)
-                        }
+                        onEnded={(e) => this.onVideoEnded(e.currentTarget.src)}
                         playsInline
                         onClick={this.roomTogglePlay}
                       ></video>
@@ -2459,30 +2457,30 @@ export class App extends React.Component<AppProps, AppState> {
                 </div>
                 {this.state.roomMedia && controls}
                 {Boolean(this.state.total) && (
-                    <div
-                      style={{
-                        color: softWhite,
-                        fontWeight: 400,
-                        fontSize: 10,
-                        lineHeight: '8px',
-                        position: 'absolute',
-                        bottom: 0,
-                        width: '100%',
-                        textAlign: 'center',
-                        zIndex: 1,
-                      }}
-                    >
-                      {Math.min(
-                        (this.state.downloaded / this.state.total) * 100,
-                        100,
-                      ).toFixed(2) +
-                        '% - ' +
-                        formatSpeed(this.state.speed) +
-                        ' - ' +
-                        this.state.connections +
-                        ' connections'}
-                    </div>
-                  )}
+                  <div
+                    style={{
+                      color: softWhite,
+                      fontWeight: 400,
+                      fontSize: 10,
+                      lineHeight: '8px',
+                      position: 'absolute',
+                      bottom: 0,
+                      width: '100%',
+                      textAlign: 'center',
+                      zIndex: 1,
+                    }}
+                  >
+                    {Math.min(
+                      (this.state.downloaded / this.state.total) * 100,
+                      100,
+                    ).toFixed(2) +
+                      '% - ' +
+                      formatSpeed(this.state.speed) +
+                      ' - ' +
+                      this.state.connections +
+                      ' connections'}
+                  </div>
+                )}
                 {!isMobile() && (
                   <div className={styles.expandButton}>
                     <ActionIcon

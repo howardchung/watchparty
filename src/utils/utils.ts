@@ -113,7 +113,7 @@ export const isDash = (input: string) => {
 };
 
 export const isMpegTs = (input: string) => {
-  return input.startsWith('ws://') || input.startsWith('wss://');
+  return input.includes('.mpegts');
 };
 
 export const isScreenShare = (input: string) => {
@@ -255,7 +255,10 @@ export async function getStreamPathResults(
     streamPath + `/${query ? 'search' : 'top'}?q=` + encodeURIComponent(query),
   );
   const data = await response.json();
-  return data.map((d: any, i: number) => ({ ...d, url: d.magnet ?? String(i) }));
+  return data.map((d: any, i: number) => ({
+    ...d,
+    url: d.magnet ?? String(i),
+  }));
 }
 
 export async function getYouTubeResults(

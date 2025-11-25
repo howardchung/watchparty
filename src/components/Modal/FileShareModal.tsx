@@ -74,30 +74,32 @@ export const FileShareModal = (props: {
               </Button>
             </Table.Td>
             <Table.Td>
-              {context.isSubscriber ? (
-                <Button
-                  color="orange"
-                  onClick={() => {
-                    props.startFileShare(true);
-                    props.closeModal();
-                  }}
-                >
-                  Start Fileshare w/Relay
-                </Button>
-              ) : (
-                subscribeButton
-              )}
-              {context.beta ? (
-                <Button
-                  color="green"
-                  onClick={() => {
-                    props.startConvert();
-                    props.closeModal();
-                  }}
-                >
-                  Start Fileshare w/Convert
-                </Button>
-              ) : null}
+              <div style={{ display: 'flex', gap: '4px' }}>
+                {context.isSubscriber ? (
+                  <Button
+                    color="orange"
+                    onClick={() => {
+                      props.startFileShare(true);
+                      props.closeModal();
+                    }}
+                  >
+                    Start Fileshare w/Relay
+                  </Button>
+                ) : (
+                  subscribeButton
+                )}
+                {context.beta ? (
+                  <Button
+                    color="green"
+                    onClick={() => {
+                      props.startConvert();
+                      props.closeModal();
+                    }}
+                  >
+                    Start Fileshare w/Convert
+                  </Button>
+                ) : null}
+              </div>
             </Table.Td>
           </Table.Tr>
         </Table.Tbody>
