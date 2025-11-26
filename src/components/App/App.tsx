@@ -605,7 +605,8 @@ export class App extends React.Component<AppProps, AppState> {
             hls.loadSource(src);
             hls.attachMedia(leftVideo);
             hls.once(Hls.Events.LEVEL_LOADED, (_, data) => {
-              this.setState({ isLiveStream: data.details.live });
+              console.log(data.details);
+              // this.setState({ isLiveStream: data.details.live });
             });
             hls.once(Hls.Events.INIT_PTS_FOUND, (event, data) => {
               const now = Math.floor(Date.now() / 1000);
@@ -1043,7 +1044,8 @@ export class App extends React.Component<AppProps, AppState> {
     // Start uploading stream
     const stream = file.stream();
     const uuid = createUuid();
-    const convertUrl = 'https://azure.howardchung.net:5001/' + uuid + '.mpegts';
+    // const convertUrl = 'https://azure.howardchung.net:5001/' + uuid + '.mpegts';
+    const convertUrl = 'https://azure.howardchung.net:5001/' + uuid + '.m3u8';
     const controller = new AbortController();
     this.setState({
       uploadController: controller,
@@ -1055,10 +1057,24 @@ export class App extends React.Component<AppProps, AppState> {
       //@ts-expect-error
       duplex: 'half',
     });
-    // Same URL but GET
-    this.roomSetMedia(convertUrl);
+    // Note: Can't read response logs as a stream as fetch will buffer it until upload is complete
+    // Would need to implement using Server Sent Events and a separate call?
+    // Wait for the playlist to get generated 
+    const poll = async () => {
+      let ok = false;
+      let i = 0;
+      while (!ok && i < 30) {
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        const resp = await fetch(convertUrl);
+        ok = resp.ok;
+        i += 1;
+      }
+      // Same URL but GET
+      this.roomSetMedia(convertUrl);
+    };
+    poll();
   };
-
+  
   startFileShare = async (useMediaSoup: boolean) => {
     const files = await openFileSelector();
     if (!files) {
@@ -1756,7 +1772,7 @@ export class App extends React.Component<AppProps, AppState> {
       const now = Math.floor(Date.now() / 1000);
       let liveStreamTarget = now - this.HTMLInterface.getDuration() + target;
       // If livestream and seeking close to edge, set target as max
-      if (now - liveStreamTarget <= 5) {
+      if (now - liveStreamTarget <= 10) {
         liveStreamTarget = Number.MAX_SAFE_INTEGER;
       }
       target = liveStreamTarget;
