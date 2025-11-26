@@ -170,7 +170,6 @@ interface AppState {
   mediaPath: string | undefined;
   roomPlaybackRate: number;
   isLiveStream: boolean;
-  liveStreamStart: number | undefined;
   settingsModalOpen: boolean;
   uploadController: AbortController | undefined;
 }
@@ -251,7 +250,6 @@ export class App extends React.Component<AppProps, AppState> {
     mediaPath: undefined,
     roomPlaybackRate: 0,
     isLiveStream: false,
-    liveStreamStart: undefined,
     settingsModalOpen: false,
     uploadController: undefined,
   };
@@ -474,7 +472,6 @@ export class App extends React.Component<AppProps, AppState> {
           vBrowserQuality: '1',
           controller: data.controller,
           isLiveStream: false,
-          liveStreamStart: undefined,
         },
         async () => {
           const leftVideo = this.HTMLInterface.getVideoEl();
@@ -581,18 +578,14 @@ export class App extends React.Component<AppProps, AppState> {
             const Dash = await import('dashjs');
             const dashPlayer = Dash.MediaPlayer().create();
             dashPlayer.initialize(leftVideo, src);
-            dashPlayer.on('streamInitialized', (_) => {
+            dashPlayer.on('streamInitialized', (e) => {
+              console.log(e);
               // for a live stream:
               // html.currenttime is time since stream start
               // html.duration is infinite
               // player.duration is the seekable range
-              const now = Math.floor(Date.now() / 1000);
-              const liveStreamStart =
-                now - this.Player().getCurrentTime() - dashPlayer.duration();
-              // console.log('now', now, 'htmltime', this.Player().getCurrentTime(), 'htmlduration', this.Player().getDuration(), 'dashplayer time', dashPlayer.time(), 'durationasutc', dashPlayer.durationAsUTC(), 'dashduration', dashPlayer.duration(), 'livestreamstart', liveStreamStart);
               this.setState({
                 isLiveStream: this.Player().getDuration() >= Infinity,
-                liveStreamStart,
               });
               dashPlayer.off('streamInitialized', () => {});
             });
@@ -605,20 +598,7 @@ export class App extends React.Component<AppProps, AppState> {
             hls.loadSource(src);
             hls.attachMedia(leftVideo);
             hls.once(Hls.Events.LEVEL_LOADED, (_, data) => {
-              console.log(data.details);
-              // this.setState({ isLiveStream: data.details.live });
-            });
-            hls.once(Hls.Events.INIT_PTS_FOUND, (event, data) => {
-              const now = Math.floor(Date.now() / 1000);
-              // console.log(data.initPTS);
-              const liveStreamStart = now - this.Player().getDuration();
-              console.log(
-                'hlsplayer time',
-                this.Player().getDuration(),
-                'livestreamstart',
-                liveStreamStart,
-              );
-              this.setState({ liveStreamStart });
+              this.setState({ isLiveStream: data.details.live });
             });
           } else if (isMpegTs(src)) {
             const mpegts = (await import('mpegts.js')).default;
@@ -864,7 +844,7 @@ export class App extends React.Component<AppProps, AppState> {
     );
     socket.on('REC:getRoomState', this.handleRoomState);
     window.setInterval(() => {
-      if (this.state.roomMedia) {
+      if (this.state.roomMedia && !this.state.isLiveStream) {
         this.socket.emit('CMD:ts', this.Player().getCurrentTime());
       }
     }, 1000);
@@ -1662,22 +1642,10 @@ export class App extends React.Component<AppProps, AppState> {
 
   localSeek = (customTime?: number) => {
     // Jump to the leader's position, or a custom one
-    // for HLS the leader is the live stream position
     let target = customTime ?? this.getLeaderTime();
+    // For live this is the offset from the leading edge (negative)
     if (this.state.isLiveStream) {
-      console.log('syncing self for livestream');
-      if (customTime) {
-        // Translate the time back to video time
-        // NOTE: dash.js and safari HLS sets htmlmediaelement duration to infinity so compute onload and save in state
-        // If we computed use it, otherwise calculate it using duration
-        const zeroTime =
-          this.state.liveStreamStart ??
-          Math.floor(Date.now() / 1000) - this.HTMLInterface.getDuration();
-        // Cap the time to the leadertime so we don't try to seek too close to edge
-        target = Math.min(customTime - zeroTime, this.getLeaderTime());
-      } else {
-        target = this.getLeaderTime();
-      }
+      target = this.Player().getDuration() + (customTime ?? 0);
     }
     if (target >= 0 && target < Infinity) {
       console.log('syncing self to leader or custom:', target);
@@ -1767,15 +1735,11 @@ export class App extends React.Component<AppProps, AppState> {
     let target = time;
     target = Math.max(target, 0);
     this.Player().seekVideo(target);
-    // Livestreams sync to network using timestamp since video time may be different for each viewer
+    // In live case, we need to adjust the time we send to the network because clients may have different durations
+    // Take the passed time and compute the delta from the end time (negative)
+    // Each client should use this value to set their own timestamp when setting
     if (this.state.isLiveStream) {
-      const now = Math.floor(Date.now() / 1000);
-      let liveStreamTarget = now - this.HTMLInterface.getDuration() + target;
-      // If livestream and seeking close to edge, set target as max
-      if (now - liveStreamTarget <= 10) {
-        liveStreamTarget = Number.MAX_SAFE_INTEGER;
-      }
-      target = liveStreamTarget;
+      target = time - this.Player().getDuration();
     }
     this.socket.emit('CMD:seek', target);
   };
@@ -1930,10 +1894,6 @@ export class App extends React.Component<AppProps, AppState> {
   };
 
   getLeaderTime = () => {
-    if (this.state.isLiveStream) {
-      // Pick a time near the end of the livestream
-      return this.HTMLInterface.getDuration() - 5;
-    }
     if (this.state.participants.length > 2) {
       return calculateMedian(Object.values(this.state.tsMap));
     }
@@ -1984,7 +1944,6 @@ export class App extends React.Component<AppProps, AppState> {
         paused={this.state.roomPaused}
         roomPlaybackRate={this.state.roomPlaybackRate}
         isLiveStream={this.state.isLiveStream}
-        liveStreamStart={this.state.liveStreamStart}
         muted={this.Player().isMuted()}
         volume={this.Player().getVolume()}
         subtitled={this.Player().isSubtitled()}
@@ -2683,7 +2642,6 @@ export class App extends React.Component<AppProps, AppState> {
                 isChatDisabled={this.state.isChatDisabled}
                 owner={this.state.owner}
                 ref={this.chatRef}
-                isLiveStream={this.state.isLiveStream}
                 hide={!this.state.showChatColumn}
               />
             </div>

@@ -31,7 +31,6 @@ interface ControlsProps {
   roomPlaybackRate: number;
   isYouTube: boolean;
   isLiveStream: boolean;
-  liveStreamStart: number | undefined;
   timeRanges: { start: number; end: number }[];
   loop: boolean;
   roomTogglePlay: () => void;
@@ -80,19 +79,10 @@ export class Controls extends React.Component<ControlsProps> {
     }
   };
 
-  getEnd = () =>
-    this.props.isLiveStream
-      ? Math.floor(Date.now() / 1000)
-      : this.props.duration;
-  getStart = () =>
-    this.props.isLiveStream && this.props.liveStreamStart
-      ? this.props.liveStreamStart
-      : 0;
+  getEnd = () => this.props.duration;
+  getStart = () => 0;
   getLength = () => this.getEnd() - this.getStart();
-  getCurrent = () =>
-    this.props.isLiveStream && this.props.liveStreamStart
-      ? this.props.liveStreamStart + this.props.currentTime
-      : this.props.currentTime;
+  getCurrent = () => this.props.currentTime;
   getPercent = () => (this.getCurrent() - this.getStart()) / this.getLength();
 
   render() {
@@ -179,9 +169,8 @@ export class Controls extends React.Component<ControlsProps> {
             className={`${styles.action}`}
             onClick={() => {
               if (isLiveStream) {
-                // do a regular seek rather than sync self if it's HLS since we're basically seeking to the live position
-                // Also, clear the room TS since we want to start at live again on refresh
-                roomSeek(Number.MAX_SAFE_INTEGER);
+                // in live case we want to seek the entire room to edge
+                roomSeek(this.props.duration)
               } else {
                 localSeek();
               }
@@ -192,7 +181,7 @@ export class Controls extends React.Component<ControlsProps> {
           </div>
         </div>
         <div className={` ${styles.text}`}>
-          {formatTimestamp(this.getCurrent(), isLiveStream)}
+          {formatTimestamp(this.getCurrent())}
         </div>
         <Progress.Root
           radius="0px"
@@ -262,12 +251,12 @@ export class Controls extends React.Component<ControlsProps> {
                 // textOverflow: 'initial',
               }}
             >
-              {formatTimestamp(this.state.hoverTimestamp, isLiveStream)}
+              {formatTimestamp(this.state.hoverTimestamp)}
             </Badge>
           )}
         </Progress.Root>
         <div className={` ${styles.text}`}>
-          {formatTimestamp(this.getEnd(), isLiveStream)}
+          {formatTimestamp(this.getEnd())}
         </div>
         {
           <Menu disabled={disabled}>

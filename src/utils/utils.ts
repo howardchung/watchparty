@@ -6,7 +6,7 @@ import config from '../config';
 import { cyrb53 } from './hash';
 import React from 'react';
 
-export function formatTimestamp(input: any, wallClock?: boolean): string {
+export function formatTimestamp(input: any, nowDuration?: number): string {
   if (
     input === null ||
     input === undefined ||
@@ -16,20 +16,17 @@ export function formatTimestamp(input: any, wallClock?: boolean): string {
   ) {
     return '';
   }
-  if (Number(input) >= Number.MAX_SAFE_INTEGER) {
-    return 'live';
+  if (nowDuration) {
+    return new Date(Date.now() - (nowDuration - input) * 1000).toLocaleTimeString();
   }
-  if (wallClock) {
-    return new Date(input * 1000).toLocaleTimeString();
-  }
-  let hours = Math.floor(Number(input) / 3600);
-  let minutes = (Math.floor(Number(input) / 60) % 60)
+  let hours = Math.abs(Math.floor(Number(input) / 3600));
+  let minutes = Math.abs((Math.floor(Number(input) / 60) % 60))
     .toString()
     .padStart(2, '0');
-  let seconds = Math.floor(Number(input) % 60)
+  let seconds = Math.abs(Math.floor(Number(input) % 60))
     .toString()
     .padStart(2, '0');
-  return `${hours ? `${hours}:` : ''}${minutes}:${seconds}`;
+  return `${Number(input) < 0 ? '-' : ''}${hours ? `${hours}:` : ''}${minutes}:${seconds}`;
 }
 
 export function formatSpeed(input: number) {
