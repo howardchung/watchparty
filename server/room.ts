@@ -725,7 +725,9 @@ export class Room {
     if (this.preventTSUpdate) {
       return;
     }
-    if (data > this.videoTS) {
+    // This is negative for live streams, so allow overwriting
+    // Otherwise, only increment this value to prevent a lagging viewer from holding up the room state
+    if (data < 0 || data > this.videoTS) {
       this.videoTS = data;
     }
     // Normalize the received TS based on how long since the last tsMap emit
@@ -734,10 +736,6 @@ export class Room {
     const timeSinceTsMap = Date.now() - this.lastTsMap;
     // console.log(socket.id, 'offset', offset, 'ms');
     this.tsMap[socket.id] = data - timeSinceTsMap / 1000 + 1;
-
-    // Calculate and update the zero time for each person (wall time - reported ts)
-    // const zeroTimeMs = Date.now() - Math.floor(data * 1000);
-    // this.zeroTimeMap[socket.id] = zeroTimeMs;
   };
 
   private sendChatMessage = (socket: Socket, data: string) => {

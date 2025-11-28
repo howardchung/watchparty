@@ -1,8 +1,9 @@
 import { loadEnvFile } from 'node:process';
-import fs from 'node:fs';
 
-if (fs.existsSync('.env')) {
+try {
   loadEnvFile();
+} catch (e) {
+  console.log(e);
 }
 
 const defaults = {

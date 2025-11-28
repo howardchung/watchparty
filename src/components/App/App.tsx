@@ -844,8 +844,9 @@ export class App extends React.Component<AppProps, AppState> {
     );
     socket.on('REC:getRoomState', this.handleRoomState);
     window.setInterval(() => {
-      if (this.state.roomMedia && !this.state.isLiveStream) {
-        this.socket.emit('CMD:ts', this.Player().getCurrentTime());
+      if (this.state.roomMedia) {
+        const target = this.getRoomTSToSet(this.Player().getCurrentTime());
+        this.socket.emit('CMD:ts', target);
       }
     }, 1000);
   };
@@ -1030,13 +1031,6 @@ export class App extends React.Component<AppProps, AppState> {
     this.setState({
       uploadController: controller,
     });
-    fetch(convertUrl, {
-      method: 'POST',
-      body: stream,
-      signal: controller.signal,
-      //@ts-expect-error
-      duplex: 'half',
-    });
     // Note: Can't read response logs as a stream as fetch will buffer it until upload is complete
     // Would need to implement using Server Sent Events and a separate call?
     // Wait for the playlist to get generated 
@@ -1053,6 +1047,15 @@ export class App extends React.Component<AppProps, AppState> {
       this.roomSetMedia(convertUrl);
     };
     poll();
+    await fetch(convertUrl, {
+      method: 'POST',
+      body: stream,
+      signal: controller.signal,
+      //@ts-expect-error
+      duplex: 'half',
+    });
+    // Upload complete
+    this.setState({ uploadController: undefined });
   };
   
   startFileShare = async (useMediaSoup: boolean) => {
@@ -1735,13 +1738,19 @@ export class App extends React.Component<AppProps, AppState> {
     let target = time;
     target = Math.max(target, 0);
     this.Player().seekVideo(target);
-    // In live case, we need to adjust the time we send to the network because clients may have different durations
-    // Take the passed time and compute the delta from the end time (negative)
-    // Each client should use this value to set their own timestamp when setting
+    this.socket.emit('CMD:seek', target);
+  };
+
+  getRoomTSToSet = (time: number) => {
+    let target = time;
+    // In live case, can't just send video time because clients may have different durations
+    // Take the passed time and compute the offset from the end time (negative)
+    // Each client should use this value to compute the time to set when starting playback
     if (this.state.isLiveStream) {
       target = time - this.Player().getDuration();
     }
-    this.socket.emit('CMD:seek', target);
+    // Otherwise just return the time
+    return target;
   };
 
   onFullScreenChange = () => {
@@ -2428,10 +2437,7 @@ export class App extends React.Component<AppProps, AppState> {
                         onClick={this.roomTogglePlay}
                       ></video>
                     )}
-                  </div>
-                </div>
-                {this.state.roomMedia && controls}
-                {Boolean(this.state.total) && (
+                    {Boolean(this.state.total) && (
                   <div
                     style={{
                       color: softWhite,
@@ -2440,8 +2446,7 @@ export class App extends React.Component<AppProps, AppState> {
                       lineHeight: '8px',
                       position: 'absolute',
                       bottom: 0,
-                      width: '100%',
-                      textAlign: 'center',
+                      right: 0,
                       zIndex: 1,
                     }}
                   >
@@ -2456,6 +2461,9 @@ export class App extends React.Component<AppProps, AppState> {
                       ' connections'}
                   </div>
                 )}
+                  </div>
+                </div>
+                {this.state.roomMedia && controls}
                 {!isMobile() && (
                   <div className={styles.expandButton}>
                     <ActionIcon

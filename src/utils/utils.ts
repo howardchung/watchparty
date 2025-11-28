@@ -19,11 +19,11 @@ export function formatTimestamp(input: any, nowDuration?: number): string {
   if (nowDuration) {
     return new Date(Date.now() - (nowDuration - input) * 1000).toLocaleTimeString();
   }
-  let hours = Math.abs(Math.floor(Number(input) / 3600));
-  let minutes = Math.abs((Math.floor(Number(input) / 60) % 60))
+  let hours = Math.abs(Math.trunc(Number(input) / 3600));
+  let minutes = Math.abs((Math.trunc(Number(input) / 60) % 60))
     .toString()
     .padStart(2, '0');
-  let seconds = Math.abs(Math.floor(Number(input) % 60))
+  let seconds = Math.abs(Math.trunc(Number(input) % 60))
     .toString()
     .padStart(2, '0');
   return `${Number(input) < 0 ? '-' : ''}${hours ? `${hours}:` : ''}${minutes}:${seconds}`;
