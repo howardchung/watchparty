@@ -634,6 +634,10 @@ export class App extends React.Component<AppProps, AppState> {
               }
               // Resync to leader since the loading might have taken some time
               this.localSeek(ts);
+              if (this.state.uploadController) {
+                // Jump back to the start of the video
+                this.roomSeek(0);
+              }
               if (data.playbackRate) {
                 // Set playback rate again since it might have been lost
                 console.log('setting playback rate again', data.playbackRate);
@@ -845,8 +849,8 @@ export class App extends React.Component<AppProps, AppState> {
     socket.on('REC:getRoomState', this.handleRoomState);
     window.setInterval(() => {
       if (this.state.roomMedia) {
-        const target = this.getRoomTSToSet(this.Player().getCurrentTime());
-        this.socket.emit('CMD:ts', target);
+        const toSend = this.getRoomTSToSet(this.Player().getCurrentTime());
+        this.socket.emit('CMD:ts', toSend);
       }
     }, 1000);
   };
@@ -1024,15 +1028,11 @@ export class App extends React.Component<AppProps, AppState> {
     const file = files[0];
     // Start uploading stream
     const stream = file.stream();
+    const reader = stream.getReader();
     const uuid = createUuid();
-    // const convertUrl = 'https://azure.howardchung.net:5001/' + uuid + '.mpegts';
-    const convertUrl = 'https://azure.howardchung.net:5001/' + uuid + '.m3u8';
-    const controller = new AbortController();
-    this.setState({
-      uploadController: controller,
-    });
-    // Note: Can't read response logs as a stream as fetch will buffer it until upload is complete
-    // Would need to implement using Server Sent Events and a separate call?
+    const convertPath = 'https://convert.watchparty.me';
+    // const convertPath = 'https://azure.howardchung.net:5001';
+    const convertUrl = convertPath + '/' + uuid + '.m3u8';
     // Wait for the playlist to get generated 
     const poll = async () => {
       let ok = false;
@@ -1047,15 +1047,45 @@ export class App extends React.Component<AppProps, AppState> {
       this.roomSetMedia(convertUrl);
     };
     poll();
-    await fetch(convertUrl, {
-      method: 'POST',
-      body: stream,
-      signal: controller.signal,
-      //@ts-expect-error
-      duplex: 'half',
+    const start = Date.now();
+    let bytes = 0;
+    const ws = new WebSocket(convertUrl.replace('http', 'ws'));
+    ws.onmessage = async (_ev) => {
+      // Server sends a message whenever it wants next chunk
+      const { done, value } = await reader.read();
+      if (value) {
+        ws.send(value);
+      }
+      if (done) {
+        ws.close();
+      }
+      const end = Date.now();
+      bytes += (value?.length ?? 0);
+      this.setState({
+        downloaded: bytes,
+        total: file.size,
+        speed: done ? 0 : bytes / ((end - start) / 1000),
+        connections: 1,
+      });
+    };
+    ws.onclose = () => {
+      this.setState({ uploadController: undefined });
+    }
+    const controller = new AbortController();
+    controller.signal.onabort = (_ev) => {
+      ws.close();
+    }
+    this.setState({
+      uploadController: controller,
     });
-    // Upload complete
-    this.setState({ uploadController: undefined });
+    // Note: If using fetch we can't read the response until the request completes
+    // await fetch(convertUrl, {
+    //   method: 'POST',
+    //   body: stream,
+    //   signal: controller.signal,
+    //   //@ts-expect-error
+    //   duplex: 'half',
+    // });
   };
   
   startFileShare = async (useMediaSoup: boolean) => {
@@ -1738,7 +1768,8 @@ export class App extends React.Component<AppProps, AppState> {
     let target = time;
     target = Math.max(target, 0);
     this.Player().seekVideo(target);
-    this.socket.emit('CMD:seek', target);
+    const toSend = this.getRoomTSToSet(target);
+    this.socket.emit('CMD:seek', toSend);
   };
 
   getRoomTSToSet = (time: number) => {

@@ -20,45 +20,43 @@ export const FileShareModal = (props: {
       centered
     >
       <div>You're about to share a file from your device.</div>
-      <ul>
-        <li>This feature is only supported on Chrome and Edge.</li>
-        <li>
-          Certain codecs such as AC3 aren't supported in Chrome (they work in
-          Edge due to licensing)
-        </li>
-      </ul>
       <Table striped>
         <Table.Thead>
           <Table.Tr>
             <Table.Th />
             <Table.Th>WatchParty Free</Table.Th>
-            <Table.Th>WatchParty Plus</Table.Th>
+            <Table.Th>WatchParty Plus (Relay)</Table.Th>
+            <Table.Th>WatchParty Plus (Convert)</Table.Th>
           </Table.Tr>
         </Table.Thead>
 
         <Table.Tbody>
           <Table.Tr>
             <Table.Td>Method</Table.Td>
-            <Table.Td>Stream your video to each viewer individually.</Table.Td>
+            <Table.Td>Stream your video to each viewer from your device. May not work with codecs not playable in browsers.</Table.Td>
             <Table.Td>
-              Our relay server streams to viewers for you.
-              <br />
-              Higher quality and lower bandwidth usage.
+              Stream your video to our relay server, which sends it to each viewer, reducing bandwidth usage. May not work with codecs not playable in browsers.
+            </Table.Td>
+            <Table.Td>
+              We convert your video in real-time to a web-compatible format and serve the result. Avoids codec compatibility issues and allows more viewers.
             </Table.Td>
           </Table.Tr>
           <Table.Tr>
             <Table.Td>Latency</Table.Td>
-            <Table.Td>{`< 1s`}</Table.Td>
-            <Table.Td>{`< 1s`}</Table.Td>
+            <Table.Td>{`<1s`}</Table.Td>
+            <Table.Td>{`<1s`}</Table.Td>
+            <Table.Td>{`~5s`}</Table.Td>
           </Table.Tr>
           <Table.Tr>
             <Table.Td>Recommended Max Viewers</Table.Td>
             <Table.Td>5</Table.Td>
             <Table.Td>20</Table.Td>
+            <Table.Td>100</Table.Td>
           </Table.Tr>
           <Table.Tr>
             <Table.Td>Recommended Upload Speed</Table.Td>
             <Table.Td>5 Mbps per viewer</Table.Td>
+            <Table.Td>5 Mbps</Table.Td>
             <Table.Td>5 Mbps</Table.Td>
           </Table.Tr>
           <Table.Tr>
@@ -74,7 +72,6 @@ export const FileShareModal = (props: {
               </Button>
             </Table.Td>
             <Table.Td>
-              <div style={{ display: 'flex', gap: '4px' }}>
                 {context.isSubscriber ? (
                   <Button
                     color="orange"
@@ -88,9 +85,11 @@ export const FileShareModal = (props: {
                 ) : (
                   subscribeButton
                 )}
-                {context.beta ? (
+                </Table.Td>
+                <Table.Td>
+                 {context.isSubscriber ? (
                   <Button
-                    color="green"
+                    color="orange"
                     onClick={() => {
                       props.startConvert();
                       props.closeModal();
@@ -98,8 +97,9 @@ export const FileShareModal = (props: {
                   >
                     Start Fileshare w/Convert
                   </Button>
-                ) : null}
-              </div>
+                ) : (
+                  subscribeButton
+                )}
             </Table.Td>
           </Table.Tr>
         </Table.Tbody>
