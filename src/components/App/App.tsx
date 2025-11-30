@@ -1028,9 +1028,8 @@ export class App extends React.Component<AppProps, AppState> {
     const file = files[0];
     // Start uploading stream
     const stream = file.stream();
-    const reader = stream.getReader();
     const uuid = createUuid();
-    const convertPath = 'https://convert.watchparty.me';
+    const convertPath = this.context.convertPath;
     // const convertPath = 'https://azure.howardchung.net:5001';
     const convertUrl = convertPath + '/' + uuid + '.m3u8';
     // Wait for the playlist to get generated 
@@ -1047,6 +1046,7 @@ export class App extends React.Component<AppProps, AppState> {
       this.roomSetMedia(convertUrl);
     };
     poll();
+    const reader = stream.getReader();
     const start = Date.now();
     let bytes = 0;
     const ws = new WebSocket(convertUrl.replace('http', 'ws'));
@@ -1082,7 +1082,7 @@ export class App extends React.Component<AppProps, AppState> {
     // await fetch(convertUrl, {
     //   method: 'POST',
     //   body: stream,
-    //   signal: controller.signal,
+    //   signal: this.state.uploadController?.signal,
     //   //@ts-expect-error
     //   duplex: 'half',
     // });
@@ -2330,7 +2330,6 @@ export class App extends React.Component<AppProps, AppState> {
                           color="red"
                           onClick={() => {
                             this.state.uploadController?.abort();
-                            this.setState({ uploadController: undefined });
                           }}
                           leftSection={<IconX />}
                         >

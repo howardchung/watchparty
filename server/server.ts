@@ -396,6 +396,7 @@ app.get('/metadata', async (req, res) => {
     decoded?.email != null &&
     Boolean(config.BETA_USER_EMAILS.split(',').includes(decoded?.email));
   const streamPath = beta ? config.STREAM_PATH : undefined;
+  const convertPath = isSubscriber ? config.CONVERT_PATH : undefined;
   // log metrics but don't wait for it
   if (postgres && decoded?.uid) {
     upsertObject(
@@ -410,6 +411,7 @@ app.get('/metadata', async (req, res) => {
     isFreePoolFull,
     beta,
     streamPath,
+    convertPath,
   });
 });
 
