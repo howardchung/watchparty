@@ -87,6 +87,6 @@
     "@types/webtorrent": "^0.110.1",
     "@types/youtube": "^0.1.2",
     "typescript": "^5.9.3",
-    "vite": "^7.2.4"
+    "vite": "^7.2.6"
   }
 }
