@@ -589,7 +589,7 @@ export const renderImageString = (
   input: string | undefined,
 ): React.ReactNode | null => {
   // If a valid image string, return an image
-  let regex = /^https?:\/\/.*\/.*\.(png|gif|webp|jpeg|jpg)\??.*$/gim;
+  let regex = /^https?:\/\/.*\/.*\.(png|gif|webp|jpeg|jpg|heic|heif)\??.*$/gim;
   if (input?.match(regex)) {
     return <img style={{ maxWidth: '100%' }} src={input} />;
   }
