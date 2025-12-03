@@ -17,7 +17,7 @@
     "dashjs": "^5.1.0",
     "discord.js": "^14.25.1",
     "eventemitter3": "^4.0.7",
-    "express": "^5.2.0",
+    "express": "^5.2.1",
     "firebase": "^9.23.0",
     "firebase-admin": "^11.11.1",
     "hls.js": "^1.6.15",
@@ -76,7 +76,7 @@
   "devDependencies": {
     "@types/compression": "^1.8.1",
     "@types/cors": "^2.8.19",
-    "@types/express": "^5.0.5",
+    "@types/express": "^5.0.6",
     "@types/node": "^24.10.1",
     "@types/pg": "^8.15.6",
     "@types/react": "^18.2.48",
