@@ -78,6 +78,9 @@ import {
 } from '@tabler/icons-react';
 import { InviteButton } from '../InviteButton/InviteButton';
 import type WebTorrent from 'webtorrent';
+import type Hls from 'hls.js';
+import { type MediaPlayerClass } from 'dashjs';
+import { Torrent } from 'webtorrent';
 
 declare global {
   interface Window {
@@ -87,7 +90,9 @@ declare global {
       ourStream: MediaStream | undefined;
       videoRefs: HTMLVideoElementDict;
       videoPCs: PCDict;
-      webtorrent: WebTorrent.Instance | null;
+      webtorrent?: WebTorrent.Instance;
+      hls?: Hls;
+      dash?: MediaPlayerClass;
     };
   }
 }
@@ -96,7 +101,6 @@ window.watchparty = {
   ourStream: undefined,
   videoRefs: {},
   videoPCs: {},
-  webtorrent: null,
 };
 
 interface AppProps {
@@ -520,97 +524,108 @@ export class App extends React.Component<AppProps, AppState> {
             // magnet:?xt=urn:btih:08ada5a7a6183aae1e09d831df6748d566095a10&dn=Sintel&tr=udp%3A%2F%2Fexplodie.org%3A6969&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Ftracker.empire-js.us%3A1337&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=wss%3A%2F%2Ftracker.btorrent.xyz&tr=wss%3A%2F%2Ftracker.fastcast.nz&tr=wss%3A%2F%2Ftracker.openwebtorrent.com&ws=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2F&xs=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2Fsintel.torrent
             const WebTorrent = //@ts-expect-error
               (await import('webtorrent/dist/webtorrent.min.js')).default;
-            window.watchparty.webtorrent?.destroy();
-            window.watchparty.webtorrent = new WebTorrent();
-            await navigator.serviceWorker?.register('/sw.min.js');
-            const controller = await navigator.serviceWorker.ready;
-            window.watchparty.webtorrent?.createServer({ controller });
+            if (!window.watchparty.webtorrent) {
+              window.watchparty.webtorrent = new WebTorrent();
+              await navigator.serviceWorker?.register('/sw.min.js');
+              const controller = await navigator.serviceWorker.ready;
+              window.watchparty.webtorrent?.createServer({ controller });
+            }
+            // Remove if exists
             await new Promise((resolve) => {
-              window.watchparty.webtorrent?.add(
-                src,
-                {
-                  announce: [
-                    'wss://tracker.btorrent.xyz',
-                    'wss://tracker.openwebtorrent.com',
-                  ],
-                  destroyStoreOnDestroy: true,
-                  maxWebConns: 4,
-                  path: '/tmp/webtorrent/',
-                  storeCacheSlots: 20,
-                  strategy: 'sequential',
-                  // noPeersIntervalTime: 30,
-                },
-                async (torrent) => {
-                  // Got torrent metadata!
-                  console.log('Client is downloading:', torrent.infoHash);
+              const finish = (torrent: Torrent) => {
+                // Got torrent metadata!
+                console.log('Client is downloading:', torrent.infoHash);
 
-                  // Torrents can contain many files.
-                  const files = torrent.files;
-                  const filtered = files.filter(
-                    (f: WebTorrent.TorrentFile) => f.length >= 10 * 1024 * 1024,
+                // Torrents can contain many files.
+                const files = torrent.files;
+                const filtered = files.filter(
+                  (f: WebTorrent.TorrentFile) => f.length >= 10 * 1024 * 1024,
+                );
+                const fileIndex = new URLSearchParams(src).get('fileIndex');
+                // Try to find a single large file to play
+                let target;
+                if (fileIndex != null && fileIndex !== '') {
+                  target = files[Number(fileIndex)];
+                } else if (filtered.length === 1) {
+                  target = filtered[0];
+                }
+                if (!target) {
+                  // Open the selector
+                  this.launchMultiSelect(
+                    files.map((f: WebTorrent.TorrentFile, i: number) => ({
+                      name: f.name as string,
+                      url: src + `&fileIndex=${i}`,
+                      length: f.length as number,
+                    })),
                   );
-                  const fileIndex = new URLSearchParams(src).get('fileIndex');
-                  // Try to find a single large file to play
-                  let target;
-                  if (fileIndex != null && fileIndex !== '') {
-                    target = files[Number(fileIndex)];
-                  } else if (filtered.length === 1) {
-                    target = filtered[0];
-                  }
-                  if (!target) {
-                    // Open the selector
-                    this.launchMultiSelect(
-                      files.map((f: WebTorrent.TorrentFile, i: number) => ({
-                        name: f.name as string,
-                        url: src + `&fileIndex=${i}`,
-                        length: f.length as number,
-                      })),
-                    );
-                  } else {
-                    //@ts-expect-error
-                    target.streamTo(leftVideo);
-                  }
-                  resolve(undefined);
-                },
-              );
+                } else {
+                  //@ts-expect-error
+                  target.streamTo(leftVideo);
+                }
+                resolve(undefined);
+              }
+
+              const target = window.watchparty.webtorrent?.torrents.find(t => src.includes(t.infoHash));
+              if (target) {
+                return finish(target);
+              } else {
+                window.watchparty.webtorrent?.add(
+                  src,
+                  {
+                    announce: [
+                      'wss://tracker.btorrent.xyz',
+                      'wss://tracker.openwebtorrent.com',
+                    ],
+                    destroyStoreOnDestroy: true,
+                    maxWebConns: 4,
+                    path: '/tmp/webtorrent/',
+                    storeCacheSlots: 20,
+                    strategy: 'sequential',
+                    // noPeersIntervalTime: 30,
+                  }, finish);
+              }
             });
           } else if (isDash(src)) {
             const Dash = await import('dashjs');
-            const dashPlayer = Dash.MediaPlayer().create();
-            dashPlayer.initialize(leftVideo, src);
-            dashPlayer.on('streamInitialized', (e) => {
-              console.log(e);
-              // for a live stream:
-              // html.currenttime is time since stream start
-              // html.duration is infinite
-              // player.duration is the seekable range
-              this.setState({
-                isLiveStream: this.Player().getDuration() >= Infinity,
+            if (!window.watchparty.dash) {
+              window.watchparty.dash = Dash.MediaPlayer().create();
+              window.watchparty.dash.on('streamInitialized', (_e: any) => {
+                // for a live stream:
+                // html.currenttime is time since stream start
+                // html.duration is infinite
+                // player.duration is the seekable range
+                this.setState({
+                  isLiveStream: this.Player().getDuration() >= Infinity,
+                });
               });
-              dashPlayer.off('streamInitialized', () => {});
-            });
+            }
+            window.watchparty.dash.initialize(leftVideo, src);
           } else if (isHls(src) && window.MediaSource) {
             // Prefer using hls.js if MediaSource Extensions are supported
             // otherwise fallback to native HLS support using video tag (i.e. iPhones)
             // https://moctobpltc-i.akamaihd.net/hls/live/571329/eight/playlist.m3u8
             const Hls = (await import('hls.js')).default;
-            let hls = new Hls();
-            hls.loadSource(src);
-            hls.attachMedia(leftVideo);
-            hls.once(Hls.Events.LEVEL_LOADED, (_, data) => {
-              this.setState({ isLiveStream: data.details.live });
-            });
-          } else if (isMpegTs(src)) {
-            const mpegts = (await import('mpegts.js')).default;
-            let player = mpegts.createPlayer({
-              type: 'mse', // could also be mpegts, m2ts, flv
-              // isLive: true,
-              url: src,
-            });
-            player.attachMediaElement(leftVideo);
-            player.load();
-            player.play();
-          } else {
+            if (!window.watchparty.hls) {
+              window.watchparty.hls = new Hls();
+              window.watchparty.hls.on(Hls.Events.LEVEL_LOADED, (_, data) => {
+                this.setState({ isLiveStream: data.details.live });
+              });
+            }
+            window.watchparty.hls.loadSource(src);
+            window.watchparty.hls.attachMedia(leftVideo);
+          } 
+          // else if (isMpegTs(src)) {
+          //   const mpegts = (await import('mpegts.js')).default;
+          //   let player = mpegts.createPlayer({
+          //     type: 'mse', // could also be mpegts, m2ts, flv
+          //     // isLive: true,
+          //     url: src,
+          //   });
+          //   player.attachMediaElement(leftVideo);
+          //   player.load();
+          //   player.play();
+          // } 
+          else {
             await this.Player().setSrcAndTime(src, time);
           }
           // Start this video

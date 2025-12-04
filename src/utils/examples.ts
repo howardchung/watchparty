@@ -21,6 +21,10 @@ export const examples: SearchResult[] = [
     url: 'https://upload.wikimedia.org/wikipedia/commons/a/a5/Spring_-_Blender_Open_Movie.webm',
     img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/SpringOpenMovie-desend.jpg/320px-SpringOpenMovie-desend.jpg',
   },
+  {
+    url: 'https://livesim2.dashif.org/livesim2/testpic_2s/Manifest.mpd',
+    img: '',
+  }
 ].map((urlOrObject: { url: string; img: string } | string) => {
   const url = typeof urlOrObject === 'object' ? urlOrObject.url : urlOrObject;
   let type: SearchResult['type'] = 'file';
