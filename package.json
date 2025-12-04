@@ -50,6 +50,7 @@
     "build": "npm run buildReact && npm run typecheckServer",
     "buildReact": "vite build && npm run typecheck",
     "dev": "node --watch-path . server/server.ts",
+    "server": "node server/server.ts",
     "pm2": "pm2 start server/server.ts",
     "deploy": "git fetch && git reset --hard origin/release && pm2 flush && pm2 delete all && pm2 start server/ecosystem.config.js",
     "prettier": "npx prettier --write .",
