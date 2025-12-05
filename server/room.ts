@@ -504,6 +504,12 @@ export class Room {
       return;
     }
     redisCount('urlStarts');
+    if (config.STREAM_PATH && data?.startsWith(config.STREAM_PATH)) {
+      redisCount('streamStarts');
+    }
+    if (config.CONVERT_PATH && data?.startsWith(config.CONVERT_PATH)) {
+      redisCount('convertStarts');
+    }
     // If a reddit URL, extract video URL
     if (
       data?.startsWith('https://www.reddit.com') ||
@@ -541,15 +547,15 @@ export class Room {
         } else {
           streams = await twitch.getVod(channel);
         }
-        const parsed = new URL(streams?.[0].url);
-        data =
-          config.TWITCH_PROXY_PATH +
-          '/proxy' +
-          parsed.pathname +
-          '?host=' +
-          parsed.host +
-          '&displayName=' +
-          data;
+        // console.log(streams);
+        const target = streams.find((str: any) => str.quality.includes('(source)')) || streams[0];
+        const parsed = new URL(target?.url);
+        const newUrl = new URL(config.TWITCH_PROXY_PATH);
+        newUrl.pathname = '/proxy' + parsed.pathname;
+        newUrl.searchParams.set('host', parsed.host);
+        newUrl.searchParams.set('displayName', data)
+        newUrl.search = newUrl.searchParams.toString();
+        data = newUrl.toString();
       } catch (e) {
         console.warn(e);
       }

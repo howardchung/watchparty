@@ -571,42 +571,45 @@ app.get('/generateName', async (req, res) => {
 
 // Proxy video segments
 app.get('/proxy/*splat', async (req, res) => {
+  redisCount('proxyReqs');
   try {
-    if (req.path.includes('index-dvr.m3u8')) {
+    const parsed = new URL('http://localhost' + req.url);
+    const pathname = parsed.pathname.slice('/proxy'.length);
+    const host = parsed.searchParams.get('host');
+    if (pathname.endsWith('index-dvr.m3u8')) {
       // VOD
       // https://d2vjef5jvl6bfs.cloudfront.net/3012391a6c3e84c79ef6_gamesdonequick_41198403369_1681059003/chunked/index-dvr.m3u8
       const resp = await axios.get(
-        'https://' + req.query.host + req.path.slice('/proxy'.length),
+        'https://' + host + pathname,
       );
-      const re = /proxy\/(.*)\/chunked\/index-dvr.m3u8/;
-      const rematch = re.exec(req.path);
-      const host = req.query.host;
-      const name = rematch?.[1];
-      const re2 = /(.*).ts/g;
-      const repl = resp.data.replaceAll(
+      const re2 = /(.*.ts)/g;
+      let repl = resp.data.replaceAll(
         re2,
-        `/proxy/${name}/chunked/$1.ts?host=${host}`,
+        `$1?host=${host}`,
       );
+      // Mark this as a VOD
+      repl += '#EXT-X-ENDLIST';
       res.send(repl);
-    } else if (req.path.includes('/v1/playlist')) {
+    } else if (pathname.endsWith('.m3u8')) {
       // Stream
       // https://video-weaver.sea02.hls.ttvnw.net/v1/playlist/CrQEgv7Mz6nnsfJH3XtVQxeYXk8mViy1zNGWglcybvxZsI1rv3iLnjAnnqwCiVXCJ-DdD27J6RuFrLy7YUYwHUCKazIKICIupUCn9UXtaBYhBM5JIYqg9dz6NWYrCWU9HZJj2TGROv9mAOKuTR51YS82hdYL4PFZa3xxWXhgDsxXQHNDB03kY6S0aG0-EVva1xYrn5Ge6IAXRwug9QDGlb-ydtF3BtYppoTklVI7CVLySPPwbbt5Ow1JXdnKhLSwQEs4bh3BLwMnRBwUFI5nmE18BLYbkMOUivgYP5SSMgnGGlSkJO-iJNPWvepunEgyBUzB_7L-b1keTcV-Qak9IcWIITIWbRvmg6qB3ZSuWdcJgWKmdXdIn4qoRM4o16G1_0N_WRqPtMQFo0hmTlAVmHrzRArJQmaSgqAxZxRbFMd9RFeX6qjP9NtwguPbSeStdVbQxMNC34iavYUIxo8Ug812BHsG7J_kIlof2zkIqkEbP3oV3UkSByIo7xh9EEVargjaGDuQRt8zPQ6-fNBWJJe9F6IFu7lXBPIJ016lopyfcvTWjbLbBHsVkg6vG-3UISh0nud7KB5g5ipQePhtcFSI5hvjlfX1DAVHEpTWXkvlnL4wNqEqpBYL2btSXYeE1Cb-RAvrAT0s61usERcL2eI-S5aTcSO8_hxQ2afC7c9vlypOWgP6p6XNpViZHXmdXv4t-d68Z-MpLtSU7VbB3pRWnSswFFyA3W39ITic4lb97Djp3wHhGgz0Sy8aDb9r0tnphIYgASoJdXMtZWFzdC0yMKQG.m3u8
       // Extract the edge URL host and add it to URL so proxy can fetch
       const resp = await axios.get(
-        'https://' + req.query.host + req.path.slice('/proxy'.length),
+        'https://' + host + pathname,
       );
-      const re = /https:\/\/(.*)\/v1\/segment\/(.*)/g;
-      const match = re.exec(resp.data);
-      const edgehost = match?.[1];
-      const repl = resp.data.replaceAll(
-        re,
-        `/proxy/v1/segment/$2?host=${edgehost}`,
-      );
+      // const re = /https:\/\/(.*)\/v1\/segment\/(.*)/g;
+      // const match = re.exec(resp.data);
+      // const edgehost = match?.[1];
+      // const repl = resp.data.replaceAll(
+      //   re,
+      //   `/proxy/v1/segment/$2?host=${edgehost}`,
+      // );
+      const repl = resp.data;
       res.send(repl);
-    } else {
+    } else if (pathname.endsWith('.ts')) {
       // Segment
       const resp = await axios.get(
-        'https://' + req.query.host + req.path.slice('/proxy'.length),
+        'https://' + host + pathname,
         { responseType: 'arraybuffer' },
       );
       res.writeHead(200, {
@@ -617,9 +620,13 @@ app.get('/proxy/*splat', async (req, res) => {
       });
       res.write(resp.data);
       res.end();
+    } else {
+      res.status(404);
+      res.end();
     }
   } catch (e) {
-    console.log(e, 'axios proxy failed');
+    // console.log(e);
+    console.log('proxy failed: %s', req.url);
   }
 });
 
@@ -904,7 +911,10 @@ async function getStats() {
   const vBrowserSessionMS = await redis?.lrange('vBrowserSessionMS', 0, -1);
   // const vBrowserVMLifetime = await redis?.lrange('vBrowserVMLifetime', 0, -1);
   const recaptchaRejectsOther = await getRedisCountDay('recaptchaRejectsOther');
+  const proxyReqs = await getRedisCountDay('proxyReqs');
   const urlStarts = await getRedisCountDay('urlStarts');
+  const streamStarts = await getRedisCountDay('streamStarts');
+  const convertStarts = await getRedisCountDay('convertStarts');
   const playlistAdds = await getRedisCountDay('playlistAdds');
   const screenShareStarts = await getRedisCountDay('screenShareStarts');
   const fileShareStarts = await getRedisCountDay('fileShareStarts');
@@ -993,7 +1003,10 @@ async function getStats() {
     deleteAccounts,
     chatMessages,
     addReactions,
+    proxyReqs,
     urlStarts,
+    streamStarts,
+    convertStarts,
     playlistAdds,
     screenShareStarts,
     fileShareStarts,
