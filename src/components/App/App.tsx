@@ -2,7 +2,6 @@ import type MediasoupClient from 'mediasoup-client';
 import React from 'react';
 import {
   Alert,
-  Divider,
   Loader,
   Menu,
   Overlay,
@@ -20,7 +19,6 @@ import {
   getOrCreateClientId,
   calculateMedian,
   getUserImage,
-  getColorForString,
   isYouTube,
   isMagnet,
   isHttp,
@@ -31,7 +29,6 @@ import {
   isDash,
   VIDEO_MAX_HEIGHT_CSS,
   createUuid,
-  isMpegTs,
   softWhite,
 } from '../../utils/utils';
 import { generateName } from '../../utils/generateName';
@@ -80,7 +77,7 @@ import { InviteButton } from '../InviteButton/InviteButton';
 import type WebTorrent from 'webtorrent';
 import type Hls from 'hls.js';
 import { type MediaPlayerClass } from 'dashjs';
-import { Torrent } from 'webtorrent';
+import { type Torrent } from 'webtorrent';
 
 declare global {
   interface Window {
@@ -521,17 +518,23 @@ export class App extends React.Component<AppProps, AppState> {
           const time = data.videoTS;
           if (isMagnet(src)) {
             // WebTorrent
-            // magnet:?xt=urn:btih:08ada5a7a6183aae1e09d831df6748d566095a10&dn=Sintel&tr=udp%3A%2F%2Fexplodie.org%3A6969&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Ftracker.empire-js.us%3A1337&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=wss%3A%2F%2Ftracker.btorrent.xyz&tr=wss%3A%2F%2Ftracker.fastcast.nz&tr=wss%3A%2F%2Ftracker.openwebtorrent.com&ws=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2F&xs=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2Fsintel.torrent
-            const WebTorrent = //@ts-expect-error
-              (await import('webtorrent/dist/webtorrent.min.js')).default;
             if (!window.watchparty.webtorrent) {
+              const WebTorrent = //@ts-expect-error
+                (await import('webtorrent/dist/webtorrent.min.js')).default;
               window.watchparty.webtorrent = new WebTorrent();
-              await navigator.serviceWorker?.register('/sw.min.js');
-              const controller = await navigator.serviceWorker.ready;
-              window.watchparty.webtorrent?.createServer({ controller });
+              const reg = await navigator.serviceWorker?.register('/sw.min.js');
+              const worker = reg.active || reg.waiting || reg.installing;
+              const checkState = (worker: ServiceWorker | null) => {
+                if (worker?.state === 'activated') {
+                  return window.watchparty.webtorrent?.createServer({ controller: reg });
+                }
+                return null;
+              }
+              if (!checkState(worker)) {
+                worker?.addEventListener('statechange', ({ target }) => checkState(target as ServiceWorker));
+              }
             }
-            // Remove if exists
-            await new Promise((resolve) => {
+            await new Promise(async (resolve) => {
               const finish = (torrent: Torrent) => {
                 // Got torrent metadata!
                 console.log('Client is downloading:', torrent.infoHash);
@@ -551,6 +554,7 @@ export class App extends React.Component<AppProps, AppState> {
                 }
                 if (!target) {
                   // Open the selector
+                  // Selecting a file sets a new URL with the fileIndex set so we go through again
                   this.launchMultiSelect(
                     files.map((f: WebTorrent.TorrentFile, i: number) => ({
                       name: f.name as string,
@@ -564,30 +568,34 @@ export class App extends React.Component<AppProps, AppState> {
                 }
                 resolve(undefined);
               }
-
-              const target = window.watchparty.webtorrent?.torrents.find(t => src.includes(t.infoHash));
-              if (target) {
-                return finish(target);
+              let target = await window.watchparty.webtorrent?.get(src);
+              if (!target) {
+                target = window.watchparty.webtorrent?.add(
+                src,
+                {
+                  announce: [
+                    'wss://tracker.btorrent.xyz',
+                    'wss://tracker.openwebtorrent.com',
+                  ],
+                  destroyStoreOnDestroy: true,
+                  maxWebConns: 4,
+                  path: '/tmp/webtorrent/',
+                  storeCacheSlots: 20,
+                  strategy: 'sequential',
+                  // noPeersIntervalTime: 30,
+                });
+              }
+              if (target?.ready) {
+                finish(target);
               } else {
-                window.watchparty.webtorrent?.add(
-                  src,
-                  {
-                    announce: [
-                      'wss://tracker.btorrent.xyz',
-                      'wss://tracker.openwebtorrent.com',
-                    ],
-                    destroyStoreOnDestroy: true,
-                    maxWebConns: 4,
-                    path: '/tmp/webtorrent/',
-                    storeCacheSlots: 20,
-                    strategy: 'sequential',
-                    // noPeersIntervalTime: 30,
-                  }, finish);
+                target?.on('ready', () => {
+                  finish(target);
+                });
               }
             });
           } else if (isDash(src)) {
-            const Dash = await import('dashjs');
             if (!window.watchparty.dash) {
+              const Dash = await import('dashjs');
               window.watchparty.dash = Dash.MediaPlayer().create();
               window.watchparty.dash.on('streamInitialized', (_e: any) => {
                 // for a live stream:
@@ -603,9 +611,8 @@ export class App extends React.Component<AppProps, AppState> {
           } else if (isHls(src) && window.MediaSource) {
             // Prefer using hls.js if MediaSource Extensions are supported
             // otherwise fallback to native HLS support using video tag (i.e. iPhones)
-            // https://moctobpltc-i.akamaihd.net/hls/live/571329/eight/playlist.m3u8
-            const Hls = (await import('hls.js')).default;
             if (!window.watchparty.hls) {
+              const Hls = (await import('hls.js')).default;
               window.watchparty.hls = new Hls();
               window.watchparty.hls.on(Hls.Events.LEVEL_LOADED, (_, data) => {
                 this.setState({ isLiveStream: data.details.live });
