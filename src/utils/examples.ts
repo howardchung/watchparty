@@ -24,7 +24,7 @@ export const examples: SearchResult[] = [
   {
     url: 'https://livesim2.dashif.org/livesim2/testpic_2s/Manifest.mpd',
     img: '',
-  }
+  },
 ].map((urlOrObject: { url: string; img: string } | string) => {
   const url = typeof urlOrObject === 'object' ? urlOrObject.url : urlOrObject;
   let type: SearchResult['type'] = 'file';

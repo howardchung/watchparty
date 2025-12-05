@@ -95,8 +95,8 @@ app.get('/isFreePoolFull', async (req, res) => {
         const currentSize = await freePool.getCurrentSize();
         isFull = Boolean(
           limitSize > 0 &&
-            (Number(availableCount) === 0 ||
-              Number(currentSize) - Number(availableCount) > limitSize * 0.95),
+          (Number(availableCount) === 0 ||
+            Number(currentSize) - Number(availableCount) > limitSize * 0.95),
         );
       }
       return isFull;

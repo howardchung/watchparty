@@ -173,9 +173,7 @@ export class Chat extends React.Component<ChatProps> {
         </React.Fragment>
       );
     } else if (cmd === 'seek') {
-      return `jumped to ${
-        formatTimestamp(msg)
-      }`;
+      return `jumped to ${formatTimestamp(msg)}`;
     } else if (cmd === 'play') {
       return `started the video at ${formatTimestamp(msg)}`;
     } else if (cmd === 'pause') {

@@ -76,8 +76,7 @@ export interface SystemMessagePayload {
 */
 // signal/provide
 export interface SignalProvideMessage
-  extends WebSocketMessage,
-    SignalProvidePayload {
+  extends WebSocketMessage, SignalProvidePayload {
   event: typeof EVENT.SIGNAL.PROVIDE;
 }
 export interface SignalProvidePayload {
@@ -89,8 +88,7 @@ export interface SignalProvidePayload {
 
 // signal/offer
 export interface SignalOfferMessage
-  extends WebSocketMessage,
-    SignalOfferPayload {
+  extends WebSocketMessage, SignalOfferPayload {
   event: typeof EVENT.SIGNAL.OFFER;
 }
 export interface SignalOfferPayload {
@@ -99,8 +97,7 @@ export interface SignalOfferPayload {
 
 // signal/answer
 export interface SignalAnswerMessage
-  extends WebSocketMessage,
-    SignalAnswerPayload {
+  extends WebSocketMessage, SignalAnswerPayload {
   event: typeof EVENT.SIGNAL.ANSWER;
 }
 export interface SignalAnswerPayload {
@@ -110,8 +107,7 @@ export interface SignalAnswerPayload {
 
 // signal/candidate
 export interface SignalCandidateMessage
-  extends WebSocketMessage,
-    SignalCandidatePayload {
+  extends WebSocketMessage, SignalCandidatePayload {
   event: typeof EVENT.SIGNAL.CANDIDATE;
 }
 export interface SignalCandidatePayload {
@@ -137,8 +133,7 @@ export type MemberPayload = Member;
 
 // member/disconnected
 export interface MemberDisconnectMessage
-  extends WebSocketMessage,
-    MemberPayload {
+  extends WebSocketMessage, MemberPayload {
   event: typeof EVENT.MEMBER.DISCONNECTED;
 }
 export interface MemberDisconnectPayload {
@@ -206,8 +201,7 @@ export interface EmojiSendPayload {
   SCREEN PAYLOADS
 */
 export interface ScreenResolutionMessage
-  extends WebSocketMessage,
-    ScreenResolutionPayload {
+  extends WebSocketMessage, ScreenResolutionPayload {
   event: ScreenEvents;
 }
 
@@ -216,8 +210,7 @@ export interface ScreenResolutionPayload extends ScreenResolution {
 }
 
 export interface ScreenConfigurationsMessage
-  extends WebSocketMessage,
-    ScreenConfigurationsPayload {
+  extends WebSocketMessage, ScreenConfigurationsPayload {
   event: ScreenEvents;
 }
 
@@ -249,8 +242,7 @@ export interface AdminPayload {
 }
 
 export interface AdminTargetMessage
-  extends WebSocketMessage,
-    AdminTargetPayload {
+  extends WebSocketMessage, AdminTargetPayload {
   event: AdminEvents;
 }
 

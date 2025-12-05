@@ -1,13 +1,6 @@
 import type MediasoupClient from 'mediasoup-client';
 import React from 'react';
-import {
-  Alert,
-  Loader,
-  Menu,
-  Overlay,
-  Select,
-  Title,
-} from '@mantine/core';
+import { Alert, Loader, Menu, Overlay, Select, Title } from '@mantine/core';
 import io, { Socket } from 'socket.io-client';
 import {
   formatSpeed,
@@ -526,12 +519,16 @@ export class App extends React.Component<AppProps, AppState> {
               const worker = reg.active || reg.waiting || reg.installing;
               const checkState = (worker: ServiceWorker | null) => {
                 if (worker?.state === 'activated') {
-                  return window.watchparty.webtorrent?.createServer({ controller: reg });
+                  return window.watchparty.webtorrent?.createServer({
+                    controller: reg,
+                  });
                 }
                 return null;
-              }
+              };
               if (!checkState(worker)) {
-                worker?.addEventListener('statechange', ({ target }) => checkState(target as ServiceWorker));
+                worker?.addEventListener('statechange', ({ target }) =>
+                  checkState(target as ServiceWorker),
+                );
               }
             }
             await new Promise(async (resolve) => {
@@ -567,12 +564,10 @@ export class App extends React.Component<AppProps, AppState> {
                   target.streamTo(leftVideo);
                 }
                 resolve(undefined);
-              }
+              };
               let target = await window.watchparty.webtorrent?.get(src);
               if (!target) {
-                target = window.watchparty.webtorrent?.add(
-                src,
-                {
+                target = window.watchparty.webtorrent?.add(src, {
                   announce: [
                     'wss://tracker.btorrent.xyz',
                     'wss://tracker.openwebtorrent.com',
@@ -620,7 +615,7 @@ export class App extends React.Component<AppProps, AppState> {
             }
             window.watchparty.hls.loadSource(src);
             window.watchparty.hls.attachMedia(leftVideo);
-          } 
+          }
           // else if (isMpegTs(src)) {
           //   const mpegts = (await import('mpegts.js')).default;
           //   let player = mpegts.createPlayer({
@@ -631,7 +626,7 @@ export class App extends React.Component<AppProps, AppState> {
           //   player.attachMediaElement(leftVideo);
           //   player.load();
           //   player.play();
-          // } 
+          // }
           else {
             await this.Player().setSrcAndTime(src, time);
           }
@@ -1054,12 +1049,12 @@ export class App extends React.Component<AppProps, AppState> {
     const convertPath = this.context.convertPath;
     // const convertPath = 'https://azure.howardchung.net:5001';
     const convertUrl = convertPath + '/' + uuid + '.m3u8';
-    // Wait for the playlist to get generated 
+    // Wait for the playlist to get generated
     const poll = async () => {
       let ok = false;
       let i = 0;
       while (!ok && i < 30) {
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise((resolve) => setTimeout(resolve, 2000));
         const resp = await fetch(convertUrl);
         ok = resp.ok;
         i += 1;
@@ -1082,7 +1077,7 @@ export class App extends React.Component<AppProps, AppState> {
         ws.close();
       }
       const end = Date.now();
-      bytes += (value?.length ?? 0);
+      bytes += value?.length ?? 0;
       this.setState({
         downloaded: bytes,
         total: file.size,
@@ -1092,11 +1087,11 @@ export class App extends React.Component<AppProps, AppState> {
     };
     ws.onclose = () => {
       this.setState({ uploadController: undefined });
-    }
+    };
     const controller = new AbortController();
     controller.signal.onabort = (_ev) => {
       ws.close();
-    }
+    };
     this.setState({
       uploadController: controller,
     });
@@ -1109,7 +1104,7 @@ export class App extends React.Component<AppProps, AppState> {
     //   duplex: 'half',
     // });
   };
-  
+
   startFileShare = async (useMediaSoup: boolean) => {
     const files = await openFileSelector();
     if (!files) {
@@ -2490,29 +2485,29 @@ export class App extends React.Component<AppProps, AppState> {
                       ></video>
                     )}
                     {Boolean(this.state.total) && (
-                  <div
-                    style={{
-                      color: softWhite,
-                      fontWeight: 400,
-                      fontSize: 10,
-                      lineHeight: '8px',
-                      position: 'absolute',
-                      bottom: 0,
-                      right: 0,
-                      zIndex: 1,
-                    }}
-                  >
-                    {Math.min(
-                      (this.state.downloaded / this.state.total) * 100,
-                      100,
-                    ).toFixed(2) +
-                      '% - ' +
-                      formatSpeed(this.state.speed) +
-                      ' - ' +
-                      this.state.connections +
-                      ' connections'}
-                  </div>
-                )}
+                      <div
+                        style={{
+                          color: softWhite,
+                          fontWeight: 400,
+                          fontSize: 10,
+                          lineHeight: '8px',
+                          position: 'absolute',
+                          bottom: 0,
+                          right: 0,
+                          zIndex: 1,
+                        }}
+                      >
+                        {Math.min(
+                          (this.state.downloaded / this.state.total) * 100,
+                          100,
+                        ).toFixed(2) +
+                          '% - ' +
+                          formatSpeed(this.state.speed) +
+                          ' - ' +
+                          this.state.connections +
+                          ' connections'}
+                      </div>
+                    )}
                   </div>
                 </div>
                 {this.state.roomMedia && controls}

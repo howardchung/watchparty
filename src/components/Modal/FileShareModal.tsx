@@ -33,12 +33,19 @@ export const FileShareModal = (props: {
         <Table.Tbody>
           <Table.Tr>
             <Table.Td>Method</Table.Td>
-            <Table.Td>Stream your video to each viewer from your device. May not work with codecs not playable in browsers.</Table.Td>
             <Table.Td>
-              Stream your video to our relay server, which sends it to each viewer, reducing bandwidth usage. May not work with codecs not playable in browsers.
+              Stream your video to each viewer from your device. May not work
+              with codecs not playable in browsers.
             </Table.Td>
             <Table.Td>
-              We convert your video in real-time to a web-compatible format and serve the result. Avoids codec compatibility issues and allows more viewers.
+              Stream your video to our relay server, which sends it to each
+              viewer, reducing bandwidth usage. May not work with codecs not
+              playable in browsers.
+            </Table.Td>
+            <Table.Td>
+              We convert your video in real-time to a web-compatible format and
+              serve the result. Avoids codec compatibility issues and allows
+              more viewers.
             </Table.Td>
           </Table.Tr>
           <Table.Tr>
@@ -72,34 +79,34 @@ export const FileShareModal = (props: {
               </Button>
             </Table.Td>
             <Table.Td>
-                {context.isSubscriber ? (
-                  <Button
-                    color="orange"
-                    onClick={() => {
-                      props.startFileShare(true);
-                      props.closeModal();
-                    }}
-                  >
-                    Start Fileshare w/Relay
-                  </Button>
-                ) : (
-                  subscribeButton
-                )}
-                </Table.Td>
-                <Table.Td>
-                 {context.isSubscriber ? (
-                  <Button
-                    color="orange"
-                    onClick={() => {
-                      props.startConvert();
-                      props.closeModal();
-                    }}
-                  >
-                    Start Fileshare w/Convert
-                  </Button>
-                ) : (
-                  subscribeButton
-                )}
+              {context.isSubscriber ? (
+                <Button
+                  color="orange"
+                  onClick={() => {
+                    props.startFileShare(true);
+                    props.closeModal();
+                  }}
+                >
+                  Start Fileshare w/Relay
+                </Button>
+              ) : (
+                subscribeButton
+              )}
+            </Table.Td>
+            <Table.Td>
+              {context.isSubscriber ? (
+                <Button
+                  color="orange"
+                  onClick={() => {
+                    props.startConvert();
+                    props.closeModal();
+                  }}
+                >
+                  Start Fileshare w/Convert
+                </Button>
+              ) : (
+                subscribeButton
+              )}
             </Table.Td>
           </Table.Tr>
         </Table.Tbody>

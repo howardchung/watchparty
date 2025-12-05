@@ -17,10 +17,12 @@ export function formatTimestamp(input: any, nowDuration?: number): string {
     return '';
   }
   if (nowDuration) {
-    return new Date(Date.now() - (nowDuration - input) * 1000).toLocaleTimeString();
+    return new Date(
+      Date.now() - (nowDuration - input) * 1000,
+    ).toLocaleTimeString();
   }
   let hours = Math.abs(Math.trunc(Number(input) / 3600));
-  let minutes = Math.abs((Math.trunc(Number(input) / 60) % 60))
+  let minutes = Math.abs(Math.trunc(Number(input) / 60) % 60)
     .toString()
     .padStart(2, '0');
   let seconds = Math.abs(Math.trunc(Number(input) % 60))

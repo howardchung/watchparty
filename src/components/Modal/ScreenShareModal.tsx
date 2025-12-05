@@ -40,9 +40,12 @@ export const ScreenShareModal = ({
         <Table.Tbody>
           <Table.Tr>
             <Table.Td>Method</Table.Td>
-            <Table.Td>Stream your video to each viewer from your device.</Table.Td>
             <Table.Td>
-              Stream your video to our relay server, which sends it to each viewer, reducing bandwidth usage.
+              Stream your video to each viewer from your device.
+            </Table.Td>
+            <Table.Td>
+              Stream your video to our relay server, which sends it to each
+              viewer, reducing bandwidth usage.
             </Table.Td>
           </Table.Tr>
           <Table.Tr>

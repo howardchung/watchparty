@@ -170,7 +170,7 @@ export class Controls extends React.Component<ControlsProps> {
             onClick={() => {
               if (isLiveStream) {
                 // in live case we want to seek the entire room to edge
-                roomSeek(this.props.duration)
+                roomSeek(this.props.duration);
               } else {
                 localSeek();
               }
