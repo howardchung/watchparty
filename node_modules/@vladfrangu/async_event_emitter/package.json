@@ -1,0 +1,112 @@
+{
+  "name": "@vladfrangu/async_event_emitter",
+  "version": "2.4.7",
+  "description": "An event emitter implementation with async support in mind",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "browser": "./dist/index.global.js",
+  "unpkg": "./dist/index.global.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.cjs"
+      },
+      "default": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "sideEffects": false,
+  "author": "Vlad Frangu <me@vladfrangu.dev>",
+  "license": "MIT",
+  "scripts": {
+    "lint": "eslint src tests --ext ts --fix",
+    "format": "prettier --write \"{src,tests}/**/*.ts\"",
+    "docs": "typedoc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "update": "yarn upgrade-interactive",
+    "prepack": "yarn build",
+    "build": "tsc -p src --noEmit && yarn clean && tsup",
+    "clean": "node scripts/clean.mjs",
+    "typecheck": "tsc -p src --noEmit",
+    "bump": "cliff-jumper",
+    "check-update": "cliff-jumper --dry-run"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.3.0",
+    "@commitlint/config-conventional": "^19.2.2",
+    "@favware/cliff-jumper": "^2.2.3",
+    "@favware/npm-deprecate": "^1.0.7",
+    "@sapphire/eslint-config": "^5.0.5",
+    "@sapphire/prettier-config": "^2.0.0",
+    "@sapphire/ts-config": "^5.0.1",
+    "@typescript-eslint/eslint-plugin": "^7.14.1",
+    "@typescript-eslint/parser": "^7.14.1",
+    "@vitest/coverage-c8": "^0.33.0",
+    "@vitest/coverage-v8": "^1.6.0",
+    "cz-conventional-changelog": "^3.3.0",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.1.3",
+    "lint-staged": "^15.2.7",
+    "node-inspect-extracted": "^3.2.1",
+    "prettier": "^3.3.2",
+    "tsup": "^8.1.0",
+    "typedoc": "^0.26.2",
+    "typedoc-plugin-mdn-links": "^3.2.1",
+    "typescript": "^5.5.2",
+    "vitest": "^1.6.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vladfrangu/async_event_emitter.git"
+  },
+  "files": [
+    "dist",
+    "!dist/*.tsbuildinfo",
+    "THIRD_PARTY_LICENSE.md"
+  ],
+  "engines": {
+    "node": ">=v14.0.0",
+    "npm": ">=7.0.0"
+  },
+  "keywords": [
+    "event emitter",
+    "async",
+    "event",
+    "emitter"
+  ],
+  "bugs": {
+    "url": "https://github.com/vladfrangu/async_event_emitter/issues"
+  },
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
+  },
+  "lint-staged": {
+    "*": "prettier --ignore-unknown --write",
+    "*.{mjs,js,ts}": "eslint --fix --ext mjs,js,ts"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "packageManager": "yarn@4.3.1",
+  "volta": {
+    "node": "22.20.0",
+    "yarn": "4.10.3"
+  }
+}

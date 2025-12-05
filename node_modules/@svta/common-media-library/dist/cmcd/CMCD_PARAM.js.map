@@ -1,0 +1,1 @@
+{"version":3,"file":"CMCD_PARAM.js","sourceRoot":"","sources":["../../src/cmcd/CMCD_PARAM.ts"],"names":[],"mappings":"AAAA;;;;;;GAMG;AACH,MAAM,CAAC,MAAM,UAAU,GAAG,MAAM,CAAC","sourcesContent":["/**\n * CMCD parameter name.\n *\n * @group CMCD\n *\n * @beta\n */\nexport const CMCD_PARAM = 'CMCD';\n"]}
