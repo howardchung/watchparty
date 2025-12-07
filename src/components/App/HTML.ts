@@ -92,7 +92,7 @@ export class HTML implements Player {
   setSubtitleMode = (mode?: TextTrackMode) => {
     if (this.getVideoEl()) {
       for (
-        var i = 0;
+        let i = 0;
         i < Math.min(this.getVideoEl().textTracks.length, 1);
         i++
       ) {

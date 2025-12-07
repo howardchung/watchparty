@@ -324,8 +324,8 @@ app.post('/createRoom', async (req, res) => {
   }
   const prePlaylist = Array.isArray(req.body?.playlist) && req.body?.playlist;
   if (prePlaylist) {
-    for (let i = 0; i < req.body.playlist; i++) {
-      newRoom.playlistAdd(null, req.body.playlist[i]);
+    for (let item of req.body.playlist) {
+      newRoom.playlistAdd(null, item);
     }
   }
   rooms.set(name, newRoom);
@@ -681,8 +681,7 @@ async function release() {
   // assigned to a room with no users
   const roomArr = Array.from(rooms.values());
   console.log('[RELEASE] %s rooms in batch', roomArr.length);
-  for (let i = 0; i < roomArr.length; i++) {
-    const room = roomArr[i];
+  for (let room of roomArr) {
     if (room.vBrowser && room.vBrowser.assignTime) {
       const maxTime = getSessionLimitSeconds(room.vBrowser.large) * 1000;
       const elapsed = Date.now() - room.vBrowser.assignTime;
@@ -724,8 +723,7 @@ async function release() {
 
 async function minuteMetrics() {
   const roomArr = Array.from(rooms.values());
-  for (let i = 0; i < roomArr.length; i++) {
-    const room = roomArr[i];
+  for (let room of roomArr) {
     if (room.vBrowser && room.vBrowser.id) {
       // Update the heartbeat
       await postgres?.query(

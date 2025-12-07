@@ -24,8 +24,7 @@ app.post('/assignVM', async (req, res) => {
     let vm = null;
     // Sequentially try each to give earlier pools preference
     // We might want to add the ability to load balance as well by randomly selecting between pools with same priority
-    for (let i = 0; i < pools.length; i++) {
-      const pool = pools[i];
+    for (let pool of pools) {
       console.log(
         'try assignVM from pool:',
         pool.getPoolName(),
@@ -63,9 +62,7 @@ app.post('/releaseVM', async (req, res) => {
 
 app.get('/stats', async (req, res) => {
   const vmManagerStats: AnyDict = {};
-  for (let i = 0; i <= Object.keys(vmManagers).length; i++) {
-    const key = Object.keys(vmManagers)[i];
-    const vmManager = vmManagers[key];
+  for (let [key, vmManager] of Object.entries(vmManagers)) {
     const availableVBrowsers = await vmManager?.getAvailableVBrowsers();
     const stagingVBrowsers = await vmManager?.getStagingVBrowsers();
     const size = await vmManager?.getCurrentSize();

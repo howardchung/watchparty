@@ -104,8 +104,7 @@ async function syncSubscribers() {
       await postgres2?.query('BEGIN TRANSACTION');
       await postgres2?.query('DELETE FROM subscriber');
       await postgres2?.query('UPDATE room SET "isSubRoom" = false');
-      for (let i = 0; i < result.length; i++) {
-        const row = result[i];
+      for (let row of result) {
         await insertObject(postgres2, 'subscriber', row);
         await updateObject(
           postgres2,
@@ -139,9 +138,9 @@ async function syncSubscribers() {
       )
     ).rows;
     console.log('%s users to set sub role', toUpdate.length);
-    for (let i = 0; i < toUpdate.length; i++) {
+    for (let row of toUpdate) {
       try {
-        const user = await guild?.members.fetch(toUpdate[i].accountid);
+        const user = await guild?.members.fetch(row.accountid);
         if (user && role) {
           console.log('assigning role %s to user %s', role, user.id);
 

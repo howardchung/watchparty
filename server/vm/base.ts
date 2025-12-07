@@ -382,8 +382,7 @@ export abstract class VMManager {
         allVMs.length,
         inUse.size,
       );
-      for (let i = 0; i < allVMs.length; i++) {
-        const server = allVMs[i];
+      for (let server of allVMs) {
         if (!inUse.has(server.id)) {
           redisCount('vBrowserCleanup');
           console.log('[CLEANUP]', this.getPoolName(), server.id);
