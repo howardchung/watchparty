@@ -41,7 +41,7 @@ export async function getStats() {
 
   const result = await postgres?.query(
     `SELECT "roomId", "creationTime", "lastUpdateTime", vanity, "isSubRoom", "roomTitle", "roomDescription", "mediaPath", owner, password,
-    data->>'video', data->>'videoTS', data->>'vBrowser', data->>'creator', data->>'lock'
+    data->>'video' as video, data->>'videoTS' as videoTS, data->>'vBrowser' as vBrowser, data->>'creator' as creator, data->>'lock' as lock
     FROM room
     WHERE "lastUpdateTime" > NOW() - INTERVAL '7 day'
     ORDER BY "creationTime" DESC`,
