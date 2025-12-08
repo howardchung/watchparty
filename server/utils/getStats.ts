@@ -57,7 +57,7 @@ export async function getStats() {
     lock: string;
   }>(
     `SELECT "roomId", "creationTime", "lastUpdateTime", vanity, "isSubRoom", "roomTitle", "roomDescription", "mediaPath", owner, password,
-    data->'video' as video, data->'videoTS' as videoTS, data->'vBrowser' as vBrowser, data->'creator' as creator, data->'lock' as lock
+    data->'video' as video, data->'videoTS' as "videoTS", data->'vBrowser' as "vBrowser", data->'creator' as creator, data->'lock' as lock
     FROM room
     WHERE "lastUpdateTime" > NOW() - INTERVAL '7 day'
     ORDER BY "creationTime" DESC`,
