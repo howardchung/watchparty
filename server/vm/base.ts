@@ -472,7 +472,7 @@ export abstract class VMManager {
           console.log('[CHECKSTAGING]', this.getPoolName(), 'giving up:', vmid);
           redisCount('vBrowserStagingFails');
           await redis?.lpush('vBrowserStageFails', vmid);
-          await redis?.ltrim('vBrowserStageFails', 0, 24);
+          await redis?.ltrim('vBrowserStageFails', 0, 19);
           // VM didn't come up. set image to null so we reimage
           await postgres.query(
             `UPDATE vbrowser SET image = NULL WHERE pool = $1 AND vmid = $2`,
@@ -520,7 +520,7 @@ export abstract class VMManager {
           );
           // console.log(rows);
           await redis?.lpush('vBrowserStageRetries', retryCount);
-          await redis?.ltrim('vBrowserStageRetries', 0, 24);
+          await redis?.ltrim('vBrowserStageRetries', 0, 19);
         }
         return [vmid, retryCount, ready].join(',');
       });

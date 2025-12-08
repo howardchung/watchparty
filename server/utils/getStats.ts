@@ -280,6 +280,8 @@ export async function getStats() {
     },
     // Stats object from vmWorker (render as JSON)
     vmManagerStats,
+    // Array of room data (render as JSON)
+    currentRoomData,
     // Arrays of last values (render as one column table)
     vBrowserStartMS,
     vBrowserStageRetries,
@@ -290,8 +292,6 @@ export async function getStats() {
     vBrowserClientIDMinutes,
     vBrowserUIDs,
     vBrowserUIDMinutes,
-    // Array of room data (render as JSON)
-    currentRoomData,
   };
 }
 

@@ -366,7 +366,7 @@ export class Room {
     this.saveRoom();
     if (redis && assignTime) {
       await redis.lpush('vBrowserSessionMS', Date.now() - assignTime);
-      await redis.ltrim('vBrowserSessionMS', 0, 24);
+      await redis.ltrim('vBrowserSessionMS', 0, 19);
     }
 
     if (id) {
@@ -1044,7 +1044,7 @@ export class Room {
         const assignEnd = Date.now();
         const assignElapsed = assignEnd - Number(queueTime);
         await redis?.lpush('vBrowserStartMS', assignElapsed);
-        await redis?.ltrim('vBrowserStartMS', 0, 24);
+        await redis?.ltrim('vBrowserStartMS', 0, 19);
         console.log(
           '[ASSIGN] %s to %s in %s',
           assignment.provider + ':' + assignment.id,
