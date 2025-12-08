@@ -1,6 +1,6 @@
-const axios = require('axios');
-const fs = require('fs');
-var s3 = require('s3-client');
+import axios from 'axios';
+import fs from 'node:fs';
+import s3 from 's3-client';
 
 var client = s3.createClient({
   maxAsyncS3: 20, // this is the default
