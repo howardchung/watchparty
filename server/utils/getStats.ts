@@ -49,7 +49,7 @@ export async function getStats() {
   const currentRoomData: any[] = [];
   for (let dbRoom of result?.rows ?? []) {
     // Get roster info from Redis
-    const rosterLength = Number(roomSizes[dbRoom.id]) || 0;
+    const rosterLength = Number(roomSizes[dbRoom.roomId]) || 0;
     let roster = [];
     if (rosterLength > 0) {
       const resp = await redis?.hget('roomRosters', dbRoom.roomId);
@@ -100,7 +100,7 @@ export async function getStats() {
     }
   }
   // Singleton stats below (same for all shards)
-  const cpuUsage = os.loadavg()[1];
+  const cpuUsage = os.loadavg()[1] * 100;
   const redisUsage = Number(
     (await redis?.info())
       ?.split('\n')
