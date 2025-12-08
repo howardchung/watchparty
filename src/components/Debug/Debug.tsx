@@ -13,6 +13,12 @@ import { serverPath } from '../../utils/utils';
 const timeSeriesUrl = serverPath + `/timeSeries${window.location.search}`;
 // const timeSeriesUrl = 'https://www.watchparty.me' + `/timeSeries${window.location.search}`;
 
+// Rendering:
+// Anything that's a Record<string, number> should render as 2 column table
+// e.g. counts, roomsizecounts, per shard stats
+// vBrowserClientIDs etc. should be converted to key/value pairs
+// vmManagerStats and currentRoomData should render in JSON blocks
+
 const Debug = () => {
   const [data, setData] = useState([]);
   // eslint-disable-next-line

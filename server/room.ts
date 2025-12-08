@@ -311,8 +311,8 @@ export class Room {
       clientId: this.clientIdMap[p.id],
       // TODO this will not work behind nginx reverse proxy, pass it and read from X-Real-IP instead
       // socket.handshake.headers["x-real-ip"]
-      ip: this.io.of(this.roomId).sockets.get(p.id)?.request?.socket
-        ?.remoteAddress,
+      // ip: this.io.of(this.roomId).sockets.get(p.id)?.request?.socket
+      //   ?.remoteAddress,
     }));
   };
 
@@ -548,12 +548,14 @@ export class Room {
           streams = await twitch.getVod(channel);
         }
         // console.log(streams);
-        const target = streams.find((str: any) => str.quality.includes('(source)')) || streams[0];
+        const target =
+          streams.find((str: any) => str.quality.includes('(source)')) ||
+          streams[0];
         const parsed = new URL(target?.url);
         const newUrl = new URL(config.TWITCH_PROXY_PATH);
         newUrl.pathname = '/proxy' + parsed.pathname;
         newUrl.searchParams.set('host', parsed.host);
-        newUrl.searchParams.set('displayName', data)
+        newUrl.searchParams.set('displayName', data);
         newUrl.search = newUrl.searchParams.toString();
         data = newUrl.toString();
       } catch (e) {

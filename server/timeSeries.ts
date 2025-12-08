@@ -1,7 +1,7 @@
 import config from './config.ts';
-import { statsAgg } from './utils/statsAgg.ts';
 import axios from 'axios';
 import { redis } from './utils/redis.ts';
+import { getStats } from './utils/getStats.ts';
 
 statsTimeSeries();
 setInterval(statsTimeSeries, 5 * 60 * 1000);
@@ -10,7 +10,7 @@ async function statsTimeSeries() {
   if (redis) {
     console.time('timeSeries');
     try {
-      const stats = await statsAgg();
+      const stats = await getStats();
       const isFreePoolFull = (
         await axios.get(
           'http://localhost:' + config.VMWORKER_PORT + '/isFreePoolFull',
@@ -18,26 +18,23 @@ async function statsTimeSeries() {
       ).data.isFull;
       const datapoint: AnyDict = {
         time: new Date(),
-        currentUsers: stats.currentUsers,
-        currentVBrowser: stats.currentVBrowser,
-        currentVBrowserLarge: stats.currentVBrowserLarge,
-        currentHttp: stats.currentHttp,
-        currentScreenShare: stats.currentScreenShare,
-        currentFileShare: stats.currentFileShare,
-        currentVideoChat: stats.currentVideoChat,
-        chatMessages: stats.chatMessages,
-        redisUsage: stats.redisUsage,
-        hetznerApiRemaining: stats.hetznerApiRemaining,
+        currentUsers: stats.counts.currentUsers,
+        currentVBrowser: stats.counts.currentVBrowser,
+        currentVBrowserLarge: stats.counts.currentVBrowserLarge,
+        currentHttp: stats.counts.currentHttp,
+        currentScreenShare: stats.counts.currentScreenShare,
+        currentFileShare: stats.counts.currentFileShare,
+        currentVideoChat: stats.counts.currentVideoChat,
+        chatMessages: stats.counts.chatMessages,
+        redisUsage: stats.counts.redisUsage,
+        hetznerApiRemaining: stats.counts.hetznerApiRemaining,
         avgStartMS:
-          stats.vBrowserStartMS &&
-          stats.vBrowserStartMS.reduce(
-            (a: string, b: string) => Number(a) + Number(b),
-            0,
-          ) / stats.vBrowserStartMS.length,
-        vBrowserStarts: stats.vBrowserStarts,
-        vBrowserLaunches: stats.vBrowserLaunches,
-        vBrowserFails: stats.vBrowserFails,
-        vBrowserStagingFails: stats.vBrowserStagingFails,
+          (stats.vBrowserStartMS || []).map(Number).reduce((a, b) => a + b, 0) /
+          (stats.vBrowserStartMS?.length ?? 0),
+        vBrowserStarts: stats.counts.vBrowserStarts,
+        vBrowserLaunches: stats.counts.vBrowserLaunches,
+        vBrowserFails: stats.counts.vBrowserFails,
+        vBrowserStagingFails: stats.counts.vBrowserStagingFails,
         isFreePoolFull: Number(isFreePoolFull),
       };
       Object.keys(stats.vmManagerStats).forEach((key) => {

@@ -88,3 +88,12 @@ interface LinkAccount {
   discriminator: string;
   kind: string;
 }
+
+interface ShardMetric {
+  uptime: number;
+  mem: number;
+  roomCount: number;
+  users: number;
+  videoChat: number;
+  vBrowserWaiting: number;
+}
