@@ -52,12 +52,12 @@ export async function getStats() {
     password: string;
     video: string;
     videoTS: number;
-    vBrowser: string;
+    vBrowser: AssignedVM;
     creator: string;
     lock: string;
   }>(
     `SELECT "roomId", "creationTime", "lastUpdateTime", vanity, "isSubRoom", "roomTitle", "roomDescription", "mediaPath", owner, password,
-    data->>'video' as video, data->>'videoTS' as videoTS, data->>'vBrowser' as vBrowser, data->>'creator' as creator, data->>'lock' as lock
+    data->'video' as video, data->'videoTS' as videoTS, data->'vBrowser' as vBrowser, data->'creator' as creator, data->'lock' as lock
     FROM room
     WHERE "lastUpdateTime" > NOW() - INTERVAL '7 day'
     ORDER BY "creationTime" DESC`,
@@ -73,9 +73,7 @@ export async function getStats() {
         roster = JSON.parse(resp);
       }
     }
-    const vBrowser: AssignedVM | undefined = dbRoom.vBrowser
-      ? JSON.parse(dbRoom.vBrowser)
-      : undefined;
+    const vBrowser = dbRoom.vBrowser;
     const obj = {
       roomId: dbRoom.roomId,
       video: dbRoom.video || undefined,
