@@ -39,7 +39,23 @@ export async function getStats() {
   let currentScreenShare = 0;
   let currentFileShare = 0;
 
-  const result = await postgres?.query(
+  const result = await postgres?.query<{
+    roomId: string;
+    creationTime: Date;
+    lastUpdateTime: Date;
+    vanity: string;
+    isSubRoom: boolean;
+    roomTitle: string;
+    roomDescription: string;
+    mediaPath: string;
+    owner: string;
+    password: string;
+    video: string;
+    videoTS: number;
+    vBrowser: string;
+    creator: string;
+    lock: string;
+  }>(
     `SELECT "roomId", "creationTime", "lastUpdateTime", vanity, "isSubRoom", "roomTitle", "roomDescription", "mediaPath", owner, password,
     data->>'video' as video, data->>'videoTS' as videoTS, data->>'vBrowser' as vBrowser, data->>'creator' as creator, data->>'lock' as lock
     FROM room
@@ -57,7 +73,7 @@ export async function getStats() {
         roster = JSON.parse(resp);
       }
     }
-    const vBrowser: AssignedVM | undefined = dbRoom.vBrower
+    const vBrowser: AssignedVM | undefined = dbRoom.vBrowser
       ? JSON.parse(dbRoom.vBrowser)
       : undefined;
     const obj = {
