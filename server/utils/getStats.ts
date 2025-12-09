@@ -56,14 +56,30 @@ export async function getStats() {
   const currentRoomData: any[] = [];
   for (let dbRoom of result?.rows ?? []) {
     const vBrowser = dbRoom.vBrowser;
+    if (vBrowser) {
+      currentVBrowser += 1;
+    }
+    if (vBrowser?.large) {
+      currentVBrowserLarge += 1;
+    }
     const rosterLength = Number(
       await redis?.get(`roomCounts:${dbRoom.roomId}`),
     );
-    const videoUsers = Number(
-      await redis?.get(`roomVideoUsers:${dbRoom.roomId}`),
-    );
-    const resp = await redis?.get(`roomRosters:${dbRoom.roomId}`);
-    const roster = resp ? JSON.parse(resp) : [];
+    let videoUsers = 0;
+    let roster = [];
+    if (rosterLength) {
+      currentRoomSizes[rosterLength] =
+        (currentRoomSizes[rosterLength] ?? 0) + 1;
+      videoUsers = Number(
+        await redis?.get(`roomVideoUsers:${dbRoom.roomId}`),
+      );
+      const resp = await redis?.get(`roomRosters:${dbRoom.roomId}`);
+      if (resp) {
+        roster = JSON.parse(resp);
+      }
+    }
+    currentUsers += rosterLength;
+    currentVideoChat += videoUsers;
     const obj = {
       roomId: dbRoom.roomId,
       video: dbRoom.video || undefined,
@@ -85,26 +101,16 @@ export async function getStats() {
       videoUsers,
       roster,
     };
-    currentUsers += obj.rosterLength;
-    currentVideoChat += obj.videoUsers;
-    currentRoomSizes[obj.rosterLength] =
-      (currentRoomSizes[obj.rosterLength] ?? 0) + 1;
-    if (vBrowser) {
-      currentVBrowser += 1;
-    }
-    if (vBrowser?.large) {
-      currentVBrowserLarge += 1;
-    }
-    if (obj.video?.startsWith('http') && obj.rosterLength) {
+    if (obj.video?.startsWith('http') && rosterLength) {
       currentHttp += 1;
     }
-    if (obj.video?.startsWith('screenshare://') && obj.rosterLength) {
+    if (obj.video?.startsWith('screenshare://') && rosterLength) {
       currentScreenShare += 1;
     }
-    if (obj.video?.startsWith('fileshare://') && obj.rosterLength) {
+    if (obj.video?.startsWith('fileshare://') && rosterLength) {
       currentFileShare += 1;
     }
-    if (obj.video || obj.rosterLength > 0) {
+    if (obj.video || rosterLength > 0) {
       currentRoomData.push(obj);
     }
   }
