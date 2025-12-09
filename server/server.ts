@@ -723,21 +723,21 @@ async function minuteMetrics() {
         );
         await redis?.expireat('vBrowserUIDMinutes', expireTime);
       }
-      const users = room.roster.length;
-      if (users) {
-        await redis?.setex(`roomCounts:${room.roomId}`, 120, users);
-        await redis?.setex(
-          `roomRosters:${room.roomId}`,
-          120,
-          JSON.stringify(room.getRosterForStats()),
-        );
-      }
-      const videoUsers = room.roster.filter((p) => p.isVideoChat).length;
-      if (videoUsers) {
-        await redis?.setex(`roomVideoUsers:${room.roomId}`, 120, videoUsers);
-      }
-      vbWaiting += room.vBrowserQueue ? 1 : 0;
     }
+    const users = room.roster.length;
+    if (users) {
+      await redis?.setex(`roomCounts:${room.roomId}`, 120, users);
+      await redis?.setex(
+        `roomRosters:${room.roomId}`,
+        120,
+        JSON.stringify(room.getRosterForStats()),
+      );
+    }
+    const videoUsers = room.roster.filter((p) => p.isVideoChat).length;
+    if (videoUsers) {
+      await redis?.setex(`roomVideoUsers:${room.roomId}`, 120, videoUsers);
+    }
+    vbWaiting += room.vBrowserQueue ? 1 : 0;
   }
   // Report shard metrics
   const obj: ShardMetric = {
