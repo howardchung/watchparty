@@ -21,14 +21,13 @@ export async function getStats() {
   }
 
   // Count these from postgres data
+  let currentUsers = 0;
+  let currentVideoChat = 0;
   let currentHttp = 0;
   let currentVBrowser = 0;
   let currentVBrowserLarge = 0;
   let currentScreenShare = 0;
   let currentFileShare = 0;
-  let currentUsers = 0;
-  let currentVideoChat = 0;
-  let currentVBrowserWaiting = 0;
   const currentRoomSizes: Record<string, number> = {};
 
   const result = await postgres?.query<{
@@ -47,14 +46,9 @@ export async function getStats() {
     vBrowser: AssignedVM;
     creator: string;
     lock: string;
-    roster_len: number;
-    roster: any[];
-    vb_waiting: boolean;
-    video_chat: number;
   }>(
     `SELECT "roomId", "creationTime", "lastUpdateTime", vanity, "isSubRoom", "roomTitle", "roomDescription", "mediaPath", owner, password,
-    data->'video' as video, data->'videoTS' as "videoTS", data->'vBrowser' as "vBrowser", data->'creator' as creator, data->'lock' as lock,
-    roster_len, roster, vb_waiting, video_chat
+    data->'video' as video, data->'videoTS' as "videoTS", data->'vBrowser' as "vBrowser", data->'creator' as creator, data->'lock' as lock
     FROM room
     WHERE "lastUpdateTime" > NOW() - INTERVAL '7 day'
     ORDER BY "creationTime" DESC`,
@@ -62,6 +56,14 @@ export async function getStats() {
   const currentRoomData: any[] = [];
   for (let dbRoom of result?.rows ?? []) {
     const vBrowser = dbRoom.vBrowser;
+    const rosterLength = Number(
+      await redis?.get(`roomCounts:${dbRoom.roomId}`),
+    );
+    const videoUsers = Number(
+      await redis?.get(`roomVideoUsers:${dbRoom.roomId}`),
+    );
+    const resp = await redis?.get(`roomRosters:${dbRoom.roomId}`);
+    const roster = resp ? JSON.parse(resp) : [];
     const obj = {
       roomId: dbRoom.roomId,
       video: dbRoom.video || undefined,
@@ -79,16 +81,14 @@ export async function getStats() {
       vBrowserElapsed: vBrowser?.assignTime && now - vBrowser?.assignTime,
       lock: dbRoom.lock || undefined,
       creator: dbRoom.creator || undefined,
-      rosterLength: dbRoom.roster_len || 0,
-      roster: dbRoom.roster || [],
-      vBrowserWaiting: dbRoom.vb_waiting || false,
-      videoChat: dbRoom.video_chat || 0,
+      rosterLength,
+      videoUsers,
+      roster,
     };
     currentUsers += obj.rosterLength;
-    currentVideoChat += obj.videoChat;
-    currentVBrowserWaiting += Number(obj.vBrowserWaiting);
+    currentVideoChat += obj.videoUsers;
     currentRoomSizes[obj.rosterLength] =
-    (currentRoomSizes[obj.rosterLength] ?? 0) + 1;
+      (currentRoomSizes[obj.rosterLength] ?? 0) + 1;
     if (vBrowser) {
       currentVBrowser += 1;
     }
@@ -241,7 +241,6 @@ export async function getStats() {
       currentVideoChat,
       currentVBrowser,
       currentVBrowserLarge,
-      currentVBrowserWaiting,
       currentHttp,
       currentScreenShare,
       currentFileShare,

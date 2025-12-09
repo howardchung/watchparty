@@ -94,4 +94,5 @@ interface ShardMetric {
   mem: number;
   roomCount: number;
   users: number;
+  vbWaiting: number;
 }

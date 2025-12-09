@@ -697,6 +697,7 @@ async function release() {
 
 async function minuteMetrics() {
   const roomArr = Array.from(rooms.values());
+  let vbWaiting = 0;
   for (let room of roomArr) {
     if (room.vBrowser && room.vBrowser.id) {
       // Update the heartbeat
@@ -722,6 +723,20 @@ async function minuteMetrics() {
         );
         await redis?.expireat('vBrowserUIDMinutes', expireTime);
       }
+      const users = room.roster.length;
+      if (users) {
+        await redis?.setex(`roomCounts:${room.roomId}`, 120, users);
+        await redis?.setex(
+          `roomRosters:${room.roomId}`,
+          120,
+          JSON.stringify(room.getRosterForStats()),
+        );
+      }
+      const videoUsers = room.roster.filter((p) => p.isVideoChat).length;
+      if (videoUsers) {
+        await redis?.setex(`roomVideoUsers:${room.roomId}`, 120, videoUsers);
+      }
+      vbWaiting += room.vBrowserQueue ? 1 : 0;
     }
   }
   // Report shard metrics
@@ -730,6 +745,7 @@ async function minuteMetrics() {
     mem: process.memoryUsage().rss,
     roomCount: rooms.size,
     users: io.engine.clientsCount,
+    vbWaiting,
   };
   await redis?.setex(
     `shardMetrics:${config.SHARD ?? 0}`,
