@@ -597,9 +597,10 @@ export class App extends React.Component<AppProps, AppState> {
                 // html.currenttime is time since stream start
                 // html.duration is infinite
                 // player.duration is the seekable range
-                console.log('dash stream initialized');
+                const isLiveStream = this.Player().getDuration() >= Infinity;
+                console.log('DASH stream initialized: isLive %s', isLiveStream);
                 this.setState({
-                  isLiveStream: this.Player().getDuration() >= Infinity,
+                  isLiveStream,
                 });
               });
             }
@@ -611,8 +612,9 @@ export class App extends React.Component<AppProps, AppState> {
               const Hls = (await import('hls.js')).default;
               window.watchparty.hls = new Hls();
               window.watchparty.hls.on(Hls.Events.LEVEL_LOADED, (_, data) => {
-                console.log('HLS level loaded');
-                this.setState({ isLiveStream: data.details.live });
+                const isLiveStream = data.details.live;
+                console.log('HLS level loaded: isLive %s', isLiveStream);
+                this.setState({ isLiveStream });
               });
             }
             window.watchparty.hls.loadSource(src);
