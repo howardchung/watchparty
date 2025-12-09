@@ -15,7 +15,7 @@ CREATE TABLE room(
   "roomTitleColor" text,
   "mediaPath" text,
   roster_len int,
-  roster jsonb,
+  roster jsonb[],
   vb_waiting boolean,
   video_chat int,
   PRIMARY KEY ("roomId")

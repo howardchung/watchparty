@@ -47,14 +47,14 @@ export async function getStats() {
     vBrowser: AssignedVM;
     creator: string;
     lock: string;
-    roster_length: number;
+    roster_len: number;
     roster: any[];
     vb_waiting: boolean;
     video_chat: number;
   }>(
     `SELECT "roomId", "creationTime", "lastUpdateTime", vanity, "isSubRoom", "roomTitle", "roomDescription", "mediaPath", owner, password,
     data->'video' as video, data->'videoTS' as "videoTS", data->'vBrowser' as "vBrowser", data->'creator' as creator, data->'lock' as lock,
-    roster_length, roster, vb_waiting, video_chat
+    roster_len, roster, vb_waiting, video_chat
     FROM room
     WHERE "lastUpdateTime" > NOW() - INTERVAL '7 day'
     ORDER BY "creationTime" DESC`,
@@ -79,7 +79,7 @@ export async function getStats() {
       vBrowserElapsed: vBrowser?.assignTime && now - vBrowser?.assignTime,
       lock: dbRoom.lock || undefined,
       creator: dbRoom.creator || undefined,
-      rosterLength: dbRoom.roster_length || 0,
+      rosterLength: dbRoom.roster_len || 0,
       roster: dbRoom.roster || [],
       vBrowserWaiting: dbRoom.vb_waiting || false,
       videoChat: dbRoom.video_chat || 0,
