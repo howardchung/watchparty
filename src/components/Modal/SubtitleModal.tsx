@@ -64,7 +64,7 @@ export class SubtitleModal extends React.Component<{
     reader.addEventListener('load', async (event) => {
       const subData = event.target?.result;
       // Upload to server
-      const resp = await window.fetch(serverPath + '/subtitle', {
+      const resp = await fetch(serverPath + '/subtitle', {
         method: 'POST',
         body: subData,
         headers: { 'Content-Type': 'text/plain' },
@@ -141,7 +141,7 @@ export class SubtitleModal extends React.Component<{
                     disabled={!this.props.haveLock()}
                     onClick={async () => {
                       this.setState({ loading: true });
-                      const resp = await window.fetch(
+                      const resp = await fetch(
                         serverPath +
                           '/searchSubtitles?title=' +
                           this.state.titleQuery,
@@ -160,7 +160,7 @@ export class SubtitleModal extends React.Component<{
                     disabled={!this.props.haveLock()}
                     onClick={async () => {
                       this.setState({ loading: true });
-                      const resp = await window.fetch(
+                      const resp = await fetch(
                         serverPath +
                           '/searchSubtitles?url=' +
                           this.props.roomMedia,

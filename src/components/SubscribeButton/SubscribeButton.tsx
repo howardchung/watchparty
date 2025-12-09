@@ -30,7 +30,7 @@ export const SubscribeButton = () => {
 export const ManageSubButton = ({}: {}) => {
   const { user } = useContext(MetadataContext);
   const onManage = useCallback(async () => {
-    const resp = await window.fetch(serverPath + '/manageSub', {
+    const resp = await fetch(serverPath + '/manageSub', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

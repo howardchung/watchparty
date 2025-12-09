@@ -305,21 +305,19 @@ export class App extends React.Component<AppProps, AppState> {
     let roomId = '/' + this.props.urlRoomId;
     // if a vanity name, resolve the url to a room id
     if (this.props.vanity) {
-      try {
-        const response = await fetch(
-          serverPath + '/resolveRoom/' + this.props.vanity,
-        );
-        const data = await response.json();
-        if (data.roomId) {
-          roomId = data.roomId;
-        } else {
-          this.setState({ overlayMsg: "Couldn't load this room." });
-        }
-      } catch (e) {
-        console.error(e);
+      const resp = await fetch(
+        serverPath + '/resolveRoom/' + this.props.vanity,
+      );
+      if (!resp.ok) {
         this.setState({ overlayMsg: "Couldn't load this room." });
         return;
       }
+      const data = await resp.json();
+      if (!data.roomId) {
+        this.setState({ overlayMsg: "Couldn't load this room." });
+        return;
+      }
+      roomId = data.roomId;
     }
     this.setState({ roomId }, () => {
       this.join(roomId);
@@ -678,7 +676,7 @@ export class App extends React.Component<AppProps, AppState> {
           this.setState({ downloaded: 0, total: 0, speed: 0 });
           if (currentMedia.includes('/stream?torrent=magnet')) {
             this.progressUpdater = window.setInterval(async () => {
-              const response = await window.fetch(
+              const response = await fetch(
                 currentMedia.replace('/stream', '/progress'),
               );
               const data = await response.json();

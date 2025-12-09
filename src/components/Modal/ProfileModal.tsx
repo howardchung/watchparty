@@ -78,7 +78,7 @@ export class ProfileModal extends React.Component<{
 
   deleteAccount = async () => {
     const token = await this.context.user?.getIdToken();
-    await window.fetch(serverPath + '/deleteAccount', {
+    await fetch(serverPath + '/deleteAccount', {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
@@ -101,7 +101,7 @@ export class ProfileModal extends React.Component<{
 
   deleteDiscord = async () => {
     const token = await this.context.user?.getIdToken();
-    await window.fetch(serverPath + '/linkAccount', {
+    await fetch(serverPath + '/linkAccount', {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',

@@ -51,7 +51,7 @@ export class SearchComponent extends React.Component<SearchComponentProps> {
   };
 
   onSelectItem = async (result: SearchResult) => {
-    let response = await window.fetch(
+    let response = await fetch(
       this.context.streamPath +
         '/data?torrent=' +
         encodeURIComponent(result.magnet!),

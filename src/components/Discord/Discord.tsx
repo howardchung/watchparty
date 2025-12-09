@@ -14,7 +14,7 @@ export const Discord = () => {
         fragment.get('token_type'),
       ];
       const token = await user?.getIdToken();
-      const authResponse = await window.fetch(serverPath + '/linkAccount', {
+      const authResponse = await fetch(serverPath + '/linkAccount', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

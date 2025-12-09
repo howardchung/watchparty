@@ -212,7 +212,7 @@ export async function getMediaPathResults(
 ): Promise<SearchResult[]> {
   let results: SearchResult[] = [];
   // if (mediaPath.includes('s3.')) {
-  //   const response = await window.fetch(mediaPath);
+  //   const response = await fetch(mediaPath);
   //   // S3-style buckets return data in XML
   //   const xml = await response.text();
   //   const parser = new XMLParser();
@@ -231,13 +231,13 @@ export async function getMediaPathResults(
     const playlistID = mediaPath.split(
       'https://www.youtube.com/playlist?list=',
     )[1];
-    const response = await window.fetch(
+    const response = await fetch(
       serverPath + '/youtubePlaylist/' + playlistID,
     );
     results = await response.json();
   } else {
     // Assume it's a text list of URLs
-    const response = await window.fetch(mediaPath);
+    const response = await fetch(mediaPath);
     const text = await response.text();
     results = text
       .split('\n')
@@ -250,7 +250,7 @@ export async function getStreamPathResults(
   streamPath: string,
   query: string,
 ): Promise<SearchResult[]> {
-  const response = await window.fetch(
+  const response = await fetch(
     streamPath + `/${query ? 'search' : 'top'}?q=` + encodeURIComponent(query),
   );
   const data = await response.json();
@@ -263,7 +263,7 @@ export async function getStreamPathResults(
 export async function getYouTubeResults(
   query: string,
 ): Promise<SearchResult[]> {
-  const response = await window.fetch(
+  const response = await fetch(
     serverPath + '/youtube?q=' + encodeURIComponent(query),
   );
   const data = await response.json();
@@ -338,7 +338,7 @@ export async function getUserImage(
   const hash = user.email ? MD5.hash(user.email) : '';
   if (user.email) {
     const gravatar = `https://www.gravatar.com/avatar/${hash}?d=404&s=256`;
-    const response = await window.fetch(gravatar);
+    const response = await fetch(gravatar);
     if (response.ok) {
       return gravatar;
     }

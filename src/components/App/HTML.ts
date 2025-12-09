@@ -135,7 +135,7 @@ export class HTML implements Player {
     if (Boolean(src)) {
       let subtitleSrc = src;
       if (subtitleSrc) {
-        const response = await window.fetch(subtitleSrc);
+        const response = await fetch(subtitleSrc);
         const buffer = await response.arrayBuffer();
         const url = await toWebVTT(new Blob([buffer]));
         const track = document.createElement('track');

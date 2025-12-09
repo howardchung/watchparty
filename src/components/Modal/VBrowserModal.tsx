@@ -26,7 +26,7 @@ export class VBrowserModal extends React.Component<{
   };
 
   async componentDidMount() {
-    const resp = await window.fetch(serverPath + '/metadata');
+    const resp = await fetch(serverPath + '/metadata');
     const metadata = await resp.json();
     this.setState({ isFreePoolFull: metadata.isFreePoolFull });
   }

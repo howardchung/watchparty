@@ -14,8 +14,8 @@ type Issue = {
 const Announce = () => {
   const [announcement, setAnnouncement] = useState<Issue | null>(null);
   useEffect(() => {
-    const fetch = async () => {
-      const response = await window.fetch(
+    const update = async () => {
+      const response = await fetch(
         'https://api.github.com/search/issues?' +
           new URLSearchParams({
             q: `repo:${GITHUB_REPO} label:${
@@ -37,7 +37,7 @@ const Announce = () => {
         setAnnouncement(top);
       }
     };
-    fetch();
+    update();
   }, []);
 
   const onDismiss = useCallback((value: number) => {

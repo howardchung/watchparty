@@ -31,7 +31,7 @@ export async function createRoom(
 ) {
   const uid = user?.uid;
   const token = await user?.getIdToken();
-  const response = await window.fetch(serverPath + '/createRoom', {
+  const response = await fetch(serverPath + '/createRoom', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
