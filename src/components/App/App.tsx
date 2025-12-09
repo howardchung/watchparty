@@ -616,6 +616,11 @@ export class App extends React.Component<AppProps, AppState> {
                 console.log('HLS level loaded: isLive %s', isLiveStream);
                 this.setState({ isLiveStream });
               });
+              window.watchparty.hls.on(Hls.Events.LEVEL_UPDATED, (_, data) => {
+                const isLiveStream = data.details.live;
+                console.log('HLS level updated: isLive %s', isLiveStream);
+                this.setState({ isLiveStream });
+              });
             }
             window.watchparty.hls.loadSource(src);
             window.watchparty.hls.attachMedia(leftVideo);
