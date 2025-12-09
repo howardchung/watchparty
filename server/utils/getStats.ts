@@ -3,34 +3,22 @@ import { postgres } from './postgres.ts';
 import os from 'node:os';
 import { getRedisCountDay, getRedisCountDayDistinct, redis } from './redis.ts';
 import config from '../config.ts';
+import { apps } from '../ecosystem.config.js';
 
 export async function getStats() {
   const now = Date.now();
 
-  // TODO if we serialize currentUsers, currentVideoChat, currentVBrowserWaiting to postgres then we can just count them below
-  // This would simplify minutemetrics code
-  // Need to assemble currentRoomSizes
-  const roomSizes = (await redis?.hgetall('roomCounts')) ?? {};
-  const currentRoomSizes: Record<string, number> = {};
-  Object.keys(roomSizes).forEach((key) => {
-    let value = roomSizes[key];
-    currentRoomSizes[value] = (currentRoomSizes[value] ?? 0) + 1;
-  });
-
-  // Need to sum currentUsers, currentVBrowserWaiting, currentVideoChat
-  let currentUsers = 0;
-  let currentVideoChat = 0;
-  let currentVBrowserWaiting = 0;
-  const resp2 = (await redis?.hgetall('shardMetrics')) ?? {};
   // Render each shard metrics as its own object
   const shardMetrics: Record<string, ShardMetric> = {};
-  Object.keys(resp2).forEach((key) => {
-    const value: ShardMetric = JSON.parse(resp2[key]);
-    shardMetrics[key] = value;
-    currentUsers += value.users;
-    currentVideoChat += value.videoChat;
-    currentVBrowserWaiting = value.vBrowserWaiting;
-  });
+  const shardKeys = new Set(
+    apps.map((app) => `shardMetrics:${app.env?.SHARD ?? 0}`),
+  );
+  for (let key of shardKeys) {
+    const resp2 = await redis?.get(key);
+    if (resp2) {
+      shardMetrics[key] = JSON.parse(resp2);
+    }
+  }
 
   // Count these from postgres data
   let currentHttp = 0;
@@ -38,6 +26,10 @@ export async function getStats() {
   let currentVBrowserLarge = 0;
   let currentScreenShare = 0;
   let currentFileShare = 0;
+  let currentUsers = 0;
+  let currentVideoChat = 0;
+  let currentVBrowserWaiting = 0;
+  const currentRoomSizes: Record<string, number> = {};
 
   const result = await postgres?.query<{
     roomId: string;
@@ -55,24 +47,20 @@ export async function getStats() {
     vBrowser: AssignedVM;
     creator: string;
     lock: string;
+    roster_length: number;
+    roster: any[];
+    vb_waiting: boolean;
+    video_chat: number;
   }>(
     `SELECT "roomId", "creationTime", "lastUpdateTime", vanity, "isSubRoom", "roomTitle", "roomDescription", "mediaPath", owner, password,
-    data->'video' as video, data->'videoTS' as "videoTS", data->'vBrowser' as "vBrowser", data->'creator' as creator, data->'lock' as lock
+    data->'video' as video, data->'videoTS' as "videoTS", data->'vBrowser' as "vBrowser", data->'creator' as creator, data->'lock' as lock,
+    roster_length, roster, vb_waiting, video_chat
     FROM room
     WHERE "lastUpdateTime" > NOW() - INTERVAL '7 day'
     ORDER BY "creationTime" DESC`,
   );
   const currentRoomData: any[] = [];
   for (let dbRoom of result?.rows ?? []) {
-    // Get roster info from Redis
-    const rosterLength = Number(roomSizes[dbRoom.roomId]) || 0;
-    let roster = [];
-    if (rosterLength > 0) {
-      const resp = await redis?.hget('roomRosters', dbRoom.roomId);
-      if (resp) {
-        roster = JSON.parse(resp);
-      }
-    }
     const vBrowser = dbRoom.vBrowser;
     const obj = {
       roomId: dbRoom.roomId,
@@ -91,9 +79,16 @@ export async function getStats() {
       vBrowserElapsed: vBrowser?.assignTime && now - vBrowser?.assignTime,
       lock: dbRoom.lock || undefined,
       creator: dbRoom.creator || undefined,
-      rosterLength,
-      roster,
+      rosterLength: dbRoom.roster_length || 0,
+      roster: dbRoom.roster || [],
+      vBrowserWaiting: dbRoom.vb_waiting || false,
+      videoChat: dbRoom.video_chat || 0,
     };
+    currentUsers += obj.rosterLength;
+    currentVideoChat += obj.videoChat;
+    currentVBrowserWaiting += Number(obj.vBrowserWaiting);
+    currentRoomSizes[obj.rosterLength] =
+    (currentRoomSizes[obj.rosterLength] ?? 0) + 1;
     if (vBrowser) {
       currentVBrowser += 1;
     }
@@ -239,8 +234,8 @@ export async function getStats() {
   const vmManagerStats = await resp.json();
 
   return {
-    currentRoomSizes,
     ...shardMetrics,
+    currentRoomSizes,
     counts: {
       currentUsers,
       currentVideoChat,

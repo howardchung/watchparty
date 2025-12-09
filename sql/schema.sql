@@ -14,6 +14,10 @@ CREATE TABLE room(
   "roomDescription" text,
   "roomTitleColor" text,
   "mediaPath" text,
+  roster_len int,
+  roster jsonb,
+  vb_waiting boolean,
+  video_chat int,
   PRIMARY KEY ("roomId")
 );
 CREATE UNIQUE INDEX on room(LOWER(vanity)) WHERE vanity IS NOT NULL;

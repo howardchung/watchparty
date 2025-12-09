@@ -288,8 +288,18 @@ export class Room {
       try {
         const roomString = this.serialize();
         await postgres.query(
-          `UPDATE room SET "lastUpdateTime" = $1, data = $2 WHERE "roomId" = $3`,
-          [this.lastUpdateTime ?? new Date(), roomString, this.roomId],
+          `UPDATE room SET
+          "lastUpdateTime" = $1, data = $2, roster_len = $3, roster = $4, vb_waiting = $5, video_chat = $6
+          WHERE "roomId" = $7`,
+          [
+            this.lastUpdateTime ?? new Date(),
+            roomString,
+            this.roster.length,
+            this.getRosterForStats(),
+            Boolean(this.vBrowserQueue),
+            this.roster.filter((p) => p.isVideoChat).length,
+            this.roomId,
+          ],
         );
       } catch (e) {
         console.warn(e);

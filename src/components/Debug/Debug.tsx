@@ -71,7 +71,7 @@ const Debug = () => {
             return (
               <div
                 style={{
-                  maxWidth: k === 'currentRoomData' ? '600px' : undefined,
+                  maxWidth: k === 'currentRoomData' ? '400px' : undefined,
                   overflow: 'auto',
                 }}
               >

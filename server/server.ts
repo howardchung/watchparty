@@ -697,9 +697,6 @@ async function release() {
 
 async function minuteMetrics() {
   const roomArr = Array.from(rooms.values());
-  let users = 0;
-  let videoChat = 0;
-  let vBrowserWaiting = 0;
   for (let room of roomArr) {
     if (room.vBrowser && room.vBrowser.id) {
       // Update the heartbeat
@@ -726,44 +723,19 @@ async function minuteMetrics() {
         await redis?.expireat('vBrowserUIDMinutes', expireTime);
       }
     }
-    users += room.roster.length;
-    videoChat += room.roster.filter((p) => p.isVideoChat).length;
-    vBrowserWaiting += room.vBrowserQueue ? 1 : 0;
-    // Store rosters and counts for the room
-    if (room.roster.length) {
-      await redis?.hset('roomCounts', room.roomId, room.roster.length);
-      await redis?.hset(
-        'roomRosters',
-        room.roomId,
-        JSON.stringify(room.getRosterForStats()),
-      );
-    } else {
-      await redis?.hdel('roomCounts', room.roomId);
-      await redis?.hdel('roomRosters', room.roomId);
-    }
-    await redis?.expire('roomCounts', 120);
-    await redis?.expire('roomRosters', 120);
   }
   // Report shard metrics
-  const uptime = process.uptime();
-  const mem = process.memoryUsage().rss;
-  const roomCount = rooms.size;
   const obj: ShardMetric = {
-    // We want these per shard
-    uptime,
-    mem,
-    roomCount,
-    // We just want the sum of these
-    users,
-    videoChat,
-    vBrowserWaiting,
+    uptime: process.uptime(),
+    mem: process.memoryUsage().rss,
+    roomCount: rooms.size,
+    users: io.engine.clientsCount,
   };
-  await redis?.hset(
-    'shardMetrics',
-    `server_${config.SHARD ?? 0}`,
+  await redis?.setex(
+    `shardMetrics:${config.SHARD ?? 0}`,
+    120,
     JSON.stringify(obj),
   );
-  await redis?.expire('shardMetrics', 120);
 }
 
 function computeOpenSubtitlesHash(first: Buffer, last: Buffer, size: number) {

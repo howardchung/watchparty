@@ -94,6 +94,4 @@ interface ShardMetric {
   mem: number;
   roomCount: number;
   users: number;
-  videoChat: number;
-  vBrowserWaiting: number;
 }
