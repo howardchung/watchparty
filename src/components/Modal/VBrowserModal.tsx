@@ -1,9 +1,5 @@
 import React from 'react';
 import { Modal, Button, Table, Alert, Select, Avatar } from '@mantine/core';
-import {
-  GoogleReCaptchaProvider,
-  useGoogleReCaptcha,
-} from 'react-google-recaptcha-v3';
 import { SignInButton } from '../TopBar/TopBar';
 import { serverPath } from '../../utils/utils';
 import { SubscribeButton } from '../SubscribeButton/SubscribeButton';
@@ -14,7 +10,6 @@ import { IconHourglass } from '@tabler/icons-react';
 export class VBrowserModal extends React.Component<{
   closeModal: () => void;
   startVBrowser: (
-    rcToken: string,
     options: { size: string; region: string },
   ) => void;
 }> {
@@ -55,14 +50,11 @@ export class VBrowserModal extends React.Component<{
     ];
     const { closeModal, startVBrowser } = this.props;
     const LaunchButton = ({ large }: { large: boolean }) => {
-      const { executeRecaptcha } = useGoogleReCaptcha();
       return (
         <Button
           color={large ? 'orange' : undefined}
           onClick={async () => {
-            const rcToken =
-              executeRecaptcha && (await executeRecaptcha('launchVBrowser'));
-            startVBrowser(rcToken ?? '', {
+            startVBrowser({
               size: large ? 'large' : '',
               region: this.state.region === 'any' ? '' : this.state.region,
             });
@@ -94,10 +86,6 @@ export class VBrowserModal extends React.Component<{
 
     const canLaunch = this.context.user || !config.VITE_FIREBASE_CONFIG;
     return (
-      <GoogleReCaptchaProvider
-        reCaptchaKey={config.VITE_RECAPTCHA_SITE_KEY as string}
-        useRecaptchaNet
-      >
         <Modal
           opened
           onClose={closeModal}
@@ -188,7 +176,6 @@ export class VBrowserModal extends React.Component<{
             </Table.Tbody>
           </Table>
         </Modal>
-      </GoogleReCaptchaProvider>
     );
   }
 }

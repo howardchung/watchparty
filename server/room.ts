@@ -972,32 +972,6 @@ export class Room {
       }
     }
 
-    if (config.RECAPTCHA_SECRET_KEY) {
-      try {
-        // Validate the request isn't spam/automated
-        const validation = await axios({
-          url: `https://www.google.com/recaptcha/api/siteverify?secret=${config.RECAPTCHA_SECRET_KEY}&response=${data.rcToken}`,
-          method: 'POST',
-        });
-        // console.log(validation?.data);
-        const isLowScore = validation?.data?.score < 0.1;
-        const failed = validation?.data?.success === false;
-        if (failed || isLowScore) {
-          if (isLowScore) {
-            redisCount('recaptchaRejectsLowScore');
-          } else {
-            console.log('[RECAPTCHA] score: ', validation?.data);
-            redisCount('recaptchaRejectsOther');
-          }
-          socket.emit('errorMessage', 'Invalid ReCAPTCHA.');
-          return;
-        }
-      } catch (e) {
-        // if Recaptcha is down or other network issues, allow continuing
-        console.warn(e);
-      }
-    }
-
     redisCount('vBrowserStarts');
     this.cmdHost(socket, 'vbrowser://');
     // Put the room in the vbrowser queue

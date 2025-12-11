@@ -154,9 +154,6 @@ export async function getStats() {
   );
   const vBrowserStopEmpty = await getRedisCountDay('vBrowserTerminateEmpty');
   const vBrowserStopManual = await getRedisCountDay('vBrowserTerminateManual');
-  const recaptchaRejectsLowScore = await getRedisCountDay(
-    'recaptchaRejectsLowScore',
-  );
   const vBrowserStartMS = await redis?.lrange('vBrowserStartMS', 0, -1);
   const vBrowserStageRetries = await redis?.lrange(
     'vBrowserStageRetries',
@@ -166,7 +163,6 @@ export async function getStats() {
   const vBrowserStageFails = await redis?.lrange('vBrowserStageFails', 0, -1);
   const vBrowserSessionMS = await redis?.lrange('vBrowserSessionMS', 0, -1);
   // const vBrowserVMLifetime = await redis?.lrange('vBrowserVMLifetime', 0, -1);
-  const recaptchaRejectsOther = await getRedisCountDay('recaptchaRejectsOther');
   const proxyReqs = await getRedisCountDay('proxyReqs');
   const urlStarts = await getRedisCountDay('urlStarts');
   const streamStarts = await getRedisCountDay('streamStarts');
@@ -287,8 +283,6 @@ export async function getStats() {
       vBrowserStopManual,
       vBrowserStopEmpty,
       vBrowserStopTimeout,
-      recaptchaRejectsLowScore,
-      recaptchaRejectsOther,
       vBrowserClientIDsCard,
       vBrowserUIDsCard,
     },

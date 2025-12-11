@@ -1636,13 +1636,13 @@ export class App extends React.Component<AppProps, AppState> {
     }
   };
 
-  startVBrowser = async (rcToken: string, options: { size: string }) => {
+  startVBrowser = async (options: { size: string }) => {
     // user.uid is the public user identifier
     // user.getIdToken() is the secret access token we can send to the server to prove identity
     const user = this.context.user;
     const uid = user?.uid;
     const token = await user?.getIdToken();
-    this.socket.emit('CMD:startVBrowser', { options, uid, token, rcToken });
+    this.socket.emit('CMD:startVBrowser', { options, uid, token });
   };
 
   stopVBrowser = async () => {
