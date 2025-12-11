@@ -237,9 +237,10 @@ export class VideoChat extends React.Component<VideoChatProps> {
       this.props;
     const ourStream = window.watchparty.ourStream;
     const videoRefs = window.watchparty.videoRefs;
+    const videoChatSize = participants.length > 2 ? 180 : 300;
     const videoChatContentStyle: React.CSSProperties = {
-      height: 180,
-      width: 180,
+      height: videoChatSize,
+      width: videoChatSize,
       objectFit: 'cover',
       position: 'relative',
     };
