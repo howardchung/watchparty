@@ -87,7 +87,7 @@ const Debug = () => {
                         <Table.Tr>
                           <Table.Td>
                             {k === 'currentRoomData' ? (
-                              <pre>{JSON.stringify(row, null, 2)}</pre>
+                              <pre style={{ whiteSpace: 'pre-wrap' }}>{JSON.stringify(row, null, 2)}</pre>
                             ) : (
                               row
                             )}
