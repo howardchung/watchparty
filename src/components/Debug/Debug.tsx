@@ -54,7 +54,7 @@ const Debug = () => {
           overflowX: 'auto',
           flexWrap: 'wrap',
           flexDirection: 'column',
-          height: '800px',
+          height: '1600px',
         }}
       >
         {Object.keys(state.current).map((k) => {
