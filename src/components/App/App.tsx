@@ -609,15 +609,20 @@ export class App extends React.Component<AppProps, AppState> {
             if (!window.watchparty.hls) {
               const Hls = (await import('hls.js')).default;
               window.watchparty.hls = new Hls();
+              let consecutiveNonLive = 0;
               window.watchparty.hls.on(Hls.Events.LEVEL_LOADED, (_, data) => {
                 const isLiveStream = data.details.live;
                 console.log('HLS level loaded: isLive %s', isLiveStream);
-                this.setState({ isLiveStream });
-              });
-              window.watchparty.hls.on(Hls.Events.LEVEL_UPDATED, (_, data) => {
-                const isLiveStream = data.details.live;
-                console.log('HLS level updated: isLive %s', isLiveStream);
-                this.setState({ isLiveStream });
+                // For some reason in prod when server restarts a playing HLS live stream returns false.
+                // Only set it if it comes back as false repeatedly
+                if (!isLiveStream) {
+                  consecutiveNonLive += 1;
+                } else {
+                  consecutiveNonLive = 0;
+                }
+                if (isLiveStream || consecutiveNonLive > 2) {
+                  this.setState({ isLiveStream });
+                }
               });
             }
             window.watchparty.hls.loadSource(src);

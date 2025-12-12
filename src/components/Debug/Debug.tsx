@@ -54,7 +54,7 @@ const Debug = () => {
           overflowX: 'auto',
           flexWrap: 'wrap',
           flexDirection: 'column',
-          height: '1600px',
+          height: '2000px',
         }}
       >
         {Object.keys(state.current).map((k) => {
@@ -87,7 +87,7 @@ const Debug = () => {
                         <Table.Tr>
                           <Table.Td>
                             {k === 'currentRoomData' ? (
-                              <pre style={{ whiteSpace: 'pre-wrap' }}>{JSON.stringify(row, null, 2)}</pre>
+                              <pre style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word', fontSize: 12 }}>{JSON.stringify(row, null, 2)}</pre>
                             ) : (
                               row
                             )}
