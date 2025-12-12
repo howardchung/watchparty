@@ -612,7 +612,6 @@ export class App extends React.Component<AppProps, AppState> {
               let consecutiveNonLive = 0;
               window.watchparty.hls.on(Hls.Events.LEVEL_LOADED, (_, data) => {
                 const isLiveStream = data.details.live;
-                console.log('HLS level loaded: isLive %s', isLiveStream);
                 // For some reason in prod when server restarts a playing HLS live stream returns false.
                 // Only set it if it comes back as false repeatedly
                 if (!isLiveStream) {
@@ -620,9 +619,10 @@ export class App extends React.Component<AppProps, AppState> {
                 } else {
                   consecutiveNonLive = 0;
                 }
-                if (isLiveStream || consecutiveNonLive > 2) {
+                if (isLiveStream || consecutiveNonLive > 5) {
                   this.setState({ isLiveStream });
                 }
+                console.log('HLS level loaded: isLive %s, consecutiveNonLive: %s', isLiveStream, consecutiveNonLive);
               });
             }
             window.watchparty.hls.loadSource(src);
