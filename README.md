@@ -2,7 +2,7 @@
 
 ![screenshot](https://github.com/howardchung/watchparty/raw/master/public/screenshot_full.png)
 
-An website for watching videos together.
+A website for watching videos together.
 
 ## Description
 
