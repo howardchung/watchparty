@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   LineChart,
   Line,
@@ -7,11 +7,11 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
-} from 'recharts';
-import { serverPath } from '../../utils/utils';
-import { useFetch } from '../../utils/useFetch.hook';
-import CountUp from 'react-countup';
-import { Table } from '@mantine/core';
+} from "recharts";
+import { serverPath } from "../../utils/utils";
+import { useFetch } from "../../utils/useFetch.hook";
+import CountUp from "react-countup";
+import { Table } from "@mantine/core";
 
 const timeSeriesUrl = serverPath + `/timeSeries${window.location.search}`;
 // const timeSeriesUrl = 'https://www.watchparty.me' + `/timeSeries${window.location.search}`;
@@ -50,17 +50,17 @@ const Debug = () => {
     <div>
       <div
         style={{
-          display: 'flex',
-          overflowX: 'auto',
-          flexWrap: 'wrap',
-          flexDirection: 'column',
-          height: '2000px',
+          display: "flex",
+          overflowX: "auto",
+          flexWrap: "wrap",
+          flexDirection: "column",
+          height: "2000px",
         }}
       >
         {Object.keys(state.current).map((k) => {
-          if (k === 'vmManagerStats') {
+          if (k === "vmManagerStats") {
             return (
-              <div style={{ overflow: 'auto' }}>
+              <div style={{ overflow: "auto" }}>
                 <pre style={{ fontSize: 12 }} key={k}>
                   {JSON.stringify(state.current[k], null, 2)}
                 </pre>
@@ -71,8 +71,8 @@ const Debug = () => {
             return (
               <div
                 style={{
-                  maxWidth: k === 'currentRoomData' ? '400px' : undefined,
-                  overflow: 'auto',
+                  maxWidth: k === "currentRoomData" ? "400px" : undefined,
+                  overflow: "auto",
                 }}
               >
                 <Table style={{}} key={k}>
@@ -86,11 +86,11 @@ const Debug = () => {
                       return (
                         <Table.Tr>
                           <Table.Td>
-                            {k === 'currentRoomData' ? (
+                            {k === "currentRoomData" ? (
                               <pre
                                 style={{
-                                  whiteSpace: 'pre-wrap',
-                                  wordWrap: 'break-word',
+                                  whiteSpace: "pre-wrap",
+                                  wordWrap: "break-word",
                                   fontSize: 12,
                                 }}
                               >
@@ -110,7 +110,7 @@ const Debug = () => {
           } else {
             // Map
             return (
-              <div style={{ overflow: 'auto' }}>
+              <div style={{ overflow: "auto" }}>
                 <Table style={{}} key={k}>
                   <Table.Thead>
                     <div>{k}</div>
@@ -146,7 +146,7 @@ const Debug = () => {
         })}
       </div>
       {keys
-        .filter((k) => k !== 'time')
+        .filter((k) => k !== "time")
         .map((key) => {
           return (
             <LineChart

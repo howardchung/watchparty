@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 // export const SettingsModal = ({ trigger }: any) => (
 //   <Modal trigger={trigger} basic closeIcon size="small">
@@ -40,7 +40,7 @@ export function getDefaultSettings(): Settings {
 }
 
 export function getCurrentSettings(): Settings {
-  const setting = window.localStorage.getItem('watchparty-setting');
+  const setting = window.localStorage.getItem("watchparty-setting");
   try {
     let settings = validateSettingsString(setting);
     if (!settings) {
@@ -62,8 +62,8 @@ export function validateSettingsString(
   if (!setting) {
     return {};
   }
-  if (setting[0] !== '{') {
-    throw new Error('failed to parse settings, using defaults');
+  if (setting[0] !== "{") {
+    throw new Error("failed to parse settings, using defaults");
   }
   // Don't have a setting or invalid value
   let settingObject: Settings = JSON.parse(setting);
@@ -71,5 +71,5 @@ export function validateSettingsString(
 }
 
 export function updateSettings(newSetting: string) {
-  window.localStorage.setItem('watchparty-setting', newSetting);
+  window.localStorage.setItem("watchparty-setting", newSetting);
 }

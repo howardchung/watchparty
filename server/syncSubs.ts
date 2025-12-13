@@ -1,11 +1,11 @@
-import config from './config.ts';
-import { getUserByEmail } from './utils/firebase.ts';
-import { insertObject, newPostgres, updateObject } from './utils/postgres.ts';
-import { getAllActiveSubscriptions, getAllCustomers } from './utils/stripe.ts';
-import { Client as DiscordClient, IntentsBitField } from 'discord.js';
+import config from "./config.ts";
+import { getUserByEmail } from "./utils/firebase.ts";
+import { insertObject, newPostgres, updateObject } from "./utils/postgres.ts";
+import { getAllActiveSubscriptions, getAllCustomers } from "./utils/stripe.ts";
+import { Client as DiscordClient, IntentsBitField } from "discord.js";
 
-let lastSubs = '';
-let currentSubs = '';
+let lastSubs = "";
+let currentSubs = "";
 
 const postgres2 = newPostgres();
 
@@ -19,7 +19,7 @@ if (config.DISCORD_ADMIN_BOT_TOKEN) {
   //   console.log(`Discord Bot "${discordBot?.user?.username}" ready`);
   // });
 }
-if (process.env.NODE_ENV === 'development') {
+if (process.env.NODE_ENV === "development") {
   setTimeout(syncSubscribers, 1000);
 }
 
@@ -29,7 +29,7 @@ async function syncSubscribers() {
   if (!config.STRIPE_SECRET_KEY || !config.FIREBASE_ADMIN_SDK_CONFIG) {
     return;
   }
-  console.time('syncSubscribers');
+  console.time("syncSubscribers");
   // Fetch subs, customers from stripe
   const [subs, customers] = await Promise.all([
     getAllActiveSubscriptions(),
@@ -41,7 +41,7 @@ async function syncSubscribers() {
     emailMap.set(cust.id, cust.email);
   });
 
-  console.log('%s subs in Stripe', subs.length);
+  console.log("%s subs in Stripe", subs.length);
 
   const uidMap = new Map();
   for (let i = 0; i < subs.length; i += 50) {
@@ -78,14 +78,14 @@ async function syncSubscribers() {
       };
     })
     .filter((sub) => sub.uid);
-  console.log('%s subs to insert', result.length);
-  console.log('%s subs do not have UID, using email', noUID);
+  console.log("%s subs to insert", result.length);
+  console.log("%s subs do not have UID, using email", noUID);
 
   const newResult = result.filter(
     (sub, index) =>
       index === result.findIndex((other) => sub.uid === other.uid),
   );
-  console.log('%s deduped subs to insert', newResult.length);
+  console.log("%s deduped subs to insert", newResult.length);
   if (result.length !== newResult.length) {
     // Log the difference
     console.log(result.filter((x) => !newResult.includes(x)));
@@ -101,23 +101,23 @@ async function syncSubscribers() {
   // console.log(result);
   if (currentSubs !== lastSubs) {
     try {
-      await postgres2?.query('BEGIN TRANSACTION');
-      await postgres2?.query('DELETE FROM subscriber');
+      await postgres2?.query("BEGIN TRANSACTION");
+      await postgres2?.query("DELETE FROM subscriber");
       await postgres2?.query('UPDATE room SET "isSubRoom" = false');
       for (let row of result) {
-        await insertObject(postgres2, 'subscriber', row);
+        await insertObject(postgres2, "subscriber", row);
         await updateObject(
           postgres2,
-          'room',
+          "room",
           { isSubRoom: true },
           { owner: row.uid },
         );
       }
-      await postgres2?.query('COMMIT');
+      await postgres2?.query("COMMIT");
       lastSubs = currentSubs;
     } catch (e) {
       console.error(e);
-      await postgres2?.query('ROLLBACK');
+      await postgres2?.query("ROLLBACK");
     }
   }
   if (
@@ -125,7 +125,7 @@ async function syncSubscribers() {
     config.DISCORD_ADMIN_BOT_SERVER_ID &&
     config.DISCORD_ADMIN_BOT_SUB_ROLE_ID
   ) {
-    console.log('setting discord roles');
+    console.log("setting discord roles");
     // Update the sub status of users in Discord
     // Join the current subs with linked accounts
     const guild = discordBot.guilds.cache.get(
@@ -137,12 +137,12 @@ async function syncSubscribers() {
         `SELECT la.accountid from subscriber JOIN link_account la ON subscriber.uid = la.uid WHERE la.kind = 'discord'`,
       )
     ).rows;
-    console.log('%s users to set sub role', toUpdate.length);
+    console.log("%s users to set sub role", toUpdate.length);
     for (let row of toUpdate) {
       try {
         const user = await guild?.members.fetch(row.accountid);
         if (user && role) {
-          console.log('assigning role %s to user %s', role, user.id);
+          console.log("assigning role %s to user %s", role, user.id);
 
           await user.roles.add(role);
         }
@@ -152,5 +152,5 @@ async function syncSubscribers() {
     }
   }
 
-  console.timeEnd('syncSubscribers');
+  console.timeEnd("syncSubscribers");
 }

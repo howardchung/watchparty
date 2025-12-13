@@ -1,19 +1,19 @@
 // This assumes an installation of Docker exists on the given host
 // and that host is configured to accept our SSH key
-import config from '../config.ts';
-import { VMManager, type VM } from './base.ts';
-import { imageName } from './utils.ts';
-import fs from 'node:fs';
-import { homedir } from 'node:os';
-import { NodeSSH } from 'node-ssh';
+import config from "../config.ts";
+import { VMManager, type VM } from "./base.ts";
+import { imageName } from "./utils.ts";
+import fs from "node:fs";
+import { homedir } from "node:os";
+import { NodeSSH } from "node-ssh";
 
 export class Docker extends VMManager {
   // TODO support multiple Docker providers in the pool config with same region
-  size = '';
-  largeSize = '';
+  size = "";
+  largeSize = "";
   minRetries = 0;
   reuseVMs = false;
-  id = 'Docker';
+  id = "Docker";
   ssh: NodeSSH | undefined = undefined;
   imageId = imageName;
 
@@ -26,8 +26,8 @@ export class Docker extends VMManager {
       host: this.hostname,
       // The private key the Docker host is configured to accept
       privateKey: config.DOCKER_VM_HOST_SSH_KEY_BASE64
-        ? Buffer.from(config.DOCKER_VM_HOST_SSH_KEY_BASE64, 'base64').toString()
-        : fs.readFileSync(homedir() + '/.ssh/id_rsa').toString(),
+        ? Buffer.from(config.DOCKER_VM_HOST_SSH_KEY_BASE64, "base64").toString()
+        : fs.readFileSync(homedir() + "/.ssh/id_rsa").toString(),
     };
     this.ssh = new NodeSSH();
     await this.ssh.connect(sshConfig);
@@ -40,11 +40,11 @@ export class Docker extends VMManager {
     // If in development, have neko share the same SSL cert as the other services
     // If in production, they are probably on different hosts and neko is behind a reverse proxy for SSL termination
     const sslEnv =
-      config.NODE_ENV === 'development' &&
+      config.NODE_ENV === "development" &&
       config.SSL_KEY_FILE &&
       config.SSL_CRT_FILE
         ? `-e NEKO_KEY="${config.SSL_KEY_FILE}" -e NEKO_CERT="${config.SSL_CRT_FILE}"`
-        : '';
+        : "";
     const { stdout, stderr } = await conn.execCommand(
       `
       #!/bin/bash
@@ -89,11 +89,11 @@ export class Docker extends VMManager {
     try {
       data = JSON.parse(stdout)[0];
       if (!data) {
-        throw new Error('no container with this ID found');
+        throw new Error("no container with this ID found");
       }
     } catch {
       console.warn(stdout);
-      throw new Error('failed to parse json');
+      throw new Error("failed to parse json");
     }
     let server = this.mapServerObject(data);
     return server;
@@ -111,7 +111,7 @@ export class Docker extends VMManager {
       data = JSON.parse(stdout);
     } catch (e) {
       console.warn(stdout);
-      throw new Error('failed to parse json');
+      throw new Error("failed to parse json");
     }
     return data.map(this.mapServerObject);
   };
@@ -121,7 +121,7 @@ export class Docker extends VMManager {
   attachToNetwork = async (id: string) => {};
 
   updateSnapshot = async () => {
-    return '';
+    return "";
   };
 
   mapServerObject = (server: any): VM => ({

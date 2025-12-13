@@ -1,30 +1,30 @@
-import '@mantine/core/styles.css';
-import './index.css';
+import "@mantine/core/styles.css";
+import "./index.css";
 
-import React, { lazy, Suspense } from 'react';
-import { createRoot } from 'react-dom/client';
-import { BrowserRouter, Route } from 'react-router-dom';
+import React, { lazy, Suspense } from "react";
+import { createRoot } from "react-dom/client";
+import { BrowserRouter, Route } from "react-router-dom";
 
-import { App } from './components/App/App';
-import { Home } from './components/Home/Home';
-import { Privacy, Terms, FAQ } from './components/Pages/Pages';
-import { TopBar } from './components/TopBar/TopBar';
-import { Footer } from './components/Footer/Footer';
-import firebase from 'firebase/compat/app';
-import 'firebase/auth';
-import { serverPath, softWhite } from './utils/utils';
-import { Create } from './components/Create/Create';
-import { Discord } from './components/Discord/Discord';
-import config from './config';
-import { DEFAULT_STATE, MetadataContext } from './MetadataContext';
-import { createTheme, MantineProvider } from '@mantine/core';
+import { App } from "./components/App/App";
+import { Home } from "./components/Home/Home";
+import { Privacy, Terms, FAQ } from "./components/Pages/Pages";
+import { TopBar } from "./components/TopBar/TopBar";
+import { Footer } from "./components/Footer/Footer";
+import firebase from "firebase/compat/app";
+import "firebase/auth";
+import { serverPath, softWhite } from "./utils/utils";
+import { Create } from "./components/Create/Create";
+import { Discord } from "./components/Discord/Discord";
+import config from "./config";
+import { DEFAULT_STATE, MetadataContext } from "./MetadataContext";
+import { createTheme, MantineProvider } from "@mantine/core";
 
 const theme = createTheme({
   /** Your theme override here */
   white: softWhite,
 });
 
-const Debug = lazy(() => import('./components/Debug/Debug'));
+const Debug = lazy(() => import("./components/Debug/Debug"));
 
 const firebaseConfig = config.VITE_FIREBASE_CONFIG;
 if (firebaseConfig) {
@@ -32,9 +32,9 @@ if (firebaseConfig) {
 }
 
 // Redirect old-style URLs
-if (window.location.hash && window.location.pathname === '/') {
+if (window.location.hash && window.location.pathname === "/") {
   const hashRoomId = window.location.hash.substring(1);
-  window.location.href = '/watch/' + hashRoomId;
+  window.location.href = "/watch/" + hashRoomId;
 }
 
 class WatchParty extends React.Component {
@@ -137,6 +137,6 @@ class WatchParty extends React.Component {
     );
   }
 }
-const container = document.getElementById('root');
+const container = document.getElementById("root");
 const root = createRoot(container!);
 root.render(<WatchParty />);

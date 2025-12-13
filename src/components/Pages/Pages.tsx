@@ -1,15 +1,15 @@
-import React from 'react';
+import React from "react";
 
 const mdStyle: React.CSSProperties = {
-  maxWidth: '100vw',
-  width: '800px',
-  padding: '10px',
+  maxWidth: "100vw",
+  width: "800px",
+  padding: "10px",
 };
 
 export const Privacy = () => {
   return (
     <div style={mdStyle}>
-      <pre style={{ whiteSpace: 'pre-wrap' }}>
+      <pre style={{ whiteSpace: "pre-wrap" }}>
         {`
 Privacy Policy
 ====
@@ -49,7 +49,7 @@ YouTube
 export const Terms = () => {
   return (
     <div style={mdStyle}>
-      <pre style={{ whiteSpace: 'pre-wrap' }}>
+      <pre style={{ whiteSpace: "pre-wrap" }}>
         {`
 Terms of Service
 ====
@@ -76,7 +76,7 @@ The service provides the ability to search and play YouTube videos. By using the
 export const FAQ = () => {
   return (
     <div style={mdStyle}>
-      <pre style={{ whiteSpace: 'pre-wrap' }}>
+      <pre style={{ whiteSpace: "pre-wrap" }}>
         {`
 FAQ
 ====

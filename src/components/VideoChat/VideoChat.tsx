@@ -1,6 +1,6 @@
-import React from 'react';
-import { ActionIcon, Button } from '@mantine/core';
-import { Socket } from 'socket.io-client';
+import React from "react";
+import { ActionIcon, Button } from "@mantine/core";
+import { Socket } from "socket.io-client";
 
 import {
   formatTimestamp,
@@ -9,16 +9,16 @@ import {
   getDefaultPicture,
   iceServers,
   softWhite,
-} from '../../utils/utils';
-import { UserMenu } from '../UserMenu/UserMenu';
-import { MetadataContext } from '../../MetadataContext';
+} from "../../utils/utils";
+import { UserMenu } from "../UserMenu/UserMenu";
+import { MetadataContext } from "../../MetadataContext";
 import {
   IconDotsVertical,
   IconMicrophone,
   IconScreenShare,
   IconVideo,
   IconX,
-} from '@tabler/icons-react';
+} from "@tabler/icons-react";
 
 interface VideoChatProps {
   socket: Socket;
@@ -39,11 +39,11 @@ export class VideoChat extends React.Component<VideoChatProps> {
   socket = this.props.socket;
 
   componentDidMount() {
-    this.socket.on('signal', this.handleSignal);
+    this.socket.on("signal", this.handleSignal);
   }
 
   componentWillUnmount() {
-    this.socket.off('signal', this.handleSignal);
+    this.socket.off("signal", this.handleSignal);
   }
 
   componentDidUpdate(prevProps: VideoChatProps) {
@@ -53,7 +53,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
   }
 
   emitUserMute = () => {
-    this.socket.emit('CMD:userMute', { isMuted: !this.getAudioWebRTC() });
+    this.socket.emit("CMD:userMute", { isMuted: !this.getAudioWebRTC() });
   };
 
   handleSignal = async (data: any) => {
@@ -61,16 +61,16 @@ export class VideoChat extends React.Component<VideoChatProps> {
     const msg = data.msg;
     const from = data.from;
     const pc = window.watchparty.videoPCs[from];
-    console.log('recv', from, data);
+    console.log("recv", from, data);
     if (msg.ice !== undefined) {
       pc.addIceCandidate(new RTCIceCandidate(msg.ice));
-    } else if (msg.sdp && msg.sdp.type === 'offer') {
+    } else if (msg.sdp && msg.sdp.type === "offer") {
       // console.log('offer');
       await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
       this.sendSignal(from, { sdp: pc.localDescription });
-    } else if (msg.sdp && msg.sdp.type === 'answer') {
+    } else if (msg.sdp && msg.sdp.type === "answer") {
       pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
     }
   };
@@ -79,11 +79,11 @@ export class VideoChat extends React.Component<VideoChatProps> {
     // Set up our own video
     // Create default stream
     let black = ({ width = 640, height = 480 } = {}) => {
-      let canvas: any = Object.assign(document.createElement('canvas'), {
+      let canvas: any = Object.assign(document.createElement("canvas"), {
         width,
         height,
       });
-      canvas.getContext('2d')?.fillRect(0, 0, width, height);
+      canvas.getContext("2d")?.fillRect(0, 0, width, height);
       let stream = canvas.captureStream();
       return Object.assign(stream.getVideoTracks()[0], { enabled: false });
     };
@@ -97,7 +97,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
     } catch (e) {
       console.warn(e);
       try {
-        console.log('attempt audio only stream');
+        console.log("attempt audio only stream");
         stream = await navigator?.mediaDevices?.getUserMedia({
           audio: true,
           video: false,
@@ -108,7 +108,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
     }
     window.watchparty.ourStream = stream;
     // alert server we've joined video chat
-    this.socket.emit('CMD:joinVideo');
+    this.socket.emit("CMD:joinVideo");
     this.emitUserMute();
   };
 
@@ -124,7 +124,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
       videoPCs[key].close();
       delete videoPCs[key];
     });
-    this.socket.emit('CMD:leaveVideo');
+    this.socket.emit("CMD:leaveVideo");
   };
 
   toggleVideoWebRTC = () => {
@@ -228,8 +228,8 @@ export class VideoChat extends React.Component<VideoChatProps> {
   };
 
   sendSignal = async (to: string, data: any) => {
-    console.log('send', to, data);
-    this.socket.emit('signal', { to, msg: data });
+    console.log("send", to, data);
+    this.socket.emit("signal", { to, msg: data });
   };
 
   render() {
@@ -241,18 +241,18 @@ export class VideoChat extends React.Component<VideoChatProps> {
     const videoChatContentStyle: React.CSSProperties = {
       height: videoChatSize,
       width: videoChatSize,
-      objectFit: 'cover',
-      position: 'relative',
+      objectFit: "cover",
+      position: "relative",
     };
     const selfId = getOrCreateClientId();
     return (
       <div
         style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          justifyContent: 'center',
-          gap: '4px',
-          padding: '4px',
+          display: "flex",
+          flexWrap: "wrap",
+          justifyContent: "center",
+          gap: "4px",
+          padding: "4px",
         }}
       >
         {participants.map((p) => {
@@ -260,7 +260,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
             <div key={p.id}>
               <div
                 style={{
-                  position: 'relative',
+                  position: "relative",
                 }}
               >
                 <div>
@@ -274,25 +274,25 @@ export class VideoChat extends React.Component<VideoChatProps> {
                     trigger={
                       <IconDotsVertical
                         style={{
-                          position: 'absolute',
+                          position: "absolute",
                           right: 0,
                           top: 0,
-                          cursor: 'pointer',
+                          cursor: "pointer",
                           visibility: Boolean(
                             owner && owner === this.context.user?.uid,
                           )
-                            ? 'visible'
-                            : 'hidden',
+                            ? "visible"
+                            : "hidden",
                         }}
                       />
                     }
                   />
                   <div
                     style={{
-                      display: 'flex',
-                      justifyContent: 'center',
-                      gap: '4px',
-                      position: 'absolute',
+                      display: "flex",
+                      justifyContent: "center",
+                      gap: "4px",
+                      position: "absolute",
                       top: 0,
                       left: 0,
                       zIndex: 1,
@@ -301,7 +301,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
                     {!ourStream && p.clientId === selfId && (
                       <Button
                         size="xs"
-                        color={'purple'}
+                        color={"purple"}
                         onClick={this.setupWebRTC}
                         leftSection={<IconVideo />}
                       >
@@ -311,7 +311,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
                     {ourStream && p.clientId === selfId && (
                       <Button
                         size="xs"
-                        color={'red'}
+                        color={"red"}
                         onClick={this.stopWebRTC}
                         leftSection={<IconX />}
                       >
@@ -321,13 +321,13 @@ export class VideoChat extends React.Component<VideoChatProps> {
                     {ourStream && p.clientId === selfId && (
                       <>
                         <ActionIcon
-                          color={this.getVideoWebRTC() ? 'green' : 'red'}
+                          color={this.getVideoWebRTC() ? "green" : "red"}
                           onClick={this.toggleVideoWebRTC}
                         >
                           <IconVideo />
                         </ActionIcon>
                         <ActionIcon
-                          color={this.getAudioWebRTC() ? 'green' : 'red'}
+                          color={this.getAudioWebRTC() ? "green" : "red"}
                           onClick={this.toggleAudioWebRTC}
                         >
                           <IconMicrophone />
@@ -339,7 +339,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
                         {p.isVideoChat && <IconVideo color={softWhite} />}
                         {p.isVideoChat && (
                           <IconMicrophone
-                            color={p.isMuted ? 'red' : softWhite}
+                            color={p.isMuted ? "red" : softWhite}
                           />
                         )}
                       </>
@@ -348,42 +348,42 @@ export class VideoChat extends React.Component<VideoChatProps> {
                   </div>
                   <div
                     style={{
-                      position: 'absolute',
-                      bottom: '4px',
-                      left: '0px',
-                      width: '100%',
-                      backgroundColor: 'rgba(0,0,0,0)',
+                      position: "absolute",
+                      bottom: "4px",
+                      left: "0px",
+                      width: "100%",
+                      backgroundColor: "rgba(0,0,0,0)",
                       color: softWhite,
-                      borderRadius: '4px',
-                      fontSize: '10px',
+                      borderRadius: "4px",
+                      fontSize: "10px",
                       fontWeight: 700,
-                      display: 'flex',
+                      display: "flex",
                       zIndex: 1,
                     }}
                   >
                     <div
                       title={nameMap[p.id] || p.id}
                       style={{
-                        backdropFilter: 'brightness(80%)',
-                        padding: '4px',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        display: 'inline-block',
+                        backdropFilter: "brightness(80%)",
+                        padding: "4px",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        display: "inline-block",
                       }}
                     >
                       {nameMap[p.id] || p.id}
                     </div>
                     <div
                       style={{
-                        backdropFilter: 'brightness(60%)',
-                        padding: '4px',
+                        backdropFilter: "brightness(60%)",
+                        padding: "4px",
                         flexGrow: 1,
-                        display: 'flex',
-                        justifyContent: 'center',
+                        display: "flex",
+                        justifyContent: "center",
                       }}
                     >
-                      {formatTimestamp(tsMap[p.id] || 0)}{' '}
+                      {formatTimestamp(tsMap[p.id] || 0)}{" "}
                       {/* {this.context.beta &&
                           `(${(
                             (tsMap[p.id] - this.props.getLeaderTime()) *
@@ -403,7 +403,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
                         // mirror the video if it's our stream. this style mimics Zoom where your
                         // video is mirrored only for you)
                         transform: `scaleX(${
-                          p.clientId === selfId ? '-1' : '1'
+                          p.clientId === selfId ? "-1" : "1"
                         })`,
                       }}
                       autoPlay

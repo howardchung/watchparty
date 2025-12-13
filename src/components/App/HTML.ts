@@ -1,5 +1,5 @@
-import { default as toWebVTT } from 'srt-webvtt';
-import { Player } from './Player';
+import { default as toWebVTT } from "srt-webvtt";
+import { Player } from "./Player";
 
 export class HTML implements Player {
   elId: string;
@@ -24,7 +24,7 @@ export class HTML implements Player {
   };
 
   isSubtitled = () => {
-    return this.getSubtitleMode() === 'showing';
+    return this.getSubtitleMode() === "showing";
   };
 
   getPlaybackRate = (): number => {
@@ -73,7 +73,7 @@ export class HTML implements Player {
     if (leftVideo) {
       leftVideo.muted = muted;
     }
-    const audio = document.getElementById('iPhoneAudio') as HTMLAudioElement;
+    const audio = document.getElementById("iPhoneAudio") as HTMLAudioElement;
     if (audio) {
       audio.muted = muted;
     }
@@ -98,15 +98,15 @@ export class HTML implements Player {
       ) {
         this.getVideoEl().textTracks[i].mode =
           mode ??
-          (this.getVideoEl().textTracks[i].mode === 'hidden'
-            ? 'showing'
-            : 'hidden');
+          (this.getVideoEl().textTracks[i].mode === "hidden"
+            ? "showing"
+            : "hidden");
       }
     }
   };
 
   getSubtitleMode = () => {
-    return this.getVideoEl()?.textTracks[0]?.mode ?? 'hidden';
+    return this.getVideoEl()?.textTracks[0]?.mode ?? "hidden";
   };
 
   isReady = () => {
@@ -117,12 +117,12 @@ export class HTML implements Player {
     const leftVideo = this.getVideoEl();
 
     // Clear src and srcObject
-    leftVideo.src = '';
+    leftVideo.src = "";
     leftVideo.srcObject = null;
 
     // Clear subtitles
-    this.setSubtitleMode('hidden');
-    leftVideo.innerHTML = '';
+    this.setSubtitleMode("hidden");
+    leftVideo.innerHTML = "";
   };
 
   loadSubtitles = async (src: string) => {
@@ -131,20 +131,20 @@ export class HTML implements Player {
       return;
     }
     // Clear subtitles and put new ones in
-    leftVideo.innerHTML = '';
+    leftVideo.innerHTML = "";
     if (Boolean(src)) {
       let subtitleSrc = src;
       if (subtitleSrc) {
         const response = await fetch(subtitleSrc);
         const buffer = await response.arrayBuffer();
         const url = await toWebVTT(new Blob([buffer]));
-        const track = document.createElement('track');
-        track.kind = 'captions';
-        track.label = 'English';
-        track.srclang = 'en';
+        const track = document.createElement("track");
+        track.kind = "captions";
+        track.label = "English";
+        track.srclang = "en";
         track.src = url;
         leftVideo.appendChild(track);
-        leftVideo.textTracks[0].mode = 'showing';
+        leftVideo.textTracks[0].mode = "showing";
       }
     }
   };

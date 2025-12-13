@@ -1,10 +1,10 @@
 //@ts-expect-error
-import canAutoplay from 'can-autoplay';
-import { MD5 } from './md5';
-import firebase from 'firebase/compat/app';
-import config from '../config';
-import { cyrb53 } from './hash';
-import React from 'react';
+import canAutoplay from "can-autoplay";
+import { MD5 } from "./md5";
+import firebase from "firebase/compat/app";
+import config from "../config";
+import { cyrb53 } from "./hash";
+import React from "react";
 
 export function formatTimestamp(input: any, zeroTime?: number): string {
   if (
@@ -14,7 +14,7 @@ export function formatTimestamp(input: any, zeroTime?: number): string {
     Number.isNaN(input) ||
     input === Infinity
   ) {
-    return '';
+    return "";
   }
   if (zeroTime) {
     return new Date((zeroTime + input) * 1000).toLocaleTimeString();
@@ -22,52 +22,52 @@ export function formatTimestamp(input: any, zeroTime?: number): string {
   let hours = Math.abs(Math.trunc(Number(input) / 3600));
   let minutes = Math.abs(Math.trunc(Number(input) / 60) % 60)
     .toString()
-    .padStart(2, '0');
+    .padStart(2, "0");
   let seconds = Math.abs(Math.trunc(Number(input) % 60))
     .toString()
-    .padStart(2, '0');
-  return `${Number(input) < 0 ? '-' : ''}${hours ? `${hours}:` : ''}${minutes}:${seconds}`;
+    .padStart(2, "0");
+  return `${Number(input) < 0 ? "-" : ""}${hours ? `${hours}:` : ""}${minutes}:${seconds}`;
 }
 
 export function formatSpeed(input: number) {
   if (input >= 1000000) {
-    return (input / 1000000).toFixed(2) + ' MB/s';
+    return (input / 1000000).toFixed(2) + " MB/s";
   }
   if (input >= 1000) {
-    return (input / 1000).toFixed(0) + ' KB/s';
+    return (input / 1000).toFixed(0) + " KB/s";
   }
-  return input + ' B/s';
+  return input + " B/s";
 }
 
 export function formatSize(input: number) {
   if (input >= 1000000000) {
-    return (input / 1000000000).toFixed(2) + ' GB';
+    return (input / 1000000000).toFixed(2) + " GB";
   }
   if (input >= 1000000) {
-    return (input / 1000000).toFixed(2) + ' MB';
+    return (input / 1000000).toFixed(2) + " MB";
   }
   if (input >= 1000) {
-    return (input / 1000).toFixed(0) + ' KB';
+    return (input / 1000).toFixed(0) + " KB";
   }
-  return input + ' B';
+  return input + " B";
 }
 
 export const colorMappings: StringDict = {
-  red: 'B03060',
-  orange: 'FE9A76',
-  yellow: 'FFD700',
-  olive: '32CD32',
-  green: '016936',
-  teal: '008080',
-  blue: '0E6EB8',
-  violet: 'EE82EE',
-  purple: 'B413EC',
-  pink: 'FF1493',
-  brown: 'A52A2A',
-  grey: 'A0A0A0',
+  red: "B03060",
+  orange: "FE9A76",
+  yellow: "FFD700",
+  olive: "32CD32",
+  green: "016936",
+  teal: "008080",
+  blue: "0E6EB8",
+  violet: "EE82EE",
+  purple: "B413EC",
+  pink: "FF1493",
+  brown: "A52A2A",
+  grey: "A0A0A0",
 };
 
-export const softWhite = 'whitesmoke';
+export const softWhite = "whitesmoke";
 
 let colorCache = {} as NumberDict;
 export function getColorForString(id: string) {
@@ -88,41 +88,41 @@ export const getFbPhoto = (fbId: string) =>
 
 export const isYouTube = (input: string) => {
   return (
-    input.startsWith('https://www.youtube.com/') ||
-    input.startsWith('https://youtu.be/')
+    input.startsWith("https://www.youtube.com/") ||
+    input.startsWith("https://youtu.be/")
   );
 };
 
 export const isHttp = (input: string) => {
-  return input.startsWith('http');
+  return input.startsWith("http");
 };
 
 export const isMagnet = (input: string) => {
-  return input.startsWith('magnet:');
+  return input.startsWith("magnet:");
 };
 
 export const isHls = (input: string) => {
-  return input.includes('.m3u8');
+  return input.includes(".m3u8");
 };
 
 export const isDash = (input: string) => {
-  return input.includes('.mpd');
+  return input.includes(".mpd");
 };
 
 export const isMpegTs = (input: string) => {
-  return input.includes('.mpegts');
+  return input.includes(".mpegts");
 };
 
 export const isScreenShare = (input: string) => {
-  return input.startsWith('screenshare://');
+  return input.startsWith("screenshare://");
 };
 
 export const isFileShare = (input: string) => {
-  return input.startsWith('fileshare://');
+  return input.startsWith("fileshare://");
 };
 
 export const isVBrowser = (input: string) => {
-  return input.startsWith('vbrowser://');
+  return input.startsWith("vbrowser://");
 };
 
 export async function testAutoplay() {
@@ -131,7 +131,7 @@ export async function testAutoplay() {
 }
 
 export function decodeEntities(input: string) {
-  const doc = new DOMParser().parseFromString(input, 'text/html');
+  const doc = new DOMParser().parseFromString(input, "text/html");
   return doc.documentElement.textContent;
 }
 
@@ -145,7 +145,7 @@ export const debounce = (callback: Function, wait = 500) => {
   };
 };
 
-export const getDefaultPicture = (name: string, background = 'a0a0a0') => {
+export const getDefaultPicture = (name: string, background = "a0a0a0") => {
   return `https://ui-avatars.com/api/?name=${name}&background=${background}&size=256&color=ffffff`;
 };
 
@@ -163,31 +163,31 @@ export function shuffle(array: any[]) {
 }
 
 export const iceServers = () => [
-  { urls: 'stun:stun.l.google.com:19302' },
+  { urls: "stun:stun.l.google.com:19302" },
   {
-    urls: 'turn:5.161.207.54:3478',
-    username: 'username',
-    credential: 'password',
+    urls: "turn:5.161.207.54:3478",
+    username: "username",
+    credential: "password",
   },
   {
-    urls: 'turn:5.161.49.183:3478',
-    username: 'username',
-    credential: 'password',
+    urls: "turn:5.161.49.183:3478",
+    username: "username",
+    credential: "password",
   },
   {
-    urls: 'turn:135.181.147.65:3478',
-    username: 'username',
-    credential: 'password',
+    urls: "turn:135.181.147.65:3478",
+    username: "username",
+    credential: "password",
   },
   {
-    urls: 'turn:5.78.83.26:3478',
-    username: 'username',
-    credential: 'password',
+    urls: "turn:5.78.83.26:3478",
+    username: "username",
+    credential: "password",
   },
   {
-    urls: 'turn:5.223.48.157:3478',
-    username: 'username',
-    credential: 'password',
+    urls: "turn:5.223.48.157:3478",
+    username: "username",
+    credential: "password",
   },
   // {
   //   urls: 'turn:numb.viagenie.ca',
@@ -199,7 +199,7 @@ export const iceServers = () => [
 export const serverPath =
   config.VITE_SERVER_HOST ||
   `${window.location.protocol}//${
-    config.NODE_ENV === 'development'
+    config.NODE_ENV === "development"
       ? `${window.location.hostname}:8080`
       : window.location.host
   }`;
@@ -224,20 +224,20 @@ export async function getMediaPathResults(
   //     name: mediaPath + '/' + file.Key,
   //   }));
   // } else
-  if (mediaPath.startsWith('https://www.youtube.com/playlist?list=')) {
+  if (mediaPath.startsWith("https://www.youtube.com/playlist?list=")) {
     // https://www.youtube.com/playlist?list=<playlist ID>
     const playlistID = mediaPath.split(
-      'https://www.youtube.com/playlist?list=',
+      "https://www.youtube.com/playlist?list=",
     )[1];
-    const response = await fetch(serverPath + '/youtubePlaylist/' + playlistID);
+    const response = await fetch(serverPath + "/youtubePlaylist/" + playlistID);
     results = await response.json();
   } else {
     // Assume it's a text list of URLs
     const response = await fetch(mediaPath);
     const text = await response.text();
     results = text
-      .split('\n')
-      .map((line) => ({ url: line, name: line, duration: 0, type: 'file' }));
+      .split("\n")
+      .map((line) => ({ url: line, name: line, duration: 0, type: "file" }));
   }
   return results.filter((res) => res.url);
 }
@@ -247,7 +247,7 @@ export async function getStreamPathResults(
   query: string,
 ): Promise<SearchResult[]> {
   const response = await fetch(
-    streamPath + `/${query ? 'search' : 'top'}?q=` + encodeURIComponent(query),
+    streamPath + `/${query ? "search" : "top"}?q=` + encodeURIComponent(query),
   );
   const data = await response.json();
   return data.map((d: any, i: number) => ({
@@ -260,19 +260,19 @@ export async function getYouTubeResults(
   query: string,
 ): Promise<SearchResult[]> {
   const response = await fetch(
-    serverPath + '/youtube?q=' + encodeURIComponent(query),
+    serverPath + "/youtube?q=" + encodeURIComponent(query),
   );
   const data = await response.json();
-  return data.map((d: any) => ({ ...d, type: 'youtube' }));
+  return data.map((d: any) => ({ ...d, type: "youtube" }));
 }
 
 export async function openFileSelector(accept?: string) {
   return new Promise<FileList | null>((resolve) => {
     // Create an input element
-    const inputElement = document.createElement('input');
+    const inputElement = document.createElement("input");
 
     // Set its type to file
-    inputElement.type = 'file';
+    inputElement.type = "file";
 
     // Set accept to the file types you want the user to select.
     // Include both the file extension and the mime type
@@ -281,22 +281,22 @@ export async function openFileSelector(accept?: string) {
     }
 
     // set onchange event to call callback when user has selected file
-    inputElement.addEventListener('change', () => {
+    inputElement.addEventListener("change", () => {
       resolve(inputElement.files);
     });
 
     // dispatch a click event to open the file dialog
-    inputElement.dispatchEvent(new MouseEvent('click'));
+    inputElement.dispatchEvent(new MouseEvent("click"));
   });
 }
 
 export function getOrCreateClientId() {
-  let clientId = window.localStorage.getItem('watchparty-clientid');
+  let clientId = window.localStorage.getItem("watchparty-clientid");
   if (!clientId) {
     // Generate a new clientID and save it
     // This requires https, so fallback to JS implementation if needed
     clientId = createUuid();
-    window.localStorage.setItem('watchparty-clientid', clientId);
+    window.localStorage.setItem("watchparty-clientid", clientId);
   }
   return clientId;
 }
@@ -331,7 +331,7 @@ export async function getUserImage(
   user: firebase.User,
 ): Promise<string | null> {
   // Check if user has a Gravatar
-  const hash = user.email ? MD5.hash(user.email) : '';
+  const hash = user.email ? MD5.hash(user.email) : "";
   if (user.email) {
     const gravatar = `https://www.gravatar.com/avatar/${hash}?d=404&s=256`;
     const response = await fetch(gravatar);
@@ -340,23 +340,23 @@ export async function getUserImage(
     }
   }
   if (user.photoURL) {
-    return user.photoURL + '?height=256&width=256';
+    return user.photoURL + "?height=256&width=256";
   }
   return `https://www.gravatar.com/avatar/${hash}?d=identicon`;
 }
 
 export const getFileName = (input: string) => {
-  return input.split('/').slice(-1)[0];
+  return input.split("/").slice(-1)[0];
 };
 
 export const isEmojiString = (input?: string): boolean => {
   return /^(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])+$/g.test(
-    input ?? '',
+    input ?? "",
   );
 };
 
 function uuidv4() {
-  return '10000000-1000-4000-8000-100000000000'.replace(/[018]/g, (c) =>
+  return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) =>
     (
       +c ^
       (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (+c / 4)))
@@ -366,4 +366,4 @@ function uuidv4() {
 
 // Subtract header, URL row, button row, 3 gaps, controls
 export const VIDEO_MAX_HEIGHT_CSS =
-  'calc(100vh - 64px - 36px - 36px - 4px - 4px - 4px - 32px)';
+  "calc(100vh - 64px - 36px - 36px - 4px - 4px - 4px - 32px)";

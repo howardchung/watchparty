@@ -1,10 +1,10 @@
 export class MD5 {
-  private static readonly alphabet = '0123456789abcdef';
+  private static readonly alphabet = "0123456789abcdef";
 
   public static hash(str?: string): string {
-    if (typeof str !== 'string') {
-      console.warn('coercing non-string value to empty string');
-      str = '';
+    if (typeof str !== "string") {
+      console.warn("coercing non-string value to empty string");
+      str = "";
     }
 
     const x = MD5.sb(str);
@@ -97,7 +97,7 @@ export class MD5 {
   }
 
   private static rh(n: number): string {
-    let s = '';
+    let s = "";
     for (let j = 0; j <= 3; j++) {
       s +=
         MD5.alphabet.charAt((n >> (j * 8 + 4)) & 0x0f) +

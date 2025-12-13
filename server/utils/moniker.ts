@@ -1,18 +1,18 @@
-import fs from 'node:fs';
-import { resolveShard } from './resolveShard.ts';
+import fs from "node:fs";
+import { resolveShard } from "./resolveShard.ts";
 
 let adjectives = fs
-  .readFileSync(process.cwd() + '/words/adjectives.txt')
+  .readFileSync(process.cwd() + "/words/adjectives.txt")
   .toString()
-  .split('\n');
+  .split("\n");
 const nouns = fs
-  .readFileSync(process.cwd() + '/words/nouns.txt')
+  .readFileSync(process.cwd() + "/words/nouns.txt")
   .toString()
-  .split('\n');
+  .split("\n");
 const verbs = fs
-  .readFileSync(process.cwd() + '/words/verbs.txt')
+  .readFileSync(process.cwd() + "/words/verbs.txt")
   .toString()
-  .split('\n');
+  .split("\n");
 const randomElement = (array: string[]) =>
   array[Math.floor(Math.random() * array.length)];
 

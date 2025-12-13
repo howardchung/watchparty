@@ -1,7 +1,7 @@
-import type MediasoupClient from 'mediasoup-client';
-import React from 'react';
-import { Alert, Loader, Menu, Overlay, Select, Title } from '@mantine/core';
-import io, { Socket } from 'socket.io-client';
+import type MediasoupClient from "mediasoup-client";
+import React from "react";
+import { Alert, Loader, Menu, Overlay, Select, Title } from "@mantine/core";
+import io, { Socket } from "socket.io-client";
 import {
   formatSpeed,
   iceServers,
@@ -23,32 +23,32 @@ import {
   VIDEO_MAX_HEIGHT_CSS,
   createUuid,
   softWhite,
-} from '../../utils/utils';
-import { generateName } from '../../utils/generateName';
-import { Chat } from '../Chat/Chat';
-import { TopBar } from '../TopBar/TopBar';
-import { VBrowser } from '../VBrowser/VBrowser';
-import { VideoChat } from '../VideoChat/VideoChat';
-import { getCurrentSettings } from '../Settings/LocalSettings';
-import { MultiStreamModal } from '../Modal/MultiStreamModal';
-import { ComboBox } from '../ComboBox/ComboBox';
-import { SearchComponent } from '../SearchComponent/SearchComponent';
-import { Controls } from '../Controls/Controls';
-import { VBrowserModal } from '../Modal/VBrowserModal';
-import { SettingsModal } from '../Settings/SettingsModal';
-import { ErrorModal } from '../Modal/ErrorModal';
-import { PasswordModal } from '../Modal/PasswordModal';
-import { ScreenShareModal } from '../Modal/ScreenShareModal';
-import { FileShareModal } from '../Modal/FileShareModal';
-import firebase from 'firebase/compat/app';
-import { SubtitleModal } from '../Modal/SubtitleModal';
-import { HTML } from './HTML';
-import { YouTube } from './YouTube';
-import styles from './App.module.css';
-import config from '../../config';
-import { MetadataContext } from '../../MetadataContext';
-import ChatVideoCard from '../ChatVideoCard/ChatVideoCard';
-import { ActionIcon, Badge, TextInput, Button } from '@mantine/core';
+} from "../../utils/utils";
+import { generateName } from "../../utils/generateName";
+import { Chat } from "../Chat/Chat";
+import { TopBar } from "../TopBar/TopBar";
+import { VBrowser } from "../VBrowser/VBrowser";
+import { VideoChat } from "../VideoChat/VideoChat";
+import { getCurrentSettings } from "../Settings/LocalSettings";
+import { MultiStreamModal } from "../Modal/MultiStreamModal";
+import { ComboBox } from "../ComboBox/ComboBox";
+import { SearchComponent } from "../SearchComponent/SearchComponent";
+import { Controls } from "../Controls/Controls";
+import { VBrowserModal } from "../Modal/VBrowserModal";
+import { SettingsModal } from "../Settings/SettingsModal";
+import { ErrorModal } from "../Modal/ErrorModal";
+import { PasswordModal } from "../Modal/PasswordModal";
+import { ScreenShareModal } from "../Modal/ScreenShareModal";
+import { FileShareModal } from "../Modal/FileShareModal";
+import firebase from "firebase/compat/app";
+import { SubtitleModal } from "../Modal/SubtitleModal";
+import { HTML } from "./HTML";
+import { YouTube } from "./YouTube";
+import styles from "./App.module.css";
+import config from "../../config";
+import { MetadataContext } from "../../MetadataContext";
+import ChatVideoCard from "../ChatVideoCard/ChatVideoCard";
+import { ActionIcon, Badge, TextInput, Button } from "@mantine/core";
 import {
   IconAntennaBars5,
   IconArrowsShuffle,
@@ -65,12 +65,12 @@ import {
   IconUsersGroup,
   IconVolume,
   IconX,
-} from '@tabler/icons-react';
-import { InviteButton } from '../InviteButton/InviteButton';
-import type WebTorrent from 'webtorrent';
-import type Hls from 'hls.js';
-import { type MediaPlayerClass } from 'dashjs';
-import { type Torrent } from 'webtorrent';
+} from "@tabler/icons-react";
+import { InviteButton } from "../InviteButton/InviteButton";
+import type WebTorrent from "webtorrent";
+import type Hls from "hls.js";
+import { type MediaPlayerClass } from "dashjs";
+import { type Torrent } from "webtorrent";
 
 declare global {
   interface Window {
@@ -99,7 +99,7 @@ interface AppProps {
 }
 
 interface AppState {
-  state: 'starting' | 'connected';
+  state: "starting" | "connected";
   roomMedia: string;
   roomSubtitle: string;
   roomPaused: boolean;
@@ -172,10 +172,10 @@ export class App extends React.Component<AppProps, AppState> {
   static contextType = MetadataContext;
   declare context: React.ContextType<typeof MetadataContext>;
   state: AppState = {
-    state: 'starting',
-    roomMedia: '',
+    state: "starting",
+    roomMedia: "",
     roomPaused: false,
-    roomSubtitle: '',
+    roomSubtitle: "",
     roomLoop: false,
     participants: [],
     rosterUpdateTS: Date.now(),
@@ -184,8 +184,8 @@ export class App extends React.Component<AppProps, AppState> {
     tsMap: {},
     nameMap: {},
     pictureMap: {},
-    myName: window.localStorage.getItem('watchparty-username') ?? '',
-    myPicture: '',
+    myName: window.localStorage.getItem("watchparty-username") ?? "",
+    myPicture: "",
     loading: true,
     scrollTimestamp: 0,
     unreadCount: 0,
@@ -199,33 +199,33 @@ export class App extends React.Component<AppProps, AppState> {
     speed: 0,
     connections: 0,
     multiStreamSelection: undefined,
-    overlayMsg: '',
+    overlayMsg: "",
     isErrorAuth: false,
     settings: {},
-    vBrowserResolution: '1280x720@30',
-    vBrowserQuality: '1',
+    vBrowserResolution: "1280x720@30",
+    vBrowserQuality: "1",
     isVBrowserLarge: false,
     nonPlayableMedia: false,
     currentTab:
-      new URLSearchParams(window.location.search).get('tab') ?? 'chat',
+      new URLSearchParams(window.location.search).get("tab") ?? "chat",
     isSubscribeModalOpen: false,
     isVBrowserModalOpen: false,
     isScreenShareModalOpen: false,
     isFileShareModalOpen: false,
     isSubtitleModalOpen: false,
-    roomLock: '',
-    controller: '',
-    roomId: '',
+    roomLock: "",
+    controller: "",
+    roomId: "",
     savedPasswords: {},
-    errorMessage: '',
-    successMessage: '',
-    warningMessage: '',
+    errorMessage: "",
+    successMessage: "",
+    warningMessage: "",
     isChatDisabled: false,
     showChatColumn: isMobile()
       ? true
       : Boolean(
           Number(
-            window.localStorage.getItem('watchparty-showchatcolumn') ?? '1',
+            window.localStorage.getItem("watchparty-showchatcolumn") ?? "1",
           ),
         ),
     showPeopleColumn: false,
@@ -237,10 +237,10 @@ export class App extends React.Component<AppProps, AppState> {
     owner: undefined,
     vanity: undefined,
     password: undefined,
-    inviteLink: '',
-    roomTitle: '',
-    roomDescription: '',
-    roomTitleColor: '',
+    inviteLink: "",
+    roomTitle: "",
+    roomDescription: "",
+    roomTitleColor: "",
     mediaPath: undefined,
     roomPlaybackRate: 0,
     isLiveStream: false,
@@ -258,7 +258,7 @@ export class App extends React.Component<AppProps, AppState> {
   progressUpdater?: number;
   heartbeat: number | undefined = undefined;
   YouTubeInterface: YouTube = new YouTube(null);
-  HTMLInterface: HTML = new HTML('leftVideo');
+  HTMLInterface: HTML = new HTML("leftVideo");
   Player = () => {
     if (this.usingYoutube()) {
       return this.YouTubeInterface;
@@ -276,7 +276,7 @@ export class App extends React.Component<AppProps, AppState> {
     // Send heartbeat to the server
     this.heartbeat = window.setInterval(
       () => {
-        fetch(serverPath + '/ping');
+        fetch(serverPath + "/ping");
       },
       10 * 60 * 1000,
     );
@@ -296,17 +296,17 @@ export class App extends React.Component<AppProps, AppState> {
   }
 
   componentWillUnmount() {
-    document.removeEventListener('fullscreenchange', this.onFullScreenChange);
-    document.removeEventListener('keydown', this.onKeydown);
+    document.removeEventListener("fullscreenchange", this.onFullScreenChange);
+    document.removeEventListener("keydown", this.onKeydown);
     window.clearInterval(this.heartbeat);
   }
 
   init = async () => {
-    let roomId = '/' + this.props.urlRoomId;
+    let roomId = "/" + this.props.urlRoomId;
     // if a vanity name, resolve the url to a room id
     if (this.props.vanity) {
       const resp = await fetch(
-        serverPath + '/resolveRoom/' + this.props.vanity,
+        serverPath + "/resolveRoom/" + this.props.vanity,
       );
       if (!resp.ok) {
         this.setState({ overlayMsg: "Couldn't load this room." });
@@ -325,21 +325,21 @@ export class App extends React.Component<AppProps, AppState> {
   };
 
   join = async (roomId: string) => {
-    let password = '';
+    let password = "";
     try {
       const savedPasswordsString = window.localStorage.getItem(
-        'watchparty-passwords',
+        "watchparty-passwords",
       );
-      const savedPasswords = JSON.parse(savedPasswordsString || '{}');
+      const savedPasswords = JSON.parse(savedPasswordsString || "{}");
       this.setState({ savedPasswords });
-      password = savedPasswords[roomId] || '';
+      password = savedPasswords[roomId] || "";
     } catch (e) {
-      console.warn('[ALERT] Could not parse saved passwords');
+      console.warn("[ALERT] Could not parse saved passwords");
     }
-    const response = await fetch(serverPath + '/resolveShard' + roomId);
-    const shard = Number(await response.text()) || '';
+    const response = await fetch(serverPath + "/resolveShard" + roomId);
+    const shard = Number(await response.text()) || "";
     const socket = io(serverPath + roomId, {
-      transports: ['websocket'],
+      transports: ["websocket"],
       query: {
         clientId: getOrCreateClientId(),
         password,
@@ -350,81 +350,81 @@ export class App extends React.Component<AppProps, AppState> {
       },
     });
     this.socket = socket;
-    socket.on('connect', async () => {
+    socket.on("connect", async () => {
       this.setState({
-        state: 'connected',
-        overlayMsg: '',
-        errorMessage: '',
-        successMessage: '',
-        warningMessage: '',
+        state: "connected",
+        overlayMsg: "",
+        errorMessage: "",
+        successMessage: "",
+        warningMessage: "",
       });
       // Use the name in our state, generate one if empty
       this.updateName(this.state.myName || (await generateName()));
       this.loadSignInData(this.context.user);
     });
-    socket.on('connect_error', (err: any) => {
+    socket.on("connect_error", (err: any) => {
       console.error(err);
-      if (err.message === 'Invalid namespace') {
+      if (err.message === "Invalid namespace") {
         this.setState({ overlayMsg: "Couldn't load this room." });
-      } else if (err.message === 'not authorized') {
+      } else if (err.message === "not authorized") {
         this.setState({ isErrorAuth: true });
-      } else if (err.message === 'room full') {
-        this.setState({ overlayMsg: 'This room is full.' });
+      } else if (err.message === "room full") {
+        this.setState({ overlayMsg: "This room is full." });
       }
     });
-    socket.on('disconnect', (reason) => {
-      if (reason === 'io server disconnect') {
+    socket.on("disconnect", (reason) => {
+      if (reason === "io server disconnect") {
         // the disconnection was initiated by the server, you need to reconnect manually
-        this.setState({ overlayMsg: 'Disconnected from server.' });
+        this.setState({ overlayMsg: "Disconnected from server." });
       } else {
         // else the socket will automatically try to reconnect
         // Use the alert pill since it's less disruptive
-        this.setState({ warningMessage: 'Reconnecting...' });
+        this.setState({ warningMessage: "Reconnecting..." });
       }
     });
-    socket.on('errorMessage', (err: string) => {
+    socket.on("errorMessage", (err: string) => {
       this.setState({ errorMessage: err });
       setTimeout(() => {
-        this.setState({ errorMessage: '' });
+        this.setState({ errorMessage: "" });
       }, 3000);
     });
-    socket.on('successMessage', (success: string) => {
+    socket.on("successMessage", (success: string) => {
       this.setState({ successMessage: success });
       setTimeout(() => {
-        this.setState({ successMessage: '' });
+        this.setState({ successMessage: "" });
       }, 3000);
     });
-    socket.on('kicked', () => {
-      window.location.assign('/');
+    socket.on("kicked", () => {
+      window.location.assign("/");
     });
-    socket.on('REC:play', () => {
+    socket.on("REC:play", () => {
       this.localPlay();
     });
-    socket.on('REC:pause', () => {
+    socket.on("REC:pause", () => {
       this.localPause();
     });
-    socket.on('REC:seek', (data: number) => {
+    socket.on("REC:seek", (data: number) => {
       this.localSeek(data);
     });
-    socket.on('REC:playbackRate', (data: number) => {
+    socket.on("REC:playbackRate", (data: number) => {
       this.setState({ roomPlaybackRate: data });
       if (data > 0) {
         this.Player().setPlaybackRate(data);
       }
     });
-    socket.on('REC:subtitle', (data: string) => {
+    socket.on("REC:subtitle", (data: string) => {
       this.setState({ roomSubtitle: data }, () => {
         this.Player().loadSubtitles(data);
       });
     });
-    socket.on('REC:loop', (data: boolean) => {
+    socket.on("REC:loop", (data: boolean) => {
       this.setState({ roomLoop: data });
     });
-    socket.on('REC:changeController', (data: string) => {
+    socket.on("REC:changeController", (data: string) => {
       this.setState({ controller: data });
     });
-    socket.on('REC:host', async (data: HostState) => {
-      let currentMedia = data.video || '';
+    socket.on("REC:host", async (data: HostState) => {
+      let currentMedia = data.video || "";
       if (this.playingScreenShare() && !isScreenShare(currentMedia)) {
         this.stopPublishingLocalStream();
       }
@@ -460,8 +460,8 @@ export class App extends React.Component<AppProps, AppState> {
           loading: Boolean(data.video),
           nonPlayableMedia: false,
           isVBrowserLarge: data.isVBrowserLarge,
-          vBrowserResolution: '1280x720@30',
-          vBrowserQuality: '1',
+          vBrowserResolution: "1280x720@30",
+          vBrowserQuality: "1",
           controller: data.controller,
           isLiveStream: false,
         },
@@ -491,7 +491,7 @@ export class App extends React.Component<AppProps, AppState> {
             this.playingVBrowser()
           ) {
             console.log(
-              'exiting REC:host since we are using webRTC (fileshare, screenshare, or vbrowser). Check setupRTCConnections()',
+              "exiting REC:host since we are using webRTC (fileshare, screenshare, or vbrowser). Check setupRTCConnections()",
             );
             if (!(this.playingVBrowser() && !this.getVBrowserHost())) {
               // Remove the loader unless we're waiting for a vbrowser
@@ -501,7 +501,7 @@ export class App extends React.Component<AppProps, AppState> {
           }
           if (this.usingYoutube() && !this.YouTubeInterface.isReady()) {
             console.log(
-              'YT player not ready, onReady callback will retry when it is',
+              "YT player not ready, onReady callback will retry when it is",
             );
             return;
           }
@@ -511,12 +511,12 @@ export class App extends React.Component<AppProps, AppState> {
             // WebTorrent
             if (!window.watchparty.webtorrent) {
               const WebTorrent = //@ts-expect-error
-                (await import('webtorrent/dist/webtorrent.min.js')).default;
+                (await import("webtorrent/dist/webtorrent.min.js")).default;
               window.watchparty.webtorrent = new WebTorrent();
-              const reg = await navigator.serviceWorker?.register('/sw.min.js');
+              const reg = await navigator.serviceWorker?.register("/sw.min.js");
               const worker = reg.active || reg.waiting || reg.installing;
               const checkState = (worker: ServiceWorker | null) => {
-                if (worker?.state === 'activated') {
+                if (worker?.state === "activated") {
                   return window.watchparty.webtorrent?.createServer({
                     controller: reg,
                   });
@@ -524,7 +524,7 @@ export class App extends React.Component<AppProps, AppState> {
                 return null;
               };
               if (!checkState(worker)) {
-                worker?.addEventListener('statechange', ({ target }) =>
+                worker?.addEventListener("statechange", ({ target }) =>
                   checkState(target as ServiceWorker),
                 );
               }
@@ -532,17 +532,17 @@ export class App extends React.Component<AppProps, AppState> {
             await new Promise(async (resolve) => {
               const finish = (torrent: Torrent) => {
                 // Got torrent metadata!
-                console.log('Client is downloading:', torrent.infoHash);
+                console.log("Client is downloading:", torrent.infoHash);
 
                 // Torrents can contain many files.
                 const files = torrent.files;
                 const filtered = files.filter(
                   (f: WebTorrent.TorrentFile) => f.length >= 10 * 1024 * 1024,
                 );
-                const fileIndex = new URLSearchParams(src).get('fileIndex');
+                const fileIndex = new URLSearchParams(src).get("fileIndex");
                 // Try to find a single large file to play
                 let target;
-                if (fileIndex != null && fileIndex !== '') {
+                if (fileIndex != null && fileIndex !== "") {
                   target = files[Number(fileIndex)];
                 } else if (filtered.length === 1) {
                   target = filtered[0];
@@ -567,36 +567,36 @@ export class App extends React.Component<AppProps, AppState> {
               if (!target) {
                 target = window.watchparty.webtorrent?.add(src, {
                   announce: [
-                    'wss://tracker.btorrent.xyz',
-                    'wss://tracker.openwebtorrent.com',
+                    "wss://tracker.btorrent.xyz",
+                    "wss://tracker.openwebtorrent.com",
                   ],
                   destroyStoreOnDestroy: true,
                   maxWebConns: 4,
-                  path: '/tmp/webtorrent/',
+                  path: "/tmp/webtorrent/",
                   storeCacheSlots: 20,
-                  strategy: 'sequential',
+                  strategy: "sequential",
                   // noPeersIntervalTime: 30,
                 });
               }
               if (target?.ready) {
                 finish(target);
               } else {
-                target?.on('ready', () => {
+                target?.on("ready", () => {
                   finish(target);
                 });
               }
             });
           } else if (isDash(src)) {
             if (!window.watchparty.dash) {
-              const Dash = await import('dashjs');
+              const Dash = await import("dashjs");
               window.watchparty.dash = Dash.MediaPlayer().create();
-              window.watchparty.dash.on('streamInitialized', (_e: any) => {
+              window.watchparty.dash.on("streamInitialized", (_e: any) => {
                 // for a live stream:
                 // html.currenttime is time since stream start
                 // html.duration is infinite
                 // player.duration is the seekable range
                 const isLiveStream = this.Player().getDuration() >= Infinity;
-                console.log('DASH stream initialized: isLive %s', isLiveStream);
+                console.log("DASH stream initialized: isLive %s", isLiveStream);
                 this.setState({
                   isLiveStream,
                 });
@@ -607,12 +607,12 @@ export class App extends React.Component<AppProps, AppState> {
             // Prefer using hls.js if MediaSource Extensions are supported
             // otherwise fallback to native HLS support using video tag (i.e. iPhones)
             if (!window.watchparty.hls) {
-              const Hls = (await import('hls.js')).default;
+              const Hls = (await import("hls.js")).default;
               window.watchparty.hls = new Hls();
               window.watchparty.hls.on(Hls.Events.LEVEL_LOADED, (_, data) => {
                 const isLiveStream = data.details.live;
                 this.setState({ isLiveStream });
-                console.log('HLS level loaded: isLive %s', isLiveStream);
+                console.log("HLS level loaded: isLive %s", isLiveStream);
               });
             }
             window.watchparty.hls.loadSource(src);
@@ -638,7 +638,7 @@ export class App extends React.Component<AppProps, AppState> {
           }
           // Do right before playing
           leftVideo?.addEventListener(
-            'canplay',
+            "canplay",
             () => {
               this.setLoadingFalse();
               let ts = undefined;
@@ -659,7 +659,7 @@ export class App extends React.Component<AppProps, AppState> {
               }
               if (data.playbackRate) {
                 // Set playback rate again since it might have been lost
-                console.log('setting playback rate again', data.playbackRate);
+                console.log("setting playback rate again", data.playbackRate);
                 this.Player().setPlaybackRate(data.playbackRate);
               }
             },
@@ -669,10 +669,10 @@ export class App extends React.Component<AppProps, AppState> {
           // Progress updater
           window.clearInterval(this.progressUpdater);
           this.setState({ downloaded: 0, total: 0, speed: 0 });
-          if (currentMedia.includes('/stream?torrent=magnet')) {
+          if (currentMedia.includes("/stream?torrent=magnet")) {
             this.progressUpdater = window.setInterval(async () => {
               const response = await fetch(
-                currentMedia.replace('/stream', '/progress'),
+                currentMedia.replace("/stream", "/progress"),
               );
               const data = await response.json();
               this.setState({
@@ -699,14 +699,14 @@ export class App extends React.Component<AppProps, AppState> {
         },
       );
     });
-    socket.on('REC:chat', (data: ChatMessage) => {
+    socket.on("REC:chat", (data: ChatMessage) => {
       if (
         !getCurrentSettings().disableChatSound &&
         !data.system &&
-        ((document.visibilityState && document.visibilityState !== 'visible') ||
-          this.state.currentTab !== 'chat')
+        ((document.visibilityState && document.visibilityState !== "visible") ||
+          this.state.currentTab !== "chat")
       ) {
-        new Audio('/clearly.mp3').play();
+        new Audio("/clearly.mp3").play();
       }
       this.state.chat.push(data);
       if (this.state.chat.length > 100) {
@@ -716,12 +716,12 @@ export class App extends React.Component<AppProps, AppState> {
         chat: this.state.chat,
         scrollTimestamp: Date.now(),
         unreadCount:
-          this.state.currentTab === 'chat'
+          this.state.currentTab === "chat"
             ? this.state.unreadCount
             : this.state.unreadCount + 1,
       });
     });
-    socket.on('REC:addReaction', (data: Reaction) => {
+    socket.on("REC:addReaction", (data: Reaction) => {
       const { chat } = this.state;
       const msgIndex = chat.findIndex(
         (m) => m.id === data.msgId && m.timestamp === data.msgTimestamp,
@@ -744,7 +744,7 @@ export class App extends React.Component<AppProps, AppState> {
         }
       });
     });
-    socket.on('REC:removeReaction', (data: Reaction) => {
+    socket.on("REC:removeReaction", (data: Reaction) => {
       const { chat } = this.state;
       const msg = chat.find(
         (m) => m.id === data.msgId && m.timestamp === data.msgTimestamp,
@@ -757,7 +757,7 @@ export class App extends React.Component<AppProps, AppState> {
       );
       this.setState({ chat });
     });
-    socket.on('REC:tsMap', (data: NumberDict) => {
+    socket.on("REC:tsMap", (data: NumberDict) => {
       this.setState({ tsMap: data }, () => {
         // Dynamic playback rate based on timestamps
         // Disable for sharing types where the users can have different timestamps
@@ -793,34 +793,34 @@ export class App extends React.Component<AppProps, AppState> {
         }
       });
     });
-    socket.on('REC:nameMap', (data: StringDict) => {
+    socket.on("REC:nameMap", (data: StringDict) => {
       this.setState({ nameMap: data });
     });
-    socket.on('REC:pictureMap', (data: StringDict) => {
+    socket.on("REC:pictureMap", (data: StringDict) => {
       this.setState({ pictureMap: data });
     });
-    socket.on('REC:lock', (data: string) => {
+    socket.on("REC:lock", (data: string) => {
       this.setState({ roomLock: data });
     });
-    socket.on('roster', (data: User[]) => {
+    socket.on("roster", (data: User[]) => {
       this.setState({ participants: data, rosterUpdateTS: Date.now() }, () => {
         this.setupRTCConnections();
       });
     });
-    socket.on('chatinit', (data: ChatMessage[]) => {
+    socket.on("chatinit", (data: ChatMessage[]) => {
       this.setState({ chat: data, scrollTimestamp: Date.now() });
     });
-    socket.on('playlist', (data: PlaylistVideo[]) => {
+    socket.on("playlist", (data: PlaylistVideo[]) => {
       this.setState({ playlist: data });
     });
     socket.on(
-      'signalSS',
+      "signalSS",
       async (data: {
         msg: { ice: any; sdp: any };
         from: string;
         sharer: boolean;
       }) => {
-        config.NODE_ENV === 'development' && console.log(data);
+        config.NODE_ENV === "development" && console.log(data);
         // Handle messages received from signaling server
         const msg = data.msg;
         const from = data.from;
@@ -830,46 +830,46 @@ export class App extends React.Component<AppProps, AppState> {
         ) as RTCPeerConnection;
         if (msg.ice !== undefined) {
           pc.addIceCandidate(new RTCIceCandidate(msg.ice));
-        } else if (msg.sdp && msg.sdp.type === 'offer') {
+        } else if (msg.sdp && msg.sdp.type === "offer") {
           // console.log('offer');
           // TODO Currently ios/Safari cannot handle this property, so remove it from the offer
           const _sdp = msg.sdp.sdp
-            .split('\n')
+            .split("\n")
             .filter((line: string) => {
-              return line.trim() !== 'a=extmap-allow-mixed';
+              return line.trim() !== "a=extmap-allow-mixed";
             })
-            .join('\n');
+            .join("\n");
           msg.sdp.sdp = _sdp;
           await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
           const answer = await pc.createAnswer();
           // Allow stereo audio
           answer.sdp = answer.sdp?.replace(
-            'useinbandfec=1',
-            'useinbandfec=1; stereo=1; maxaveragebitrate=510000',
+            "useinbandfec=1",
+            "useinbandfec=1; stereo=1; maxaveragebitrate=510000",
           );
           // console.log(answer.sdp);
           // Allow multichannel audio if Chromium
           const isChromium = Boolean((window as any).chrome);
           if (isChromium) {
             answer.sdp = answer.sdp
-              ?.replace('opus/48000/2', 'multiopus/48000/6')
+              ?.replace("opus/48000/2", "multiopus/48000/6")
               .replace(
-                'useinbandfec=1',
-                'channel_mapping=0,4,1,2,3,5; num_streams=4; coupled_streams=2;maxaveragebitrate=510000;minptime=10;useinbandfec=1',
+                "useinbandfec=1",
+                "channel_mapping=0,4,1,2,3,5; num_streams=4; coupled_streams=2;maxaveragebitrate=510000;minptime=10;useinbandfec=1",
               );
           }
           await pc.setLocalDescription(answer);
           this.sendSignalSS(from, { sdp: pc.localDescription }, !data.sharer);
-        } else if (msg.sdp && msg.sdp.type === 'answer') {
+        } else if (msg.sdp && msg.sdp.type === "answer") {
           pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
         }
       },
     );
-    socket.on('REC:getRoomState', this.handleRoomState);
+    socket.on("REC:getRoomState", this.handleRoomState);
     window.setInterval(() => {
       if (this.state.roomMedia) {
         const toSend = this.getRoomTSToSet(this.Player().getCurrentTime());
-        this.socket.emit('CMD:ts', toSend);
+        this.socket.emit("CMD:ts", toSend);
       }
     }, 1000);
   };
@@ -895,15 +895,15 @@ export class App extends React.Component<AppProps, AppState> {
       // NOTE: firebase auth doesn't provide the actual first name data that individual providers (G/FB) do
       // It's accessible at the time the user logs in but not afterward
       // If we want accurate surname/given name we'll need to save that somewhere
-      const firstName = user.displayName?.split(' ')[0];
+      const firstName = user.displayName?.split(" ")[0];
       if (firstName) {
         // Don't update the username if the user wants to customize their own
         // Set a flag in localstorage so we only update this once, if the user changes name manually later we won't overwrite
         // Clear the flag on logout
-        if (!window.localStorage.getItem('watchparty-loginname')) {
+        if (!window.localStorage.getItem("watchparty-loginname")) {
           this.updateName(firstName);
           window.localStorage.setItem(
-            'watchparty-loginname',
+            "watchparty-loginname",
             Date.now().toString(),
           );
         }
@@ -918,21 +918,21 @@ export class App extends React.Component<AppProps, AppState> {
 
   loadYouTube = () => {
     // This code loads the IFrame Player API code asynchronously.
-    const tag = document.createElement('script');
-    tag.src = 'https://www.youtube.com/iframe_api';
+    const tag = document.createElement("script");
+    tag.src = "https://www.youtube.com/iframe_api";
     document.body.append(tag);
     window.onYouTubeIframeAPIReady = () => {
       // Note: this fails silently if the element is not available
-      const ytPlayer = new window.YT.Player('leftYt', {
+      const ytPlayer = new window.YT.Player("leftYt", {
         events: {
           onReady: () => {
-            console.log('yt onReady');
+            console.log("yt onReady");
             this.YouTubeInterface = new YouTube(ytPlayer);
             this.setState({ loading: false });
             // We might have failed to play YT originally, ask for the current video again
             if (this.usingYoutube()) {
-              console.log('requesting host data again after ytReady');
-              this.socket.emit('CMD:askHost');
+              console.log("requesting host data again after ytReady");
+              this.socket.emit("CMD:askHost");
             }
           },
           onStateChange: (e) => {
@@ -958,10 +958,10 @@ export class App extends React.Component<AppProps, AppState> {
             ) {
               this.ytDebounce = false;
               if (e.data === window.YT?.PlayerState?.PLAYING) {
-                this.socket.emit('CMD:play');
+                this.socket.emit("CMD:play");
                 this.localPlay();
               } else {
-                this.socket.emit('CMD:pause');
+                this.socket.emit("CMD:pause");
                 this.localPause();
               }
               window.setTimeout(() => (this.ytDebounce = true), 500);
@@ -990,7 +990,7 @@ export class App extends React.Component<AppProps, AppState> {
     this.setRoomDescription(data.roomDescription);
     this.setRoomTitleColor(data.roomTitleColor);
     this.setMediaPath(data.mediaPath);
-    window.history.replaceState('', '', this.getInviteLink(data.vanity));
+    window.history.replaceState("", "", this.getInviteLink(data.vanity));
   };
 
   setOwner = (owner: string) => {
@@ -1021,7 +1021,7 @@ export class App extends React.Component<AppProps, AppState> {
   setRoomLock = async (locked: boolean) => {
     const uid = this.context.user?.uid;
     const token = await this.context.user?.getIdToken();
-    this.socket.emit('CMD:lock', { uid, token, locked });
+    this.socket.emit("CMD:lock", { uid, token, locked });
   };
 
   haveLock = () => {
@@ -1036,7 +1036,7 @@ export class App extends React.Component<AppProps, AppState> {
   clearChat = async () => {
     const uid = this.context.user?.uid;
     const token = await this.context.user?.getIdToken();
-    this.socket.emit('CMD:deleteChatMessages', { uid, token });
+    this.socket.emit("CMD:deleteChatMessages", { uid, token });
   };
 
   startConvert = async () => {
@@ -1050,7 +1050,7 @@ export class App extends React.Component<AppProps, AppState> {
     const uuid = createUuid();
     const convertPath = this.context.convertPath;
     // const convertPath = 'https://azure.howardchung.net:5001';
-    const convertUrl = convertPath + '/' + uuid + '.m3u8';
+    const convertUrl = convertPath + "/" + uuid + ".m3u8";
     // Wait for the playlist to get generated
     const poll = async () => {
       let ok = false;
@@ -1068,7 +1068,7 @@ export class App extends React.Component<AppProps, AppState> {
     const reader = stream.getReader();
     const start = Date.now();
     let bytes = 0;
-    const ws = new WebSocket(convertUrl.replace('http', 'ws'));
+    const ws = new WebSocket(convertUrl.replace("http", "ws"));
     ws.onmessage = async (_ev) => {
       // Server sends a message whenever it wants next chunk
       const { done, value } = await reader.read();
@@ -1121,7 +1121,7 @@ export class App extends React.Component<AppProps, AppState> {
     this.localStreamToPublish = leftVideo?.captureStream();
     this.isLocalStreamAFile = true;
     if (this.localStreamToPublish) {
-      this.socket.emit('CMD:joinScreenShare', {
+      this.socket.emit("CMD:joinScreenShare", {
         file: true,
         mediasoup: useMediaSoup,
       });
@@ -1144,7 +1144,7 @@ export class App extends React.Component<AppProps, AppState> {
       });
       this.localStreamToPublish = stream;
       this.isLocalStreamAFile = false;
-      this.socket.emit('CMD:joinScreenShare', {
+      this.socket.emit("CMD:joinScreenShare", {
         file: false,
         mediasoup: useMediaSoup,
       });
@@ -1161,16 +1161,16 @@ export class App extends React.Component<AppProps, AppState> {
     const connectSocket = (mediasoupURL: string) => {
       return new Promise<void>((resolve, reject) => {
         this.mediasoupPubSocket = io(mediasoupURL, {
-          transports: ['websocket'],
+          transports: ["websocket"],
         });
 
         const socket = this.mediasoupPubSocket;
-        socket?.on('connect', function () {
-          console.log('PUBLISH: connected to socket.io');
+        socket?.on("connect", function () {
+          console.log("PUBLISH: connected to socket.io");
           resolve();
         });
-        socket?.on('error', function (err) {
-          console.error('PUBLISH: socket.io ERROR:', err);
+        socket?.on("error", function (err) {
+          console.error("PUBLISH: socket.io ERROR:", err);
           reject(err);
         });
       });
@@ -1192,15 +1192,15 @@ export class App extends React.Component<AppProps, AppState> {
 
     async function publish() {
       // --- get transport info ---
-      console.log('PUBLISH: --- createProducerTransport --');
-      const params = await sendRequest('createProducerTransport', {});
-      console.log('PUBLISH: transport params:', params);
+      console.log("PUBLISH: --- createProducerTransport --");
+      const params = await sendRequest("createProducerTransport", {});
+      console.log("PUBLISH: transport params:", params);
       producerTransport = device.createSendTransport(params);
-      console.log('PUBLISH: createSendTransport:', producerTransport);
+      console.log("PUBLISH: createSendTransport:", producerTransport);
 
       // --- join & start publish --
       producerTransport.on(
-        'connect',
+        "connect",
         async (
           {
             dtlsParameters,
@@ -1208,8 +1208,8 @@ export class App extends React.Component<AppProps, AppState> {
           callback: () => void,
           errback: (error: Error) => void,
         ) => {
-          console.log('PUBLISH: --transport connect');
-          sendRequest('connectProducerTransport', {
+          console.log("PUBLISH: --transport connect");
+          sendRequest("connectProducerTransport", {
             dtlsParameters: dtlsParameters,
           })
             .then(callback)
@@ -1218,7 +1218,7 @@ export class App extends React.Component<AppProps, AppState> {
       );
 
       producerTransport.on(
-        'produce',
+        "produce",
         async (
           {
             kind,
@@ -1230,9 +1230,9 @@ export class App extends React.Component<AppProps, AppState> {
           callback: ({ id }: { id: string }) => void,
           errback: (error: Error) => void,
         ) => {
-          console.log('PUBLISH: --transport produce');
+          console.log("PUBLISH: --transport produce");
           try {
-            const { id } = await sendRequest('produce', {
+            const { id } = await sendRequest("produce", {
               transportId: producerTransport.id,
               kind,
               rtpParameters,
@@ -1279,15 +1279,15 @@ export class App extends React.Component<AppProps, AppState> {
     async function loadDevice(
       routerRtpCapabilities: MediasoupClient.types.RtpCapabilities,
     ) {
-      const { Device } = await import('mediasoup-client');
+      const { Device } = await import("mediasoup-client");
       device = new Device();
       await device.load({ routerRtpCapabilities });
     }
 
     await connectSocket(mediasoupURL);
     // --- get capabilities --
-    const data = await sendRequest('getRouterRtpCapabilities', {});
-    console.log('PUBLISH: getRouterRtpCapabilities:', data);
+    const data = await sendRequest("getRouterRtpCapabilities", {});
+    console.log("PUBLISH: getRouterRtpCapabilities:", data);
     await loadDevice(data);
     await publish();
   };
@@ -1301,24 +1301,24 @@ export class App extends React.Component<AppProps, AppState> {
     const connectSocket = () => {
       return new Promise<void>((resolve, reject) => {
         this.mediasoupSubSocket = io(mediaSoupURL, {
-          transports: ['websocket'],
+          transports: ["websocket"],
         });
         const socket = this.mediasoupSubSocket;
-        socket?.on('connect', function () {
-          console.log('SUBSCRIBE: connected to socket.io');
+        socket?.on("connect", function () {
+          console.log("SUBSCRIBE: connected to socket.io");
           resolve();
         });
-        socket?.on('error', function (err) {
-          console.error('SUBSCRIBE: socket.io ERROR:', err);
+        socket?.on("error", function (err) {
+          console.error("SUBSCRIBE: socket.io ERROR:", err);
           reject(err);
         });
-        socket?.on('newProducer', async function (message) {
-          console.log('SUBSCRIBE: socket.io newProducer:', message);
+        socket?.on("newProducer", async function (message) {
+          console.log("SUBSCRIBE: socket.io newProducer:", message);
           if (consumerTransport) {
             // start consume
-            if (message.kind === 'video') {
+            if (message.kind === "video") {
               await consumeAndResume(message.kind);
-            } else if (message.kind === 'audio') {
+            } else if (message.kind === "audio") {
               await consumeAndResume(message.kind);
             }
           }
@@ -1375,23 +1375,23 @@ export class App extends React.Component<AppProps, AppState> {
     async function consumeAndResume(kind: string) {
       const consumer = await consume(consumerTransport, kind);
       if (consumer) {
-        console.log('SUBSCRIBE: -- track exist, consumer ready. kind=' + kind);
-        if (kind === 'video') {
-          console.log('SUBSCRIBE: -- resume kind=' + kind);
-          sendRequest('resume', { kind: kind })
+        console.log("SUBSCRIBE: -- track exist, consumer ready. kind=" + kind);
+        if (kind === "video") {
+          console.log("SUBSCRIBE: -- resume kind=" + kind);
+          sendRequest("resume", { kind: kind })
             .then(() => {
-              console.log('SUBSCRIBE: resume OK');
+              console.log("SUBSCRIBE: resume OK");
               return consumer;
             })
             .catch((err) => {
-              console.error('SUBSCRIBE: resume ERROR:', err);
+              console.error("SUBSCRIBE: resume ERROR:", err);
               return consumer;
             });
         } else {
-          console.log('SUBSCRIBE: -- do not resume kind=' + kind);
+          console.log("SUBSCRIBE: -- do not resume kind=" + kind);
         }
       } else {
-        console.log('SUBSCRIBE: -- no consumer yet. kind=' + kind);
+        console.log("SUBSCRIBE: -- no consumer yet. kind=" + kind);
         return null;
       }
     }
@@ -1400,12 +1400,12 @@ export class App extends React.Component<AppProps, AppState> {
       routerRtpCapabilities: MediasoupClient.types.RtpCapabilities,
     ) {
       try {
-        const { Device } = await import('mediasoup-client');
+        const { Device } = await import("mediasoup-client");
         device = new Device();
         await device.load({ routerRtpCapabilities });
       } catch (error: any) {
-        if (error.name === 'UnsupportedError') {
-          console.error('browser not supported');
+        if (error.name === "UnsupportedError") {
+          console.error("browser not supported");
         }
       }
     }
@@ -1414,13 +1414,13 @@ export class App extends React.Component<AppProps, AppState> {
       transport: MediasoupClient.types.Transport,
       trackKind: string,
     ) {
-      console.log('SUBSCRIBE: --start of consume --kind=' + trackKind);
+      console.log("SUBSCRIBE: --start of consume --kind=" + trackKind);
       const { rtpCapabilities } = device;
-      const data = await sendRequest('consume', {
+      const data = await sendRequest("consume", {
         rtpCapabilities: rtpCapabilities,
         kind: trackKind,
       }).catch((err) => {
-        console.error('SUBSCRIBE: ERROR:', err);
+        console.error("SUBSCRIBE: ERROR:", err);
       });
       const { producerId, id, kind, rtpParameters } = data;
 
@@ -1436,24 +1436,24 @@ export class App extends React.Component<AppProps, AppState> {
         });
 
         addRemoteTrack(consumer.track);
-        console.log('SUBSCRIBE: --end of consume');
+        console.log("SUBSCRIBE: --end of consume");
         return consumer;
       } else {
-        console.warn('SUBSCRIBE: ---remote producer NOT READY');
+        console.warn("SUBSCRIBE: ---remote producer NOT READY");
         return null;
       }
     }
 
     async function subscribe() {
-      console.log('SUBSCRIBE: ---createConsumerTransport --');
-      const params = await sendRequest('createConsumerTransport', {});
-      console.log('SUBSCRIBE: transport params:', params);
+      console.log("SUBSCRIBE: ---createConsumerTransport --");
+      const params = await sendRequest("createConsumerTransport", {});
+      console.log("SUBSCRIBE: transport params:", params);
       consumerTransport = device.createRecvTransport(params);
-      console.log('SUBSCRIBE: createConsumerTransport:', consumerTransport);
+      console.log("SUBSCRIBE: createConsumerTransport:", consumerTransport);
 
       // --- join & start watching
       consumerTransport.on(
-        'connect',
+        "connect",
         async (
           {
             dtlsParameters,
@@ -1461,8 +1461,8 @@ export class App extends React.Component<AppProps, AppState> {
           callback: () => void,
           errback: (err: Error) => void,
         ) => {
-          console.log('SUBSCRIBE: ---consumer transport connect');
-          sendRequest('connectConsumerTransport', {
+          console.log("SUBSCRIBE: ---consumer transport connect");
+          sendRequest("connectConsumerTransport", {
             dtlsParameters: dtlsParameters,
           })
             .then(callback)
@@ -1490,8 +1490,8 @@ export class App extends React.Component<AppProps, AppState> {
       //   }
       // });
 
-      await consumeAndResume('video');
-      await consumeAndResume('audio');
+      await consumeAndResume("video");
+      await consumeAndResume("audio");
     }
 
     // Clear the srcobject so we load our stream when received
@@ -1499,15 +1499,15 @@ export class App extends React.Component<AppProps, AppState> {
     leftVideo.srcObject = null;
     await connectSocket();
     // --- get capabilities --
-    const data = await sendRequest('getRouterRtpCapabilities', {});
-    console.log('getRouterRtpCapabilities:', data);
+    const data = await sendRequest("getRouterRtpCapabilities", {});
+    console.log("getRouterRtpCapabilities:", data);
     await loadDevice(data);
     await subscribe();
   };
 
   stopPublishingLocalStream = async () => {
     if (this.localStreamToPublish) {
-      this.socket.emit('CMD:leaveScreenShare');
+      this.socket.emit("CMD:leaveScreenShare");
       // We don't actually need to unmute if it's a fileshare but this is fine
       this.localSetMute(false);
     }
@@ -1546,13 +1546,13 @@ export class App extends React.Component<AppProps, AppState> {
       // Stop sharing if the local stream stops
       localTrack.onended = () => this.stopPublishingLocalStream();
     }
-    if (this.state.roomMedia.includes('@')) {
-      let prefix = 'screenshare://';
+    if (this.state.roomMedia.includes("@")) {
+      let prefix = "screenshare://";
       if (this.playingFileShare()) {
-        prefix = 'fileshare://';
+        prefix = "fileshare://";
       }
-      const unprefixed = this.state.roomMedia.replace(prefix, '');
-      const mediasoupURL = unprefixed.split('@')[1];
+      const unprefixed = this.state.roomMedia.replace(prefix, "");
+      const mediasoupURL = unprefixed.split("@")[1];
       if (sharer?.clientId === selfId && this.mediasoupPubSocket == null) {
         await this.publishMediasoup(mediasoupURL);
       }
@@ -1623,7 +1623,7 @@ export class App extends React.Component<AppProps, AppState> {
         // console.log(stream);
         const leftVideo = this.HTMLInterface.getVideoEl();
         if (leftVideo) {
-          leftVideo.src = '';
+          leftVideo.src = "";
           leftVideo.srcObject = event.streams[0];
           this.localPlay();
         }
@@ -1637,21 +1637,21 @@ export class App extends React.Component<AppProps, AppState> {
     const user = this.context.user;
     const uid = user?.uid;
     const token = await user?.getIdToken();
-    this.socket.emit('CMD:startVBrowser', { options, uid, token });
+    this.socket.emit("CMD:startVBrowser", { options, uid, token });
   };
 
   stopVBrowser = async () => {
-    this.socket.emit('CMD:stopVBrowser');
+    this.socket.emit("CMD:stopVBrowser");
   };
 
   changeController = async (value: string | null) => {
     // console.log(data);
-    this.socket.emit('CMD:changeController', value);
+    this.socket.emit("CMD:changeController", value);
   };
 
   sendSignalSS = async (to: string, data: any, sharer?: boolean) => {
     // console.log('sendSS', to, data);
-    this.socket.emit('signalSS', { to, msg: data, sharer });
+    this.socket.emit("signalSS", { to, msg: data, sharer });
   };
 
   usingYoutube = () => {
@@ -1681,11 +1681,11 @@ export class App extends React.Component<AppProps, AppState> {
   };
 
   getVBrowserPass = () => {
-    return this.state.roomMedia.replace('vbrowser://', '').split('@')[0];
+    return this.state.roomMedia.replace("vbrowser://", "").split("@")[0];
   };
 
   getVBrowserHost = () => {
-    return this.state.roomMedia.replace('vbrowser://', '').split('@')[1];
+    return this.state.roomMedia.replace("vbrowser://", "").split("@")[1];
   };
 
   isPauseDisabled = () => {
@@ -1700,7 +1700,7 @@ export class App extends React.Component<AppProps, AppState> {
       target = this.Player().getDuration() + (customTime ?? 0);
     }
     if (target >= 0 && target < Infinity) {
-      console.log('syncing self to leader or custom:', target);
+      console.log("syncing self to leader or custom:", target);
       this.Player().seekVideo(target);
     }
   };
@@ -1717,7 +1717,7 @@ export class App extends React.Component<AppProps, AppState> {
           !this.state.isAutoPlayable ||
           (this.localStreamToPublish && !this.isLocalStreamAFile)
         ) {
-          console.log('auto-muting to allow autoplay or screenshare host');
+          console.log("auto-muting to allow autoplay or screenshare host");
           this.localSetMute(true);
         } else {
           this.localSetMute(false);
@@ -1726,7 +1726,7 @@ export class App extends React.Component<AppProps, AppState> {
           await this.Player().playVideo();
         } catch (e: any) {
           console.warn(e, e.name);
-          if (e.name === 'NotSupportedError' && this.usingNative()) {
+          if (e.name === "NotSupportedError" && this.usingNative()) {
             this.setState({ loading: false, nonPlayableMedia: true });
           }
         }
@@ -1759,11 +1759,11 @@ export class App extends React.Component<AppProps, AppState> {
 
   roomSetPlaybackRate = (rate: number) => {
     // emit an event to the server
-    this.socket.emit('CMD:playbackRate', rate);
+    this.socket.emit("CMD:playbackRate", rate);
   };
 
   roomSetLoop = (loop: boolean) => {
-    this.socket.emit('CMD:loop', loop);
+    this.socket.emit("CMD:loop", loop);
   };
 
   roomTogglePlay = () => {
@@ -1775,10 +1775,10 @@ export class App extends React.Component<AppProps, AppState> {
     }
     const shouldPlay = this.Player().shouldPlay();
     if (shouldPlay) {
-      this.socket.emit('CMD:play');
+      this.socket.emit("CMD:play");
       this.localPlay();
     } else {
-      this.socket.emit('CMD:pause');
+      this.socket.emit("CMD:pause");
       this.localPause();
     }
   };
@@ -1788,7 +1788,7 @@ export class App extends React.Component<AppProps, AppState> {
     target = Math.max(target, 0);
     this.Player().seekVideo(target);
     const toSend = this.getRoomTSToSet(target);
-    this.socket.emit('CMD:seek', toSend);
+    this.socket.emit("CMD:seek", toSend);
   };
 
   getRoomTSToSet = (time: number) => {
@@ -1809,19 +1809,19 @@ export class App extends React.Component<AppProps, AppState> {
   };
 
   onKeydown = (e: any) => {
-    if (!document.activeElement || document.activeElement.tagName === 'BODY') {
-      if (e.key === ' ') {
+    if (!document.activeElement || document.activeElement.tagName === "BODY") {
+      if (e.key === " ") {
         e.preventDefault();
         this.roomTogglePlay();
-      } else if (e.key === 'ArrowRight') {
+      } else if (e.key === "ArrowRight") {
         this.roomSeek(this.Player().getCurrentTime() + 10);
-      } else if (e.key === 'ArrowLeft') {
+      } else if (e.key === "ArrowLeft") {
         this.roomSeek(this.Player().getCurrentTime() - 10);
-      } else if (e.key === 't') {
+      } else if (e.key === "t") {
         this.localFullScreen(false);
-      } else if (e.key === 'f') {
+      } else if (e.key === "f") {
         this.localFullScreen(true);
-      } else if (e.key === 'm') {
+      } else if (e.key === "m") {
         this.localToggleMute();
       }
     }
@@ -1834,7 +1834,7 @@ export class App extends React.Component<AppProps, AppState> {
       if (this.playingVBrowser() && !isMobile()) {
         // vbrowser needs to fullscreen the control wrapper div
         // Can't really control the VBrowser on mobile anyway, so just fullscreen the video
-        container = document.getElementById('leftVideoParent') as HTMLElement;
+        container = document.getElementById("leftVideoParent") as HTMLElement;
       } else {
         // fullscreen just the video
         container = this.Player().getVideoEl();
@@ -1866,7 +1866,7 @@ export class App extends React.Component<AppProps, AppState> {
   };
 
   roomSetMedia = (value: string) => {
-    this.socket.emit('CMD:host', value);
+    this.socket.emit("CMD:host", value);
   };
 
   roomPlaylistPlay = (index: number) => {
@@ -1875,72 +1875,72 @@ export class App extends React.Component<AppProps, AppState> {
   };
 
   roomPlaylistAdd = (value: string) => {
-    this.socket.emit('CMD:playlistAdd', value);
+    this.socket.emit("CMD:playlistAdd", value);
   };
 
   roomPlaylistMove = (index: number, toIndex: number) => {
-    this.socket.emit('CMD:playlistMove', { index, toIndex });
+    this.socket.emit("CMD:playlistMove", { index, toIndex });
   };
 
   roomPlaylistDelete = (index: number) => {
-    this.socket.emit('CMD:playlistDelete', index);
+    this.socket.emit("CMD:playlistDelete", index);
   };
 
   updateName = (name: string) => {
     this.setState({ myName: name });
-    this.socket.emit('CMD:name', name);
-    window.localStorage.setItem('watchparty-username', name);
+    this.socket.emit("CMD:name", name);
+    window.localStorage.setItem("watchparty-username", name);
   };
 
   updatePicture = (url: string) => {
     this.setState({ myPicture: url });
-    this.socket.emit('CMD:picture', url);
+    this.socket.emit("CMD:picture", url);
   };
 
   updateUid = async (user: firebase.User) => {
     const uid = user.uid;
     const token = await user.getIdToken();
-    this.socket.emit('CMD:uid', { uid, token });
+    this.socket.emit("CMD:uid", { uid, token });
   };
 
   getMediaDisplayName = (input?: string) => {
     if (!input) {
-      return '';
+      return "";
     }
     // Show the whole URL for youtube
     if (this.usingYoutube()) {
       return input;
     }
-    if (input.startsWith('screenshare://')) {
+    if (input.startsWith("screenshare://")) {
       const sharer = this.state.participants.find((user) => user.isScreenShare);
-      return this.state.nameMap[sharer?.id ?? ''] + "'s screen";
+      return this.state.nameMap[sharer?.id ?? ""] + "'s screen";
     }
-    if (input.startsWith('fileshare://')) {
+    if (input.startsWith("fileshare://")) {
       const sharer = this.state.participants.find((user) => user.isScreenShare);
-      return this.state.nameMap[sharer?.id ?? ''] + "'s file";
+      return this.state.nameMap[sharer?.id ?? ""] + "'s file";
     }
-    if (input.startsWith('vbrowser://')) {
-      return 'Virtual Browser' + (this.state.isVBrowserLarge ? '+' : '');
+    if (input.startsWith("vbrowser://")) {
+      return "Virtual Browser" + (this.state.isVBrowserLarge ? "+" : "");
     }
     if (isMagnet(input)) {
       const magnetParsed = new URLSearchParams(input);
-      const index = magnetParsed.get('fileIndex');
-      return magnetParsed.get('dn') + (index != null ? ` (file ${index})` : '');
+      const index = magnetParsed.get("fileIndex");
+      return magnetParsed.get("dn") + (index != null ? ` (file ${index})` : "");
     }
-    if (input.includes('/stream?torrent=magnet')) {
+    if (input.includes("/stream?torrent=magnet")) {
       const search = new URL(input).search;
       const searchParsed = new URLSearchParams(search);
-      const magnetUrl = searchParsed.get('torrent') ?? '';
+      const magnetUrl = searchParsed.get("torrent") ?? "";
       const magnetParsed = new URLSearchParams(magnetUrl);
-      const index = searchParsed.get('fileIndex');
+      const index = searchParsed.get("fileIndex");
       return (
-        (magnetParsed.get('dn') ?? searchParsed.get('dn')) +
-        (index != null ? ` (file ${index})` : '')
+        (magnetParsed.get("dn") ?? searchParsed.get("dn")) +
+        (index != null ? ` (file ${index})` : "")
       );
     }
-    if (input.includes('/proxy')) {
+    if (input.includes("/proxy")) {
       const urlParsed = new URLSearchParams(input);
-      const displayName = urlParsed.get('displayName');
+      const displayName = urlParsed.get("displayName");
       if (displayName) {
         return displayName;
       }
@@ -1969,7 +1969,7 @@ export class App extends React.Component<AppProps, AppState> {
     }
     if (this.state.playlist.length) {
       // Pass the url of the video at the time this video was started
-      this.socket.emit('CMD:playlistNext', url);
+      this.socket.emit("CMD:playlistNext", url);
       return;
     }
     // Play next fileIndex
@@ -2070,7 +2070,7 @@ export class App extends React.Component<AppProps, AppState> {
             getSubtitleMode={this.Player().getSubtitleMode}
           />
         )}
-        {this.state.state === 'starting' && (
+        {this.state.state === "starting" && (
           <Overlay className={styles.flexCenter}>
             <Title order={2}>Loading...</Title>
           </Overlay>
@@ -2113,9 +2113,9 @@ export class App extends React.Component<AppProps, AppState> {
             title="Error"
             color="red"
             style={{
-              position: 'fixed',
-              bottom: '10px',
-              right: '10px',
+              position: "fixed",
+              bottom: "10px",
+              right: "10px",
               zIndex: 1000,
             }}
           >
@@ -2127,9 +2127,9 @@ export class App extends React.Component<AppProps, AppState> {
             title="Success"
             color="green"
             style={{
-              position: 'fixed',
-              bottom: '10px',
-              right: '10px',
+              position: "fixed",
+              bottom: "10px",
+              right: "10px",
               zIndex: 1000,
             }}
           >
@@ -2141,10 +2141,10 @@ export class App extends React.Component<AppProps, AppState> {
             color="yellow"
             // header={this.state.warningMessage}
             style={{
-              position: 'fixed',
-              top: '10px',
-              left: '50%',
-              transform: 'translate(-50%, 0)',
+              position: "fixed",
+              top: "10px",
+              left: "50%",
+              transform: "translate(-50%, 0)",
               zIndex: 1000,
             }}
           >
@@ -2161,24 +2161,24 @@ export class App extends React.Component<AppProps, AppState> {
         {
           <div
             className={styles.mobileStack}
-            style={{ margin: '0 8px', display: 'flex', columnGap: '32px' }}
+            style={{ margin: "0 8px", display: "flex", columnGap: "32px" }}
           >
             <div
               className={
                 (this.state.fullScreen
                   ? styles.fullHeightColumnFullscreen
                   : styles.fullHeightColumn) +
-                ' ' +
+                " " +
                 styles.leftColumn
               }
             >
               <div
                 style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  height: '100%',
-                  position: 'relative',
-                  gap: '4px',
+                  display: "flex",
+                  flexDirection: "column",
+                  height: "100%",
+                  position: "relative",
+                  gap: "4px",
                 }}
               >
                 {!this.state.fullScreen && (
@@ -2272,25 +2272,25 @@ export class App extends React.Component<AppProps, AppState> {
                             }
                             data={[
                               {
-                                label: '1080p (Plus only)',
-                                value: '1920x1080@30',
+                                label: "1080p (Plus only)",
+                                value: "1920x1080@30",
                                 disabled: !this.state.isVBrowserLarge,
                               },
                               {
-                                label: '720p',
-                                value: '1280x720@30',
+                                label: "720p",
+                                value: "1280x720@30",
                               },
                               {
-                                label: '576p',
-                                value: '1024x576@60',
+                                label: "576p",
+                                value: "1024x576@60",
                               },
                               {
-                                label: '486p',
-                                value: '864x486@60',
+                                label: "486p",
+                                value: "864x486@60",
                               },
                               {
-                                label: '360p',
-                                value: '640x360@60',
+                                label: "360p",
+                                value: "640x360@60",
                               },
                             ]}
                           ></Select>
@@ -2305,24 +2305,24 @@ export class App extends React.Component<AppProps, AppState> {
                             }}
                             data={[
                               {
-                                label: 'Eco (0.25x)',
-                                value: '0.25',
+                                label: "Eco (0.25x)",
+                                value: "0.25",
                               },
                               {
-                                label: 'Low (0.5x)',
-                                value: '0.5',
+                                label: "Low (0.5x)",
+                                value: "0.5",
                               },
                               {
-                                label: 'Standard (1x)',
-                                value: '1',
+                                label: "Standard (1x)",
+                                value: "1",
                               },
                               {
-                                label: 'High (1.5x)',
-                                value: '1.5',
+                                label: "High (1.5x)",
+                                value: "1.5",
                               },
                               {
-                                label: 'Ultra (2x)',
-                                value: '2',
+                                label: "Ultra (2x)",
+                                value: "2",
                               },
                             ]}
                           ></Select>
@@ -2360,7 +2360,7 @@ export class App extends React.Component<AppProps, AppState> {
                         <SearchComponent
                           setMedia={this.roomSetMedia}
                           playlistAdd={this.roomPlaylistAdd}
-                          type={'youtube'}
+                          type={"youtube"}
                           disabled={!this.haveLock()}
                         />
                       )}
@@ -2368,7 +2368,7 @@ export class App extends React.Component<AppProps, AppState> {
                         <SearchComponent
                           setMedia={this.roomSetMedia}
                           playlistAdd={this.roomPlaylistAdd}
-                          type={'stream'}
+                          type={"stream"}
                           launchMultiSelect={this.launchMultiSelect}
                           disabled={!this.haveLock()}
                         />
@@ -2376,7 +2376,7 @@ export class App extends React.Component<AppProps, AppState> {
                     </div>
                   </React.Fragment>
                 )}
-                <div style={{ flexGrow: 1, position: 'relative' }}>
+                <div style={{ flexGrow: 1, position: "relative" }}>
                   <div className={styles.playerContainer}>
                     {!this.state.isAutoPlayable && this.state.roomMedia && (
                       <Overlay className={styles.flexCenter}>
@@ -2405,14 +2405,14 @@ export class App extends React.Component<AppProps, AppState> {
                             <div
                               className={styles.flexCenter}
                               style={{
-                                flexDirection: 'column',
+                                flexDirection: "column",
                               }}
                             >
                               <Loader />
                               <div>
                                 {this.playingVBrowser()
-                                  ? 'Launching virtual browser. This can take up to a minute.'
-                                  : ''}
+                                  ? "Launching virtual browser. This can take up to a minute."
+                                  : ""}
                               </div>
                             </div>
                           )}
@@ -2440,8 +2440,8 @@ export class App extends React.Component<AppProps, AppState> {
                       style={{
                         display:
                           this.usingYoutube() && !this.state.loading
-                            ? 'block'
-                            : 'none',
+                            ? "block"
+                            : "none",
                       }}
                       title="YouTube"
                       id="leftYt"
@@ -2476,9 +2476,9 @@ export class App extends React.Component<AppProps, AppState> {
                           display:
                             (this.usingNative() && !this.state.loading) ||
                             this.state.fullScreen
-                              ? 'block'
-                              : 'none',
-                          width: '100%',
+                              ? "block"
+                              : "none",
+                          width: "100%",
                           maxHeight: VIDEO_MAX_HEIGHT_CSS,
                         }}
                         id="leftVideo"
@@ -2493,8 +2493,8 @@ export class App extends React.Component<AppProps, AppState> {
                           color: softWhite,
                           fontWeight: 400,
                           fontSize: 10,
-                          lineHeight: '8px',
-                          position: 'absolute',
+                          lineHeight: "8px",
+                          position: "absolute",
                           bottom: 0,
                           right: 0,
                           zIndex: 1,
@@ -2504,11 +2504,11 @@ export class App extends React.Component<AppProps, AppState> {
                           (this.state.downloaded / this.state.total) * 100,
                           100,
                         ).toFixed(2) +
-                          '% - ' +
+                          "% - " +
                           formatSpeed(this.state.speed) +
-                          ' - ' +
+                          " - " +
                           this.state.connections +
-                          ' connections'}
+                          " connections"}
                       </div>
                     )}
                   </div>
@@ -2523,7 +2523,7 @@ export class App extends React.Component<AppProps, AppState> {
                           showChatColumn: newVal,
                         });
                         window.localStorage.setItem(
-                          'watchparty-showchatcolumn',
+                          "watchparty-showchatcolumn",
                           Number(newVal).toString(),
                         );
                       }}
@@ -2540,29 +2540,29 @@ export class App extends React.Component<AppProps, AppState> {
             </div>
             <div
               style={{
-                display: 'flex',
-                flexDirection: 'column',
-                position: 'relative',
+                display: "flex",
+                flexDirection: "column",
+                position: "relative",
                 width: this.state.showChatColumn ? 400 : 0,
                 maxWidth: 400,
-                overflow: 'hidden',
-                gap: '4px',
+                overflow: "hidden",
+                gap: "4px",
               }}
               className={`${
                 (this.state.fullScreen
                   ? styles.fullHeightColumnFullscreen
                   : styles.fullHeightColumn) +
-                ' ' +
+                " " +
                 styles.rightColumn
               }`}
             >
-              <div style={{ display: 'flex', width: '100%', gap: '4px' }}>
+              <div style={{ display: "flex", width: "100%", gap: "4px" }}>
                 <TextInput
                   // description="Name"
                   style={{
                     visibility: this.state.showChatColumn
                       ? undefined
-                      : 'hidden',
+                      : "hidden",
                     flexGrow: 1,
                   }}
                   value={this.state.myName}
@@ -2586,7 +2586,7 @@ export class App extends React.Component<AppProps, AppState> {
                 />
                 <InviteButton />
               </div>
-              <div style={{ display: 'flex', gap: '4px' }}>
+              <div style={{ display: "flex", gap: "4px" }}>
                 <Button
                   className={styles.shareButton}
                   color="grey"
@@ -2615,7 +2615,7 @@ export class App extends React.Component<AppProps, AppState> {
                   </Menu.Target>
                   <Menu.Dropdown
                     style={{
-                      overflowY: playlist.length > 0 ? 'scroll' : undefined,
+                      overflowY: playlist.length > 0 ? "scroll" : undefined,
                       maxHeight: 400,
                       maxWidth: isMobile() ? 400 : 600,
                     }}
@@ -2627,7 +2627,7 @@ export class App extends React.Component<AppProps, AppState> {
                     )}
                     {playlist.map((item: PlaylistVideo, index: number) => {
                       if (Boolean(item.img)) {
-                        item.type = 'youtube';
+                        item.type = "youtube";
                       }
                       return (
                         <Menu.Item key={index}>
@@ -2661,21 +2661,21 @@ export class App extends React.Component<AppProps, AppState> {
                   <IconSettings />
                 </Button>
               </div>
-              {this.state.state === 'connected' && (
+              {this.state.state === "connected" && (
                 <div
                   style={{
-                    position: 'absolute',
-                    background: 'rgba(10, 10, 10, 0.6)',
+                    position: "absolute",
+                    background: "rgba(10, 10, 10, 0.6)",
                     zIndex: 200,
                     left: 0,
                     top: 76,
                     height: this.state.showPeopleColumn
-                      ? 'calc(100% - 120px)'
-                      : '0%',
-                    width: '100%',
-                    overflowY: 'auto',
+                      ? "calc(100% - 120px)"
+                      : "0%",
+                    width: "100%",
+                    overflowY: "auto",
                     // visibility: this.state.showPeopleColumn ? 'visible' : 'hidden',
-                    transition: 'height ease-out 0.5s',
+                    transition: "height ease-out 0.5s",
                   }}
                 >
                   <VideoChat

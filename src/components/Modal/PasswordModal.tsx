@@ -1,6 +1,6 @@
-import React, { useCallback } from 'react';
-import { Modal, PasswordInput, ActionIcon } from '@mantine/core';
-import { IconKey } from '@tabler/icons-react';
+import React, { useCallback } from "react";
+import { Modal, PasswordInput, ActionIcon } from "@mantine/core";
+import { IconKey } from "@tabler/icons-react";
 
 export const PasswordModal = ({
   savedPasswords,
@@ -11,10 +11,10 @@ export const PasswordModal = ({
 }) => {
   const setPassword = useCallback(() => {
     window.localStorage.setItem(
-      'watchparty-passwords',
+      "watchparty-passwords",
       JSON.stringify({
         ...savedPasswords,
-        [roomId]: (document.getElementById('roomPassword') as HTMLInputElement)
+        [roomId]: (document.getElementById("roomPassword") as HTMLInputElement)
           ?.value,
       }),
     );
@@ -31,7 +31,7 @@ export const PasswordModal = ({
     >
       <PasswordInput
         id="roomPassword"
-        onKeyDown={(e: any) => e.key === 'Enter' && setPassword()}
+        onKeyDown={(e: any) => e.key === "Enter" && setPassword()}
         rightSection={
           <ActionIcon onClick={setPassword}>
             <IconKey size={16} />

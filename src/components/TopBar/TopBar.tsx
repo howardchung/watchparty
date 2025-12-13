@@ -1,16 +1,16 @@
-import React, { useCallback, useContext } from 'react';
-import { serverPath, getUserImage, softWhite } from '../../utils/utils';
-import { ActionIcon, Avatar, Button, Menu, Text } from '@mantine/core';
-import firebase from 'firebase/compat/app';
-import 'firebase/compat/auth';
-import { LoginModal } from '../Modal/LoginModal';
-import { SubscribeButton } from '../SubscribeButton/SubscribeButton';
-import { ProfileModal } from '../Modal/ProfileModal';
-import Announce from '../Announce/Announce';
-import { InviteButton } from '../InviteButton/InviteButton';
-import appStyles from '../App/App.module.css';
-import { MetadataContext } from '../../MetadataContext';
-import config from '../../config';
+import React, { useCallback, useContext } from "react";
+import { serverPath, getUserImage, softWhite } from "../../utils/utils";
+import { ActionIcon, Avatar, Button, Menu, Text } from "@mantine/core";
+import firebase from "firebase/compat/app";
+import "firebase/compat/auth";
+import { LoginModal } from "../Modal/LoginModal";
+import { SubscribeButton } from "../SubscribeButton/SubscribeButton";
+import { ProfileModal } from "../Modal/ProfileModal";
+import Announce from "../Announce/Announce";
+import { InviteButton } from "../InviteButton/InviteButton";
+import appStyles from "../App/App.module.css";
+import { MetadataContext } from "../../MetadataContext";
+import config from "../../config";
 import {
   IconBrandDiscord,
   IconBrandFacebookFilled,
@@ -21,20 +21,20 @@ import {
   IconLogin,
   IconMailFilled,
   IconTrash,
-} from '@tabler/icons-react';
-import styles from './TopBar.module.css';
+} from "@tabler/icons-react";
+import styles from "./TopBar.module.css";
 
 export async function createRoom(
   user: firebase.User | undefined,
   openNewTab: boolean | undefined,
-  video: string = '',
+  video: string = "",
 ) {
   const uid = user?.uid;
   const token = await user?.getIdToken();
-  const response = await fetch(serverPath + '/createRoom', {
-    method: 'POST',
+  const response = await fetch(serverPath + "/createRoom", {
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({
       uid,
@@ -45,9 +45,9 @@ export async function createRoom(
   const data = await response.json();
   const { name } = data;
   if (openNewTab) {
-    window.open('/watch' + name);
+    window.open("/watch" + name);
   } else {
-    window.location.assign('/watch' + name);
+    window.location.assign("/watch" + name);
   }
 }
 
@@ -88,11 +88,11 @@ export class SignInButton extends React.Component<SignInButtonProps> {
       return (
         <div
           style={{
-            margin: '4px',
-            minWidth: '40px',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
+            margin: "4px",
+            minWidth: "40px",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
           }}
         >
           <Avatar
@@ -151,7 +151,7 @@ export class ListRoomsButton extends React.Component<{}> {
       await fetch(
         serverPath +
           `/deleteRoom?uid=${this.context.user?.uid}&token=${token}&roomId=${roomId}`,
-        { method: 'DELETE' },
+        { method: "DELETE" },
       );
       this.setState({
         rooms: this.state.rooms.filter((room) => room.roomId !== roomId),
@@ -182,10 +182,10 @@ export class ListRoomsButton extends React.Component<{}> {
                 key={room.roomId}
                 component="a"
                 href={
-                  room.vanity ? '/r/' + room.vanity : '/watch' + room.roomId
+                  room.vanity ? "/r/" + room.vanity : "/watch" + room.roomId
                 }
               >
-                <div style={{ display: 'flex', alignItems: 'center' }}>
+                <div style={{ display: "flex", alignItems: "center" }}>
                   <div>
                     <Text>
                       {room.vanity
@@ -196,7 +196,7 @@ export class ListRoomsButton extends React.Component<{}> {
                       {room.roomId}
                     </Text>
                   </div>
-                  <div style={{ marginLeft: 'auto', paddingLeft: '20px' }}>
+                  <div style={{ marginLeft: "auto", paddingLeft: "20px" }}>
                     <ActionIcon
                       onClick={(e: React.MouseEvent) => {
                         e.stopPropagation();
@@ -233,14 +233,14 @@ export const TopBar = (props: {
     <React.Fragment>
       <div
         style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          padding: '4px 8px',
-          rowGap: '8px',
+          display: "flex",
+          flexWrap: "wrap",
+          padding: "4px 8px",
+          rowGap: "8px",
         }}
       >
-        <a href="/" style={{ display: 'flex' }}>
-          <img style={{ width: '56px', height: '56px' }} src="/logo192.png" />
+        <a href="/" style={{ display: "flex" }}>
+          <img style={{ width: "56px", height: "56px" }} src="/logo192.png" />
           {/* <div
               style={{
                 height: '48px',
@@ -279,17 +279,17 @@ export const TopBar = (props: {
         {props.roomTitle || props.roomDescription ? (
           <div
             style={{
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
               marginRight: 10,
               marginLeft: 10,
             }}
           >
             <div
               style={{
-                fontSize: '30px',
-                lineHeight: '30px',
+                fontSize: "30px",
+                lineHeight: "30px",
                 color: props.roomTitleColor || softWhite,
                 fontWeight: 700,
                 letterSpacing: 1,
@@ -303,32 +303,32 @@ export const TopBar = (props: {
           </div>
         ) : (
           <React.Fragment>
-            <a href="/" style={{ display: 'flex', textDecoration: 'none' }}>
+            <a href="/" style={{ display: "flex", textDecoration: "none" }}>
               <div
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
+                  display: "flex",
+                  alignItems: "center",
                 }}
               >
                 <div
                   style={{
-                    textTransform: 'uppercase',
+                    textTransform: "uppercase",
                     fontWeight: 700,
-                    color: '#2185d0',
-                    fontSize: '30px',
-                    lineHeight: '30px',
+                    color: "#2185d0",
+                    fontSize: "30px",
+                    lineHeight: "30px",
                   }}
                 >
                   Watch
                 </div>
                 <div
                   style={{
-                    textTransform: 'uppercase',
+                    textTransform: "uppercase",
                     fontWeight: 700,
-                    color: '#21ba45',
-                    fontSize: '30px',
-                    lineHeight: '30px',
-                    marginLeft: 'auto',
+                    color: "#21ba45",
+                    fontSize: "30px",
+                    lineHeight: "30px",
+                    marginLeft: "auto",
                   }}
                 >
                   Party
@@ -341,18 +341,18 @@ export const TopBar = (props: {
         <div
           className={appStyles.mobileStack}
           style={{
-            display: 'flex',
-            marginLeft: 'auto',
-            alignItems: 'center',
-            gap: '4px',
+            display: "flex",
+            marginLeft: "auto",
+            alignItems: "center",
+            gap: "4px",
           }}
         >
           <div
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '4px',
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "4px",
             }}
           >
             <ActionIcon

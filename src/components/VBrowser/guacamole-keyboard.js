@@ -58,7 +58,7 @@ Guacamole.Keyboard = function Keyboard(element) {
    * @constant
    * @type {!string}
    */
-  var EVENT_MARKER = '_GUAC_KEYBOARD_HANDLED_BY_' + guacKeyboardID;
+  var EVENT_MARKER = "_GUAC_KEYBOARD_HANDLED_BY_" + guacKeyboardID;
 
   /**
    * Fired whenever the user presses a key with the element associated
@@ -690,7 +690,7 @@ Guacamole.Keyboard = function Keyboard(element) {
     var typedCharacter;
 
     // If identifier is U+xxxx, decode Unicode character
-    var unicodePrefixLocation = identifier.indexOf('U+');
+    var unicodePrefixLocation = identifier.indexOf("U+");
     if (unicodePrefixLocation >= 0) {
       var hex = identifier.substring(unicodePrefixLocation + 2);
       typedCharacter = String.fromCharCode(parseInt(hex, 16));
@@ -759,7 +759,7 @@ Guacamole.Keyboard = function Keyboard(element) {
     if (!keyIdentifier) return false;
 
     // Assume non-Unicode keyIdentifier values are sane
-    var unicodePrefixLocation = keyIdentifier.indexOf('U+');
+    var unicodePrefixLocation = keyIdentifier.indexOf("U+");
     if (unicodePrefixLocation === -1) return true;
 
     // If the Unicode codepoint isn't identical to the keyCode,
@@ -957,7 +957,7 @@ Guacamole.Keyboard = function Keyboard(element) {
   var syncModifierStates = function syncModifierStates(keyEvent) {
     // Resync state of alt
     updateModifierState(
-      'alt',
+      "alt",
       [
         0xffe9, // Left alt
         0xffea, // Right alt
@@ -968,7 +968,7 @@ Guacamole.Keyboard = function Keyboard(element) {
 
     // Resync state of shift
     updateModifierState(
-      'shift',
+      "shift",
       [
         0xffe1, // Left shift
         0xffe2, // Right shift
@@ -978,7 +978,7 @@ Guacamole.Keyboard = function Keyboard(element) {
 
     // Resync state of ctrl
     updateModifierState(
-      'ctrl',
+      "ctrl",
       [
         0xffe3, // Left ctrl
         0xffe4, // Right ctrl
@@ -988,7 +988,7 @@ Guacamole.Keyboard = function Keyboard(element) {
 
     // Resync state of meta
     updateModifierState(
-      'meta',
+      "meta",
       [
         0xffe7, // Left meta
         0xffe8, // Right meta
@@ -998,7 +998,7 @@ Guacamole.Keyboard = function Keyboard(element) {
 
     // Resync state of hyper
     updateModifierState(
-      'hyper',
+      "hyper",
       [
         0xffeb, // Left super/hyper
         0xffec, // Right super/hyper
@@ -1209,10 +1209,10 @@ Guacamole.Keyboard = function Keyboard(element) {
    */
   var getEventLocation = function getEventLocation(e) {
     // Use standard location, if possible
-    if ('location' in e) return e.location;
+    if ("location" in e) return e.location;
 
     // Failing that, attempt to use deprecated keyLocation
-    if ('keyLocation' in e) return e.keyLocation;
+    if ("keyLocation" in e) return e.keyLocation;
 
     // If no location is available, assume left side
     return 0;
@@ -1252,7 +1252,7 @@ Guacamole.Keyboard = function Keyboard(element) {
   this.listenTo = function listenTo(element) {
     // When key pressed
     element.addEventListener(
-      'keydown',
+      "keydown",
       function (e) {
         // Only intercept if handler set
         if (!guac_keyboard.onkeydown) return;
@@ -1277,7 +1277,7 @@ Guacamole.Keyboard = function Keyboard(element) {
 
     // When key pressed
     element.addEventListener(
-      'keypress',
+      "keypress",
       function (e) {
         // Only intercept if handler set
         if (!guac_keyboard.onkeydown && !guac_keyboard.onkeyup) return;
@@ -1296,7 +1296,7 @@ Guacamole.Keyboard = function Keyboard(element) {
 
     // When key released
     element.addEventListener(
-      'keyup',
+      "keyup",
       function (e) {
         // Only intercept if handler set
         if (!guac_keyboard.onkeyup) return;
@@ -1391,10 +1391,10 @@ Guacamole.Keyboard.ModifierState.fromKeyboardEvent = function (e) {
   // Use DOM3 getModifierState() for others
   if (e.getModifierState) {
     state.hyper =
-      e.getModifierState('OS') ||
-      e.getModifierState('Super') ||
-      e.getModifierState('Hyper') ||
-      e.getModifierState('Win');
+      e.getModifierState("OS") ||
+      e.getModifierState("Super") ||
+      e.getModifierState("Hyper") ||
+      e.getModifierState("Win");
   }
 
   return state;

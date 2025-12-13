@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useContext } from 'react';
+import React, { useState, useCallback, useContext } from "react";
 import {
   Button,
   Modal,
@@ -11,13 +11,13 @@ import {
   Loader,
   Text,
   Divider,
-} from '@mantine/core';
-import { getCurrentSettings, updateSettings } from './LocalSettings';
-import { serverPath } from '../../utils/utils';
-import { PermanentRoomModal } from '../Modal/PermanentRoomModal';
-import { Socket } from 'socket.io-client';
-import { HexColorPicker } from 'react-colorful';
-import { MetadataContext } from '../../MetadataContext';
+} from "@mantine/core";
+import { getCurrentSettings, updateSettings } from "./LocalSettings";
+import { serverPath } from "../../utils/utils";
+import { PermanentRoomModal } from "../Modal/PermanentRoomModal";
+import { Socket } from "socket.io-client";
+import { HexColorPicker } from "react-colorful";
+import { MetadataContext } from "../../MetadataContext";
 import {
   IconCheck,
   IconDeviceFloppy,
@@ -25,10 +25,10 @@ import {
   IconPaintFilled,
   IconTrash,
   IconX,
-} from '@tabler/icons-react';
-import styles from './Settings.module.css';
+} from "@tabler/icons-react";
+import styles from "./Settings.module.css";
 
-const defaultRoomTitleColor = '#FFFFFF';
+const defaultRoomTitleColor = "#FFFFFF";
 const roomTitleMaxCharLength = 50;
 const roomDescriptionMaxCharLength = 120;
 
@@ -94,12 +94,12 @@ export const SettingsModal = ({
   >(undefined);
   const [roomTitleColorInput, setRoomTitleColorInput] = useState<
     string | undefined
-  >('');
+  >("");
 
   const setRoomState = useCallback(
     async (data: any) => {
       const token = await user?.getIdToken();
-      socket.emit('CMD:setRoomState', {
+      socket.emit("CMD:setRoomState", {
         uid: user?.uid,
         token,
         ...data,
@@ -110,7 +110,7 @@ export const SettingsModal = ({
   const setRoomOwner = useCallback(
     async (data: any) => {
       const token = await user?.getIdToken();
-      socket.emit('CMD:setRoomOwner', {
+      socket.emit("CMD:setRoomOwner", {
         uid: user?.uid,
         token,
         ...data,
@@ -126,13 +126,13 @@ export const SettingsModal = ({
       }
       setValidVanity(false);
       setValidVanityLoading(true);
-      const response = await fetch(serverPath + '/resolveRoom/' + input);
+      const response = await fetch(serverPath + "/resolveRoom/" + input);
       const data = await response.json();
       setValidVanityLoading(false);
       if (
         data &&
         data.vanity &&
-        data.vanity !== roomLink.split('/').slice(-1)[0]
+        data.vanity !== roomLink.split("/").slice(-1)[0]
       ) {
         // Already exists and doesn't match current room
         setValidVanity(false);
@@ -156,7 +156,7 @@ export const SettingsModal = ({
         opened={modalOpen}
         onClose={() => setModalOpen(false)}
         centered
-        title={'Settings'}
+        title={"Settings"}
       >
         <div>
           <div className={styles.sectionHeader}>Room Settings</div>
@@ -167,24 +167,24 @@ export const SettingsModal = ({
             checked={Boolean(roomLock)}
             disabled={disableLocking && disableOwning}
             onChange={(e) => setRoomLock(Boolean(e.currentTarget.checked))}
-            label={!user ? 'requires login' : ''}
+            label={!user ? "requires login" : ""}
           />
           <SettingRow
             toggle
             name={`Make Room Permanent`}
             description={
-              'Prevent this room from expiring. This also unlocks additional room features.'
+              "Prevent this room from expiring. This also unlocks additional room features."
             }
             helpIcon={
               <IconHelpCircle
                 onClick={() => setPermModalOpen(true)}
-                style={{ cursor: 'pointer' }}
+                style={{ cursor: "pointer" }}
               />
             }
             checked={Boolean(owner)}
             disabled={disableOwning}
             onChange={(e) => setRoomOwner({ undo: !e.currentTarget.checked })}
-            label={!user ? 'requires login' : ''}
+            label={!user ? "requires login" : ""}
           />
 
           <Divider my="lg" />
@@ -227,7 +227,7 @@ export const SettingsModal = ({
               <TextInput
                 label={`Set Room Password`}
                 description="Users must know this password in order to join the room."
-                value={password ?? ''}
+                value={password ?? ""}
                 placeholder="Password"
                 onChange={(e) => {
                   setAdminSettingsChanged(true);
@@ -245,7 +245,7 @@ export const SettingsModal = ({
                 label={`Set Room Media Source`}
                 description="Set a media source URL to replace the default examples"
                 placeholder="YouTube playlist or link to text list of URLs"
-                value={mediaPath ?? ''}
+                value={mediaPath ?? ""}
                 onChange={(e) => {
                   setAdminSettingsChanged(true);
                   setMediaPath(e.target.value);
@@ -272,7 +272,7 @@ export const SettingsModal = ({
           <SettingRow
             disabled={false}
             content={
-              <div style={{ display: 'flex', gap: '14px' }}>
+              <div style={{ display: "flex", gap: "14px" }}>
                 <ActionIcon color="red" size="lg" onClick={() => clearChat()}>
                   <IconTrash />
                 </ActionIcon>
@@ -298,7 +298,7 @@ export const SettingsModal = ({
               <TextInput
                 label={`Set Custom Room URL`}
                 description="Set a custom URL for this room. Inappropriate names may be revoked."
-                value={vanity ?? ''}
+                value={vanity ?? ""}
                 disabled={!isSubscriber}
                 onChange={(e: any) => {
                   setAdminSettingsChanged(true);
@@ -327,12 +327,12 @@ export const SettingsModal = ({
             subOnly={true}
             content={
               <div
-                style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}
+                style={{ display: "flex", flexDirection: "column", gap: "4px" }}
               >
                 <TextInput
                   label={`Set Room Title, Description & Color`}
                   description="Set the room title, description and title color to be displayed in the top bar."
-                  value={roomTitleInput ?? roomTitle ?? ''}
+                  value={roomTitleInput ?? roomTitle ?? ""}
                   disabled={!isSubscriber}
                   maxLength={roomTitleMaxCharLength}
                   onChange={(e) => {
@@ -379,7 +379,7 @@ export const SettingsModal = ({
                   }
                 ></TextInput>
                 <TextInput
-                  value={roomDescriptionInput ?? roomDescription ?? ''}
+                  value={roomDescriptionInput ?? roomDescription ?? ""}
                   disabled={!isSubscriber}
                   maxLength={roomDescriptionMaxCharLength}
                   onChange={(e: any) => {
@@ -394,7 +394,7 @@ export const SettingsModal = ({
         )}
         {owner && owner === user?.uid && (
           <Button
-            style={{ marginTop: '8px' }}
+            style={{ marginTop: "8px" }}
             disabled={!validVanity || !adminSettingsChanged}
             onClick={() => {
               setRoomState({
@@ -449,13 +449,13 @@ const SettingRow = ({
     <>
       <div
         style={{
-          display: 'flex',
-          marginTop: '4px',
-          width: '100%',
-          position: 'relative',
+          display: "flex",
+          marginTop: "4px",
+          width: "100%",
+          position: "relative",
         }}
       >
-        <div style={{ position: 'absolute', top: 0, right: 0 }}>
+        <div style={{ position: "absolute", top: 0, right: 0 }}>
           {label ? (
             <Badge size="xs" color="red">
               {label}
@@ -479,7 +479,7 @@ const SettingRow = ({
           )}
           {content}
         </div>
-        <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+        <div style={{ display: "flex", alignItems: "flex-end" }}>
           {helpIcon}
         </div>
       </div>

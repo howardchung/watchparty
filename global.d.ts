@@ -1,4 +1,4 @@
-declare module 'srt-webvtt';
+declare module "srt-webvtt";
 
 type StringDict = Record<string, string>;
 type NumberDict = Record<string, number>;
@@ -6,7 +6,7 @@ type BooleanDict = Record<string, boolean>;
 type AnyDict = Record<string, any>;
 type PCDict = Record<string, RTCPeerConnection>;
 type HTMLVideoElementDict = Record<string, HTMLVideoElement>;
-type MediaType = 'vbrowser' | 'screenshare' | 'video' | 'youtube';
+type MediaType = "vbrowser" | "screenshare" | "video" | "youtube";
 
 interface User {
   id: string;
@@ -55,7 +55,7 @@ interface SearchResult extends PlaylistVideo {
   size?: string | number;
   seeders?: string;
   magnet?: string;
-  type: 'youtube' | 'file' | 'magnet';
+  type: "youtube" | "file" | "magnet";
   url: string;
   name: string;
   duration: number;

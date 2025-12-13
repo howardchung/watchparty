@@ -1,9 +1,9 @@
-import type { AssignedVM } from '../vm/base.ts';
-import { postgres } from './postgres.ts';
-import os from 'node:os';
-import { getRedisCountDay, getRedisCountDayDistinct, redis } from './redis.ts';
-import config from '../config.ts';
-import { apps } from '../ecosystem.config.js';
+import type { AssignedVM } from "../vm/base.ts";
+import { postgres } from "./postgres.ts";
+import os from "node:os";
+import { getRedisCountDay, getRedisCountDayDistinct, redis } from "./redis.ts";
+import config from "../config.ts";
+import { apps } from "../ecosystem.config.js";
 
 export async function getStats() {
   const now = Date.now();
@@ -96,26 +96,26 @@ export async function getStats() {
         rosterLength,
         roster,
       };
-      if (obj.video?.startsWith('http') && rosterLength) {
+      if (obj.video?.startsWith("http") && rosterLength) {
         currentHttp += 1;
       }
-      if (obj.video?.startsWith('screenshare://') && rosterLength) {
+      if (obj.video?.startsWith("screenshare://") && rosterLength) {
         currentScreenShare += 1;
       }
-      if (obj.video?.startsWith('fileshare://') && rosterLength) {
+      if (obj.video?.startsWith("fileshare://") && rosterLength) {
         currentFileShare += 1;
       }
       return obj;
     }),
   );
   // Singleton stats below (same for all shards)
-  const currentVideoChat = Number(await redis?.get('videoUsers'));
+  const currentVideoChat = Number(await redis?.get("videoUsers"));
   const cpuUsage = os.loadavg()[1] * 100;
   const redisUsage = Number(
     (await redis?.info())
-      ?.split('\n')
-      .find((line) => line.startsWith('used_memory:'))
-      ?.split(':')[1]
+      ?.split("\n")
+      .find((line) => line.startsWith("used_memory:"))
+      ?.split(":")[1]
       .trim(),
   );
   const postgresUsage = Number(
@@ -123,102 +123,102 @@ export async function getStats() {
       .pg_database_size,
   );
   const numPermaRooms = Number(
-    (await postgres?.query('SELECT count(1) from room WHERE owner IS NOT NULL'))
+    (await postgres?.query("SELECT count(1) from room WHERE owner IS NOT NULL"))
       ?.rows[0].count,
   );
   const numAllRooms = Number(
-    (await postgres?.query('SELECT count(1) from room'))?.rows[0].count,
+    (await postgres?.query("SELECT count(1) from room"))?.rows[0].count,
   );
   const numSubs = Number(
-    (await postgres?.query('SELECT count(1) from subscriber'))?.rows[0].count,
+    (await postgres?.query("SELECT count(1) from subscriber"))?.rows[0].count,
   );
-  const discordBotWatch = await getRedisCountDay('discordBotWatch');
-  const createRoomErrors = await getRedisCountDay('createRoomError');
-  const deleteAccounts = await getRedisCountDay('deleteAccount');
-  const chatMessages = await getRedisCountDay('chatMessages');
-  const addReactions = await getRedisCountDay('addReaction');
-  const hetznerApiRemaining = Number(await redis?.get('hetznerApiRemaining'));
-  const vBrowserStarts = await getRedisCountDay('vBrowserStarts');
-  const vBrowserLaunches = await getRedisCountDay('vBrowserLaunches');
-  const vBrowserFails = await getRedisCountDay('vBrowserFails');
-  const vBrowserStagingFails = await getRedisCountDay('vBrowserStagingFails');
-  const vBrowserReimages = await getRedisCountDay('vBrowserReimage');
-  const vBrowserCleanups = await getRedisCountDay('vBrowserCleanup');
+  const discordBotWatch = await getRedisCountDay("discordBotWatch");
+  const createRoomErrors = await getRedisCountDay("createRoomError");
+  const deleteAccounts = await getRedisCountDay("deleteAccount");
+  const chatMessages = await getRedisCountDay("chatMessages");
+  const addReactions = await getRedisCountDay("addReaction");
+  const hetznerApiRemaining = Number(await redis?.get("hetznerApiRemaining"));
+  const vBrowserStarts = await getRedisCountDay("vBrowserStarts");
+  const vBrowserLaunches = await getRedisCountDay("vBrowserLaunches");
+  const vBrowserFails = await getRedisCountDay("vBrowserFails");
+  const vBrowserStagingFails = await getRedisCountDay("vBrowserStagingFails");
+  const vBrowserReimages = await getRedisCountDay("vBrowserReimage");
+  const vBrowserCleanups = await getRedisCountDay("vBrowserCleanup");
   const vBrowserStopTimeout = await getRedisCountDay(
-    'vBrowserTerminateTimeout',
+    "vBrowserTerminateTimeout",
   );
-  const vBrowserStopEmpty = await getRedisCountDay('vBrowserTerminateEmpty');
-  const vBrowserStopManual = await getRedisCountDay('vBrowserTerminateManual');
-  const vBrowserStartMS = await redis?.lrange('vBrowserStartMS', 0, -1);
+  const vBrowserStopEmpty = await getRedisCountDay("vBrowserTerminateEmpty");
+  const vBrowserStopManual = await getRedisCountDay("vBrowserTerminateManual");
+  const vBrowserStartMS = await redis?.lrange("vBrowserStartMS", 0, -1);
   const vBrowserStageRetries = await redis?.lrange(
-    'vBrowserStageRetries',
+    "vBrowserStageRetries",
     0,
     -1,
   );
-  const vBrowserStageFails = await redis?.lrange('vBrowserStageFails', 0, -1);
-  const vBrowserSessionMS = await redis?.lrange('vBrowserSessionMS', 0, -1);
+  const vBrowserStageFails = await redis?.lrange("vBrowserStageFails", 0, -1);
+  const vBrowserSessionMS = await redis?.lrange("vBrowserSessionMS", 0, -1);
   // const vBrowserVMLifetime = await redis?.lrange('vBrowserVMLifetime', 0, -1);
-  const proxyReqs = await getRedisCountDay('proxyReqs');
-  const urlStarts = await getRedisCountDay('urlStarts');
-  const streamStarts = await getRedisCountDay('streamStarts');
-  const convertStarts = await getRedisCountDay('convertStarts');
-  const playlistAdds = await getRedisCountDay('playlistAdds');
-  const screenShareStarts = await getRedisCountDay('screenShareStarts');
-  const fileShareStarts = await getRedisCountDay('fileShareStarts');
-  const mediasoupStarts = await getRedisCountDay('mediasoupStarts');
-  const videoChatStarts = await getRedisCountDay('videoChatStarts');
-  const connectStarts = await getRedisCountDay('connectStarts');
+  const proxyReqs = await getRedisCountDay("proxyReqs");
+  const urlStarts = await getRedisCountDay("urlStarts");
+  const streamStarts = await getRedisCountDay("streamStarts");
+  const convertStarts = await getRedisCountDay("convertStarts");
+  const playlistAdds = await getRedisCountDay("playlistAdds");
+  const screenShareStarts = await getRedisCountDay("screenShareStarts");
+  const fileShareStarts = await getRedisCountDay("fileShareStarts");
+  const mediasoupStarts = await getRedisCountDay("mediasoupStarts");
+  const videoChatStarts = await getRedisCountDay("videoChatStarts");
+  const connectStarts = await getRedisCountDay("connectStarts");
   const connectStartsDistinct = await getRedisCountDayDistinct(
-    'connectStartsDistinct',
+    "connectStartsDistinct",
   );
-  const subUploads = await getRedisCountDay('subUploads');
-  const subDownloadsOS = await getRedisCountDay('subDownloadsOS');
-  const subSearchesOS = await getRedisCountDay('subSearchesOS');
-  const youtubeSearch = await getRedisCountDay('youtubeSearch');
-  const vBrowserClientIDsCard = await redis?.zcard('vBrowserClientIDs');
-  const vBrowserUIDsCard = await redis?.zcard('vBrowserUIDs');
-  const createRoomPreloads = await getRedisCountDay('createRoomPreload');
+  const subUploads = await getRedisCountDay("subUploads");
+  const subDownloadsOS = await getRedisCountDay("subDownloadsOS");
+  const subSearchesOS = await getRedisCountDay("subSearchesOS");
+  const youtubeSearch = await getRedisCountDay("youtubeSearch");
+  const vBrowserClientIDsCard = await redis?.zcard("vBrowserClientIDs");
+  const vBrowserUIDsCard = await redis?.zcard("vBrowserUIDs");
+  const createRoomPreloads = await getRedisCountDay("createRoomPreload");
 
   const vBrowserClientIDs = altArrayToObject(
     await redis?.zrevrangebyscore(
-      'vBrowserClientIDs',
-      '+inf',
-      '0',
-      'WITHSCORES',
-      'LIMIT',
+      "vBrowserClientIDs",
+      "+inf",
+      "0",
+      "WITHSCORES",
+      "LIMIT",
       0,
       20,
     ),
   );
   const vBrowserUIDs = altArrayToObject(
     await redis?.zrevrangebyscore(
-      'vBrowserUIDs',
-      '+inf',
-      '0',
-      'WITHSCORES',
-      'LIMIT',
+      "vBrowserUIDs",
+      "+inf",
+      "0",
+      "WITHSCORES",
+      "LIMIT",
       0,
       20,
     ),
   );
   const vBrowserClientIDMinutes = altArrayToObject(
     await redis?.zrevrangebyscore(
-      'vBrowserClientIDMinutes',
-      '+inf',
-      '0',
-      'WITHSCORES',
-      'LIMIT',
+      "vBrowserClientIDMinutes",
+      "+inf",
+      "0",
+      "WITHSCORES",
+      "LIMIT",
       0,
       20,
     ),
   );
   const vBrowserUIDMinutes = altArrayToObject(
     await redis?.zrevrangebyscore(
-      'vBrowserUIDMinutes',
-      '+inf',
-      '0',
-      'WITHSCORES',
-      'LIMIT',
+      "vBrowserUIDMinutes",
+      "+inf",
+      "0",
+      "WITHSCORES",
+      "LIMIT",
       0,
       20,
     ),
@@ -226,7 +226,7 @@ export async function getStats() {
 
   // Fetch VM stats from vmworker
   const resp = await fetch(
-    'http://localhost:' + config.VMWORKER_PORT + '/stats',
+    "http://localhost:" + config.VMWORKER_PORT + "/stats",
   );
   const vmManagerStats = await resp.json();
 

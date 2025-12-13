@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   Modal,
   Button,
@@ -6,24 +6,24 @@ import {
   TextInput,
   PasswordInput,
   Divider,
-} from '@mantine/core';
-import firebase from 'firebase/compat/app';
-import 'firebase/compat/auth';
+} from "@mantine/core";
+import firebase from "firebase/compat/app";
+import "firebase/compat/auth";
 import {
   IconBrandFacebookFilled,
   IconBrandGoogleFilled,
-} from '@tabler/icons-react';
-import config from '../../config';
+} from "@tabler/icons-react";
+import config from "../../config";
 
 export class LoginModal extends React.Component<{
   closeModal: () => void;
 }> {
   public state = {
-    email: '',
-    password: '',
+    email: "",
+    password: "",
     showCreate: false,
     showReset: false,
-    error: '',
+    error: "",
   };
 
   emailSignIn = async (email: string, password: string) => {
@@ -56,7 +56,7 @@ export class LoginModal extends React.Component<{
 
   render() {
     const { closeModal } = this.props;
-    const enabledOptions = config.VITE_FIREBASE_SIGNIN_METHODS.split(',');
+    const enabledOptions = config.VITE_FIREBASE_SIGNIN_METHODS.split(",");
     return (
       <>
         {this.state.showCreate && (
@@ -69,8 +69,8 @@ export class LoginModal extends React.Component<{
         )}
         <Modal opened onClose={closeModal} title="Login" size="auto" centered>
           <div>
-            <div style={{ display: 'flex', gap: '4px' }}>
-              {enabledOptions.includes('facebook') && (
+            <div style={{ display: "flex", gap: "4px" }}>
+              {enabledOptions.includes("facebook") && (
                 <Button
                   leftSection={<IconBrandFacebookFilled />}
                   onClick={this.facebookSignIn}
@@ -78,7 +78,7 @@ export class LoginModal extends React.Component<{
                   Facebook
                 </Button>
               )}
-              {enabledOptions.includes('google') && (
+              {enabledOptions.includes("google") && (
                 <Button
                   leftSection={<IconBrandGoogleFilled />}
                   onClick={this.googleSignIn}
@@ -87,7 +87,7 @@ export class LoginModal extends React.Component<{
                 </Button>
               )}
             </div>
-            {enabledOptions.includes('email') && (
+            {enabledOptions.includes("email") && (
               <>
                 <Divider
                   label="Or sign in with email"
@@ -100,9 +100,9 @@ export class LoginModal extends React.Component<{
                     this.emailSignIn(this.state.email, this.state.password);
                   }}
                   style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '8px',
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "8px",
                   }}
                 >
                   {this.state.error && (
@@ -129,9 +129,9 @@ export class LoginModal extends React.Component<{
                 <Divider label="Or" labelPosition="center" my="lg" />
                 <div
                   style={{
-                    display: 'flex',
-                    gap: '4px',
-                    justifyContent: 'center',
+                    display: "flex",
+                    gap: "4px",
+                    justifyContent: "center",
                   }}
                 >
                   <Button
@@ -159,7 +159,7 @@ export class LoginModal extends React.Component<{
 export class CreateModal extends React.Component<{
   closeModal: () => void;
 }> {
-  public state = { email: '', password: '', error: '' };
+  public state = { email: "", password: "", error: "" };
 
   createAccount = async (email: string, password: string) => {
     try {
@@ -185,7 +185,7 @@ export class CreateModal extends React.Component<{
             e.preventDefault();
             this.createAccount(this.state.email, this.state.password);
           }}
-          style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}
+          style={{ display: "flex", flexDirection: "column", gap: "8px" }}
         >
           {this.state.error && (
             <Alert color="red" title="Error">
@@ -214,7 +214,7 @@ export class CreateModal extends React.Component<{
 export class ResetModal extends React.Component<{
   closeModal: () => void;
 }> {
-  public state = { email: '', password: '', error: '' };
+  public state = { email: "", password: "", error: "" };
 
   resetPassword = async () => {
     try {
@@ -235,7 +235,7 @@ export class ResetModal extends React.Component<{
             e.preventDefault();
             this.resetPassword();
           }}
-          style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}
+          style={{ display: "flex", flexDirection: "column", gap: "8px" }}
         >
           {this.state.error && (
             <Alert color="red" title="Error">

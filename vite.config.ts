@@ -1,5 +1,5 @@
-import { loadEnvFile } from 'node:process';
-import fs from 'node:fs';
+import { loadEnvFile } from "node:process";
+import fs from "node:fs";
 
 try {
   loadEnvFile();
@@ -9,7 +9,7 @@ try {
 
 export default {
   build: {
-    outDir: 'build',
+    outDir: "build",
     // sourcemap: true,
   },
   server: {

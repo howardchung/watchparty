@@ -1,9 +1,9 @@
-import React, { useCallback, useContext, useState } from 'react';
-import { Button } from '@mantine/core';
-import { serverPath } from '../../utils/utils';
-import { SubscribeModal } from '../Modal/SubscribeModal';
-import { MetadataContext } from '../../MetadataContext';
-import { IconStarFilled, IconTool } from '@tabler/icons-react';
+import React, { useCallback, useContext, useState } from "react";
+import { Button } from "@mantine/core";
+import { serverPath } from "../../utils/utils";
+import { SubscribeModal } from "../Modal/SubscribeModal";
+import { MetadataContext } from "../../MetadataContext";
+import { IconStarFilled, IconTool } from "@tabler/icons-react";
 
 export const SubscribeButton = () => {
   const { isSubscriber } = useContext(MetadataContext);
@@ -30,10 +30,10 @@ export const SubscribeButton = () => {
 export const ManageSubButton = ({}: {}) => {
   const { user } = useContext(MetadataContext);
   const onManage = useCallback(async () => {
-    const resp = await fetch(serverPath + '/manageSub', {
-      method: 'POST',
+    const resp = await fetch(serverPath + "/manageSub", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         uid: user?.uid,

@@ -1,9 +1,9 @@
-import config from '../config.ts';
-import axios from 'axios';
-import { redis, redisCount } from '../utils/redis.ts';
-import { postgres as pg } from '../utils/postgres.ts';
-import type { PoolConfig, PoolRegion } from './utils.ts';
-import type { Client } from 'pg';
+import config from "../config.ts";
+import axios from "axios";
+import { redis, redisCount } from "../utils/redis.ts";
+import { postgres as pg } from "../utils/postgres.ts";
+import type { PoolConfig, PoolRegion } from "./utils.ts";
+import type { Client } from "pg";
 
 const incrInterval = 5 * 1000;
 const decrInterval = 15 * 1000;
@@ -15,7 +15,7 @@ const postgres = !pg ? (null as unknown as Client) : pg;
 
 export abstract class VMManager {
   protected isLarge = false;
-  protected region: PoolRegion = 'US';
+  protected region: PoolRegion = "US";
   private limitSize = 0;
   private minSize = 0;
   protected hostname: string | undefined;
@@ -57,7 +57,7 @@ export abstract class VMManager {
   };
 
   public getPoolName = () => {
-    return this.id + (this.isLarge ? 'Large' : '') + this.region;
+    return this.id + (this.isLarge ? "Large" : "") + this.region;
   };
 
   public getAdjustedBuffer = (): number => {
@@ -65,8 +65,8 @@ export abstract class VMManager {
     // If ramping config, adjust buffer based on the hour
     // During ramp down hours, keep a smaller buffer
     // During ramp up hours, keep a larger buffer
-    const rampDownHours = config.VM_POOL_RAMP_DOWN_HOURS.split(',').map(Number);
-    const rampUpHours = config.VM_POOL_RAMP_UP_HOURS.split(',').map(Number);
+    const rampDownHours = config.VM_POOL_RAMP_DOWN_HOURS.split(",").map(Number);
+    const rampUpHours = config.VM_POOL_RAMP_UP_HOURS.split(",").map(Number);
     const nowHour = new Date().getUTCHours();
     const isRampDown =
       rampDownHours.length &&
@@ -116,9 +116,9 @@ export abstract class VMManager {
 
   public getTag = () => {
     return (
-      (config.VBROWSER_TAG || 'vbrowser') +
+      (config.VBROWSER_TAG || "vbrowser") +
       this.region +
-      (this.isLarge ? 'Large' : '')
+      (this.isLarge ? "Large" : "")
     );
   };
 
@@ -163,7 +163,7 @@ export abstract class VMManager {
       );
       if (rows[0]?.roomId && rows[0]?.roomId !== roomId) {
         console.log(
-          '[RESET] %s: roomId mismatch on %s, expected %s, got %s',
+          "[RESET] %s: roomId mismatch on %s, expected %s, got %s",
           this.getPoolName(),
           vmid,
           rows[0]?.roomId,
@@ -172,7 +172,7 @@ export abstract class VMManager {
         return;
       }
     }
-    console.log('[RESET]', this.getPoolName(), vmid, roomId);
+    console.log("[RESET]", this.getPoolName(), vmid, roomId);
     // We generally want to reuse if the provider has per-hour billing
     // Since most user sessions are less than an hour
     // Otherwise if it's per-second or Docker, it's easier to just terminate it on reboot
@@ -190,7 +190,7 @@ export abstract class VMManager {
       // Check if VM needs to be reimaged
       if (this.imageId !== vmImageId) {
         await this.reimageVM(vmid);
-        redisCount('vBrowserReimage');
+        redisCount("vBrowserReimage");
         // Update the vmImageId
         await postgres.query(
           `UPDATE vbrowser SET image = $3 WHERE pool = $1 AND vmid = $2`,
@@ -211,7 +211,7 @@ export abstract class VMManager {
         `,
         [this.getPoolName(), vmid],
       );
-      console.log('UPSERT', result.rowCount);
+      console.log("UPSERT", result.rowCount);
       // Normally this should be an update, but we could insert if:
       // if cleaning up a VM we didn't record in db on create
       // if we resized down and deleted db row but didn't complete the termination
@@ -231,12 +231,12 @@ export abstract class VMManager {
     VALUES($1, $2, NOW(), 'staging', $3)`,
       [this.getPoolName(), id, this.imageId],
     );
-    redisCount('vBrowserLaunches');
+    redisCount("vBrowserLaunches");
     return id;
   };
 
   protected terminateVMWrapper = async (vmid: string) => {
-    console.log('[TERMINATE]', this.getPoolName(), vmid);
+    console.log("[TERMINATE]", this.getPoolName(), vmid);
     // Update the DB before calling terminate
     // If we don't actually complete the termination, cleanup will reset it
     const { command, rowCount } = await postgres.query(
@@ -251,14 +251,14 @@ export abstract class VMManager {
   checkVMReady = async (host: string) => {
     // NOTE: This URL doesn't work for docker since it doesn't have /
     // But since we don't reuse docker VMs it's ok
-    const url = 'https://' + host.replace('/', '/health');
+    const url = "https://" + host.replace("/", "/health");
     try {
       // const out = execSync(`curl -i -L -v --ipv4 '${host}'`);
       // if (!out.toString().startsWith('OK') && !out.toString().startsWith('404 page not found')) {
       //   throw new Error('mismatched response from health');
       // }
       const resp = await axios({
-        method: 'GET',
+        method: "GET",
         url,
         timeout: 1000,
       });
@@ -283,17 +283,17 @@ export abstract class VMManager {
         currentSize < (this.getLimitSize() || Infinity);
       if (launch) {
         console.log(
-          '[RESIZE-INCR]',
+          "[RESIZE-INCR]",
           this.getPoolName(),
-          'target:',
+          "target:",
           this.getAdjustedBuffer(),
-          'available:',
+          "available:",
           availableCount,
-          'staging:',
+          "staging:",
           stagingCount,
-          'currentSize:',
+          "currentSize:",
           currentSize,
-          'limit:',
+          "limit:",
           this.getLimitSize(),
         );
         try {
@@ -343,7 +343,7 @@ export abstract class VMManager {
         );
         const first = rows[0];
         if (first) {
-          console.log('[RESIZE-DECR] %s: %s', this.getPoolName(), first.vmid);
+          console.log("[RESIZE-DECR] %s: %s", this.getPoolName(), first.vmid);
           await this.terminateVMWrapper(first.vmid);
         }
       }
@@ -359,7 +359,7 @@ export abstract class VMManager {
         allVMs = await this.listVMs(this.getTag());
       } catch (e) {
         console.log(
-          '[CLEANUP] %s: failed to fetch VM list',
+          "[CLEANUP] %s: failed to fetch VM list",
           this.getPoolName(),
         );
         return;
@@ -377,20 +377,20 @@ export abstract class VMManager {
       );
       const inUse = new Set(rows.map((row: any) => row.vmid));
       console.log(
-        '[CLEANUP] %s: found %s VMs, %s to keep',
+        "[CLEANUP] %s: found %s VMs, %s to keep",
         this.getPoolName(),
         allVMs.length,
         inUse.size,
       );
       for (let server of allVMs) {
         if (!inUse.has(server.id)) {
-          redisCount('vBrowserCleanup');
-          console.log('[CLEANUP]', this.getPoolName(), server.id);
+          redisCount("vBrowserCleanup");
+          console.log("[CLEANUP]", this.getPoolName(), server.id);
           try {
             await this.resetVM(server.id);
             //this.terminateVMWrapper(server.id);
           } catch (e: any) {
-            console.warn('[CLEANUP]', this.getPoolName(), e.response?.data);
+            console.warn("[CLEANUP]", this.getPoolName(), e.response?.data);
           }
           await new Promise((resolve) => setTimeout(resolve, 2000));
         }
@@ -414,16 +414,16 @@ export abstract class VMManager {
         const retryCount = row.retries as number;
         let vm = row.data as VM | null;
         if (retryCount < this.minRetries) {
-          if (config.NODE_ENV === 'development') {
+          if (config.NODE_ENV === "development") {
             console.log(
-              '[CHECKSTAGING] %s: [vmid: %s] [attempt: %s] waiting for minRetries',
+              "[CHECKSTAGING] %s: [vmid: %s] [attempt: %s] waiting for minRetries",
               this.getPoolName(),
               vmid,
               retryCount,
             );
           }
           // Do a minimum # of retries to give reboot time
-          return [vmid, retryCount, false].join(',');
+          return [vmid, retryCount, false].join(",");
         }
         // Fetch data on first attempt
         // Try again only every once in a while to reduce load on API
@@ -437,10 +437,10 @@ export abstract class VMManager {
             console.warn(e.response?.data);
             if (e.response?.status === 404) {
               // Remove the VM because the provider says it doesn't exist
-              await postgres.query('DELETE FROM vbrowser WHERE id = $1', [
+              await postgres.query("DELETE FROM vbrowser WHERE id = $1", [
                 rowid,
               ]);
-              throw new Error('failed to find vm ' + vmid);
+              throw new Error("failed to find vm " + vmid);
             }
           }
           if (vm?.host) {
@@ -453,15 +453,15 @@ export abstract class VMManager {
         }
         if (!vm?.host) {
           console.log(
-            '[CHECKSTAGING] %s: no host for vm %s',
+            "[CHECKSTAGING] %s: no host for vm %s",
             this.getPoolName(),
             vmid,
           );
-          throw new Error('no host for vm ' + vmid);
+          throw new Error("no host for vm " + vmid);
         }
         if (retryCount % 150 === 0) {
           console.log(
-            '[CHECKSTAGING] %s: %s poweron, attach to network',
+            "[CHECKSTAGING] %s: %s poweron, attach to network",
             this.getPoolName(),
             vmid,
           );
@@ -469,10 +469,10 @@ export abstract class VMManager {
           //this.attachToNetwork(vmid);
         }
         if (retryCount % 180 === 0) {
-          console.log('[CHECKSTAGING]', this.getPoolName(), 'giving up:', vmid);
-          redisCount('vBrowserStagingFails');
-          await redis?.lpush('vBrowserStageFails', vmid);
-          await redis?.ltrim('vBrowserStageFails', 0, 19);
+          console.log("[CHECKSTAGING]", this.getPoolName(), "giving up:", vmid);
+          redisCount("vBrowserStagingFails");
+          await redis?.lpush("vBrowserStageFails", vmid);
+          await redis?.ltrim("vBrowserStageFails", 0, 19);
           // VM didn't come up. set image to null so we reimage
           await postgres.query(
             `UPDATE vbrowser SET image = NULL WHERE pool = $1 AND vmid = $2`,
@@ -481,15 +481,15 @@ export abstract class VMManager {
           await this.resetVM(vmid);
         }
         if (retryCount >= 180) {
-          throw new Error('too many attempts on vm ' + vmid);
+          throw new Error("too many attempts on vm " + vmid);
         }
         const ready = await this.checkVMReady(vm.host);
         if (
           ready ||
-          retryCount % (config.NODE_ENV === 'development' ? 1 : 30) === 0
+          retryCount % (config.NODE_ENV === "development" ? 1 : 30) === 0
         ) {
           console.log(
-            '[CHECKSTAGING] %s: [ready: %s] [vmid: %s] [retries: %s] [host: %s]',
+            "[CHECKSTAGING] %s: [ready: %s] [vmid: %s] [retries: %s] [host: %s]",
             this.getPoolName(),
             ready,
             vmid,
@@ -499,16 +499,16 @@ export abstract class VMManager {
         }
         if (ready) {
           const passUrl =
-            'https://' +
-            (vm.host.includes('/')
-              ? vm.host.replace('/', '/password')
-              : vm.host + '/password') +
-            (vm.host.includes('?') ? '&' : '?') +
-            'key=' +
+            "https://" +
+            (vm.host.includes("/")
+              ? vm.host.replace("/", "/password")
+              : vm.host + "/password") +
+            (vm.host.includes("?") ? "&" : "?") +
+            "key=" +
             config.VBROWSER_ADMIN_KEY;
           // console.log(passUrl);
           const resp2 = await axios({
-            method: 'GET',
+            method: "GET",
             url: passUrl,
             timeout: 1000,
           });
@@ -519,10 +519,10 @@ export abstract class VMManager {
             [rowid, pass],
           );
           // console.log(rows);
-          await redis?.lpush('vBrowserStageRetries', retryCount);
-          await redis?.ltrim('vBrowserStageRetries', 0, 19);
+          await redis?.lpush("vBrowserStageRetries", retryCount);
+          await redis?.ltrim("vBrowserStageRetries", 0, 19);
         }
-        return [vmid, retryCount, ready].join(',');
+        return [vmid, retryCount, ready].join(",");
       });
       // TODO log something if we timeout
       const result = await Promise.race([
@@ -532,13 +532,13 @@ export abstract class VMManager {
       return result;
     };
 
-    console.log('[VMWORKER] %s: starting background jobs', this.getPoolName());
+    console.log("[VMWORKER] %s: starting background jobs", this.getPoolName());
 
     setInterval(resizeVMGroupIncr, incrInterval);
     setInterval(resizeVMGroupDecr, decrInterval);
     setInterval(async () => {
       console.log(
-        '[STATS] %s: currentSize %s, available %s, staging %s, target %s',
+        "[STATS] %s: currentSize %s, available %s, staging %s, target %s",
         this.getPoolName(),
         await this.getCurrentSize(),
         await this.getAvailableCount(),
@@ -551,17 +551,17 @@ export abstract class VMManager {
     // Use while loop and delay between iterations rather than setInterval to avoid stacking requests
     setImmediate(async () => {
       while (true) {
-        console.time(this.getPoolName() + ':cleanup');
+        console.time(this.getPoolName() + ":cleanup");
         try {
           await cleanupVMGroup();
         } catch (e: any) {
           console.warn(
-            '[CLEANUPVMGROUP-ERROR]',
+            "[CLEANUPVMGROUP-ERROR]",
             this.getPoolName(),
             e.response?.data,
           );
         }
-        console.timeEnd(this.getPoolName() + ':cleanup');
+        console.timeEnd(this.getPoolName() + ":cleanup");
         await new Promise((resolve) => setTimeout(resolve, cleanupInterval));
       }
     });
@@ -572,7 +572,7 @@ export abstract class VMManager {
         try {
           await checkStaging();
         } catch (e) {
-          console.warn('[CHECKSTAGING-ERROR]', this.getPoolName(), e);
+          console.warn("[CHECKSTAGING-ERROR]", this.getPoolName(), e);
         }
         // console.timeEnd(this.getPoolName() + ':checkstaging');
         await new Promise((resolve) => setTimeout(resolve, 1000));

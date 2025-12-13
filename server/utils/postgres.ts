@@ -1,5 +1,5 @@
-import { Client, type QueryResult } from 'pg';
-import config from '../config.ts';
+import { Client, type QueryResult } from "pg";
+import config from "../config.ts";
 
 export let postgres: Client | undefined = undefined;
 if (config.DATABASE_URL) {
@@ -17,7 +17,7 @@ if (config.DATABASE_URL) {
  */
 export function newPostgres() {
   if (!config.DATABASE_URL) {
-    throw new Error('postgres not configured');
+    throw new Error("postgres not configured");
   }
   const postgres = new Client({
     connectionString: config.DATABASE_URL,
@@ -38,7 +38,7 @@ export async function updateObject(
   // TODO support compound conditions, not just one
   let query = `UPDATE ${table} SET ${columns
     .map((c, i) => `"${c}" = $${i + 1}`)
-    .join(',')}
+    .join(",")}
     WHERE "${Object.keys(condition)[0]}" = $${Object.keys(object).length + 1}
     RETURNING *`;
   //console.log(query);
@@ -56,8 +56,8 @@ export async function insertObject(
 ): Promise<QueryResult<any>> {
   const columns = Object.keys(object);
   const values = Object.values(object);
-  let query = `INSERT INTO ${table} (${columns.map((c) => `"${c}"`).join(',')})
-    VALUES (${values.map((_, i) => '$' + (i + 1)).join(',')})
+  let query = `INSERT INTO ${table} (${columns.map((c) => `"${c}"`).join(",")})
+    VALUES (${values.map((_, i) => "$" + (i + 1)).join(",")})
     RETURNING *`;
   // console.log(query);
   const result = await postgres.query(query, values);
@@ -72,14 +72,14 @@ export async function upsertObject(
 ): Promise<QueryResult<any>> {
   const columns = Object.keys(object);
   const values = Object.values(object);
-  let query = `INSERT INTO ${table} (${columns.map((c) => `"${c}"`).join(',')})
-    VALUES (${values.map((_, i) => '$' + (i + 1)).join(',')})
+  let query = `INSERT INTO ${table} (${columns.map((c) => `"${c}"`).join(",")})
+    VALUES (${values.map((_, i) => "$" + (i + 1)).join(",")})
     ON CONFLICT (${Object.keys(conflict)
       .map((k) => `"${k}"`)
-      .join(',')})
+      .join(",")})
     DO UPDATE SET ${Object.keys(object)
       .map((c) => `"${c}" = EXCLUDED."${c}"`)
-      .join(',')}
+      .join(",")}
     RETURNING *`;
   // console.log(query);
   const result = await postgres.query(query, values);

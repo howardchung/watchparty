@@ -1,7 +1,7 @@
-import React, { useContext, useRef } from 'react';
-import { createRoom } from '../TopBar/TopBar';
-import { Loader } from '@mantine/core';
-import { MetadataContext } from '../../MetadataContext';
+import React, { useContext, useRef } from "react";
+import { createRoom } from "../TopBar/TopBar";
+import { Loader } from "@mantine/core";
+import { MetadataContext } from "../../MetadataContext";
 
 export const Create = () => {
   const { user } = useContext(MetadataContext);
@@ -12,24 +12,24 @@ export const Create = () => {
   return (
     <div
       style={{
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        width: '100vw',
-        height: '100vh',
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        alignItems: "center",
+        width: "100vw",
+        height: "100vh",
       }}
     >
       <Loader></Loader>
       <div>Creating room. . .</div>
       <button
-        style={{ display: 'none' }}
+        style={{ display: "none" }}
         ref={buttonEl}
         onClick={() => {
           createRoom(
             user,
             false,
-            new URLSearchParams(window.location.search).get('video') ??
+            new URLSearchParams(window.location.search).get("video") ??
               undefined,
           );
         }}

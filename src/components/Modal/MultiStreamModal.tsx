@@ -1,6 +1,6 @@
-import React from 'react';
-import { Modal, Loader, Menu, Text } from '@mantine/core';
-import { IconFile } from '@tabler/icons-react';
+import React from "react";
+import { Modal, Loader, Menu, Text } from "@mantine/core";
+import { IconFile } from "@tabler/icons-react";
 
 export const MultiStreamModal = ({
   streams,

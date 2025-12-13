@@ -1,11 +1,11 @@
-import React from 'react';
-import { Modal, Button, Table, Alert, Select, Avatar } from '@mantine/core';
-import { SignInButton } from '../TopBar/TopBar';
-import { serverPath } from '../../utils/utils';
-import { SubscribeButton } from '../SubscribeButton/SubscribeButton';
-import config from '../../config';
-import { MetadataContext } from '../../MetadataContext';
-import { IconHourglass } from '@tabler/icons-react';
+import React from "react";
+import { Modal, Button, Table, Alert, Select, Avatar } from "@mantine/core";
+import { SignInButton } from "../TopBar/TopBar";
+import { serverPath } from "../../utils/utils";
+import { SubscribeButton } from "../SubscribeButton/SubscribeButton";
+import config from "../../config";
+import { MetadataContext } from "../../MetadataContext";
+import { IconHourglass } from "@tabler/icons-react";
 
 export class VBrowserModal extends React.Component<{
   closeModal: () => void;
@@ -15,57 +15,57 @@ export class VBrowserModal extends React.Component<{
   declare context: React.ContextType<typeof MetadataContext>;
   state = {
     isFreePoolFull: false,
-    region: 'any',
+    region: "any",
   };
 
   async componentDidMount() {
-    const resp = await fetch(serverPath + '/metadata');
+    const resp = await fetch(serverPath + "/metadata");
     const metadata = await resp.json();
     this.setState({ isFreePoolFull: metadata.isFreePoolFull });
   }
   render() {
     const regionOptions = [
       {
-        label: 'Any available',
-        value: 'any',
-        image: { avatar: false, src: '' },
+        label: "Any available",
+        value: "any",
+        image: { avatar: false, src: "" },
       },
       {
-        label: 'US East',
-        value: 'US',
-        image: { avatar: false, src: '/flag-united-states.png' },
+        label: "US East",
+        value: "US",
+        image: { avatar: false, src: "/flag-united-states.png" },
       },
       {
-        label: 'US West',
-        value: 'USW',
-        image: { avatar: false, src: '/flag-united-states.png' },
+        label: "US West",
+        value: "USW",
+        image: { avatar: false, src: "/flag-united-states.png" },
       },
       {
-        label: 'Europe',
-        value: 'EU',
-        image: { avatar: false, src: '/flag-european-union.png' },
+        label: "Europe",
+        value: "EU",
+        image: { avatar: false, src: "/flag-european-union.png" },
       },
     ];
     const { closeModal, startVBrowser } = this.props;
     const LaunchButton = ({ large }: { large: boolean }) => {
       return (
         <Button
-          color={large ? 'orange' : undefined}
+          color={large ? "orange" : undefined}
           onClick={async () => {
             startVBrowser({
-              size: large ? 'large' : '',
-              region: this.state.region === 'any' ? '' : this.state.region,
+              size: large ? "large" : "",
+              region: this.state.region === "any" ? "" : this.state.region,
             });
             closeModal();
           }}
         >
-          {large ? 'Launch VBrowser+' : 'Continue with Free'}
+          {large ? "Launch VBrowser+" : "Continue with Free"}
         </Button>
       );
     };
     const vmPoolFullMessage = (
       <Alert
-        style={{ maxWidth: '300px' }}
+        style={{ maxWidth: "300px" }}
         color="red"
         icon={<IconHourglass />}
         title="No Free VBrowsers Available"
@@ -136,9 +136,9 @@ export class VBrowserModal extends React.Component<{
                     <div
                       key={option.value}
                       style={{
-                        display: 'flex',
-                        gap: '8px',
-                        alignItems: 'center',
+                        display: "flex",
+                        gap: "8px",
+                        alignItems: "center",
                       }}
                     >
                       <Avatar radius="xs" src={option.image.src} />

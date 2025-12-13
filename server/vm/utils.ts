@@ -1,14 +1,14 @@
-import { type AssignedVM, VMManager } from './base.ts';
-import config from '../config.ts';
-import { Scaleway } from './scaleway.ts';
-import { Hetzner } from './hetzner.ts';
-import { DigitalOcean } from './digitalocean.ts';
-import { Docker } from './docker.ts';
+import { type AssignedVM, VMManager } from "./base.ts";
+import config from "../config.ts";
+import { Scaleway } from "./scaleway.ts";
+import { Hetzner } from "./hetzner.ts";
+import { DigitalOcean } from "./digitalocean.ts";
+import { Docker } from "./docker.ts";
 
 // Chromium on ARM: ghcr.io/howardchung/vbrowser/arm-chromium
-export const imageName = 'howardc93/vbrowser';
+export const imageName = "howardc93/vbrowser";
 
-export type PoolRegion = 'US' | 'USW' | 'EU';
+export type PoolRegion = "US" | "USW" | "EU";
 export type PoolConfig = {
   provider: string;
   isLarge: boolean;
@@ -25,40 +25,40 @@ function createVMManager(poolConfig: PoolConfig): VMManager {
     config.SCW_ORGANIZATION_ID &&
     config.SCW_IMAGE &&
     config.SCW_GATEWAY &&
-    poolConfig.provider === 'Scaleway'
+    poolConfig.provider === "Scaleway"
   ) {
     vmManager = new Scaleway(poolConfig);
   } else if (
     config.HETZNER_TOKEN &&
     config.HETZNER_IMAGE &&
     config.HETZNER_GATEWAY &&
-    poolConfig.provider === 'Hetzner'
+    poolConfig.provider === "Hetzner"
   ) {
     vmManager = new Hetzner(poolConfig);
   } else if (
     config.DO_TOKEN &&
     config.DO_IMAGE &&
     config.DO_GATEWAY &&
-    poolConfig.provider === 'DO'
+    poolConfig.provider === "DO"
   ) {
     vmManager = new DigitalOcean(poolConfig);
-  } else if (poolConfig.provider === 'Docker') {
+  } else if (poolConfig.provider === "Docker") {
     vmManager = new Docker(poolConfig);
   }
   if (!vmManager) {
-    throw new Error('failed to create vmManager');
+    throw new Error("failed to create vmManager");
   }
   return vmManager;
 }
 
 export function getVMManagerConfig(): PoolConfig[] {
-  return config.VM_MANAGER_CONFIG.split(',')
+  return config.VM_MANAGER_CONFIG.split(",")
     .filter(Boolean)
     .map((c) => {
-      const split = c.split(':');
+      const split = c.split(":");
       return {
         provider: split[0],
-        isLarge: split[1] === 'large',
+        isLarge: split[1] === "large",
         region: split[2] as PoolRegion,
         minSize: Number(split[3]),
         limitSize: Number(split[4]),

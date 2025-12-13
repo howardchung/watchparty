@@ -1,29 +1,29 @@
-import config from './config.ts';
-import axios from 'axios';
-import { Server, Socket } from 'socket.io';
-import { getUser, validateUserToken } from './utils/firebase.ts';
-import { redis, redisCount, redisCountDistinct } from './utils/redis.ts';
-import { getIsSubscriberByEmail } from './utils/stripe.ts';
-import { type AssignedVM } from './vm/base.ts';
-import { getStartOfDay } from './utils/time.ts';
-import { postgres, updateObject, upsertObject } from './utils/postgres.ts';
+import config from "./config.ts";
+import axios from "axios";
+import { Server, Socket } from "socket.io";
+import { getUser, validateUserToken } from "./utils/firebase.ts";
+import { redis, redisCount, redisCountDistinct } from "./utils/redis.ts";
+import { getIsSubscriberByEmail } from "./utils/stripe.ts";
+import { type AssignedVM } from "./vm/base.ts";
+import { getStartOfDay } from "./utils/time.ts";
+import { postgres, updateObject, upsertObject } from "./utils/postgres.ts";
 import {
   fetchYoutubeVideo,
   getYoutubeVideoID,
   isYouTube,
-} from './utils/youtube.ts';
+} from "./utils/youtube.ts";
 //@ts-expect-error
-import twitch from 'twitch-m3u8';
-import { type QueryResult } from 'pg';
-import { Docker } from './vm/docker.ts';
+import twitch from "twitch-m3u8";
+import { type QueryResult } from "pg";
+import { Docker } from "./vm/docker.ts";
 
 // Stateless pool instance to use for VMs if full management isn't needed
 let stateless: Docker | undefined = undefined;
 if (!config.VM_MANAGER_CONFIG) {
   stateless = new Docker({
-    provider: 'Docker',
+    provider: "Docker",
     isLarge: false,
-    region: 'US',
+    region: "US",
     limitSize: 0,
     minSize: 0,
     hostname: config.DOCKER_VM_HOST,
@@ -31,13 +31,13 @@ if (!config.VM_MANAGER_CONFIG) {
 }
 
 // Test single count video chat
-redis?.del('videoUsers');
+redis?.del("videoUsers");
 
 export class Room {
   // Serialized state
-  public video: string | null = '';
+  public video: string | null = "";
   public videoTS = 0;
-  public subtitle = '';
+  public subtitle = "";
   public playbackRate = 1;
   public paused = false;
   public loop = false;
@@ -97,7 +97,7 @@ export class Room {
       });
       if (this.video) {
         this.lastTsMap = Date.now();
-        io.of(roomId).emit('REC:tsMap', this.tsMap);
+        io.of(roomId).emit("REC:tsMap", this.tsMap);
       }
     }, 1000);
 
@@ -123,7 +123,7 @@ export class Room {
             isOwner = result.rows[0]?.owner === decoded.uid;
           }
           if (!isOwner) {
-            next(new Error('not authorized'));
+            next(new Error("not authorized"));
             return;
           }
         }
@@ -133,84 +133,84 @@ export class Room {
           ? config.ROOM_CAPACITY_SUB
           : config.ROOM_CAPACITY;
         if (roomCapacity && this.roster.length >= roomCapacity) {
-          next(new Error('room full'));
+          next(new Error("room full"));
           return;
         }
       }
       next();
     });
-    io.of(roomId).on('connection', (socket: Socket) => {
+    io.of(roomId).on("connection", (socket: Socket) => {
       const clientId = socket.handshake.query?.clientId as string;
       this.clientIdMap[socket.id] = clientId;
       this.roster.push({ id: socket.id, clientId });
-      redisCount('connectStarts');
-      redisCountDistinct('connectStartsDistinct', clientId);
+      redisCount("connectStarts");
+      redisCountDistinct("connectStartsDistinct", clientId);
 
-      socket.emit('REC:host', this.getHostState());
-      socket.emit('REC:nameMap', this.nameMap);
-      socket.emit('REC:pictureMap', this.pictureMap);
-      socket.emit('REC:tsMap', this.tsMap);
-      socket.emit('REC:lock', this.lock);
-      socket.emit('chatinit', this.chat);
-      socket.emit('playlist', this.playlist);
+      socket.emit("REC:host", this.getHostState());
+      socket.emit("REC:nameMap", this.nameMap);
+      socket.emit("REC:pictureMap", this.pictureMap);
+      socket.emit("REC:tsMap", this.tsMap);
+      socket.emit("REC:lock", this.lock);
+      socket.emit("chatinit", this.chat);
+      socket.emit("playlist", this.playlist);
       this.getRoomState(socket);
-      io.of(roomId).emit('roster', this.getRosterForApp());
+      io.of(roomId).emit("roster", this.getRosterForApp());
 
-      socket.on('CMD:name', (data) => this.changeUserName(socket, data));
-      socket.on('CMD:picture', (data) => this.changeUserPicture(socket, data));
-      socket.on('CMD:uid', (data) => this.changeUserID(socket, data));
-      socket.on('CMD:host', (data) => this.startHosting(socket, data));
-      socket.on('CMD:play', () => this.playVideo(socket));
-      socket.on('CMD:pause', () => this.pauseVideo(socket));
-      socket.on('CMD:seek', (data) => this.seekVideo(socket, data));
-      socket.on('CMD:playbackRate', (data) =>
+      socket.on("CMD:name", (data) => this.changeUserName(socket, data));
+      socket.on("CMD:picture", (data) => this.changeUserPicture(socket, data));
+      socket.on("CMD:uid", (data) => this.changeUserID(socket, data));
+      socket.on("CMD:host", (data) => this.startHosting(socket, data));
+      socket.on("CMD:play", () => this.playVideo(socket));
+      socket.on("CMD:pause", () => this.pauseVideo(socket));
+      socket.on("CMD:seek", (data) => this.seekVideo(socket, data));
+      socket.on("CMD:playbackRate", (data) =>
         this.setPlaybackRate(socket, data),
       );
-      socket.on('CMD:loop', (data) => this.setLoop(socket, data));
-      socket.on('CMD:ts', (data) => this.setTimestamp(socket, data));
-      socket.on('CMD:chat', (data) => this.sendChatMessage(socket, data));
-      socket.on('CMD:addReaction', (data) => this.addReaction(socket, data));
-      socket.on('CMD:removeReaction', (data) =>
+      socket.on("CMD:loop", (data) => this.setLoop(socket, data));
+      socket.on("CMD:ts", (data) => this.setTimestamp(socket, data));
+      socket.on("CMD:chat", (data) => this.sendChatMessage(socket, data));
+      socket.on("CMD:addReaction", (data) => this.addReaction(socket, data));
+      socket.on("CMD:removeReaction", (data) =>
         this.removeReaction(socket, data),
       );
-      socket.on('CMD:joinVideo', () => this.joinVideo(socket));
-      socket.on('CMD:leaveVideo', () => this.leaveVideo(socket));
-      socket.on('CMD:joinScreenShare', (data) =>
+      socket.on("CMD:joinVideo", () => this.joinVideo(socket));
+      socket.on("CMD:leaveVideo", () => this.leaveVideo(socket));
+      socket.on("CMD:joinScreenShare", (data) =>
         this.joinScreenSharing(socket, data),
       );
-      socket.on('CMD:userMute', (data) => this.setUserMute(socket, data));
-      socket.on('CMD:leaveScreenShare', () => this.leaveScreenSharing(socket));
-      socket.on('CMD:startVBrowser', (data) =>
+      socket.on("CMD:userMute", (data) => this.setUserMute(socket, data));
+      socket.on("CMD:leaveScreenShare", () => this.leaveScreenSharing(socket));
+      socket.on("CMD:startVBrowser", (data) =>
         this.startVBrowser(socket, data),
       );
-      socket.on('CMD:stopVBrowser', () => this.stopVBrowser(socket));
-      socket.on('CMD:changeController', (data) =>
+      socket.on("CMD:stopVBrowser", () => this.stopVBrowser(socket));
+      socket.on("CMD:changeController", (data) =>
         this.changeController(socket, data),
       );
-      socket.on('CMD:subtitle', (data) => this.addSubtitles(socket, data));
-      socket.on('CMD:lock', (data) => this.lockRoom(socket, data));
-      socket.on('CMD:askHost', () => {
-        socket.emit('REC:host', this.getHostState());
+      socket.on("CMD:subtitle", (data) => this.addSubtitles(socket, data));
+      socket.on("CMD:lock", (data) => this.lockRoom(socket, data));
+      socket.on("CMD:askHost", () => {
+        socket.emit("REC:host", this.getHostState());
       });
-      socket.on('CMD:getRoomState', () => this.getRoomState(socket));
-      socket.on('CMD:setRoomState', (data) => this.setRoomState(socket, data));
-      socket.on('CMD:setRoomOwner', (data) => this.setRoomOwner(socket, data));
-      socket.on('CMD:playlistNext', (data) => this.playlistNext(socket, data));
-      socket.on('CMD:playlistAdd', (data) => this.playlistAdd(socket, data));
-      socket.on('CMD:playlistMove', (data) => this.playlistMove(socket, data));
-      socket.on('CMD:playlistDelete', (data) =>
+      socket.on("CMD:getRoomState", () => this.getRoomState(socket));
+      socket.on("CMD:setRoomState", (data) => this.setRoomState(socket, data));
+      socket.on("CMD:setRoomOwner", (data) => this.setRoomOwner(socket, data));
+      socket.on("CMD:playlistNext", (data) => this.playlistNext(socket, data));
+      socket.on("CMD:playlistAdd", (data) => this.playlistAdd(socket, data));
+      socket.on("CMD:playlistMove", (data) => this.playlistMove(socket, data));
+      socket.on("CMD:playlistDelete", (data) =>
         this.playlistDelete(socket, data),
       );
 
-      socket.on('signal', (data) => this.sendSignal(socket, data));
-      socket.on('signalSS', (data) => this.signalSS(socket, data));
+      socket.on("signal", (data) => this.sendSignal(socket, data));
+      socket.on("signalSS", (data) => this.signalSS(socket, data));
 
-      socket.on('kickUser', (data) => this.kickUser(socket, data));
-      socket.on('CMD:deleteChatMessages', (data) =>
+      socket.on("kickUser", (data) => this.kickUser(socket, data));
+      socket.on("CMD:deleteChatMessages", (data) =>
         this.deleteChatMessages(socket, data),
       );
 
-      socket.on('disconnect', () => this.disconnectUser(socket));
+      socket.on("disconnect", () => this.disconnectUser(socket));
     });
   }
 
@@ -322,11 +322,11 @@ export class Room {
   };
 
   protected getSharerId = (): string => {
-    let sharerId = '';
-    if (this.video?.startsWith('screenshare://')) {
-      sharerId = this.video?.slice('screenshare://'.length).split('@')[0];
-    } else if (this.video?.startsWith('fileshare://')) {
-      sharerId = this.video?.slice('fileshare://'.length).split('@')[0];
+    let sharerId = "";
+    if (this.video?.startsWith("screenshare://")) {
+      sharerId = this.video?.slice("screenshare://".length).split("@")[0];
+    } else if (this.video?.startsWith("fileshare://")) {
+      sharerId = this.video?.slice("fileshare://".length).split("@")[0];
     }
     return sharerId;
   };
@@ -346,7 +346,7 @@ export class Room {
       (user) => this.clientIdMap[user.id] === this.vBrowser?.controllerClient,
     );
     return {
-      video: this.video ?? '',
+      video: this.video ?? "",
       videoTS: this.videoTS,
       subtitle: this.subtitle,
       playbackRate: this.playbackRate,
@@ -362,16 +362,16 @@ export class Room {
     const id = this.vBrowser?.id;
     const provider = this.vBrowser?.provider;
     const isLarge = this.vBrowser?.large ?? false;
-    const region = this.vBrowser?.region ?? '';
-    const uid = this.vBrowser?.creatorUID ?? '';
+    const region = this.vBrowser?.region ?? "";
+    const uid = this.vBrowser?.creatorUID ?? "";
     this.vBrowser = undefined;
-    this.cmdHost(null, '');
+    this.cmdHost(null, "");
     // Force a save because this might change in unattended rooms
     this.lastUpdateTime = new Date();
     this.saveRoom();
     if (redis && assignTime) {
-      await redis.lpush('vBrowserSessionMS', Date.now() - assignTime);
-      await redis.ltrim('vBrowserSessionMS', 0, 19);
+      await redis.lpush("vBrowserSessionMS", Date.now() - assignTime);
+      await redis.ltrim("vBrowserSessionMS", 0, 19);
     }
 
     if (id) {
@@ -380,7 +380,7 @@ export class Room {
           await stateless.terminateVM(id);
         } else {
           await axios.post(
-            'http://localhost:' + config.VMWORKER_PORT + '/releaseVM',
+            "http://localhost:" + config.VMWORKER_PORT + "/releaseVM",
             {
               provider,
               isLarge,
@@ -400,19 +400,19 @@ export class Room {
     this.video = data;
     this.videoTS = 0;
     this.paused = false;
-    this.subtitle = '';
+    this.subtitle = "";
     this.loop = false;
     this.playbackRate = 1;
     this.tsMap = {};
     this.preventTSUpdate = true;
     setTimeout(() => (this.preventTSUpdate = false), 1000);
-    this.io.of(this.roomId).emit('REC:tsMap', this.tsMap);
-    this.io.of(this.roomId).emit('REC:host', this.getHostState());
+    this.io.of(this.roomId).emit("REC:tsMap", this.tsMap);
+    this.io.of(this.roomId).emit("REC:host", this.getHostState());
     if (socket && data) {
-      const chatMsg = { id: socket.id, cmd: 'host', msg: data };
+      const chatMsg = { id: socket.id, cmd: "host", msg: data };
       this.addChatMessage(socket, chatMsg);
     }
-    if (data === '') {
+    if (data === "") {
       this.playlistNext(null);
     }
     // The room video is changing so remove room from vbrowser queue
@@ -432,7 +432,7 @@ export class Room {
     };
     this.chat.push(chatWithTime);
     this.chat = this.chat.splice(-100);
-    this.io.of(this.roomId).emit('REC:chat', chatWithTime);
+    this.io.of(this.roomId).emit("REC:chat", chatWithTime);
   };
 
   private validateLock = (socketId: string) => {
@@ -441,7 +441,7 @@ export class Room {
     }
     const result = this.uidMap[socketId] === this.lock;
     if (!result) {
-      console.log('[VALIDATELOCK] failed', socketId);
+      console.log("[VALIDATELOCK] failed", socketId);
     }
     return result;
   };
@@ -463,7 +463,7 @@ export class Room {
       return;
     }
     this.nameMap[socket.id] = data;
-    this.io.of(this.roomId).emit('REC:nameMap', this.nameMap);
+    this.io.of(this.roomId).emit("REC:nameMap", this.nameMap);
   };
 
   private changeUserPicture = (socket: Socket, data: string) => {
@@ -471,7 +471,7 @@ export class Room {
       return;
     }
     this.pictureMap[socket.id] = data;
-    this.io.of(this.roomId).emit('REC:pictureMap', this.pictureMap);
+    this.io.of(this.roomId).emit("REC:pictureMap", this.pictureMap);
   };
 
   private changeUserID = async (
@@ -508,24 +508,24 @@ export class Room {
       );
       return;
     }
-    redisCount('urlStarts');
+    redisCount("urlStarts");
     if (config.STREAM_PATH && data?.startsWith(config.STREAM_PATH)) {
-      redisCount('streamStarts');
+      redisCount("streamStarts");
     }
     if (config.CONVERT_PATH && data?.startsWith(config.CONVERT_PATH)) {
-      redisCount('convertStarts');
+      redisCount("convertStarts");
     }
     // If a reddit URL, extract video URL
     if (
-      data?.startsWith('https://www.reddit.com') ||
-      data?.startsWith('https://old.reddit.com') ||
-      data?.startsWith('https://reddit.com')
+      data?.startsWith("https://www.reddit.com") ||
+      data?.startsWith("https://old.reddit.com") ||
+      data?.startsWith("https://reddit.com")
     ) {
-      if (data.endsWith('/')) {
+      if (data.endsWith("/")) {
         // Remove trailing slash
         data = data.slice(0, -1);
       }
-      data = data + '.json';
+      data = data + ".json";
       // Extract fallback_url
       const resp = await axios.get(data);
       const json = resp.data;
@@ -538,13 +538,13 @@ export class Room {
       // prefer reddit m3u8 streams over the mp4 links as the m3u8 streams contain audio.
       data = reddit_m3u8 || reddit_mp4 || data;
     } else if (
-      data?.startsWith('https://www.twitch.tv') ||
-      data?.startsWith('https://twitch.tv')
+      data?.startsWith("https://www.twitch.tv") ||
+      data?.startsWith("https://twitch.tv")
     ) {
       try {
         // Extract m3u8 data
         // Note this won't work directly since Twitch will reject requests from the wrong origin--need to proxy the m3u8 playlist
-        const channel = data.split('/').slice(-1)[0];
+        const channel = data.split("/").slice(-1)[0];
         const isStream = isNaN(Number(channel));
         let streams = [];
         if (isStream) {
@@ -554,13 +554,13 @@ export class Room {
         }
         // console.log(streams);
         const target =
-          streams.find((str: any) => str.quality.includes('(source)')) ||
+          streams.find((str: any) => str.quality.includes("(source)")) ||
           streams[0];
         const parsed = new URL(target?.url);
         const newUrl = new URL(config.TWITCH_PROXY_PATH);
-        newUrl.pathname = '/proxy' + parsed.pathname;
-        newUrl.searchParams.set('host', parsed.host);
-        newUrl.searchParams.set('displayName', data);
+        newUrl.pathname = "/proxy" + parsed.pathname;
+        newUrl.searchParams.set("host", parsed.host);
+        newUrl.searchParams.set("displayName", data);
         newUrl.search = newUrl.searchParams.toString();
         data = newUrl.toString();
       } catch (e) {
@@ -586,7 +586,7 @@ export class Room {
           getYoutubeVideoID(data) === getYoutubeVideoID(this.video)))
     ) {
       const next = this.playlist.shift();
-      this.io.of(this.roomId).emit('playlist', this.playlist);
+      this.io.of(this.roomId).emit("playlist", this.playlist);
       if (next) {
         this.cmdHost(null, next.url);
       }
@@ -600,14 +600,14 @@ export class Room {
     if (socket && !this.validateLock(socket.id)) {
       return;
     }
-    redisCount('playlistAdds');
+    redisCount("playlistAdds");
     const youtubeVideoId = getYoutubeVideoID(data);
     const item = {
       name: data,
-      channel: 'Video URL',
+      channel: "Video URL",
       duration: 0,
       url: data,
-      type: data.startsWith('magnet:') ? 'magnet' : 'file',
+      type: data.startsWith("magnet:") ? "magnet" : "file",
     };
     let video: PlaylistVideo | null = null;
     try {
@@ -623,11 +623,11 @@ export class Room {
     } else {
       this.playlist.push(item);
     }
-    this.io.of(this.roomId).emit('playlist', this.playlist);
+    this.io.of(this.roomId).emit("playlist", this.playlist);
     if (socket) {
       const chatMsg = {
         id: socket.id,
-        cmd: 'playlistAdd',
+        cmd: "playlistAdd",
         msg: data,
       };
       this.addChatMessage(socket, chatMsg);
@@ -643,7 +643,7 @@ export class Room {
     }
     if (index !== -1) {
       this.playlist.splice(index, 1);
-      this.io.of(this.roomId).emit('playlist', this.playlist);
+      this.io.of(this.roomId).emit("playlist", this.playlist);
     }
   };
 
@@ -657,7 +657,7 @@ export class Room {
     if (data.index !== -1) {
       const items = this.playlist.splice(data.index, 1);
       this.playlist.splice(data.toIndex, 0, items[0]);
-      this.io.of(this.roomId).emit('playlist', this.playlist);
+      this.io.of(this.roomId).emit("playlist", this.playlist);
     }
   };
 
@@ -665,10 +665,10 @@ export class Room {
     if (!this.validateLock(socket.id)) {
       return;
     }
-    socket.broadcast.emit('REC:play', this.video);
+    socket.broadcast.emit("REC:play", this.video);
     const chatMsg = {
       id: socket.id,
-      cmd: 'play',
+      cmd: "play",
       msg: this.tsMap[socket.id]?.toString(),
     };
     this.paused = false;
@@ -679,10 +679,10 @@ export class Room {
     if (!this.validateLock(socket.id)) {
       return;
     }
-    socket.broadcast.emit('REC:pause');
+    socket.broadcast.emit("REC:pause");
     const chatMsg = {
       id: socket.id,
-      cmd: 'pause',
+      cmd: "pause",
       msg: this.tsMap[socket.id]?.toString(),
     };
     this.paused = true;
@@ -697,8 +697,8 @@ export class Room {
       return;
     }
     this.videoTS = data;
-    socket.broadcast.emit('REC:seek', data);
-    const chatMsg = { id: socket.id, cmd: 'seek', msg: data?.toString() };
+    socket.broadcast.emit("REC:seek", data);
+    const chatMsg = { id: socket.id, cmd: "seek", msg: data?.toString() };
     this.addChatMessage(socket, chatMsg);
   };
 
@@ -710,10 +710,10 @@ export class Room {
       return;
     }
     this.playbackRate = Number(data);
-    this.io.of(this.roomId).emit('REC:playbackRate', Number(data));
+    this.io.of(this.roomId).emit("REC:playbackRate", Number(data));
     const chatMsg = {
       id: socket.id,
-      cmd: 'playbackRate',
+      cmd: "playbackRate",
       msg: data?.toString(),
     };
     this.addChatMessage(socket, chatMsg);
@@ -727,7 +727,7 @@ export class Room {
       return;
     }
     this.loop = data;
-    this.io.of(this.roomId).emit('REC:loop', data);
+    this.io.of(this.roomId).emit("REC:loop", data);
   };
 
   private setTimestamp = (socket: Socket, data: number) => {
@@ -755,7 +755,7 @@ export class Room {
     if (data && data.length > 10000) {
       return;
     }
-    redisCount('chatMessages');
+    redisCount("chatMessages");
     const chatMsg = { id: socket.id, msg: data };
     this.addChatMessage(socket, chatMsg);
   };
@@ -780,8 +780,8 @@ export class Room {
     if (!msg.reactions[data.value].includes(socket.id)) {
       msg.reactions[data.value].push(socket.id);
       const reaction: Reaction = { user: socket.id, ...data };
-      redisCount('addReaction');
-      this.io.of(this.roomId).emit('REC:addReaction', reaction);
+      redisCount("addReaction");
+      this.io.of(this.roomId).emit("REC:addReaction", reaction);
     }
   };
 
@@ -803,26 +803,26 @@ export class Room {
       (id) => id !== socket.id,
     );
     const reaction: Reaction = { user: socket.id, ...data };
-    this.io.of(this.roomId).emit('REC:removeReaction', reaction);
+    this.io.of(this.roomId).emit("REC:removeReaction", reaction);
   };
 
   private joinVideo = (socket: Socket) => {
     const match = this.roster.find((user) => user.id === socket.id);
     if (match) {
       match.isVideoChat = true;
-      redisCount('videoChatStarts');
-      redis?.incrby('videoUsers', 1);
+      redisCount("videoChatStarts");
+      redis?.incrby("videoUsers", 1);
     }
-    this.io.of(this.roomId).emit('roster', this.getRosterForApp());
+    this.io.of(this.roomId).emit("roster", this.getRosterForApp());
   };
 
   private leaveVideo = (socket: Socket) => {
     const match = this.roster.find((user) => user.id === socket.id);
     if (match) {
       match.isVideoChat = false;
-      redis?.incrby('videoUsers', -1);
+      redis?.incrby("videoUsers", -1);
     }
-    this.io.of(this.roomId).emit('roster', this.getRosterForApp());
+    this.io.of(this.roomId).emit("roster", this.getRosterForApp());
   };
 
   private setUserMute = (socket: Socket, data: { isMuted: boolean }) => {
@@ -830,7 +830,7 @@ export class Room {
     if (match) {
       match.isMuted = data.isMuted;
     }
-    this.io.of(this.roomId).emit('roster', this.getRosterForApp());
+    this.io.of(this.roomId).emit("roster", this.getRosterForApp());
   };
 
   private joinScreenSharing = (
@@ -845,28 +845,28 @@ export class Room {
       // Someone's already sharing
       return;
     }
-    let mediasoupSuffix = '';
+    let mediasoupSuffix = "";
     if (data?.mediasoup) {
       // TODO validate the user has permissions to ask for a mediasoup
       // TODO set up the room on the remote server rather than letting the remote server create
       mediasoupSuffix =
-        '@' + config.MEDIASOUP_SERVER + '/' + crypto.randomUUID();
-      redisCount('mediasoupStarts');
+        "@" + config.MEDIASOUP_SERVER + "/" + crypto.randomUUID();
+      redisCount("mediasoupStarts");
     }
     if (data && data.file) {
       this.cmdHost(
         socket,
-        'fileshare://' + this.clientIdMap[socket.id] + mediasoupSuffix,
+        "fileshare://" + this.clientIdMap[socket.id] + mediasoupSuffix,
       );
-      redisCount('fileShareStarts');
+      redisCount("fileShareStarts");
     } else {
       this.cmdHost(
         socket,
-        'screenshare://' + this.clientIdMap[socket.id] + mediasoupSuffix,
+        "screenshare://" + this.clientIdMap[socket.id] + mediasoupSuffix,
       );
-      redisCount('screenShareStarts');
+      redisCount("screenShareStarts");
     }
-    this.io.of(this.roomId).emit('roster', this.getRosterForApp());
+    this.io.of(this.roomId).emit("roster", this.getRosterForApp());
   };
 
   private leaveScreenSharing = (socket: Socket) => {
@@ -874,8 +874,8 @@ export class Room {
     if (!sharer || sharer?.id !== socket.id) {
       return;
     }
-    this.cmdHost(socket, '');
-    this.io.of(this.roomId).emit('roster', this.getRosterForApp());
+    this.cmdHost(socket, "");
+    this.io.of(this.roomId).emit("roster", this.getRosterForApp());
   };
 
   private startVBrowser = async (
@@ -888,34 +888,34 @@ export class Room {
     },
   ) => {
     if (!this.validateLock(socket.id)) {
-      socket.emit('errorMessage', 'Room is locked.');
+      socket.emit("errorMessage", "Room is locked.");
       return;
     }
     if (!data) {
-      socket.emit('errorMessage', 'Invalid input.');
+      socket.emit("errorMessage", "Invalid input.");
       return;
     }
 
     const clientId = this.clientIdMap[socket.id];
-    let uid: string = '';
+    let uid: string = "";
 
     // these checks are skipped if firebase not provided
     if (config.FIREBASE_ADMIN_SDK_CONFIG) {
       const decoded = await validateUserToken(data.uid, data.token);
       if (!decoded || !decoded.uid) {
-        socket.emit('errorMessage', 'Invalid user token.');
+        socket.emit("errorMessage", "Invalid user token.");
         return;
       }
 
       const user = await getUser(decoded.uid);
       // Validate verified email if not a third-party auth provider
       if (
-        user?.providerData[0].providerId === 'password' &&
+        user?.providerData[0].providerId === "password" &&
         !user?.emailVerified
       ) {
         socket.emit(
-          'errorMessage',
-          'A verified email is required to start a VBrowser.',
+          "errorMessage",
+          "A verified email is required to start a VBrowser.",
         );
         return;
       }
@@ -927,43 +927,43 @@ export class Room {
         const expireTime = getStartOfDay() / 1000 + 86400;
         if (clientId) {
           const clientCount = await redis.zincrby(
-            'vBrowserClientIDs',
+            "vBrowserClientIDs",
             1,
             clientId,
           );
-          redis.expireat('vBrowserClientIDs', expireTime);
+          redis.expireat("vBrowserClientIDs", expireTime);
           const clientMinutes = await redis.zincrby(
-            'vBrowserClientIDMinutes',
+            "vBrowserClientIDMinutes",
             1,
             clientId,
           );
-          redis.expireat('vBrowserClientIDMinutes', expireTime);
+          redis.expireat("vBrowserClientIDMinutes", expireTime);
         }
         if (uid) {
-          const uidCount = await redis.zincrby('vBrowserUIDs', 1, uid);
-          redis.expireat('vBrowserUIDs', expireTime);
-          const uidMinutes = await redis.zincrby('vBrowserUIDMinutes', 1, uid);
-          redis.expireat('vBrowserUIDMinutes', expireTime);
+          const uidCount = await redis.zincrby("vBrowserUIDs", 1, uid);
+          redis.expireat("vBrowserUIDs", expireTime);
+          const uidMinutes = await redis.zincrby("vBrowserUIDMinutes", 1, uid);
+          redis.expireat("vBrowserUIDMinutes", expireTime);
           // TODO limit users based on client or uid usage
         }
       }
       // check if the user already has a VM already in postgres
       if (postgres) {
         const { rows } = await postgres.query(
-          'SELECT count(1) from vbrowser WHERE uid = $1',
+          "SELECT count(1) from vbrowser WHERE uid = $1",
           [decoded.uid],
         );
         if (rows[0].count >= 2) {
           socket.emit(
-            'errorMessage',
-            'There is already an active vBrowser for this user.',
+            "errorMessage",
+            "There is already an active vBrowser for this user.",
           );
           return;
         }
       }
     }
     let isLarge = false;
-    let region = '';
+    let region = "";
     let isSubscriber = false;
     if (data && data.uid && data.token) {
       const decoded = await validateUserToken(data.uid, data.token);
@@ -971,14 +971,14 @@ export class Room {
     }
     // Check if user is subscriber or firebase not configured, if so allow sub options
     if (isSubscriber || !config.FIREBASE_ADMIN_SDK_CONFIG) {
-      isLarge = data.options?.size === 'large';
+      isLarge = data.options?.size === "large";
       if (data.options?.region) {
         region = data.options?.region;
       }
     }
 
-    redisCount('vBrowserStarts');
-    this.cmdHost(socket, 'vbrowser://');
+    redisCount("vBrowserStarts");
+    this.cmdHost(socket, "vbrowser://");
     // Put the room in the vbrowser queue
     this.vBrowserQueue = {
       roomId: this.roomId,
@@ -1004,7 +1004,7 @@ export class Room {
           };
         } else {
           const { data } = await axios.post<AssignedVM>(
-            'http://localhost:' + config.VMWORKER_PORT + '/assignVM',
+            "http://localhost:" + config.VMWORKER_PORT + "/assignVM",
             {
               isLarge,
               region,
@@ -1024,17 +1024,17 @@ export class Room {
         this.vBrowser.creatorClientID = clientId;
         const assignEnd = Date.now();
         const assignElapsed = assignEnd - Number(queueTime);
-        await redis?.lpush('vBrowserStartMS', assignElapsed);
-        await redis?.ltrim('vBrowserStartMS', 0, 19);
+        await redis?.lpush("vBrowserStartMS", assignElapsed);
+        await redis?.ltrim("vBrowserStartMS", 0, 19);
         console.log(
-          '[ASSIGN] %s to %s in %s',
-          assignment.provider + ':' + assignment.id,
+          "[ASSIGN] %s to %s in %s",
+          assignment.provider + ":" + assignment.id,
           roomId,
-          assignElapsed + 'ms',
+          assignElapsed + "ms",
         );
         this.cmdHost(
           null,
-          'vbrowser://' + this.vBrowser.pass + '@' + this.vBrowser.host,
+          "vbrowser://" + this.vBrowser.pass + "@" + this.vBrowser.host,
         );
       }
       await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -1042,14 +1042,14 @@ export class Room {
   };
 
   private stopVBrowser = async (socket: Socket) => {
-    if (!this.vBrowser && this.video !== 'vbrowser://') {
+    if (!this.vBrowser && this.video !== "vbrowser://") {
       return;
     }
     if (!this.validateLock(socket.id)) {
       return;
     }
     await this.stopVBrowserInternal();
-    redisCount('vBrowserTerminateManual');
+    redisCount("vBrowserTerminateManual");
   };
 
   private changeController = (socket: Socket, data: string) => {
@@ -1061,7 +1061,7 @@ export class Room {
     }
     if (this.vBrowser) {
       this.vBrowser.controllerClient = this.clientIdMap[data];
-      this.io.of(this.roomId).emit('REC:changeController', data);
+      this.io.of(this.roomId).emit("REC:changeController", data);
     }
   };
 
@@ -1073,7 +1073,7 @@ export class Room {
       return;
     }
     this.subtitle = data;
-    this.io.of(this.roomId).emit('REC:subtitle', this.subtitle);
+    this.io.of(this.roomId).emit("REC:subtitle", this.subtitle);
   };
 
   private lockRoom = async (
@@ -1090,12 +1090,12 @@ export class Room {
     if (!this.validateLock(socket.id) && !this.validateOwner(decoded.uid)) {
       return;
     }
-    this.lock = data.locked ? decoded.uid : '';
-    this.io.of(this.roomId).emit('REC:lock', this.lock);
+    this.lock = data.locked ? decoded.uid : "";
+    this.io.of(this.roomId).emit("REC:lock", this.lock);
     const chatMsg = {
       id: socket.id,
-      cmd: data.locked ? 'lock' : 'unlock',
-      msg: '',
+      cmd: data.locked ? "lock" : "unlock",
+      msg: "",
     };
     this.addChatMessage(socket, chatMsg);
   };
@@ -1109,7 +1109,7 @@ export class Room {
     },
   ) => {
     if (!postgres) {
-      socket.emit('errorMessage', 'Database is not available');
+      socket.emit("errorMessage", "Database is not available");
       return;
     }
     const decoded = await validateUserToken(
@@ -1117,20 +1117,20 @@ export class Room {
       data?.token as string,
     );
     if (!decoded) {
-      socket.emit('errorMessage', 'Failed to authenticate user');
+      socket.emit("errorMessage", "Failed to authenticate user");
       return;
     }
     const owner = decoded.uid;
     const isOwner = await this.validateOwner(decoded.uid);
     if (!isOwner) {
-      socket.emit('errorMessage', 'Not current room owner');
+      socket.emit("errorMessage", "Not current room owner");
       return;
     }
     const isSubscriber = await getIsSubscriberByEmail(decoded?.email);
     if (data.undo) {
       await updateObject(
         postgres,
-        'room',
+        "room",
         {
           password: null,
           owner: null,
@@ -1144,7 +1144,7 @@ export class Room {
         },
         { roomId: this.roomId },
       );
-      socket.emit('REC:getRoomState', {});
+      socket.emit("REC:getRoomState", {});
     } else {
       // validate room count
       const roomCount = (
@@ -1158,7 +1158,7 @@ export class Room {
         : config.FREE_ROOM_LIMIT;
       if (roomCount >= limit) {
         socket.emit(
-          'errorMessage',
+          "errorMessage",
           `You've exceeded the permanent room limit. Subscribe for additional permanent rooms.`,
         );
         return;
@@ -1169,12 +1169,12 @@ export class Room {
         isSubRoom: isSubscriber,
       };
       let result: QueryResult | null = null;
-      result = await upsertObject(postgres, 'room', roomObj, {
+      result = await upsertObject(postgres, "room", roomObj, {
         roomId: true,
       });
       const row = result?.rows?.[0];
       // console.log(result, row);
-      socket.emit('REC:getRoomState', {
+      socket.emit("REC:getRoomState", {
         password: row?.password,
         vanity: row?.vanity,
         owner: row?.owner,
@@ -1195,7 +1195,7 @@ export class Room {
       this.isChatDisabled = Boolean(first?.isChatDisabled);
     }
     // TODO only send the password if this is current owner
-    socket.emit('REC:getRoomState', {
+    socket.emit("REC:getRoomState", {
       password: first?.password,
       vanity: first?.vanity,
       owner: first?.owner,
@@ -1222,7 +1222,7 @@ export class Room {
     },
   ) => {
     if (!postgres) {
-      socket.emit('errorMessage', 'Database is not available');
+      socket.emit("errorMessage", "Database is not available");
       return;
     }
     const decoded = await validateUserToken(
@@ -1230,12 +1230,12 @@ export class Room {
       data?.token as string,
     );
     if (!decoded) {
-      socket.emit('errorMessage', 'Failed to authenticate user');
+      socket.emit("errorMessage", "Failed to authenticate user");
       return;
     }
     const isOwner = await this.validateOwner(decoded.uid);
     if (!isOwner) {
-      socket.emit('errorMessage', 'Not current room owner');
+      socket.emit("errorMessage", "Not current room owner");
       return;
     }
     const isSubscriber = await getIsSubscriberByEmail(decoded?.email);
@@ -1250,29 +1250,29 @@ export class Room {
     } = data;
     if (password) {
       if (password.length > 100) {
-        socket.emit('errorMessage', 'Password too long');
+        socket.emit("errorMessage", "Password too long");
         return;
       }
     }
     if (vanity && vanity.length > 100) {
-      socket.emit('errorMessage', 'Custom URL too long');
+      socket.emit("errorMessage", "Custom URL too long");
       return;
     }
     if (roomTitle && roomTitle.length > 50) {
-      socket.emit('errorMessage', 'Room title too long');
+      socket.emit("errorMessage", "Room title too long");
       return;
     }
     if (roomDescription && roomDescription.length > 120) {
-      socket.emit('errorMessage', 'Room description too long');
+      socket.emit("errorMessage", "Room description too long");
       return;
     }
     // check if is valid hex color representation
     if (!/^#([0-9a-f]{3}){1,2}$/i.test(roomTitleColor)) {
-      socket.emit('errorMessage', 'Invalid color code');
+      socket.emit("errorMessage", "Invalid color code");
       return;
     }
     if (mediaPath && mediaPath.length > 1000) {
-      socket.emit('errorMessage', 'Media source too long');
+      socket.emit("errorMessage", "Media source too long");
       return;
     }
     // console.log(owner, vanity, password);
@@ -1304,7 +1304,7 @@ export class Room {
       const row = result.rows[0];
       this.isChatDisabled = Boolean(row?.isChatDisabled);
       // TODO only send password if current owner
-      this.io.of(this.roomId).emit('REC:getRoomState', {
+      this.io.of(this.roomId).emit("REC:getRoomState", {
         password: row?.password,
         vanity: row?.vanity,
         owner: row?.owner,
@@ -1314,7 +1314,7 @@ export class Room {
         roomTitleColor: row?.roomTitleColor,
         mediaPath: row?.mediaPath,
       });
-      socket.emit('successMessage', 'Saved admin settings');
+      socket.emit("successMessage", "Saved admin settings");
     } catch (e) {
       console.warn(e);
     }
@@ -1328,8 +1328,8 @@ export class Room {
     const toId = this.roster.find((p) => p.clientId === data.to)?.id;
     this.io
       .of(this.roomId)
-      .to(toId ?? '')
-      .emit('signal', { from: fromClientId, msg: data.msg });
+      .to(toId ?? "")
+      .emit("signal", { from: fromClientId, msg: data.msg });
   };
 
   private signalSS = (
@@ -1343,8 +1343,8 @@ export class Room {
     const toId = this.roster.find((p) => p.clientId === data.to)?.id;
     this.io
       .of(this.roomId)
-      .to(toId ?? '')
-      .emit('signalSS', {
+      .to(toId ?? "")
+      .emit("signalSS", {
         from: fromClientId,
         sharer: data.sharer,
         msg: data.msg,
@@ -1354,14 +1354,14 @@ export class Room {
   private disconnectUser = (socket: Socket) => {
     let index = this.roster.findIndex((user) => user.id === socket.id);
     const removed = this.roster.splice(index, 1)[0];
-    this.io.of(this.roomId).emit('roster', this.getRosterForApp());
+    this.io.of(this.roomId).emit("roster", this.getRosterForApp());
     const wasSharer = removed.clientId === this.getSharerId();
     if (wasSharer) {
       // Reset the room state since we lost the screen sharer
-      this.cmdHost(socket, '');
+      this.cmdHost(socket, "");
     }
     if (removed?.isVideoChat) {
-      redis?.incrby('videoUsers', -1);
+      redis?.incrby("videoUsers", -1);
     }
     delete this.tsMap[socket.id];
     // delete nameMap[socket.id];
@@ -1380,12 +1380,12 @@ export class Room {
       data?.token as string,
     );
     if (!decoded) {
-      socket.emit('errorMessage', 'Failed to authenticate user');
+      socket.emit("errorMessage", "Failed to authenticate user");
       return;
     }
     const isOwner = await this.validateOwner(decoded.uid);
     if (!isOwner) {
-      socket.emit('errorMessage', 'Not current room owner');
+      socket.emit("errorMessage", "Not current room owner");
       return;
     }
     const userToBeKickedSocket = this.io
@@ -1393,7 +1393,7 @@ export class Room {
       .sockets.get(data.userToBeKicked);
     if (userToBeKickedSocket) {
       try {
-        userToBeKickedSocket.emit('kicked');
+        userToBeKickedSocket.emit("kicked");
         userToBeKickedSocket.disconnect();
       } catch (e) {
         console.warn(e);
@@ -1415,12 +1415,12 @@ export class Room {
       data?.token as string,
     );
     if (!decoded) {
-      socket.emit('errorMessage', 'Failed to authenticate user');
+      socket.emit("errorMessage", "Failed to authenticate user");
       return;
     }
     const isOwner = await this.validateOwner(decoded.uid);
     if (!isOwner) {
-      socket.emit('errorMessage', 'Not current room owner');
+      socket.emit("errorMessage", "Not current room owner");
       return;
     }
     if (!data.timestamp && !data.author) {
@@ -1433,7 +1433,7 @@ export class Room {
         return msg.id !== data.author;
       });
     }
-    this.io.of(this.roomId).emit('chatinit', this.chat);
+    this.io.of(this.roomId).emit("chatinit", this.chat);
     return;
   };
 }

@@ -1,26 +1,26 @@
-import config from '../config.ts';
-import axios from 'axios';
-import { VMManager, type VM } from './base.ts';
+import config from "../config.ts";
+import axios from "axios";
+import { VMManager, type VM } from "./base.ts";
 
 const DO_TOKEN = config.DO_TOKEN;
-const region = 'sfo3';
+const region = "sfo3";
 const gatewayHost = config.DO_GATEWAY;
-const sshKeys = config.DO_SSH_KEYS.split(',');
+const sshKeys = config.DO_SSH_KEYS.split(",");
 
 export class DigitalOcean extends VMManager {
-  size = 's-2vcpu-2gb'; // s-1vcpu-1gb, s-1vcpu-2gb, s-2vcpu-2gb, s-2vcpu-4gb, c-2, s-4vcpu-8gb
-  largeSize = 's-4vcpu-8gb';
+  size = "s-2vcpu-2gb"; // s-1vcpu-1gb, s-1vcpu-2gb, s-2vcpu-2gb, s-2vcpu-4gb, c-2, s-4vcpu-8gb
+  largeSize = "s-4vcpu-8gb";
   minRetries = 5;
   reuseVMs = true;
-  id = 'DO';
+  id = "DO";
   imageId = config.DO_IMAGE;
   startVM = async (name: string) => {
     const response = await axios({
-      method: 'POST',
+      method: "POST",
       url: `https://api.digitalocean.com/v2/droplets`,
       headers: {
-        Authorization: 'Bearer ' + DO_TOKEN,
-        'Content-Type': 'application/json',
+        Authorization: "Bearer " + DO_TOKEN,
+        "Content-Type": "application/json",
       },
       data: {
         name: name,
@@ -39,11 +39,11 @@ export class DigitalOcean extends VMManager {
 
   terminateVM = async (id: string) => {
     const response = await axios({
-      method: 'DELETE',
+      method: "DELETE",
       url: `https://api.digitalocean.com/v2/droplets/${id}`,
       headers: {
-        Authorization: 'Bearer ' + DO_TOKEN,
-        'Content-Type': 'application/json',
+        Authorization: "Bearer " + DO_TOKEN,
+        "Content-Type": "application/json",
       },
     });
   };
@@ -51,14 +51,14 @@ export class DigitalOcean extends VMManager {
   rebootVM = async (id: string) => {
     // Reboot the VM
     const response2 = await axios({
-      method: 'POST',
+      method: "POST",
       url: `https://api.digitalocean.com/v2/droplets/${id}/actions`,
       headers: {
-        Authorization: 'Bearer ' + DO_TOKEN,
-        'Content-Type': 'application/json',
+        Authorization: "Bearer " + DO_TOKEN,
+        "Content-Type": "application/json",
       },
       data: {
-        type: 'reboot',
+        type: "reboot",
       },
     });
     return;
@@ -67,14 +67,14 @@ export class DigitalOcean extends VMManager {
   reimageVM = async (id: string) => {
     // Rebuild the VM
     const response2 = await axios({
-      method: 'POST',
+      method: "POST",
       url: `https://api.digitalocean.com/v2/droplets/${id}/actions`,
       headers: {
-        Authorization: 'Bearer ' + DO_TOKEN,
-        'Content-Type': 'application/json',
+        Authorization: "Bearer " + DO_TOKEN,
+        "Content-Type": "application/json",
       },
       data: {
-        type: 'rebuild',
+        type: "rebuild",
         image: Number(this.imageId),
       },
     });
@@ -83,11 +83,11 @@ export class DigitalOcean extends VMManager {
 
   getVM = async (id: string) => {
     const response = await axios({
-      method: 'GET',
+      method: "GET",
       url: `https://api.digitalocean.com/v2/droplets/${id}`,
       headers: {
-        Authorization: 'Bearer ' + DO_TOKEN,
-        'Content-Type': 'application/json',
+        Authorization: "Bearer " + DO_TOKEN,
+        "Content-Type": "application/json",
       },
     });
     let server = this.mapServerObject(response.data.droplet);
@@ -97,11 +97,11 @@ export class DigitalOcean extends VMManager {
   listVMs = async (filter: string) => {
     // console.log(filter, tags);
     const response = await axios({
-      method: 'GET',
+      method: "GET",
       url: `https://api.digitalocean.com/v2/droplets`,
       headers: {
-        Authorization: 'Bearer ' + DO_TOKEN,
-        'Content-Type': 'application/json',
+        Authorization: "Bearer " + DO_TOKEN,
+        "Content-Type": "application/json",
       },
       params: {
         // TODO need to update if over 100 results
@@ -117,7 +117,7 @@ export class DigitalOcean extends VMManager {
   attachToNetwork = async (_id: string) => {};
 
   updateSnapshot = async () => {
-    return '';
+    return "";
   };
 
   mapServerObject = (server: any): VM => {
@@ -125,12 +125,12 @@ export class DigitalOcean extends VMManager {
     //   (network: any) => network.type === 'private',
     // )?.ip_address;
     const ip = server.networks.v4.find(
-      (network: any) => network.type === 'public',
+      (network: any) => network.type === "public",
     )?.ip_address;
     return {
       id: server.id?.toString(),
       // The gateway handles SSL termination and proxies to the private IP
-      host: ip ? `${gatewayHost}/?ip=${ip}` : '',
+      host: ip ? `${gatewayHost}/?ip=${ip}` : "",
       provider: this.id,
       large: this.isLarge,
       region: this.region,

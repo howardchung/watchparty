@@ -1,8 +1,8 @@
-import React, { useMemo, useState } from 'react';
-import { Badge, Menu, Progress, Slider } from '@mantine/core';
-import { formatTimestamp, softWhite } from '../../utils/utils';
-import styles from './Controls.module.css';
-import { MetadataContext } from '../../MetadataContext';
+import React, { useMemo, useState } from "react";
+import { Badge, Menu, Progress, Slider } from "@mantine/core";
+import { formatTimestamp, softWhite } from "../../utils/utils";
+import styles from "./Controls.module.css";
+import { MetadataContext } from "../../MetadataContext";
 import {
   IconPlayerPlayFilled,
   IconPlayerPauseFilled,
@@ -15,7 +15,7 @@ import {
   IconTheater,
   IconMaximize,
   IconPlayerSkipForwardFilled,
-} from '@tabler/icons-react';
+} from "@tabler/icons-react";
 
 interface ControlsProps {
   duration: number;
@@ -117,14 +117,14 @@ export const Controls = (props: ControlsProps) => {
       <div
         key={start}
         style={{
-          position: 'absolute',
-          height: '8px',
-          backgroundColor: 'grey',
-          left: buffStartPct + '%',
-          width: buffLengthPct + '%',
-          bottom: '0em',
+          position: "absolute",
+          height: "8px",
+          backgroundColor: "grey",
+          left: buffStartPct + "%",
+          width: buffLengthPct + "%",
+          bottom: "0em",
           zIndex: 0,
-          pointerEvents: 'none',
+          pointerEvents: "none",
         }}
       ></div>
     );
@@ -152,15 +152,15 @@ export const Controls = (props: ControlsProps) => {
       )}
       <div
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexDirection: 'column',
-          position: 'relative',
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexDirection: "column",
+          position: "relative",
         }}
       >
         <IconRefresh
-          color={isBehind ? 'orange' : softWhite}
+          color={isBehind ? "orange" : softWhite}
           className={`${styles.action}`}
           title="Sync"
           onClick={() => {
@@ -204,14 +204,14 @@ export const Controls = (props: ControlsProps) => {
           flexGrow: 1,
           marginTop: 0,
           marginBottom: 0,
-          position: 'relative',
-          minWidth: '50px',
-          overflow: 'visible',
-          cursor: 'pointer',
+          position: "relative",
+          minWidth: "50px",
+          overflow: "visible",
+          cursor: "pointer",
         }}
       >
         <Progress.Section
-          style={{ pointerEvents: 'none', zIndex: 1 }}
+          style={{ pointerEvents: "none", zIndex: 1 }}
           value={getPercent() * 100}
         ></Progress.Section>
         {buffers}
@@ -237,11 +237,11 @@ export const Controls = (props: ControlsProps) => {
         {getLength() < Infinity && showTimestamp && (
           <Badge
             style={{
-              position: 'absolute',
-              bottom: '10px',
-              left: `calc(${hoverState.hoverPos * 100 + '%'})`,
-              transform: 'translate(-50%)',
-              display: 'inline-block',
+              position: "absolute",
+              bottom: "10px",
+              left: `calc(${hoverState.hoverPos * 100 + "%"})`,
+              transform: "translate(-50%)",
+              display: "inline-block",
             }}
           >
             {formatTimestamp(
@@ -258,10 +258,10 @@ export const Controls = (props: ControlsProps) => {
             <div
               className={`${styles.text} ${styles.action}`}
               style={{
-                backgroundColor: 'rgba(100,100,100, 0.6)',
+                backgroundColor: "rgba(100,100,100, 0.6)",
                 fontSize: 10,
-                borderRadius: '4px',
-                padding: '2px',
+                borderRadius: "4px",
+                padding: "2px",
               }}
             >
               {props.playbackRate?.toFixed(2)}x
@@ -269,16 +269,16 @@ export const Controls = (props: ControlsProps) => {
           </Menu.Target>
           <Menu.Dropdown>
             {[
-              { key: 'Auto', text: 'Auto', value: 0 },
-              { key: '0.25', text: '0.25x', value: 0.25 },
-              { key: '0.5', text: '0.5x', value: 0.5 },
+              { key: "Auto", text: "Auto", value: 0 },
+              { key: "0.25", text: "0.25x", value: 0.25 },
+              { key: "0.5", text: "0.5x", value: 0.5 },
               // { key: '0.75', text: '0.75x', value: 0.75 },
-              { key: '1', text: '1x', value: 1 },
+              { key: "1", text: "1x", value: 1 },
               // { key: '1.25', text: '1.25x', value: 1.25 },
-              { key: '1.5', text: '1.5x', value: 1.5 },
+              { key: "1.5", text: "1.5x", value: 1.5 },
               // { key: '1.75', text: '1.75x', value: 1.75 },
-              { key: '2', text: '2x', value: 2 },
-              { key: '3', text: '3x', value: 3 },
+              { key: "2", text: "2x", value: 2 },
+              { key: "3", text: "3x", value: 3 },
             ].map((item) => (
               <Menu.Item
                 key={item.key}
@@ -301,7 +301,7 @@ export const Controls = (props: ControlsProps) => {
         }}
         className={` ${styles.action}`}
         title="Loop"
-        color={props.loop ? 'green' : softWhite}
+        color={props.loop ? "green" : softWhite}
       />
       {props.isYouTube ? (
         <Menu>
@@ -310,9 +310,9 @@ export const Controls = (props: ControlsProps) => {
           </Menu.Target>
           <Menu.Dropdown>
             {[
-              { key: 'hidden', text: 'Off', value: 'hidden' },
-              { key: 'en', text: 'English', value: 'showing' },
-              { key: 'es', text: 'Spanish', value: 'showing' },
+              { key: "hidden", text: "Off", value: "hidden" },
+              { key: "en", text: "English", value: "showing" },
+              { key: "es", text: "Spanish", value: "showing" },
             ].map((item) => (
               <Menu.Item
                 key={item.key}
@@ -335,7 +335,7 @@ export const Controls = (props: ControlsProps) => {
           }}
           className={` ${styles.action}`}
           title="Captions"
-          color={subtitled ? 'green' : softWhite}
+          color={subtitled ? "green" : softWhite}
         />
       )}
       <IconTheater
@@ -363,7 +363,7 @@ export const Controls = (props: ControlsProps) => {
           className={` ${styles.action}`}
         />
       )}
-      <div style={{ width: '100px' }}>
+      <div style={{ width: "100px" }}>
         <Slider
           defaultValue={volume}
           disabled={muted}

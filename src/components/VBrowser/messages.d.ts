@@ -8,8 +8,8 @@ import {
   ChatEvents,
   ScreenEvents,
   AdminEvents,
-} from './events';
-import { Member, ScreenConfigurations, ScreenResolution } from './types';
+} from "./events";
+import { Member, ScreenConfigurations, ScreenResolution } from "./types";
 
 export type WebSocketMessages =
   | WebSocketMessage
@@ -256,7 +256,7 @@ export interface AdminLockMessage extends WebSocketMessage, AdminLockPayload {
   id: string;
 }
 
-export type AdminLockResource = 'login' | 'control';
+export type AdminLockResource = "login" | "control";
 
 export interface AdminLockPayload {
   resource: AdminLockResource;

@@ -1,5 +1,5 @@
-import React, { useContext } from 'react';
-import { Button, Stepper } from '@mantine/core';
+import React, { useContext } from "react";
+import { Button, Stepper } from "@mantine/core";
 import {
   IconBrandDiscordFilled,
   IconBrandYoutubeFilled,
@@ -12,10 +12,10 @@ import {
   IconRefresh,
   IconScreenShare,
   IconVideo,
-} from '@tabler/icons-react';
-import { NewRoomButton } from '../TopBar/TopBar';
-import styles from './Home.module.css';
-import { MetadataContext } from '../../MetadataContext';
+} from "@tabler/icons-react";
+import { NewRoomButton } from "../TopBar/TopBar";
+import styles from "./Home.module.css";
+import { MetadataContext } from "../../MetadataContext";
 
 export const Home = () => {
   const { user } = useContext(MetadataContext);
@@ -23,14 +23,14 @@ export const Home = () => {
     <div>
       <div className={styles.container}>
         <Hero
-          heroText={'Watch videos together with friends anywhere.'}
-          subText={'No registration or download required.'}
+          heroText={"Watch videos together with friends anywhere."}
+          subText={"No registration or download required."}
           action={
-            <div style={{ marginTop: '8px', width: '300px' }}>
+            <div style={{ marginTop: "8px", width: "300px" }}>
               <NewRoomButton size="xl" />
             </div>
           }
-          image={'/screenshot4.png'}
+          image={"/screenshot4.png"}
         />
         <div className={styles.featureSection}>
           <Feature
@@ -61,9 +61,9 @@ export const Home = () => {
         </div>
 
         <Hero
-          heroText={'React to moments together.'}
+          heroText={"React to moments together."}
           subText={"Find moments of shared joy even when you're apart."}
-          image={'/screenshot18.png'}
+          image={"/screenshot18.png"}
           color="green"
         />
         <div className={styles.featureSection}>
@@ -90,18 +90,18 @@ export const Home = () => {
         </div>
 
         <Hero
-          heroText={'Theater mode.'}
+          heroText={"Theater mode."}
           subText={
-            'Bring video and chat front-and-center for minimal distractions.'
+            "Bring video and chat front-and-center for minimal distractions."
           }
-          image={'/screenshot14.png'}
+          image={"/screenshot14.png"}
         />
         <div
           style={{
-            padding: '30px',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
+            padding: "30px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
           }}
         >
           <div className={styles.heroText}>Get started!</div>
@@ -135,12 +135,12 @@ const Feature = ({
   return (
     <div
       style={{
-        display: 'flex',
-        flex: '1 1 0px',
-        flexDirection: 'column',
-        alignItems: 'center',
-        padding: '10px',
-        minWidth: '180px',
+        display: "flex",
+        flex: "1 1 0px",
+        flexDirection: "column",
+        alignItems: "center",
+        padding: "10px",
+        minWidth: "180px",
       }}
     >
       <Icon size={80} />
@@ -166,12 +166,12 @@ export const Hero = ({
   color?: string;
 }) => {
   return (
-    <div className={`${styles.hero} ${color === 'green' ? styles.green : ''}`}>
+    <div className={`${styles.hero} ${color === "green" ? styles.green : ""}`}>
       <div
-        style={{ flexDirection: color === 'green' ? 'row-reverse' : undefined }}
+        style={{ flexDirection: color === "green" ? "row-reverse" : undefined }}
         className={styles.heroInner}
       >
-        <div style={{ padding: '30px', flex: '1 1 0' }}>
+        <div style={{ padding: "30px", flex: "1 1 0" }}>
           <div className={styles.heroText}>{heroText}</div>
           <div className={styles.subText}>{subText}</div>
           <div className={styles.subText}>{subText2}</div>
@@ -179,12 +179,12 @@ export const Hero = ({
         </div>
         <div
           style={{
-            flex: '1 1 0',
+            flex: "1 1 0",
           }}
         >
           <img
             alt="hero"
-            style={{ width: '100%', borderRadius: '10px' }}
+            style={{ width: "100%", borderRadius: "10px" }}
             src={image}
           />
         </div>
@@ -199,10 +199,10 @@ export const DiscordBot = () => {
       <Hero
         color="green"
         heroText={
-          'Add the WatchParty Discord bot to your server to easily generate WatchParty links.'
+          "Add the WatchParty Discord bot to your server to easily generate WatchParty links."
         }
-        subText={'/watch to generate a new empty room'}
-        subText2={'/watch video <URL_HERE> to create a room with a video'}
+        subText={"/watch to generate a new empty room"}
+        subText2={"/watch video <URL_HERE> to create a room with a video"}
         action={
           <Button
             leftSection={<IconBrandDiscordFilled />}
@@ -214,7 +214,7 @@ export const DiscordBot = () => {
             Add to Discord
           </Button>
         }
-        image={'/screenshot5.png'}
+        image={"/screenshot5.png"}
       />
     </div>
   );

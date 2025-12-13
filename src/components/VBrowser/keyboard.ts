@@ -1,4 +1,4 @@
-import GuacamoleKeyboard from './guacamole-keyboard';
+import GuacamoleKeyboard from "./guacamole-keyboard";
 
 export interface GuacamoleKeyboardInterface {
   /**

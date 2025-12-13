@@ -1,19 +1,19 @@
-import config from './config.ts';
-import axios from 'axios';
-import { redis } from './utils/redis.ts';
-import { getStats } from './utils/getStats.ts';
+import config from "./config.ts";
+import axios from "axios";
+import { redis } from "./utils/redis.ts";
+import { getStats } from "./utils/getStats.ts";
 
 statsTimeSeries();
 setInterval(statsTimeSeries, 5 * 60 * 1000);
 
 async function statsTimeSeries() {
   if (redis) {
-    console.time('timeSeries');
+    console.time("timeSeries");
     try {
       const stats = await getStats();
       const isFreePoolFull = (
         await axios.get(
-          'http://localhost:' + config.VMWORKER_PORT + '/isFreePoolFull',
+          "http://localhost:" + config.VMWORKER_PORT + "/isFreePoolFull",
         )
       ).data.isFull;
       const datapoint: AnyDict = {
@@ -43,11 +43,11 @@ async function statsTimeSeries() {
             stats.vmManagerStats[key]?.availableVBrowsers?.length;
         }
       });
-      await redis.lpush('timeSeries', JSON.stringify(datapoint));
-      await redis.ltrim('timeSeries', 0, 288);
+      await redis.lpush("timeSeries", JSON.stringify(datapoint));
+      await redis.ltrim("timeSeries", 0, 288);
     } catch (e: any) {
       console.warn(`[TIMESERIES] %s when collecting stats`, e.code);
     }
-    console.timeEnd('timeSeries');
+    console.timeEnd("timeSeries");
   }
 }

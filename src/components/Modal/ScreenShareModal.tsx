@@ -1,7 +1,7 @@
-import React, { useContext } from 'react';
-import { Modal, Button, Table } from '@mantine/core';
-import { SubscribeButton } from '../SubscribeButton/SubscribeButton';
-import { MetadataContext } from '../../MetadataContext';
+import React, { useContext } from "react";
+import { Modal, Button, Table } from "@mantine/core";
+import { SubscribeButton } from "../SubscribeButton/SubscribeButton";
+import { MetadataContext } from "../../MetadataContext";
 
 export const ScreenShareModal = ({
   closeModal,

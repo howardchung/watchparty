@@ -1,11 +1,11 @@
-import React from 'react';
-import { Modal, Button, Avatar, HoverCard, Text } from '@mantine/core';
-import firebase from 'firebase/compat/app';
-import 'firebase/compat/auth';
-import { serverPath } from '../../utils/utils';
-import { ManageSubButton } from '../SubscribeButton/SubscribeButton';
-import config from '../../config';
-import { MetadataContext } from '../../MetadataContext';
+import React from "react";
+import { Modal, Button, Avatar, HoverCard, Text } from "@mantine/core";
+import firebase from "firebase/compat/app";
+import "firebase/compat/auth";
+import { serverPath } from "../../utils/utils";
+import { ManageSubButton } from "../SubscribeButton/SubscribeButton";
+import config from "../../config";
+import { MetadataContext } from "../../MetadataContext";
 import {
   IconBrandDiscordFilled,
   IconBrandGravatar,
@@ -14,7 +14,7 @@ import {
   IconKeyFilled,
   IconLogout,
   IconTrashFilled,
-} from '@tabler/icons-react';
+} from "@tabler/icons-react";
 
 export class ProfileModal extends React.Component<{
   close: () => void;
@@ -30,23 +30,23 @@ export class ProfileModal extends React.Component<{
   };
 
   async componentDidMount() {
-    const token = (await this.context.user?.getIdToken()) ?? '';
+    const token = (await this.context.user?.getIdToken()) ?? "";
     const response = await fetch(
       serverPath +
-        '/linkAccount?' +
+        "/linkAccount?" +
         new URLSearchParams({
-          uid: this.context.user?.uid ?? '',
+          uid: this.context.user?.uid ?? "",
           token,
         }),
     );
     const data: LinkAccount[] = await response.json();
-    const linkedDiscord = data.find((d) => d.kind === 'discord');
+    const linkedDiscord = data.find((d) => d.kind === "discord");
     this.setState({ linkedDiscord });
   }
 
   onSignOut = () => {
     firebase.auth().signOut();
-    window.localStorage.removeItem('watchparty-loginname');
+    window.localStorage.removeItem("watchparty-loginname");
     window.location.reload();
   };
 
@@ -78,10 +78,10 @@ export class ProfileModal extends React.Component<{
 
   deleteAccount = async () => {
     const token = await this.context.user?.getIdToken();
-    await fetch(serverPath + '/deleteAccount', {
-      method: 'DELETE',
+    await fetch(serverPath + "/deleteAccount", {
+      method: "DELETE",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({ uid: this.context.user?.uid, token }),
     });
@@ -94,22 +94,22 @@ export class ProfileModal extends React.Component<{
     )}%2Fdiscord%2Fauth&response_type=token&scope=identify`;
     window.open(
       url,
-      '_blank',
-      'toolbar=0,location=0,menubar=0,width=450,height=900',
+      "_blank",
+      "toolbar=0,location=0,menubar=0,width=450,height=900",
     );
   };
 
   deleteDiscord = async () => {
     const token = await this.context.user?.getIdToken();
-    await fetch(serverPath + '/linkAccount', {
-      method: 'DELETE',
+    await fetch(serverPath + "/linkAccount", {
+      method: "DELETE",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         uid: this.context.user?.uid,
         token,
-        kind: 'discord',
+        kind: "discord",
       }),
     });
     window.location.reload();
@@ -134,7 +134,7 @@ export class ProfileModal extends React.Component<{
             NOT automatically cancel it and you will need to contact
             support@watchparty.me to cancel.
           </p>
-          <div style={{ display: 'flex', gap: '4px' }}>
+          <div style={{ display: "flex", gap: "4px" }}>
             <Button
               onClick={async () => {
                 await this.deleteAccount();
@@ -153,10 +153,10 @@ export class ProfileModal extends React.Component<{
         </Modal>
         <div
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "8px",
           }}
         >
           <Avatar src={userImage} />
@@ -170,10 +170,10 @@ export class ProfileModal extends React.Component<{
         </div>
         <div
           style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '10px',
-            margin: '10px',
+            display: "flex",
+            flexDirection: "column",
+            gap: "10px",
+            margin: "10px",
           }}
         >
           <Button

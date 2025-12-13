@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   debounce,
   getMediaPathResults,
@@ -6,16 +6,16 @@ import {
   isHttp,
   isMagnet,
   isYouTube,
-} from '../../utils/utils';
-import { examples } from '../../utils/examples';
-import ChatVideoCard from '../ChatVideoCard/ChatVideoCard';
-import { IconLink, IconX } from '@tabler/icons-react';
+} from "../../utils/utils";
+import { examples } from "../../utils/examples";
+import ChatVideoCard from "../ChatVideoCard/ChatVideoCard";
+import { IconLink, IconX } from "@tabler/icons-react";
 import {
   ActionIcon,
   Autocomplete,
   Loader,
   type AutocompleteProps,
-} from '@mantine/core';
+} from "@mantine/core";
 
 type ComboBoxProps = {
   roomSetMedia: (value: string) => void;
@@ -48,23 +48,23 @@ export class ComboBox extends React.Component<ComboBoxProps, ComboBoxState> {
   doSearch = async () => {
     const value = this.state.inputMedia;
     this.setState({ loading: true });
-    const query: string = value || '';
+    const query: string = value || "";
     let items = examples;
     if (
-      query === '' ||
+      query === "" ||
       // Anything that doesn't pass this check we pass to YouTube as a search query
       (query && (isHttp(query) || isMagnet(query)))
     ) {
       if (!value && this.props.mediaPath) {
-        items = await getMediaPathResults(this.props.mediaPath, '');
+        items = await getMediaPathResults(this.props.mediaPath, "");
       }
       if (query) {
-        let type: SearchResult['type'] = 'file';
+        let type: SearchResult["type"] = "file";
         if (isYouTube(query)) {
-          type = 'youtube';
+          type = "youtube";
         }
         if (isMagnet(query)) {
-          type = 'magnet';
+          type = "magnet";
         }
         // Create entry from user input
         items = [
@@ -94,13 +94,13 @@ export class ComboBox extends React.Component<ComboBoxProps, ComboBoxState> {
 
   render() {
     const { roomMedia: currentMedia, getMediaDisplayName } = this.props;
-    const renderOption: AutocompleteProps['renderOption'] = ({ option }) => {
+    const renderOption: AutocompleteProps["renderOption"] = ({ option }) => {
       const video = this.state.items.find((item) => item.url === option.value);
       return (
         <div
           key={option.value}
           onClick={(e) => this.setMediaAndClose(option.value)}
-          style={{ width: '100%' }}
+          style={{ width: "100%" }}
         >
           {video && (
             <ChatVideoCard
@@ -115,7 +115,7 @@ export class ComboBox extends React.Component<ComboBoxProps, ComboBoxState> {
     return (
       <Autocomplete
         maxDropdownHeight={400}
-        style={{ width: '100%' }}
+        style={{ width: "100%" }}
         disabled={this.props.disabled}
         onChange={this.onChange}
         onFocus={(e: any) => {
@@ -147,14 +147,14 @@ export class ComboBox extends React.Component<ComboBoxProps, ComboBoxState> {
           });
         }}
         onKeyDown={(e: any) => {
-          if (e.key === 'Enter') {
-            this.setMediaAndClose(this.state.inputMedia ?? '');
+          if (e.key === "Enter") {
+            this.setMediaAndClose(this.state.inputMedia ?? "");
           }
         }}
         rightSection={
           <ActionIcon
             color="red"
-            onClick={(e: any) => this.setMediaAndClose('')}
+            onClick={(e: any) => this.setMediaAndClose("")}
             title="Clear"
           >
             <IconX />

@@ -1,27 +1,27 @@
-import { useContext, useEffect, useState } from 'react';
-import firebase from 'firebase/compat/app';
-import { serverPath } from '../../utils/utils';
-import { MetadataContext } from '../../MetadataContext';
+import { useContext, useEffect, useState } from "react";
+import firebase from "firebase/compat/app";
+import { serverPath } from "../../utils/utils";
+import { MetadataContext } from "../../MetadataContext";
 
 export const Discord = () => {
-  const [errorMsg, setErrorMsg] = useState('');
+  const [errorMsg, setErrorMsg] = useState("");
   const { user } = useContext(MetadataContext);
   useEffect(() => {
     async function auth() {
       const fragment = new URLSearchParams(window.location.hash.slice(1));
       const [accessToken, tokenType] = [
-        fragment.get('access_token'),
-        fragment.get('token_type'),
+        fragment.get("access_token"),
+        fragment.get("token_type"),
       ];
       const token = await user?.getIdToken();
-      const authResponse = await fetch(serverPath + '/linkAccount', {
-        method: 'POST',
+      const authResponse = await fetch(serverPath + "/linkAccount", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           uid: user?.uid,
-          kind: 'discord',
+          kind: "discord",
           token: token,
           tokenType,
           accessToken,
@@ -41,7 +41,7 @@ export const Discord = () => {
   }, [user]);
 
   if (errorMsg) {
-    return <div style={{ color: 'red', fontSize: 20 }}>{errorMsg}</div>;
+    return <div style={{ color: "red", fontSize: 20 }}>{errorMsg}</div>;
   }
   return null;
 };

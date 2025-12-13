@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { Modal, TextInput, ActionIcon } from '@mantine/core';
-import { IconCopy } from '@tabler/icons-react';
+import React, { useState } from "react";
+import { Modal, TextInput, ActionIcon } from "@mantine/core";
+import { IconCopy } from "@tabler/icons-react";
 
 export const InviteModal = ({
   closeInviteModal,
@@ -33,7 +33,7 @@ export const InviteModal = ({
       />
       {inviteLinkCopied && (
         <div style={{ marginTop: 15 }}>
-          <b style={{ color: 'green' }}>Link copied to clipboard.</b>
+          <b style={{ color: "green" }}>Link copied to clipboard.</b>
         </div>
       )}
     </Modal>

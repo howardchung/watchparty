@@ -1,9 +1,9 @@
-import React, { useContext, useState } from 'react';
-import { Menu } from '@mantine/core';
-import { Socket } from 'socket.io-client';
+import React, { useContext, useState } from "react";
+import { Menu } from "@mantine/core";
+import { Socket } from "socket.io-client";
 // import styles from './UserMenu.module.css';
-import { MetadataContext } from '../../MetadataContext';
-import { IconBan, IconTrashFilled, IconX } from '@tabler/icons-react';
+import { MetadataContext } from "../../MetadataContext";
+import { IconBan, IconTrashFilled, IconX } from "@tabler/icons-react";
 
 export const UserMenu = ({
   socket,
@@ -39,7 +39,7 @@ export const UserMenu = ({
             leftSection={<IconX />}
             onClick={async () => {
               const token = await user?.getIdToken();
-              socket.emit('CMD:deleteChatMessages', {
+              socket.emit("CMD:deleteChatMessages", {
                 author: userToManage,
                 timestamp: timestamp,
                 uid: user?.uid,
@@ -54,7 +54,7 @@ export const UserMenu = ({
           leftSection={<IconTrashFilled />}
           onClick={async () => {
             const token = await user?.getIdToken();
-            socket.emit('CMD:deleteChatMessages', {
+            socket.emit("CMD:deleteChatMessages", {
               author: userToManage,
               uid: user?.uid,
               token,
@@ -67,7 +67,7 @@ export const UserMenu = ({
           leftSection={<IconBan />}
           onClick={async () => {
             const token = await user?.getIdToken();
-            socket.emit('kickUser', {
+            socket.emit("kickUser", {
               userToBeKicked: userToManage,
               uid: user?.uid,
               token,

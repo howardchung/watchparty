@@ -1,12 +1,12 @@
-import React from 'react';
+import React from "react";
 
-import { EVENT } from './events';
-import { NekoClient } from './client';
-import GuacamoleKeyboard from './keyboard';
-import config from '../../config';
-import { VIDEO_MAX_HEIGHT_CSS } from '../../utils/utils';
-import { Button } from '@mantine/core';
-import { IconClipboard, IconKeyboardFilled } from '@tabler/icons-react';
+import { EVENT } from "./events";
+import { NekoClient } from "./client";
+import GuacamoleKeyboard from "./keyboard";
+import config from "../../config";
+import { VIDEO_MAX_HEIGHT_CSS } from "../../utils/utils";
+import { Button } from "@mantine/core";
+import { IconClipboard, IconKeyboardFilled } from "@tabler/icons-react";
 
 export class VBrowser extends React.Component<{
   username: string;
@@ -20,7 +20,7 @@ export class VBrowser extends React.Component<{
   doPlay: () => Promise<void>;
   isMobile: boolean;
 }> {
-  state = { dummyValue: '' };
+  state = { dummyValue: "" };
   // private observer = new ResizeObserver(this.onResize);
   private keyboard = GuacamoleKeyboard();
   private focused = false;
@@ -45,7 +45,7 @@ export class VBrowser extends React.Component<{
   componentDidMount() {
     this.controlling = this.props.controlling;
     this.keepAliveInterval = window.setInterval(
-      () => this.$client.sendMessage('chat/message'),
+      () => this.$client.sendMessage("chat/message"),
       30000,
     );
 
@@ -67,13 +67,13 @@ export class VBrowser extends React.Component<{
     });
     this.$client.on(EVENT.TRACK, async (track: MediaStreamTrack, stream) => {
       // console.log(track, streams);
-      const video = document.getElementById('leftVideo') as HTMLVideoElement;
-      video.src = '';
+      const video = document.getElementById("leftVideo") as HTMLVideoElement;
+      video.src = "";
       video.srcObject = stream;
       // Manually play audio for iPhone Safari since this seems to create two separate streams
-      if (stream.getTracks().length === 1 && track.kind === 'audio') {
+      if (stream.getTracks().length === 1 && track.kind === "audio") {
         const audio = document.getElementById(
-          'iPhoneAudio',
+          "iPhoneAudio",
         ) as HTMLAudioElement;
         audio.srcObject = new MediaStream([track]);
         audio.play();
@@ -82,15 +82,15 @@ export class VBrowser extends React.Component<{
     });
     this.$client.on(EVENT.CONTROL.CLIPBOARD, this.onClipboardChanged);
 
-    if (config.NODE_ENV === 'development') {
-      this.$client.on('debug', (e, data) => console.log(e, data));
+    if (config.NODE_ENV === "development") {
+      this.$client.on("debug", (e, data) => console.log(e, data));
     }
 
     const url =
-      location.protocol.replace('http', 'ws') +
-      '//' +
+      location.protocol.replace("http", "ws") +
+      "//" +
       this.props.hostname +
-      '/ws';
+      "/ws";
     this.$client.login(url, this.props.password, this.props.username);
 
     // this._container.current?.addEventListener('resize', this.onResize);
@@ -104,8 +104,8 @@ export class VBrowser extends React.Component<{
     // document.addEventListener('focusout', this.onBlur.bind(this));
 
     document
-      .getElementById('leftOverlay')
-      ?.addEventListener('wheel', this.onWheel, { passive: false });
+      .getElementById("leftOverlay")
+      ?.addEventListener("wheel", this.onWheel, { passive: false });
 
     /* Initialize Guacamole Keyboard */
     this.keyboard.onkeydown = (key: number) => {
@@ -113,16 +113,16 @@ export class VBrowser extends React.Component<{
         return true;
       }
       const keyToSend = this.keyMap(key);
-      this.$client.sendData('keydown', { key: keyToSend });
+      this.$client.sendData("keydown", { key: keyToSend });
       return false;
     };
     this.keyboard.onkeyup = (key: number) => {
       if (!this.focused || !this.controlling) {
         return;
       }
-      this.$client.sendData('keyup', { key: this.keyMap(key) });
+      this.$client.sendData("keyup", { key: this.keyMap(key) });
     };
-    this.keyboard.listenTo(document.getElementById('leftOverlay') as Element);
+    this.keyboard.listenTo(document.getElementById("leftOverlay") as Element);
   }
 
   componentDidUpdate(prevProps: any) {
@@ -148,11 +148,11 @@ export class VBrowser extends React.Component<{
   takeControl = () => {
     if (this.$client.connected) {
       this.$client.sendMessage(EVENT.ADMIN.CONTROL);
-      this.$client.sendMessage(EVENT.CONTROL.CLIPBOARD, { text: '' });
+      this.$client.sendMessage(EVENT.CONTROL.CLIPBOARD, { text: "" });
     } else {
       this.$client.once(EVENT.CONNECTED, () => {
         this.$client.sendMessage(EVENT.ADMIN.CONTROL);
-        this.$client.sendMessage(EVENT.CONTROL.CLIPBOARD, { text: '' });
+        this.$client.sendMessage(EVENT.CONTROL.CLIPBOARD, { text: "" });
       });
     }
   };
@@ -173,7 +173,7 @@ export class VBrowser extends React.Component<{
   onClipboardChanged(clipboard: string) {
     if (
       navigator.clipboard &&
-      typeof navigator.clipboard.writeText === 'function'
+      typeof navigator.clipboard.writeText === "function"
     ) {
       // Received clipboard contents from vbrowser
       navigator.clipboard.writeText(clipboard);
@@ -183,7 +183,7 @@ export class VBrowser extends React.Component<{
     if (this.props.controlling) {
       if (
         navigator.clipboard &&
-        typeof navigator.clipboard.readText === 'function'
+        typeof navigator.clipboard.readText === "function"
       ) {
         try {
           const text = await navigator.clipboard.readText();
@@ -194,9 +194,9 @@ export class VBrowser extends React.Component<{
         }
       }
       this.$client.sendMessage(EVENT.CONTROL.KEYBOARD, {
-        capsLock: e.getModifierState('CapsLock'),
-        numLock: e.getModifierState('NumLock'),
-        scrollLock: e.getModifierState('ScrollLock'),
+        capsLock: e.getModifierState("CapsLock"),
+        numLock: e.getModifierState("NumLock"),
+        scrollLock: e.getModifierState("ScrollLock"),
       });
     }
   };
@@ -207,9 +207,9 @@ export class VBrowser extends React.Component<{
     }
 
     // Reset the vbrowser clipboard (it will be repopulated the next time the controller focuses)
-    this.$client.sendMessage(EVENT.CONTROL.CLIPBOARD, { text: '' });
+    this.$client.sendMessage(EVENT.CONTROL.CLIPBOARD, { text: "" });
     this.activeKeys.forEach((key) => {
-      this.$client.sendData('keyup', { key });
+      this.$client.sendData("keyup", { key });
       this.activeKeys.delete(key);
     });
   };
@@ -227,7 +227,7 @@ export class VBrowser extends React.Component<{
   onMousePos = (e: MouseEvent | React.MouseEvent) => {
     const { w, h } = { w: this.width, h: this.height };
     const rect = this._overlay.current!.getBoundingClientRect();
-    this.$client.sendData('mousemove', {
+    this.$client.sendData("mousemove", {
       x: Math.round((w / rect.width) * (e.clientX - rect.left)),
       y: Math.round((h / rect.height) * (e.clientY - rect.top)),
     });
@@ -252,7 +252,7 @@ export class VBrowser extends React.Component<{
     x = Math.min(Math.max(x, -this.scroll), this.scroll);
     y = Math.min(Math.max(y, -this.scroll), this.scroll);
 
-    this.$client.sendData('wheel', { x, y });
+    this.$client.sendData("wheel", { x, y });
   };
 
   onMouseDown = (e: React.MouseEvent) => {
@@ -262,7 +262,7 @@ export class VBrowser extends React.Component<{
       return;
     }
     this.onMousePos(e);
-    this.$client.sendData('mousedown', { key: e.button + 1 });
+    this.$client.sendData("mousedown", { key: e.button + 1 });
   };
 
   onMouseUp = (e: React.MouseEvent) => {
@@ -272,7 +272,7 @@ export class VBrowser extends React.Component<{
       return;
     }
     this.onMousePos(e);
-    this.$client.sendData('mouseup', { key: e.button + 1 });
+    this.$client.sendData("mouseup", { key: e.button + 1 });
   };
 
   onMouseMove = (e: React.MouseEvent) => {
@@ -371,17 +371,17 @@ export class VBrowser extends React.Component<{
       <>
         <div
           style={{
-            position: 'absolute',
+            position: "absolute",
             top: 0,
             left: 0,
-            display: 'flex',
-            gap: '4px',
+            display: "flex",
+            gap: "4px",
           }}
         >
           {this.props.isMobile && this.props.controlling && (
             <Button
               onClick={() => {
-                const dummy = document.getElementById('dummy');
+                const dummy = document.getElementById("dummy");
                 dummy?.focus();
               }}
               leftSection={<IconKeyboardFilled />}
@@ -393,10 +393,10 @@ export class VBrowser extends React.Component<{
             <Button
               onClick={async () => {
                 // Guacamole ctrl v codes
-                this.$client.sendData('keydown', { key: 65507 });
-                this.$client.sendData('keydown', { key: 118 });
-                this.$client.sendData('keyup', { key: 65507 });
-                this.$client.sendData('keyup', { key: 118 });
+                this.$client.sendData("keydown", { key: 65507 });
+                this.$client.sendData("keydown", { key: 118 });
+                this.$client.sendData("keyup", { key: 65507 });
+                this.$client.sendData("keyup", { key: 118 });
               }}
               leftSection={<IconClipboard />}
             >
@@ -407,19 +407,19 @@ export class VBrowser extends React.Component<{
         <div
           id="leftVideoParent"
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '100%',
-            height: '100%',
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: "100%",
+            height: "100%",
           }}
         >
           <div
             ref={this._container}
             style={{
-              position: 'relative',
-              width: '100%',
-              height: document.getElementById('leftVideo')?.clientHeight,
+              position: "relative",
+              width: "100%",
+              height: document.getElementById("leftVideo")?.clientHeight,
             }}
           >
             <video
@@ -427,25 +427,25 @@ export class VBrowser extends React.Component<{
               ref={this._video}
               id="leftVideo"
               style={{
-                position: 'absolute',
+                position: "absolute",
                 top: 0,
                 left: 0,
-                width: '100%',
+                width: "100%",
                 // maxHeight: document.fullscreenElement ? undefined : VIDEO_MAX_HEIGHT_CSS,
               }}
             />
             <div
               ref={this._overlay}
-              id={'leftOverlay'}
+              id={"leftOverlay"}
               tabIndex={0}
               style={{
-                position: 'absolute',
+                position: "absolute",
                 top: 0,
                 left: 0,
-                width: document.getElementById('leftVideo')?.clientWidth,
-                height: document.getElementById('leftVideo')?.clientHeight,
+                width: document.getElementById("leftVideo")?.clientWidth,
+                height: document.getElementById("leftVideo")?.clientHeight,
                 // disable firefox scrollbars?
-                scrollbarWidth: 'none',
+                scrollbarWidth: "none",
               }}
               onClick={this.onClick}
               onContextMenu={this.onContextMenu}
@@ -463,7 +463,7 @@ export class VBrowser extends React.Component<{
               id="dummy"
               value={this.state.dummyValue}
               style={{
-                position: 'absolute',
+                position: "absolute",
                 left: 0,
                 top: 0,
                 height: 0,
@@ -471,25 +471,25 @@ export class VBrowser extends React.Component<{
               }}
               onFocus={() => {
                 this.focused = true;
-                this.setState({ dummyValue: '' });
+                this.setState({ dummyValue: "" });
               }}
               onBlur={() => {
                 this.focused = false;
-                this.setState({ dummyValue: '' });
+                this.setState({ dummyValue: "" });
               }}
               onKeyDown={(e) => {
                 e.nativeEvent.preventDefault();
                 // document.getElementById('debug')!.innerHTML = e.key;
                 // On mobile this is "unidentified" for content chars, so this is meant for backspace/enter
-                if (e.key !== 'Unidentified') {
+                if (e.key !== "Unidentified") {
                   document
-                    .getElementById('leftOverlay')
+                    .getElementById("leftOverlay")
                     ?.dispatchEvent(
-                      new KeyboardEvent('keydown', { key: e.key }),
+                      new KeyboardEvent("keydown", { key: e.key }),
                     );
                   document
-                    .getElementById('leftOverlay')
-                    ?.dispatchEvent(new KeyboardEvent('keyup', { key: e.key }));
+                    .getElementById("leftOverlay")
+                    ?.dispatchEvent(new KeyboardEvent("keyup", { key: e.key }));
                 }
               }}
               onBeforeInputCapture={(
@@ -497,15 +497,15 @@ export class VBrowser extends React.Component<{
               ) => {
                 e.nativeEvent.preventDefault();
                 // document.getElementById('debug')!.innerHTML = e.type + ' ' + e.data;
-                if (e.type === 'beforeinput') {
-                  document.getElementById('leftOverlay')?.dispatchEvent(
-                    new KeyboardEvent('keydown', {
+                if (e.type === "beforeinput") {
+                  document.getElementById("leftOverlay")?.dispatchEvent(
+                    new KeyboardEvent("keydown", {
                       key: e.data,
                       shiftKey: e.data === e.data.toUpperCase(),
                     }),
                   );
-                  document.getElementById('leftOverlay')?.dispatchEvent(
-                    new KeyboardEvent('keyup', {
+                  document.getElementById("leftOverlay")?.dispatchEvent(
+                    new KeyboardEvent("keyup", {
                       key: e.data,
                     }),
                   );

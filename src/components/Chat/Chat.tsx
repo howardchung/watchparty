@@ -1,34 +1,34 @@
-import React, { RefObject, useContext } from 'react';
+import React, { RefObject, useContext } from "react";
 import {
   ActionIcon,
   Avatar,
   Button,
   HoverCard,
   TextInput,
-} from '@mantine/core';
+} from "@mantine/core";
 // import data from '@emoji-mart/data';
-import Picker from '@emoji-mart/react';
-import { init } from 'emoji-mart';
+import Picker from "@emoji-mart/react";
+import { init } from "emoji-mart";
 // import onClickOutside from 'react-onclickoutside';
 //@ts-expect-error
-import Linkify from 'react-linkify';
-import { SecureLink } from 'react-secure-link';
-import styles from './Chat.module.css';
+import Linkify from "react-linkify";
+import { SecureLink } from "react-secure-link";
+import styles from "./Chat.module.css";
 
 import {
   formatTimestamp,
   getColorForStringHex,
   getDefaultPicture,
   isEmojiString,
-} from '../../utils/utils';
-import { UserMenu } from '../UserMenu/UserMenu';
-import { Socket } from 'socket.io-client';
+} from "../../utils/utils";
+import { UserMenu } from "../UserMenu/UserMenu";
+import { Socket } from "socket.io-client";
 import {
   CSSTransition,
   SwitchTransition,
   TransitionGroup,
-} from 'react-transition-group';
-import { MetadataContext } from '../../MetadataContext';
+} from "react-transition-group";
+import { MetadataContext } from "../../MetadataContext";
 
 interface ChatProps {
   chat: ChatMessage[];
@@ -48,13 +48,13 @@ export class Chat extends React.Component<ChatProps> {
   static contextType = MetadataContext;
   declare context: React.ContextType<typeof MetadataContext>;
   public state = {
-    chatMsg: '',
+    chatMsg: "",
     isNearBottom: true,
     isPickerOpen: false,
     reactionMenu: {
       isOpen: false,
-      selectedMsgId: '',
-      selectedMsgTimestamp: '',
+      selectedMsgId: "",
+      selectedMsgTimestamp: "",
       yPosition: 0,
       xPosition: 0,
     },
@@ -63,7 +63,7 @@ export class Chat extends React.Component<ChatProps> {
 
   async componentDidMount() {
     this.scrollToBottom();
-    this.messagesRef.current?.addEventListener('scroll', this.onScroll);
+    this.messagesRef.current?.addEventListener("scroll", this.onScroll);
     init({});
   }
 
@@ -106,9 +106,9 @@ export class Chat extends React.Component<ChatProps> {
       msgTimestamp: timestamp || this.state.reactionMenu.selectedMsgTimestamp,
     };
     if (msg?.reactions?.[value].includes(this.props.socket.id!)) {
-      this.props.socket.emit('CMD:removeReaction', data);
+      this.props.socket.emit("CMD:removeReaction", data);
     } else {
-      this.props.socket.emit('CMD:addReaction', data);
+      this.props.socket.emit("CMD:addReaction", data);
     }
   };
 
@@ -124,8 +124,8 @@ export class Chat extends React.Component<ChatProps> {
     if (this.chatTooLong()) {
       return;
     }
-    this.setState({ chatMsg: '' });
-    this.props.socket.emit('CMD:chat', this.state.chatMsg);
+    this.setState({ chatMsg: "" });
+    this.props.socket.emit("CMD:chat", this.state.chatMsg);
   };
 
   chatTooLong = () => {
@@ -154,37 +154,37 @@ export class Chat extends React.Component<ChatProps> {
   };
 
   formatMessage = (cmd: string, msg?: string): React.ReactNode | string => {
-    if (cmd === 'host') {
+    if (cmd === "host") {
       return (
         <React.Fragment>
           {`changed the video to `}
-          <span style={{ textTransform: 'initial' }}>
+          <span style={{ textTransform: "initial" }}>
             {this.props.getMediaDisplayName(msg)}
           </span>
         </React.Fragment>
       );
-    } else if (cmd === 'playlistAdd') {
+    } else if (cmd === "playlistAdd") {
       return (
         <React.Fragment>
           {`added to the playlist: `}
-          <span style={{ textTransform: 'initial' }}>
+          <span style={{ textTransform: "initial" }}>
             {this.props.getMediaDisplayName(msg)}
           </span>
         </React.Fragment>
       );
-    } else if (cmd === 'seek') {
+    } else if (cmd === "seek") {
       return `jumped to ${formatTimestamp(msg)}`;
-    } else if (cmd === 'play') {
+    } else if (cmd === "play") {
       return `started the video at ${formatTimestamp(msg)}`;
-    } else if (cmd === 'pause') {
+    } else if (cmd === "pause") {
       return `paused the video at ${formatTimestamp(msg)}`;
-    } else if (cmd === 'playbackRate') {
-      return `set the playback rate to ${msg === '0' ? 'auto' : `${msg}x`}`;
-    } else if (cmd === 'lock') {
+    } else if (cmd === "playbackRate") {
+      return `set the playback rate to ${msg === "0" ? "auto" : `${msg}x`}`;
+    } else if (cmd === "lock") {
       return `locked the room`;
-    } else if (cmd === 'unlock') {
-      return 'unlocked the room';
-    } else if (cmd === 'vBrowserTimeout') {
+    } else if (cmd === "unlock") {
+      return "unlocked the room";
+    } else if (cmd === "vBrowserTimeout") {
       return (
         <React.Fragment>
           The VBrowser shut down automatically.
@@ -192,7 +192,7 @@ export class Chat extends React.Component<ChatProps> {
           Subscribe for longer sessions.
         </React.Fragment>
       );
-    } else if (cmd === 'vBrowserAlmostTimeout') {
+    } else if (cmd === "vBrowserAlmostTimeout") {
       return (
         <React.Fragment>
           The VBrowser will shut down soon.
@@ -213,22 +213,22 @@ export class Chat extends React.Component<ChatProps> {
       <div
         className={this.props.className}
         style={{
-          display: this.props.hide ? 'none' : 'flex',
-          flexDirection: 'column',
+          display: this.props.hide ? "none" : "flex",
+          flexDirection: "column",
           flexGrow: 1,
           minHeight: 0,
           marginTop: 0,
           marginBottom: 0,
-          padding: '8px',
-          backgroundColor: 'rgba(30,30,30,1)',
+          padding: "8px",
+          backgroundColor: "rgba(30,30,30,1)",
         }}
       >
         <div
           className={styles.chatContainer}
           ref={this.messagesRef}
-          style={{ position: 'relative' }}
+          style={{ position: "relative" }}
         >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
             {this.props.chat.map((msg) => (
               <ChatMessage
                 key={msg.timestamp + msg.id}
@@ -236,7 +236,7 @@ export class Chat extends React.Component<ChatProps> {
                   msg.id === this.state.reactionMenu.selectedMsgId &&
                   msg.timestamp === this.state.reactionMenu.selectedMsgTimestamp
                     ? styles.selected
-                    : ''
+                    : ""
                 }
                 message={msg}
                 pictureMap={this.props.pictureMap}
@@ -256,10 +256,10 @@ export class Chat extends React.Component<ChatProps> {
               size="xs"
               onClick={this.scrollToBottom}
               style={{
-                position: 'sticky',
+                position: "sticky",
                 bottom: 0,
-                display: 'block',
-                margin: '0 auto',
+                display: "block",
+                margin: "0 auto",
               }}
             >
               Jump to bottom
@@ -267,7 +267,7 @@ export class Chat extends React.Component<ChatProps> {
           )}
         </div>
         {this.state.isPickerOpen && (
-          <div style={{ position: 'absolute', bottom: '60px' }}>
+          <div style={{ position: "absolute", bottom: "60px" }}>
             <Picker
               theme="dark"
               previewPosition="none"
@@ -281,16 +281,16 @@ export class Chat extends React.Component<ChatProps> {
           in={this.state.reactionMenu.isOpen}
           timeout={300}
           classNames={{
-            enter: styles['reactionMenu-enter'],
-            enterActive: styles['reactionMenu-enter-active'],
-            exit: styles['reactionMenu-exit'],
-            exitActive: styles['reactionMenu-exit-active'],
+            enter: styles["reactionMenu-enter"],
+            enterActive: styles["reactionMenu-enter-active"],
+            exit: styles["reactionMenu-exit"],
+            exitActive: styles["reactionMenu-exit-active"],
           }}
           unmountOnExit
         >
           <div
             style={{
-              position: 'fixed',
+              position: "fixed",
               top: Math.min(
                 this.state.reactionMenu.yPosition - 150,
                 window.innerHeight - 450,
@@ -318,16 +318,16 @@ export class Chat extends React.Component<ChatProps> {
           /> */}
         </CSSTransition>
         <TextInput
-          style={{ marginTop: '10px' }}
-          onKeyDown={(e: any) => e.key === 'Enter' && this.sendChatMsg()}
+          style={{ marginTop: "10px" }}
+          onKeyDown={(e: any) => e.key === "Enter" && this.sendChatMsg()}
           onChange={this.updateChatMsg}
           value={this.state.chatMsg}
           error={this.chatTooLong()}
           disabled={this.props.isChatDisabled}
           placeholder={
             this.props.isChatDisabled
-              ? 'The chat was disabled by the room owner.'
-              : 'Enter a message...'
+              ? "The chat was disabled by the room owner."
+              : "Enter a message..."
           }
           rightSection={
             <ActionIcon
@@ -388,11 +388,11 @@ const ChatMessage = ({
   return (
     <div
       style={{
-        display: 'flex',
-        gap: '8px',
-        alignItems: 'center',
-        position: 'relative',
-        overflowWrap: 'anywhere',
+        display: "flex",
+        gap: "8px",
+        alignItems: "center",
+        position: "relative",
+        overflowWrap: "anywhere",
       }}
       className={`${styles.comment} ${className}`}
     >
@@ -407,9 +407,9 @@ const ChatMessage = ({
       <div>
         <div
           style={{
-            display: 'flex',
-            gap: '8px',
-            alignItems: 'flex-end',
+            display: "flex",
+            gap: "8px",
+            alignItems: "flex-end",
             fontSize: 14,
           }}
         >
@@ -422,24 +422,24 @@ const ChatMessage = ({
             disabled={!Boolean(owner && owner === user?.uid)}
             trigger={
               <div
-                style={{ cursor: 'pointer', fontWeight: 700 }}
-                title={isSub ? 'WatchParty Plus subscriber' : ''}
+                style={{ cursor: "pointer", fontWeight: 700 }}
+                title={isSub ? "WatchParty Plus subscriber" : ""}
                 className={`${isSub ? styles.subscriber : styles.light} ${styles.hoverEffect}`}
               >
-                {Boolean(system) && 'System'}
+                {Boolean(system) && "System"}
                 {nameMap[id] || id}
               </div>
             }
           />
-          <div className={styles.small + ' ' + styles.dark}>
+          <div className={styles.small + " " + styles.dark}>
             <div title={new Date(timestamp).toLocaleDateString()}>
               {new Date(timestamp).toLocaleTimeString()}
-              {Boolean(videoTS) && ' @ '}
+              {Boolean(videoTS) && " @ "}
               {formatTimestamp(videoTS)}
             </div>
           </div>
         </div>
-        <div className={styles.light + ' ' + styles.system}>
+        <div className={styles.light + " " + styles.system}>
           {cmd && formatMessage(cmd, msg)}
         </div>
         <Linkify
@@ -455,7 +455,7 @@ const ChatMessage = ({
         >
           <div
             className={`${styles.light} ${
-              isEmojiString(msg) ? styles.emoji : ''
+              isEmojiString(msg) ? styles.emoji : ""
             }`}
           >
             {!cmd && msg}
@@ -479,9 +479,9 @@ const ChatMessage = ({
             disabled={isChatDisabled}
             style={{
               opacity: 1,
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
               padding: 0,
               margin: 0,
             }}
@@ -502,10 +502,10 @@ const ChatMessage = ({
                 key={key}
                 timeout={200}
                 classNames={{
-                  enter: styles['reaction-enter'],
-                  enterActive: styles['reaction-enter-active'],
-                  exit: styles['reaction-exit'],
-                  exitActive: styles['reaction-exit-active'],
+                  enter: styles["reaction-enter"],
+                  enterActive: styles["reaction-enter-active"],
+                  exit: styles["reaction-exit"],
+                  exitActive: styles["reaction-exit-active"],
                 }}
                 unmountOnExit
               >
@@ -515,7 +515,7 @@ const ChatMessage = ({
                       className={`${styles.reactionContainer} ${
                         reactions[key].includes(socket.id!)
                           ? styles.highlighted
-                          : ''
+                          : ""
                       }`}
                       onClick={() =>
                         handleReactionClick(key, message.id, message.timestamp)
@@ -524,7 +524,7 @@ const ChatMessage = ({
                       <span
                         style={{
                           fontSize: 17,
-                          position: 'relative',
+                          position: "relative",
                           bottom: 1,
                         }}
                       >
@@ -532,22 +532,22 @@ const ChatMessage = ({
                       </span>
                       <SwitchTransition>
                         <CSSTransition
-                          key={key + '-' + reactions[key].length}
+                          key={key + "-" + reactions[key].length}
                           classNames={{
-                            enter: styles['reactionCounter-enter'],
-                            enterActive: styles['reactionCounter-enter-active'],
-                            exit: styles['reactionCounter-exit'],
-                            exitActive: styles['reactionCounter-exit-active'],
+                            enter: styles["reactionCounter-enter"],
+                            enterActive: styles["reactionCounter-enter-active"],
+                            exit: styles["reactionCounter-exit"],
+                            exitActive: styles["reactionCounter-exit-active"],
                           }}
                           addEndListener={(node, done) =>
-                            node.addEventListener('transitionend', done, false)
+                            node.addEventListener("transitionend", done, false)
                           }
                           unmountOnExit
                         >
                           <span
                             className={styles.reactionCounter}
                             style={{
-                              color: 'rgba(255, 255, 255, 0.85)',
+                              color: "rgba(255, 255, 255, 0.85)",
                               marginLeft: 3,
                             }}
                           >
@@ -560,7 +560,7 @@ const ChatMessage = ({
                   <HoverCard.Dropdown>
                     {`${reactions[key]
                       .slice(0, spellFull)
-                      .map((id) => nameMap[id] || 'Unknown')
+                      .map((id) => nameMap[id] || "Unknown")
                       .concat(
                         reactions[key].length > spellFull
                           ? [`${reactions[key].length - spellFull} more`]
@@ -569,7 +569,7 @@ const ChatMessage = ({
                       .reduce(
                         (text, value, i, array) =>
                           text +
-                          (i < array.length - 1 ? ', ' : ' and ') +
+                          (i < array.length - 1 ? ", " : " and ") +
                           value,
                       )} reacted.`}
                   </HoverCard.Dropdown>
@@ -589,7 +589,7 @@ export const renderImageString = (
   // If a valid image string, return an image
   let regex = /^https?:\/\/.*\/.*\.(png|gif|webp|jpeg|jpg|heic|heif)\??.*$/gim;
   if (input?.match(regex)) {
-    return <img style={{ maxWidth: '100%' }} src={input} />;
+    return <img style={{ maxWidth: "100%" }} src={input} />;
   }
   return null;
 };

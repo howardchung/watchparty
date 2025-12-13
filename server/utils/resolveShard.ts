@@ -1,5 +1,5 @@
-import config from '../config.ts';
-import { apps } from '../ecosystem.config.js';
+import config from "../config.ts";
+import { apps } from "../ecosystem.config.js";
 
 export function resolveShard(roomId: string): number {
   if (!config.SHARD) {

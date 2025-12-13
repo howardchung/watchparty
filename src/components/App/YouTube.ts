@@ -1,5 +1,5 @@
-import { MediaPlayerClass } from 'dashjs';
-import { Player } from './Player';
+import { MediaPlayerClass } from "dashjs";
+import { Player } from "./Player";
 
 export class YouTube implements Player {
   watchPartyYTPlayer: YT.Player | null;
@@ -44,16 +44,16 @@ export class YouTube implements Player {
   setSrcAndTime = async (src: string, time: number) => {
     let url = new window.URL(src);
     // Standard link https://www.youtube.com/watch?v=ID
-    let videoId = new URLSearchParams(url.search).get('v');
+    let videoId = new URLSearchParams(url.search).get("v");
     // Link shortener https://youtu.be/ID
-    let altVideoId = src.split('/').slice(-1)[0].split('?')[0];
+    let altVideoId = src.split("/").slice(-1)[0].split("?")[0];
     this.watchPartyYTPlayer?.cueVideoById(videoId || altVideoId, time);
     // this.watchPartyYTPlayer?.cuePlaylist({listType: 'playlist', list: 'OLAK5uy_mtoaOGQksRdPbwlNtQ9IiK67wir5QqyIc'});
   };
 
   playVideo = async () => {
     setTimeout(() => {
-      console.log('play yt');
+      console.log("play yt");
       this.watchPartyYTPlayer?.playVideo();
     }, 200);
   };
@@ -94,26 +94,26 @@ export class YouTube implements Player {
   setSubtitleMode = (mode?: TextTrackMode, lang?: string) => {
     // Show the available options
     // console.log(this.watchPartyYTPlayer?.getOptions('captions'));
-    if (mode === 'showing') {
+    if (mode === "showing") {
       console.log(lang);
       //@ts-expect-error
-      this.watchPartyYTPlayer?.setOption('captions', 'reload', true);
+      this.watchPartyYTPlayer?.setOption("captions", "reload", true);
       //@ts-expect-error
-      this.watchPartyYTPlayer?.setOption('captions', 'track', {
-        languageCode: lang ?? 'en',
+      this.watchPartyYTPlayer?.setOption("captions", "track", {
+        languageCode: lang ?? "en",
       });
     }
-    if (mode === 'hidden') {
+    if (mode === "hidden") {
       // BUG this doesn't actually set the value of track
       // so we can't determine if subtitles are on or off
       // need to provide separate menu options
       //@ts-expect-error
-      this.watchPartyYTPlayer?.setOption('captions', 'track', {});
+      this.watchPartyYTPlayer?.setOption("captions", "track", {});
     }
   };
 
   getSubtitleMode = () => {
-    return 'hidden' as TextTrackMode;
+    return "hidden" as TextTrackMode;
   };
 
   isReady = () => {
@@ -152,6 +152,6 @@ export class YouTube implements Player {
   };
 
   getVideoEl = (): HTMLMediaElement => {
-    return document.getElementById('leftYt') as HTMLMediaElement;
+    return document.getElementById("leftYt") as HTMLMediaElement;
   };
 }

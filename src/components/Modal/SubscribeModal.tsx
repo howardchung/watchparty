@@ -1,10 +1,10 @@
-import React from 'react';
-import { Modal, Title, Table, Button } from '@mantine/core';
-import { loadStripe } from '@stripe/stripe-js';
-import { SignInButton } from '../TopBar/TopBar';
-import config from '../../config';
-import { MetadataContext } from '../../MetadataContext';
-import { IconBrandStripeFilled, IconCheck } from '@tabler/icons-react';
+import React from "react";
+import { Modal, Title, Table, Button } from "@mantine/core";
+import { loadStripe } from "@stripe/stripe-js";
+import { SignInButton } from "../TopBar/TopBar";
+import config from "../../config";
+import { MetadataContext } from "../../MetadataContext";
+import { IconBrandStripeFilled, IconCheck } from "@tabler/icons-react";
 
 // Make sure to call `loadStripe` outside of a component’s render to avoid
 // recreating the `Stripe` object on every render.
@@ -19,7 +19,7 @@ export class SubscribeModal extends React.Component<{
   declare context: React.ContextType<typeof MetadataContext>;
   onSubscribe = async () => {
     if (!stripePromise) {
-      console.warn('Stripe integration is not configured, cannot subscribe');
+      console.warn("Stripe integration is not configured, cannot subscribe");
       return;
     }
     const stripe = await stripePromise;
@@ -27,13 +27,13 @@ export class SubscribeModal extends React.Component<{
       lineItems: [
         {
           price:
-            config.NODE_ENV === 'development'
-              ? 'price_HNGtabCzD5qyfd'
-              : 'price_HNDBoPDI7yYRi9',
+            config.NODE_ENV === "development"
+              ? "price_HNGtabCzD5qyfd"
+              : "price_HNDBoPDI7yYRi9",
           quantity: 1,
         },
       ],
-      mode: 'subscription',
+      mode: "subscription",
       successUrl: window.location.href,
       cancelUrl: window.location.href,
       customerEmail: this.context.user?.email ?? undefined,
@@ -155,7 +155,7 @@ export class SubscribeModal extends React.Component<{
             </Table.Tr>
           </Table.Tbody>
         </Table>
-        <div style={{ textAlign: 'right' }}>
+        <div style={{ textAlign: "right" }}>
           {/* if user isn't logged in, provide login prompt */}
           {this.context.user && this.context.user.email ? (
             <Button

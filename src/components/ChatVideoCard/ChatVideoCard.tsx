@@ -1,8 +1,8 @@
-import React from 'react';
-import { ActionIcon } from '@mantine/core';
-import { decodeEntities, formatTimestamp } from '../../utils/utils';
+import React from "react";
+import { ActionIcon } from "@mantine/core";
+import { decodeEntities, formatTimestamp } from "../../utils/utils";
 
-import classes from './ChatVideoCard.module.css';
+import classes from "./ChatVideoCard.module.css";
 import {
   IconArrowUp,
   IconBrandYoutubeFilled,
@@ -11,7 +11,7 @@ import {
   IconPlayerPlayFilled,
   IconPlaylistAdd,
   IconTrash,
-} from '@tabler/icons-react';
+} from "@tabler/icons-react";
 
 const ChatVideoCard: React.FC<{
   video: PlaylistVideo;
@@ -95,9 +95,9 @@ const ChatVideoCard: React.FC<{
           )}
         </div>
         <div style={{ flexShrink: 0 }}>
-          {video.type === 'youtube' && <IconBrandYoutubeFilled color="red" />}
-          {video.type === 'file' && <IconFile />}
-          {video.type === 'magnet' && <IconMagnetFilled />}
+          {video.type === "youtube" && <IconBrandYoutubeFilled color="red" />}
+          {video.type === "file" && <IconFile />}
+          {video.type === "magnet" && <IconMagnetFilled />}
         </div>
         <div className={classes.Content}>
           <div className={classes.Title}>{decodeEntities(video.name)}</div>

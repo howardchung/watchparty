@@ -1,28 +1,28 @@
-import config from '../config.ts';
-import axios from 'axios';
-import { VMManager, type VM } from './base.ts';
-import fs from 'node:fs';
-import { redis } from '../utils/redis.ts';
+import config from "../config.ts";
+import axios from "axios";
+import { VMManager, type VM } from "./base.ts";
+import fs from "node:fs";
+import { redis } from "../utils/redis.ts";
 
 const HETZNER_TOKEN = config.HETZNER_TOKEN;
-const sshKeys = config.HETZNER_SSH_KEYS.split(',').map(Number);
+const sshKeys = config.HETZNER_SSH_KEYS.split(",").map(Number);
 
 export class Hetzner extends VMManager {
-  size = 'cpx11'; // cpx11, cx22 (not available in US yet)
-  largeSize = 'cpx31'; // cpx21, cpx31, ccx13, ccx23, cx32
+  size = "cpx11"; // cpx11, cx22 (not available in US yet)
+  largeSize = "cpx31"; // cpx21, cpx31, ccx13, ccx23, cx32
   minRetries = 5;
   reuseVMs = true;
-  id = 'Hetzner';
+  id = "Hetzner";
   gateway = config.HETZNER_GATEWAY;
   imageId = config.HETZNER_IMAGE;
 
   private getRandomDatacenter() {
     // US
-    let datacenters = ['ash'];
-    if (this.region === 'USW') {
-      datacenters = ['hil'];
-    } else if (this.region === 'EU') {
-      datacenters = ['nbg1', 'fsn1', 'hel1'];
+    let datacenters = ["ash"];
+    if (this.region === "USW") {
+      datacenters = ["hil"];
+    } else if (this.region === "EU") {
+      datacenters = ["nbg1", "fsn1", "hel1"];
     }
     return datacenters[Math.floor(Math.random() * datacenters.length)];
   }
@@ -43,16 +43,16 @@ export class Hetzner extends VMManager {
       // ],
       // user_data: `replace with vbrowser.sh startup script if we want to boot vbrowser on instance creation (won't trigger on rebuild/restart)`
       labels: {
-        [this.getTag()]: '1',
+        [this.getTag()]: "1",
       },
       location: this.getRandomDatacenter(),
     };
     const response = await axios({
-      method: 'POST',
+      method: "POST",
       url: `https://api.hetzner.cloud/v1/servers`,
       headers: {
-        Authorization: 'Bearer ' + HETZNER_TOKEN,
-        'Content-Type': 'application/json',
+        Authorization: "Bearer " + HETZNER_TOKEN,
+        "Content-Type": "application/json",
       },
       data,
     });
@@ -62,10 +62,10 @@ export class Hetzner extends VMManager {
 
   terminateVM = async (id: string) => {
     await axios({
-      method: 'DELETE',
+      method: "DELETE",
       url: `https://api.hetzner.cloud/v1/servers/${id}`,
       headers: {
-        Authorization: 'Bearer ' + HETZNER_TOKEN,
+        Authorization: "Bearer " + HETZNER_TOKEN,
       },
     });
   };
@@ -73,10 +73,10 @@ export class Hetzner extends VMManager {
   rebootVM = async (id: string) => {
     // Reboot the VM
     await axios({
-      method: 'POST',
+      method: "POST",
       url: `https://api.hetzner.cloud/v1/servers/${id}/actions/reboot`,
       headers: {
-        Authorization: 'Bearer ' + HETZNER_TOKEN,
+        Authorization: "Bearer " + HETZNER_TOKEN,
       },
     });
     return;
@@ -85,10 +85,10 @@ export class Hetzner extends VMManager {
   reimageVM = async (id: string) => {
     // Rebuild the VM
     await axios({
-      method: 'POST',
+      method: "POST",
       url: `https://api.hetzner.cloud/v1/servers/${id}/actions/rebuild`,
       headers: {
-        Authorization: 'Bearer ' + HETZNER_TOKEN,
+        Authorization: "Bearer " + HETZNER_TOKEN,
       },
       data: {
         image: Number(this.imageId),
@@ -99,18 +99,18 @@ export class Hetzner extends VMManager {
 
   getVM = async (id: string) => {
     const response: any = await axios({
-      method: 'GET',
+      method: "GET",
       url: `https://api.hetzner.cloud/v1/servers/${id}`,
       headers: {
-        Authorization: 'Bearer ' + HETZNER_TOKEN,
+        Authorization: "Bearer " + HETZNER_TOKEN,
       },
     });
     console.log(
-      '[GETVM] %s: %s rate limit remaining',
+      "[GETVM] %s: %s rate limit remaining",
       id,
-      response?.headers['ratelimit-remaining'],
+      response?.headers["ratelimit-remaining"],
     );
-    redis?.set('hetznerApiRemaining', response?.headers['ratelimit-remaining']);
+    redis?.set("hetznerApiRemaining", response?.headers["ratelimit-remaining"]);
     const server = this.mapServerObject(response.data.server);
     return server;
   };
@@ -122,13 +122,13 @@ export class Hetzner extends VMManager {
     const responses: any[] = await Promise.all(
       pages.map((page) =>
         axios({
-          method: 'GET',
+          method: "GET",
           url: `https://api.hetzner.cloud/v1/servers`,
           headers: {
-            Authorization: 'Bearer ' + HETZNER_TOKEN,
+            Authorization: "Bearer " + HETZNER_TOKEN,
           },
           params: {
-            sort: 'id:asc',
+            sort: "id:asc",
             page,
             per_page: 50,
             label_selector: filter,
@@ -146,15 +146,15 @@ export class Hetzner extends VMManager {
     // Poweron the server (usually not needed)
     try {
       await axios({
-        method: 'POST',
+        method: "POST",
         url: `https://api.hetzner.cloud/v1/servers/${id}/actions/poweron`,
         headers: {
-          Authorization: 'Bearer ' + HETZNER_TOKEN,
-          'Content-Type': 'application/json',
+          Authorization: "Bearer " + HETZNER_TOKEN,
+          "Content-Type": "application/json",
         },
       });
     } catch (e) {
-      console.log('%s failed to poweron', id);
+      console.log("%s failed to poweron", id);
     }
   };
 
@@ -190,22 +190,22 @@ export class Hetzner extends VMManager {
 
   updateSnapshot = async () => {
     const response = await axios({
-      method: 'POST',
+      method: "POST",
       url: `https://api.hetzner.cloud/v1/servers`,
       headers: {
-        Authorization: 'Bearer ' + HETZNER_TOKEN,
-        'Content-Type': 'application/json',
+        Authorization: "Bearer " + HETZNER_TOKEN,
+        "Content-Type": "application/json",
       },
       data: {
-        name: 'vBrowserSnapshot',
-        server_type: 'cpx11',
+        name: "vBrowserSnapshot",
+        server_type: "cpx11",
         start_after_create: true,
-        image: 'docker-ce', // 15512617 for Ubuntu 20.04
+        image: "docker-ce", // 15512617 for Ubuntu 20.04
         ssh_keys: sshKeys,
         user_data: fs
-          .readFileSync(import.meta.dirname + '/../../dev/vbrowser.sh')
+          .readFileSync(import.meta.dirname + "/../../dev/vbrowser.sh")
           .toString()
-          .replace('{VBROWSER_ADMIN_KEY}', config.VBROWSER_ADMIN_KEY),
+          .replace("{VBROWSER_ADMIN_KEY}", config.VBROWSER_ADMIN_KEY),
         location: this.getRandomDatacenter(),
       },
     });
@@ -216,11 +216,11 @@ export class Hetzner extends VMManager {
     //   'http://' + response.data.server.public_net?.ipv4?.ip + ':5000'
     // );
     const response2 = await axios({
-      method: 'POST',
+      method: "POST",
       url: `https://api.hetzner.cloud/v1/servers/${id}/actions/create_image`,
       headers: {
-        Authorization: 'Bearer ' + HETZNER_TOKEN,
-        'Content-Type': 'application/json',
+        Authorization: "Bearer " + HETZNER_TOKEN,
+        "Content-Type": "application/json",
       },
     });
     const imageId = response2.data.image.id;
@@ -238,7 +238,7 @@ export class Hetzner extends VMManager {
     return {
       id: server.id?.toString(),
       // The gateway handles SSL termination and proxies to the private IP
-      host: ip ? `${this.gateway}/?ip=${ip}` : '',
+      host: ip ? `${this.gateway}/?ip=${ip}` : "",
       provider: this.id,
       large: this.isLarge,
       region: this.region,

@@ -1,6 +1,6 @@
-import config from '../config.ts';
-import { Redis } from 'ioredis';
-import { getStartOfHour } from './time.ts';
+import config from "../config.ts";
+import { Redis } from "ioredis";
+import { getStartOfHour } from "./time.ts";
 
 export let redis: Redis | undefined = undefined;
 if (config.REDIS_URL) {

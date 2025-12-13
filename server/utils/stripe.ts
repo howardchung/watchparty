@@ -1,8 +1,8 @@
-import config from '../config.ts';
-import Stripe from 'stripe';
+import config from "../config.ts";
+import Stripe from "stripe";
 
 const stripe = new Stripe(config.STRIPE_SECRET_KEY as string, {
-  apiVersion: '2020-08-27',
+  apiVersion: "2020-08-27",
 });
 
 export async function getCustomerByEmail(email: string) {
@@ -11,7 +11,7 @@ export async function getCustomerByEmail(email: string) {
   }
   const customer = await stripe.customers.list({
     email,
-    expand: ['data.subscriptions'],
+    expand: ["data.subscriptions"],
   });
   return customer?.data[0];
 }
@@ -26,7 +26,7 @@ export async function getIsSubscriberByEmail(email: string | undefined) {
   }
   const customer = await getCustomerByEmail(email);
   const isSubscriber = Boolean(
-    customer?.subscriptions?.data?.find((sub) => sub?.status === 'active'),
+    customer?.subscriptions?.data?.find((sub) => sub?.status === "active"),
   );
   return isSubscriber;
 }
@@ -53,7 +53,7 @@ export async function getAllActiveSubscriptions() {
   const result = [];
   for await (const sub of stripe.subscriptions.list({
     limit: 100,
-    status: 'active',
+    status: "active",
   })) {
     result.push(sub);
   }

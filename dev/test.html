@@ -1,19 +1,19 @@
 <video id="video" autoplay="true"></video>
 <canvas id="canvas"></canvas>
 <script>
-  var video = document.getElementById('video');
+  var video = document.getElementById("video");
 
   if (navigator.mediaDevices.getUserMedia) {
     var successCallback = function (stream) {
       video.srcObject = stream;
-      var canvas = document.querySelector('canvas');
+      var canvas = document.querySelector("canvas");
 
       // Optional frames per second argument.
       var stream2 = canvas.captureStream(25);
       var recordedChunks = [];
 
       console.log(stream);
-      var options = { mimeType: 'video/webm; codecs=vp9' };
+      var options = { mimeType: "video/webm; codecs=vp9" };
       mediaRecorder = new MediaRecorder(stream, options);
 
       mediaRecorder.ondataavailable = handleDataAvailable;
@@ -33,13 +33,13 @@
     navigator.mediaDevices
       .getUserMedia({
         audio: false,
-        video: { facingMode: { ideal: 'environment' } }, // prefer rear-facing camera
+        video: { facingMode: { ideal: "environment" } }, // prefer rear-facing camera
       })
       .then(successCallback, errorCallback);
   }
 
-  var canvas = document.getElementById('canvas');
-  var context = canvas.getContext('2d');
+  var canvas = document.getElementById("canvas");
+  var context = canvas.getContext("2d");
   requestAnimationFrame(renderFrame);
 
   function renderFrame() {
@@ -73,7 +73,7 @@
     }
   }
 
-  const videoRec = document.createElement('video');
+  const videoRec = document.createElement("video");
   const ms = new MediaSource();
 
   videoRec.autoplay = true;
@@ -81,11 +81,11 @@
   videoRec.height = 240;
   // console.log(MediaSource.isTypeSupported('video/webm; codecs=vp9'));
   ms.onsourceopen = () => {
-    console.log('onsourceopen');
-    ms.addSourceBuffer('video/webm; codecs=vp9');
+    console.log("onsourceopen");
+    ms.addSourceBuffer("video/webm; codecs=vp9");
   };
   ms.onsourceclose = () => {
-    console.log('onsourceclose');
+    console.log("onsourceclose");
   };
   videoRec.src = window.URL.createObjectURL(ms);
   document.body.appendChild(videoRec);

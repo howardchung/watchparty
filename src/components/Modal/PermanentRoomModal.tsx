@@ -1,6 +1,6 @@
-import React from 'react';
-import { Modal, Table } from '@mantine/core';
-import { IconCheck } from '@tabler/icons-react';
+import React from "react";
+import { Modal, Table } from "@mantine/core";
+import { IconCheck } from "@tabler/icons-react";
 
 export const PermanentRoomModal = (props: { closeModal: () => void }) => {
   const { closeModal } = props;

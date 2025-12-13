@@ -1,8 +1,8 @@
-import EventEmitter from 'eventemitter3';
+import EventEmitter from "eventemitter3";
 
-import { BaseClient } from './base';
+import { BaseClient } from "./base";
 //import { Member } from './types';
-import { EVENT } from './events';
+import { EVENT } from "./events";
 import {
   ControlClipboardPayload,
   ControlPayload,
@@ -10,7 +10,7 @@ import {
   ScreenConfigurationsPayload,
   ScreenResolutionPayload,
   SystemMessagePayload,
-} from './messages';
+} from "./messages";
 
 export class NekoClient extends BaseClient implements EventEmitter<any> {
   login(url: string, password: string, displayname: string) {
@@ -42,7 +42,7 @@ export class NekoClient extends BaseClient implements EventEmitter<any> {
   }
 
   protected [EVENT.DATA](data: any) {
-    console.log('[DATA]', data);
+    console.log("[DATA]", data);
   }
 
   /////////////////////////////

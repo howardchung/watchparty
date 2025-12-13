@@ -1,15 +1,15 @@
-import config from '../config.ts';
+import config from "../config.ts";
 import {
   PT_HOURS_REGEX,
   PT_MINUTES_REGEX,
   PT_SECONDS_REGEX,
   YOUTUBE_VIDEO_ID_REGEX,
-} from './regex.ts';
-import { youtube, youtube_v3 } from '@googleapis/youtube';
+} from "./regex.ts";
+import { youtube, youtube_v3 } from "@googleapis/youtube";
 
 let Youtube = config.YOUTUBE_API_KEY
   ? youtube({
-      version: 'v3',
+      version: "v3",
       auth: config.YOUTUBE_API_KEY,
     })
   : null;
@@ -18,12 +18,12 @@ export const mapYoutubeSearchResult = (
   video: youtube_v3.Schema$SearchResult,
 ): PlaylistVideo => {
   return {
-    channel: video.snippet?.channelTitle ?? '',
-    url: 'https://www.youtube.com/watch?v=' + video?.id?.videoId,
-    name: video.snippet?.title ?? '',
-    img: video.snippet?.thumbnails?.default?.url ?? '',
+    channel: video.snippet?.channelTitle ?? "",
+    url: "https://www.youtube.com/watch?v=" + video?.id?.videoId,
+    name: video.snippet?.title ?? "",
+    img: video.snippet?.thumbnails?.default?.url ?? "",
     duration: 0,
-    type: 'youtube',
+    type: "youtube",
   };
 };
 
@@ -32,12 +32,12 @@ export const mapYoutubeListResult = (
 ): PlaylistVideo => {
   const videoId = video.id;
   return {
-    url: 'https://www.youtube.com/watch?v=' + videoId,
-    name: video.snippet?.title ?? '',
-    img: video.snippet?.thumbnails?.default?.url ?? '',
-    channel: video.snippet?.channelTitle ?? '',
-    duration: getVideoDuration(video.contentDetails?.duration ?? ''),
-    type: 'youtube',
+    url: "https://www.youtube.com/watch?v=" + videoId,
+    name: video.snippet?.title ?? "",
+    img: video.snippet?.thumbnails?.default?.url ?? "",
+    channel: video.snippet?.channelTitle ?? "",
+    duration: getVideoDuration(video.contentDetails?.duration ?? ""),
+    type: "youtube",
   };
 };
 
@@ -45,13 +45,13 @@ export const mapYoutubePlaylistResult = (
   item: youtube_v3.Schema$PlaylistItem,
 ): PlaylistVideo => {
   return {
-    url: 'https://www.youtube.com/watch?v=' + item.snippet?.resourceId?.videoId,
-    name: item.snippet?.title ?? '',
-    img: item.snippet?.thumbnails?.default?.url ?? '',
-    channel: item.snippet?.channelTitle ?? '',
+    url: "https://www.youtube.com/watch?v=" + item.snippet?.resourceId?.videoId,
+    name: item.snippet?.title ?? "",
+    img: item.snippet?.thumbnails?.default?.url ?? "",
+    channel: item.snippet?.channelTitle ?? "",
     duration: 0,
     // duration: getVideoDuration(video.contentDetails?.duration ?? ''),
-    type: 'youtube',
+    type: "youtube",
   };
 };
 
@@ -59,8 +59,8 @@ export const searchYoutube = async (
   query: string,
 ): Promise<PlaylistVideo[]> => {
   const response = await Youtube?.search.list({
-    part: ['snippet'],
-    type: ['video'],
+    part: ["snippet"],
+    type: ["video"],
     maxResults: 25,
     q: query,
   });
@@ -71,7 +71,7 @@ export const youtubePlaylist = async (
   playlistId: string,
 ): Promise<PlaylistVideo[]> => {
   const response = await Youtube?.playlistItems.list({
-    part: ['snippet'],
+    part: ["snippet"],
     playlistId,
     maxResults: 100,
   });
@@ -96,7 +96,7 @@ export const fetchYoutubeVideo = async (
   id: string,
 ): Promise<PlaylistVideo | null> => {
   const response = await Youtube?.videos.list({
-    part: ['snippet', 'contentDetails'],
+    part: ["snippet", "contentDetails"],
     id: [id],
   });
   const top = response?.data?.items?.[0];
@@ -121,7 +121,7 @@ export const getVideoDuration = (string: string): number => {
 
 export const isYouTube = (input: string) => {
   return (
-    input.startsWith('https://www.youtube.com/') ||
-    input.startsWith('https://youtu.be/')
+    input.startsWith("https://www.youtube.com/") ||
+    input.startsWith("https://youtu.be/")
   );
 };

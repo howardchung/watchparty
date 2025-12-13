@@ -1,5 +1,5 @@
-import firebase from 'firebase/compat/app';
-import React from 'react';
+import firebase from "firebase/compat/app";
+import React from "react";
 
 export const DEFAULT_STATE = {
   user: undefined as firebase.User | undefined,

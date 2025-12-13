@@ -1,7 +1,7 @@
-import config from './config.ts';
-import { getBgVMManagers } from './vm/utils.ts';
-import express from 'express';
-import bodyParser from 'body-parser';
+import config from "./config.ts";
+import { getBgVMManagers } from "./vm/utils.ts";
+import express from "express";
+import bodyParser from "body-parser";
 
 const app = express();
 const vmManagers = getBgVMManagers();
@@ -12,7 +12,7 @@ Object.values(vmManagers).forEach((manager) => {
   manager?.runBackgroundJobs();
 });
 
-app.post('/assignVM', async (req, res) => {
+app.post("/assignVM", async (req, res) => {
   try {
     // Find a pool that matches the size and region requirements
     const pools = Object.values(vmManagers).filter((mgr) => {
@@ -26,7 +26,7 @@ app.post('/assignVM', async (req, res) => {
     // We might want to add the ability to load balance as well by randomly selecting between pools with same priority
     for (let pool of pools) {
       console.log(
-        'try assignVM from pool:',
+        "try assignVM from pool:",
         pool.getPoolName(),
         req.body.roomId,
         req.body.uid,
@@ -44,11 +44,11 @@ app.post('/assignVM', async (req, res) => {
   }
 });
 
-app.post('/releaseVM', async (req, res) => {
+app.post("/releaseVM", async (req, res) => {
   try {
     const pool =
       vmManagers[
-        req.body.provider + (req.body.isLarge ? 'Large' : '') + req.body.region
+        req.body.provider + (req.body.isLarge ? "Large" : "") + req.body.region
       ];
     if (req.body.id) {
       await pool?.resetVM(req.body.id, req.body.roomId);
@@ -60,7 +60,7 @@ app.post('/releaseVM', async (req, res) => {
   }
 });
 
-app.get('/stats', async (req, res) => {
+app.get("/stats", async (req, res) => {
   const vmManagerStats: AnyDict = {};
   for (let [key, vmManager] of Object.entries(vmManagers)) {
     const availableVBrowsers = await vmManager?.getAvailableVBrowsers();
@@ -79,7 +79,7 @@ app.get('/stats', async (req, res) => {
   res.json(vmManagerStats);
 });
 
-app.get('/isFreePoolFull', async (req, res) => {
+app.get("/isFreePoolFull", async (req, res) => {
   const freePools = Object.values(vmManagers).filter((mgr) => {
     return mgr?.getIsLarge() === false && mgr?.getLimitSize() > 0;
   });
@@ -103,12 +103,12 @@ app.get('/isFreePoolFull', async (req, res) => {
   res.json({ isFull });
 });
 
-app.post('/updateSnapshot', async (req, res) => {
+app.post("/updateSnapshot", async (req, res) => {
   const pool = vmManagers[req.body.provider + req.body.region];
   const result = await pool?.updateSnapshot();
-  res.send(result?.toString() + '\n');
+  res.send(result?.toString() + "\n");
 });
 
 app.listen(config.VMWORKER_PORT, () => {
-  console.log('vmWorker listening on %s', config.VMWORKER_PORT);
+  console.log("vmWorker listening on %s", config.VMWORKER_PORT);
 });
