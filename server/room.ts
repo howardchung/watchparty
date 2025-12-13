@@ -30,6 +30,9 @@ if (!config.VM_MANAGER_CONFIG) {
   });
 }
 
+// Test single count video chat
+redis?.del('videoUsers');
+
 export class Room {
   // Serialized state
   public video: string | null = '';
@@ -808,6 +811,7 @@ export class Room {
     if (match) {
       match.isVideoChat = true;
       redisCount('videoChatStarts');
+      redis?.incrby('videoUsers', 1);
     }
     this.io.of(this.roomId).emit('roster', this.getRosterForApp());
   };
@@ -816,6 +820,7 @@ export class Room {
     const match = this.roster.find((user) => user.id === socket.id);
     if (match) {
       match.isVideoChat = false;
+      redis?.incrby('videoUsers', -1);
     }
     this.io.of(this.roomId).emit('roster', this.getRosterForApp());
   };
@@ -1354,6 +1359,9 @@ export class Room {
     if (wasSharer) {
       // Reset the room state since we lost the screen sharer
       this.cmdHost(socket, '');
+    }
+    if (removed?.isVideoChat) {
+      redis?.incrby('videoUsers', -1);
     }
     delete this.tsMap[socket.id];
     // delete nameMap[socket.id];

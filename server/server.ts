@@ -741,10 +741,6 @@ async function minuteMetrics() {
         JSON.stringify(room.getRosterForStats()),
       );
     }
-    const videoUsers = room.roster.filter((p) => p.isVideoChat).length;
-    if (videoUsers) {
-      await redis?.setex(`roomVideoUsers:${room.roomId}`, 120, videoUsers);
-    }
     vbWaiting += room.vBrowserQueue ? 1 : 0;
   }
   // Report shard metrics

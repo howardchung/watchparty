@@ -8,6 +8,8 @@ import { apps } from '../ecosystem.config.js';
 export async function getStats() {
   const now = Date.now();
 
+  let currentUsers = 0;
+
   // Render each shard metrics as its own object
   const shardMetrics: Record<string, ShardMetric> = {};
   const shardKeys = new Set(
@@ -17,12 +19,11 @@ export async function getStats() {
     const resp2 = await redis?.get(key);
     if (resp2) {
       shardMetrics[key] = JSON.parse(resp2);
+      currentUsers += shardMetrics[key].users;
     }
   }
 
   // Count these from postgres data
-  let currentUsers = 0;
-  let currentVideoChat = 0;
   let currentHttp = 0;
   let currentVBrowser = 0;
   let currentVBrowserLarge = 0;
@@ -66,14 +67,10 @@ export async function getStats() {
       const rosterLength = Number(
         await redis?.get(`roomCounts:${dbRoom.roomId}`),
       );
-      let videoUsers = 0;
       let roster = [];
       if (rosterLength) {
         currentRoomSizes[rosterLength] =
           (currentRoomSizes[rosterLength] ?? 0) + 1;
-        videoUsers = Number(
-          await redis?.get(`roomVideoUsers:${dbRoom.roomId}`),
-        );
         const resp = await redis?.get(`roomRosters:${dbRoom.roomId}`);
         if (resp) {
           roster = JSON.parse(resp);
@@ -97,7 +94,6 @@ export async function getStats() {
         lock: dbRoom.lock || undefined,
         creator: dbRoom.creator || undefined,
         rosterLength,
-        videoUsers,
         roster,
       };
       if (obj.video?.startsWith('http') && rosterLength) {
@@ -109,12 +105,11 @@ export async function getStats() {
       if (obj.video?.startsWith('fileshare://') && rosterLength) {
         currentFileShare += 1;
       }
-      currentUsers += rosterLength;
-      currentVideoChat += videoUsers;
       return obj;
     }),
   );
   // Singleton stats below (same for all shards)
+  const currentVideoChat = Number(await redis?.get('videoUsers'));
   const cpuUsage = os.loadavg()[1] * 100;
   const redisUsage = Number(
     (await redis?.info())
