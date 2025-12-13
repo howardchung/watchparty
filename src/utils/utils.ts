@@ -6,7 +6,7 @@ import config from '../config';
 import { cyrb53 } from './hash';
 import React from 'react';
 
-export function formatTimestamp(input: any, nowDuration?: number): string {
+export function formatTimestamp(input: any, zeroTime?: number): string {
   if (
     input === null ||
     input === undefined ||
@@ -16,10 +16,8 @@ export function formatTimestamp(input: any, nowDuration?: number): string {
   ) {
     return '';
   }
-  if (nowDuration) {
-    return new Date(
-      Date.now() - (nowDuration - input) * 1000,
-    ).toLocaleTimeString();
+  if (zeroTime) {
+    return new Date((zeroTime + input) * 1000).toLocaleTimeString();
   }
   let hours = Math.abs(Math.trunc(Number(input) / 3600));
   let minutes = Math.abs(Math.trunc(Number(input) / 60) % 60)
@@ -231,9 +229,7 @@ export async function getMediaPathResults(
     const playlistID = mediaPath.split(
       'https://www.youtube.com/playlist?list=',
     )[1];
-    const response = await fetch(
-      serverPath + '/youtubePlaylist/' + playlistID,
-    );
+    const response = await fetch(serverPath + '/youtubePlaylist/' + playlistID);
     results = await response.json();
   } else {
     // Assume it's a text list of URLs

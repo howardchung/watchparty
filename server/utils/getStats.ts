@@ -51,69 +51,69 @@ export async function getStats() {
     data->'video' as video, data->'videoTS' as "videoTS", data->'vBrowser' as "vBrowser", data->'creator' as creator, data->'lock' as lock
     FROM room
     WHERE "lastUpdateTime" > NOW() - INTERVAL '7 day'
+    AND length(video) > 0
     ORDER BY "creationTime" DESC`,
   );
-  const currentRoomData: any[] = [];
-  for (let dbRoom of result?.rows ?? []) {
-    const vBrowser = dbRoom.vBrowser;
-    if (vBrowser) {
-      currentVBrowser += 1;
-    }
-    if (vBrowser?.large) {
-      currentVBrowserLarge += 1;
-    }
-    const rosterLength = Number(
-      await redis?.get(`roomCounts:${dbRoom.roomId}`),
-    );
-    let videoUsers = 0;
-    let roster = [];
-    if (rosterLength) {
-      currentRoomSizes[rosterLength] =
-        (currentRoomSizes[rosterLength] ?? 0) + 1;
-      videoUsers = Number(
-        await redis?.get(`roomVideoUsers:${dbRoom.roomId}`),
-      );
-      const resp = await redis?.get(`roomRosters:${dbRoom.roomId}`);
-      if (resp) {
-        roster = JSON.parse(resp);
+  const currentRoomData = await Promise.all(
+    (result?.rows ?? []).map(async (dbRoom) => {
+      const vBrowser = dbRoom.vBrowser;
+      if (vBrowser) {
+        currentVBrowser += 1;
       }
-    }
-    currentUsers += rosterLength;
-    currentVideoChat += videoUsers;
-    const obj = {
-      roomId: dbRoom.roomId,
-      video: dbRoom.video || undefined,
-      videoTS: dbRoom.videoTS || undefined,
-      creationTime: dbRoom.creationTime || undefined,
-      lastUpdateTime: dbRoom.lastUpdateTime || undefined,
-      vanity: dbRoom.vanity || undefined,
-      isSubRoom: dbRoom.isSubRoom || undefined,
-      owner: dbRoom.owner || undefined,
-      password: dbRoom.password || undefined,
-      roomTitle: dbRoom.roomTitle || undefined,
-      roomDescription: dbRoom.roomDescription || undefined,
-      mediaPath: dbRoom.mediaPath || undefined,
-      vBrowser,
-      vBrowserElapsed: vBrowser?.assignTime && now - vBrowser?.assignTime,
-      lock: dbRoom.lock || undefined,
-      creator: dbRoom.creator || undefined,
-      rosterLength,
-      videoUsers,
-      roster,
-    };
-    if (obj.video?.startsWith('http') && rosterLength) {
-      currentHttp += 1;
-    }
-    if (obj.video?.startsWith('screenshare://') && rosterLength) {
-      currentScreenShare += 1;
-    }
-    if (obj.video?.startsWith('fileshare://') && rosterLength) {
-      currentFileShare += 1;
-    }
-    if (obj.video || rosterLength > 0) {
-      currentRoomData.push(obj);
-    }
-  }
+      if (vBrowser?.large) {
+        currentVBrowserLarge += 1;
+      }
+      const rosterLength = Number(
+        await redis?.get(`roomCounts:${dbRoom.roomId}`),
+      );
+      let videoUsers = 0;
+      let roster = [];
+      if (rosterLength) {
+        currentRoomSizes[rosterLength] =
+          (currentRoomSizes[rosterLength] ?? 0) + 1;
+        videoUsers = Number(
+          await redis?.get(`roomVideoUsers:${dbRoom.roomId}`),
+        );
+        const resp = await redis?.get(`roomRosters:${dbRoom.roomId}`);
+        if (resp) {
+          roster = JSON.parse(resp);
+        }
+      }
+      const obj = {
+        roomId: dbRoom.roomId,
+        video: dbRoom.video || undefined,
+        videoTS: dbRoom.videoTS || undefined,
+        creationTime: dbRoom.creationTime || undefined,
+        lastUpdateTime: dbRoom.lastUpdateTime || undefined,
+        vanity: dbRoom.vanity || undefined,
+        isSubRoom: dbRoom.isSubRoom || undefined,
+        owner: dbRoom.owner || undefined,
+        password: dbRoom.password || undefined,
+        roomTitle: dbRoom.roomTitle || undefined,
+        roomDescription: dbRoom.roomDescription || undefined,
+        mediaPath: dbRoom.mediaPath || undefined,
+        vBrowser,
+        vBrowserElapsed: vBrowser?.assignTime && now - vBrowser?.assignTime,
+        lock: dbRoom.lock || undefined,
+        creator: dbRoom.creator || undefined,
+        rosterLength,
+        videoUsers,
+        roster,
+      };
+      if (obj.video?.startsWith('http') && rosterLength) {
+        currentHttp += 1;
+      }
+      if (obj.video?.startsWith('screenshare://') && rosterLength) {
+        currentScreenShare += 1;
+      }
+      if (obj.video?.startsWith('fileshare://') && rosterLength) {
+        currentFileShare += 1;
+      }
+      currentUsers += rosterLength;
+      currentVideoChat += videoUsers;
+      return obj;
+    }),
+  );
   // Singleton stats below (same for all shards)
   const cpuUsage = os.loadavg()[1] * 100;
   const redisUsage = Number(

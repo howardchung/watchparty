@@ -2000,6 +2000,7 @@ export class App extends React.Component<AppProps, AppState> {
     const controls = (
       <Controls
         key={this.state.controlsTimestamp}
+        video={this.state.roomMedia}
         paused={this.state.roomPaused}
         roomPlaybackRate={this.state.roomPlaybackRate}
         isLiveStream={this.state.isLiveStream}

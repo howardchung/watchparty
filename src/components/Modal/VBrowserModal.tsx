@@ -9,9 +9,7 @@ import { IconHourglass } from '@tabler/icons-react';
 
 export class VBrowserModal extends React.Component<{
   closeModal: () => void;
-  startVBrowser: (
-    options: { size: string; region: string },
-  ) => void;
+  startVBrowser: (options: { size: string; region: string }) => void;
 }> {
   static contextType = MetadataContext;
   declare context: React.ContextType<typeof MetadataContext>;
@@ -86,96 +84,94 @@ export class VBrowserModal extends React.Component<{
 
     const canLaunch = this.context.user || !config.VITE_FIREBASE_CONFIG;
     return (
-        <Modal
-          opened
-          onClose={closeModal}
-          title="Launch a VBrowser"
-          centered
-          size="auto"
-        >
-          <div>
-            You're about to launch a virtual browser to share in this room.
-          </div>
-          <Table striped>
-            <Table.Thead>
-              <Table.Tr>
-                <Table.Th />
-                <Table.Th>WatchParty Free</Table.Th>
-                <Table.Th>WatchParty Plus</Table.Th>
-              </Table.Tr>
-            </Table.Thead>
+      <Modal
+        opened
+        onClose={closeModal}
+        title="Launch a VBrowser"
+        centered
+        size="auto"
+      >
+        <div>
+          You're about to launch a virtual browser to share in this room.
+        </div>
+        <Table striped>
+          <Table.Thead>
+            <Table.Tr>
+              <Table.Th />
+              <Table.Th>WatchParty Free</Table.Th>
+              <Table.Th>WatchParty Plus</Table.Th>
+            </Table.Tr>
+          </Table.Thead>
 
-            <Table.Tbody>
-              <Table.Tr>
-                <Table.Td>VBrowser Max Resolution</Table.Td>
-                <Table.Td>720p</Table.Td>
-                <Table.Td>1080p</Table.Td>
-              </Table.Tr>
-              <Table.Tr>
-                <Table.Td>VBrowser CPU/RAM</Table.Td>
-                <Table.Td>Standard</Table.Td>
-                <Table.Td>Extra</Table.Td>
-              </Table.Tr>
-              <Table.Tr>
-                <Table.Td>VBrowser Session Length</Table.Td>
-                <Table.Td>3 hours</Table.Td>
-                <Table.Td>24 hours</Table.Td>
-              </Table.Tr>
-              <Table.Tr>
-                <Table.Td>Recommended Max Viewers</Table.Td>
-                <Table.Td>15</Table.Td>
-                <Table.Td>30</Table.Td>
-              </Table.Tr>
-              <Table.Tr>
-                <Table.Td>Region</Table.Td>
-                <Table.Td>Where available </Table.Td>
-                <Table.Td>
-                  <Select
-                    onChange={(value, option) =>
-                      this.setState({ region: value })
-                    }
-                    value={this.state.region}
-                    data={regionOptions}
-                    renderOption={({ option }: { option: any }) => (
-                      <div
-                        key={option.value}
-                        style={{
-                          display: 'flex',
-                          gap: '8px',
-                          alignItems: 'center',
-                        }}
-                      >
-                        <Avatar radius="xs" src={option.image.src} />
-                        {option.label}
-                      </div>
-                    )}
-                  />
-                </Table.Td>
-              </Table.Tr>
-              <Table.Tr>
-                <Table.Td></Table.Td>
-                <Table.Td>
-                  {canLaunch ? (
-                    this.state.isFreePoolFull ? (
-                      vmPoolFullMessage
-                    ) : (
-                      <LaunchButton large={false} />
-                    )
-                  ) : (
-                    <SignInButton />
+          <Table.Tbody>
+            <Table.Tr>
+              <Table.Td>VBrowser Max Resolution</Table.Td>
+              <Table.Td>720p</Table.Td>
+              <Table.Td>1080p</Table.Td>
+            </Table.Tr>
+            <Table.Tr>
+              <Table.Td>VBrowser CPU/RAM</Table.Td>
+              <Table.Td>Standard</Table.Td>
+              <Table.Td>Extra</Table.Td>
+            </Table.Tr>
+            <Table.Tr>
+              <Table.Td>VBrowser Session Length</Table.Td>
+              <Table.Td>3 hours</Table.Td>
+              <Table.Td>24 hours</Table.Td>
+            </Table.Tr>
+            <Table.Tr>
+              <Table.Td>Recommended Max Viewers</Table.Td>
+              <Table.Td>15</Table.Td>
+              <Table.Td>30</Table.Td>
+            </Table.Tr>
+            <Table.Tr>
+              <Table.Td>Region</Table.Td>
+              <Table.Td>Where available </Table.Td>
+              <Table.Td>
+                <Select
+                  onChange={(value, option) => this.setState({ region: value })}
+                  value={this.state.region}
+                  data={regionOptions}
+                  renderOption={({ option }: { option: any }) => (
+                    <div
+                      key={option.value}
+                      style={{
+                        display: 'flex',
+                        gap: '8px',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <Avatar radius="xs" src={option.image.src} />
+                      {option.label}
+                    </div>
                   )}
-                </Table.Td>
-                <Table.Td>
-                  {this.context.isSubscriber ? (
-                    <LaunchButton large />
+                />
+              </Table.Td>
+            </Table.Tr>
+            <Table.Tr>
+              <Table.Td></Table.Td>
+              <Table.Td>
+                {canLaunch ? (
+                  this.state.isFreePoolFull ? (
+                    vmPoolFullMessage
                   ) : (
-                    subscribeButton
-                  )}
-                </Table.Td>
-              </Table.Tr>
-            </Table.Tbody>
-          </Table>
-        </Modal>
+                    <LaunchButton large={false} />
+                  )
+                ) : (
+                  <SignInButton />
+                )}
+              </Table.Td>
+              <Table.Td>
+                {this.context.isSubscriber ? (
+                  <LaunchButton large />
+                ) : (
+                  subscribeButton
+                )}
+              </Table.Td>
+            </Table.Tr>
+          </Table.Tbody>
+        </Table>
+      </Modal>
     );
   }
 }
