@@ -51,7 +51,7 @@ export async function getStats() {
     data->'video' as video, data->'videoTS' as "videoTS", data->'vBrowser' as "vBrowser", data->'creator' as creator, data->'lock' as lock
     FROM room
     WHERE "lastUpdateTime" > NOW() - INTERVAL '7 day'
-    AND length(data->'video') > 0
+    AND length(data->>'video') > 0
     ORDER BY "creationTime" DESC`,
   );
   const currentRoomData = await Promise.all(
