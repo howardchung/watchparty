@@ -806,7 +806,7 @@ export class Room {
     this.io.of(this.roomId).emit("REC:removeReaction", reaction);
   };
 
-  private joinVideo = (socket: Socket) => {
+  private joinVideo = async (socket: Socket) => {
     const match = this.roster.find((user) => user.id === socket.id);
     if (match) {
       match.isVideoChat = true;
@@ -816,7 +816,7 @@ export class Room {
     this.io.of(this.roomId).emit("roster", this.getRosterForApp());
   };
 
-  private leaveVideo = (socket: Socket) => {
+  private leaveVideo = async (socket: Socket) => {
     const match = this.roster.find((user) => user.id === socket.id);
     if (match) {
       match.isVideoChat = false;
