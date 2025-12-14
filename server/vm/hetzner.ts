@@ -110,7 +110,7 @@ export class Hetzner extends VMManager {
       id,
       response?.headers["ratelimit-remaining"],
     );
-    redis?.set("hetznerApiRemaining", response?.headers["ratelimit-remaining"]);
+    await redis?.set("hetznerApiRemaining", response?.headers["ratelimit-remaining"]);
     const server = this.mapServerObject(response.data.server);
     return server;
   };

@@ -256,7 +256,7 @@ app.get("/timeSeries", async (req, res) => {
 app.get("/youtube", async (req, res) => {
   if (typeof req.query.q === "string") {
     try {
-      await redisCount("youtubeSearch");
+      redisCount("youtubeSearch");
       const items = await searchYoutube(req.query.q);
       res.json(items);
     } catch {

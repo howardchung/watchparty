@@ -31,7 +31,7 @@ if (!config.VM_MANAGER_CONFIG) {
 }
 
 // Test single count video chat
-redis?.del("videoUsers");
+await redis?.del("videoUsers");
 
 export class Room {
   // Serialized state
@@ -811,7 +811,7 @@ export class Room {
     if (match) {
       match.isVideoChat = true;
       redisCount("videoChatStarts");
-      redis?.incrby("videoUsers", 1);
+      await redis?.incrby("videoUsers", 1);
     }
     this.io.of(this.roomId).emit("roster", this.getRosterForApp());
   };
@@ -820,7 +820,7 @@ export class Room {
     const match = this.roster.find((user) => user.id === socket.id);
     if (match) {
       match.isVideoChat = false;
-      redis?.incrby("videoUsers", -1);
+      await redis?.incrby("videoUsers", -1);
     }
     this.io.of(this.roomId).emit("roster", this.getRosterForApp());
   };
@@ -1351,7 +1351,7 @@ export class Room {
       });
   };
 
-  private disconnectUser = (socket: Socket) => {
+  private disconnectUser = async (socket: Socket) => {
     let index = this.roster.findIndex((user) => user.id === socket.id);
     const removed = this.roster.splice(index, 1)[0];
     this.io.of(this.roomId).emit("roster", this.getRosterForApp());
@@ -1361,7 +1361,7 @@ export class Room {
       this.cmdHost(socket, "");
     }
     if (removed?.isVideoChat) {
-      redis?.incrby("videoUsers", -1);
+      await redis?.incrby("videoUsers", -1);
     }
     delete this.tsMap[socket.id];
     // delete nameMap[socket.id];

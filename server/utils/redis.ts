@@ -11,9 +11,13 @@ export async function redisCount(prefix: string) {
   if (!redis) {
     return;
   }
-  const key = `${prefix}:${getStartOfHour()}`;
-  await redis.incr(key);
-  await redis.expireat(key, getStartOfHour() + 86400 * 1000);
+  try {
+    const key = `${prefix}:${getStartOfHour()}`;
+    await redis.incr(key);
+    await redis.expireat(key, getStartOfHour() + 86400 * 1000);
+  } catch (e) {
+    console.log(e);
+  }
 }
 
 export async function getRedisCountDay(prefix: string) {
