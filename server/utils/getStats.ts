@@ -109,7 +109,7 @@ export async function getStats() {
     }),
   );
   // Singleton stats below (same for all shards)
-  const currentVideoChat = Number(await redis?.get("videoUsers"));
+  const currentVideoChat = 0;
   const cpuUsage = os.loadavg()[1] * 100;
   const redisUsage = Number(
     (await redis?.info())
