@@ -149,6 +149,7 @@ export class ComboBox extends React.Component<ComboBoxProps, ComboBoxState> {
         onKeyDown={(e: any) => {
           if (e.key === "Enter") {
             this.setMediaAndClose(this.state.inputMedia ?? "");
+            e.target.blur();
           }
         }}
         rightSection={
