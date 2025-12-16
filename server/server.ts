@@ -63,13 +63,15 @@ io.engine.use(async (req: any, res: Response, next: () => void) => {
   const key = "/" + roomId;
   // Check to make sure this shard should load this room
   const isCorrectShard = !config.SHARD || shard === Number(config.SHARD);
-  if (isCorrectShard && postgres && !rooms.has(key)) {
-    // Get the room data from postgres
-    const { rows } = await postgres.query<PersistentRoom>(
+  // Get the room data from postgres
+  const persistedRoom = (
+    await postgres?.query<PersistentRoom>(
       `SELECT * from room where "roomId" = $1`,
       [key],
-    );
-    const persistedRoom = rows[0];
+    )
+  )?.rows?.[0];
+  // Don't await after this because we may have a race condition where 2 rquests both try to load the room
+  if (isCorrectShard && !rooms.has(key)) {
     const data = persistedRoom?.data
       ? JSON.stringify(persistedRoom.data)
       : undefined;

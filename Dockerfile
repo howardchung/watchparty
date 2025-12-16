@@ -8,4 +8,4 @@ RUN npm ci
 
 RUN npm run build
 
-ENTRYPOINT ["/bin/sh", "-c" , "npm run server"]
+ENTRYPOINT ["/bin/sh", "-c" , "npm start"]
