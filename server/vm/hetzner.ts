@@ -53,6 +53,7 @@ export class Hetzner extends VMManager {
       headers: {
         Authorization: "Bearer " + HETZNER_TOKEN,
         "Content-Type": "application/json",
+        "User-Agent": "test",
       },
       data,
     });
@@ -66,6 +67,7 @@ export class Hetzner extends VMManager {
       url: `https://api.hetzner.cloud/v1/servers/${id}`,
       headers: {
         Authorization: "Bearer " + HETZNER_TOKEN,
+        "User-Agent": "test",
       },
     });
   };
@@ -77,6 +79,7 @@ export class Hetzner extends VMManager {
       url: `https://api.hetzner.cloud/v1/servers/${id}/actions/reboot`,
       headers: {
         Authorization: "Bearer " + HETZNER_TOKEN,
+        "User-Agent": "test",
       },
     });
     return;
@@ -89,6 +92,7 @@ export class Hetzner extends VMManager {
       url: `https://api.hetzner.cloud/v1/servers/${id}/actions/rebuild`,
       headers: {
         Authorization: "Bearer " + HETZNER_TOKEN,
+        "User-Agent": "test",
       },
       data: {
         image: Number(this.imageId),
@@ -103,6 +107,7 @@ export class Hetzner extends VMManager {
       url: `https://api.hetzner.cloud/v1/servers/${id}`,
       headers: {
         Authorization: "Bearer " + HETZNER_TOKEN,
+        "User-Agent": "test",
       },
     });
     console.log(
@@ -129,6 +134,7 @@ export class Hetzner extends VMManager {
           url: `https://api.hetzner.cloud/v1/servers`,
           headers: {
             Authorization: "Bearer " + HETZNER_TOKEN,
+            "User-Agent": "test",
           },
           params: {
             sort: "id:asc",
@@ -154,6 +160,7 @@ export class Hetzner extends VMManager {
         headers: {
           Authorization: "Bearer " + HETZNER_TOKEN,
           "Content-Type": "application/json",
+          "User-Agent": "test",
         },
       });
     } catch (e) {
@@ -198,6 +205,7 @@ export class Hetzner extends VMManager {
       headers: {
         Authorization: "Bearer " + HETZNER_TOKEN,
         "Content-Type": "application/json",
+        "User-Agent": "test,
       },
       data: {
         name: "vBrowserSnapshot",
