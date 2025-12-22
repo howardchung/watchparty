@@ -205,7 +205,7 @@ export class Hetzner extends VMManager {
       headers: {
         Authorization: "Bearer " + HETZNER_TOKEN,
         "Content-Type": "application/json",
-        "User-Agent": "test,
+        "User-Agent": "test",
       },
       data: {
         name: "vBrowserSnapshot",
