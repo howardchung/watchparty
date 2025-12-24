@@ -87,13 +87,7 @@ const Debug = () => {
                         <Table.Tr>
                           <Table.Td>
                             {k === "currentRoomData"
-                              ? Object.entries(row).map(([k, v]) => {
-                                  return (
-                                    <div>
-                                      {k}: {JSON.stringify(v)}
-                                    </div>
-                                  );
-                                })
+                              ? <div style={{ wordBreak: "break-all" }}>{JSON.stringify(row, null, 2)}</div>
                               : row}
                           </Table.Td>
                         </Table.Tr>
