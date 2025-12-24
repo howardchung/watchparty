@@ -70,7 +70,7 @@ app.get("/stats", async (req, res) => {
       vmManagerStats[key] = {
         availableVBrowsers,
         stagingVBrowsers,
-        adjustedBuffer: vmManager?.getAdjustedBuffer(),
+        bufferSize: vmManager?.getTargetBuffer(),
         // terminationVBrowsers,
         size,
       };
