@@ -10,6 +10,7 @@ import {
   testAutoplay,
   openFileSelector,
   getOrCreateClientId,
+  getOrCreateSessionId,
   calculateMedian,
   getUserImage,
   isYouTube,
@@ -23,6 +24,7 @@ import {
   VIDEO_MAX_HEIGHT_CSS,
   createUuid,
   softWhite,
+  getSavedPasswords,
 } from "../../utils/utils";
 import { generateName } from "../../utils/generateName";
 import { Chat } from "../Chat/Chat";
@@ -92,6 +94,8 @@ window.watchparty = {
   videoRefs: {},
   videoPCs: {},
 };
+
+const clientId = getOrCreateClientId();
 
 interface AppProps {
   vanity?: string;
@@ -325,28 +329,19 @@ export class App extends React.Component<AppProps, AppState> {
   };
 
   join = async (roomId: string) => {
-    let password = "";
-    try {
-      const savedPasswordsString = window.localStorage.getItem(
-        "watchparty-passwords",
-      );
-      const savedPasswords = JSON.parse(savedPasswordsString || "{}");
-      this.setState({ savedPasswords });
-      password = savedPasswords[roomId] || "";
-    } catch (e) {
-      console.warn("[ALERT] Could not parse saved passwords");
-    }
+    const password = getSavedPasswords()[roomId] ?? "";
     const response = await fetch(serverPath + "/resolveShard" + roomId);
     const shard = Number(await response.text()) || "";
     const socket = io(serverPath + roomId, {
       transports: ["websocket"],
       query: {
-        clientId: getOrCreateClientId(),
+        clientId,
         password,
-        uid: this.context.user?.uid,
-        token: await this.context.user?.getIdToken(),
         shard,
         roomId: roomId.slice(1),
+      },
+      auth: {
+        sessionId: getOrCreateSessionId(),
       },
     });
     this.socket = socket;
@@ -366,10 +361,10 @@ export class App extends React.Component<AppProps, AppState> {
       console.error(err);
       if (err.message === "Invalid namespace") {
         this.setState({ overlayMsg: "Couldn't load this room." });
-      } else if (err.message === "not authorized") {
+      } else if (err.message === "password") {
         this.setState({ isErrorAuth: true });
-      } else if (err.message === "room full") {
-        this.setState({ overlayMsg: "This room is full." });
+      } else {
+        this.setState({ overlayMsg: err?.message ?? "An error occurred" });
       }
     });
     socket.on("disconnect", (reason) => {
@@ -770,7 +765,7 @@ export class App extends React.Component<AppProps, AppState> {
           this.state.roomPlaybackRate === 0
         ) {
           const leader = this.getLeaderTime();
-          const delta = leader - data[this.socket.id!];
+          const delta = leader - data[clientId];
           // Set leader pbr to 1
           let pbr = 1;
           // Add .01 pbr for each 100ms delay
@@ -785,7 +780,7 @@ export class App extends React.Component<AppProps, AppState> {
         }
         if (this.state.roomSubtitle) {
           const sharer = this.state.participants.find((p) => p.isScreenShare);
-          if (sharer && sharer.id !== this.socket.id) {
+          if (sharer && sharer.id !== clientId) {
             // Sync only if someone is sharing and it's not us
             const sharerTime = this.state.tsMap[sharer.id];
             this.Player().syncSubtitles(sharerTime);
@@ -1019,9 +1014,7 @@ export class App extends React.Component<AppProps, AppState> {
   };
 
   setRoomLock = async (locked: boolean) => {
-    const uid = this.context.user?.uid;
-    const token = await this.context.user?.getIdToken();
-    this.socket.emit("CMD:lock", { uid, token, locked });
+    this.socket.emit("CMD:lock", { locked });
   };
 
   haveLock = () => {
@@ -1034,9 +1027,7 @@ export class App extends React.Component<AppProps, AppState> {
   setIsChatDisabled = (val: boolean) => this.setState({ isChatDisabled: val });
 
   clearChat = async () => {
-    const uid = this.context.user?.uid;
-    const token = await this.context.user?.getIdToken();
-    this.socket.emit("CMD:deleteChatMessages", { uid, token });
+    this.socket.emit("CMD:deleteChatMessages", {});
   };
 
   startConvert = async () => {
@@ -1553,7 +1544,7 @@ export class App extends React.Component<AppProps, AppState> {
       }
       const unprefixed = this.state.roomMedia.replace(prefix, "");
       const mediasoupURL = unprefixed.split("@")[1];
-      if (sharer?.clientId === selfId && this.mediasoupPubSocket == null) {
+      if (sharer?.id === selfId && this.mediasoupPubSocket == null) {
         await this.publishMediasoup(mediasoupURL);
       }
       // If we're not sharing a file, also start watching
@@ -1565,10 +1556,10 @@ export class App extends React.Component<AppProps, AppState> {
     }
 
     // We're the sharer, create a connection to each other member
-    if (sharer?.clientId === selfId) {
+    if (sharer?.id === selfId) {
       // Delete and close any connections that aren't in the current member list (maybe someone disconnected)
       // This allows them to rejoin later
-      const clientIds = new Set(this.state.participants.map((p) => p.clientId));
+      const clientIds = new Set(this.state.participants.map((p) => p.id));
       Object.entries(this.publisherConns).forEach(([key, value]) => {
         if (!clientIds.has(key)) {
           value.close();
@@ -1577,7 +1568,7 @@ export class App extends React.Component<AppProps, AppState> {
       });
 
       this.state.participants.forEach((user) => {
-        const id = user.clientId;
+        const id = user.id;
         if (id === selfId && this.isLocalStreamAFile) {
           // Don't set up a connection to ourselves if sharing file
           return;
@@ -1615,7 +1606,7 @@ export class App extends React.Component<AppProps, AppState> {
       pc.onicecandidate = (event) => {
         // We generated an ICE candidate, send it to sharer
         if (event.candidate) {
-          this.sendSignalSS(sharer.clientId, { ice: event.candidate });
+          this.sendSignalSS(sharer.id, { ice: event.candidate });
         }
       };
       pc.ontrack = (event: RTCTrackEvent) => {
@@ -1632,12 +1623,7 @@ export class App extends React.Component<AppProps, AppState> {
   };
 
   startVBrowser = async (options: { size: string }) => {
-    // user.uid is the public user identifier
-    // user.getIdToken() is the secret access token we can send to the server to prove identity
-    const user = this.context.user;
-    const uid = user?.uid;
-    const token = await user?.getIdToken();
-    this.socket.emit("CMD:startVBrowser", { options, uid, token });
+    this.socket.emit("CMD:startVBrowser", { options });
   };
 
   stopVBrowser = async () => {
@@ -2076,12 +2062,7 @@ export class App extends React.Component<AppProps, AppState> {
           </Overlay>
         )}
         {this.state.overlayMsg && <ErrorModal error={this.state.overlayMsg} />}
-        {this.state.isErrorAuth && (
-          <PasswordModal
-            savedPasswords={this.state.savedPasswords}
-            roomId={this.state.roomId}
-          />
-        )}
+        {this.state.isErrorAuth && <PasswordModal roomId={this.state.roomId} />}
         <SettingsModal
           modalOpen={this.state.settingsModalOpen}
           setModalOpen={this.setSettingsModalOpen}
@@ -2199,7 +2180,6 @@ export class App extends React.Component<AppProps, AppState> {
                         <Button
                           color="red"
                           onClick={this.stopPublishingLocalStream}
-                          disabled={sharer?.id !== this.socket?.id}
                           leftSection={<IconX />}
                         >
                           Stop Share
@@ -2455,10 +2435,10 @@ export class App extends React.Component<AppProps, AppState> {
                     this.getVBrowserPass() &&
                     this.getVBrowserHost() ? (
                       <VBrowser
-                        username={this.socket.id!}
+                        username={clientId}
                         password={this.getVBrowserPass()}
                         hostname={this.getVBrowserHost()}
-                        controlling={this.state.controller === this.socket.id}
+                        controlling={this.state.controller === clientId}
                         resolution={this.state.vBrowserResolution}
                         quality={this.state.vBrowserQuality}
                         doPlay={this.localPlay}

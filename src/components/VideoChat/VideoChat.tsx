@@ -173,9 +173,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
     // Delete and close any connections that aren't in the current member list (maybe someone disconnected)
     // This allows them to rejoin later
     const clientIds = new Set(
-      this.props.participants
-        .filter((p) => p.isVideoChat)
-        .map((p) => p.clientId),
+      this.props.participants.filter((p) => p.isVideoChat).map((p) => p.id),
     );
     Object.entries(videoPCs).forEach(([key, value]) => {
       if (!clientIds.has(key)) {
@@ -185,7 +183,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
     });
 
     this.props.participants.forEach((user) => {
-      const id = user.clientId;
+      const id = user.id;
       if (!user.isVideoChat || videoPCs[id]) {
         // User isn't in video chat, or we already have a connection to them
         return;
@@ -237,7 +235,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
       this.props;
     const ourStream = window.watchparty.ourStream;
     const videoRefs = window.watchparty.videoRefs;
-    const videoChatSize = participants.length > 2 ? 180 : 270;
+    const videoChatSize = participants.length > 2 ? 180 : 250;
     const videoChatContentStyle: React.CSSProperties = {
       height: videoChatSize,
       width: videoChatSize,
@@ -278,6 +276,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
                           right: 0,
                           top: 0,
                           cursor: "pointer",
+                          zIndex: 1,
                           visibility: Boolean(
                             owner && owner === this.context.user?.uid,
                           )
@@ -298,7 +297,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
                       zIndex: 1,
                     }}
                   >
-                    {!ourStream && p.clientId === selfId && (
+                    {!ourStream && p.id === selfId && (
                       <Button
                         size="xs"
                         color={"purple"}
@@ -308,7 +307,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
                         Join
                       </Button>
                     )}
-                    {ourStream && p.clientId === selfId && (
+                    {ourStream && p.id === selfId && (
                       <Button
                         size="xs"
                         color={"red"}
@@ -318,7 +317,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
                         Leave
                       </Button>
                     )}
-                    {ourStream && p.clientId === selfId && (
+                    {ourStream && p.id === selfId && (
                       <>
                         <ActionIcon
                           color={this.getVideoWebRTC() ? "green" : "red"}
@@ -334,7 +333,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
                         </ActionIcon>
                       </>
                     )}
-                    {p.clientId !== selfId && (
+                    {p.id !== selfId && (
                       <>
                         {p.isVideoChat && <IconVideo color={softWhite} />}
                         {p.isVideoChat && (
@@ -395,19 +394,17 @@ export class VideoChat extends React.Component<VideoChatProps> {
                     <video
                       ref={(el) => {
                         if (el) {
-                          videoRefs[p.clientId] = el;
+                          videoRefs[p.id] = el;
                         }
                       }}
                       style={{
                         ...videoChatContentStyle,
                         // mirror the video if it's our stream. this style mimics Zoom where your
                         // video is mirrored only for you)
-                        transform: `scaleX(${
-                          p.clientId === selfId ? "-1" : "1"
-                        })`,
+                        transform: `scaleX(${p.id === selfId ? "-1" : "1"})`,
                       }}
                       autoPlay
-                      muted={p.clientId === selfId}
+                      muted={p.id === selfId}
                       data-id={p.id}
                     />
                   ) : (

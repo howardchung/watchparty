@@ -301,6 +301,40 @@ export function getOrCreateClientId() {
   return clientId;
 }
 
+export function getOrCreateSessionId() {
+  let sessionId = window.localStorage.getItem("watchparty-sessionid");
+  if (!sessionId) {
+    // Generate a new sessionID and save it
+    // This requires https, so fallback to JS implementation if needed
+    sessionId = createUuid();
+    window.localStorage.setItem("watchparty-sessionid", sessionId);
+  }
+  return sessionId;
+}
+
+export function addAndSavePassword(roomId: string, password: string) {
+  const newPasswords = {
+    ...getSavedPasswords(),
+    [roomId]: password,
+  };
+  window.localStorage.setItem(
+    "watchparty-passwords",
+    JSON.stringify(newPasswords),
+  );
+}
+
+export function getSavedPasswords(): Record<string, string> {
+  try {
+    const savedPasswordsString =
+      window.localStorage.getItem("watchparty-passwords") ?? "{}";
+    const savedPasswords = JSON.parse(savedPasswordsString);
+    return savedPasswords;
+  } catch (e) {
+    console.warn("[ALERT] Could not parse saved passwords");
+  }
+  return {};
+}
+
 export function createUuid() {
   return crypto.randomUUID ? crypto.randomUUID() : uuidv4();
 }

@@ -45,7 +45,25 @@ export abstract class VMManager {
   };
 
   public getTargetBuffer = () => {
-    return this.limitSize * 0.03;
+    let buffer = this.limitSize * 0.01;
+    // If ramping config, adjust buffer based on the hour
+    // During ramp down hours, keep a smaller buffer
+    // During ramp up hours, keep a larger buffer
+    // const rampDownHours = config.VM_POOL_RAMP_DOWN_HOURS.split(",").map(Number);
+    // const rampUpHours = config.VM_POOL_RAMP_UP_HOURS.split(",").map(Number);
+    // const nowHour = new Date().getUTCHours();
+    // const isRampDown =
+    //   rampDownHours.length &&
+    //   pointInInterval24(nowHour, rampDownHours[0], rampDownHours[1]);
+    // const isRampUp =
+    //   rampUpHours.length &&
+    //   pointInInterval24(nowHour, rampUpHours[0], rampUpHours[1]);
+    // if (isRampDown) {
+    //   buffer *= 0.5;
+    // } else if (isRampUp) {
+    //   buffer *= 1.5;
+    // }
+    return Math.ceil(buffer);
   };
 
   public getCurrentSize = async () => {
@@ -58,28 +76,6 @@ export abstract class VMManager {
 
   public getPoolName = () => {
     return this.id + (this.isLarge ? "Large" : "") + this.region;
-  };
-
-  public getAdjustedBuffer = (): number => {
-    let buffer = this.getTargetBuffer();
-    // If ramping config, adjust buffer based on the hour
-    // During ramp down hours, keep a smaller buffer
-    // During ramp up hours, keep a larger buffer
-    const rampDownHours = config.VM_POOL_RAMP_DOWN_HOURS.split(",").map(Number);
-    const rampUpHours = config.VM_POOL_RAMP_UP_HOURS.split(",").map(Number);
-    const nowHour = new Date().getUTCHours();
-    const isRampDown =
-      rampDownHours.length &&
-      pointInInterval24(nowHour, rampDownHours[0], rampDownHours[1]);
-    const isRampUp =
-      rampUpHours.length &&
-      pointInInterval24(nowHour, rampUpHours[0], rampUpHours[1]);
-    if (isRampDown) {
-      buffer *= 0.5;
-    } else if (isRampUp) {
-      buffer *= 1.5;
-    }
-    return Math.ceil(buffer);
   };
 
   public getAvailableCount = async (): Promise<number> => {
@@ -279,14 +275,14 @@ export abstract class VMManager {
       const currentSize = await this.getCurrentSize();
       let launch = false;
       launch =
-        availableCount + stagingCount < this.getAdjustedBuffer() &&
+        availableCount + stagingCount < this.getTargetBuffer() &&
         currentSize < (this.getLimitSize() || Infinity);
       if (launch) {
         console.log(
           "[RESIZE-INCR]",
           this.getPoolName(),
           "target:",
-          this.getAdjustedBuffer(),
+          this.getTargetBuffer(),
           "available:",
           availableCount,
           "staging:",
@@ -313,7 +309,7 @@ export abstract class VMManager {
       const availableCount = await this.getAvailableCount();
       const stagingCount = await this.getStagingCount();
       let unlaunch = false;
-      unlaunch = availableCount + stagingCount > this.getAdjustedBuffer();
+      unlaunch = availableCount + stagingCount > this.getTargetBuffer();
       if (unlaunch) {
         // use SKIP LOCKED to delete to avoid deleting VM that might be assigning
         // filter to only VMs eligible for deletion
@@ -543,7 +539,7 @@ export abstract class VMManager {
         await this.getCurrentSize(),
         await this.getAvailableCount(),
         await this.getStagingCount(),
-        this.getAdjustedBuffer(),
+        this.getTargetBuffer(),
       );
     }, 10000);
 

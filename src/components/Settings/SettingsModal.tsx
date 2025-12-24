@@ -98,10 +98,7 @@ export const SettingsModal = ({
 
   const setRoomState = useCallback(
     async (data: any) => {
-      const token = await user?.getIdToken();
       socket.emit("CMD:setRoomState", {
-        uid: user?.uid,
-        token,
         ...data,
       });
     },
@@ -109,10 +106,7 @@ export const SettingsModal = ({
   );
   const setRoomOwner = useCallback(
     async (data: any) => {
-      const token = await user?.getIdToken();
       socket.emit("CMD:setRoomOwner", {
-        uid: user?.uid,
-        token,
         ...data,
       });
     },

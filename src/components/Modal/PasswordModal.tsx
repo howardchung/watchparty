@@ -1,25 +1,38 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useContext, useEffect } from "react";
 import { Modal, PasswordInput, ActionIcon } from "@mantine/core";
 import { IconKey } from "@tabler/icons-react";
+import { addAndSavePassword, serverPath } from "../../utils/utils";
+import { MetadataContext } from "../../MetadataContext";
 
-export const PasswordModal = ({
-  savedPasswords,
-  roomId,
-}: {
-  savedPasswords: StringDict;
-  roomId: string;
-}) => {
+export const PasswordModal = ({ roomId }: { roomId: string }) => {
   const setPassword = useCallback(() => {
-    window.localStorage.setItem(
-      "watchparty-passwords",
-      JSON.stringify({
-        ...savedPasswords,
-        [roomId]: (document.getElementById("roomPassword") as HTMLInputElement)
-          ?.value,
-      }),
-    );
+    const password = (
+      document.getElementById("roomPassword") as HTMLInputElement
+    )?.value;
+    addAndSavePassword(roomId, password);
     window.location.reload();
-  }, [savedPasswords, roomId]);
+  }, [roomId]);
+  const { user } = useContext(MetadataContext);
+  useEffect(() => {
+    const update = async () => {
+      // Make sure we have the password for this room if we're the owner
+      if (user) {
+        const token = await user.getIdToken();
+        const response = await fetch(
+          serverPath + `/listRooms?uid=${user.uid}&token=${token}`,
+        );
+        if (response.ok) {
+          const rooms = await response.json();
+          const target = rooms.find((r: any) => r.roomId === roomId);
+          if (target?.password) {
+            addAndSavePassword(target.roomId, target.password);
+            window.location.reload();
+          }
+        }
+      }
+    };
+    update();
+  }, [user]);
   return (
     <Modal
       onClose={() => {}}

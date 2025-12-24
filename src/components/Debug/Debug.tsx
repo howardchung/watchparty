@@ -86,19 +86,15 @@ const Debug = () => {
                       return (
                         <Table.Tr>
                           <Table.Td>
-                            {k === "currentRoomData" ? (
-                              <pre
-                                style={{
-                                  whiteSpace: "pre-wrap",
-                                  wordWrap: "break-word",
-                                  fontSize: 12,
-                                }}
-                              >
-                                {JSON.stringify(row, null, 2)}
-                              </pre>
-                            ) : (
-                              row
-                            )}
+                            {k === "currentRoomData"
+                              ? Object.entries(row).map(([k, v]) => {
+                                  return (
+                                    <div>
+                                      {k}: {JSON.stringify(v)}
+                                    </div>
+                                  );
+                                })
+                              : row}
                           </Table.Td>
                         </Table.Tr>
                       );

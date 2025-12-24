@@ -436,7 +436,7 @@ app.get("/listRooms", async (req, res) => {
     return;
   }
   const result = await postgres?.query<PersistentRoom>(
-    `SELECT "roomId", vanity from room WHERE owner = $1`,
+    `SELECT "roomId", vanity, password from room WHERE owner = $1`,
     [decoded.uid],
   );
   res.json(result?.rows ?? []);

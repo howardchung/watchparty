@@ -13,8 +13,6 @@ interface User {
   isVideoChat?: boolean;
   isMuted?: boolean;
   isScreenShare?: boolean;
-  isSub?: boolean;
-  clientId: string;
 }
 
 interface Reaction {

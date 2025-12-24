@@ -19,6 +19,7 @@ import {
   formatTimestamp,
   getColorForStringHex,
   getDefaultPicture,
+  getOrCreateClientId,
   isEmojiString,
 } from "../../utils/utils";
 import { UserMenu } from "../UserMenu/UserMenu";
@@ -29,6 +30,8 @@ import {
   TransitionGroup,
 } from "react-transition-group";
 import { MetadataContext } from "../../MetadataContext";
+
+const clientId = getOrCreateClientId();
 
 interface ChatProps {
   chat: ChatMessage[];
@@ -105,7 +108,7 @@ export class Chat extends React.Component<ChatProps> {
       msgId: id || this.state.reactionMenu.selectedMsgId,
       msgTimestamp: timestamp || this.state.reactionMenu.selectedMsgTimestamp,
     };
-    if (msg?.reactions?.[value].includes(this.props.socket.id!)) {
+    if (msg?.reactions?.[value].includes(clientId)) {
       this.props.socket.emit("CMD:removeReaction", data);
     } else {
       this.props.socket.emit("CMD:addReaction", data);
@@ -513,7 +516,7 @@ const ChatMessage = ({
                   <HoverCard.Target>
                     <div
                       className={`${styles.reactionContainer} ${
-                        reactions[key].includes(socket.id!)
+                        reactions[key].includes(clientId)
                           ? styles.highlighted
                           : ""
                       }`}
