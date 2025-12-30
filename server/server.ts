@@ -113,11 +113,13 @@ app.get("/ping", (_req, res) => {
 
 // Data's already compressed so go before the compression middleware
 app.get("/subtitle/:hash", async (req, res) => {
-  const buf = await redis?.getBuffer("subtitle:" + req.params.hash);
+  const key = "subtitle:" + req.params.hash;
+  const buf = await redis?.getBuffer(key);
   if (!buf) {
     res.status(404).end("not found");
     return;
   }
+  await redis?.expire(key, 24 * 60 * 60);
   res.setHeader("Content-Encoding", "gzip");
   res.end(buf);
 });
