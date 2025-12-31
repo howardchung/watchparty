@@ -53,7 +53,6 @@ import ChatVideoCard from "../ChatVideoCard/ChatVideoCard";
 import { ActionIcon, Badge, TextInput, Button } from "@mantine/core";
 import {
   IconAntennaBars5,
-  IconArrowsShuffle,
   IconBrowser,
   IconChevronLeft,
   IconChevronRight,
@@ -2551,17 +2550,14 @@ export class App extends React.Component<AppProps, AppState> {
                   }}
                   onFocus={(e) => e.target.select()}
                   leftSection={<IconUser />}
+                  rightSectionWidth={70}
                   rightSection={
-                    <ActionIcon
-                      color="gray"
-                      onClick={async () => {
-                        const randName = await generateName();
-                        this.updateName(randName);
-                      }}
-                      title="Generate a random name"
+                    <Button
+                      size="compact-xs"
+                      onClick={async () => this.updateName(await generateName())}
                     >
-                      <IconArrowsShuffle size={16} />
-                    </ActionIcon>
+                      Random
+                    </Button>
                   }
                 />
                 <InviteButton />
