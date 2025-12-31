@@ -28,7 +28,7 @@
     "cors": "^2.8.5",
     "discord.js": "^14.25.1",
     "express": "^5.2.1",
-    "firebase-admin": "^11.11.1",
+    "firebase-admin": "^13.6.0",
     "ioredis": "^5.8.2",
     "node-ssh": "^13.2.1",
     "pg": "^8.16.3",
