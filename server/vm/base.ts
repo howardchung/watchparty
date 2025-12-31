@@ -45,7 +45,7 @@ export abstract class VMManager {
   };
 
   public getTargetBuffer = () => {
-    let buffer = this.limitSize * 0.01;
+    let buffer = this.limitSize * 0.02;
     // If ramping config, adjust buffer based on the hour
     // During ramp down hours, keep a smaller buffer
     // During ramp up hours, keep a larger buffer
