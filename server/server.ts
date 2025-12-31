@@ -180,8 +180,8 @@ app.get("/downloadSubtitles", async (req, res) => {
 
 app.get("/searchSubtitles", async (req, res) => {
   try {
-    const title = req.query.title as string;
-    const url = req.query.url as string;
+    const title = req.query.title ? String(req.query.title) : "";
+    const url = req.query.url ? String(req.query.url) : "";
     let subUrl = "";
     if (url) {
       const startResp = await axios({

@@ -592,7 +592,7 @@ export const renderImageString = (
   // If a valid image string, return an image
   let regex =
     /^https?:\/\/.*\/.*\.(png|gif|webp|jpeg|jpg|heic|heif|jfif)\??.*$/gim;
-  if (input?.match(regex)) {
+  if (String(input)?.match(regex)) {
     return <img style={{ maxWidth: "100%" }} src={input} />;
   }
   return null;

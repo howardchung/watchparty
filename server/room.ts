@@ -238,11 +238,12 @@ export class Room {
         return !owner || socket.uid === owner;
       };
 
-      socket.on("CMD:name", (data) => this.changeUserName(socket, data));
-      socket.on("CMD:picture", (data) => this.changeUserPicture(socket, data));
-      socket.on("CMD:uid", async (data: { uid: string; token: string }) => {
+      socket.on("CMD:name", (data: unknown) => this.changeUserName(socket, String(data)));
+      socket.on("CMD:picture", (data: unknown) => this.changeUserPicture(socket, String(data)));
+      socket.on("CMD:uid", async (raw: unknown) => {
+        let data = raw as { uid: string; token: string };
         // Called when the user logs in, sets the socket's auth state
-        if (!data) {
+        if (!data || !data.uid || !data.token) {
           return;
         }
         const decoded = await validateUserToken(data.uid, data.token);
@@ -255,8 +256,8 @@ export class Room {
           socket.isSub = true;
         }
       });
-      socket.on("CMD:host", (data) => {
-        validateLock() && this.startHosting(socket, data);
+      socket.on("CMD:host", (data: unknown) => {
+        validateLock() && this.startHosting(socket, String(data));
       });
       socket.on("CMD:play", () => {
         validateLock() && this.playVideo(socket);
@@ -264,19 +265,19 @@ export class Room {
       socket.on("CMD:pause", () => {
         validateLock() && this.pauseVideo(socket);
       });
-      socket.on("CMD:seek", (data) => {
-        validateLock() && this.seekVideo(socket, data);
+      socket.on("CMD:seek", (data: unknown) => {
+        validateLock() && this.seekVideo(socket, Number(data));
       });
-      socket.on("CMD:playbackRate", (data) => {
-        validateLock() && this.setPlaybackRate(socket, data);
+      socket.on("CMD:playbackRate", (data: unknown) => {
+        validateLock() && this.setPlaybackRate(socket, Number(data));
       });
-      socket.on("CMD:loop", (data) => {
-        validateLock() && this.setLoop(data);
+      socket.on("CMD:loop", (data: unknown) => {
+        validateLock() && this.setLoop(Boolean(data));
       });
-      socket.on("CMD:ts", (data) => this.setTimestamp(socket, data));
-      socket.on("CMD:chat", (data) => this.sendChatMessage(socket, data));
-      socket.on("CMD:addReaction", (data) => this.addReaction(socket, data));
-      socket.on("CMD:removeReaction", (data) => {
+      socket.on("CMD:ts", (data: unknown) => this.setTimestamp(socket, Number(data)));
+      socket.on("CMD:chat", (data: unknown) => this.sendChatMessage(socket, String(data)));
+      socket.on("CMD:addReaction", (data: unknown) => this.addReaction(socket, data));
+      socket.on("CMD:removeReaction", (data: unknown) => {
         this.removeReaction(socket, data);
       });
       socket.on("CMD:joinVideo", () => this.joinVideo(socket));
@@ -284,21 +285,21 @@ export class Room {
       socket.on("CMD:joinScreenShare", (data) => {
         validateLock() && this.joinScreenSharing(socket, data);
       });
-      socket.on("CMD:userMute", (data) => this.setUserMute(socket, data));
+      socket.on("CMD:userMute", (data: unknown) => this.setUserMute(socket, data));
       socket.on("CMD:leaveScreenShare", () => this.leaveScreenSharing(socket));
-      socket.on("CMD:startVBrowser", (data) => {
+      socket.on("CMD:startVBrowser", (data: unknown) => {
         validateLock() && this.startVBrowser(socket, data);
       });
       socket.on("CMD:stopVBrowser", () => {
         validateLock() && this.stopVBrowser();
       });
-      socket.on("CMD:changeController", (data) => {
-        validateLock() && this.changeController(data);
+      socket.on("CMD:changeController", (data: unknown) => {
+        validateLock() && this.changeController(String(data));
       });
-      socket.on("CMD:subtitle", (data) => {
-        validateLock() && this.addSubtitles(data);
+      socket.on("CMD:subtitle", (data: unknown) => {
+        validateLock() && this.addSubtitles(String(data));
       });
-      socket.on("CMD:lock", async (data) => {
+      socket.on("CMD:lock", async (data: unknown) => {
         const hasLock = validateLock();
         const isOwner = await validateOwner();
         (hasLock || isOwner) && this.lockRoom(socket, data);
@@ -307,33 +308,33 @@ export class Room {
         socket.emit("REC:host", this.getHostState());
       });
       socket.on("CMD:getRoomState", () => this.getRoomState(socket));
-      socket.on("CMD:setRoomState", async (data) => {
+      socket.on("CMD:setRoomState", async (data: unknown) => {
         (await validateOwner()) && this.setRoomState(socket, data);
       });
-      socket.on("CMD:setRoomOwner", async (data) => {
+      socket.on("CMD:setRoomOwner", async (data: unknown) => {
         (await validateOwner()) && this.setRoomOwner(socket, data);
       });
-      socket.on("CMD:playlistNext", (data) => {
+      socket.on("CMD:playlistNext", (data: unknown) => {
         validateLock() && this.playlistNext(data);
       });
-      socket.on("CMD:playlistAdd", (data) => {
-        validateLock() && this.playlistAdd(socket, data);
+      socket.on("CMD:playlistAdd", (data: unknown) => {
+        validateLock() && this.playlistAdd(socket, String(data));
       });
-      socket.on("CMD:playlistMove", (data) => {
+      socket.on("CMD:playlistMove", (data: unknown) => {
         validateLock() && this.playlistMove(data);
       });
-      socket.on("CMD:playlistDelete", (data) => {
-        validateLock() && this.playlistDelete(data);
+      socket.on("CMD:playlistDelete", (data: unknown) => {
+        validateLock() && this.playlistDelete(Number(data));
       });
-      socket.on("CMD:kickUser", async (data) => {
+      socket.on("CMD:kickUser", async (data: unknown) => {
         (await validateOwner()) && this.kickUser(data);
       });
-      socket.on("CMD:deleteChatMessages", async (data) => {
+      socket.on("CMD:deleteChatMessages", async (data: unknown) => {
         (await validateOwner()) && this.deleteChatMessages(data);
       });
 
-      socket.on("signal", (data) => this.sendSignal(socket, data, "signal"));
-      socket.on("signalSS", (data) =>
+      socket.on("signal", (data: unknown) => this.sendSignal(socket, data, "signal"));
+      socket.on("signalSS", (data: unknown) =>
         this.sendSignal(socket, data, "signalSS"),
       );
 
@@ -652,7 +653,8 @@ export class Room {
     this.cmdHost(socket, data);
   };
 
-  private playlistNext = (data: string | null) => {
+  private playlistNext = (raw: unknown) => {
+    const data = raw ? String(raw) : null;
     // Clients may pass the URL that should be the current one.
     // If we've already advanced the playlist, we can ignore duplicate calls
     if (
@@ -720,7 +722,11 @@ export class Room {
     }
   };
 
-  private playlistMove = (data: { index: number; toIndex: number }) => {
+  private playlistMove = (raw: unknown) => {
+    const data = raw as { index: number; toIndex: number };
+    if (!data) {
+      return;
+    }
     if (data.index !== -1) {
       const items = this.playlist.splice(data.index, 1);
       this.playlist.splice(data.toIndex, 0, items[0]);
@@ -814,8 +820,12 @@ export class Room {
 
   private addReaction = (
     socket: Socket,
-    data: { value: string; msgId: string; msgTimestamp: string },
+    raw: unknown,
   ) => {
+    const data = raw as { value: string; msgId: string; msgTimestamp: string };
+    if (!data || !data.value || !data.msgId || !data.msgTimestamp) {
+      return;
+    }
     // Emojis can be multiple bytes
     if (data.value.length > 8) {
       return;
@@ -839,8 +849,12 @@ export class Room {
 
   private removeReaction = (
     socket: Socket,
-    data: { value: string; msgId: string; msgTimestamp: string },
+    raw: unknown,
   ) => {
+    const data = raw as { value: string; msgId: string; msgTimestamp: string };
+    if (!data || !data.value || !data.msgId || !data.msgTimestamp) {
+      return;
+    }
     // Emojis can be multiple bytes
     if (data.value.length > 8) {
       return;
@@ -875,7 +889,11 @@ export class Room {
     this.io.of(this.roomId).emit("roster", this.getRosterForApp());
   };
 
-  private setUserMute = (socket: Socket, data: { isMuted: boolean }) => {
+  private setUserMute = (socket: Socket, raw: unknown) => {
+    const data = raw as { isMuted: boolean };
+    if (!data) {
+      return;
+    }
     const match = this.roster.find((user) => user.id === socket.clientId);
     if (match) {
       match.isMuted = data.isMuted;
@@ -885,8 +903,12 @@ export class Room {
 
   private joinScreenSharing = (
     socket: Socket,
-    data: { file: boolean; mediasoup?: boolean },
+    raw: unknown,
   ) => {
+    const data = raw as { file: boolean; mediasoup?: boolean };
+    if (!data) {
+      return;
+    }
     const sharer = this.getRosterForApp().find((user) => user.isScreenShare);
     if (sharer) {
       // Someone's already sharing
@@ -929,10 +951,11 @@ export class Room {
 
   private startVBrowser = async (
     socket: Socket,
-    data: {
-      options: { size: string; region: string; provider: string };
-    },
+    raw: unknown,
   ) => {
+    const data = raw as {
+      options?: { size: string; region: string; provider: string };
+    };
     if (!data) {
       socket.emit("errorMessage", "Invalid vBrowser input");
       return;
@@ -1093,7 +1116,8 @@ export class Room {
     this.io.of(this.roomId).emit("REC:subtitle", this.subtitle);
   };
 
-  private lockRoom = async (socket: Socket, data: { locked: boolean }) => {
+  private lockRoom = async (socket: Socket, raw: unknown) => {
+    const data = raw as { locked: boolean };
     if (!data) {
       return;
     }
@@ -1110,10 +1134,14 @@ export class Room {
 
   private setRoomOwner = async (
     socket: Socket,
-    data: {
-      undo: boolean;
-    },
+    raw: unknown,
   ) => {
+    const data = raw as {
+      undo: boolean;
+    };
+    if (!data) {
+      return;
+    }
     if (!postgres) {
       socket.emit("errorMessage", "Database is not available");
       return;
@@ -1201,7 +1229,9 @@ export class Room {
 
   private setRoomState = async (
     socket: Socket,
-    data: {
+    raw: unknown,
+  ) => {
+    const data = raw as {
       password: string;
       vanity: string;
       isChatDisabled: boolean;
@@ -1209,10 +1239,12 @@ export class Room {
       roomDescription: string;
       roomTitleColor: string;
       mediaPath: string;
-    },
-  ) => {
+    };
     if (!postgres) {
       socket.emit("errorMessage", "Database is not available");
+      return;
+    }
+    if (!data) {
       return;
     }
     const {
@@ -1299,9 +1331,10 @@ export class Room {
 
   private sendSignal = (
     socket: Socket,
-    data: { to: string; msg: string; sharer?: boolean },
+    raw: unknown,
     eventName: "signal" | "signalSS",
   ) => {
+    const data = raw as { to: string; msg: string; sharer?: boolean };
     if (!data) {
       return;
     }
@@ -1328,7 +1361,11 @@ export class Room {
     // This will keep growing in memory until the room is unloaded
   };
 
-  private kickUser = async (data: { userToBeKicked: string }) => {
+  private kickUser = async (raw: unknown) => {
+    const data = raw as { userToBeKicked: string };
+    if (!data) {
+      return;
+    }
     const userToBeKickedSocket = this.io
       .of(this.roomId)
       .sockets.get(this.socketIdMap[data.userToBeKicked]);
@@ -1338,10 +1375,14 @@ export class Room {
     }
   };
 
-  private deleteChatMessages = async (data: {
+  private deleteChatMessages = async (raw: unknown) => {
+    const data = raw as {
     author: string;
     timestamp: string | undefined;
-  }) => {
+  };
+    if (!data) {
+      return;
+    }
     if (!data.timestamp && !data.author) {
       this.chat.length = 0;
     } else {
