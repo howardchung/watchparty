@@ -57,7 +57,7 @@
     "can-autoplay": "^3.0.2",
     "dashjs": "^5.1.0",
     "eventemitter3": "^4.0.7",
-    "firebase": "^9.23.0",
+    "firebase": "^10.9.0",
     "hls.js": "^1.6.15",
     "mediasoup-client": "^3.18.1",
     "react": "^18.3.1",
