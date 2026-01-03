@@ -184,15 +184,6 @@ export class Room {
         }
       }
 
-      // make sure no duplicate clientID in roster
-      if (this.roster.find((p) => p.id === clientId)) {
-        next(
-          new Error(
-            "Duplicate session detected (close any other open tabs and try again)",
-          ),
-        );
-        return;
-      }
       next();
     });
     io.of(roomId).on("connection", async (socket: Socket) => {
@@ -201,7 +192,9 @@ export class Room {
         // We already validated in middleware above, this is just to satisfy TS
         return;
       }
-      this.roster.push({ id: clientId });
+      if (!this.roster.find((p) => p.id === clientId)) {
+        this.roster.push({ id: clientId });
+      }
 
       // Keep track of the current socketID associated with this client (only used for signaling and kicking)
       this.socketIdMap[clientId] = socket.id;
@@ -1351,11 +1344,16 @@ export class Room {
 
   private disconnectUser = async (socket: Socket) => {
     const { clientId } = socket;
-    let index = this.roster.findIndex((user) => user.id === clientId);
-    const removed = this.roster.splice(index, 1)[0];
-    this.io.of(this.roomId).emit("roster", this.getRosterForApp());
-    delete this.tsMap[clientId];
-    delete this.socketIdMap[clientId];
+    // Disconnecting socket is the current one
+    if (socket.id === this.socketIdMap[clientId]) {
+      let index = this.roster.findIndex((user) => user.id === clientId);
+      if (index > -1) {
+        this.roster.splice(index, 1);
+      }
+      this.io.of(this.roomId).emit("roster", this.getRosterForApp());
+      delete this.tsMap[clientId];
+      delete this.socketIdMap[clientId];
+    }
     // Keep namemap/picturemap so old chat messages still render correctly after disconnect
     // When serializing we only write values with messages in chat
     // This will keep growing in memory until the room is unloaded
