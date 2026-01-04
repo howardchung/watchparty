@@ -184,6 +184,14 @@ export class Room {
         }
       }
 
+      // Disconnect other sockets with this clientId
+      if (this.socketIdMap[clientId]) {
+        io.of(roomId).sockets.get(this.socketIdMap[clientId])?.disconnect();
+      }
+      // Keep track of the current socketID associated with this client (only used for signaling and kicking)
+      this.socketIdMap[clientId] = socket.id;
+      this.roster.push({ id: clientId });
+
       next();
     });
     io.of(roomId).on("connection", async (socket: Socket) => {
@@ -192,12 +200,6 @@ export class Room {
         // We already validated in middleware above, this is just to satisfy TS
         return;
       }
-      if (!this.roster.find((p) => p.id === clientId)) {
-        this.roster.push({ id: clientId });
-      }
-
-      // Keep track of the current socketID associated with this client (only used for signaling and kicking)
-      this.socketIdMap[clientId] = socket.id;
 
       redisCount("connectStarts");
       redisCountDistinct("connectStartsDistinct", clientId);
@@ -331,7 +333,7 @@ export class Room {
         this.sendSignal(socket, data, "signalSS"),
       );
 
-      socket.on("disconnect", () => this.disconnectUser(socket));
+      socket.on("disconnect", () => this.onDisconnect(socket));
     });
   }
 
@@ -1342,7 +1344,7 @@ export class Room {
     }
   };
 
-  private disconnectUser = async (socket: Socket) => {
+  private onDisconnect = (socket: Socket) => {
     const { clientId } = socket;
     // Disconnecting socket is the current one
     if (socket.id === this.socketIdMap[clientId]) {
