@@ -1,7 +1,7 @@
 import config from "../config.ts";
 import Stripe from "stripe";
 
-const stripe = new Stripe(config.STRIPE_SECRET_KEY as string, {
+const stripe = new Stripe(config.STRIPE_SECRET_KEY, {
   apiVersion: "2020-08-27",
 });
 

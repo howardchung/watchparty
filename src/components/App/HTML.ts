@@ -157,17 +157,17 @@ export class HTML implements Player {
     let offset = leftVideo.currentTime - sharerTime;
     if (track && track.cues && offset) {
       for (let i = 0; i < track.cues.length; i++) {
-        let cue = track?.cues?.[i];
+        let cue = track?.cues?.[i] as TextTrackCue & { origStart: number, origEnd: number };
         if (!cue) {
           continue;
         }
-        // console.log(cue.text, offset, (cue as any).origStart, (cue as any).origEnd);
-        if (!(cue as any).origStart) {
-          (cue as any).origStart = cue.startTime;
-          (cue as any).origEnd = cue.endTime;
+        // console.log(cue.text, offset, cue.origStart, cue.origEnd);
+        if (!cue.origStart) {
+          cue.origStart = cue.startTime;
+          cue.origEnd = cue.endTime;
         }
-        cue.startTime = (cue as any).origStart + offset;
-        cue.endTime = (cue as any).origEnd + offset;
+        cue.startTime = cue.origStart + offset;
+        cue.endTime = cue.origEnd + offset;
       }
     }
   };

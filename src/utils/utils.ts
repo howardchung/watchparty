@@ -69,7 +69,7 @@ export const colorMappings: StringDict = {
 
 export const softWhite = "whitesmoke";
 
-let colorCache = {} as NumberDict;
+let colorCache: NumberDict = {};
 export function getColorForString(id: string) {
   let colors = Object.keys(colorMappings);
   if (colorCache[id]) {

@@ -406,9 +406,9 @@ export abstract class VMManager {
       );
       const stagingPromises = rows.map(async (row: any): Promise<string> => {
         const rowid = row.id;
-        const vmid = row.vmid as string;
-        const retryCount = row.retries as number;
-        let vm = row.data as VM | null;
+        const vmid: string = row.vmid;
+        const retryCount: number = row.retries;
+        let vm: VM | null = row.data;
         if (retryCount < this.minRetries) {
           if (config.NODE_ENV === "development") {
             console.log(

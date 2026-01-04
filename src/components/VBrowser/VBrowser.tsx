@@ -122,7 +122,7 @@ export class VBrowser extends React.Component<{
       }
       this.$client.sendData("keyup", { key: this.keyMap(key) });
     };
-    this.keyboard.listenTo(document.getElementById("leftOverlay") as Element);
+    this.keyboard.listenTo(document.getElementById("leftOverlay")!);
   }
 
   componentDidUpdate(prevProps: any) {
@@ -351,10 +351,10 @@ export class VBrowser extends React.Component<{
     //   const offsetHeight = this._component.current?.offsetHeight;
     //   this._player.current!.style.width = `${offsetWidth}px`;
     //   this._player.current!.style.height = `${offsetHeight}px`;
-    //   height = offsetHeight as number;
+    //   height = offsetHeight;
     // } else {
     //   const offsetHeight = this._player.current?.offsetHeight;
-    //   height = offsetHeight as number;
+    //   height = offsetHeight;
     // }
     // this._container.current!.style.maxWidth = `${
     //   (this.horizontal / this.vertical) * height

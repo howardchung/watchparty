@@ -9,7 +9,7 @@ import { IconBrandStripeFilled, IconCheck } from "@tabler/icons-react";
 // Make sure to call `loadStripe` outside of a component’s render to avoid
 // recreating the `Stripe` object on every render.
 const stripePromise = config.VITE_STRIPE_PUBLIC_KEY
-  ? loadStripe(config.VITE_STRIPE_PUBLIC_KEY as string)
+  ? loadStripe(config.VITE_STRIPE_PUBLIC_KEY)
   : null;
 
 export class SubscribeModal extends React.Component<{

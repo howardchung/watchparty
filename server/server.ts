@@ -43,8 +43,8 @@ const releaseInterval = 5 * 60 * 1000;
 const app = express();
 let server = null as https.Server | http.Server | null;
 if (config.SSL_KEY_FILE && config.SSL_CRT_FILE) {
-  const key = fs.readFileSync(config.SSL_KEY_FILE as string);
-  const cert = fs.readFileSync(config.SSL_CRT_FILE as string);
+  const key = fs.readFileSync(config.SSL_KEY_FILE);
+  const cert = fs.readFileSync(config.SSL_CRT_FILE);
   server = https.createServer({ key: key, cert: cert }, app);
 } else {
   server = new http.Server(app);
@@ -319,7 +319,10 @@ app.post("/createRoom", async (req, res) => {
 });
 
 app.post("/manageSub", async (req, res) => {
-  const decoded = await validateUserToken(req.body?.uid, req.body?.token);
+  const decoded = await validateUserToken(
+    String(req.body?.uid),
+    String(req.body?.token),
+  );
   if (!decoded) {
     res.status(400).json({ error: "invalid user token" });
     return;
@@ -362,8 +365,8 @@ app.delete("/deleteAccount", async (req, res) => {
 
 app.get("/metadata", async (req, res) => {
   const decoded = await validateUserToken(
-    req.query?.uid as string,
-    req.query?.token as string,
+    String(req.query?.uid),
+    String(req.query?.token),
   );
   let isSubscriber = await getIsSubscriberByEmail(decoded?.email);
   // Has the user ever been a subscriber?
@@ -430,8 +433,8 @@ app.get("/resolveShard/:roomId", async (req, res) => {
 
 app.get("/listRooms", async (req, res) => {
   const decoded = await validateUserToken(
-    req.query?.uid as string,
-    req.query?.token as string,
+    String(req.query?.uid),
+    String(req.query?.token),
   );
   if (!decoded) {
     res.status(400).json({ error: "invalid user token" });
@@ -446,8 +449,8 @@ app.get("/listRooms", async (req, res) => {
 
 app.delete("/deleteRoom", async (req, res) => {
   const decoded = await validateUserToken(
-    req.query?.uid as string,
-    req.query?.token as string,
+    String(req.query?.uid),
+    String(req.query?.token),
   );
   if (!decoded) {
     res.status(400).json({ error: "invalid user token" });
@@ -462,8 +465,8 @@ app.delete("/deleteRoom", async (req, res) => {
 
 app.get("/linkAccount", async (req, res) => {
   const decoded = await validateUserToken(
-    req.query?.uid as string,
-    req.query?.token as string,
+    String(req.query?.uid),
+    String(req.query?.token),
   );
   if (!decoded) {
     res.status(400).json({ error: "invalid user token" });
@@ -487,8 +490,8 @@ app.get("/linkAccount", async (req, res) => {
 
 app.post("/linkAccount", async (req, res) => {
   const decoded = await validateUserToken(
-    req.body?.uid as string,
-    req.body?.token as string,
+    String(req.body?.uid),
+    String(req.body?.token),
   );
   if (!decoded) {
     res.status(400).json({ error: "invalid user token" });
@@ -533,8 +536,8 @@ app.post("/linkAccount", async (req, res) => {
 app.delete("/linkAccount", async (req, res) => {
   // TODO read from req.query instead
   const decoded = await validateUserToken(
-    req.body?.uid as string,
-    req.body?.token as string,
+    String(req.body?.uid),
+    String(req.body?.token),
   );
   if (!decoded) {
     res.status(400).json({ error: "invalid user token" });

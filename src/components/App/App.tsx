@@ -250,7 +250,7 @@ export class App extends React.Component<AppProps, AppState> {
     settingsModalOpen: false,
     uploadController: undefined,
   };
-  socket: Socket = null as any;
+  socket: Socket = null!;
   mediasoupPubSocket: Socket | null = null;
   mediasoupSubSocket: Socket | null = null;
   ytDebounce = true;
@@ -546,9 +546,9 @@ export class App extends React.Component<AppProps, AppState> {
                   // Selecting a file sets a new URL with the fileIndex set so we go through again
                   this.launchMultiSelect(
                     files.map((f: WebTorrent.TorrentFile, i: number) => ({
-                      name: f.name as string,
+                      name: f.name,
                       url: src + `&fileIndex=${i}`,
-                      length: f.length as number,
+                      length: f.length,
                     })),
                   );
                 } else {
@@ -843,7 +843,8 @@ export class App extends React.Component<AppProps, AppState> {
           );
           // console.log(answer.sdp);
           // Allow multichannel audio if Chromium
-          const isChromium = Boolean((window as any).chrome);
+          //@ts-expect-error
+          const isChromium = Boolean(window.chrome);
           if (isChromium) {
             answer.sdp = answer.sdp
               ?.replace("opus/48000/2", "multiopus/48000/6")
@@ -1827,10 +1828,12 @@ export class App extends React.Component<AppProps, AppState> {
     }
     if (
       !container.requestFullscreen &&
-      (container as any).webkitEnterFullScreen
+      //@ts-expect-error
+      container.webkitEnterFullScreen
     ) {
       // e.g. iPhone doesn't allow requestFullscreen
-      (container as any).webkitEnterFullscreen();
+      //@ts-expect-error
+      container.webkitEnterFullscreen();
       return;
     }
     if (!document.fullscreenElement) {
@@ -2246,7 +2249,7 @@ export class App extends React.Component<AppProps, AppState> {
                             value={this.state.vBrowserResolution}
                             onChange={(value) =>
                               this.setState({
-                                vBrowserResolution: value as string,
+                                vBrowserResolution: value!,
                               })
                             }
                             data={[
@@ -2279,7 +2282,7 @@ export class App extends React.Component<AppProps, AppState> {
                             value={this.state.vBrowserQuality}
                             onChange={(value) => {
                               this.setState({
-                                vBrowserQuality: value as string,
+                                vBrowserQuality: value!,
                               });
                             }}
                             data={[

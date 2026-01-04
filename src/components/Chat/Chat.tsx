@@ -468,7 +468,8 @@ const ChatMessage = ({
         <div className={styles.commentMenu}>
           <ActionIcon
             onClick={(e) => {
-              const viewportOffset = (e.target as any).getBoundingClientRect();
+              //@ts-expect-error
+              const viewportOffset = e.target.getBoundingClientRect();
               setTimeout(() => {
                 setReactionMenu(
                   true,
