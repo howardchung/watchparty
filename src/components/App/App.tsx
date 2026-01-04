@@ -2172,7 +2172,6 @@ export class App extends React.Component<AppProps, AppState> {
                         playlistAdd={this.roomPlaylistAdd}
                         roomMedia={this.state.roomMedia}
                         getMediaDisplayName={this.getMediaDisplayName}
-                        launchMultiSelect={this.launchMultiSelect}
                         mediaPath={this.state.mediaPath}
                         disabled={!this.haveLock()}
                       />

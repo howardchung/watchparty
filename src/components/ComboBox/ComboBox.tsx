@@ -22,7 +22,6 @@ type ComboBoxProps = {
   playlistAdd: (value: string) => void;
   roomMedia: string;
   getMediaDisplayName: (input: string) => string;
-  launchMultiSelect: (multi: []) => void;
   mediaPath: string | undefined;
   disabled?: boolean;
 };
