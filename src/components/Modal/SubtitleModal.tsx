@@ -13,7 +13,7 @@ import { Socket } from "socket.io-client";
 import { openFileSelector, serverPath } from "../../utils/utils";
 import config from "../../config";
 import { MetadataContext } from "../../MetadataContext";
-import { IconSearch, IconUpload, IconX } from "@tabler/icons-react";
+import { IconDownload, IconSearch, IconUpload, IconX } from "@tabler/icons-react";
 
 export class SubtitleModal extends React.Component<{
   closeModal: () => void;
@@ -185,27 +185,19 @@ export class SubtitleModal extends React.Component<{
                   type: string;
                   attributes: Record<string, any>;
                 }) => (
-                  <div key={result.id}>
-                    <Radio
-                      disabled={!this.props.haveLock()}
-                      label={result.attributes.release}
-                      name="radioGroup"
-                      value={result.attributes.files[0]?.file_id}
-                      checked={this.props.roomSubtitle?.includes(
-                        encodeURIComponent(
-                          result.attributes.files[0]?.file_name,
-                        ),
-                      )}
-                      onChange={async (e) => {
+                  <div key={result.id} style={{ display: 'flex', gap: '4px' }}>
+                      <ActionIcon disabled={!this.props.haveLock()} onClick={async (e) => {
                         const resp = await fetch(
                           serverPath +
                             "/downloadSubtitles?file_id=" +
-                            e.target.value,
+                            result.attributes.files[0]?.file_id,
                         );
                         const data = await resp.json();
-                        this.props.socket.emit("CMD:subtitle", data.link);
-                      }}
-                    />
+                        this.props.socket.emit("CMD:subtitle", serverPath + data.link);
+                      }}>
+                        <IconDownload />
+                      </ActionIcon>
+                      <span>{result.attributes.release}</span>
                   </div>
                 ),
               )}

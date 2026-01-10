@@ -146,7 +146,7 @@ app.post("/subtitle", async (req, res) => {
 app.get("/downloadSubtitles", async (req, res) => {
   // Request the URL from OS
   try {
-    const urlResp = await axios({
+    const urlResp = await axios<{ link: string }>({
       url: "https://api.opensubtitles.com/api/v1/download",
       method: "POST",
       headers: {
@@ -161,15 +161,23 @@ app.get("/downloadSubtitles", async (req, res) => {
         // sub_format: 'srt',
       },
     });
-    // console.log(urlResp.data);
-    // Return the link to the user
-    res.json(urlResp.data);
     redisCount("subDownloadsOS");
-    // Alternative: Download the data, store in redis, and return the hash (same as upload)
-    // However, this will give no info about which subtitle option is selected
-    // const response = await axios.get(urlResp.data.link, {
-    //   responseType: 'arraybuffer',
-    // });
+    if (!redis) {
+      // Return the direct link to the user, will work for about 3 hours
+      res.json(urlResp.data);
+      return;
+    }
+    // Cache the contents in Redis (longer retention)
+    const subResp = await axios.get(urlResp.data.link, { responseType: "arraybuffer" });
+    const data = subResp.data;
+    const hash = crypto
+      .createHash("sha256")
+      .update(data, "utf8")
+      .digest()
+      .toString("hex");
+    let gzipData = gzipSync(data);
+    await redis.setex("subtitle:" + hash, 24 * 60 * 60, gzipData);
+    res.json({ link: "/subtitle/" + hash});
   } catch (e) {
     if (isAxiosError(e)) {
       console.log(e.response);
