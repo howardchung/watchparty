@@ -86,9 +86,13 @@ const Debug = () => {
                       return (
                         <Table.Tr>
                           <Table.Td>
-                            {k === "currentRoomData"
-                              ? <div style={{ wordBreak: "break-all" }}>{JSON.stringify(row, null, 2)}</div>
-                              : row}
+                            {k === "currentRoomData" ? (
+                              <div style={{ wordBreak: "break-all" }}>
+                                {JSON.stringify(row, null, 2)}
+                              </div>
+                            ) : (
+                              row
+                            )}
                           </Table.Td>
                         </Table.Tr>
                       );

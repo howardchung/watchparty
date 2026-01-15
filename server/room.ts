@@ -233,8 +233,12 @@ export class Room {
         return !owner || socket.uid === owner;
       };
 
-      socket.on("CMD:name", (data: unknown) => this.changeUserName(socket, String(data)));
-      socket.on("CMD:picture", (data: unknown) => this.changeUserPicture(socket, String(data)));
+      socket.on("CMD:name", (data: unknown) =>
+        this.changeUserName(socket, String(data)),
+      );
+      socket.on("CMD:picture", (data: unknown) =>
+        this.changeUserPicture(socket, String(data)),
+      );
       socket.on("CMD:uid", async (raw: unknown) => {
         let data = raw as { uid: string; token: string };
         // Called when the user logs in, sets the socket's auth state
@@ -269,9 +273,15 @@ export class Room {
       socket.on("CMD:loop", (data: unknown) => {
         validateLock() && this.setLoop(Boolean(data));
       });
-      socket.on("CMD:ts", (data: unknown) => this.setTimestamp(socket, Number(data)));
-      socket.on("CMD:chat", (data: unknown) => this.sendChatMessage(socket, String(data)));
-      socket.on("CMD:addReaction", (data: unknown) => this.addReaction(socket, data));
+      socket.on("CMD:ts", (data: unknown) =>
+        this.setTimestamp(socket, Number(data)),
+      );
+      socket.on("CMD:chat", (data: unknown) =>
+        this.sendChatMessage(socket, String(data)),
+      );
+      socket.on("CMD:addReaction", (data: unknown) =>
+        this.addReaction(socket, data),
+      );
       socket.on("CMD:removeReaction", (data: unknown) => {
         this.removeReaction(socket, data);
       });
@@ -280,7 +290,9 @@ export class Room {
       socket.on("CMD:joinScreenShare", (data) => {
         validateLock() && this.joinScreenSharing(socket, data);
       });
-      socket.on("CMD:userMute", (data: unknown) => this.setUserMute(socket, data));
+      socket.on("CMD:userMute", (data: unknown) =>
+        this.setUserMute(socket, data),
+      );
       socket.on("CMD:leaveScreenShare", () => this.leaveScreenSharing(socket));
       socket.on("CMD:startVBrowser", (data: unknown) => {
         validateLock() && this.startVBrowser(socket, data);
@@ -328,7 +340,9 @@ export class Room {
         (await validateOwner()) && this.deleteChatMessages(data);
       });
 
-      socket.on("signal", (data: unknown) => this.sendSignal(socket, data, "signal"));
+      socket.on("signal", (data: unknown) =>
+        this.sendSignal(socket, data, "signal"),
+      );
       socket.on("signalSS", (data: unknown) =>
         this.sendSignal(socket, data, "signalSS"),
       );
@@ -813,10 +827,7 @@ export class Room {
     this.addChatMessage(socket, chatMsg);
   };
 
-  private addReaction = (
-    socket: Socket,
-    raw: unknown,
-  ) => {
+  private addReaction = (socket: Socket, raw: unknown) => {
     const data = raw as { value: string; msgId: string; msgTimestamp: string };
     if (!data || !data.value || !data.msgId || !data.msgTimestamp) {
       return;
@@ -842,10 +853,7 @@ export class Room {
     }
   };
 
-  private removeReaction = (
-    socket: Socket,
-    raw: unknown,
-  ) => {
+  private removeReaction = (socket: Socket, raw: unknown) => {
     const data = raw as { value: string; msgId: string; msgTimestamp: string };
     if (!data || !data.value || !data.msgId || !data.msgTimestamp) {
       return;
@@ -896,10 +904,7 @@ export class Room {
     this.io.of(this.roomId).emit("roster", this.getRosterForApp());
   };
 
-  private joinScreenSharing = (
-    socket: Socket,
-    raw: unknown,
-  ) => {
+  private joinScreenSharing = (socket: Socket, raw: unknown) => {
     const data = raw as { file: boolean; mediasoup?: boolean };
     if (!data) {
       return;
@@ -944,10 +949,7 @@ export class Room {
     this.io.of(this.roomId).emit("roster", this.getRosterForApp());
   };
 
-  private startVBrowser = async (
-    socket: Socket,
-    raw: unknown,
-  ) => {
+  private startVBrowser = async (socket: Socket, raw: unknown) => {
     const data = raw as {
       options?: { size: string; region: string; provider: string };
     };
@@ -1127,10 +1129,7 @@ export class Room {
     this.addChatMessage(socket, chatMsg);
   };
 
-  private setRoomOwner = async (
-    socket: Socket,
-    raw: unknown,
-  ) => {
+  private setRoomOwner = async (socket: Socket, raw: unknown) => {
     const data = raw as {
       undo: boolean;
     };
@@ -1222,10 +1221,7 @@ export class Room {
     });
   };
 
-  private setRoomState = async (
-    socket: Socket,
-    raw: unknown,
-  ) => {
+  private setRoomState = async (socket: Socket, raw: unknown) => {
     const data = raw as {
       password: string;
       vanity: string;
@@ -1377,9 +1373,9 @@ export class Room {
 
   private deleteChatMessages = async (raw: unknown) => {
     const data = raw as {
-    author: string;
-    timestamp: string | undefined;
-  };
+      author: string;
+      timestamp: string | undefined;
+    };
     if (!data) {
       return;
     }

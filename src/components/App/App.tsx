@@ -128,7 +128,7 @@ interface AppState {
   total: number;
   speed: number;
   connections: number;
-  multiStreamSelection?: {
+  fileSelection: {
     name: string;
     url: string;
     length: number;
@@ -147,6 +147,7 @@ interface AppState {
   isScreenShareModalOpen: boolean;
   isFileShareModalOpen: boolean;
   isSubtitleModalOpen: boolean;
+  isMultiSelectModalOpen: boolean;
   roomLock: string;
   controller?: string;
   savedPasswords: StringDict;
@@ -201,7 +202,7 @@ export class App extends React.Component<AppProps, AppState> {
     total: 0,
     speed: 0,
     connections: 0,
-    multiStreamSelection: undefined,
+    fileSelection: [],
     overlayMsg: "",
     isErrorAuth: false,
     settings: {},
@@ -216,6 +217,7 @@ export class App extends React.Component<AppProps, AppState> {
     isScreenShareModalOpen: false,
     isFileShareModalOpen: false,
     isSubtitleModalOpen: false,
+    isMultiSelectModalOpen: false,
     roomLock: "",
     controller: "",
     roomId: "",
@@ -544,7 +546,8 @@ export class App extends React.Component<AppProps, AppState> {
                 if (!target) {
                   // Open the selector
                   // Selecting a file sets a new URL with the fileIndex set so we go through again
-                  this.launchMultiSelect(
+                  this.setMultiSelectModal(true);
+                  this.setFileSelection(
                     files.map((f: WebTorrent.TorrentFile, i: number) => ({
                       name: f.name,
                       url: src + `&fileIndex=${i}`,
@@ -869,14 +872,18 @@ export class App extends React.Component<AppProps, AppState> {
     }, 1000);
   };
 
-  launchMultiSelect = (
-    data?: { name: string; url: string; length: number; playFn?: () => void }[],
+  setFileSelection = (
+    data: { name: string; url: string; length: number; playFn?: () => void }[],
   ) => {
-    this.setState({ multiStreamSelection: data });
+    this.setState({ fileSelection: data });
+  };
+
+  setMultiSelectModal = (isMultiSelectModalOpen: boolean) => {
+    this.setState({ isMultiSelectModalOpen });
   };
 
   resetMultiSelect = () => {
-    this.setState({ multiStreamSelection: undefined });
+    this.setState({ isMultiSelectModalOpen: false, fileSelection: [] });
   };
 
   loadSettings = async () => {
@@ -1030,18 +1037,23 @@ export class App extends React.Component<AppProps, AppState> {
     this.socket.emit("CMD:deleteChatMessages", {});
   };
 
-  startConvert = async () => {
-    const files = await openFileSelector();
-    if (!files) {
-      return;
+  startConvert = async (sourceUrl?: string) => {
+    let stream = new ReadableStream();
+    let file: File;
+    if (!sourceUrl) {
+      const files = await openFileSelector();
+      if (!files) {
+        return;
+      }
+      file = files[0];
+      // Start uploading stream
+      stream = file.stream();
     }
-    const file = files[0];
-    // Start uploading stream
-    const stream = file.stream();
     const uuid = createUuid();
     const convertPath = this.context.convertPath;
     // const convertPath = 'https://azure.howardchung.net:5001';
-    const convertUrl = convertPath + "/" + uuid + ".m3u8";
+    let convertUrl = convertPath + "/" + uuid + ".m3u8";
+    convertUrl += sourceUrl ? "?url=" + encodeURIComponent(sourceUrl) : "";
     // Wait for the playlist to get generated
     const poll = async () => {
       let ok = false;
@@ -1073,7 +1085,7 @@ export class App extends React.Component<AppProps, AppState> {
       bytes += value?.length ?? 0;
       this.setState({
         downloaded: bytes,
-        total: file.size,
+        total: file?.size,
         speed: done ? 0 : bytes / ((end - start) / 1000),
         connections: 1,
       });
@@ -2020,11 +2032,12 @@ export class App extends React.Component<AppProps, AppState> {
     );
     return (
       <React.Fragment>
-        {this.state.multiStreamSelection && (
+        {this.state.isMultiSelectModalOpen && (
           <MultiStreamModal
-            streams={this.state.multiStreamSelection}
+            streams={this.state.fileSelection}
             setMedia={this.roomSetMedia}
             resetMultiSelect={this.resetMultiSelect}
+            startConvert={this.startConvert}
           />
         )}
         {this.state.isVBrowserModalOpen && (
@@ -2334,7 +2347,7 @@ export class App extends React.Component<AppProps, AppState> {
                           }}
                           leftSection={<IconX />}
                         >
-                          Stop Upload
+                          Stop Convert
                         </Button>
                       )}
                       {false && (
@@ -2342,6 +2355,8 @@ export class App extends React.Component<AppProps, AppState> {
                           setMedia={this.roomSetMedia}
                           playlistAdd={this.roomPlaylistAdd}
                           type={"youtube"}
+                          setShowMultiSelect={this.setMultiSelectModal}
+                          setFileSelection={this.setFileSelection}
                           disabled={!this.haveLock()}
                         />
                       )}
@@ -2350,7 +2365,8 @@ export class App extends React.Component<AppProps, AppState> {
                           setMedia={this.roomSetMedia}
                           playlistAdd={this.roomPlaylistAdd}
                           type={"stream"}
-                          launchMultiSelect={this.launchMultiSelect}
+                          setShowMultiSelect={this.setMultiSelectModal}
+                          setFileSelection={this.setFileSelection}
                           disabled={!this.haveLock()}
                         />
                       )}
@@ -2556,7 +2572,9 @@ export class App extends React.Component<AppProps, AppState> {
                   rightSection={
                     <Button
                       size="compact-xs"
-                      onClick={async () => this.updateName(await generateName())}
+                      onClick={async () =>
+                        this.updateName(await generateName())
+                      }
                     >
                       Random
                     </Button>

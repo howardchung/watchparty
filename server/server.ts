@@ -168,7 +168,9 @@ app.get("/downloadSubtitles", async (req, res) => {
       return;
     }
     // Cache the contents in Redis (longer retention)
-    const subResp = await axios.get(urlResp.data.link, { responseType: "arraybuffer" });
+    const subResp = await axios.get(urlResp.data.link, {
+      responseType: "arraybuffer",
+    });
     const data = subResp.data;
     const hash = crypto
       .createHash("sha256")
@@ -177,7 +179,7 @@ app.get("/downloadSubtitles", async (req, res) => {
       .toString("hex");
     let gzipData = gzipSync(data);
     await redis.setex("subtitle:" + hash, 24 * 60 * 60, gzipData);
-    res.json({ link: "/subtitle/" + hash});
+    res.json({ link: "/subtitle/" + hash });
   } catch (e) {
     if (isAxiosError(e)) {
       console.log(e.response);

@@ -13,7 +13,12 @@ import { Socket } from "socket.io-client";
 import { openFileSelector, serverPath } from "../../utils/utils";
 import config from "../../config";
 import { MetadataContext } from "../../MetadataContext";
-import { IconDownload, IconSearch, IconUpload, IconX } from "@tabler/icons-react";
+import {
+  IconDownload,
+  IconSearch,
+  IconUpload,
+  IconX,
+} from "@tabler/icons-react";
 
 export class SubtitleModal extends React.Component<{
   closeModal: () => void;
@@ -185,19 +190,25 @@ export class SubtitleModal extends React.Component<{
                   type: string;
                   attributes: Record<string, any>;
                 }) => (
-                  <div key={result.id} style={{ display: 'flex', gap: '4px' }}>
-                      <ActionIcon disabled={!this.props.haveLock()} onClick={async (e) => {
+                  <div key={result.id} style={{ display: "flex", gap: "4px" }}>
+                    <ActionIcon
+                      disabled={!this.props.haveLock()}
+                      onClick={async (e) => {
                         const resp = await fetch(
                           serverPath +
                             "/downloadSubtitles?file_id=" +
                             result.attributes.files[0]?.file_id,
                         );
                         const data = await resp.json();
-                        this.props.socket.emit("CMD:subtitle", serverPath + data.link);
-                      }}>
-                        <IconDownload />
-                      </ActionIcon>
-                      <span>{result.attributes.release}</span>
+                        this.props.socket.emit(
+                          "CMD:subtitle",
+                          serverPath + data.link,
+                        );
+                      }}
+                    >
+                      <IconDownload />
+                    </ActionIcon>
+                    <span>{result.attributes.release}</span>
                   </div>
                 ),
               )}

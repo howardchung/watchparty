@@ -157,7 +157,10 @@ export class HTML implements Player {
     let offset = leftVideo.currentTime - sharerTime;
     if (track && track.cues && offset) {
       for (let i = 0; i < track.cues.length; i++) {
-        let cue = track?.cues?.[i] as TextTrackCue & { origStart: number, origEnd: number };
+        let cue = track?.cues?.[i] as TextTrackCue & {
+          origStart: number;
+          origEnd: number;
+        };
         if (!cue) {
           continue;
         }

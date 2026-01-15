@@ -16,7 +16,8 @@ interface SearchComponentProps {
   setMedia: (value: string) => void;
   playlistAdd: (value: string) => void;
   type?: "youtube" | "media" | "stream";
-  launchMultiSelect?: (multi?: []) => void;
+  setShowMultiSelect: (show: boolean) => void;
+  setFileSelection: (multi: []) => void;
   disabled?: boolean;
 }
 
@@ -51,6 +52,7 @@ export class SearchComponent extends React.Component<SearchComponentProps> {
   };
 
   onSelectItem = async (result: SearchResult) => {
+    this.props.setShowMultiSelect(true);
     let response = await fetch(
       this.context.streamPath +
         "/data?torrent=" +
@@ -58,34 +60,16 @@ export class SearchComponent extends React.Component<SearchComponentProps> {
     );
     let metadata = await response.json();
     // console.log(metadata);
-    if (
-      metadata.files.filter((file: any) => file.length > 10 * 1024 * 1024)
-        .length > 1 &&
-      this.props.launchMultiSelect
-    ) {
-      // Multiple large files, present user selection
-      const multiStreamSelection = metadata.files.map(
-        (file: any, i: number) => ({
-          ...file,
-          url:
-            this.context.streamPath +
-            "/stream?torrent=" +
-            encodeURIComponent(result.magnet!) +
-            "&fileIndex=" +
-            i,
-        }),
-      );
-      // multiStreamSelection.sort((a: any, b: any) =>
-      //   a.name.localeCompare(b.name)
-      // );
-      this.props.launchMultiSelect(multiStreamSelection);
-    } else {
-      this.props.setMedia(
+    const multiStreamSelection = metadata.files.map((file: any, i: number) => ({
+      ...file,
+      url:
         this.context.streamPath +
-          "/stream?torrent=" +
-          encodeURIComponent(result.magnet!),
-      );
-    }
+        "/stream?torrent=" +
+        encodeURIComponent(result.magnet!) +
+        "&fileIndex=" +
+        i,
+    }));
+    this.props.setFileSelection(multiStreamSelection);
   };
 
   render() {
