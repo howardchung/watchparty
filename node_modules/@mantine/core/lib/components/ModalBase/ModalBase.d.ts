@@ -1,0 +1,50 @@
+import { RemoveScroll } from 'react-remove-scroll';
+import { BoxProps, ElementProps, MantineShadow, MantineSize, MantineSpacing } from '../../core';
+import { BasePortalProps } from '../Portal';
+import { TransitionOverride } from '../Transition';
+type RemoveScrollProps = Omit<React.ComponentProps<typeof RemoveScroll>, 'children'>;
+export interface ModalBaseProps extends BoxProps, ElementProps<'div', 'title'> {
+    unstyled?: boolean;
+    /** If set modal/drawer is not unmounted from the DOM when hidden. `display: none` styles are applied instead. @default `false` */
+    keepMounted?: boolean;
+    /** Controls opened state */
+    opened: boolean;
+    /** Called when modal/drawer is closed */
+    onClose: () => void;
+    /** Id used to connect modal/drawer with body and title */
+    id?: string;
+    /** If set, scroll is locked when `opened={true}` @default `true` */
+    lockScroll?: boolean;
+    /** If set, focus is trapped within the modal/drawer @default `true` */
+    trapFocus?: boolean;
+    /** If set, the component is rendered inside `Portal` @default `true` */
+    withinPortal?: boolean;
+    /** Props passed down to the Portal component when `withinPortal` is set */
+    portalProps?: BasePortalProps;
+    /** Modal/drawer content */
+    children?: React.ReactNode;
+    /** If set, the modal/drawer is closed when user clicks on the overlay @default `true` */
+    closeOnClickOutside?: boolean;
+    /** Props added to the `Transition` component that used to animate overlay and body, use to configure duration and animation type, `{ duration: 200, transition: 'fade-down' }` by default */
+    transitionProps?: TransitionOverride;
+    /** Called when exit transition ends */
+    onExitTransitionEnd?: () => void;
+    /** Called when enter transition ends */
+    onEnterTransitionEnd?: () => void;
+    /** If set, `onClose` is called when user presses the escape key @default `true` */
+    closeOnEscape?: boolean;
+    /** If set, focus is returned to the last active element when `onClose` is called @default `true` */
+    returnFocus?: boolean;
+    /** `z-index` CSS property of the root element @default `200` */
+    zIndex?: string | number;
+    /** Key of `theme.shadows` or any valid CSS box-shadow value @default `'xl'` */
+    shadow?: MantineShadow;
+    /** Key of `theme.spacing` or any valid CSS value to set content, header and footer padding @default `'md'` */
+    padding?: MantineSpacing;
+    /** Controls width of the content area @default `'md'` */
+    size?: MantineSize | (string & {}) | number;
+    /** Props passed down to react-remove-scroll, can be used to customize scroll lock behavior */
+    removeScrollProps?: RemoveScrollProps;
+}
+export declare const ModalBase: import("react").ForwardRefExoticComponent<ModalBaseProps & import("react").RefAttributes<HTMLDivElement>>;
+export {};
