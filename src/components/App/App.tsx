@@ -318,7 +318,7 @@ export class App extends React.Component<AppProps, AppState> {
         return;
       }
       const data = await resp.json();
-      if (!data.roomId) {
+      if (!data?.roomId) {
         this.setState({ overlayMsg: "Couldn't load this room." });
         return;
       }
