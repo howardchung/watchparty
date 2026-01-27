@@ -532,16 +532,11 @@ export class App extends React.Component<AppProps, AppState> {
 
                 // Torrents can contain many files.
                 const files = torrent.files;
-                const filtered = files.filter(
-                  (f: WebTorrent.TorrentFile) => f.length >= 10 * 1024 * 1024,
-                );
                 const fileIndex = new URLSearchParams(src).get("fileIndex");
                 // Try to find a single large file to play
                 let target;
                 if (fileIndex != null && fileIndex !== "") {
                   target = files[Number(fileIndex)];
-                } else if (filtered.length === 1) {
-                  target = filtered[0];
                 }
                 if (!target) {
                   // Open the selector
