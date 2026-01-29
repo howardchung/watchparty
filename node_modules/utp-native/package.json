@@ -1,0 +1,43 @@
+{
+  "name": "utp-native",
+  "version": "2.5.3",
+  "description": "Native bindings for libutp",
+  "main": "index.js",
+  "gypfile": true,
+  "scripts": {
+    "test-timeouts": "tape test/timeouts.js",
+    "test": "standard && tape test/net.js test/sockets.js test/udp.js",
+    "install": "node-gyp-build",
+    "fetch-libutp": "git submodule update --recursive --init",
+    "prebuild": "prebuildify --napi --strip",
+    "prebuild-ia32": "prebuildify --napi --strip --arch=ia32"
+  },
+  "bin": {
+    "ucat": "./ucat.js"
+  },
+  "engines": {
+    "node": ">=8.12"
+  },
+  "dependencies": {
+    "napi-macros": "^2.0.0",
+    "node-gyp-build": "^4.2.0",
+    "readable-stream": "^3.0.2",
+    "timeout-refresh": "^1.0.0",
+    "unordered-set": "^2.0.1"
+  },
+  "devDependencies": {
+    "prebuildify": "^4.1.2",
+    "standard": "^14.3.1",
+    "tape": "^4.11.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mafintosh/utp-native.git"
+  },
+  "author": "Mathias Buus (@mafintosh)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mafintosh/utp-native/issues"
+  },
+  "homepage": "https://github.com/mafintosh/utp-native#readme"
+}

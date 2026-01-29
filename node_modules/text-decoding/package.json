@@ -1,0 +1,66 @@
+{
+  "name": "text-decoding",
+  "version": "1.0.0",
+  "description": "[fork] TextEncoder and TextDecoder (Polyfill for the Encoding Living Standard's API) For Node.JS.",
+  "main": "build/index.js",
+  "module": "src/index.js",
+  "scripts": {
+    "t": "zoroaster -a",
+    "test": "yarn t test/spec test/mask",
+    "spec": "yarn t test/spec",
+    "mask": "yarn t test/mask",
+    "test-build": "ALAMODE_ENV=test-build yarn test",
+    "lint": "eslint .",
+    "doc": "NODE_DEBUG=doc doc -o README.md",
+    "b": "alamode src -o build -s",
+    "d": "yarn-s d1 externs",
+    "d1": "typal types/index.js src -c -t types/index.xml",
+    "externs": "typal types/externs.js",
+    "build": "yarn-s d b doc",
+    "e": "alanode"
+  },
+  "files": [
+    "build",
+    "src",
+    "types/externs.js"
+  ],
+  "externs": "types/externs.js",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/idiocc/text-decoding.git"
+  },
+  "keywords": [
+    "text-encoding",
+    "encoding",
+    "text-decoding",
+    "TextEncoder",
+    "TextDecoder",
+    "decoding",
+    "ascii",
+    "windows-1252",
+    "big5",
+    "euc-jp",
+    "euc-kr",
+    "gb18030",
+    "iso-20220jp",
+    "shift-jis",
+    "single-byte",
+    "utf8",
+    "utf16",
+    "x-user-defined",
+    "unicode"
+  ],
+  "author": "Anton <anton@adc.sh>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/idiocc/text-decoding/issues"
+  },
+  "homepage": "https://github.com/idiocc/text-decoding#readme",
+  "devDependencies": {
+    "alamode": "^2.3.4",
+    "documentary": "^1.27.4",
+    "eslint-config-artdeco": "1.0.1",
+    "yarn-s": "1.1.0",
+    "zoroaster": "^4.1.1-alpha"
+  }
+}

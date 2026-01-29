@@ -1,0 +1,72 @@
+{
+  "name": "magnet-uri",
+  "description": "Parse a magnet URI and return an object of keys/values",
+  "version": "7.0.7",
+  "author": {
+    "name": "WebTorrent LLC",
+    "email": "feross@webtorrent.io",
+    "url": "https://webtorrent.io"
+  },
+  "bugs": {
+    "url": "https://github.com/webtorrent/magnet-uri/issues"
+  },
+  "type": "module",
+  "dependencies": {
+    "@thaunknown/thirty-two": "^1.0.5",
+    "bep53-range": "^2.0.0",
+    "uint8-util": "^2.2.5"
+  },
+  "devDependencies": {
+    "@webtorrent/semantic-release-config": "1.0.10",
+    "semantic-release": "21.1.2",
+    "standard": "*",
+    "tape": "5.9.0"
+  },
+  "funding": [
+    {
+      "type": "github",
+      "url": "https://github.com/sponsors/feross"
+    },
+    {
+      "type": "patreon",
+      "url": "https://www.patreon.com/feross"
+    },
+    {
+      "type": "consulting",
+      "url": "https://feross.org/support"
+    }
+  ],
+  "keywords": [
+    "bittorrent",
+    "cryptolinks",
+    "magnet",
+    "p2p",
+    "peer-to-peer",
+    "uri",
+    "urn",
+    "webtorrent"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=12.20.0"
+  },
+  "exports": {
+    "import": "./index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/webtorrent/magnet-uri.git"
+  },
+  "scripts": {
+    "test": "standard && tape test/*.js"
+  },
+  "renovate": {
+    "extends": [
+      "github>webtorrent/renovate-config"
+    ],
+    "rangeStrategy": "bump"
+  },
+  "release": {
+    "extends": "@webtorrent/semantic-release-config"
+  }
+}

@@ -1,0 +1,1 @@
+{"version":3,"file":"TrackType.js","sourceRoot":"","sources":["../../../../../../src/cmaf/ham/types/model/TrackType.ts"],"names":[],"mappings":"","sourcesContent":["/**\n * CMAF-HAM TrackType type\n * This can be 'audio' or 'video' or 'text'\n *\n * @group CMAF\n * @alpha\n */\nexport type TrackType = 'audio' | 'video' | 'text';\n"]}

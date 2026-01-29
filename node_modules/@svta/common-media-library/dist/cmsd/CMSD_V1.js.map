@@ -1,0 +1,1 @@
+{"version":3,"file":"CMSD_V1.js","sourceRoot":"","sources":["../../src/cmsd/CMSD_V1.ts"],"names":[],"mappings":"AAAA;;;;;;GAMG;AACH,MAAM,CAAC,MAAM,OAAO,GAAG,CAAC,CAAC","sourcesContent":["/**\n * CMSD Version 1\n *\n * @group CMSD\n *\n * @beta\n */\nexport const CMSD_V1 = 1;\n"]}

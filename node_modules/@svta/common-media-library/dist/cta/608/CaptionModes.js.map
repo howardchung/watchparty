@@ -1,0 +1,1 @@
+{"version":3,"file":"CaptionModes.js","sourceRoot":"","sources":["../../../src/cta/608/CaptionModes.ts"],"names":[],"mappings":"","sourcesContent":["/**\n * The different caption modes that can be used.\n *\n * @group CTA-608\n * @beta\n */\nexport type CaptionModes = 'MODE_ROLL-UP' |\n\t'MODE_POP-ON' |\n\t'MODE_PAINT-ON' |\n\t'MODE_TEXT' |\n\tnull;\n"]}

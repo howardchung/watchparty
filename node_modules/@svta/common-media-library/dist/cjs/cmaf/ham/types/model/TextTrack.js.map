@@ -1,0 +1,1 @@
+{"version":3,"file":"TextTrack.js","sourceRoot":"","sources":["../../../../../../src/cmaf/ham/types/model/TextTrack.ts"],"names":[],"mappings":"","sourcesContent":["import type { Track } from './Track.js';\n\n/**\n * CMAF-HAM Text Track type\n *\n * @group CMAF\n * @alpha\n */\nexport type TextTrack = Track;\n"]}

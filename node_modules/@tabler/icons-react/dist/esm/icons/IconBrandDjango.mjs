@@ -1,0 +1,14 @@
+/**
+ * @license @tabler/icons-react v3.35.0 - MIT
+ *
+ * This source code is licensed under the MIT license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+import createReactComponent from '../createReactComponent.mjs';
+
+const __iconNode = [["path", { "d": "M3 3m0 3a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v12a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3z", "key": "svg-0" }], ["path", { "d": "M12 7v8.5l-2.015 .201a2.715 2.715 0 1 1 0 -5.402l2.015 .201", "key": "svg-1" }], ["path", { "d": "M16 7v.01", "key": "svg-2" }], ["path", { "d": "M16 10v5.586c0 .905 -.36 1.774 -1 2.414", "key": "svg-3" }]];
+const IconBrandDjango = createReactComponent("outline", "brand-django", "BrandDjango", __iconNode);
+
+export { __iconNode, IconBrandDjango as default };
+//# sourceMappingURL=IconBrandDjango.mjs.map

@@ -1,0 +1,35 @@
+.m_b077c2bc {
+  --ci-eye-dropper-icon-size-xs: 14px;
+  --ci-eye-dropper-icon-size-sm: 16px;
+  --ci-eye-dropper-icon-size-md: 18px;
+  --ci-eye-dropper-icon-size-lg: 20px;
+  --ci-eye-dropper-icon-size-xl: 22px;
+  --ci-eye-dropper-icon-size: var(--ci-eye-dropper-icon-size-sm);
+}
+
+.m_66a028b5 {
+  --ci-button-size-xs: 22px;
+  --ci-button-size-sm: 26px;
+  --ci-button-size-md: 28px;
+  --ci-button-size-lg: 32px;
+  --ci-button-size-xl: 40px;
+  --ci-button-size: var(--ci-button-size-sm);
+
+  width: var(--ci-button-size);
+  height: var(--ci-button-size);
+  min-width: var(--ci-button-size);
+  min-height: var(--ci-button-size);
+}
+
+.m_c5ccdcab {
+  --ci-preview-size-xs: 16px;
+  --ci-preview-size-sm: 18px;
+  --ci-preview-size-md: 22px;
+  --ci-preview-size-lg: 28px;
+  --ci-preview-size-xl: 36px;
+  --ci-preview-size: var(--ci-preview-size-sm);
+}
+
+.m_5ece2cd7 {
+  padding: 8px;
+}

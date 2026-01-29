@@ -1,0 +1,1 @@
+{"version":3,"file":"Channels.js","sourceRoot":"","sources":["../../../src/cta/608/Channels.ts"],"names":[],"mappings":"","sourcesContent":["/**\n * Channel number\n *\n * @group CTA-608\n * @beta\n */\nexport type Channels = 0 | 1 | 2; // Will be 1 or 2 when parsing captions\n"]}

@@ -1,0 +1,1 @@
+{"version":3,"file":"SegmentTemplate.d.ts","sourceRoot":"","sources":["../../../../../../src/cmaf/ham/types/mapper/dash/SegmentTemplate.ts"],"names":[],"mappings":"AAAA;;;;;;;GAOG;AACH,MAAM,MAAM,eAAe,GAAG;IAC7B,CAAC,EAAE;QACF,QAAQ,EAAE,MAAM,CAAC;QACjB,cAAc,EAAE,MAAM,CAAC;QACvB,KAAK,EAAE,MAAM,CAAC;QACd,WAAW,EAAE,MAAM,CAAC;QACpB,SAAS,EAAE,MAAM,CAAC;KAClB,CAAC;CACF,CAAC"}

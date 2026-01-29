@@ -1,0 +1,49 @@
+{
+  "name": "k-bucket",
+  "version": "5.1.0",
+  "description": "Kademlia DHT K-bucket implementation as a binary tree",
+  "keywords": [
+    "k-bucket",
+    "kademlia",
+    "dht"
+  ],
+  "bugs": {
+    "url": "https://github.com/tristanls/k-bucket/issues"
+  },
+  "license": "MIT",
+  "contributors": [
+    "Tristan Slominski <tristan.slominski@gmail.com>",
+    "Mike de Boer <info@mikedeboer.nl>",
+    "Conrad Pankoff <deoxxa@fknsrs.biz>",
+    "Feross Aboukhadijeh <feross@feross.org>",
+    "Nathan Hernandez <email@nathanph.com>",
+    "Fabien O'Carroll <fabien@allou.is>",
+    "Kirill Fomichev <fanatid@ya.ru>",
+    "Robert Kowalski <rok@kowalski.gd>",
+    "Nazar Mokrynskyi <nazar@mokrynskyi.com>",
+    "Jimmy Wärting <jimmy@warting.se>",
+    "Alex Potsides <alex@achingbrain.net>"
+  ],
+  "main": "./index.js",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:tristanls/k-bucket.git"
+  },
+  "scripts": {
+    "benchmark:add": "node benchmarks/add.js",
+    "benchmark:closest": "node benchmarks/closest.js",
+    "benchmark:distance": "node benchmarks/distance.js",
+    "coverage": "nyc tape test/*.js",
+    "lint": "standard",
+    "test": "npm run lint && npm run unit",
+    "unit": "tape test/*.js"
+  },
+  "dependencies": {
+    "randombytes": "^2.1.0"
+  },
+  "devDependencies": {
+    "nyc": "^15.1.0",
+    "standard": "^16.0.3",
+    "tape": "^5.1.1"
+  }
+}

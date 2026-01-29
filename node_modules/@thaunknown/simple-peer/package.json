@@ -1,0 +1,73 @@
+{
+  "name": "@thaunknown/simple-peer",
+  "description": "Simple one-to-one WebRTC video/voice and data channels",
+  "version": "10.0.12",
+  "type": "module",
+  "author": {
+    "name": "ThaUnknown",
+    "email": "casistaken@gmail.com",
+    "url": "http://github.com/ThaUnknown"
+  },
+  "bugs": {
+    "url": "https://github.com/thaunknown/simple-websocket/issues"
+  },
+  "dependencies": {
+    "debug": "^4.3.7",
+    "err-code": "^3.0.1",
+    "streamx": "^2.20.1",
+    "uint8-util": "^2.2.5",
+    "webrtc-polyfill": "^1.1.10"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.26.0",
+    "@babel/preset-env": "^7.26.0",
+    "airtap": "^4.0.4",
+    "airtap-manual": "^1.0.0",
+    "airtap-system": "^0.1.0",
+    "babelify": "^10.0.0",
+    "bowser": "^2.11.0",
+    "cross-env": "^7.0.3",
+    "prettier-bytes": "^1.0.4",
+    "speedometer": "^1.1.0",
+    "string-to-stream": "^3.0.1",
+    "tap-spec": "^5.0.0",
+    "tape": "^5.9.0",
+    "thunky": "^1.1.0",
+    "ws": "^8.18.0"
+  },
+  "keywords": [
+    "data",
+    "data channel",
+    "data channel stream",
+    "data channels",
+    "p2p",
+    "peer",
+    "peer",
+    "peer-to-peer",
+    "stream",
+    "video",
+    "voice",
+    "webrtc",
+    "webrtc stream"
+  ],
+  "license": "MIT",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/thaunknown/simple-peer.git"
+  },
+  "contributors": [
+    {
+      "name": "Feross Aboukhadijeh",
+      "email": "feross@feross.org",
+      "url": "https://feross.org"
+    }
+  ],
+  "scripts": {
+    "test": "npm run test-node && npm run test-browser",
+    "test-browser": "airtap --concurrency 1 --all -- test/*.js test/browser/*.js | tap-spec",
+    "test-browser-local": "airtap --preset local -- test/*.js | tap-spec",
+    "test-node": "tape test/*.js",
+    "test-node-debug": "cross-env DEBUG=* tape test/negotiation.js"
+  }
+}

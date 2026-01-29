@@ -1,0 +1,40 @@
+{
+  "name": "requizzle",
+  "version": "0.2.4",
+  "description": "Swizzle a little something into your require() calls.",
+  "main": "index.js",
+  "scripts": {
+    "test": "gulp test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/hegemonic/requizzle.git"
+  },
+  "keywords": [
+    "module",
+    "modules",
+    "require",
+    "inject",
+    "dependency",
+    "swizzle"
+  ],
+  "author": "Jeff Williams <jeffrey.l.williams@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/hegemonic/requizzle/issues"
+  },
+  "homepage": "https://github.com/hegemonic/requizzle",
+  "dependencies": {
+    "lodash": "^4.17.21"
+  },
+  "devDependencies": {
+    "@jsdoc/eslint-config": "^1.1.9",
+    "@jsdoc/prettier-config": "^0.1.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "expectations": "^1.0.0",
+    "gulp": "^4.0.2",
+    "gulp-eslint-new": "^1.7.0",
+    "gulp-mocha": "^8.0.0"
+  }
+}

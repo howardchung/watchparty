@@ -1,0 +1,72 @@
+{
+  "name": "bencode",
+  "description": "Bencode de/encoder",
+  "version": "4.0.0",
+  "bugs": {
+    "url": "https://github.com/webtorrent/node-bencode/issues"
+  },
+  "type": "module",
+  "contributors": [
+    {
+      "name": "Mark Schmale",
+      "email": "masch@masch.it",
+      "url": "http://masch.it/"
+    },
+    {
+      "name": "Jonas Hermsmeier",
+      "email": "jhermsmeier@gmail.com",
+      "url": "https://jhermsmeier.de/"
+    }
+  ],
+  "devDependencies": {
+    "@webtorrent/semantic-release-config": "1.0.10",
+    "bencoding": "latest",
+    "bncode": "latest",
+    "browserify": "^17.0.0",
+    "btparse": "latest",
+    "dht-bencode": "latest",
+    "dht.js": "latest",
+    "nanobench": "3.0.0",
+    "semantic-release": "21.0.7",
+    "standard": "17.1.0",
+    "tap-spec": "5.0.0",
+    "tape": "5.6.6"
+  },
+  "keywords": [
+    "bdecode",
+    "bencode",
+    "bencoding",
+    "bittorrent",
+    "torrent"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=12.20.0"
+  },
+  "exports": {
+    "import": "./index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/webtorrent/node-bencode.git"
+  },
+  "scripts": {
+    "benchmark": "nanobench benchmark/*.js",
+    "bundle": "mkdir -p dist && npm run bundle:lib && npm run bundle:test",
+    "bundle:lib": "browserify lib/index.js -s bencode -o dist/bencode.js",
+    "bundle:test": "browserify test/*.test.js -o dist/tests.js",
+    "style": "standard --fix",
+    "test": "standard && tape test/*.test.js | tap-spec"
+  },
+  "renovate": {
+    "extends": [
+      "github>webtorrent/renovate-config"
+    ]
+  },
+  "release": {
+    "extends": "@webtorrent/semantic-release-config"
+  },
+  "dependencies": {
+    "uint8-util": "^2.2.2"
+  }
+}

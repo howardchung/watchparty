@@ -1,0 +1,78 @@
+{
+  "name": "bittorrent-protocol",
+  "type": "module",
+  "description": "Simple, robust, BitTorrent peer wire protocol implementation",
+  "version": "4.1.21",
+  "author": {
+    "name": "WebTorrent LLC",
+    "email": "feross@webtorrent.io",
+    "url": "https://webtorrent.io"
+  },
+  "bugs": {
+    "url": "https://github.com/webtorrent/bittorrent-protocol/issues"
+  },
+  "dependencies": {
+    "bencode": "^4.0.0",
+    "bitfield": "^4.2.0",
+    "debug": "^4.4.3",
+    "rc4": "^0.1.5",
+    "streamx": "^2.22.1",
+    "throughput": "^1.0.2",
+    "uint8-util": "^2.2.5",
+    "unordered-array-remove": "^1.0.2"
+  },
+  "devDependencies": {
+    "@webtorrent/semantic-release-config": "1.0.10",
+    "semantic-release": "21.1.2",
+    "standard": "*",
+    "tap-spec": "^5.0.0",
+    "tape": "5.9.0"
+  },
+  "engines": {
+    "node": ">=12.20.0"
+  },
+  "exports": {
+    "import": "./index.js"
+  },
+  "keywords": [
+    "bittorrent",
+    "p2p",
+    "peer",
+    "peer-to-peer",
+    "protocol",
+    "stream",
+    "torrent",
+    "wire"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/webtorrent/bittorrent-protocol.git"
+  },
+  "scripts": {
+    "test": "standard && tape test/*.js | tap-spec"
+  },
+  "funding": [
+    {
+      "type": "github",
+      "url": "https://github.com/sponsors/feross"
+    },
+    {
+      "type": "patreon",
+      "url": "https://www.patreon.com/feross"
+    },
+    {
+      "type": "consulting",
+      "url": "https://feross.org/support"
+    }
+  ],
+  "renovate": {
+    "extends": [
+      "github>webtorrent/renovate-config"
+    ],
+    "rangeStrategy": "bump"
+  },
+  "release": {
+    "extends": "@webtorrent/semantic-release-config"
+  }
+}

@@ -1,0 +1,1 @@
+{"version":3,"file":"CMCD_REQUEST.js","sourceRoot":"","sources":["../../../src/cmcd/CMCD_REQUEST.ts"],"names":[],"mappings":";;;AAAA;;;;;;GAMG;AACU,QAAA,YAAY,GAAG,cAAc,CAAC","sourcesContent":["/**\n * CMCD request header name.\n *\n * @group CMCD\n *\n * @beta\n */\nexport const CMCD_REQUEST = 'CMCD-Request';\n"]}

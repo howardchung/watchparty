@@ -1,0 +1,60 @@
+{
+  "version": "0.4.9",
+  "name": "@silentbot1/nat-api",
+  "description": "Port mapping with UPnP and NAT-PMP",
+  "main": "index.js",
+  "type": "module",
+  "chromeapp": {
+    "default-gateway": false,
+    "dgram": "chrome-dgram",
+    "./lib/pmp/index.js": false
+  },
+  "scripts": {
+    "test": "standard"
+  },
+  "engines": {
+    "node": ">=10.0.0"
+  },
+  "dependencies": {
+    "chrome-dgram": "^3.0.6",
+    "cross-fetch-ponyfill": "^1.0.3",
+    "debug": "^4.4.0",
+    "default-gateway": "^7.2.2",
+    "unordered-array-remove": "^1.0.2",
+    "xml2js": "^0.6.2"
+  },
+  "devDependencies": {
+    "standard": "^17.1.2"
+  },
+  "contributors": [
+    {
+      "name": "Alex",
+      "email": "alxmorais8@msn.com"
+    }
+  ],
+  "author": {
+    "name": "SilentBot1",
+    "email": "silentbot1@gmail.com"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/silentbot1/nat-api.git"
+  },
+  "bugs": {
+    "url": "https://github.com/silentbot1/nat-api/issues"
+  },
+  "homepage": "https://github.com/silentbot1/nat-api#readme",
+  "keywords": [
+    "nat",
+    "api",
+    "upnp",
+    "pmp",
+    "nat-pmp",
+    "holepunch",
+    "port",
+    "forwarding",
+    "map",
+    "mapping"
+  ]
+}
