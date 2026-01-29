@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Badge, Menu, Progress, Slider } from "@mantine/core";
+import { Badge, Button, Menu, Progress, Slider } from "@mantine/core";
 import { formatTimestamp, softWhite } from "../../utils/utils";
 import styles from "./Controls.module.css";
 import { MetadataContext } from "../../MetadataContext";
@@ -106,7 +106,7 @@ export const Controls = (props: ControlsProps) => {
   // console.log(leaderTime, currentTime);
   const behindThreshold = 10;
   const behindTime =
-    leaderTime && leaderTime < Infinity
+    !isLiveStream && leaderTime && leaderTime < Infinity
       ? leaderTime - currentTime
       : getEnd() - getCurrent();
   const isBehind = behindTime > behindThreshold;
@@ -159,9 +159,9 @@ export const Controls = (props: ControlsProps) => {
           position: "relative",
         }}
       >
-        <IconRefresh
-          color={isBehind ? "orange" : softWhite}
-          className={`${styles.action}`}
+        <Button
+          size="compact-xs"
+          color={isBehind ? "blue" : "dark"}
           title="Sync"
           onClick={() => {
             if (isLiveStream) {
@@ -171,7 +171,9 @@ export const Controls = (props: ControlsProps) => {
               localSeek();
             }
           }}
-        />
+        >
+          Sync
+        </Button>
         {/* <div style={{ position: 'absolute', fontSize: '6px', zIndex: -1 }}>
             {Math.max(Math.floor(behindTime), 0)}
           </div> */}
@@ -252,6 +254,7 @@ export const Controls = (props: ControlsProps) => {
         )}
       </Progress.Root>
       <div className={` ${styles.text}`}>{formatTimestamp(getEnd())}</div>
+      {isLiveStream && <Badge size="xs" color="red">LIVE</Badge>}
       {
         <Menu disabled={disabled}>
           <Menu.Target>
