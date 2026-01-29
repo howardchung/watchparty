@@ -2365,6 +2365,53 @@ export class App extends React.Component<AppProps, AppState> {
                           disabled={!this.haveLock()}
                         />
                       )}
+                      <Menu>
+                        <Menu.Target>
+                          <Button
+                            color="grey"
+                            leftSection={<IconList />}
+                            rightSection={<Badge circle>{playlist.length}</Badge>}
+                            className={styles.shareButton}
+                          >
+                            Playlist
+                          </Button>
+                        </Menu.Target>
+                        <Menu.Dropdown
+                          style={{
+                            overflowY: playlist.length > 0 ? "scroll" : undefined,
+                            maxHeight: 400,
+                            maxWidth: isMobile() ? 400 : 600,
+                          }}
+                        >
+                          {playlist.length === 0 && (
+                            <Menu.Item disabled>
+                              There are no items in the playlist.
+                            </Menu.Item>
+                          )}
+                          {playlist.map((item: PlaylistVideo, index: number) => {
+                            if (Boolean(item.img)) {
+                              item.type = "youtube";
+                            }
+                            return (
+                              <Menu.Item key={index}>
+                                <ChatVideoCard
+                                  video={item}
+                                  index={index}
+                                  controls
+                                  onPlay={this.roomPlaylistPlay}
+                                  onPlayNext={(index) => {
+                                    this.roomPlaylistMove(index, 0);
+                                  }}
+                                  onRemove={(index) => {
+                                    this.roomPlaylistDelete(index);
+                                  }}
+                                  disabled={!this.haveLock()}
+                                />
+                              </Menu.Item>
+                            );
+                          })}
+                        </Menu.Dropdown>
+                      </Menu>
                     </div>
                   </React.Fragment>
                 )}
@@ -2579,13 +2626,13 @@ export class App extends React.Component<AppProps, AppState> {
               </div>
               <div style={{ display: "flex", gap: "4px" }}>
                 <Button
-                  className={styles.shareButton}
                   color="grey"
                   onClick={() =>
                     this.setState({
                       showPeopleColumn: !this.state.showPeopleColumn,
                     })
                   }
+                  fullWidth
                   leftSection={<IconUsersGroup />}
                   rightSection={
                     <Badge circle>{this.state.participants.length}</Badge>
@@ -2593,63 +2640,16 @@ export class App extends React.Component<AppProps, AppState> {
                 >
                   People
                 </Button>
-                <Menu>
-                  <Menu.Target>
-                    <Button
-                      color="grey"
-                      className={styles.shareButton}
-                      leftSection={<IconList />}
-                      rightSection={<Badge circle>{playlist.length}</Badge>}
-                    >
-                      Playlist
-                    </Button>
-                  </Menu.Target>
-                  <Menu.Dropdown
-                    style={{
-                      overflowY: playlist.length > 0 ? "scroll" : undefined,
-                      maxHeight: 400,
-                      maxWidth: isMobile() ? 400 : 600,
-                    }}
-                  >
-                    {playlist.length === 0 && (
-                      <Menu.Item disabled>
-                        There are no items in the playlist.
-                      </Menu.Item>
-                    )}
-                    {playlist.map((item: PlaylistVideo, index: number) => {
-                      if (Boolean(item.img)) {
-                        item.type = "youtube";
-                      }
-                      return (
-                        <Menu.Item key={index}>
-                          <ChatVideoCard
-                            video={item}
-                            index={index}
-                            controls
-                            onPlay={this.roomPlaylistPlay}
-                            onPlayNext={(index) => {
-                              this.roomPlaylistMove(index, 0);
-                            }}
-                            onRemove={(index) => {
-                              this.roomPlaylistDelete(index);
-                            }}
-                            disabled={!this.haveLock()}
-                          />
-                        </Menu.Item>
-                      );
-                    })}
-                  </Menu.Dropdown>
-                </Menu>
                 <Button
-                  style={{ flexGrow: 1 }}
                   color="grey"
                   title="Settings"
-                  // className={styles.shareButton}
+                  fullWidth
                   onClick={() => {
                     this.setSettingsModalOpen(true);
                   }}
+                  leftSection={<IconSettings />}
                 >
-                  <IconSettings />
+                  Settings
                 </Button>
               </div>
               {this.state.state === "connected" && (
