@@ -161,7 +161,7 @@ export const Controls = (props: ControlsProps) => {
       >
         <Button
           size="compact-xs"
-          color={isBehind ? "blue" : "dark"}
+          color={isBehind ? "blue" : "grey"}
           title="Sync"
           onClick={() => {
             if (isLiveStream) {
