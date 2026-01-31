@@ -2370,7 +2370,9 @@ export class App extends React.Component<AppProps, AppState> {
                           <Button
                             color="grey"
                             leftSection={<IconList />}
-                            rightSection={<Badge circle>{playlist.length}</Badge>}
+                            rightSection={
+                              <Badge circle>{playlist.length}</Badge>
+                            }
                             className={styles.shareButton}
                           >
                             Playlist
@@ -2378,7 +2380,8 @@ export class App extends React.Component<AppProps, AppState> {
                         </Menu.Target>
                         <Menu.Dropdown
                           style={{
-                            overflowY: playlist.length > 0 ? "scroll" : undefined,
+                            overflowY:
+                              playlist.length > 0 ? "scroll" : undefined,
                             maxHeight: 400,
                             maxWidth: isMobile() ? 400 : 600,
                           }}
@@ -2388,28 +2391,30 @@ export class App extends React.Component<AppProps, AppState> {
                               There are no items in the playlist.
                             </Menu.Item>
                           )}
-                          {playlist.map((item: PlaylistVideo, index: number) => {
-                            if (Boolean(item.img)) {
-                              item.type = "youtube";
-                            }
-                            return (
-                              <Menu.Item key={index}>
-                                <ChatVideoCard
-                                  video={item}
-                                  index={index}
-                                  controls
-                                  onPlay={this.roomPlaylistPlay}
-                                  onPlayNext={(index) => {
-                                    this.roomPlaylistMove(index, 0);
-                                  }}
-                                  onRemove={(index) => {
-                                    this.roomPlaylistDelete(index);
-                                  }}
-                                  disabled={!this.haveLock()}
-                                />
-                              </Menu.Item>
-                            );
-                          })}
+                          {playlist.map(
+                            (item: PlaylistVideo, index: number) => {
+                              if (Boolean(item.img)) {
+                                item.type = "youtube";
+                              }
+                              return (
+                                <Menu.Item key={index}>
+                                  <ChatVideoCard
+                                    video={item}
+                                    index={index}
+                                    controls
+                                    onPlay={this.roomPlaylistPlay}
+                                    onPlayNext={(index) => {
+                                      this.roomPlaylistMove(index, 0);
+                                    }}
+                                    onRemove={(index) => {
+                                      this.roomPlaylistDelete(index);
+                                    }}
+                                    disabled={!this.haveLock()}
+                                  />
+                                </Menu.Item>
+                              );
+                            },
+                          )}
                         </Menu.Dropdown>
                       </Menu>
                     </div>

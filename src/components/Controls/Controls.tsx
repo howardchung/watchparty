@@ -254,7 +254,11 @@ export const Controls = (props: ControlsProps) => {
         )}
       </Progress.Root>
       <div className={` ${styles.text}`}>{formatTimestamp(getEnd())}</div>
-      {isLiveStream && <Badge size="xs" color="red">LIVE</Badge>}
+      {isLiveStream && (
+        <Badge size="xs" color="red">
+          LIVE
+        </Badge>
+      )}
       {
         <Menu disabled={disabled}>
           <Menu.Target>
