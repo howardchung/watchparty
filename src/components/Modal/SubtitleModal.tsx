@@ -60,7 +60,7 @@ export class SubtitleModal extends React.Component<{
   }
 
   uploadSubtitle = async () => {
-    const files = await openFileSelector(".srt");
+    const files = await openFileSelector(".srt,.vtt");
     if (!files) {
       return;
     }
@@ -129,7 +129,7 @@ export class SubtitleModal extends React.Component<{
               disabled={!this.props.haveLock()}
               leftSection={<IconUpload />}
             >
-              Upload (.srt)
+              Upload (.srt / .vtt)
             </Button>
             <Divider my="lg" />
             <Title order={6}>OpenSubtitles</Title>
