@@ -122,6 +122,21 @@
   margin-bottom: 2px;
 }
 
+.replyTooltip {
+  background: rgba(20, 28, 36, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: rgba(240, 248, 255, 0.94);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  max-width: 360px;
+  padding: 6px 8px;
+  font-size: 12px;
+  line-height: 1.2;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  pointer-events: none;
+}
+
 .reactionMenuContainer {
   display: flex;
   flex-wrap: nowrap;

@@ -22,10 +22,10 @@ interface Reaction {
   msgTimestamp: string;
 }
 
-type SendChatMessagePayload = {
+type ChatReplyPayload = {
   msg: string;
-  replyToId?: string;
-  replyToTimestamp?: string;
+  replyToId: string;
+  replyToTimestamp: string;
 };
 
 interface ChatMessageBase {

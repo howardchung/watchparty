@@ -276,8 +276,11 @@ export class Room {
       socket.on("CMD:ts", (data: unknown) =>
         this.setTimestamp(socket, Number(data)),
       );
-      socket.on("CMD:chat", (data: SendChatMessagePayload) =>
-        this.sendChatMessage(socket, data),
+      socket.on("CMD:chat", (data: unknown) =>
+        this.sendChatMessage(socket, String(data)),
+      );
+      socket.on("CMD:chatReply", (data: unknown) =>
+        this.sendChatReplyMessage(socket, data),
       );
       socket.on("CMD:addReaction", (data: unknown) =>
         this.addReaction(socket, data),
@@ -818,29 +821,52 @@ export class Room {
     this.tsMap[socket.clientId] = data - timeSinceTsMap / 1000 + 1;
   };
 
-  private sendChatMessage = (socket: Socket, data: SendChatMessagePayload) => {
-    if (!data?.msg || data.msg.length > 10000) {
+  private isValidChatMessage = (msg: string | undefined) => {
+    return Boolean(msg && msg.length <= 10000);
+  };
+
+private sendChatReplyMessage = (socket: Socket, payload: unknown) => {
+  const data = payload as {
+    msg: string;
+    replyToId: string;
+    replyToTimestamp: string;
+  };
+
+  if (
+    !data ||
+    !this.isValidChatMessage(data?.msg) ||
+    !data.replyToId ||
+    !data.replyToTimestamp
+  ) {
+    return;
+  }
+
+  const target = this.chat.find(
+    (m) => m.id === data.replyToId && m.timestamp === data.replyToTimestamp,
+  );
+  if (!target) {
+    return;
+  }
+
+  const chatMsg: ChatMessageBase = {
+    id: socket.clientId,
+    msg: data.msg,
+    replyToId: data.replyToId,
+    replyToTimestamp: data.replyToTimestamp,
+    replyToUserId: data.replyToId,
+    replyToMsg: target.msg || "",
+  };
+
+  redisCount("chatMessages");
+  this.addChatMessage(socket, chatMsg);
+};
+
+  private sendChatMessage = (socket: Socket, data: string) => {
+    if (!this.isValidChatMessage(data)) {
       return;
     }
-
-    const chatMsg: ChatMessageBase = {
-      id: socket.clientId,
-      msg: data.msg,
-    };
-
-    if (data.replyToId && data.replyToTimestamp) {
-      const target = this.chat.find(
-        (m) => m.id === data.replyToId && m.timestamp === data.replyToTimestamp,
-      );
-      if (target) {
-        chatMsg.replyToId = data.replyToId;
-        chatMsg.replyToTimestamp = data.replyToTimestamp;
-        chatMsg.replyToUserId = data.replyToId;
-        chatMsg.replyToMsg = (target.msg || "");
-      }
-    }
-
     redisCount("chatMessages");
+    const chatMsg = { id: socket.clientId, msg: data };
     this.addChatMessage(socket, chatMsg);
   };
 

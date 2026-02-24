@@ -133,12 +133,18 @@ export class Chat extends React.Component<ChatProps> {
     if (this.chatTooLong()) {
       return;
     }
+    if (this.state.replyTo?.id && this.state.replyTo.timestamp) {
+      const replyData: ChatReplyPayload = {
+        msg: this.state.chatMsg,
+        replyToId: this.state.replyTo.id,
+        replyToTimestamp: this.state.replyTo.timestamp,
+      };
+      this.props.socket.emit("CMD:chatReply", replyData);
+      this.setState({ chatMsg: "", replyTo: undefined });
+      return;
+    }
     this.setState({ chatMsg: "", replyTo: undefined });
-    this.props.socket.emit("CMD:chat", {
-      msg: this.state.chatMsg,
-      replyToId: this.state.replyTo?.id,
-      replyToTimestamp: this.state.replyTo?.timestamp,
-    });
+    this.props.socket.emit("CMD:chat", this.state.chatMsg);
   };
 
   setReplyTo = (id: string, timestamp: string, msg?: string) => {
@@ -504,12 +510,17 @@ const ChatMessage = ({
           {cmd && formatMessage(cmd, msg)}
         </div>
         {message.replyToUserId && (
-          <div className={styles.replyInfo}>
-            {message.replyToUserId === clientId
-              ? "Replying to You: "
-              : `Replying to @${nameMap[message.replyToUserId] || "user"}: `}
-            {truncateReply(message.replyToMsg, 30)}
-          </div>
+          <HoverCard withinPortal={false} openDelay={120}>
+            <HoverCard.Target>
+              <div className={styles.replyInfo}>
+                {`Replying to @${nameMap[message.replyToUserId] || "user"}: `}
+                {truncateReply(message.replyToMsg, 30)}
+              </div>
+            </HoverCard.Target>
+            <HoverCard.Dropdown className={styles.replyTooltip}>
+              {message.replyToMsg || ""}
+            </HoverCard.Dropdown>
+          </HoverCard>
         )}
         <Linkify
           componentDecorator={(
