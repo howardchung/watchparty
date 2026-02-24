@@ -108,6 +108,20 @@
   display: flex;
 }
 
+.replyMessage {
+  background: radial-gradient(
+    at top right,
+    rgba(255, 176, 96, 0.22),
+    transparent 70%
+  );
+}
+
+.replyInfo {
+  color: rgba(180, 200, 220, 0.95);
+  font-size: 12px;
+  margin-bottom: 2px;
+}
+
 .reactionMenuContainer {
   display: flex;
   flex-wrap: nowrap;

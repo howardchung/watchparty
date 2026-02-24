@@ -276,8 +276,8 @@ export class Room {
       socket.on("CMD:ts", (data: unknown) =>
         this.setTimestamp(socket, Number(data)),
       );
-      socket.on("CMD:chat", (data: unknown) =>
-        this.sendChatMessage(socket, String(data)),
+      socket.on("CMD:chat", (data: SendChatMessagePayload) =>
+        this.sendChatMessage(socket, data),
       );
       socket.on("CMD:addReaction", (data: unknown) =>
         this.addReaction(socket, data),
@@ -818,12 +818,29 @@ export class Room {
     this.tsMap[socket.clientId] = data - timeSinceTsMap / 1000 + 1;
   };
 
-  private sendChatMessage = (socket: Socket, data: string) => {
-    if (data && data.length > 10000) {
+  private sendChatMessage = (socket: Socket, data: SendChatMessagePayload) => {
+    if (!data?.msg || data.msg.length > 10000) {
       return;
     }
+
+    const chatMsg: ChatMessageBase = {
+      id: socket.clientId,
+      msg: data.msg,
+    };
+
+    if (data.replyToId && data.replyToTimestamp) {
+      const target = this.chat.find(
+        (m) => m.id === data.replyToId && m.timestamp === data.replyToTimestamp,
+      );
+      if (target) {
+        chatMsg.replyToId = data.replyToId;
+        chatMsg.replyToTimestamp = data.replyToTimestamp;
+        chatMsg.replyToUserId = data.replyToId;
+        chatMsg.replyToMsg = (target.msg || "");
+      }
+    }
+
     redisCount("chatMessages");
-    const chatMsg = { id: socket.clientId, msg: data };
     this.addChatMessage(socket, chatMsg);
   };
 
