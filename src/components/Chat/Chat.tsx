@@ -134,12 +134,12 @@ export class Chat extends React.Component<ChatProps> {
       return;
     }
     if (this.state.replyTo?.id && this.state.replyTo.timestamp) {
-      const replyData: ChatReplyPayload = {
+      const chatPayload: ChatPayload = {
         msg: this.state.chatMsg,
         replyToId: this.state.replyTo.id,
         replyToTimestamp: this.state.replyTo.timestamp,
       };
-      this.props.socket.emit("CMD:chatV2", replyData);
+      this.props.socket.emit("CMD:chatV2", chatPayload);
       this.setState({ chatMsg: "", replyTo: undefined });
       return;
     }

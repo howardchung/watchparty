@@ -280,7 +280,7 @@ export class Room {
         this.sendChatMessage(socket, String(data)),
       );
       socket.on("CMD:chatV2", (data: unknown) =>
-        this.sendChatMessageV2(socket, data),
+        this.sendChatMessage(socket, data),
       );
       socket.on("CMD:addReaction", (data: unknown) =>
         this.addReaction(socket, data),
@@ -825,13 +825,15 @@ export class Room {
     return Boolean(msg && msg.length <= 10000);
   };
 
-  private sendChatMessageV2 = (socket: Socket, raw: unknown) => {
-    if (!raw || typeof raw !== "object") {
+  private sendChatMessage = (socket: Socket, raw: unknown) => {
+    // Support legacy string and V2 object chat payloads.
+    const payload = typeof raw === "string" ? { msg: raw } : raw;
+    if (!payload || typeof payload !== "object") {
       return;
     }
 
-    // Validate fields.
-    const data = raw as Record<string, unknown>;
+    // Validate supported fields.
+    const data = payload as Record<string, unknown>;
     const msg = typeof data.msg === "string" ? data.msg : undefined;
     const replyToId =
       typeof data.replyToId === "string" ? data.replyToId : undefined;
@@ -843,44 +845,40 @@ export class Room {
     if (!msg || !this.isValidChatMessage(msg)) {
       return;
     }
-    // No reply metadata -> regular chat message.
-    if (!replyToId && !replyToTimestamp) {
-      this.sendChatMessage(socket, msg);
+
+    // Require both reply fields or neither.
+    if (Boolean(replyToId) !== Boolean(replyToTimestamp)) {
       return;
     }
+
+    const baseMsg: ChatMessageBase = { id: socket.clientId, msg };
+    const emitChatMessage = (chatMsg: ChatMessageBase) => {
+      redisCount("chatMessages");
+      this.addChatMessage(socket, chatMsg);
+    };
+
+    // No reply metadata -> regular message.
     if (!replyToId || !replyToTimestamp) {
+      emitChatMessage(baseMsg);
       return;
     }
 
     const target = this.chat.find(
       (m) => m.id === replyToId && m.timestamp === replyToTimestamp,
     );
-    // Fall back to a regular message if the reply target is missing.
+    // Missing target -> fall back to regular message.
     if (!target) {
-      this.sendChatMessage(socket, msg);
+      emitChatMessage(baseMsg);
       return;
     }
 
-    const chatMsg: ChatMessageBase = {
-      id: socket.clientId,
-      msg,
+    emitChatMessage({
+      ...baseMsg,
       replyToId,
       replyToTimestamp,
       replyToUserId: replyToId,
       replyToMsg: target.msg || "",
-    };
-
-    redisCount("chatMessages");
-    this.addChatMessage(socket, chatMsg);
-  };
-
-  private sendChatMessage = (socket: Socket, data: string) => {
-    if (!this.isValidChatMessage(data)) {
-      return;
-    }
-    redisCount("chatMessages");
-    const chatMsg = { id: socket.clientId, msg: data };
-    this.addChatMessage(socket, chatMsg);
+    });
   };
 
   private addReaction = (socket: Socket, raw: unknown) => {
