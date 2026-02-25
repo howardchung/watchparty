@@ -348,6 +348,7 @@ export class Chat extends React.Component<ChatProps> {
         </CSSTransition>
         {this.state.replyTo && (
           <div
+            className={styles.replyComposer}
             style={{
               marginTop: 10,
               padding: "6px 8px",
