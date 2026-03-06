@@ -357,6 +357,10 @@ export class App extends React.Component<AppProps, AppState> {
       // Use the name in our state, generate one if empty
       this.updateName(this.state.myName || (await generateName()));
       this.loadSignInData(this.context.user);
+      // Re-join video chat if we were in it before the reconnection
+      if (window.watchparty.ourStream) {
+        socket.emit("CMD:joinVideo");
+      }
     });
     socket.on("connect_error", (err: any) => {
       console.error(err);
