@@ -32,6 +32,8 @@ import {
 import { MetadataContext } from "../../MetadataContext";
 
 const clientId = getOrCreateClientId();
+const truncateReply = (input?: string, max = 30) =>
+  input && input.length > max ? `${input.slice(0, max)}...` : input || "";
 
 interface ChatProps {
   chat: ChatMessage[];
@@ -52,6 +54,9 @@ export class Chat extends React.Component<ChatProps> {
   declare context: React.ContextType<typeof MetadataContext>;
   public state = {
     chatMsg: "",
+    replyTo: undefined as
+      | { id: string; timestamp: string; msg?: string }
+      | undefined,
     isNearBottom: true,
     isPickerOpen: false,
     reactionMenu: {
@@ -63,6 +68,7 @@ export class Chat extends React.Component<ChatProps> {
     },
   };
   messagesRef = React.createRef<HTMLDivElement>();
+  chatInputRef = React.createRef<HTMLInputElement>();
 
   async componentDidMount() {
     this.scrollToBottom();
@@ -127,8 +133,27 @@ export class Chat extends React.Component<ChatProps> {
     if (this.chatTooLong()) {
       return;
     }
-    this.setState({ chatMsg: "" });
+    if (this.state.replyTo?.id && this.state.replyTo.timestamp) {
+      const chatPayload: ChatPayload = {
+        msg: this.state.chatMsg,
+        replyToId: this.state.replyTo.id,
+        replyToTimestamp: this.state.replyTo.timestamp,
+      };
+      this.props.socket.emit("CMD:chatV2", chatPayload);
+      this.setState({ chatMsg: "", replyTo: undefined });
+      return;
+    }
+    this.setState({ chatMsg: "", replyTo: undefined });
     this.props.socket.emit("CMD:chat", this.state.chatMsg);
+  };
+
+  setReplyTo = (id: string, timestamp: string, msg?: string) => {
+    this.setState({ replyTo: { id, timestamp, msg } });
+    this.chatInputRef.current?.focus();
+  };
+
+  clearReplyTo = () => {
+    this.setState({ replyTo: undefined });
   };
 
   chatTooLong = () => {
@@ -250,6 +275,7 @@ export class Chat extends React.Component<ChatProps> {
                 isChatDisabled={this.props.isChatDisabled}
                 setReactionMenu={this.setReactionMenu}
                 handleReactionClick={this.handleReactionClick}
+                onReply={this.setReplyTo}
               />
             ))}
             {/* <div ref={this.messagesEndRef} /> */}
@@ -320,7 +346,42 @@ export class Chat extends React.Component<ChatProps> {
             xPosition={this.state.reactionMenu.xPosition}
           /> */}
         </CSSTransition>
+        {this.state.replyTo && (
+          <div
+            className={styles.replyComposer}
+            style={{
+              marginTop: 10,
+              padding: "6px 8px",
+              borderLeft: "2px solid rgb(46, 137, 212)",
+              background: "rgba(255, 255, 255, 0.06)",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: 8,
+            }}
+          >
+            <div className={styles.small + " " + styles.light}>
+              Replying to {this.props.nameMap[this.state.replyTo.id] || "Unknown"}
+              {this.state.replyTo.msg ? (
+                <div
+                  style={{
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    maxWidth: 260,
+                  }}
+                >
+                  {this.state.replyTo.msg}
+                </div>
+              ) : null}
+            </div>
+            <Button size="xs" variant="subtle" onClick={this.clearReplyTo}>
+              Cancel
+            </Button>
+          </div>
+        )}
         <TextInput
+          ref={this.chatInputRef}
           style={{ marginTop: "10px" }}
           onKeyDown={(e: any) => e.key === "Enter" && this.sendChatMsg()}
           onChange={this.updateChatMsg}
@@ -364,6 +425,7 @@ const ChatMessage = ({
   isChatDisabled,
   setReactionMenu,
   handleReactionClick,
+  onReply,
   className,
 }: {
   message: ChatMessage;
@@ -381,6 +443,7 @@ const ChatMessage = ({
     xPosition?: number,
   ) => void;
   handleReactionClick: (value: string, id?: string, timestamp?: string) => void;
+  onReply: (id: string, timestamp: string, msg?: string) => void;
   className: string;
 }) => {
   const { user } = useContext(MetadataContext);
@@ -397,7 +460,9 @@ const ChatMessage = ({
         position: "relative",
         overflowWrap: "anywhere",
       }}
-      className={`${styles.comment} ${className}`}
+      className={`${styles.comment} ${className} ${
+        message.replyToUserId === clientId ? styles.replyMessage : ""
+      }`}
     >
       {id ? (
         <Avatar
@@ -445,6 +510,19 @@ const ChatMessage = ({
         <div className={styles.light + " " + styles.system}>
           {cmd && formatMessage(cmd, msg)}
         </div>
+        {message.replyToUserId && (
+          <HoverCard withinPortal={false} openDelay={120}>
+            <HoverCard.Target>
+              <div className={styles.replyInfo}>
+                {`Replying to @${nameMap[message.replyToUserId] || "user"}: `}
+                {truncateReply(message.replyToMsg, 30)}
+              </div>
+            </HoverCard.Target>
+            <HoverCard.Dropdown className={styles.replyTooltip}>
+              {message.replyToMsg || ""}
+            </HoverCard.Dropdown>
+          </HoverCard>
+        )}
         <Linkify
           componentDecorator={(
             decoratedHref: string,
@@ -466,6 +544,25 @@ const ChatMessage = ({
         </Linkify>
         {imageMsg}
         <div className={styles.commentMenu}>
+          {id && id !== clientId && (
+            <ActionIcon
+              onClick={() => onReply(id, timestamp, msg)}
+              disabled={isChatDisabled}
+              style={{
+                opacity: 1,
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                padding: 0,
+                margin: 0,
+                marginRight: 4,
+              }}
+            >
+              <span role="img" aria-label="Reply" style={{ margin: 0, fontSize: 16 }}>
+                ↩
+              </span>
+            </ActionIcon>
+          )}
           <ActionIcon
             onClick={(e) => {
               //@ts-expect-error
