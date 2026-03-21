@@ -364,15 +364,6 @@ export const SettingsModal = ({
                             }}
                             prefixed
                           />
-                          <div
-                            style={{
-                              marginTop: 8,
-                              paddingLeft: 4,
-                              borderLeft: `24px solid ${roomTitleColorInput}`,
-                            }}
-                          >
-                            {roomTitleColorInput?.toUpperCase()}
-                          </div>
                         </React.Fragment>
                       </Popover.Dropdown>
                       <Popover.Target>
