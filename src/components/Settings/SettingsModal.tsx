@@ -16,7 +16,7 @@ import { getCurrentSettings, updateSettings } from "./LocalSettings";
 import { serverPath } from "../../utils/utils";
 import { PermanentRoomModal } from "../Modal/PermanentRoomModal";
 import { Socket } from "socket.io-client";
-import { HexColorPicker } from "react-colorful";
+import { HexColorPicker, HexColorInput } from "react-colorful";
 import { MetadataContext } from "../../MetadataContext";
 import {
   IconCheck,
@@ -349,6 +349,20 @@ export const SettingsModal = ({
                               setAdminSettingsChanged(true);
                               setRoomTitleColorInput(e);
                             }}
+                          />
+                          <HexColorInput
+                            placeholder="enter hex color"
+                            style={{ marginTop: 8 }}
+                            color={
+                              roomTitleColorInput ||
+                              roomTitleColor ||
+                              defaultRoomTitleColor
+                            }
+                            onChange={(e) => {
+                              setAdminSettingsChanged(true);
+                              setRoomTitleColorInput(e);
+                            }}
+                            prefixed
                           />
                           <div
                             style={{
