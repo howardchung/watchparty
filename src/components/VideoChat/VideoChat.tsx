@@ -60,12 +60,24 @@ export class VideoChat extends React.Component<VideoChatProps> {
     // Handle messages received from signaling server
     const msg = data.msg;
     const from = data.from;
-    const pc = window.watchparty.videoPCs[from];
+    let pc = window.watchparty.videoPCs[from];
+    if (!pc) {
+      return;
+    }
     console.log("recv", from, data);
     if (msg.ice !== undefined) {
       pc.addIceCandidate(new RTCIceCandidate(msg.ice));
     } else if (msg.sdp && msg.sdp.type === "offer") {
-      // console.log('offer');
+      // If our PC is stale, replace it with a fresh one before handling the offer
+      if (pc.connectionState === "failed" || pc.connectionState === "closed") {
+        pc.close();
+        delete window.watchparty.videoPCs[from];
+        this.updateWebRTC();
+        pc = window.watchparty.videoPCs[from];
+        if (!pc) {
+          return;
+        }
+      }
       await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
@@ -210,6 +222,14 @@ export class VideoChat extends React.Component<VideoChatProps> {
           // Mount the stream from peer
           // console.log(stream);
           videoRefs[id].srcObject = event.streams[0];
+        };
+        pc.oniceconnectionstatechange = () => {
+          if (pc.iceConnectionState === "failed") {
+            // ICE failed (permanently, not a temporary disconnection, which would be "disconnected"), tear down and attempt to re-establish
+            pc.close();
+            delete videoPCs[id];
+            this.updateWebRTC();
+          }
         };
         // For each pair, have the lexicographically smaller ID be the offerer
         const isOfferer = selfId < id;
