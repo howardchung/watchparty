@@ -100,7 +100,7 @@ class WatchParty extends React.Component {
               }}
             />
             <Route
-              path="/popout/:roomId"
+              path="/popup/:roomId"
               component={PopupChat}
             />
             <Route

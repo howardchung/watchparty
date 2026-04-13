@@ -36,6 +36,7 @@ declare module "socket.io" {
     clientId: string;
     uid: string;
     isSub: boolean;
+    isPopup: boolean
   }
 }
 
@@ -183,15 +184,14 @@ export class Room {
           }
         }
       }
-
-      // Disconnect other sockets with this clientId
       if (this.socketIdMap[clientId]) {
-        io.of(roomId).sockets.get(this.socketIdMap[clientId])?.disconnect();
+        // Disconnect other sockets with this clientId
+        // io.of(roomId).sockets.get(this.socketIdMap[clientId])?.disconnect();
+        socket.isPopup = false;
+      } else {
+        this.roster.push({ id: clientId }); // only add to roster if not a popup
+        this.socketIdMap[clientId] = socket.id;
       }
-      // Keep track of the current socketID associated with this client (only used for signaling and kicking)
-      this.socketIdMap[clientId] = socket.id;
-      this.roster.push({ id: clientId });
-
       next();
     });
     io.of(roomId).on("connection", async (socket: Socket) => {
@@ -1397,14 +1397,22 @@ export class Room {
   private onDisconnect = (socket: Socket) => {
     const { clientId } = socket;
     // Disconnecting socket is the current one
+    if (socket.isPopup) {
+      return; // popup disconnecting, nothing to clean up
+    }
+
     if (socket.id === this.socketIdMap[clientId]) {
-      let index = this.roster.findIndex((user) => user.id === clientId);
-      if (index > -1) {
-        this.roster.splice(index, 1);
+      // Prevents userId that already exists in the room from being adding 
+      // Only works if userId isn't labeled as popup
+      if (!socket.isPopup) {
+        let index = this.roster.findIndex((user) => user.id === clientId);
+        if (index > -1) {
+          this.roster.splice(index, 1);
+        }
+        this.io.of(this.roomId).emit("roster", this.getRosterForApp());
+        delete this.tsMap[clientId];
+        delete this.socketIdMap[clientId];
       }
-      this.io.of(this.roomId).emit("roster", this.getRosterForApp());
-      delete this.tsMap[clientId];
-      delete this.socketIdMap[clientId];
     }
     // Keep namemap/picturemap so old chat messages still render correctly after disconnect
     // When serializing we only write values with messages in chat
