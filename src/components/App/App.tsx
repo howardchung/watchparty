@@ -68,6 +68,7 @@ import {
   IconX,
 } from "@tabler/icons-react";
 import { InviteButton } from "../InviteButton/InviteButton";
+import { PopupButton } from "../PopoutButton/PopoutButton";
 import type WebTorrent from "webtorrent";
 import type Hls from "hls.js";
 import { type MediaPlayerClass } from "dashjs";
@@ -2632,6 +2633,7 @@ export class App extends React.Component<AppProps, AppState> {
                   }
                 />
                 <InviteButton />
+                <PopupButton />
               </div>
               <div style={{ display: "flex", gap: "4px" }}>
                 <Button
