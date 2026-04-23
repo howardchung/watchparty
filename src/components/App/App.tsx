@@ -1134,7 +1134,7 @@ export class App extends React.Component<AppProps, AppState> {
     if (navigator.mediaDevices.getDisplayMedia) {
       const stream = await navigator.mediaDevices.getDisplayMedia({
         //@ts-expect-error
-        video: { height: 720, logicalSurface: true },
+        video: { height: 1080, frameRate: 60, logicalSurface: true },
         audio: {
           autoGainControl: false,
           channelCount: 2,

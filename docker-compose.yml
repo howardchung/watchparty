@@ -1,0 +1,43 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: watchparty
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: watchparty
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./sql/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U watchparty -d watchparty"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redisdata:/data
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      DATABASE_URL: postgresql://watchparty:${POSTGRES_PASSWORD}@postgres:5432/watchparty?sslmode=disable
+      REDIS_URL: redis://redis:6379
+      YOUTUBE_API_KEY: ${YOUTUBE_API_KEY:-}
+      PORT: "8080"
+      HOST: "0.0.0.0"
+    ports:
+      - "127.0.0.1:8080:8080"
+
+volumes:
+  pgdata:
+  redisdata:

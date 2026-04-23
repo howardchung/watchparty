@@ -1,0 +1,11 @@
+.git
+.github
+.vscode
+node_modules
+build
+.env
+.env.*
+!.env.example
+*.md
+CHANGELOG.md
+LICENSE
