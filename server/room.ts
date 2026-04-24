@@ -190,7 +190,9 @@ export class Room {
       }
       // Keep track of the current socketID associated with this client (only used for signaling and kicking)
       this.socketIdMap[clientId] = socket.id;
-      this.roster.push({ id: clientId });
+      if (!this.roster.find(user => user.id === clientId)) {
+        this.roster.push({ id: clientId });
+      }
 
       next();
     });
