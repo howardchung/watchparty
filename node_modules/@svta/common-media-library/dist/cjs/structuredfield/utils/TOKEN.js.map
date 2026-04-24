@@ -1,0 +1,1 @@
+{"version":3,"file":"TOKEN.js","sourceRoot":"","sources":["../../../../src/structuredfield/utils/TOKEN.ts"],"names":[],"mappings":";;;AAAa,QAAA,KAAK,GAAG,OAAO,CAAC","sourcesContent":["export const TOKEN = 'Token';\n"]}

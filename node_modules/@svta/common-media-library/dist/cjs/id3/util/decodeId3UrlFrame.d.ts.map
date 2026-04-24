@@ -1,0 +1,1 @@
+{"version":3,"file":"decodeId3UrlFrame.d.ts","sourceRoot":"","sources":["../../../../src/id3/util/decodeId3UrlFrame.ts"],"names":[],"mappings":"AACA,OAAO,KAAK,EAAE,eAAe,EAAE,MAAM,uBAAuB,CAAC;AAC7D,OAAO,KAAK,EAAE,WAAW,EAAE,MAAM,eAAe,CAAC;AAEjD;;;;;;;;;;GAUG;AACH,wBAAgB,iBAAiB,CAAC,KAAK,EAAE,WAAW,GAAG,eAAe,CAAC,MAAM,CAAC,GAAG,SAAS,CA4BzF"}
