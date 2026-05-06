@@ -1399,9 +1399,9 @@ export class Room {
       if (index > -1) {
         this.roster.splice(index, 1);
       }
-        this.io.of(this.roomId).emit("roster", this.getRosterForApp());
-        delete this.tsMap[clientId];
-        delete this.socketIdMap[clientId];
+      this.io.of(this.roomId).emit("roster", this.getRosterForApp());
+      delete this.tsMap[clientId];
+      delete this.socketIdMap[clientId];
     }
     // Keep namemap/picturemap so old chat messages still render correctly after disconnect
     // When serializing we only write values with messages in chat
