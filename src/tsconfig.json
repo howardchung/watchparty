@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "esnext",
     "module": "esnext",
-    "moduleResolution": "node",
+    "moduleResolution": "node", // Depricated in 7.0
     "strict": true,
     "noEmit": true,
     "allowJs": true,
@@ -10,7 +10,8 @@
     "skipLibCheck": true,
     "lib": ["dom", "dom.iterable", "esnext"],
     "jsx": "react-jsx",
-    "types": ["vite/client", "youtube"]
+    "types": ["vite/client", "youtube"],
+    "ignoreDeprecations": "6.0" // Solves deprication issue
   },
   "include": ["./**/*", "../global.d.ts"]
 }

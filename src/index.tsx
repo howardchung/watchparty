@@ -1,10 +1,8 @@
 import "@mantine/core/styles.css";
 import "./index.css";
-
 import React, { lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Route } from "react-router-dom";
-
 import { App } from "./components/App/App";
 import { Home } from "./components/Home/Home";
 import { Privacy, Terms, FAQ } from "./components/Pages/Pages";
@@ -15,7 +13,6 @@ import "firebase/auth";
 import { serverPath, softWhite } from "./utils/utils";
 import { Create } from "./components/Create/Create";
 import { Discord } from "./components/Discord/Discord";
-import { PopupChat } from "./components/PopoutButton/PopoutButton";
 import config from "./config";
 import { DEFAULT_STATE, MetadataContext } from "./MetadataContext";
 import { createTheme, MantineProvider } from "@mantine/core";
@@ -98,10 +95,6 @@ class WatchParty extends React.Component {
               render={(props) => {
                 return <App urlRoomId={props.match.params.roomId} />;
               }}
-            />
-            <Route
-              path="/popup/:roomId"
-              component={PopupChat}
             />
             <Route
               path="/r/:vanity"

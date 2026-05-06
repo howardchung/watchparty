@@ -274,6 +274,7 @@ export class App extends React.Component<AppProps, AppState> {
   };
 
   chatRef = React.createRef<Chat>();
+  isPopup = new URLSearchParams(window.location.search).get("popup") === "true";
 
   async componentDidMount() {
     document.onfullscreenchange = this.onFullScreenChange;
@@ -2076,6 +2077,13 @@ export class App extends React.Component<AppProps, AppState> {
             <Title order={2}>Loading...</Title>
           </Overlay>
         )}
+        {!this.state.fullScreen && !this.isPopup && (
+          <TopBar
+            roomTitle={this.state.roomTitle}
+            roomDescription={this.state.roomDescription}
+            roomTitleColor={this.state.roomTitleColor}
+          />
+        )}
         {this.state.overlayMsg && <ErrorModal error={this.state.overlayMsg} />}
         {this.state.isErrorAuth && <PasswordModal roomId={this.state.roomId} />}
         <SettingsModal
@@ -2147,19 +2155,12 @@ export class App extends React.Component<AppProps, AppState> {
             {this.state.warningMessage}
           </Alert>
         )}
-        {!this.state.fullScreen && (
-          <TopBar
-            roomTitle={this.state.roomTitle}
-            roomDescription={this.state.roomDescription}
-            roomTitleColor={this.state.roomTitleColor}
-          />
-        )}
         {
           <div
             className={styles.mobileStack}
             style={{ margin: "0 8px", display: "flex", columnGap: "32px" }}
           >
-            <div
+          {!this.isPopup && <div
               className={
                 (this.state.fullScreen
                   ? styles.fullHeightColumnFullscreen
@@ -2586,14 +2587,14 @@ export class App extends React.Component<AppProps, AppState> {
                   </div>
                 )}
               </div>
-            </div>
+            </div>}
             <div
               style={{
                 display: "flex",
                 flexDirection: "column",
                 position: "relative",
-                width: this.state.showChatColumn ? 400 : 0,
-                maxWidth: 400,
+                width: this.isPopup ? "100%" : (this.state.showChatColumn ? 400 : 0),
+                maxWidth: this.isPopup ? "100%" : 400,
                 overflow: "hidden",
                 gap: "4px",
               }}
@@ -2633,7 +2634,7 @@ export class App extends React.Component<AppProps, AppState> {
                   }
                 />
                 <InviteButton />
-                <PopupButton />
+                {!this.isPopup && <PopupButton />}
               </div>
               <div style={{ display: "flex", gap: "4px" }}>
                 <Button
