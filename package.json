@@ -34,7 +34,7 @@
     "pg": "^8.16.3",
     "pm2": "^6.0.14",
     "socket.io": "^4.8.1",
-    "stripe": "^8.222.0"
+    "stripe": "^20.1.0"
   },
   "devDependencies": {
     "@emoji-mart/data": "^1.2.1",
