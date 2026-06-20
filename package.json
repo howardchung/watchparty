@@ -74,7 +74,7 @@
     "srt-webvtt": "^2.0.0",
     "twitch-m3u8": "^1.1.5",
     "typescript": "^5.9.3",
-    "vite": "^7.2.7",
+    "vite": "^7.3.2",
     "webtorrent": "^2.8.5"
   },
   "browserslist": {
