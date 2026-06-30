@@ -2496,7 +2496,7 @@ export class App extends React.Component<AppProps, AppState> {
                       className={styles.videoContent}
                       allowFullScreen
                       frameBorder="0"
-                      allow="autoplay"
+                      allow="autoplay; encrypted-media"
                       src="https://www.youtube.com/embed/?enablejsapi=1&controls=0&rel=0"
                     />
                     {this.playingVBrowser() &&
