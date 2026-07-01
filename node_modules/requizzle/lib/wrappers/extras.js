@@ -1,0 +1,21 @@
+/*
+    Copyright 2014 Google LLC
+
+    Use of this source code is governed by the MIT License, available in this package's LICENSE file
+    or at http://opensource.org/licenses/MIT.
+ */
+function callFunction(targetPath, parentModule, func) {
+  if (!func) {
+    return '';
+  }
+
+  return func(targetPath, parentModule);
+}
+
+exports.before = function before(targetPath, parentModule, options) {
+  return callFunction(targetPath, parentModule, options.before);
+};
+
+exports.after = function after(targetPath, parentModule, options) {
+  return callFunction(targetPath, parentModule, options.after);
+};

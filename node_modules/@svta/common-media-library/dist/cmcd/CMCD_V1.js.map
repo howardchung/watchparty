@@ -1,0 +1,1 @@
+{"version":3,"file":"CMCD_V1.js","sourceRoot":"","sources":["../../src/cmcd/CMCD_V1.ts"],"names":[],"mappings":"AAAA;;;;;;GAMG;AACH,MAAM,CAAC,MAAM,OAAO,GAAG,CAAC,CAAC","sourcesContent":["/**\n * CMCD Version 1\n *\n * @group CMCD\n *\n * @beta\n */\nexport const CMCD_V1 = 1;\n"]}

@@ -1,0 +1,1 @@
+{"version":3,"file":"PenStyles.js","sourceRoot":"","sources":["../../../src/cta/608/PenStyles.ts"],"names":[],"mappings":"","sourcesContent":["/**\n * PenStyles\n *\n * @group CTA-608\n * @beta\n */\nexport type PenStyles = {\n\tforeground: string | null;\n\tunderline: boolean;\n\titalics: boolean;\n\tbackground: string;\n\tflash: boolean;\n};\n"]}

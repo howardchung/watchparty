@@ -1,0 +1,26 @@
+Randomized with seed 20147
+Started
+..F.F
+
+Failures:
+1) XMLParser v6 should parse only true numbers
+  Message:
+    Expected $.rootNode.intTag = 45 to equal '045'.
+  Stack:
+        at <Jasmine>
+        at UserContext.<anonymous> (file:///home/amit/code/git/temp/fast-xml-parser/spec/v6/xmlParser_spec.js:63:20)
+        at <Jasmine>
+
+2) XMLParser v6 should not parse values to primitive type
+  Message:
+    Expected $.rootNode.boolean = true to equal 'true'.
+    Expected $.rootNode.intTag = 45 to equal '045'.
+    Expected $.rootNode.floatTag = 65.34 to equal '65.34'.
+  Stack:
+        at <Jasmine>
+        at UserContext.<anonymous> (file:///home/amit/code/git/temp/fast-xml-parser/spec/v6/xmlParser_spec.js:120:20)
+        at <Jasmine>
+
+5 specs, 2 failures
+Finished in 0.016 seconds
+Randomized with seed 20147 (jasmine --random=true --seed=20147)

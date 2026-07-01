@@ -1,0 +1,1 @@
+{"version":3,"file":"DECIMAL.js","sourceRoot":"","sources":["../../../src/structuredfield/utils/DECIMAL.ts"],"names":[],"mappings":"AAAA,MAAM,CAAC,MAAM,OAAO,GAAW,SAAS,CAAC","sourcesContent":["export const DECIMAL: string = 'Decimal';\n"]}

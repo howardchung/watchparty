@@ -1,0 +1,25 @@
+{
+  "name": "timeout-refresh",
+  "version": "1.0.3",
+  "description": "Efficiently refresh a timer",
+  "main": "index.js",
+  "dependencies": {},
+  "devDependencies": {
+    "standard": "^11.0.1",
+    "tape": "^4.9.1"
+  },
+  "browser": "./browser.js",
+  "scripts": {
+    "test": "standard && tape test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mafintosh/timeout-refresh.git"
+  },
+  "author": "Mathias Buus (@mafintosh)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mafintosh/timeout-refresh/issues"
+  },
+  "homepage": "https://github.com/mafintosh/timeout-refresh"
+}

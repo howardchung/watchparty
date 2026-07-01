@@ -1,0 +1,1 @@
+{"version":3,"file":"Initialization.js","sourceRoot":"","sources":["../../../../../../src/cmaf/ham/types/mapper/dash/Initialization.ts"],"names":[],"mappings":"","sourcesContent":["/**\n * DASH Initialization\n *\n * @group CMAF\n * @alpha\n */\nexport type Initialization = {\n\t$: {\n\t\trange?: string;\n\t\tsourceURL?: string;\n\t};\n};\n"]}

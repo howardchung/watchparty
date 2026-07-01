@@ -1,0 +1,45 @@
+{
+  "name": "chrome-dns",
+  "description": "Use the Node `dns` API in Chrome Apps",
+  "version": "1.0.1",
+  "author": {
+    "name": "Feross Aboukhadijeh",
+    "email": "feross@feross.org",
+    "url": "https://feross.org"
+  },
+  "bugs": {
+    "url": "https://github.com/feross/chrome-dns/issues"
+  },
+  "dependencies": {
+    "chrome-net": "^3.3.2"
+  },
+  "devDependencies": {
+    "browserify": "^14.0.0",
+    "chrome-dgram": "^3.0.2",
+    "envify": "^4.1.0",
+    "once": "1.x",
+    "portfinder": "^1.0.21",
+    "standard": "^13.1.0",
+    "tape": "^4.11.0"
+  },
+  "homepage": "https://github.com/feross/chrome-dns",
+  "keywords": [
+    "chrome app",
+    "chrome.dns",
+    "chrome.dns.resolve",
+    "dns",
+    "domain name resolution",
+    "domain name server",
+    "dns lookup"
+  ],
+  "license": "MIT",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/feross/chrome-dns.git"
+  },
+  "scripts": {
+    "test": "standard",
+    "test-browser": "tape test/*.js"
+  }
+}

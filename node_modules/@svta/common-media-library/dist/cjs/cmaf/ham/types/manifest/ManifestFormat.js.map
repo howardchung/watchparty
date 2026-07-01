@@ -1,0 +1,1 @@
+{"version":3,"file":"ManifestFormat.js","sourceRoot":"","sources":["../../../../../../src/cmaf/ham/types/manifest/ManifestFormat.ts"],"names":[],"mappings":"","sourcesContent":["/**\n * The format of the manifest.\n *\n * @group CMAF\n * @alpha\n */\nexport type ManifestFormat = 'hls' | 'dash';\n"]}

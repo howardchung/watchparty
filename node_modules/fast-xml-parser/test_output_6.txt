@@ -1,0 +1,98 @@
+Randomized with seed 51104
+Started
+TagName: tag ValueParsers: [
+  'trim',     'join',
+  'number',   'boolean',
+  'currency', 'trim',
+  'number',   'boolean',
+  'currency'
+]
+TagName: boolean ValueParsers: [
+  'trim',     'join',
+  'number',   'boolean',
+  'currency', 'trim',
+  'number',   'boolean',
+  'currency'
+]
+TagName: intTag ValueParsers: [
+  'trim',     'join',
+  'number',   'boolean',
+  'currency', 'trim',
+  'number',   'boolean',
+  'currency'
+]
+TagName: floatTag ValueParsers: [
+  'trim',     'join',
+  'number',   'boolean',
+  'currency', 'trim',
+  'number',   'boolean',
+  'currency'
+]
+TagName: hexadecimal ValueParsers: [
+  'trim',     'join',
+  'number',   'boolean',
+  'currency', 'trim',
+  'number',   'boolean',
+  'currency'
+]
+TagName: rootNode ValueParsers: [
+  'trim',     'join',
+  'number',   'boolean',
+  'currency', 'trim',
+  'number',   'boolean',
+  'currency'
+]
+.TagName: tag ValueParsers: []
+TagName: boolean ValueParsers: []
+TagName: intTag ValueParsers: []
+TagName: floatTag ValueParsers: []
+TagName: rootNode ValueParsers: []
+.TagName: tag ValueParsers: []
+TagName: rootNode ValueParsers: []
+.TagName: floatTag0 ValueParsers: [ numParser { options: { leadingZeros: false } } ]
+TagName: floatTag1 ValueParsers: [ numParser { options: { leadingZeros: false } } ]
+TagName: floatTag2 ValueParsers: [ numParser { options: { leadingZeros: false } } ]
+TagName: floatTag3 ValueParsers: [ numParser { options: { leadingZeros: false } } ]
+TagName: rootNode ValueParsers: [ numParser { options: { leadingZeros: false } } ]
+.TagName: tag ValueParsers: [
+  'boolean',
+  numParser {
+    options: { hex: true, leadingZeros: false, eNotation: true }
+  }
+]
+TagName: boolean ValueParsers: [
+  'boolean',
+  numParser {
+    options: { hex: true, leadingZeros: false, eNotation: true }
+  }
+]
+TagName: intTag ValueParsers: [
+  'boolean',
+  numParser {
+    options: { hex: true, leadingZeros: false, eNotation: true }
+  }
+]
+TagName: floatTag ValueParsers: [
+  'boolean',
+  numParser {
+    options: { hex: true, leadingZeros: false, eNotation: true }
+  }
+]
+TagName: long ValueParsers: [
+  'boolean',
+  numParser {
+    options: { hex: true, leadingZeros: false, eNotation: true }
+  }
+]
+TagName: rootNode ValueParsers: [
+  'boolean',
+  numParser {
+    options: { hex: true, leadingZeros: false, eNotation: true }
+  }
+]
+.
+
+
+5 specs, 0 failures
+Finished in 0.015 seconds
+Randomized with seed 51104 (jasmine --random=true --seed=51104)

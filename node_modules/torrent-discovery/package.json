@@ -1,0 +1,84 @@
+{
+  "name": "torrent-discovery",
+  "description": "Discover BitTorrent and WebTorrent peers",
+  "version": "11.0.19",
+  "author": {
+    "name": "WebTorrent LLC",
+    "email": "feross@webtorrent.io",
+    "url": "https://webtorrent.io"
+  },
+  "browser": {
+    "bittorrent-dht": false,
+    "bittorrent-lsd": false
+  },
+  "chromeapp": {},
+  "bugs": {
+    "url": "https://github.com/webtorrent/torrent-discovery/issues"
+  },
+  "type": "module",
+  "dependencies": {
+    "bittorrent-dht": "^11.0.11",
+    "bittorrent-tracker": "^11.2.2",
+    "bittorrent-lsd": "^2.0.0",
+    "debug": "^4.4.3",
+    "run-parallel": "^1.2.0"
+  },
+  "devDependencies": {
+    "@webtorrent/semantic-release-config": "1.0.10",
+    "randombytes": "2.1.0",
+    "semantic-release": "21.1.2",
+    "standard": "*",
+    "tape": "5.9.0"
+  },
+  "keywords": [
+    "webtorrent",
+    "torrent",
+    "bittorrent",
+    "peers",
+    "discovery",
+    "tracker",
+    "dht",
+    "lsd",
+    "trackers",
+    "find peers",
+    "peer-to-peer",
+    "peer discovery"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "exports": {
+    "import": "./index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/webtorrent/torrent-discovery.git"
+  },
+  "scripts": {
+    "test": "standard && tape test/*.js"
+  },
+  "funding": [
+    {
+      "type": "github",
+      "url": "https://github.com/sponsors/feross"
+    },
+    {
+      "type": "patreon",
+      "url": "https://www.patreon.com/feross"
+    },
+    {
+      "type": "consulting",
+      "url": "https://feross.org/support"
+    }
+  ],
+  "renovate": {
+    "extends": [
+      "github>webtorrent/renovate-config"
+    ],
+    "rangeStrategy": "bump"
+  },
+  "release": {
+    "extends": "@webtorrent/semantic-release-config"
+  }
+}

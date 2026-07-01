@@ -1,0 +1,1 @@
+{"version":3,"file":"parseDict.d.ts","sourceRoot":"","sources":["../../../../src/structuredfield/parse/parseDict.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,eAAe,EAAE,MAAM,uBAAuB,CAAC;AAC7D,OAAO,KAAK,EAAE,YAAY,EAAE,MAAM,oBAAoB,CAAC;AAIvD,OAAO,KAAK,EAAE,WAAW,EAAE,MAAM,kBAAkB,CAAC;AAyDpD,wBAAgB,SAAS,CAAC,GAAG,EAAE,MAAM,EAAE,OAAO,CAAC,EAAE,eAAe,GAAG,WAAW,CAAC,YAAY,CAAC,CAsC3F"}

@@ -1,0 +1,1 @@
+{"version":3,"file":"SegmentUrl.js","sourceRoot":"","sources":["../../../../../../src/cmaf/ham/types/mapper/dash/SegmentUrl.ts"],"names":[],"mappings":"","sourcesContent":["/**\n * DASH Segment URL\n *\n * @group CMAF\n * @alpha\n */\nexport type SegmentURL = {\n\t$: {\n\t\tmedia?: string;\n\t};\n};\n"]}

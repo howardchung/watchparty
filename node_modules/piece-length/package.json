@@ -1,0 +1,17 @@
+{
+  "name": "piece-length",
+  "author": ["Jimmy Wärting <jimmy@warting.se>", "Michael Rhodes"],
+  "version": "2.0.1",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/michaelrhodes/piece-length.git"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "tape": "^4.11.0"
+  },
+  "scripts": {
+    "test": "node test"
+  }
+}

@@ -1,0 +1,88 @@
+{
+  "name": "react-onclickoutside",
+  "version": "6.13.2",
+  "description": "An onClickOutside wrapper for React components",
+  "main": "dist/react-onclickoutside.cjs.js",
+  "module": "dist/react-onclickoutside.es.js",
+  "jsnext:main": "dist/react-onclickoutside.es.js",
+  "files": [
+    "dist"
+  ],
+  "unpkg": "dist/react-onclickoutside.min.js",
+  "homepage": "https://github.com/Pomax/react-onclickoutside",
+  "authors": [
+    "Pomax <pomax@nihongoresources.com>",
+    "Andarist <mateuszburzynski@gmail.com>"
+  ],
+  "funding": {
+    "type": "individual",
+    "url": "https://github.com/Pomax/react-onclickoutside/blob/master/FUNDING.md"
+  },
+  "keywords": [
+    "react",
+    "onclick",
+    "outside",
+    "onclickoutside"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Pomax/react-onclickoutside.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Pomax/react-onclickoutside/issues"
+  },
+  "scripts": {
+    "release:patch": "npm run prerelease && npm version patch && npm publish && git push --follow-tags",
+    "release:minor": "npm run prerelease && npm version minor && npm publish && git push --follow-tags",
+    "release:major": "npm run prerelease && npm version major && npm publish && git push --follow-tags",
+    "prerelease": "npm run test",
+    "test": "run-s test:**",
+    "test:basic": "run-s lint build",
+    "test:nodom": "mocha test/no-dom-test.js",
+    "lint": "eslint src/*.js ./test",
+    "build": "rollup -c rollup.config.js --compact",
+    "prebuild": "npm run clean",
+    "clean": "rimraf dist",
+    "precommit": "npm test && lint-staged"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.14.2",
+    "@babel/plugin-proposal-class-properties": "^7.13.0",
+    "@babel/plugin-proposal-object-rest-spread": "^7.14.2",
+    "@babel/preset-env": "^7.14.2",
+    "@babel/preset-stage-0": "^7.8.3",
+    "@rollup/plugin-babel": "^5.3.0",
+    "babel-eslint": "^8.0.2",
+    "babel-loader": "^8.2.2",
+    "chai": "^4.1.2",
+    "eslint": "^4.12.0",
+    "husky": "^0.14.3",
+    "lint-staged": "^5.0.0",
+    "mocha": "^8.4.0",
+    "npm-run-all": "^4.0.2",
+    "prettier": "^1.8.2",
+    "react": "^15.5.x",
+    "react-dom": "^15.5.x",
+    "react-test-renderer": "^15.5.x",
+    "require-hijack": "^1.2.1",
+    "rimraf": "^2.6.2",
+    "rollup": "^2.50.1",
+    "webpack": "^5.37.1"
+  },
+  "peerDependencies": {
+    "react": "^15.5.x || ^16.x || ^17.x || ^18.x",
+    "react-dom": "^15.5.x || ^16.x || ^17.x || ^18.x"
+  },
+  "lint-staged": {
+    "{src,test}/**/*.js": [
+      "prettier --print-width=120 --single-quote --trailing-comma=all --write",
+      "eslint --fix",
+      "git add"
+    ],
+    "*.md": [
+      "prettier --write",
+      "git add"
+    ]
+  }
+}

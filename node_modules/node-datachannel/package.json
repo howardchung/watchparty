@@ -1,0 +1,103 @@
+{
+    "name": "node-datachannel",
+    "version": "0.12.0",
+    "description": "libdatachannel node bindings",
+    "type": "module",
+    "types": "./lib/index.d.ts",
+    "exports": {
+        ".": {
+            "import": {
+                "types": "./lib/index.d.ts",
+                "default": "./lib/index.js"
+            },
+            "require": {
+                "types": "./lib/index.d.cts",
+                "default": "./lib/index.cjs"
+            }
+        },
+        "./polyfill": {
+            "import": {
+                "types": "./polyfill/index.d.ts",
+                "default": "./polyfill/index.js"
+            },
+            "require": {
+                "types": "./polyfill/index.d.cts",
+                "default": "./polyfill/index.cjs"
+            }
+        }
+    },
+    "engines": {
+        "node": ">=16.0.0"
+    },
+    "directories": {
+        "lib": "lib",
+        "test": "test"
+    },
+    "_from": "node-datachannel@latest",
+    "scripts": {
+        "install": "prebuild-install -r napi || (npm install --ignore-scripts --production=false && npm run _prebuild)",
+        "install-nice": "npm run clean && npm install --ignore-scripts --production=false && cmake-js build --CDUSE_NICE=1",
+        "install-gnu-tls": "npm run clean && npm install --ignore-scripts --production=false && cmake-js build --CDUSE_GNUTLS=1",
+        "build": "cmake-js build",
+        "build:debug": "cmake-js build -D",
+        "_prebuild": "prebuild -r napi --backend cmake-js",
+        "clean": "cmake-js clean",
+        "lint": "eslint lib/**/* test/**/*",
+        "test": "NODE_OPTIONS=--experimental-vm-modules jest",
+        "wpt-test": "node test/wpt.js",
+        "test-types": "tsc",
+        "prepublishOnly": "cp lib/index.d.ts lib/index.d.cts && cp polyfill/index.d.ts polyfill/index.d.cts && rollup lib/index.js --file lib/index.cjs --format cjs && rollup polyfill/index.js --file polyfill/index.cjs --format cjs"
+    },
+    "binary": {
+        "napi_versions": [
+            8
+        ]
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/murat-dogan/node-datachannel.git"
+    },
+    "keywords": [
+        "libdatachannel",
+        "webrtc",
+        "p2p",
+        "peer-to-peer",
+        "datachannel",
+        "data channel",
+        "websocket"
+    ],
+    "contributors": [
+        {
+            "name": "Murat Doğan",
+            "url": "https://github.com/murat-dogan"
+        },
+        {
+            "name": "Paul-Louis Ageneau",
+            "url": "https://github.com/paullouisageneau"
+        }
+    ],
+    "license": "MPL 2.0",
+    "bugs": {
+        "url": "https://github.com/murat-dogan/node-datachannel/issues"
+    },
+    "homepage": "https://github.com/murat-dogan/node-datachannel#readme",
+    "devDependencies": {
+        "@types/node": "^20.6.1",
+        "@typescript-eslint/eslint-plugin": "^5.62.0",
+        "@typescript-eslint/parser": "^5.62.0",
+        "cmake-js": "^6.3.2",
+        "eslint": "^8.49.0",
+        "eslint-config-prettier": "^8.10.0",
+        "eslint-plugin-prettier": "^4.2.1",
+        "jest": "^29.7.0",
+        "node-addon-api": "^7.0.0",
+        "prebuild": "^12.0.0",
+        "prettier": "^2.8.8",
+        "rollup": "^4.14.1",
+        "typescript": "^5.3.2"
+    },
+    "dependencies": {
+        "node-domexception": "^2.0.1",
+        "prebuild-install": "^7.0.1"
+    }
+}

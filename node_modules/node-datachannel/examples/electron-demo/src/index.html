@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>node-datachannel Demo</title>
+  </head>
+  <body>
+    <h1>node-datachannel Demo</h1>
+    <h2>My ID: <span id="my-id"></span></h2>
+    <br />
+    <!-- Text box -->
+    <input id="remote-id" type="text" placeholder="Remote ID" />
+    <button onclick="connect()" id="connect">Connect</button>
+    <br />
+    <p>Status: <span id="state">disconnected</span></p>
+    <br />
+    <br />
+    <h2>Messages</h2>
+    <input id="new-message" type="text" placeholder="Message to Send" width="100px"/>
+    <button onclick="sendMessage()">Send</button>
+    <br />
+    <br />
+    <input id="sendRandom" type="checkbox" onclick="sendRandomMessage()">Send Random Messages</input> Every <input id="randomInterval" type="number" value="1000" min="1" step="100" /> ms
+    <br />
+    <br />
+    <textarea id="messages" rows="10" cols="80" readonly></textarea>
+
+  </body>
+</html>

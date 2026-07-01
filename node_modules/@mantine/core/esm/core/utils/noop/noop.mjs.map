@@ -1,0 +1,1 @@
+{"version":3,"file":"noop.mjs","sources":["../../../../src/core/utils/noop/noop.ts"],"sourcesContent":["export const noop = () => {};\n"],"names":[],"mappings":";AAAO,CAAA,CAAA,CAAA,CAAA,CAAA,CAAM,CAAA,CAAA,CAAA,IAAO,CAAA,CAAA,CAAA,CAAA,CAAA,CAAM,CAAA;AAAC,CAAA,CAAA;;"}

@@ -1,0 +1,14 @@
+/**
+ * @license @tabler/icons-react v3.35.0 - MIT
+ *
+ * This source code is licensed under the MIT license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+import createReactComponent from '../createReactComponent.mjs';
+
+const __iconNode = [["path", { "d": "M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0", "key": "svg-0" }], ["path", { "d": "M12 3v18", "key": "svg-1" }], ["path", { "d": "M12 14l7 -7", "key": "svg-2" }], ["path", { "d": "M12 19l8.5 -8.5", "key": "svg-3" }], ["path", { "d": "M12 9l4.5 -4.5", "key": "svg-4" }]];
+const IconCircleHalf2 = createReactComponent("outline", "circle-half-2", "CircleHalf2", __iconNode);
+
+export { __iconNode, IconCircleHalf2 as default };
+//# sourceMappingURL=IconCircleHalf2.mjs.map

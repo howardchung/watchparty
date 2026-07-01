@@ -1,0 +1,1 @@
+{"version":3,"file":"CMSD_DYNAMIC.js","sourceRoot":"","sources":["../../../src/cmsd/CMSD_DYNAMIC.ts"],"names":[],"mappings":";;;AAAA;;;;;;GAMG;AACU,QAAA,YAAY,GAAG,cAAc,CAAC","sourcesContent":["/**\n * CMSD dynamic header name.\n *\n * @group CMSD\n *\n * @beta\n */\nexport const CMSD_DYNAMIC = 'CMSD-Dynamic';\n"]}

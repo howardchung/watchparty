@@ -1,0 +1,28 @@
+{
+  "name": "fast-readable-async-iterator",
+  "version": "2.0.0",
+  "description": "Fast Async Iterator for browser Readable Streams.",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ThaUnknown/fast-readable-async-iterator.git"
+  },
+  "keywords": [
+    "async",
+    "iterator",
+    "browser",
+    "readable",
+    "stream",
+    "caching",
+    "low-latency"
+  ],
+  "author": "ThaUnknown_",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ThaUnknown/fast-readable-async-iterator/issues"
+  },
+  "homepage": "https://github.com/ThaUnknown/fast-readable-async-iterator#readme",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}

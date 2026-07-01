@@ -1,0 +1,1 @@
+{"version":3,"file":"Id3Frame.js","sourceRoot":"","sources":["../../src/id3/Id3Frame.ts"],"names":[],"mappings":"","sourcesContent":["import type { DecodedId3Frame } from './DecodedId3Frame.js';\n\n/**\n * ID3 frame.\n *\n * @group ID3\n *\n * @beta\n */\nexport type Id3Frame = DecodedId3Frame<ArrayBuffer | string | number>;\n"]}

@@ -1,0 +1,51 @@
+{
+    "name": "imsc",
+    "description": "Renders IMSC documents to HTML5 fragments",
+    "version": "1.1.5",
+    "license": "BSD-2-Clause",
+    "homepage": "https://github.com/sandflow/imscJS",
+    "bugs": "https://github.com/sandflow/imscJS/issues",
+    "repository": "github:sandflow/imscJS",
+    "files": [
+        "src/main/js",
+        "README.txt",
+        "dist"
+    ],
+    "keywords": [
+        "imsc1",
+        "imsc1.0.1",
+        "imsc",
+        "imsc1.1",
+        "ebut-tt-d",
+        "smpte-tt",
+        "sdp-us",
+        "cff-tt",
+        "ttml",
+        "imsc"
+    ],
+    "author": "Pierre-Anthony Lemieux <pal@sandflow.com>",
+    "main": "src/main/js/main.js",
+    "unpkg": "dist/imsc.min.js",
+    "scripts": {
+        "prepublishOnly": "grunt build:release"
+    },
+    "dependencies": {
+        "sax": "1.2.1"
+    },
+    "devDependencies": {
+        "browserify": "^16.2.3",
+        "filesaver.js-npm": "latest",
+        "google-closure-compiler": "^20180910.1.0",
+        "grunt": "latest",
+        "grunt-browserify": "latest",
+        "grunt-contrib-clean": "latest",
+        "grunt-contrib-jshint": "latest",
+        "grunt-exec": "^3.0.0",
+        "grunt-npmcopy": "latest",
+        "grunt-sync": "latest",
+        "jszip": "latest",
+        "node-qunit": "^1.0.0",
+        "qunit-assert-close": "latest",
+        "qunitjs": "latest"
+    }
+}

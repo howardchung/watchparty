@@ -1,0 +1,14 @@
+{
+  "name": "freelist",
+  "version": "1.0.3",
+  "description": "Outsource of Node's internal FreeList module (originally by Ryan Dahl)",
+  "main": "index.js",
+  "keywords": [
+    "free",
+    "list",
+    "freelist"
+  ],
+  "repository": "https://github.com/kenansulayman/freelist.git",
+  "author": "Kenan Sulayman",
+  "license": "MIT"
+}

@@ -1,0 +1,45 @@
+{
+  "name": "cross-fetch-ponyfill",
+  "version": "1.0.3",
+  "type": "module",
+  "description": "Fetch polyfilled in Node only",
+  "main": "index.js",
+  "exports": {
+    "node": "./_node.js",
+    "browser": "./browser.js",
+    "default": "./browser.js"
+  },
+  "browser": {
+    "index.js": "browser.js",
+    "node-fetch": false,
+    "abort-controller": false
+  },
+  "chromeapp": {
+    "index.js": "browser.js",
+    "node-fetch": false,
+    "abort-controller": false
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ThaUnknown/cross-fetch-ponyfill.git"
+  },
+  "keywords": [
+    "fetch",
+    "ponyfill",
+    "node",
+    "browser"
+  ],
+  "author": "ThaUnknown",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ThaUnknown/cross-fetch-ponyfill/issues"
+  },
+  "homepage": "https://github.com/ThaUnknown/cross-fetch-ponyfill#readme",
+  "dependencies": {
+    "abort-controller": "^3.0.0",
+    "node-fetch": "^3.3.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
