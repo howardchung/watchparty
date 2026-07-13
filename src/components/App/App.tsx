@@ -12,7 +12,6 @@ import {
   getOrCreateClientId,
   getOrCreateSessionId,
   calculateMedian,
-  getUserImage,
   isYouTube,
   isMagnet,
   isHttp,
@@ -59,6 +58,7 @@ import {
   IconFile,
   IconKeyboardFilled,
   IconList,
+  IconMessageCircle,
   IconScreenShare,
   IconSettings,
   IconUser,
@@ -67,11 +67,11 @@ import {
   IconVolume,
   IconX,
 } from "@tabler/icons-react";
-import { InviteButton } from "../InviteButton/InviteButton";
 import type WebTorrent from "webtorrent";
 import type Hls from "hls.js";
 import { type MediaPlayerClass } from "dashjs";
 import { type Torrent } from "webtorrent";
+import { t } from "../../i18n";
 
 declare global {
   interface Window {
@@ -120,6 +120,7 @@ interface AppState {
   scrollTimestamp: number;
   unreadCount: number;
   fullScreen: boolean;
+  fullscreenChatOpen: boolean;
   controlsTimestamp: number;
   watchOptions: SearchResult[];
   isVBrowser: boolean;
@@ -194,6 +195,7 @@ export class App extends React.Component<AppProps, AppState> {
     scrollTimestamp: 0,
     unreadCount: 0,
     fullScreen: false,
+    fullscreenChatOpen: false,
     controlsTimestamp: 0,
     watchOptions: [],
     isVBrowser: false,
@@ -275,7 +277,7 @@ export class App extends React.Component<AppProps, AppState> {
   chatRef = React.createRef<Chat>();
 
   async componentDidMount() {
-    document.onfullscreenchange = this.onFullScreenChange;
+    document.addEventListener("fullscreenchange", this.onFullScreenChange);
     document.onkeydown = this.onKeydown;
 
     // Send heartbeat to the server
@@ -303,6 +305,7 @@ export class App extends React.Component<AppProps, AppState> {
   componentWillUnmount() {
     document.removeEventListener("fullscreenchange", this.onFullScreenChange);
     document.removeEventListener("keydown", this.onKeydown);
+    document.body.classList.remove("watch-fullscreen");
     window.clearInterval(this.heartbeat);
   }
 
@@ -908,10 +911,6 @@ export class App extends React.Component<AppProps, AppState> {
             Date.now().toString(),
           );
         }
-      }
-      const userImage = await getUserImage(user);
-      if (userImage) {
-        this.updatePicture(userImage);
       }
       this.updateUid(user);
     }
@@ -1801,8 +1800,21 @@ export class App extends React.Component<AppProps, AppState> {
   };
 
   onFullScreenChange = () => {
-    this.setState({ fullScreen: Boolean(document.fullscreenElement) });
-    setTimeout(() => this.chatRef.current?.scrollToBottom(), 100);
+    const fullScreen = Boolean(document.fullscreenElement);
+    this.setState(
+      {
+        fullScreen,
+        fullscreenChatOpen: false,
+      },
+      () => {
+        this.syncFullscreenBodyClass(fullScreen);
+        setTimeout(() => this.chatRef.current?.scrollToBottom(), 100);
+      },
+    );
+  };
+
+  syncFullscreenBodyClass = (fullScreen: boolean) => {
+    document.body.classList.toggle("watch-fullscreen", fullScreen);
   };
 
   onKeydown = (e: any) => {
@@ -1825,38 +1837,63 @@ export class App extends React.Component<AppProps, AppState> {
   };
 
   localFullScreen = async (bVideoOnly: boolean) => {
-    // Default: fullscreen the body (theater mode)
-    let container = document.body as HTMLElement;
-    if (bVideoOnly || isMobile()) {
-      if (this.playingVBrowser() && !isMobile()) {
-        // vbrowser needs to fullscreen the control wrapper div
-        // Can't really control the VBrowser on mobile anyway, so just fullscreen the video
-        container = document.getElementById("leftVideoParent") as HTMLElement;
-      } else {
-        // fullscreen just the video
-        container = this.Player().getVideoEl();
-      }
-    }
-    if (
-      !container.requestFullscreen &&
-      //@ts-expect-error
-      container.webkitEnterFullScreen
-    ) {
-      // e.g. iPhone doesn't allow requestFullscreen
-      //@ts-expect-error
-      container.webkitEnterFullscreen();
+    // iPhone Safari does not expose a DOM overlay while using native video
+    // fullscreen, so use a fixed room surface on small screens instead.
+    if (isMobile()) {
+      const fullScreen = !this.state.fullScreen;
+      this.setState(
+        {
+          fullScreen,
+          fullscreenChatOpen: false,
+        },
+        () => {
+          this.syncFullscreenBodyClass(fullScreen);
+          setTimeout(() => this.chatRef.current?.scrollToBottom(), 100);
+        },
+      );
       return;
     }
-    if (!document.fullscreenElement) {
-      // not currently in fullscreen
-      await container.requestFullscreen();
-    } else {
-      // e.g. switching from video fullscreen to theater mode
-      const bChangeElements = document.fullscreenElement !== container;
-      await document.exitFullscreen();
-      if (bChangeElements) {
+
+    // Fullscreen the room surface so controls and the chat overlay remain
+    // descendants of the browser's fullscreen element.
+    const container =
+      (bVideoOnly
+        ? document.getElementById("watch-room-layout")
+        : document.body) ?? document.body;
+
+    if (!container.requestFullscreen) {
+      const fullScreen = !this.state.fullScreen;
+      this.setState(
+        {
+          fullScreen,
+          fullscreenChatOpen: false,
+        },
+        () => this.syncFullscreenBodyClass(fullScreen),
+      );
+      return;
+    }
+
+    try {
+      if (!document.fullscreenElement) {
+        // not currently in fullscreen
         await container.requestFullscreen();
+      } else {
+        // e.g. switching from video fullscreen to theater mode
+        const bChangeElements = document.fullscreenElement !== container;
+        await document.exitFullscreen();
+        if (bChangeElements) {
+          await container.requestFullscreen();
+        }
       }
+    } catch {
+      const fullScreen = !this.state.fullScreen;
+      this.setState(
+        {
+          fullScreen,
+          fullscreenChatOpen: false,
+        },
+        () => this.syncFullscreenBodyClass(fullScreen),
+      );
     }
   };
 
@@ -1889,11 +1926,6 @@ export class App extends React.Component<AppProps, AppState> {
     this.setState({ myName: name });
     this.socket.emit("CMD:name", name);
     window.localStorage.setItem("watchparty-username", name);
-  };
-
-  updatePicture = (url: string) => {
-    this.setState({ myPicture: url });
-    this.socket.emit("CMD:picture", url);
   };
 
   updateUid = async (user: firebase.User) => {
@@ -2027,6 +2059,13 @@ export class App extends React.Component<AppProps, AppState> {
         localSetSubtitleMode={this.Player().setSubtitleMode}
         roomPlaylistPlay={this.roomPlaylistPlay}
         playlist={this.state.playlist}
+        fullscreen={this.state.fullScreen}
+        chatOpen={this.state.fullscreenChatOpen}
+        onToggleChat={() => {
+          this.setState((state) => ({
+            fullscreenChatOpen: !state.fullscreenChatOpen,
+          }));
+        }}
       />
     );
     return (
@@ -2072,7 +2111,7 @@ export class App extends React.Component<AppProps, AppState> {
         )}
         {this.state.state === "starting" && (
           <Overlay className={styles.flexCenter}>
-            <Title order={2}>Loading...</Title>
+            <Title order={2}>{t("loading")}</Title>
           </Overlay>
         )}
         {this.state.overlayMsg && <ErrorModal error={this.state.overlayMsg} />}
@@ -2105,7 +2144,7 @@ export class App extends React.Component<AppProps, AppState> {
         />
         {this.state.errorMessage && (
           <Alert
-            title="Error"
+            title={t("error")}
             color="red"
             style={{
               position: "fixed",
@@ -2119,7 +2158,7 @@ export class App extends React.Component<AppProps, AppState> {
         )}
         {this.state.successMessage && (
           <Alert
-            title="Success"
+            title={t("success")}
             color="green"
             style={{
               position: "fixed",
@@ -2148,15 +2187,17 @@ export class App extends React.Component<AppProps, AppState> {
         )}
         {!this.state.fullScreen && (
           <TopBar
-            roomTitle={this.state.roomTitle}
+            roomTitle={this.state.roomTitle || "اتاق تماشا"}
             roomDescription={this.state.roomDescription}
             roomTitleColor={this.state.roomTitleColor}
           />
         )}
         {
           <div
-            className={styles.mobileStack}
-            style={{ margin: "0 8px", display: "flex", columnGap: "32px" }}
+            id="watch-room-layout"
+            className={`${styles.watchPage} ${styles.roomLayout} ${
+              this.state.fullScreen ? styles.fullscreenLayout : ""
+            }`}
           >
             <div
               className={
@@ -2164,21 +2205,15 @@ export class App extends React.Component<AppProps, AppState> {
                   ? styles.fullHeightColumnFullscreen
                   : styles.fullHeightColumn) +
                 " " +
-                styles.leftColumn
+                styles.leftColumn +
+                " " +
+                styles.mediaColumn
               }
             >
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  height: "100%",
-                  position: "relative",
-                  gap: "4px",
-                }}
-              >
+              <div className={styles.mediaPanel}>
                 {!this.state.fullScreen && (
                   <React.Fragment>
-                    <div className={styles.mobileStack}>
+                    <div className={styles.sourceRow}>
                       <ComboBox
                         roomSetMedia={this.roomSetMedia}
                         playlistAdd={this.roomPlaylistAdd}
@@ -2188,14 +2223,14 @@ export class App extends React.Component<AppProps, AppState> {
                         disabled={!this.haveLock()}
                       />
                     </div>
-                    <div className={styles.mobileStack}>
+                    <div className={styles.actionRow}>
                       {this.localStreamToPublish && (
                         <Button
                           color="red"
                           onClick={this.stopPublishingLocalStream}
                           leftSection={<IconX />}
                         >
-                          Stop Share
+                          {t("stopShare")}
                         </Button>
                       )}
                       {!this.localStreamToPublish &&
@@ -2212,7 +2247,7 @@ export class App extends React.Component<AppProps, AppState> {
                             }}
                             leftSection={<IconScreenShare />}
                           >
-                            Screenshare
+                            {t("shareScreen")}
                           </Button>
                         )}
                       {!this.localStreamToPublish &&
@@ -2229,7 +2264,7 @@ export class App extends React.Component<AppProps, AppState> {
                             }}
                             leftSection={<IconBrowser />}
                           >
-                            VBrowser
+                            {t("virtualBrowser")}
                           </Button>
                         )}
                       {this.playingVBrowser() && (
@@ -2240,12 +2275,12 @@ export class App extends React.Component<AppProps, AppState> {
                             onClick={this.stopVBrowser}
                             leftSection={<IconX />}
                           >
-                            Stop VBrowser
+                            {t("stopShare")} مرورگر مجازی
                           </Button>
                           <Select
                             leftSection={<IconKeyboardFilled />}
                             value={this.state.controller}
-                            placeholder="No controller"
+                            placeholder="بدون کنترل‌کننده"
                             clearable
                             onChange={this.changeController}
                             disabled={!this.haveLock()}
@@ -2335,7 +2370,7 @@ export class App extends React.Component<AppProps, AppState> {
                             }}
                             leftSection={<IconFile />}
                           >
-                            File
+                            {t("shareFile")}
                           </Button>
                         )}
                       {this.state.uploadController && (
@@ -2346,7 +2381,7 @@ export class App extends React.Component<AppProps, AppState> {
                           }}
                           leftSection={<IconX />}
                         >
-                          Stop Convert
+                          {t("stopConvert")}
                         </Button>
                       )}
                       {false && (
@@ -2379,7 +2414,7 @@ export class App extends React.Component<AppProps, AppState> {
                             }
                             className={styles.shareButton}
                           >
-                            Playlist
+                            {t("playlist")}
                           </Button>
                         </Menu.Target>
                         <Menu.Dropdown
@@ -2392,7 +2427,7 @@ export class App extends React.Component<AppProps, AppState> {
                         >
                           {playlist.length === 0 && (
                             <Menu.Item disabled>
-                              There are no items in the playlist.
+                              فهرست پخش خالی است.
                             </Menu.Item>
                           )}
                           {playlist.map(
@@ -2424,7 +2459,10 @@ export class App extends React.Component<AppProps, AppState> {
                     </div>
                   </React.Fragment>
                 )}
-                <div style={{ flexGrow: 1, position: "relative" }}>
+                <div
+                  className={styles.playerStage}
+                  style={{ flexGrow: 1, position: "relative" }}
+                >
                   <div className={styles.playerContainer}>
                     {!this.state.isAutoPlayable && this.state.roomMedia && (
                       <Overlay className={styles.flexCenter}>
@@ -2437,7 +2475,7 @@ export class App extends React.Component<AppProps, AppState> {
                           leftSection={<IconVolume />}
                           size="xl"
                         >
-                          Unmute
+                          فعال‌سازی صدا
                         </Button>
                       </Overlay>
                     )}
@@ -2459,7 +2497,7 @@ export class App extends React.Component<AppProps, AppState> {
                               <Loader />
                               <div>
                                 {this.playingVBrowser()
-                                  ? "Launching virtual browser. This can take up to a minute."
+                                  ? "در حال راه‌اندازی مرورگر مجازی؛ ممکن است یک دقیقه طول بکشد."
                                   : ""}
                               </div>
                             </div>
@@ -2467,19 +2505,18 @@ export class App extends React.Component<AppProps, AppState> {
                           {!this.state.loading && !this.state.roomMedia && (
                             <Alert
                               color="yellow"
-                              title="You're not watching anything!"
+                              title={t("nothingPlaying")}
                             >
-                              Pick something to watch above.
+                              {t("chooseSomething")}
                             </Alert>
                           )}
                           {!this.state.loading &&
                             this.state.nonPlayableMedia && (
                               <Alert
                                 color="red"
-                                title="It doesn't look like this is a media file!"
+                              title="این فایل رسانه‌ای قابل پخش نیست."
                               >
-                                Maybe you meant to launch a VBrowser if you're
-                                trying to visit a web page?
+                                اگر می‌خواهید یک وب‌سایت را باز کنید، مرورگر مجازی را امتحان کنید.
                               </Alert>
                             )}
                         </div>
@@ -2561,7 +2598,12 @@ export class App extends React.Component<AppProps, AppState> {
                     )}
                   </div>
                 </div>
-                {this.state.roomMedia && controls}
+                {this.state.roomMedia &&
+                  (this.state.fullScreen ? (
+                    <div className={styles.fullscreenControls}>{controls}</div>
+                  ) : (
+                    controls
+                  ))}
                 {!isMobile() && (
                   <div className={styles.expandButton}>
                     <ActionIcon
@@ -2586,27 +2628,24 @@ export class App extends React.Component<AppProps, AppState> {
                 )}
               </div>
             </div>
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                position: "relative",
-                width: this.state.showChatColumn ? 400 : 0,
-                maxWidth: 400,
-                overflow: "hidden",
-                gap: "4px",
-              }}
-              className={`${
-                (this.state.fullScreen
-                  ? styles.fullHeightColumnFullscreen
-                  : styles.fullHeightColumn) +
-                " " +
-                styles.rightColumn
-              }`}
-            >
-              <div style={{ display: "flex", width: "100%", gap: "4px" }}>
+            {!this.state.fullScreen && (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  position: "relative",
+                  width: this.state.showChatColumn ? 400 : 0,
+                  maxWidth: 400,
+                  overflow: "hidden",
+                  gap: "4px",
+                }}
+                className={`${styles.fullHeightColumn} ${styles.rightColumn} ${styles.chatColumn}`}
+              >
+              <div className={styles.chatTools}>
                 <TextInput
                   // description="Name"
+                  aria-label="نام شما"
+                  placeholder="نام شما"
                   style={{
                     visibility: this.state.showChatColumn
                       ? undefined
@@ -2627,13 +2666,12 @@ export class App extends React.Component<AppProps, AppState> {
                         this.updateName(await generateName())
                       }
                     >
-                      Random
+                      تصادفی
                     </Button>
                   }
                 />
-                <InviteButton />
               </div>
-              <div style={{ display: "flex", gap: "4px" }}>
+              <div className={styles.roomActions}>
                 <Button
                   color="grey"
                   onClick={() =>
@@ -2647,7 +2685,7 @@ export class App extends React.Component<AppProps, AppState> {
                     <Badge circle>{this.state.participants.length}</Badge>
                   }
                 >
-                  People
+                  {t("people")}
                 </Button>
                 <Button
                   color="grey"
@@ -2658,7 +2696,7 @@ export class App extends React.Component<AppProps, AppState> {
                   }}
                   leftSection={<IconSettings />}
                 >
-                  Settings
+                  {t("settings")}
                 </Button>
               </div>
               {this.state.state === "connected" && (
@@ -2690,19 +2728,62 @@ export class App extends React.Component<AppProps, AppState> {
                   />
                 </div>
               )}
-              <Chat
-                chat={this.state.chat}
-                nameMap={this.state.nameMap}
-                pictureMap={this.state.pictureMap}
-                socket={this.socket}
-                scrollTimestamp={this.state.scrollTimestamp}
-                getMediaDisplayName={this.getMediaDisplayName}
-                isChatDisabled={this.state.isChatDisabled}
-                owner={this.state.owner}
-                ref={this.chatRef}
-                hide={!this.state.showChatColumn}
-              />
-            </div>
+                <Chat
+                  chat={this.state.chat}
+                  nameMap={this.state.nameMap}
+                  pictureMap={this.state.pictureMap}
+                  socket={this.socket}
+                  scrollTimestamp={this.state.scrollTimestamp}
+                  getMediaDisplayName={this.getMediaDisplayName}
+                  isChatDisabled={this.state.isChatDisabled}
+                  owner={this.state.owner}
+                  ref={this.chatRef}
+                  hide={!this.state.showChatColumn}
+                />
+              </div>
+            )}
+            {this.state.fullScreen && this.state.fullscreenChatOpen && (
+              <div
+                className={styles.fullscreenChatOverlay}
+                role="dialog"
+                aria-label={t("conversation")}
+              >
+                <div className={styles.fullscreenChatPanel}>
+                  <div className={styles.fullscreenChatHeader}>
+                    <div className={styles.fullscreenChatTitle}>
+                      <IconMessageCircle size={18} />
+                      <span>{t("conversation")}</span>
+                      <span className={styles.fullscreenChatMeta}>
+                        {this.state.participants.length}
+                      </span>
+                    </div>
+                    <ActionIcon
+                      variant="subtle"
+                      aria-label={t("closeChat")}
+                      onClick={() => {
+                        this.setState({ fullscreenChatOpen: false });
+                      }}
+                    >
+                      <IconX size={18} />
+                    </ActionIcon>
+                  </div>
+                  <Chat
+                    chat={this.state.chat}
+                    nameMap={this.state.nameMap}
+                    pictureMap={this.state.pictureMap}
+                    socket={this.socket}
+                    scrollTimestamp={this.state.scrollTimestamp}
+                    getMediaDisplayName={this.getMediaDisplayName}
+                    isChatDisabled={this.state.isChatDisabled}
+                    owner={this.state.owner}
+                    ref={this.chatRef}
+                    hide={false}
+                    fullscreen
+                    className={styles.fullscreenChatInner}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         }
       </React.Fragment>

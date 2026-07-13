@@ -1,31 +1,81 @@
 .controlsContainer {
   position: absolute;
-  width: 100%;
-  bottom: 0px;
+  inset-inline: 0;
+  bottom: 0;
 }
 
 .controls {
-  color: whitesmoke;
   display: flex;
   align-items: center;
-  line-height: 14px;
-  padding-left: 10px;
-  padding-top: 4px;
-  padding-bottom: 4px;
-  gap: 6px;
+  gap: 8px;
+  min-height: 54px;
+  padding: 8px 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--watch-text);
+  background: linear-gradient(180deg, transparent, rgba(5, 9, 18, 0.9) 30%);
+  direction: ltr;
 }
 
-@media only screen and (max-width: 600px) {
-  .controls {
-    flex-wrap: wrap;
-  }
+.chatOnlyControls {
+  justify-content: flex-start;
+  min-height: 58px;
+}
+
+.chatToggleButton {
+  min-height: 40px;
+  border: 1px solid rgba(255, 122, 105, 0.52);
+  color: var(--watch-text) !important;
+  background: rgba(255, 122, 105, 0.16) !important;
+  box-shadow: 0 8px 24px rgba(5, 9, 18, 0.2);
+}
+
+.chatToggleButton:hover {
+  border-color: var(--watch-coral);
+  background: rgba(255, 122, 105, 0.26) !important;
 }
 
 .text {
+  color: var(--watch-muted);
+  font-size: 11px;
   font-weight: 700;
-  font-size: 0.8em;
+  white-space: nowrap;
 }
 
 .action {
+  color: var(--watch-text);
   cursor: pointer;
+  transition:
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.action:hover {
+  color: var(--watch-coral);
+  transform: translateY(-1px);
+}
+
+.controls :global(.mantine-Progress-root) {
+  background: rgba(145, 162, 189, 0.22);
+}
+
+.controls :global(.mantine-Progress-section) {
+  background: var(--watch-coral);
+}
+
+.controls :global(.mantine-Slider-track) {
+  background: rgba(145, 162, 189, 0.25);
+}
+
+.controls :global(.mantine-Slider-bar),
+.controls :global(.mantine-Slider-thumb) {
+  background: var(--watch-coral);
+  border-color: var(--watch-coral);
+}
+
+@media (max-width: 720px) {
+  .controls {
+    flex-wrap: wrap;
+    gap: 7px;
+    padding: 8px;
+  }
 }

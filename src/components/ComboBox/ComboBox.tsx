@@ -16,6 +16,7 @@ import {
   Loader,
   type AutocompleteProps,
 } from "@mantine/core";
+import { t } from "../../i18n";
 
 type ComboBoxProps = {
   roomSetMedia: (value: string) => void;
@@ -155,13 +156,13 @@ export class ComboBox extends React.Component<ComboBoxProps, ComboBoxState> {
           <ActionIcon
             color="red"
             onClick={(e: any) => this.setMediaAndClose("")}
-            title="Clear"
+        title={t("clear")}
           >
             <IconX />
           </ActionIcon>
         }
         leftSection={this.state.loading ? <Loader size="sm" /> : <IconLink />}
-        placeholder="Enter video file URL, magnet link, YouTube link, or YouTube search term"
+        placeholder="نشانی MP4، HLS، مگنت یا لینک یوتیوب را وارد کنید"
         value={
           this.state.inputMedia !== undefined
             ? this.state.inputMedia

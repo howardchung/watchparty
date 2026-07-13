@@ -14,6 +14,7 @@ import {
   IconBrandGoogleFilled,
 } from "@tabler/icons-react";
 import config from "../../config";
+import { t } from "../../i18n";
 
 export class LoginModal extends React.Component<{
   closeModal: () => void;
@@ -67,7 +68,13 @@ export class LoginModal extends React.Component<{
         {this.state.showReset && (
           <ResetModal closeModal={() => this.setState({ showReset: false })} />
         )}
-        <Modal opened onClose={closeModal} title="Login" size="auto" centered>
+        <Modal
+          opened
+          onClose={closeModal}
+          title={t("loginTitle")}
+          size="auto"
+          centered
+        >
           <div>
             <div style={{ display: "flex", gap: "4px" }}>
               {enabledOptions.includes("facebook") && (
@@ -75,7 +82,7 @@ export class LoginModal extends React.Component<{
                   leftSection={<IconBrandFacebookFilled />}
                   onClick={this.facebookSignIn}
                 >
-                  Facebook
+                  فیس‌بوک
                 </Button>
               )}
               {enabledOptions.includes("google") && (
@@ -83,14 +90,14 @@ export class LoginModal extends React.Component<{
                   leftSection={<IconBrandGoogleFilled />}
                   onClick={this.googleSignIn}
                 >
-                  Google
+                  گوگل
                 </Button>
               )}
             </div>
             {enabledOptions.includes("email") && (
               <>
                 <Divider
-                  label="Or sign in with email"
+                  label="یا با ایمیل وارد شوید"
                   labelPosition="center"
                   my="lg"
                 />
@@ -106,27 +113,27 @@ export class LoginModal extends React.Component<{
                   }}
                 >
                   {this.state.error && (
-                    <Alert color="red" title="Error">
+                    <Alert color="red" title={t("error")}>
                       {this.state.error}
                     </Alert>
                   )}
                   <TextInput
-                    label="Email"
-                    placeholder="Email"
+                    label={t("email")}
+                    placeholder={t("email")}
                     value={this.state.email}
                     onChange={(e) => this.setState({ email: e.target.value })}
                   />
                   <PasswordInput
-                    label="Password"
-                    placeholder="Password"
+                    label={t("password")}
+                    placeholder={t("password")}
                     value={this.state.password}
                     onChange={(e) =>
                       this.setState({ password: e.target.value })
                     }
                   />
-                  <Button type="submit">Login</Button>
+                  <Button type="submit">{t("signIn")}</Button>
                 </form>
-                <Divider label="Or" labelPosition="center" my="lg" />
+                <Divider label="یا" labelPosition="center" my="lg" />
                 <div
                   style={{
                     display: "flex",
@@ -138,13 +145,13 @@ export class LoginModal extends React.Component<{
                     size="xs"
                     onClick={() => this.setState({ showCreate: true })}
                   >
-                    Create account
+                    {t("createAccount")}
                   </Button>
                   <Button
                     size="xs"
                     onClick={() => this.setState({ showReset: true })}
                   >
-                    Reset password
+                    {t("resetPassword")}
                   </Button>
                 </div>
               </>
@@ -176,7 +183,7 @@ export class CreateModal extends React.Component<{
       <Modal
         opened
         onClose={closeModal}
-        title="Create an account"
+        title={t("createAccount")}
         size="auto"
         centered
       >
@@ -188,23 +195,23 @@ export class CreateModal extends React.Component<{
           style={{ display: "flex", flexDirection: "column", gap: "8px" }}
         >
           {this.state.error && (
-            <Alert color="red" title="Error">
+            <Alert color="red" title={t("error")}>
               {this.state.error}
             </Alert>
           )}
           <TextInput
-            label="Email"
-            placeholder="Email"
+            label={t("email")}
+            placeholder={t("email")}
             value={this.state.email}
             onChange={(e) => this.setState({ email: e.target.value })}
           />
           <PasswordInput
-            label="Password"
-            placeholder="Password"
+            label={t("password")}
+            placeholder={t("password")}
             value={this.state.password}
             onChange={(e) => this.setState({ password: e.target.value })}
           />
-          <Button type="submit">Create</Button>
+          <Button type="submit">{t("createAccount")}</Button>
         </form>
       </Modal>
     );
@@ -229,7 +236,7 @@ export class ResetModal extends React.Component<{
   render() {
     const { closeModal } = this.props;
     return (
-      <Modal opened onClose={closeModal} title="Reset password" centered>
+        <Modal opened onClose={closeModal} title={t("resetPassword")} centered>
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -238,17 +245,17 @@ export class ResetModal extends React.Component<{
           style={{ display: "flex", flexDirection: "column", gap: "8px" }}
         >
           {this.state.error && (
-            <Alert color="red" title="Error">
+            <Alert color="red" title={t("error")}>
               {this.state.error}
             </Alert>
           )}
           <TextInput
-            label="Email"
-            placeholder="Email"
+            label={t("email")}
+            placeholder={t("email")}
             value={this.state.email}
             onChange={(e) => this.setState({ email: e.target.value })}
           />
-          <Button type="submit">Reset</Button>
+          <Button type="submit">{t("resetPassword")}</Button>
         </form>
       </Modal>
     );

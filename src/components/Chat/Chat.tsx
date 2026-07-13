@@ -1,7 +1,6 @@
 import React, { RefObject, useContext } from "react";
 import {
   ActionIcon,
-  Avatar,
   Button,
   HoverCard,
   TextInput,
@@ -17,8 +16,6 @@ import styles from "./Chat.module.css";
 
 import {
   formatTimestamp,
-  getColorForStringHex,
-  getDefaultPicture,
   getOrCreateClientId,
   isEmojiString,
 } from "../../utils/utils";
@@ -30,6 +27,12 @@ import {
   TransitionGroup,
 } from "react-transition-group";
 import { MetadataContext } from "../../MetadataContext";
+import { t } from "../../i18n";
+import {
+  IconCornerDownLeft,
+  IconMoodSmile,
+  IconSend,
+} from "@tabler/icons-react";
 
 const clientId = getOrCreateClientId();
 const truncateReply = (input?: string, max = 30) =>
@@ -42,6 +45,7 @@ interface ChatProps {
   socket: Socket;
   scrollTimestamp: number;
   className?: string;
+  fullscreen?: boolean;
   getMediaDisplayName: (input?: string) => string;
   hide?: boolean;
   isChatDisabled?: boolean;
@@ -185,7 +189,7 @@ export class Chat extends React.Component<ChatProps> {
     if (cmd === "host") {
       return (
         <React.Fragment>
-          {`changed the video to `}
+          {`ویدیو را تغییر داد`}
           <span style={{ textTransform: "initial" }}>
             {this.props.getMediaDisplayName(msg)}
           </span>
@@ -194,38 +198,38 @@ export class Chat extends React.Component<ChatProps> {
     } else if (cmd === "playlistAdd") {
       return (
         <React.Fragment>
-          {`added to the playlist: `}
+          {`به فهرست پخش اضافه کرد: `}
           <span style={{ textTransform: "initial" }}>
             {this.props.getMediaDisplayName(msg)}
           </span>
         </React.Fragment>
       );
     } else if (cmd === "seek") {
-      return `jumped to ${formatTimestamp(msg)}`;
+      return `به ${formatTimestamp(msg)} رفت`;
     } else if (cmd === "play") {
-      return `started the video at ${formatTimestamp(msg)}`;
+      return `پخش را از ${formatTimestamp(msg)} شروع کرد`;
     } else if (cmd === "pause") {
-      return `paused the video at ${formatTimestamp(msg)}`;
+      return `پخش را در ${formatTimestamp(msg)} متوقف کرد`;
     } else if (cmd === "playbackRate") {
-      return `set the playback rate to ${msg === "0" ? "auto" : `${msg}x`}`;
+      return `سرعت پخش را روی ${msg === "0" ? "خودکار" : `${msg}x`} گذاشت`;
     } else if (cmd === "lock") {
-      return `locked the room`;
+      return `اتاق را قفل کرد`;
     } else if (cmd === "unlock") {
-      return "unlocked the room";
+      return "قفل اتاق را باز کرد";
     } else if (cmd === "vBrowserTimeout") {
       return (
         <React.Fragment>
-          The VBrowser shut down automatically.
+          مرورگر مجازی به‌صورت خودکار متوقف شد.
           <br />
-          Subscribe for longer sessions.
+          برای زمان بیشتر اشتراک تهیه کنید.
         </React.Fragment>
       );
     } else if (cmd === "vBrowserAlmostTimeout") {
       return (
         <React.Fragment>
-          The VBrowser will shut down soon.
+          مرورگر مجازی به‌زودی متوقف می‌شود.
           <br />
-          Subscribe for longer sessions.
+          برای زمان بیشتر اشتراک تهیه کنید.
         </React.Fragment>
       );
     }
@@ -239,24 +243,18 @@ export class Chat extends React.Component<ChatProps> {
   render() {
     return (
       <div
-        className={this.props.className}
+        className={`${styles.chatPanel} ${
+          this.props.fullscreen ? styles.fullscreenPanel : ""
+        } ${this.props.className || ""}`}
         style={{
           display: this.props.hide ? "none" : "flex",
-          flexDirection: "column",
-          flexGrow: 1,
-          minHeight: 0,
-          marginTop: 0,
-          marginBottom: 0,
-          padding: "8px",
-          backgroundColor: "rgba(30,30,30,1)",
         }}
       >
         <div
           className={styles.chatContainer}
           ref={this.messagesRef}
-          style={{ position: "relative" }}
         >
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          <div className={styles.messageList}>
             {this.props.chat.map((msg) => (
               <ChatMessage
                 key={msg.timestamp + msg.id}
@@ -283,20 +281,15 @@ export class Chat extends React.Component<ChatProps> {
           {!this.state.isNearBottom && (
             <Button
               size="xs"
+              className={styles.jumpButton}
               onClick={this.scrollToBottom}
-              style={{
-                position: "sticky",
-                bottom: 0,
-                display: "block",
-                margin: "0 auto",
-              }}
             >
-              Jump to bottom
+              {t("jumpToBottom")}
             </Button>
           )}
         </div>
         {this.state.isPickerOpen && (
-          <div style={{ position: "absolute", bottom: "60px" }}>
+          <div className={styles.emojiPicker}>
             <Picker
               theme="dark"
               previewPosition="none"
@@ -347,69 +340,63 @@ export class Chat extends React.Component<ChatProps> {
           /> */}
         </CSSTransition>
         {this.state.replyTo && (
-          <div
-            className={styles.replyComposer}
-            style={{
-              marginTop: 10,
-              padding: "6px 8px",
-              borderLeft: "2px solid rgb(46, 137, 212)",
-              background: "rgba(255, 255, 255, 0.06)",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              gap: 8,
-            }}
-          >
-            <div className={styles.small + " " + styles.light}>
-              Replying to {this.props.nameMap[this.state.replyTo.id] || "Unknown"}
+          <div className={styles.replyComposer}>
+            <div className={`${styles.small} ${styles.light}`}>
+              {t("replyingTo")}{" "}
+              {this.props.nameMap[this.state.replyTo.id] || "کاربر"}
               {this.state.replyTo.msg ? (
-                <div
-                  style={{
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    maxWidth: 260,
-                  }}
-                >
+                <div className={styles.replyPreview}>
                   {this.state.replyTo.msg}
                 </div>
               ) : null}
             </div>
-            <Button size="xs" variant="subtle" onClick={this.clearReplyTo}>
-              Cancel
+            <Button
+              size="xs"
+              variant="subtle"
+              leftSection={<IconCornerDownLeft size={15} />}
+              onClick={this.clearReplyTo}
+            >
+              {t("cancel")}
             </Button>
           </div>
         )}
-        <TextInput
-          ref={this.chatInputRef}
-          style={{ marginTop: "10px" }}
-          onKeyDown={(e: any) => e.key === "Enter" && this.sendChatMsg()}
-          onChange={this.updateChatMsg}
-          value={this.state.chatMsg}
-          error={this.chatTooLong()}
-          disabled={this.props.isChatDisabled}
-          placeholder={
-            this.props.isChatDisabled
-              ? "The chat was disabled by the room owner."
-              : "Enter a message..."
-          }
-          rightSection={
-            <ActionIcon
-              onClick={() => {
-                // Add a delay to prevent the click from triggering onClickOutside
-                const curr = this.state.isPickerOpen;
-                setTimeout(() => this.setState({ isPickerOpen: !curr }), 100);
-              }}
-              disabled={this.props.isChatDisabled}
-            >
-              <span role="img" aria-label="Emoji">
-                😀
-              </span>
-            </ActionIcon>
-          }
-        >
-          {/* <Icon onClick={this.sendChatMsg} name="send" inverted circular link /> */}
-        </TextInput>
+        <div className={styles.composer}>
+          <TextInput
+            ref={this.chatInputRef}
+            className={styles.composerInput}
+            onKeyDown={(e: any) => e.key === "Enter" && this.sendChatMsg()}
+            onChange={this.updateChatMsg}
+            value={this.state.chatMsg}
+            error={this.chatTooLong()}
+            disabled={this.props.isChatDisabled}
+            placeholder={
+              this.props.isChatDisabled
+                ? t("chatDisabled")
+                : t("messagePlaceholder")
+            }
+            rightSection={
+              <ActionIcon
+                aria-label={t("emoji")}
+                variant="subtle"
+                onClick={() => {
+                  const curr = this.state.isPickerOpen;
+                  setTimeout(() => this.setState({ isPickerOpen: !curr }), 100);
+                }}
+                disabled={this.props.isChatDisabled}
+              >
+                <IconMoodSmile size={18} />
+              </ActionIcon>
+            }
+          />
+          <ActionIcon
+            className={styles.sendButton}
+            aria-label={t("send")}
+            onClick={this.sendChatMsg}
+            disabled={this.props.isChatDisabled || !this.state.chatMsg}
+          >
+            <IconSend size={19} />
+          </ActionIcon>
+        </div>
       </div>
     );
   }
@@ -453,33 +440,13 @@ const ChatMessage = ({
   const imageMsg = renderImageString(msg);
   return (
     <div
-      style={{
-        display: "flex",
-        gap: "8px",
-        alignItems: "center",
-        position: "relative",
-        overflowWrap: "anywhere",
-      }}
       className={`${styles.comment} ${className} ${
         message.replyToUserId === clientId ? styles.replyMessage : ""
       }`}
     >
-      {id ? (
-        <Avatar
-          src={
-            pictureMap[id] ||
-            getDefaultPicture(nameMap[id], getColorForStringHex(id))
-          }
-        />
-      ) : null}
-      <div>
+      <div className={styles.commentBody}>
         <div
-          style={{
-            display: "flex",
-            gap: "8px",
-            alignItems: "flex-end",
-            fontSize: 14,
-          }}
+          className={styles.commentHeader}
         >
           <UserMenu
             displayName={nameMap[id] || id}
@@ -490,7 +457,7 @@ const ChatMessage = ({
             disabled={!Boolean(owner && owner === user?.uid)}
             trigger={
               <div
-                style={{ cursor: "pointer", fontWeight: 700 }}
+                style={{ cursor: "pointer", fontWeight: 800 }}
                 title={isSub ? "WatchParty Plus subscriber" : ""}
                 className={`${isSub ? styles.subscriber : styles.light} ${styles.hoverEffect}`}
               >
@@ -535,7 +502,7 @@ const ChatMessage = ({
           )}
         >
           <div
-            className={`${styles.light} ${
+            className={`${styles.messageText} ${
               isEmojiString(msg) ? styles.emoji : ""
             }`}
           >
@@ -548,19 +515,10 @@ const ChatMessage = ({
             <ActionIcon
               onClick={() => onReply(id, timestamp, msg)}
               disabled={isChatDisabled}
-              style={{
-                opacity: 1,
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                padding: 0,
-                margin: 0,
-                marginRight: 4,
-              }}
+              variant="subtle"
+              aria-label={t("reply")}
             >
-              <span role="img" aria-label="Reply" style={{ margin: 0, fontSize: 16 }}>
-                ↩
-              </span>
+              <IconCornerDownLeft size={16} />
             </ActionIcon>
           )}
           <ActionIcon
@@ -578,22 +536,10 @@ const ChatMessage = ({
               }, 100);
             }}
             disabled={isChatDisabled}
-            style={{
-              opacity: 1,
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              padding: 0,
-              margin: 0,
-            }}
+            variant="subtle"
+            aria-label={t("emoji")}
           >
-            <span
-              role="img"
-              aria-label="React"
-              style={{ margin: 0, fontSize: 18 }}
-            >
-              😀
-            </span>
+            <IconMoodSmile size={17} />
           </ActionIcon>
         </div>
         <TransitionGroup>

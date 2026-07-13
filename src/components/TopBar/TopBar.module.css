@@ -1,0 +1,214 @@
+.topBar {
+  width: min(1440px, calc(100% - 32px));
+  min-height: 68px;
+  margin: 16px auto 10px;
+  padding: 10px 14px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  background: rgba(13, 20, 36, 0.9);
+  border: 1px solid var(--watch-border);
+  border-radius: 18px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.16);
+  backdrop-filter: blur(18px);
+  position: relative;
+  z-index: 20;
+}
+
+.brandCluster,
+.topActions,
+.homeNav,
+.roomIdentity,
+.roomStatus,
+.brand,
+.accountButton,
+.roomMenuItem {
+  display: flex;
+  align-items: center;
+}
+
+.brandCluster,
+.topActions {
+  gap: 12px;
+}
+
+.brand {
+  gap: 9px;
+  text-decoration: none;
+  color: var(--watch-text);
+  font-size: 23px;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+}
+
+.brandMark {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--watch-bg);
+  background: var(--watch-coral);
+  border-radius: 10px 10px 10px 4px;
+  box-shadow: 0 8px 20px rgba(255, 122, 105, 0.22);
+}
+
+.homeNav {
+  gap: 16px;
+  margin-inline-start: 18px;
+  color: var(--watch-muted);
+  font-size: 13px;
+}
+
+.homeNav a {
+  text-decoration: none;
+  transition: color 160ms ease;
+}
+
+.homeNav a:hover {
+  color: var(--watch-text);
+}
+
+.roomIdentity {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding-inline-start: 16px;
+  border-inline-start: 1px solid var(--watch-border);
+}
+
+.roomIdentity strong {
+  font-size: 17px;
+  line-height: 1.2;
+}
+
+.roomIdentity span {
+  color: var(--watch-muted);
+  font-size: 11px;
+  max-width: 260px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.topActions {
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.primaryButton {
+  background: var(--watch-coral);
+  color: var(--watch-bg);
+  border: 1px solid transparent;
+}
+
+.primaryButton:hover {
+  background: var(--watch-coral-strong);
+}
+
+.secondaryButton,
+.signInButton,
+.accountButton {
+  color: var(--watch-text);
+}
+
+.secondaryButton:hover,
+.signInButton:hover,
+.accountButton:hover {
+  background: var(--watch-surface-raised);
+}
+
+.accountButton {
+  gap: 7px;
+  border: 1px solid var(--watch-border);
+  border-radius: 10px;
+  padding: 9px 12px;
+  background: var(--watch-surface-soft);
+  cursor: pointer;
+}
+
+.iconButton {
+  color: var(--watch-text);
+  border: 1px solid var(--watch-border);
+  background: var(--watch-surface-soft);
+}
+
+.iconButton:hover {
+  color: var(--watch-coral);
+  background: var(--watch-surface-raised);
+}
+
+.roomStatus {
+  gap: 7px;
+  color: var(--watch-teal);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--watch-teal);
+  box-shadow: 0 0 0 4px rgba(45, 212, 191, 0.12);
+}
+
+.roomMenuItem {
+  width: 100%;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+@media (max-width: 820px) {
+  .topBar {
+    width: min(100% - 20px, 680px);
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .brandCluster,
+  .topActions {
+    width: 100%;
+  }
+
+  .topActions {
+    justify-content: flex-start;
+  }
+
+  .homeNav {
+    margin-inline-start: auto;
+  }
+}
+
+@media (max-width: 520px) {
+  .topBar {
+    padding: 10px;
+  }
+
+  .brandCluster {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .homeNav {
+    margin-inline-start: 0;
+    gap: 10px;
+    font-size: 12px;
+  }
+
+  .topActions {
+    gap: 6px;
+  }
+
+  .topActions > :global(.mantine-Button-root) {
+    flex: 1 1 auto;
+  }
+
+  .roomIdentity {
+    padding-inline-start: 0;
+    border-inline-start: 0;
+  }
+}

@@ -4,6 +4,7 @@ import { serverPath } from "../../utils/utils";
 import { SubscribeModal } from "../Modal/SubscribeModal";
 import { MetadataContext } from "../../MetadataContext";
 import { IconStarFilled, IconTool } from "@tabler/icons-react";
+import { t } from "../../i18n";
 
 export const SubscribeButton = () => {
   const { isSubscriber } = useContext(MetadataContext);
@@ -21,7 +22,7 @@ export const SubscribeButton = () => {
         color="orange"
         onClick={() => setIsSubscribeModalOpen(true)}
       >
-        Subscribe
+        اشتراک
       </Button>
     </>
   );
@@ -47,7 +48,7 @@ export const ManageSubButton = ({}: {}) => {
   }, [user]);
   return (
     <Button leftSection={<IconTool />} color="orange" onClick={onManage}>
-      Manage Subscription
+      {t("manageSubscription")}
     </Button>
   );
 };

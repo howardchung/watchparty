@@ -1,221 +1,180 @@
-import React, { useContext } from "react";
-import { Button, Stepper } from "@mantine/core";
+import React, { FormEvent, useContext, useState } from "react";
+import { Button, TextInput } from "@mantine/core";
 import {
-  IconBrandDiscordFilled,
-  IconBrandYoutubeFilled,
-  IconBrowser,
-  IconFile,
+  IconArrowLeft,
+  IconBadgeCc,
   IconLink,
-  IconList,
   IconMessageFilled,
-  type IconProps,
+  IconPlayerPlayFilled,
   IconRefresh,
-  IconScreenShare,
-  IconVideo,
 } from "@tabler/icons-react";
-import { NewRoomButton } from "../TopBar/TopBar";
-import styles from "./Home.module.css";
 import { MetadataContext } from "../../MetadataContext";
+import { createRoom } from "../TopBar/TopBar";
+import { t } from "../../i18n";
+import styles from "./Home.module.css";
+
+const features = [
+  {
+    icon: IconRefresh,
+    title: t("featureSync"),
+    text: t("featureSyncText"),
+    color: "teal",
+  },
+  {
+    icon: IconMessageFilled,
+    title: t("featureChat"),
+    text: t("featureChatText"),
+    color: "coral",
+  },
+  {
+    icon: IconBadgeCc,
+    title: t("featureSubtitles"),
+    text: t("featureSubtitlesText"),
+    color: "amber",
+  },
+];
+
+const steps = [
+  {
+    number: "۱",
+    title: t("stepRoom"),
+    text: t("stepRoomText"),
+    icon: "＋",
+  },
+  {
+    number: "۲",
+    title: t("stepShare"),
+    text: t("stepShareText"),
+    icon: "↗",
+  },
+  {
+    number: "۳",
+    title: t("stepPlay"),
+    text: t("stepPlayText"),
+    icon: "▶",
+  },
+];
 
 export const Home = () => {
   const { user } = useContext(MetadataContext);
+  const [source, setSource] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
+  const [error, setError] = useState("");
+
+  const submitCreate = async (event: FormEvent) => {
+    event.preventDefault();
+    setError("");
+    setIsCreating(true);
+    try {
+      await createRoom(user, false, source.trim());
+    } catch (createError) {
+      console.error(createError);
+      setError("ساخت اتاق انجام نشد. دوباره تلاش کنید.");
+      setIsCreating(false);
+    }
+  };
+
+  const joinRoom = () => {
+    const value = window.prompt("لینک اتاق را وارد کنید:");
+    if (!value) {
+      return;
+    }
+    try {
+      const url = new URL(value, window.location.origin);
+      if (!url.pathname.startsWith("/watch/") && !url.pathname.startsWith("/r/")) {
+        setError("این لینک، لینک معتبر اتاق نیست.");
+        return;
+      }
+      window.location.assign(url.pathname + url.search);
+    } catch {
+      setError("این لینک معتبر نیست.");
+    }
+  };
+
   return (
-    <div>
-      <div className={styles.container}>
-        <Hero
-          heroText={"Watch videos together with friends anywhere."}
-          subText={"No registration or download required."}
-          action={
-            <div style={{ marginTop: "8px", width: "300px" }}>
-              <NewRoomButton size="xl" />
-            </div>
-          }
-          image={"/screenshot4.png"}
-        />
-        <div className={styles.featureSection}>
-          <Feature
-            Icon={IconBrowser}
-            title={`VBrowser`}
-            text="Watch together on a virtual browser running in the cloud."
-          />
-          <Feature
-            Icon={IconBrandYoutubeFilled}
-            title={`YouTube`}
-            text="Watch videos together from YouTube."
-          />
-          <Feature
-            Icon={IconScreenShare}
-            title={`Screensharing`}
-            text="Share a browser tab or your desktop."
-          />
-          <Feature
-            Icon={IconFile}
-            title={`File`}
-            text="Upload and stream your own file."
-          />
-          <Feature
-            Icon={IconLink}
-            title={`URL`}
-            text="Paste in a video URL for everyone to watch from."
-          />
-        </div>
-
-        <Hero
-          heroText={"React to moments together."}
-          subText={"Find moments of shared joy even when you're apart."}
-          image={"/screenshot18.png"}
-          color="green"
-        />
-        <div className={styles.featureSection}>
-          <Feature
-            Icon={IconRefresh}
-            title="Synchronized Play"
-            text="Starts, stops, and seeks are synchronized to everyone, so take those restroom and snack breaks without worrying about falling behind."
-          />
-          <Feature
-            Icon={IconMessageFilled}
-            title="Chat"
-            text="Chat with others in your room. Memes and inside jokes encouraged."
-          />
-          <Feature
-            Icon={IconList}
-            title="Playlists"
-            text="Set up a whole list of videos to play next, and rearrange to your heart's content."
-          />
-          <Feature
-            Icon={IconVideo}
-            title="Video chat"
-            text="Jump into video chat if you'd rather be face-to-face."
-          />
-        </div>
-
-        <Hero
-          heroText={"Theater mode."}
-          subText={
-            "Bring video and chat front-and-center for minimal distractions."
-          }
-          image={"/screenshot14.png"}
-        />
-        <div
-          style={{
-            padding: "30px",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-          }}
-        >
-          <div className={styles.heroText}>Get started!</div>
-          <div className={styles.featureSection}>
-            <Stepper active={-1}>
-              <Stepper.Step label="Make a room" />
-              <Stepper.Step label="Share link with friends" />
-              <Stepper.Step label="Pick something to watch" />
-              <Stepper.Step label="Success!" />
-            </Stepper>
+    <main className={styles.homePage} dir="rtl">
+      <section className={styles.hero}>
+        <div className={styles.heroCopy}>
+          <div className={styles.heroTitleRow}>
+            <span className={styles.heroPlayMark}>
+              <IconPlayerPlayFilled size={18} />
+            </span>
+            <span className={styles.heroKicker}>تماشای خصوصی، با هم</span>
           </div>
-          {/* <div style={{ width: '160px' }}>
-            <NewRoomButton />
-          </div> */}
+          <h1>{t("homeHeadline")}</h1>
+          <p>{t("homeSubhead")}</p>
+          <form className={styles.createForm} onSubmit={submitCreate}>
+            <TextInput
+              aria-label={t("source")}
+              className={styles.sourceInput}
+              value={source}
+              onChange={(event) => setSource(event.currentTarget.value)}
+              placeholder={t("sourcePlaceholder")}
+              leftSection={<IconLink size={18} />}
+              dir="ltr"
+            />
+            <span className={styles.formHelper}>{t("homeHelper")}</span>
+            <div className={styles.heroActions}>
+              <Button
+                type="submit"
+                loading={isCreating}
+                className={styles.primaryAction}
+                leftSection={<IconPlayerPlayFilled size={18} />}
+              >
+                {t("createRoom")}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className={styles.secondaryAction}
+                rightSection={<IconArrowLeft size={18} />}
+                onClick={joinRoom}
+              >
+                {t("joinRoom")}
+              </Button>
+            </div>
+            {error && <div className={styles.error}>{error}</div>}
+          </form>
         </div>
-      </div>
-      <DiscordBot />
-    </div>
-  );
-};
-
-const Feature = ({
-  Icon,
-  text,
-  title,
-}: {
-  Icon: React.ForwardRefExoticComponent<IconProps>;
-  text: string;
-  title: string;
-}) => {
-  return (
-    <div
-      style={{
-        display: "flex",
-        flex: "1 1 0px",
-        flexDirection: "column",
-        alignItems: "center",
-        padding: "10px",
-        minWidth: "180px",
-      }}
-    >
-      <Icon size={80} />
-      <h4 className={styles.featureTitle}>{title}</h4>
-      <div className={styles.featureText}>{text}</div>
-    </div>
-  );
-};
-
-export const Hero = ({
-  heroText,
-  subText,
-  subText2,
-  action,
-  image,
-  color,
-}: {
-  heroText?: string;
-  subText?: string;
-  subText2?: string;
-  action?: React.ReactNode;
-  image?: string;
-  color?: string;
-}) => {
-  return (
-    <div className={`${styles.hero} ${color === "green" ? styles.green : ""}`}>
-      <div
-        style={{ flexDirection: color === "green" ? "row-reverse" : undefined }}
-        className={styles.heroInner}
-      >
-        <div style={{ padding: "30px", flex: "1 1 0" }}>
-          <div className={styles.heroText}>{heroText}</div>
-          <div className={styles.subText}>{subText}</div>
-          <div className={styles.subText}>{subText2}</div>
-          {action}
+        <div className={styles.heroPreview}>
+          <div className={styles.previewFrame}>
+            <img
+              src="/watch-room-preview.png"
+              alt="پیش‌نمایش اتاق تماشای Watch"
+            />
+          </div>
         </div>
-        <div
-          style={{
-            flex: "1 1 0",
-          }}
-        >
-          <img
-            alt="hero"
-            style={{ width: "100%", borderRadius: "10px" }}
-            src={image}
-          />
-        </div>
-      </div>
-    </div>
-  );
-};
+      </section>
 
-export const DiscordBot = () => {
-  return (
-    <div>
-      <Hero
-        color="green"
-        heroText={
-          "Add the WatchParty Discord bot to your server to easily generate WatchParty links."
-        }
-        subText={"/watch to generate a new empty room"}
-        subText2={"/watch video <URL_HERE> to create a room with a video"}
-        action={
-          <Button
-            leftSection={<IconBrandDiscordFilled />}
-            component="a"
-            size="lg"
-            target="_blank"
-            href="https://discord.com/api/oauth2/authorize?client_id=1071394728513380372&permissions=2147485696&scope=bot"
-          >
-            Add to Discord
-          </Button>
-        }
-        image={"/screenshot5.png"}
-      />
-    </div>
+      <section className={styles.featureBand} aria-label="امکانات">
+        {features.map(({ icon: FeatureIcon, title, text, color }) => (
+          <div className={styles.feature} key={title}>
+            <span className={`${styles.featureIcon} ${styles[color]}`}>
+              <FeatureIcon size={22} />
+            </span>
+            <div>
+              <h2>{title}</h2>
+              <p>{text}</p>
+            </div>
+          </div>
+        ))}
+      </section>
+
+      <section className={styles.stepsSection}>
+        <h2>{t("howItWorks")}</h2>
+        <div className={styles.steps}>
+          {steps.map((step) => (
+            <article className={styles.step} key={step.number}>
+              <div className={styles.stepTop}>
+                <span className={styles.stepNumber}>{step.number}</span>
+                <span className={styles.stepIcon}>{step.icon}</span>
+              </div>
+              <h3>{step.title}</h3>
+              <p>{step.text}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+    </main>
   );
 };

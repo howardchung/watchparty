@@ -2,22 +2,300 @@
   display: none !important;
 }
 
+.watchPage {
+  width: min(1440px, calc(100% - 32px));
+  margin: 0 auto 18px;
+}
+
+.roomLayout {
+  display: flex;
+  align-items: stretch;
+  gap: 16px;
+  min-height: calc(100vh - 122px);
+  direction: ltr;
+}
+
+.fullscreenLayout {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  width: 100%;
+  max-width: none;
+  height: 100dvh;
+  min-height: 100dvh;
+  margin: 0;
+  padding: max(8px, env(safe-area-inset-top))
+    max(8px, env(safe-area-inset-right))
+    max(8px, env(safe-area-inset-bottom))
+    max(8px, env(safe-area-inset-left));
+  box-sizing: border-box;
+  overflow: hidden;
+  background: #050912;
+}
+
+.fullscreenLayout:fullscreen {
+  background: #050912;
+}
+
+.fullscreenLayout .mediaColumn {
+  width: 100%;
+  height: 100%;
+}
+
+.fullscreenLayout .mediaPanel {
+  position: relative;
+  height: 100%;
+  gap: 0;
+}
+
+.fullscreenLayout .playerStage {
+  min-height: 0;
+}
+
+.fullscreenLayout .playerContainer {
+  height: 100%;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.fullscreenLayout .playerContainer video,
+.fullscreenLayout .playerContainer iframe {
+  width: 100% !important;
+  height: 100% !important;
+  max-height: none !important;
+}
+
+.fullscreenLayout .chatColumn,
+.fullscreenLayout .expandButton {
+  display: none;
+}
+
+.fullscreenControls {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 25;
+  padding-bottom: max(4px, env(safe-area-inset-bottom));
+  pointer-events: auto;
+}
+
+.fullscreenChatOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  overflow: hidden;
+  pointer-events: none;
+  direction: rtl;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(5, 9, 18, 0.02) 20%,
+      rgba(5, 9, 18, 0.16) 58%,
+      rgba(5, 9, 18, 0.66) 100%
+    );
+}
+
+.fullscreenChatPanel {
+  position: absolute;
+  right: max(12px, env(safe-area-inset-right));
+  left: auto;
+  inset-block-end: calc(70px + max(10px, env(safe-area-inset-bottom)));
+  display: flex;
+  width: min(420px, calc(100% - 24px));
+  height: min(52vh, 520px);
+  max-height: calc(100% - 118px);
+  flex-direction: column;
+  overflow: hidden;
+  pointer-events: auto;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 20px;
+  background: rgba(13, 20, 36, 0.68);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.42);
+  -webkit-backdrop-filter: blur(22px) saturate(1.2);
+  backdrop-filter: blur(22px) saturate(1.2);
+  animation: fullscreenChatIn 220ms cubic-bezier(0.22, 0.8, 0.25, 1);
+}
+
+.fullscreenChatHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 52px;
+  padding: 8px 12px 8px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(16, 24, 42, 0.48);
+}
+
+.fullscreenChatTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--watch-text);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.fullscreenChatMeta {
+  display: inline-flex;
+  min-width: 24px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 7px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  color: var(--watch-muted);
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 11px;
+}
+
+.fullscreenChatInner {
+  min-height: 0;
+}
+
+@keyframes fullscreenChatIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.mediaColumn {
+  min-width: 0;
+  flex: 1 1 auto;
+  direction: rtl;
+}
+
+.mediaPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: 100%;
+}
+
+.sourceRow {
+  min-width: 0;
+}
+
+.sourceRow :global(.mantine-Autocomplete-root) {
+  width: 100%;
+}
+
+.sourceRow :global(.mantine-Autocomplete-input) {
+  min-height: 48px;
+  border-radius: 13px;
+}
+
+.actionRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.actionRow :global(.mantine-Button-root),
+.actionRow :global(.mantine-Select-root) {
+  flex: 0 1 auto;
+}
+
+.actionRow :global(.mantine-Button-root) {
+  border: 1px solid var(--watch-border);
+  color: var(--watch-text) !important;
+  background: var(--watch-surface-raised) !important;
+}
+
+.actionRow :global(.mantine-Button-root:hover) {
+  border-color: var(--watch-coral);
+  background: #223452 !important;
+}
+
+.actionRow :global(.mantine-Button-root[data-variant="filled"]) {
+  color: var(--watch-text) !important;
+}
+
+.chatColumn {
+  flex: 0 0 390px;
+  height: calc(100vh - 122px);
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+  border: 1px solid var(--watch-border);
+  border-radius: 18px;
+  background: var(--watch-surface);
+  direction: rtl;
+}
+
+.chatTools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  border-bottom: 1px solid var(--watch-border);
+  background: rgba(16, 24, 42, 0.78);
+}
+
+.chatTools :global(.mantine-TextInput-root) {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.chatTools :global(.mantine-Input-input) {
+  min-height: 40px;
+  border-radius: 10px;
+}
+
+.roomActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 0 12px 12px;
+}
+
+.roomActions :global(.mantine-Button-root) {
+  min-width: 0;
+  border: 1px solid var(--watch-border);
+  background: var(--watch-surface-soft) !important;
+  color: var(--watch-text) !important;
+}
+
+.roomActions :global(.mantine-Button-root:hover) {
+  background: var(--watch-surface-raised) !important;
+}
+
 .videoContent {
   position: absolute;
-  top: 0;
-  left: 0;
+  inset: 0;
   width: 100%;
   height: 100%;
 }
 
 .playerContainer {
-  height: 100%;
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Making this larger causes issues on mobile */
-  min-height: 48vh;
+  min-height: min(68vh, 720px);
+  overflow: hidden;
+  border: 1px solid var(--watch-border);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 50% 30%, rgba(45, 212, 191, 0.12), transparent 28%),
+    linear-gradient(145deg, #101a2e, #080d18);
+  box-shadow: 0 26px 60px rgba(0, 0, 0, 0.24);
+}
+
+.playerContainer video,
+.playerContainer iframe {
+  object-fit: contain;
+  background: #050912;
 }
 
 .flexCenter {
@@ -28,17 +306,7 @@
 
 .mobileStack {
   display: flex;
-  gap: 4px;
-  @media only screen and (max-width: 600px) {
-    flex-direction: column;
-    width: calc(100% - 8px);
-  }
-}
-
-.mobileWrap {
-  @media only screen and (max-width: 600px) {
-    flex-wrap: wrap;
-  }
+  gap: 8px;
 }
 
 .leftColumn {
@@ -51,29 +319,124 @@
 
 .expandButton {
   position: absolute;
+  inset-inline-end: -26px;
+  top: 50%;
+  z-index: 3;
   display: flex;
   align-items: center;
   justify-content: center;
-  top: 50%;
-  right: -30px;
 }
 
 .fullHeightColumn {
-  height: calc(100vh - 72px);
-  transition: width ease-out 0.5s;
-  &.leftColumn {
-    @media only screen and (max-width: 600px) {
-      /* video height doesn't matter on mobile since things are stacked */
-      height: initial;
-    }
-  }
+  height: calc(100vh - 122px);
+  min-height: 0;
+  transition: width 260ms ease;
 }
 
 .fullHeightColumnFullscreen {
-  height: calc(100vh);
-  transition: width ease-out 0.5s;
+  height: 100vh;
+  min-height: 0;
+  transition: width 260ms ease;
 }
 
 .shareButton {
-  min-width: 150px;
+  min-width: 132px;
+}
+
+.loadingCopy {
+  color: var(--watch-muted);
+  font-size: 13px;
+}
+
+@media only screen and (max-width: 900px) {
+  .watchPage {
+    width: min(100% - 20px, 680px);
+  }
+
+  .roomLayout {
+    flex-direction: column;
+    min-height: auto;
+  }
+
+  .mediaColumn,
+  .chatColumn {
+    width: 100% !important;
+  }
+
+  .chatColumn {
+    height: auto;
+    flex-basis: auto;
+    min-height: 500px;
+  }
+
+  .fullHeightColumn,
+  .fullHeightColumnFullscreen {
+    min-height: auto;
+    height: auto;
+  }
+
+  .fullscreenLayout {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: max(4px, env(safe-area-inset-top))
+      max(4px, env(safe-area-inset-right))
+      max(4px, env(safe-area-inset-bottom))
+      max(4px, env(safe-area-inset-left));
+  }
+
+  .fullscreenChatPanel {
+    right: max(8px, env(safe-area-inset-right));
+    left: max(8px, env(safe-area-inset-left));
+    inset-block-end: calc(66px + max(8px, env(safe-area-inset-bottom)));
+    width: auto;
+    height: min(42vh, 380px);
+    max-height: calc(100% - 112px);
+    border-radius: 18px;
+  }
+
+  .fullscreenChatHeader {
+    min-height: 48px;
+  }
+
+  .playerContainer {
+    min-height: 58vw;
+    max-height: 72vh;
+  }
+
+  .expandButton {
+    display: none;
+  }
+}
+
+@media only screen and (max-width: 600px) {
+  .watchPage {
+    width: min(100% - 12px, 520px);
+  }
+
+  .fullscreenLayout {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+  }
+
+  .actionRow {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .actionRow :global(.mantine-Button-root),
+  .actionRow :global(.mantine-Select-root) {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .chatColumn {
+    min-height: 440px;
+    border-radius: 16px;
+  }
+
+  .fullscreenControls {
+    padding-inline: 4px;
+  }
 }

@@ -27,6 +27,7 @@ import {
   IconX,
 } from "@tabler/icons-react";
 import styles from "./Settings.module.css";
+import { t } from "../../i18n";
 
 const defaultRoomTitleColor = "#FFFFFF";
 const roomTitleMaxCharLength = 50;
@@ -146,29 +147,27 @@ export const SettingsModal = ({
           closeModal={() => setPermModalOpen(false)}
         ></PermanentRoomModal>
       )}
-      <Modal
-        opened={modalOpen}
-        onClose={() => setModalOpen(false)}
-        centered
-        title={"Settings"}
-      >
+        <Modal
+          opened={modalOpen}
+          onClose={() => setModalOpen(false)}
+          centered
+          title={t("settings")}
+        >
         <div>
-          <div className={styles.sectionHeader}>Room Settings</div>
+          <div className={styles.sectionHeader}>{t("roomSettings")}</div>
           <SettingRow
             toggle
-            name={`Lock Room`}
-            description="Only the person who locked the room can control the video."
+            name={t("lockRoom")}
+            description={t("lockRoomDescription")}
             checked={Boolean(roomLock)}
             disabled={disableLocking && disableOwning}
             onChange={(e) => setRoomLock(Boolean(e.currentTarget.checked))}
-            label={!user ? "requires login" : ""}
+            label={!user ? "نیازمند ورود" : ""}
           />
           <SettingRow
             toggle
-            name={`Make Room Permanent`}
-            description={
-              "Prevent this room from expiring. This also unlocks additional room features."
-            }
+            name={t("permanentRoom")}
+            description="این اتاق منقضی نمی‌شود و امکانات بیشتری فعال می‌کند."
             helpIcon={
               <IconHelpCircle
                 onClick={() => setPermModalOpen(true)}
@@ -178,16 +177,16 @@ export const SettingsModal = ({
             checked={Boolean(owner)}
             disabled={disableOwning}
             onChange={(e) => setRoomOwner({ undo: !e.currentTarget.checked })}
-            label={!user ? "requires login" : ""}
+            label={!user ? "نیازمند ورود" : ""}
           />
 
           <Divider my="lg" />
-          <div className={styles.sectionHeader}>Local Settings</div>
+          <div className={styles.sectionHeader}>{t("localSettings")}</div>
           <SettingRow
             toggle
             updateTS={updateTS}
-            name="Disable chat notification sound"
-            description="Don't play a sound when a chat message is sent while you're on another tab"
+            name="صدای اعلان گفت‌وگو"
+            description="وقتی در تب دیگری هستید برای پیام جدید صدا پخش نشود."
             checked={Boolean(getCurrentSettings().disableChatSound)}
             disabled={false}
             onChange={(e) => {
@@ -203,15 +202,15 @@ export const SettingsModal = ({
         </div>
 
         <Divider my="lg" />
-        {<div className={styles.sectionHeader}>Permanent Room Settings</div>}
+        {<div className={styles.sectionHeader}>{t("permanentSettings")}</div>}
         {!owner && (
           <Alert color="yellow">
-            The room must be permanent to modify these settings.
+            برای تغییر این گزینه‌ها، اتاق باید دائمی باشد.
           </Alert>
         )}
         {owner && owner !== user?.uid && (
           <Alert color="yellow">
-            Only the room owner can change permanent room settings.
+            فقط صاحب اتاق می‌تواند تنظیمات دائمی را تغییر دهد.
           </Alert>
         )}
         {owner && owner === user?.uid && (
@@ -219,10 +218,10 @@ export const SettingsModal = ({
             toggle={false}
             content={
               <TextInput
-                label={`Set Room Password`}
-                description="Users must know this password in order to join the room."
+                label={t("roomPassword")}
+                description="برای ورود به اتاق، همراهان باید این رمز را بدانند."
                 value={password ?? ""}
-                placeholder="Password"
+                placeholder={t("password")}
                 onChange={(e) => {
                   setAdminSettingsChanged(true);
                   setPassword(e.target.value);
@@ -236,9 +235,9 @@ export const SettingsModal = ({
           <SettingRow
             content={
               <TextInput
-                label={`Set Room Media Source`}
-                description="Set a media source URL to replace the default examples"
-                placeholder="YouTube playlist or link to text list of URLs"
+                label={t("mediaSource")}
+                description="یک منبع رسانه برای جایگزین کردن نمونه‌های پیش‌فرض تعیین کنید."
+                placeholder="فهرست یوتیوب یا فهرست متنی لینک‌ها"
                 value={mediaPath ?? ""}
                 onChange={(e) => {
                   setAdminSettingsChanged(true);
@@ -252,8 +251,8 @@ export const SettingsModal = ({
         {owner && owner === user?.uid && (
           <SettingRow
             toggle
-            name={`Disable Chat`}
-            description="Prevent users from sending messages in chat."
+            name={t("disableChat")}
+            description="کاربران نتوانند در گفت‌وگو پیام بفرستند."
             checked={Boolean(isChatDisabled)}
             disabled={false}
             onChange={(e) => {
@@ -271,9 +270,9 @@ export const SettingsModal = ({
                   <IconTrash />
                 </ActionIcon>
                 <div>
-                  <Text>Clear Chat</Text>
-                  <Text size="xs" c="grey">
-                    Delete all existing chat messages
+                        <Text>{t("clearChat")}</Text>
+                        <Text size="xs" c="grey">
+                    همه پیام‌های فعلی حذف می‌شوند.
                   </Text>
                 </div>
               </div>
@@ -290,8 +289,8 @@ export const SettingsModal = ({
             subOnly={true}
             content={
               <TextInput
-                label={`Set Custom Room URL`}
-                description="Set a custom URL for this room. Inappropriate names may be revoked."
+                label={t("customRoomUrl")}
+                description="یک نشانی کوتاه و اختصاصی برای این اتاق انتخاب کنید."
                 value={vanity ?? ""}
                 disabled={!isSubscriber}
                 onChange={(e: any) => {
@@ -324,8 +323,8 @@ export const SettingsModal = ({
                 style={{ display: "flex", flexDirection: "column", gap: "4px" }}
               >
                 <TextInput
-                  label={`Set Room Title, Description & Color`}
-                  description="Set the room title, description and title color to be displayed in the top bar."
+                label={`${t("roomTitle")}، ${t("roomDescription")}`}
+                description="عنوان و توضیح اتاق در نوار بالا نمایش داده می‌شود."
                   value={roomTitleInput ?? roomTitle ?? ""}
                   disabled={!isSubscriber}
                   maxLength={roomTitleMaxCharLength}
@@ -333,12 +332,12 @@ export const SettingsModal = ({
                     setAdminSettingsChanged(true);
                     setRoomTitleInput(e.target.value);
                   }}
-                  placeholder={`Title (max. ${roomTitleMaxCharLength} characters)`}
+                  placeholder={`عنوان (حداکثر ${roomTitleMaxCharLength} نویسه)`}
                   rightSection={
                     <Popover>
                       <Popover.Dropdown>
                         <React.Fragment>
-                          <h5>Edit Title Color</h5>
+                          <h5>رنگ عنوان</h5>
                           <HexColorPicker
                             color={
                               roomTitleColorInput ||
@@ -385,7 +384,7 @@ export const SettingsModal = ({
                     setAdminSettingsChanged(true);
                     setRoomDescriptionInput(e.target.value);
                   }}
-                  placeholder={`Description (max. ${roomDescriptionMaxCharLength} characters)`}
+                  placeholder={`توضیح (حداکثر ${roomDescriptionMaxCharLength} نویسه)`}
                 />
               </div>
             }
@@ -411,8 +410,8 @@ export const SettingsModal = ({
               setAdminSettingsChanged(false);
             }}
             leftSection={<IconDeviceFloppy />}
-          >
-            Save Settings
+            >
+            {t("saveSettings")}
           </Button>
         )}
       </Modal>
@@ -462,7 +461,7 @@ const SettingRow = ({
           ) : null}
           {subOnly ? (
             <Badge size="xs" color="orange">
-              Subscriber only
+              فقط برای مشترکان
             </Badge>
           ) : null}
         </div>

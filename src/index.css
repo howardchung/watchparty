@@ -1,10 +1,131 @@
+:root {
+  color-scheme: dark;
+  --watch-bg: #0b1020;
+  --watch-surface: #131b2d;
+  --watch-surface-raised: #18233a;
+  --watch-surface-soft: #10182a;
+  --watch-border: #25324a;
+  --watch-text: #f3f7ff;
+  --watch-muted: #91a2bd;
+  --watch-coral: #ff7a69;
+  --watch-coral-strong: #f56555;
+  --watch-teal: #2dd4bf;
+  --watch-amber: #f7b955;
+  font-family: "Vazirmatn", "Segoe UI", Tahoma, sans-serif;
+  background: var(--watch-bg);
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
 html body {
   margin: 0;
-  /* fix for scrollbar popping in and out at certain widths, but adds a permanent scrollbar */
   overflow-y: scroll;
-  background-color: #222222;
+  background:
+    radial-gradient(circle at 12% -10%, rgba(45, 212, 191, 0.08), transparent 38%),
+    radial-gradient(circle at 92% 0%, rgba(255, 122, 105, 0.08), transparent 32%),
+    var(--watch-bg);
+  color: var(--watch-text);
+  direction: rtl;
+  text-align: start;
+  font-family: "Vazirmatn", "Segoe UI", Tahoma, sans-serif;
+}
+
+body.watch-fullscreen {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+a {
+  color: inherit;
+}
+
+::selection {
+  color: var(--watch-bg);
+  background: var(--watch-coral);
+}
+
+.mantine-Button-root,
+.mantine-ActionIcon-root,
+.mantine-Input-input,
+.mantine-Select-input,
+.mantine-Autocomplete-input,
+.mantine-Menu-item,
+.mantine-Modal-title,
+.mantine-Text-root {
+  font-family: inherit;
+}
+
+.mantine-Button-root {
+  min-height: 40px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.mantine-Input-input,
+.mantine-Select-input,
+.mantine-Autocomplete-input {
+  background: rgba(16, 24, 42, 0.88);
+  border-color: var(--watch-border);
+  color: var(--watch-text);
+}
+
+.mantine-Input-input:focus,
+.mantine-Select-input:focus,
+.mantine-Autocomplete-input:focus {
+  border-color: var(--watch-coral);
+  box-shadow: 0 0 0 2px rgba(255, 122, 105, 0.18);
+}
+
+.mantine-Modal-content,
+.mantine-Popover-dropdown,
+.mantine-Menu-dropdown {
+  background: var(--watch-surface);
+  border-color: var(--watch-border);
+  color: var(--watch-text);
+}
+
+.mantine-Modal-header {
+  background: var(--watch-surface);
+  color: var(--watch-text);
+}
+
+.mantine-Modal-title {
+  font-weight: 800;
+}
+
+.mantine-Menu-item:hover {
+  background: var(--watch-surface-raised);
+}
+
+.mantine-Menu-label,
+.mantine-Input-label,
+.mantine-Switch-label,
+.mantine-Input-description {
+  color: var(--watch-muted);
 }
 
 ::-webkit-scrollbar-corner {
   background: rgba(0, 0, 0, 0);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2a3954;
+  border-radius: 999px;
+  border: 3px solid var(--watch-bg);
 }

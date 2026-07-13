@@ -5,8 +5,6 @@ import { Socket } from "socket.io-client";
 import {
   formatTimestamp,
   getOrCreateClientId,
-  getColorForStringHex,
-  getDefaultPicture,
   iceServers,
   softWhite,
 } from "../../utils/utils";
@@ -251,7 +249,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
   };
 
   render() {
-    const { participants, pictureMap, nameMap, tsMap, socket, owner } =
+    const { participants, nameMap, tsMap, socket, owner } =
       this.props;
     const ourStream = window.watchparty.ourStream;
     const videoRefs = window.watchparty.videoRefs;
@@ -324,7 +322,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
                         onClick={this.setupWebRTC}
                         leftSection={<IconVideo />}
                       >
-                        Join
+                        ورود
                       </Button>
                     )}
                     {ourStream && p.id === selfId && (
@@ -334,7 +332,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
                         onClick={this.stopWebRTC}
                         leftSection={<IconX />}
                       >
-                        Leave
+                        خروج
                       </Button>
                     )}
                     {ourStream && p.id === selfId && (
@@ -428,16 +426,21 @@ export class VideoChat extends React.Component<VideoChatProps> {
                       data-id={p.id}
                     />
                   ) : (
-                    <img
-                      style={videoChatContentStyle}
-                      src={
-                        pictureMap[p.id] ||
-                        getDefaultPicture(
-                          nameMap[p.id],
-                          getColorForStringHex(p.id),
-                        )
-                      }
-                    />
+                    <div
+                      style={{
+                        ...videoChatContentStyle,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: softWhite,
+                        background:
+                          "linear-gradient(145deg, #1b2a45, #0b1120)",
+                        fontSize: 44,
+                      }}
+                      aria-label={nameMap[p.id] || p.id}
+                    >
+                      <IconVideo size={46} opacity={0.42} />
+                    </div>
                   )}
                 </div>
               </div>

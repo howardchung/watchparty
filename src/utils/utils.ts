@@ -1,10 +1,7 @@
 //@ts-expect-error
 import canAutoplay from "can-autoplay";
-import { MD5 } from "./md5";
-import firebase from "firebase/compat/app";
 import config from "../config";
 import { cyrb53 } from "./hash";
-import React from "react";
 
 export function formatTimestamp(input: any, zeroTime?: number): string {
   if (
@@ -145,10 +142,6 @@ export const debounce = (callback: Function, wait = 500) => {
   };
 };
 
-export const getDefaultPicture = (name: string, background = "a0a0a0") => {
-  return `https://ui-avatars.com/api/?name=${name}&background=${background}&size=256&color=ffffff`;
-};
-
 export const isMobile = () => {
   return window.screen.width <= 600;
 };
@@ -162,39 +155,33 @@ export function shuffle(array: any[]) {
   }
 }
 
-export const iceServers = () => [
-  { urls: "stun:stun.l.google.com:19302" },
-  {
-    urls: "turn:5.161.207.54:3478",
-    username: "username",
-    credential: "password",
-  },
-  {
-    urls: "turn:5.161.49.183:3478",
-    username: "username",
-    credential: "password",
-  },
-  {
-    urls: "turn:135.181.147.65:3478",
-    username: "username",
-    credential: "password",
-  },
-  {
-    urls: "turn:5.78.83.26:3478",
-    username: "username",
-    credential: "password",
-  },
-  {
-    urls: "turn:5.223.48.157:3478",
-    username: "username",
-    credential: "password",
-  },
-  // {
-  //   urls: 'turn:numb.viagenie.ca',
-  //   credential: 'watchparty',
-  //   username: 'howardzchung@gmail.com',
-  // },
-];
+export const iceServers = () => {
+  const servers: RTCIceServer[] = [{ urls: "stun:stun.l.google.com:19302" }];
+  const configured = config.VITE_TURN_SERVERS;
+  if (!configured) {
+    return servers;
+  }
+
+  try {
+    const parsed = JSON.parse(configured);
+    if (Array.isArray(parsed)) {
+      return servers.concat(parsed);
+    }
+  } catch {
+    const urls = configured
+      .split(",")
+      .map((url: string) => url.trim())
+      .filter(Boolean);
+    if (urls.length) {
+      servers.push({
+        urls,
+        username: config.VITE_TURN_USERNAME || undefined,
+        credential: config.VITE_TURN_CREDENTIAL || undefined,
+      });
+    }
+  }
+  return servers;
+};
 
 export const serverPath =
   config.VITE_SERVER_HOST ||
@@ -359,24 +346,6 @@ export function calculateMedian(array: number[]): number {
     }
   }
   return 0;
-}
-
-export async function getUserImage(
-  user: firebase.User,
-): Promise<string | null> {
-  // Check if user has a Gravatar
-  const hash = user.email ? MD5.hash(user.email) : "";
-  if (user.email) {
-    const gravatar = `https://www.gravatar.com/avatar/${hash}?d=404&s=256`;
-    const response = await fetch(gravatar);
-    if (response.ok) {
-      return gravatar;
-    }
-  }
-  if (user.photoURL) {
-    return user.photoURL + "?height=256&width=256";
-  }
-  return `https://www.gravatar.com/avatar/${hash}?d=identicon`;
 }
 
 export const getFileName = (input: string) => {

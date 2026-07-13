@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Modal, TextInput, ActionIcon } from "@mantine/core";
 import { IconCopy } from "@tabler/icons-react";
+import { t } from "../../i18n";
 
 export const InviteModal = ({
   closeInviteModal,
@@ -19,10 +20,10 @@ export const InviteModal = ({
       opened
       centered
       onClose={closeInviteModal}
-      title="Invite friends and watch together!"
+      title={t("inviteTitle")}
     >
       <TextInput
-        label="Copy and share this link:"
+        label={t("inviteLabel")}
         readOnly
         rightSection={
           <ActionIcon onClick={handleCopyInviteLink} color="teal">
@@ -33,7 +34,7 @@ export const InviteModal = ({
       />
       {inviteLinkCopied && (
         <div style={{ marginTop: 15 }}>
-          <b style={{ color: "green" }}>Link copied to clipboard.</b>
+          <b style={{ color: "var(--watch-teal)" }}>{t("copied")}</b>
         </div>
       )}
     </Modal>

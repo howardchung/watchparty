@@ -2,6 +2,7 @@ import React, { useContext } from "react";
 import { Modal, Button, Table } from "@mantine/core";
 import { SubscribeButton } from "../SubscribeButton/SubscribeButton";
 import { MetadataContext } from "../../MetadataContext";
+import { t } from "../../i18n";
 
 export const FileShareModal = (props: {
   closeModal: () => void;
@@ -15,24 +16,24 @@ export const FileShareModal = (props: {
     <Modal
       opened
       onClose={closeModal}
-      title="Share a file"
+      title={t("shareFile")}
       size="auto"
       centered
     >
-      <div>You're about to share a file from your device.</div>
+      <div>یک فایل از دستگاه شما برای همراهان اتاق به اشتراک گذاشته می‌شود.</div>
       <Table striped>
         <Table.Thead>
           <Table.Tr>
             <Table.Th />
-            <Table.Th>WatchParty Free</Table.Th>
-            <Table.Th>WatchParty Plus (Relay)</Table.Th>
-            <Table.Th>WatchParty Plus (Convert)</Table.Th>
+            <Table.Th>رایگان</Table.Th>
+            <Table.Th>اشتراک — رله</Table.Th>
+            <Table.Th>اشتراک — تبدیل</Table.Th>
           </Table.Tr>
         </Table.Thead>
 
         <Table.Tbody>
           <Table.Tr>
-            <Table.Td>Method</Table.Td>
+            <Table.Td>روش</Table.Td>
             <Table.Td>
               Stream your video to each viewer from your device. May not work
               with codecs not playable in browsers.
@@ -49,19 +50,19 @@ export const FileShareModal = (props: {
             </Table.Td>
           </Table.Tr>
           <Table.Tr>
-            <Table.Td>Latency</Table.Td>
+            <Table.Td>تأخیر</Table.Td>
             <Table.Td>{`<1s`}</Table.Td>
             <Table.Td>{`<1s`}</Table.Td>
             <Table.Td>{`~5s`}</Table.Td>
           </Table.Tr>
           <Table.Tr>
-            <Table.Td>Recommended Max Viewers</Table.Td>
+            <Table.Td>تعداد پیشنهادی بیننده</Table.Td>
             <Table.Td>5</Table.Td>
             <Table.Td>20</Table.Td>
             <Table.Td>100</Table.Td>
           </Table.Tr>
           <Table.Tr>
-            <Table.Td>Recommended Upload Speed</Table.Td>
+            <Table.Td>سرعت آپلود پیشنهادی</Table.Td>
             <Table.Td>5 Mbps per viewer</Table.Td>
             <Table.Td>5 Mbps</Table.Td>
             <Table.Td>5 Mbps</Table.Td>
@@ -75,7 +76,7 @@ export const FileShareModal = (props: {
                   props.closeModal();
                 }}
               >
-                Start Fileshare
+                شروع اشتراک فایل
               </Button>
             </Table.Td>
             <Table.Td>
@@ -87,7 +88,7 @@ export const FileShareModal = (props: {
                     props.closeModal();
                   }}
                 >
-                  Start Fileshare w/Relay
+                  شروع اشتراک با رله
                 </Button>
               ) : (
                 subscribeButton
@@ -102,7 +103,7 @@ export const FileShareModal = (props: {
                     props.closeModal();
                   }}
                 >
-                  Start Fileshare w/Convert
+                  شروع اشتراک با تبدیل
                 </Button>
               ) : (
                 subscribeButton

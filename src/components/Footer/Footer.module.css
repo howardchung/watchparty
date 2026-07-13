@@ -1,0 +1,27 @@
+.footer {
+  width: min(1240px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 30px 0 42px;
+  border-top: 1px solid var(--watch-border);
+  color: var(--watch-muted);
+  text-align: center;
+  font-size: 12px;
+}
+
+.footer nav {
+  display: flex;
+  justify-content: center;
+  gap: 22px;
+}
+
+.footer a {
+  text-decoration: none;
+}
+
+.footer a:hover {
+  color: var(--watch-text);
+}
+
+.footer p {
+  margin: 16px 0 8px;
+}

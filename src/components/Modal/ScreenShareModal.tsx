@@ -2,6 +2,7 @@ import React, { useContext } from "react";
 import { Modal, Button, Table } from "@mantine/core";
 import { SubscribeButton } from "../SubscribeButton/SubscribeButton";
 import { MetadataContext } from "../../MetadataContext";
+import { t } from "../../i18n";
 
 export const ScreenShareModal = ({
   closeModal,
@@ -16,30 +17,29 @@ export const ScreenShareModal = ({
     <Modal
       opened={true}
       onClose={closeModal}
-      title="Share your screen"
+      title={t("shareScreen")}
       centered
       size="auto"
     >
-      <div>You're about to share your screen.</div>
+      <div>صفحه شما با همراهان اتاق به اشتراک گذاشته می‌شود.</div>
       <ul>
-        <li>This feature is only supported on Chrome and Edge on desktop.</li>
+        <li>این قابلیت روی Chrome و Edge دسکتاپ پشتیبانی می‌شود.</li>
         <li>
-          Audio sharing only works if sharing your entire screen or a browser
-          tab, not an application.
+          اشتراک صدا فقط برای کل صفحه یا یک تب مرورگر کار می‌کند، نه یک برنامه.
         </li>
       </ul>
       <Table striped>
         <Table.Thead>
           <Table.Tr>
             <Table.Th />
-            <Table.Th>WatchParty Free</Table.Th>
-            <Table.Th>WatchParty Plus</Table.Th>
+            <Table.Th>رایگان</Table.Th>
+            <Table.Th>اشتراک</Table.Th>
           </Table.Tr>
         </Table.Thead>
 
         <Table.Tbody>
           <Table.Tr>
-            <Table.Td>Method</Table.Td>
+            <Table.Td>روش</Table.Td>
             <Table.Td>
               Stream your video to each viewer from your device.
             </Table.Td>
@@ -49,17 +49,17 @@ export const ScreenShareModal = ({
             </Table.Td>
           </Table.Tr>
           <Table.Tr>
-            <Table.Td>Latency</Table.Td>
+            <Table.Td>تأخیر</Table.Td>
             <Table.Td>{`<1s`}</Table.Td>
             <Table.Td>{`<1s`}</Table.Td>
           </Table.Tr>
           <Table.Tr>
-            <Table.Td>Recommended Max Viewers</Table.Td>
+            <Table.Td>تعداد پیشنهادی بیننده</Table.Td>
             <Table.Td>5</Table.Td>
             <Table.Td>20</Table.Td>
           </Table.Tr>
           <Table.Tr>
-            <Table.Td>Recommended Upload Speed</Table.Td>
+            <Table.Td>سرعت آپلود پیشنهادی</Table.Td>
             <Table.Td>5 Mbps per viewer</Table.Td>
             <Table.Td>5 Mbps</Table.Td>
           </Table.Tr>
@@ -72,7 +72,7 @@ export const ScreenShareModal = ({
                   closeModal();
                 }}
               >
-                Start Screenshare
+                شروع اشتراک صفحه
               </Button>
             </Table.Td>
             <Table.Td>
@@ -84,7 +84,7 @@ export const ScreenShareModal = ({
                     closeModal();
                   }}
                 >
-                  Start Screenshare w/Relay
+                  شروع اشتراک صفحه با رله
                 </Button>
               ) : (
                 subscribeButton

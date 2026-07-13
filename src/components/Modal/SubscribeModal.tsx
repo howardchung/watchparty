@@ -54,26 +54,25 @@ export class SubscribeModal extends React.Component<{
         onClose={closeSubscribe}
         centered
         size="auto"
-        title="Subscribe to WatchParty Plus"
+        title="اشتراک Watch"
       >
         <div>
-          Subscriptions help us maintain the service and build new features!
-          Please consider supporting us if you're enjoying WatchParty.
+          اشتراک به نگهداری سرویس و ساخت قابلیت‌های جدید کمک می‌کند.
         </div>
-        <Title order={6}>Features</Title>
+        <Title order={6}>امکانات</Title>
         <Table striped>
           <Table.Thead>
             <Table.Tr>
               <Table.Th />
-              <Table.Th>WatchParty Free</Table.Th>
-              <Table.Th>WatchParty Plus</Table.Th>
+              <Table.Th>رایگان</Table.Th>
+              <Table.Th>اشتراک</Table.Th>
             </Table.Tr>
           </Table.Thead>
 
           <Table.Tbody>
             {/* Priority support */}
             <Table.Tr>
-              <Table.Td>Synchronized watching, chat, screenshare</Table.Td>
+              <Table.Td>تماشای همگام، گفت‌وگو و اشتراک صفحه</Table.Td>
               <Table.Td>
                 <IconCheck />
               </Table.Td>
@@ -82,7 +81,7 @@ export class SubscribeModal extends React.Component<{
               </Table.Td>
             </Table.Tr>
             <Table.Tr>
-              <Table.Td>Number of Permanent Rooms</Table.Td>
+              <Table.Td>تعداد اتاق‌های دائمی</Table.Td>
               <Table.Td>1</Table.Td>
               <Table.Td>20</Table.Td>
             </Table.Tr>
@@ -92,27 +91,27 @@ export class SubscribeModal extends React.Component<{
                   <Table.Td>100</Table.Td>
                 </Table.Tr> */}
             <Table.Tr>
-              <Table.Td>VBrowser Access</Table.Td>
-              <Table.Td>When capacity allows</Table.Td>
-              <Table.Td>Anytime</Table.Td>
+              <Table.Td>دسترسی به مرورگر مجازی</Table.Td>
+              <Table.Td>در صورت وجود ظرفیت</Table.Td>
+              <Table.Td>همیشه</Table.Td>
             </Table.Tr>
             <Table.Tr>
-              <Table.Td>VBrowser Max Resolution</Table.Td>
+              <Table.Td>بیشترین وضوح مرورگر مجازی</Table.Td>
               <Table.Td>720p</Table.Td>
               <Table.Td>1080p</Table.Td>
             </Table.Tr>
             <Table.Tr>
-              <Table.Td>VBrowser CPU/RAM</Table.Td>
-              <Table.Td>Standard</Table.Td>
-              <Table.Td>Extra</Table.Td>
+              <Table.Td>منابع CPU/RAM</Table.Td>
+              <Table.Td>استاندارد</Table.Td>
+              <Table.Td>بیشتر</Table.Td>
             </Table.Tr>
             <Table.Tr>
-              <Table.Td>VBrowser Session Length</Table.Td>
-              <Table.Td>3 hours</Table.Td>
-              <Table.Td>24 hours</Table.Td>
+              <Table.Td>مدت نشست مرورگر مجازی</Table.Td>
+              <Table.Td>۳ ساعت</Table.Td>
+              <Table.Td>۲۴ ساعت</Table.Td>
             </Table.Tr>
             <Table.Tr>
-              <Table.Td>VBrowser Region Selection</Table.Td>
+              <Table.Td>انتخاب منطقه مرورگر مجازی</Table.Td>
               <Table.Td></Table.Td>
               <Table.Td>
                 <IconCheck />
@@ -120,7 +119,7 @@ export class SubscribeModal extends React.Component<{
             </Table.Tr>
             <Table.Tr>
               <Table.Td>
-                Share your screen/file to more viewers with Relay
+                اشتراک صفحه و فایل برای بیننده‌های بیشتر با رله
               </Table.Td>
               <Table.Td></Table.Td>
               <Table.Td>
@@ -128,30 +127,23 @@ export class SubscribeModal extends React.Component<{
               </Table.Td>
             </Table.Tr>
             <Table.Tr>
-              <Table.Td>Custom room URLs and titles</Table.Td>
+              <Table.Td>نشانی و عنوان اختصاصی اتاق</Table.Td>
               <Table.Td></Table.Td>
               <Table.Td>
                 <IconCheck />
               </Table.Td>
             </Table.Tr>
             <Table.Tr>
-              <Table.Td>Discord subscriber role (with linked account)</Table.Td>
+              <Table.Td>نام‌های رنگی در گفت‌وگو</Table.Td>
               <Table.Td></Table.Td>
               <Table.Td>
                 <IconCheck />
               </Table.Td>
             </Table.Tr>
             <Table.Tr>
-              <Table.Td>Colored names in chat</Table.Td>
-              <Table.Td></Table.Td>
-              <Table.Td>
-                <IconCheck />
-              </Table.Td>
-            </Table.Tr>
-            <Table.Tr>
-              <Table.Td>Price</Table.Td>
-              <Table.Td>$0 / month</Table.Td>
-              <Table.Td>$5 / month</Table.Td>
+              <Table.Td>قیمت</Table.Td>
+              <Table.Td>$۰ / ماه</Table.Td>
+              <Table.Td>$۵ / ماه</Table.Td>
             </Table.Tr>
           </Table.Tbody>
         </Table>
@@ -162,11 +154,11 @@ export class SubscribeModal extends React.Component<{
               leftSection={<IconBrandStripeFilled />}
               onClick={this.onSubscribe}
             >
-              Subscribe with Stripe
+              پرداخت با Stripe
             </Button>
           ) : (
             <div>
-              Please sign in to subscribe: <SignInButton />
+              برای اشتراک ابتدا وارد شوید: <SignInButton />
             </div>
           )}
         </div>

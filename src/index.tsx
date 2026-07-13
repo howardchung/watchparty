@@ -18,10 +18,29 @@ import { Discord } from "./components/Discord/Discord";
 import config from "./config";
 import { DEFAULT_STATE, MetadataContext } from "./MetadataContext";
 import { createTheme, MantineProvider } from "@mantine/core";
+import { applyLocale } from "./i18n";
+
+applyLocale();
 
 const theme = createTheme({
-  /** Your theme override here */
   white: softWhite,
+  primaryColor: "coral",
+  fontFamily: '"Vazirmatn", "Segoe UI", Tahoma, sans-serif',
+  defaultRadius: "md",
+  colors: {
+    coral: [
+      "#fff1ef",
+      "#ffd9d4",
+      "#ffb4ab",
+      "#ff978a",
+      "#ff7a69",
+      "#f56555",
+      "#e34d3d",
+      "#bd382d",
+      "#8e2c24",
+      "#5e1d19",
+    ],
+  },
 });
 
 const Debug = lazy(() => import("./components/Debug/Debug"));

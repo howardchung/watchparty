@@ -3,6 +3,7 @@ import { Badge, Button, Menu, Progress, Slider } from "@mantine/core";
 import { formatTimestamp, softWhite } from "../../utils/utils";
 import styles from "./Controls.module.css";
 import { MetadataContext } from "../../MetadataContext";
+import { t } from "../../i18n";
 import {
   IconPlayerPlayFilled,
   IconPlayerPauseFilled,
@@ -14,6 +15,7 @@ import {
   IconVolume,
   IconTheater,
   IconMaximize,
+  IconMessageCircle,
   IconPlayerSkipForwardFilled,
 } from "@tabler/icons-react";
 
@@ -46,6 +48,9 @@ interface ControlsProps {
   localSetSubtitleMode: (mode: TextTrackMode, lang?: string) => void;
   roomPlaylistPlay: (index: number) => void;
   playlist: PlaylistVideo[];
+  fullscreen?: boolean;
+  chatOpen?: boolean;
+  onToggleChat?: () => void;
 }
 
 export const Controls = (props: ControlsProps) => {
@@ -136,8 +141,36 @@ export const Controls = (props: ControlsProps) => {
     className: ` ${styles.action}`,
     disabled: disabled || isPauseDisabled,
   };
+
+  if (props.fullscreen && props.chatOpen && props.onToggleChat) {
+    return (
+      <div className={`${styles.controls} ${styles.chatOnlyControls}`}>
+        <Button
+          className={styles.chatToggleButton}
+          size="compact-sm"
+          onClick={props.onToggleChat}
+          aria-label={t("closeChat")}
+          leftSection={<IconMessageCircle size={17} />}
+        >
+          {t("closeChat")}
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.controls}>
+      {props.fullscreen && props.onToggleChat && (
+        <Button
+          className={styles.chatToggleButton}
+          size="compact-sm"
+          onClick={props.onToggleChat}
+          aria-label={t("openChat")}
+          leftSection={<IconMessageCircle size={17} />}
+        >
+          {t("conversation")}
+        </Button>
+      )}
       {paused ? (
         <IconPlayerPlayFilled {...playPauseProps} />
       ) : (
@@ -145,7 +178,7 @@ export const Controls = (props: ControlsProps) => {
       )}
       {playlist.length > 0 && (
         <IconPlayerSkipForwardFilled
-          title="Skip to next"
+          title="پخش بعدی"
           className={styles.action}
           onClick={() => roomPlaylistPlay(0)}
         />
@@ -162,7 +195,7 @@ export const Controls = (props: ControlsProps) => {
         <Button
           size="compact-xs"
           color={isBehind ? "blue" : "grey"}
-          title="Sync"
+          title="همگام‌سازی"
           onClick={() => {
             if (isLiveStream) {
               // in live case we want to seek the entire room to edge
@@ -172,7 +205,7 @@ export const Controls = (props: ControlsProps) => {
             }
           }}
         >
-          Sync
+          همگام‌سازی
         </Button>
         {/* <div style={{ position: 'absolute', fontSize: '6px', zIndex: -1 }}>
             {Math.max(Math.floor(behindTime), 0)}
@@ -255,8 +288,8 @@ export const Controls = (props: ControlsProps) => {
       </Progress.Root>
       <div className={` ${styles.text}`}>{formatTimestamp(getEnd())}</div>
       {isLiveStream && (
-        <Badge size="xs" color="red">
-          LIVE
+          <Badge size="xs" color="red">
+          زنده
         </Badge>
       )}
       {
@@ -271,21 +304,21 @@ export const Controls = (props: ControlsProps) => {
                 padding: "2px",
               }}
             >
-              {props.playbackRate?.toFixed(2)}x
+              {props.playbackRate?.toFixed(2)}×
             </div>
           </Menu.Target>
           <Menu.Dropdown>
             {[
-              { key: "Auto", text: "Auto", value: 0 },
-              { key: "0.25", text: "0.25x", value: 0.25 },
-              { key: "0.5", text: "0.5x", value: 0.5 },
+              { key: "Auto", text: "خودکار", value: 0 },
+              { key: "0.25", text: "۰٫۲۵×", value: 0.25 },
+              { key: "0.5", text: "۰٫۵×", value: 0.5 },
               // { key: '0.75', text: '0.75x', value: 0.75 },
-              { key: "1", text: "1x", value: 1 },
+              { key: "1", text: "۱×", value: 1 },
               // { key: '1.25', text: '1.25x', value: 1.25 },
-              { key: "1.5", text: "1.5x", value: 1.5 },
+              { key: "1.5", text: "۱٫۵×", value: 1.5 },
               // { key: '1.75', text: '1.75x', value: 1.75 },
-              { key: "2", text: "2x", value: 2 },
-              { key: "3", text: "3x", value: 3 },
+              { key: "2", text: "۲×", value: 2 },
+              { key: "3", text: "۳×", value: 3 },
             ].map((item) => (
               <Menu.Item
                 key={item.key}
@@ -307,13 +340,13 @@ export const Controls = (props: ControlsProps) => {
           }
         }}
         className={` ${styles.action}`}
-        title="Loop"
+        title="حلقه"
         color={props.loop ? "green" : softWhite}
       />
       {props.isYouTube ? (
         <Menu>
           <Menu.Target>
-            <IconBadgeCc className={styles.action} />
+          <IconBadgeCc className={styles.action} title="زیرنویس" />
           </Menu.Target>
           <Menu.Dropdown>
             {[
@@ -341,19 +374,19 @@ export const Controls = (props: ControlsProps) => {
             localSubtitleModal();
           }}
           className={` ${styles.action}`}
-          title="Captions"
+          title="زیرنویس"
           color={subtitled ? "green" : softWhite}
         />
       )}
       <IconTheater
         onClick={() => localFullScreen(false)}
         className={` ${styles.action}`}
-        title="Theater Mode"
+        title="حالت سینمایی"
       />
       <IconMaximize
         onClick={() => localFullScreen(true)}
         className={` ${styles.action}`}
-        title="Fullscreen"
+        title="تمام صفحه"
       />
       {muted ? (
         <IconVolumeOff

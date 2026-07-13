@@ -1,116 +1,84 @@
 import React from "react";
 
-const mdStyle: React.CSSProperties = {
-  maxWidth: "100vw",
-  width: "800px",
-  padding: "10px",
+const pageStyle: React.CSSProperties = {
+  width: "min(900px, calc(100% - 32px))",
+  margin: "0 auto",
+  padding: "54px 0 90px",
+  lineHeight: 1.9,
 };
 
-export const Privacy = () => {
-  return (
-    <div style={mdStyle}>
-      <pre style={{ whiteSpace: "pre-wrap" }}>
-        {`
-Privacy Policy
-====
+const Page = ({ children }: { children: React.ReactNode }) => (
+  <article dir="rtl" style={pageStyle}>
+    {children}
+  </article>
+);
 
-Rooms
-----
-- By default, rooms are temporary and expire after one day of inactivity.
-- Users have the option of making a room permanent, which can be undone at any time.
-- We do not keep logs of the content that users watch.
+export const Privacy = () => (
+  <Page>
+    <h1>حریم خصوصی</h1>
+    <h2>اتاق‌ها</h2>
+    <ul>
+      <li>اتاق‌های موقت پس از یک روز بی‌فعالیتی منقضی می‌شوند.</li>
+      <li>کاربران می‌توانند اتاق را دائمی کنند و این گزینه را بعداً برگردانند.</li>
+      <li>محتوای ویدیوهایی که تماشا می‌کنید در گزارش‌های ما ذخیره نمی‌شود.</li>
+    </ul>
+    <h2>اطلاعات شخصی</h2>
+    <ul>
+      <li>برای استفاده از Watch نیازی به ثبت‌نام ندارید.</li>
+      <li>
+        در صورت ورود، اطلاعات حساب برای نمایش نام شما در اتاق و مدیریت اشتراک
+        استفاده می‌شود.
+      </li>
+      <li>اطلاعات شخصی به اشخاص ثالث فروخته نمی‌شود.</li>
+      <li>برای درخواست حذف اطلاعات، با پشتیبانی سرویس خود تماس بگیرید.</li>
+    </ul>
+    <h2>کوکی‌ها و سرویس‌های جانبی</h2>
+    <p>
+      Watch ممکن است برای ورود، پرداخت، پخش رسانه و زیرنویس با سرویس‌های
+      شخص ثالث ارتباط برقرار کند. قبل از فعال‌سازی این سرویس‌ها، کلیدهای
+      مربوط را در محیط خود تنظیم کنید و هیچ کلیدی را در مخزن قرار ندهید.
+    </p>
+  </Page>
+);
 
-Personal Information
-----
-- You are not required to register to use the service, but you have the option to sign in with an email or authentication provider, which will be used to display your name and picture in the rooms you join.
-- If you provide this information, we may use it to contact you regarding your use of the service, or to link your account to a subscription.
-- We do not sell personal information to third parties.
-- You have the right to request deletion of your user data, in accordance with various laws governing data protection. Please contact support@watchparty.me to request user data deletion.
-- Payment information is handled by providers such as Stripe. We do not collect or access financial information directly.
+export const Terms = () => (
+  <Page>
+    <h1>قوانین استفاده</h1>
+    <p>با استفاده از Watch با موارد زیر موافقت می‌کنید:</p>
+    <ul>
+      <li>سن شما حداقل ۱۳ سال است.</li>
+      <li>
+        استفاده از سرویس برای محتوای غیرقانونی یا نقض‌کننده حقوق دیگران مجاز
+        نیست.
+      </li>
+      <li>Watch دسترسی دائمی یا بدون خطا را تضمین نمی‌کند.</li>
+      <li>هر محتوایی که در اتاق وارد می‌کنید باید مجوز لازم را داشته باشد.</li>
+    </ul>
+    <h2>اشتراک‌ها</h2>
+    <p>
+      مسائل مربوط به پرداخت و بازگشت وجه باید از مسیر سرویس پرداخت پیکربندی‌شده
+      برای نصب شما پیگیری شود.
+    </p>
+  </Page>
+);
 
-Cookies
-----
-- We use services such as Google Analytics to measure usage. These services may set cookies or other information locally on your device.
-
-Virtual Browsers
-----
-- Virtual machines are recycled after each session ends and any data on them is destroyed.
-- Your commands are encrypted while in-transit to the virtual machine.
-
-YouTube
-----
-- The service provides the ability to search and play YouTube videos. Google/YouTube may use data provided to the search service in accordance with the [Google Privacy Policy](https://policies.google.com/privacy).
-`}
-      </pre>
-    </div>
-  );
-};
-
-export const Terms = () => {
-  return (
-    <div style={mdStyle}>
-      <pre style={{ whiteSpace: "pre-wrap" }}>
-        {`
-Terms of Service
-====
-By using this service you agree to the following terms:
-- You are over 13 years of age
-- Your use of the service may be terminated if you are found to be sharing illegal or infringing content
-- The service provides no guarantee of uptime or availability
-- You use the service at your own risk of encountering objectionable content, as we do not actively moderate rooms unless content is found to be illegal or infringing
-
-Subscriptions
-----
-- If you are dissatisfied with the service for any reason or believe you have been charged in error, please contact support@watchparty.me.
-- We will provide a full refund of the most recent payment, no questions asked.
-
-YouTube
-----
-The service provides the ability to search and play YouTube videos. By using the YouTube search you agree to the [YouTube Terms of Service](https://www.youtube.com/t/terms).
-`}
-      </pre>
-    </div>
-  );
-};
-
-export const FAQ = () => {
-  return (
-    <div style={mdStyle}>
-      <pre style={{ whiteSpace: "pre-wrap" }}>
-        {`
-FAQ
-====
-What's a VBrowser?
-----
-A virtual browser (VBrowser) is a browser running in the cloud that a room's members can connect to. Everyone in the room sees the same thing, so it's a great way to watch videos or collaborate on tasks together.
-
-Why did my VBrowser session stop?
-----
-VBrowsers will terminate automatically if no one is in the room for a while.
-VBrowser sessions are also limited to a maximum of 3 hours for free users, and 24 hours for subscribers.
-
-Does everyone in the room need to be a subscriber to get the benefits?
-----
-No, only the person who created the VBrowser needs to be.
-
-How do I access sites that have a "not available" message in the VBrowser?
-----
-Some sites may block traffic that's detected as coming from the cloud. You may need to install a VPN extension inside the virtual browser.
-
-How come I'm not getting any audio when screensharing?
-----
-To share audio, you must be using Chrome/Edge and sharing a tab or desktop.
-
-Is there a limit to how many people can be in a room?
-----
-Currently there isn't a hard limit, although the service hasn't been tested with more than 15 people or so. Screensharing and filesharing rely on one person uploading to everyone else, so it may not work well with large room sizes.
-
-I own a website and I'd like to have a link that generates a WatchParty room with a specific video already set. How do I do this?
-----
-You can link to https://www.watchparty.me/create?video=URL_HERE to do this!
-
-`}
-      </pre>
-    </div>
-  );
-};
+export const FAQ = () => (
+  <Page>
+    <h1>سؤالات متداول</h1>
+    <h2>چطور با هم تماشا کنیم؟</h2>
+    <p>
+      یک اتاق بسازید، لینک MP4 یا HLS را وارد کنید و لینک اتاق را برای همراهتان
+      بفرستید. پخش و مکث برای اعضای اتاق همگام می‌شود.
+    </p>
+    <h2>آیا همه فایل‌های MKV پخش می‌شوند؟</h2>
+    <p>
+      مرورگرها از همه کانتینرها و کدک‌ها پشتیبانی نمی‌کنند. برای بهترین نتیجه،
+      MP4 با H.264 و AAC یا یک استریم HLS استفاده کنید.
+    </p>
+    <h2>مرورگر مجازی چیست؟</h2>
+    <p>
+      مرورگر مجازی یک مرورگر ابری است که اعضای اتاق آن را به‌صورت مشترک می‌بینند
+      و برای سایت‌هایی که با ویدیوهای مستقیم سازگار نیستند کاربرد دارد.
+    </p>
+  </Page>
+);

@@ -1,106 +1,163 @@
-.subscriber {
-  color: rgb(33, 186, 69);
+.chatPanel {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  overflow: hidden;
+  direction: rtl;
+  background: var(--watch-surface);
 }
 
-/* .subscriber {
-  position: relative;
-} */
+.fullscreenPanel {
+  padding: 0;
+  gap: 8px;
+  background: transparent;
+}
 
-/* .subscriber img {
-  border: 3px solid transparent;
-} */
+.fullscreenPanel .chatContainer {
+  padding: 8px 12px 4px;
+}
 
-/* .subscriber:before {
-  content: '';
-  background: linear-gradient(
-    60deg,
-    #f79533,
-    #f37055,
-    #ef4e7b,
-    #a166ab,
-    #5073b8,
-    #1098ad,
-    #07b39b,
-    #6fba82
-  );
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  z-index: -1;
-  border-radius: 2px;
-  animation: animatedgradient 2.5s ease infinite;
-  background-size: 200% 200%;
-} */
+.fullscreenPanel .comment {
+  background: rgba(5, 9, 18, 0.14);
+}
 
-/* @keyframes animatedgradient {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-} */
+.fullscreenPanel .comment:hover,
+.fullscreenPanel .comment.selected {
+  background: rgba(24, 35, 58, 0.38);
+}
+
+.fullscreenPanel .messageText {
+  border-color: rgba(255, 122, 105, 0.72);
+  background: rgba(24, 35, 58, 0.62);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+.fullscreenPanel .composer {
+  margin: 0 10px 10px;
+  background: rgba(16, 24, 42, 0.72);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+}
 
 .chatContainer {
-  flex-grow: 1;
-  overflow: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 2px 1px 6px;
+  scrollbar-gutter: stable;
 }
 
-.hoverEffect:hover {
-  filter: brightness(0.8);
+.messageList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.light {
-  color: gainsboro;
-  font-size: 14px;
-}
-
-.light.emoji {
-  font-size: 24px;
-}
-
-.dark {
-  color: gray;
-}
-
-.small {
-  font-size: 12px;
-}
-
-.system {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-.comment .commentMenu {
-  display: none;
-  justify-content: center;
-  position: absolute;
-  right: 5px;
-  top: -13px;
-  padding: 4px !important;
-  border-radius: 3px;
-  cursor: pointer;
-}
-
-.comment .commentMenu:hover,
-.comment.selected .commentMenu {
-  background: rgb(46, 137, 212);
-  transition: background 0.2s ease-in-out;
+.comment {
+  position: relative;
+  display: flex;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    transform 160ms ease;
 }
 
 .comment:hover,
 .comment.selected {
-  border-radius: 5px;
-  background: radial-gradient(
-    at top right,
-    #7eaee02a,
-    transparent 70%
-  ) !important;
+  border-color: rgba(255, 122, 105, 0.34);
+  background: rgba(24, 35, 58, 0.74);
+  transform: translateY(-1px);
+}
+
+.commentBody {
+  min-width: 0;
+  width: 100%;
+}
+
+.commentHeader {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  font-size: 13px;
+}
+
+.commentHeader > :first-child {
+  min-width: 0;
+}
+
+.messageText {
+  width: fit-content;
+  max-width: min(92%, 330px);
+  margin-top: 5px;
+  padding: 9px 12px;
+  border-inline-start: 3px solid var(--watch-coral);
+  border-radius: 12px 12px 4px 12px;
+  color: var(--watch-text);
+  background: var(--watch-surface-raised);
+  font-size: 14px;
+  line-height: 1.75;
+  white-space: pre-wrap;
+}
+
+.messageText.emoji {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-size: 28px;
+  line-height: 1.2;
+}
+
+.replyMessage .messageText {
+  border-inline-start-color: var(--watch-teal);
+}
+
+.subscriber {
+  color: var(--watch-teal);
+}
+
+.hoverEffect:hover {
+  color: var(--watch-coral);
+}
+
+.light {
+  color: var(--watch-text);
+}
+
+.dark {
+  color: var(--watch-muted);
+}
+
+.small {
+  font-size: 11px;
+}
+
+.system {
+  color: var(--watch-muted);
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+.commentMenu {
+  position: absolute;
+  inset-inline-start: 8px;
+  top: -12px;
+  display: none;
+  gap: 3px;
+  padding: 3px;
+  border: 1px solid var(--watch-border);
+  border-radius: 8px;
+  background: var(--watch-surface-raised);
 }
 
 .comment:hover .commentMenu,
@@ -108,140 +165,171 @@
   display: flex;
 }
 
-.replyMessage {
-  background: radial-gradient(
-    at top right,
-    rgba(255, 176, 96, 0.22),
-    transparent 70%
-  );
-}
-
 .replyInfo {
-  color: rgba(180, 200, 220, 0.95);
-  font-size: 12px;
-  margin-bottom: 2px;
+  margin-top: 4px;
+  color: var(--watch-muted);
+  font-size: 11px;
 }
 
 .replyTooltip {
-  background: rgba(20, 28, 36, 0.45);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  color: rgba(240, 248, 255, 0.94);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
   max-width: 360px;
-  padding: 6px 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--watch-border);
+  color: var(--watch-text);
+  background: var(--watch-surface-raised);
   font-size: 12px;
-  line-height: 1.2;
+  line-height: 1.6;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  pointer-events: none;
-}
-
-.reactionMenuContainer {
-  display: flex;
-  flex-wrap: nowrap;
-  border-radius: 5px;
-  position: fixed;
-  font-size: 24px;
-  overflow: hidden;
-  background: rgba(255, 255, 255, 0.91);
-}
-
-.reactionMenuContainer div {
-  line-height: 30px;
-  padding: 5px;
-}
-
-.reactionMenuContainer div:hover {
-  background-color: rgb(46, 137, 212);
-  transition: background-color 0.2s ease-in-out;
 }
 
 .reactionContainer {
   display: inline-flex;
   align-items: center;
-  padding: 3px;
-  border-radius: 5px;
-  background: rgba(255, 255, 255, 0.16);
-  margin-right: 3px;
-  margin-top: 1px;
-  min-width: 39px;
+  min-width: 38px;
+  margin: 5px 0 0 4px;
+  padding: 4px 7px;
+  border: 1px solid var(--watch-border);
+  border-radius: 999px;
+  color: var(--watch-text);
+  background: rgba(255, 255, 255, 0.06);
   cursor: pointer;
 }
 
+.reactionContainer:hover,
 .reactionContainer.highlighted {
-  background: rgb(66, 111, 129);
+  border-color: var(--watch-coral);
+  background: rgba(255, 122, 105, 0.14);
 }
 
-.reactionContainer:hover {
-  background-color: rgb(46, 137, 212);
-  transition: background-color 0.2s ease-in-out;
+.reactionCounter {
+  margin-inline-start: 3px;
+  color: var(--watch-muted);
+  font-size: 11px;
 }
 
-.reaction-enter {
+.composer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px;
+  border: 1px solid var(--watch-coral);
+  border-radius: 14px;
+  background: rgba(16, 24, 42, 0.82);
+}
+
+.composerInput {
+  flex: 1 1 auto;
+}
+
+.composerInput :global(.mantine-Input-input) {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.composerInput :global(.mantine-Input-input:focus) {
+  border: 0;
+  box-shadow: none;
+}
+
+.sendButton {
+  flex: 0 0 auto;
+  color: var(--watch-bg);
+  background: var(--watch-coral);
+}
+
+.sendButton:hover {
+  color: var(--watch-bg);
+  background: var(--watch-coral-strong);
+}
+
+.jumpButton {
+  position: sticky;
+  bottom: 4px;
+  display: block;
+  margin: 0 auto;
+  color: var(--watch-text);
+  background: var(--watch-surface-raised);
+}
+
+.emojiPicker {
+  position: absolute;
+  inset-inline-end: 8px;
+  bottom: 72px;
+  z-index: 10;
+}
+
+.replyComposer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border-inline-start: 3px solid var(--watch-teal);
+  border-radius: 10px;
+  background: rgba(45, 212, 191, 0.08);
+  animation: replyComposerIn 220ms cubic-bezier(0.22, 0.8, 0.25, 1);
+}
+
+.replyPreview {
+  max-width: 260px;
+  overflow: hidden;
+  color: var(--watch-text);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.reaction-enter,
+.reactionMenu-enter {
   transform: scale(0);
 }
-.reaction-enter-active {
+
+.reaction-enter-active,
+.reactionMenu-enter-active {
   transform: scale(1);
-  transition: all 200ms ease-in !important;
+  transition: transform 160ms ease-out !important;
 }
-.reaction-exit {
+
+.reaction-exit,
+.reactionMenu-exit {
   transform: scale(1);
 }
-.reaction-exit-active {
+
+.reaction-exit-active,
+.reactionMenu-exit-active {
   transform: scale(0);
-  transition: all 200ms ease-in !important;
+  transition: transform 160ms ease-in !important;
 }
 
 .reactionCounter-enter {
   transform: scale(0);
-  color: rgb(255, 136, 0) !important;
-}
-.reactionCounter-enter-active {
-  transform: scale(1);
-  transition: all 200ms ease-in !important;
-}
-.reactionCounter-exit {
-  transform: scale(1);
-  color: rgb(255, 136, 0) !important;
-}
-.reactionCounter-exit-active {
-  transform: scale(0);
-  transition: all 200ms ease-in !important;
 }
 
-.reactionMenu-enter {
-  transform: scale(0);
-}
-.reactionMenu-enter-active {
+.reactionCounter-enter-active {
   transform: scale(1);
-  transition: all 100ms ease-out !important;
+  transition: transform 160ms ease-out !important;
 }
-.reactionMenu-exit {
+
+.reactionCounter-exit {
   transform: scale(1);
 }
-.reactionMenu-exit-active {
+
+.reactionCounter-exit-active {
   transform: scale(0);
-  transition: all 100ms ease-out !important;
+  transition: transform 160ms ease-in !important;
 }
 
 @keyframes replyComposerIn {
   0% {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(8px);
   }
-  70% {
-    opacity: 1;
-    transform: translateY(-2px);
-  }
+
   100% {
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-.replyComposer {
-  animation: replyComposerIn 220ms cubic-bezier(0.22, 0.8, 0.25, 1);
 }
 
 @media (prefers-reduced-motion: reduce) {

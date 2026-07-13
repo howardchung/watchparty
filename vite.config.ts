@@ -3,8 +3,10 @@ import fs from "node:fs";
 
 try {
   loadEnvFile();
-} catch (e) {
-  console.log(e);
+} catch (error: any) {
+  if (error?.code !== "ENOENT") {
+    console.warn("Unable to load .env:", error);
+  }
 }
 
 export default {

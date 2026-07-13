@@ -1,0 +1,33 @@
+services:
+  watch:
+    build:
+      context: .
+      args:
+        VITE_SERVER_HOST: ${VITE_SERVER_HOST:-}
+        VITE_OAUTH_REDIRECT_HOSTNAME: ${VITE_OAUTH_REDIRECT_HOSTNAME:-}
+        VITE_FIREBASE_CONFIG: ${VITE_FIREBASE_CONFIG:-}
+        VITE_STRIPE_PUBLIC_KEY: ${VITE_STRIPE_PUBLIC_KEY:-}
+        VITE_TURN_SERVERS: ${VITE_TURN_SERVERS:-}
+        VITE_TURN_USERNAME: ${VITE_TURN_USERNAME:-}
+        VITE_TURN_CREDENTIAL: ${VITE_TURN_CREDENTIAL:-}
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 8080
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    restart: unless-stopped
+    init: true
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:8080/ping').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 5

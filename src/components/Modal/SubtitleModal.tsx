@@ -19,6 +19,7 @@ import {
   IconUpload,
   IconX,
 } from "@tabler/icons-react";
+import { t } from "../../i18n";
 
 export class SubtitleModal extends React.Component<{
   closeModal: () => void;
@@ -90,22 +91,22 @@ export class SubtitleModal extends React.Component<{
         opened
         onClose={closeModal}
         centered
-        title="Subtitles"
+        title={t("subtitles")}
         size="50rem"
       >
         <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
           <Switch
             checked={this.props.getSubtitleMode() === "showing"}
-            label="Toggle subtitles for myself"
+            label="فعال‌سازی زیرنویس برای من"
             onClick={() => {
               this.props.setSubtitleMode();
             }}
           />
           <Divider my="lg" />
-          <Title order={6}>Room subtitles</Title>
+          <Title order={6}>زیرنویس اتاق</Title>
           <div style={{ display: "flex", gap: "4px", flexDirection: "column" }}>
             <TextInput
-              placeholder="Subtitle URL"
+              placeholder="نشانی زیرنویس"
               value={this.props.roomSubtitle}
               disabled={!this.props.haveLock()}
               onChange={(e) =>
@@ -129,10 +130,10 @@ export class SubtitleModal extends React.Component<{
               disabled={!this.props.haveLock()}
               leftSection={<IconUpload />}
             >
-              Upload (.srt / .vtt)
+              {t("uploadSubtitle")} (.srt / .vtt)
             </Button>
             <Divider my="lg" />
-            <Title order={6}>OpenSubtitles</Title>
+            <Title order={6}>جست‌وجوی زیرنویس</Title>
             <TextInput
               value={this.state.titleQuery}
               onChange={(e) => this.setState({ titleQuery: e.target.value })}
@@ -156,8 +157,8 @@ export class SubtitleModal extends React.Component<{
                       this.setState({ loading: false });
                     }}
                     leftSection={<IconSearch />}
-                  >
-                    By title
+                    >
+                      {t("byTitle")}
                   </Button>
                   <Button
                     loading={this.state.loading}
@@ -175,8 +176,8 @@ export class SubtitleModal extends React.Component<{
                       this.setState({ loading: false });
                     }}
                     leftSection={<IconSearch />}
-                  >
-                    By hash
+                    >
+                      {t("byHash")}
                   </Button>
                 </div>
               }
