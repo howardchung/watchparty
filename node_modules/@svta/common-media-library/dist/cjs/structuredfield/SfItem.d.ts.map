@@ -1,0 +1,1 @@
+{"version":3,"file":"SfItem.d.ts","sourceRoot":"","sources":["../../../src/structuredfield/SfItem.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,UAAU,EAAE,MAAM,iBAAiB,CAAC;AAClD,OAAO,KAAK,EAAE,YAAY,EAAE,MAAM,mBAAmB,CAAC;AAEtD;;;;;;GAMG;AACH,qBAAa,MAAM;IAElB,KAAK,EAAE,UAAU,CAAC;IAElB,MAAM,CAAC,EAAE,YAAY,CAAC;gBAEV,KAAK,EAAE,GAAG,EAAE,MAAM,CAAC,EAAE,YAAY;CAQ7C"}

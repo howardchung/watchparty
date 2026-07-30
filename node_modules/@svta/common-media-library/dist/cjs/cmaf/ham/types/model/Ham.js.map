@@ -1,0 +1,1 @@
+{"version":3,"file":"Ham.js","sourceRoot":"","sources":["../../../../../../src/cmaf/ham/types/model/Ham.ts"],"names":[],"mappings":"","sourcesContent":["/**\n * CMAF-HAM base HAM type\n * \n * id - Identifier of the object\n * \n * @group CMAF\n * @alpha\n */\nexport type Ham = {\n\tid: string;\n};\n"]}

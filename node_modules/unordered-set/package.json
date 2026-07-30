@@ -1,0 +1,24 @@
+{
+  "name": "unordered-set",
+  "version": "2.0.1",
+  "description": "A couple of functions that make it easy to maintain an unordered set as an array in an efficient way",
+  "main": "index.js",
+  "dependencies": {},
+  "devDependencies": {
+    "standard": "^6.0.4",
+    "tape": "^4.4.0"
+  },
+  "scripts": {
+    "test": "standard && tape test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mafintosh/unordered-set.git"
+  },
+  "author": "Mathias Buus (@mafintosh)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mafintosh/unordered-set/issues"
+  },
+  "homepage": "https://github.com/mafintosh/unordered-set"
+}

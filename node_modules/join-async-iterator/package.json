@@ -1,0 +1,32 @@
+{
+  "name": "join-async-iterator",
+  "version": "1.1.1",
+  "description": "An async iterator that joins multiple other async iterators in order, one after another.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ThaUnknown/join-async-iterator.git"
+  },
+  "keywords": [
+    "mutlistream",
+    "multi-stream",
+    "multi-asnyc-iterator",
+    "join-async-iterator",
+    "queue-asnyc-iterator",
+    "merge-async-iterator",
+    "iterator",
+    "async",
+    "async-iterator",
+    "stream",
+    "node-stream"
+  ],
+  "author": "ThaUnknown",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ThaUnknown/join-async-iterator/issues"
+  },
+  "homepage": "https://github.com/ThaUnknown/join-async-iterator#readme"
+}

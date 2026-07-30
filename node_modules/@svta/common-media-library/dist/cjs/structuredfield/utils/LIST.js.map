@@ -1,0 +1,1 @@
+{"version":3,"file":"LIST.js","sourceRoot":"","sources":["../../../../src/structuredfield/utils/LIST.ts"],"names":[],"mappings":";;;AAAa,QAAA,IAAI,GAAG,MAAM,CAAC","sourcesContent":["export const LIST = 'List';\n"]}

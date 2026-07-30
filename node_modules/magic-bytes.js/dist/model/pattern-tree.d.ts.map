@@ -1,0 +1,1 @@
+{"version":3,"file":"pattern-tree.d.ts","sourceRoot":"","sources":["../../src/model/pattern-tree.ts"],"names":[],"mappings":"AACA,OAAO,EAAiC,IAAI,EAAS,IAAI,EAAE,MAAM,QAAQ,CAAC;AAQ1E,aAAK,QAAQ,GAAG,MAAM,CAAC;AACvB,aAAK,SAAS,GAAG,MAAM,EAAE,CAAC;AAE1B,eAAO,MAAM,GAAG,aACJ,QAAQ,yCAED,IAAI,GAAG,SAAS,sCAwClC,CAAC;AA2xCF,eAAO,MAAM,UAAU,QAAO,IAAoB,CAAC;8BAChC,IAAI;AAAvB,wBAAwC"}

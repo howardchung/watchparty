@@ -1,0 +1,1 @@
+{"version":3,"file":"NR_COLS.js","sourceRoot":"","sources":["../../../../src/cta/608/utils/NR_COLS.ts"],"names":[],"mappings":"AAAA,MAAM,CAAC,MAAM,OAAO,GAAG,GAAG,CAAC","sourcesContent":["export const NR_COLS = 100;\n"]}

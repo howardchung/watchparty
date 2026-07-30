@@ -1,0 +1,1 @@
+{"version":3,"file":"RawFrame.js","sourceRoot":"","sources":["../../../../src/id3/util/RawFrame.ts"],"names":[],"mappings":"","sourcesContent":["/**\n * Raw ID3 frame.\n *\n * @internal\n *\n * @group ID3\n */\nexport type RawId3Frame = { type: string; size: number; data: Uint8Array; };\n"]}

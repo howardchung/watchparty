@@ -1,0 +1,32 @@
+{
+  "name": "@jsdoc/salty",
+  "version": "0.2.5",
+  "description": "A drop-in replacement for (some of) TaffyDB.",
+  "keywords": [
+    "jsdoc"
+  ],
+  "author": "Jeff Williams <jeffrey.l.williams@gmail.com>",
+  "homepage": "https://jsdoc.app/",
+  "license": "Apache-2.0",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jsdoc/jsdoc.git"
+  },
+  "scripts": {
+    "test": "echo \"Error: run tests from root\" && exit 1"
+  },
+  "bugs": {
+    "url": "https://github.com/jsdoc/jsdoc/issues"
+  },
+  "type": "commonjs",
+  "dependencies": {
+    "lodash": "^4.17.21"
+  },
+  "engines": {
+    "node": ">=v12.0.0"
+  },
+  "gitHead": "e20ec9ce0cbe9985647fcd0859a56067894a9889"
+}

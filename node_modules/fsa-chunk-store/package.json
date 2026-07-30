@@ -1,0 +1,43 @@
+{
+  "name": "fsa-chunk-store",
+  "description": "File System Access API chunk store that is abstract-chunk-store compliant, with filesystem-like folder structure.",
+  "version": "1.3.0",
+  "type": "module",
+  "author": {
+    "name": "ThaUnknown_"
+  },
+  "bugs": {
+    "url": "https://github.com/ThaUnknown/fsa-chunk-store/issues"
+  },
+  "devDependencies": {
+    "@testing-library/dom": "^10.4.0",
+    "@vitest/browser": "^2.0.5",
+    "run-parallel": "^1.2.0",
+    "vitest": "^2.0.5"
+  },
+  "homepage": "https://github.com/ThaUnknown/fsa-chunk-store",
+  "keywords": [
+    "abstract-chunk-store",
+    "chunk",
+    "webfs",
+    "file system access api",
+    "filesystem access",
+    "file system access",
+    "FileSystemHandle",
+    "FileSystemFileHandle",
+    "FileSystemDirectoryHandle",
+    "FileSystemWritableFileStream"
+  ],
+  "license": "MIT",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/ThaUnknown/fsa-chunk-store.git"
+  },
+  "dependencies": {
+    "filename-reserved-regex": "^3.0.0"
+  },
+  "scripts": {
+    "test": "vitest"
+  }
+}

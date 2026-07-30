@@ -1,0 +1,85 @@
+on:
+  push:
+    tags:
+      - 'v*'
+name: Build binaries and create release
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-16.04]
+    runs-on: ${{ matrix.os }}
+    name: Build
+    steps:
+      - uses: actions/checkout@v2.1.0
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 14.x
+      - run: npm run fetch-libutp
+      - run: npm install
+      - run: npm run prebuild
+      - run: npm run prebuild-ia32
+        if: ${{ matrix.os == 'windows-latest' }}
+      - uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.os }}
+          path: ./prebuilds
+  release:
+    name: Create Release
+    runs-on: ubuntu-16.04
+    needs: build
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Get builds
+        uses: actions/download-artifact@v2
+        with:
+          path: prebuilds
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: true
+      - name: Get version
+        id: get_version
+        run: echo ::set-output name=VERSION::$(git describe --tags)
+      - name: Compress builds
+        run: |
+          tar --create --verbose --file="./${{ steps.get_version.outputs.VERSION }}-windows-all.tar" --directory "prebuilds/windows-latest" .
+          tar --create --verbose --file="./${{ steps.get_version.outputs.VERSION }}-linux-x86.tar" --directory "prebuilds/ubuntu-16.04" .
+          tar --create --verbose --file="./${{ steps.get_version.outputs.VERSION }}-osx-x86.tar" --directory "prebuilds/macos-latest" .
+      - name: Upload x86 build
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./${{ steps.get_version.outputs.VERSION }}-linux-x86.tar
+          asset_name: ${{ steps.get_version.outputs.VERSION }}-linux-x86.tar
+          asset_content_type: application/x-tar
+      - name: Upload windows build
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./${{ steps.get_version.outputs.VERSION }}-windows-all.tar
+          asset_name: ${{ steps.get_version.outputs.VERSION }}-windows-all.tar
+          asset_content_type: application/x-tar
+      - name: Upload osx build
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./${{ steps.get_version.outputs.VERSION }}-osx-x86.tar
+          asset_name: ${{ steps.get_version.outputs.VERSION }}-osx-x86.tar
+          asset_content_type: application/x-tar
+      #- uses: JS-DevTools/npm-publish@v1
+      #  with:
+      #    token: ${{ secrets.NPM_TOKEN }}

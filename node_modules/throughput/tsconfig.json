@@ -1,0 +1,6 @@
+{
+  "extends": "eslint-config-standard-universal/tsconfig.json",
+  "include": [
+    "**/*.js"
+  ]
+}
