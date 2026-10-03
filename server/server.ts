@@ -11,9 +11,9 @@ import { searchYoutube, youtubePlaylist } from "./utils/youtube.ts";
 import { Room } from "./room.ts";
 import { redis, redisCount } from "./utils/redis.ts";
 import {
-  getCustomerByEmail,
+  getCustomerByUid,
   createSelfServicePortal,
-  getIsSubscriberByEmail,
+  getIsSubscriberByUid,
   stripe,
 } from "./utils/stripe.ts";
 import { deleteUser, validateUserToken } from "./utils/firebase.ts";
@@ -330,10 +330,26 @@ app.post("/createRoom", async (req, res) => {
 });
 
 app.post("/checkoutSub", async (req, res) => {
+  const decoded = await validateUserToken(
+    String(req.body?.uid),
+    String(req.body?.token),
+  );
+  if (!decoded) {
+    res.status(400).json({ error: "invalid user token" });
+    return;
+  }
+  // Reuse the existing customer for this user, or create one tagged with their UID
+  // so we can find it later even if their email changes
+  const customer =
+    (await getCustomerByUid(decoded.uid)) ??
+    (await stripe.customers.create({
+      email: decoded.email,
+      metadata: { firebaseUid: decoded.uid },
+    }));
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
-    client_reference_id: req.body.uid,
-    customer_email: req.body.email ?? undefined,
+    client_reference_id: decoded.uid,
+    customer: customer.id,
     line_items: [
       {
         price:
@@ -359,11 +375,7 @@ app.post("/manageSub", async (req, res) => {
     res.status(400).json({ error: "invalid user token" });
     return;
   }
-  if (!decoded.email) {
-    res.status(400).json({ error: "no email found" });
-    return;
-  }
-  const customer = await getCustomerByEmail(decoded.email);
+  const customer = await getCustomerByUid(decoded.uid);
   if (!customer) {
     res.status(400).json({ error: "customer not found" });
     return;
@@ -400,9 +412,9 @@ app.get("/metadata", async (req, res) => {
     String(req.query?.uid),
     String(req.query?.token),
   );
-  let isSubscriber = await getIsSubscriberByEmail(decoded?.email);
+  let isSubscriber = await getIsSubscriberByUid(decoded?.uid);
   // Has the user ever been a subscriber?
-  // const customer = await getCustomerByEmail(decoded.email);
+  // const customer = await getCustomerByUid(decoded.uid);
   let isFreePoolFull = false;
   try {
     isFreePoolFull = (

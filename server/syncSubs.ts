@@ -1,7 +1,11 @@
 import config from "./config.ts";
 import { getUserByEmail } from "./utils/firebase.ts";
 import { insertObject, newPostgres, updateObject } from "./utils/postgres.ts";
-import { getAllActiveSubscriptions, getAllCustomers } from "./utils/stripe.ts";
+import {
+  getAllActiveSubscriptions,
+  getAllCustomers,
+  stripe,
+} from "./utils/stripe.ts";
 import { Client as DiscordClient, IntentsBitField } from "discord.js";
 
 let lastSubs = "";
@@ -36,43 +40,54 @@ async function syncSubscribers() {
     getAllCustomers(),
   ]);
 
-  const emailMap = new Map();
+  const emailMap = new Map<string, string | null>();
+  const uidMap = new Map<string, string>();
   customers.forEach((cust) => {
     emailMap.set(cust.id, cust.email);
+    if (cust.metadata?.firebaseUid) {
+      uidMap.set(cust.id, cust.metadata.firebaseUid);
+    }
   });
 
   console.log("%s subs in Stripe", subs.length);
 
-  const uidMap = new Map();
-  for (let i = 0; i < subs.length; i += 50) {
+  // Backfill the Firebase UID for legacy customers that only have an email
+  const toBackfill = [
+    ...new Set(subs.map((sub) => sub.customer as string)),
+  ].filter((custId) => !uidMap.has(custId) && emailMap.get(custId));
+  console.log("%s customers to backfill UID", toBackfill.length);
+  for (let i = 0; i < toBackfill.length; i += 50) {
     // Batch customers and fetch firebase data
-    const batch = subs.slice(i, i + 50);
-    const fbUsers = await Promise.all(
-      batch
-        .map((sub) =>
-          emailMap.get(sub.customer)
-            ? getUserByEmail(emailMap.get(sub.customer))
-            : null,
-        )
-        .filter(Boolean),
+    const batch = toBackfill.slice(i, i + 50);
+    await Promise.all(
+      batch.map(async (custId) => {
+        const user = await getUserByEmail(emailMap.get(custId)!);
+        if (user?.uid) {
+          uidMap.set(custId, user.uid);
+          try {
+            await stripe.customers.update(custId, {
+              metadata: { firebaseUid: user.uid },
+            });
+          } catch (e: any) {
+            console.log(custId, e.message);
+          }
+        }
+      }),
     );
-    fbUsers.forEach((user) => {
-      uidMap.set(user?.email, user?.uid);
-    });
   }
 
   let noUID = 0;
   // Create sub objects
   let result = subs
     .map((sub) => {
-      let uid = uidMap.get(emailMap.get(sub.customer));
+      let uid = uidMap.get(sub.customer as string);
       if (!uid) {
-        uid = emailMap.get(sub.customer);
+        uid = emailMap.get(sub.customer as string) ?? undefined;
         noUID += 1;
       }
       return {
         customerId: sub.customer,
-        email: emailMap.get(sub.customer),
+        email: emailMap.get(sub.customer as string),
         status: sub.status,
         uid,
       };

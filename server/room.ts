@@ -3,7 +3,7 @@ import axios from "axios";
 import { Server, Socket } from "socket.io";
 import { getUser, validateUserToken } from "./utils/firebase.ts";
 import { redis, redisCount, redisCountDistinct } from "./utils/redis.ts";
-import { getIsSubscriberByEmail } from "./utils/stripe.ts";
+import { getIsSubscriberByUid } from "./utils/stripe.ts";
 import { type AssignedVM } from "./vm/base.ts";
 import { getStartOfDay } from "./utils/time.ts";
 import { postgres, updateObject, upsertObject } from "./utils/postgres.ts";
@@ -252,7 +252,7 @@ export class Room {
           // This socket is now confirmed to be this UID
           socket.uid = decoded?.uid;
         }
-        const isSubscriber = await getIsSubscriberByEmail(decoded?.email);
+        const isSubscriber = await getIsSubscriberByUid(decoded?.uid);
         if (isSubscriber) {
           socket.isSub = true;
         }

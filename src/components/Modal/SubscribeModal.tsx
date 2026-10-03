@@ -23,7 +23,7 @@ export class SubscribeModal extends React.Component<{
         },
         body: JSON.stringify({
           uid: user?.uid,
-          email: user?.email,
+          token: await user?.getIdToken(),
           return_url: window.location.href,
         }),
       });

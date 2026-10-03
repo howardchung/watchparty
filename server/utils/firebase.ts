@@ -57,14 +57,6 @@ export async function getUser(uid: string) {
   return await admin.auth().getUser(uid);
 }
 
-export async function getUserEmail(uid: string) {
-  if (!config.FIREBASE_ADMIN_SDK_CONFIG) {
-    return null;
-  }
-  const user = await admin.auth().getUser(uid);
-  return user.email;
-}
-
 export async function deleteUser(uid: string) {
   if (!config.FIREBASE_ADMIN_SDK_CONFIG) {
     return null;
