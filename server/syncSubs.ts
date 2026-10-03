@@ -1,11 +1,6 @@
 import config from "./config.ts";
-import { getUserByEmail } from "./utils/firebase.ts";
 import { insertObject, newPostgres, updateObject } from "./utils/postgres.ts";
-import {
-  getAllActiveSubscriptions,
-  getAllCustomers,
-  stripe,
-} from "./utils/stripe.ts";
+import { getAllActiveSubscriptions, getAllCustomers } from "./utils/stripe.ts";
 import { Client as DiscordClient, IntentsBitField } from "discord.js";
 
 let lastSubs = "";
@@ -50,31 +45,6 @@ async function syncSubscribers() {
   });
 
   console.log("%s subs in Stripe", subs.length);
-
-  // Backfill the Firebase UID for legacy customers that only have an email
-  const toBackfill = [
-    ...new Set(subs.map((sub) => sub.customer as string)),
-  ].filter((custId) => !uidMap.has(custId) && emailMap.get(custId));
-  console.log("%s customers to backfill UID", toBackfill.length);
-  for (let i = 0; i < toBackfill.length; i += 50) {
-    // Batch customers and fetch firebase data
-    const batch = toBackfill.slice(i, i + 50);
-    await Promise.all(
-      batch.map(async (custId) => {
-        const user = await getUserByEmail(emailMap.get(custId)!);
-        if (user?.uid) {
-          uidMap.set(custId, user.uid);
-          try {
-            await stripe.customers.update(custId, {
-              metadata: { firebaseUid: user.uid },
-            });
-          } catch (e: any) {
-            console.log(custId, e.message);
-          }
-        }
-      }),
-    );
-  }
 
   let noUID = 0;
   // Create sub objects
