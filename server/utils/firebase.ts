@@ -38,18 +38,6 @@ export async function writeData(key: string, value: string) {
   await admin.database().ref(key).set(value);
 }
 
-export async function getUserByEmail(email: string) {
-  if (!config.FIREBASE_ADMIN_SDK_CONFIG) {
-    return null;
-  }
-  try {
-    return await admin.auth().getUserByEmail(email);
-  } catch (e: any) {
-    console.log(email, e.message);
-  }
-  return null;
-}
-
 export async function getUser(uid: string) {
   if (!config.FIREBASE_ADMIN_SDK_CONFIG) {
     return null;
