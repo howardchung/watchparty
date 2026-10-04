@@ -338,6 +338,17 @@ app.post("/checkoutSub", async (req, res) => {
     res.status(400).json({ error: "invalid user token" });
     return;
   }
+  // Don't let a user subscribe twice
+  if (postgres) {
+    const { rows } = await postgres.query(
+      "SELECT 1 FROM subscriber WHERE uid = $1 AND status = 'active'",
+      [decoded.uid],
+    );
+    if (rows.length) {
+      res.status(400).json({ error: "already subscribed" });
+      return;
+    }
+  }
   // Reuse the existing customer for this user, or create one tagged with their UID
   // so we can find it later even if their email changes
   const customer =
