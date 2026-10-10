@@ -2520,27 +2520,7 @@ export class App extends React.Component<AppProps, AppState> {
                         onClick={this.roomTogglePlay}
                       ></video>
                     )}
-                    {this.state.convertProgress !== undefined &&
-                      this.state.convertProgress < 1 && (
-                        <div
-                          style={{
-                            color: softWhite,
-                            fontWeight: 400,
-                            fontSize: 10,
-                            lineHeight: "8px",
-                            position: "absolute",
-                            bottom: 0,
-                            right: 0,
-                            zIndex: 1,
-                          }}
-                        >
-                          {"Converted " +
-                            (this.state.convertProgress * 100).toFixed(0) +
-                            "%"}
-                        </div>
-                      )}
-                    {Boolean(this.state.total) && (
-                      <div
+                    <div
                         style={{
                           color: softWhite,
                           fontWeight: 400,
@@ -2552,6 +2532,7 @@ export class App extends React.Component<AppProps, AppState> {
                           zIndex: 1,
                         }}
                       >
+                    {Boolean(this.state.total) && (<>
                         {Math.min(
                           (this.state.downloaded / this.state.total) * 100,
                           100,
@@ -2561,8 +2542,14 @@ export class App extends React.Component<AppProps, AppState> {
                           " - " +
                           this.state.connections +
                           " connections"}
-                      </div>
-                    )}
+                      </>)}
+                    {this.state.convertProgress !== undefined && (<>
+                      {" " +
+                        (this.state.convertProgress * 100).toFixed(1) +
+                        "% converted"}
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
                 {this.state.roomMedia && controls}
