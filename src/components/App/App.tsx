@@ -486,6 +486,7 @@ export class App extends React.Component<AppProps, AppState> {
           // Stop all players
           // Unless the user is sharing a file, because we play it in leftVideo and capture stream
           if (!this.isLocalStreamAFile) {
+            this.stopConvert();
             this.HTMLInterface.pauseVideo();
           }
           this.YouTubeInterface.stopVideo();
@@ -643,7 +644,13 @@ export class App extends React.Component<AppProps, AppState> {
           //   player.load();
           //   player.play();
           // }
-          else {
+          else if (
+            this.state.convertEnabled &&
+            isClientTranscodeSupported() &&
+            isDirectVideoUrl(src)
+          ) {
+            await this.convertAndPlay(src, time);
+          } else {
             await this.Player().setSrcAndTime(src, time);
           }
           // Start this video
@@ -1066,61 +1073,88 @@ export class App extends React.Component<AppProps, AppState> {
     }
   };
 
-  // Shares a file (or URL, if convert is set) from this device.
-  // With convert, the file is transcoded in this browser using WebCodecs into a format browsers can play
-  // (see clientTranscode.ts), then shared the same way as an unconverted file.
+  createTranscoder = (
+    source: File | string,
+    video: HTMLMediaElement,
+    startTime: number,
+    onError: (err: Error) => void,
+  ) => {
+    const transcoder = new ClientTranscoder({
+      source,
+      video,
+      startTime,
+      onProgress: (fraction) => {
+        if (this.transcoder === transcoder) {
+          this.setState({ convertProgress: fraction });
+        }
+      },
+      onError,
+    });
+    this.transcoder = transcoder;
+    this.setState({ convertProgress: 0 });
+    return transcoder;
+  };
+
+  // Plays a media URL in this browser after converting it with WebCodecs (see clientTranscode.ts), for formats the
+  // browser can't play natively. Only affects this client: the room's media URL is unchanged.
+  convertAndPlay = async (src: string, time: number) => {
+    const video = this.HTMLInterface.getVideoEl();
+    const transcoder = this.createTranscoder(src, video, time, (err) => {
+      // Conversion failed while playing. Carry on without it.
+      this.showError(
+        `Conversion failed: ${err.message}. Playing without conversion.`,
+      );
+      this.stopConvert();
+      this.Player().setSrcAndTime(src, video.currentTime);
+    });
+    try {
+      await transcoder.start();
+    } catch (err) {
+      console.error(err);
+      if (this.transcoder === transcoder) {
+        // Typically a CORS restriction or a link that isn't a media file
+        this.stopConvert();
+        const reason =
+          err instanceof Error ? err.message : "Unable to convert this video";
+        this.showError(`${reason}. Playing without conversion.`);
+        await this.Player().setSrcAndTime(src, time);
+      }
+    }
+  };
+
+  // Shares a file from this device. With convert, the file is first transcoded in this browser using WebCodecs
+  // into a format browsers can play (see clientTranscode.ts), then shared the same way as an unconverted file.
   startFileShare = async (
     useMediaSoup: boolean,
-    options?: { convert?: boolean; sourceUrl?: string },
+    options?: { convert?: boolean },
   ) => {
-    let source: File | string | undefined = options?.sourceUrl;
-    if (!source) {
-      const files = await openFileSelector();
-      if (!files) {
-        return;
-      }
-      source = files[0];
+    const files = await openFileSelector();
+    if (!files) {
+      return;
     }
+    const file = files[0];
     if (options?.convert && !isClientTranscodeSupported()) {
       this.showError("Your browser doesn't support converting videos");
       return;
     }
     this.stopConvert();
-    await this.releaseLocalShare();
     this.Player().clearState();
     const leftVideo = this.HTMLInterface.getVideoEl();
     if (options?.convert) {
-      const transcoder = new ClientTranscoder({
-        source,
-        video: leftVideo,
-        onProgress: (fraction) => {
-          if (this.transcoder === transcoder) {
-            this.setState({ convertProgress: fraction });
-          }
-        },
-        onError: (err) => {
-          // Conversion failed mid-share
-          this.showError(`Conversion failed: ${err.message}`);
-          this.stopPublishingLocalStream();
-        },
+      const transcoder = this.createTranscoder(file, leftVideo, 0, (err) => {
+        // Conversion failed mid-share
+        this.showError(`Conversion failed: ${err.message}`);
+        this.stopPublishingLocalStream();
       });
-      this.transcoder = transcoder;
-      this.setState({ convertProgress: 0 });
       try {
         await transcoder.start();
       } catch (err) {
         console.error(err);
         if (this.transcoder === transcoder) {
           this.stopConvert();
-          const reason =
-            err instanceof Error ? err.message : "Unable to convert this file";
-          if (options.sourceUrl) {
-            // Typically a CORS restriction or a link that isn't a media file. Play it normally instead.
-            this.showError(`${reason}. Playing without conversion.`);
-            this.socket.emit("CMD:host", options.sourceUrl);
-          } else {
-            this.showError(reason);
-          }
+          this.showError(
+            err instanceof Error ? err.message : "Unable to convert this file",
+          );
         }
         return;
       }
@@ -1129,7 +1163,7 @@ export class App extends React.Component<AppProps, AppState> {
         return;
       }
     } else {
-      leftVideo.src = URL.createObjectURL(source as File);
+      leftVideo.src = URL.createObjectURL(file);
     }
     leftVideo.play();
     //@ts-expect-error
@@ -1879,18 +1913,6 @@ export class App extends React.Component<AppProps, AppState> {
   };
 
   roomSetMedia = (value: string) => {
-    const sharer = this.state.participants.find((p) => p.isScreenShare);
-    const someoneElseSharing = sharer && sharer.id !== getOrCreateClientId();
-    if (
-      this.state.convertEnabled &&
-      isClientTranscodeSupported() &&
-      isDirectVideoUrl(value) &&
-      !someoneElseSharing
-    ) {
-      // Convert in this browser and share it, rather than having everyone load the URL directly
-      this.startFileShare(false, { convert: true, sourceUrl: value });
-      return;
-    }
     this.socket.emit("CMD:host", value);
   };
 
@@ -1900,33 +1922,6 @@ export class App extends React.Component<AppProps, AppState> {
       convertEnabled ? "1" : "0",
     );
     this.setState({ convertEnabled });
-  };
-
-  // If we're currently sharing, stop and wait for the server to confirm. The server rejects a new share while one
-  // exists, and the REC:host confirming the old share ended would otherwise tear down the new one.
-  releaseLocalShare = async () => {
-    if (!this.localStreamToPublish) {
-      return;
-    }
-    const confirmed = new Promise<void>((resolve) => {
-      const onHost = (data: HostState) => {
-        if (
-          !isFileShare(data.video || "") &&
-          !isScreenShare(data.video || "")
-        ) {
-          this.socket.off("REC:host", onHost);
-          resolve();
-        }
-      };
-      this.socket.on("REC:host", onHost);
-    });
-    await this.stopPublishingLocalStream();
-    await Promise.race([
-      confirmed,
-      new Promise((resolve) => setTimeout(resolve, 3000)),
-    ]);
-    // Give the REC:host handler time to finish resetting the player
-    await new Promise((resolve) => setTimeout(resolve, 100));
   };
 
   roomPlaylistPlay = (index: number) => {
@@ -2115,7 +2110,6 @@ export class App extends React.Component<AppProps, AppState> {
           <FileShareModal
             closeModal={() => this.setState({ isFileShareModalOpen: false })}
             startFileShare={this.startFileShare}
-            defaultConvert={this.state.convertEnabled}
           />
         )}
         {this.state.isSubtitleModalOpen && (
@@ -2251,7 +2245,7 @@ export class App extends React.Component<AppProps, AppState> {
                         <Tooltip
                           multiline
                           w={280}
-                          label="Convert videos on your device so they play even if their format isn't supported by browsers. Applies to direct video links. Uses your CPU/GPU and upload bandwidth."
+                          label="Convert videos on your device so they play even if their format isn't supported by your browser. Applies to direct video links, and only affects your own playback. Uses your CPU/GPU."
                         >
                           <Switch
                             label="Convert"

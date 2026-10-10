@@ -55,6 +55,8 @@ export interface ClientTranscoderOptions {
   source: File | string;
   /** The element that will play the converted media */
   video: HTMLMediaElement;
+  /** Where in the media (seconds) to start converting and playing from. Defaults to 0. */
+  startTime?: number;
   /** Called with the fraction (0-1) of the file that has been converted so far */
   onProgress?: (fraction: number) => void;
   /** Called if conversion fails after start() has resolved. The transcoder stops itself. */
@@ -161,9 +163,17 @@ export class ClientTranscoder {
       // Lets the seek bar show the full length even though we only convert on demand
       mediaSource.duration = this.duration;
     }
+    const startTime = Math.min(
+      Math.max(this.opts.startTime ?? 0, 0),
+      this.duration > 0 ? this.duration : Infinity,
+    );
+    if (startTime > 0) {
+      // Before data arrives this just sets the start position, it doesn't trigger a seek
+      video.currentTime = startTime;
+    }
     video.addEventListener("seeking", this.onSeeking);
     video.addEventListener("waiting", this.onWaiting);
-    await this.begin(0);
+    await this.begin(startTime);
     this.started = true;
   }
 
@@ -462,10 +472,13 @@ export class ClientTranscoder {
       // Already have it. If the conversion isn't producing data for this region, onWaiting will catch it.
       return;
     }
-    this.seekTimeout = window.setTimeout(
-      () => this.restartAt(t),
-      SEEK_DEBOUNCE_MS,
-    );
+    this.seekTimeout = window.setTimeout(() => {
+      // Data for the target may have arrived in the meantime (e.g. the start position after initial load)
+      const now = this.opts.video.currentTime;
+      if (this.bufferedEndAt(now) === undefined) {
+        this.restartAt(now);
+      }
+    }, SEEK_DEBOUNCE_MS);
   };
 
   private onWaiting = () => {

@@ -10,11 +10,10 @@ export const FileShareModal = (props: {
     useMediaSoup: boolean,
     options?: { convert?: boolean },
   ) => void;
-  defaultConvert?: boolean;
 }) => {
   const context = useContext(MetadataContext);
   const { closeModal } = props;
-  const [convert, setConvert] = useState(Boolean(props.defaultConvert));
+  const [convert, setConvert] = useState(false);
   const canConvert = isClientTranscodeSupported();
   const subscribeButton = <SubscribeButton />;
   return (
