@@ -161,7 +161,6 @@ export async function getStats() {
   const proxyReqs = await getRedisCountDay("proxyReqs");
   const urlStarts = await getRedisCountDay("urlStarts");
   const streamStarts = await getRedisCountDay("streamStarts");
-  const convertStarts = await getRedisCountDay("convertStarts");
   const playlistAdds = await getRedisCountDay("playlistAdds");
   const screenShareStarts = await getRedisCountDay("screenShareStarts");
   const fileShareStarts = await getRedisCountDay("fileShareStarts");
@@ -256,7 +255,6 @@ export async function getStats() {
       proxyReqs,
       urlStarts,
       streamStarts,
-      convertStarts,
       playlistAdds,
       screenShareStarts,
       fileShareStarts,

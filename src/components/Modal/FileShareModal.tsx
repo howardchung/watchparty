@@ -1,15 +1,20 @@
-import React, { useContext } from "react";
-import { Modal, Button, Table } from "@mantine/core";
+import React, { useContext, useState } from "react";
+import { Modal, Button, Table, Checkbox } from "@mantine/core";
 import { SubscribeButton } from "../SubscribeButton/SubscribeButton";
 import { MetadataContext } from "../../MetadataContext";
+import { isClientTranscodeSupported } from "../../utils/clientTranscode";
 
 export const FileShareModal = (props: {
   closeModal: () => void;
-  startFileShare: (useMediaSoup: boolean) => void;
-  startConvert: () => void;
+  startFileShare: (
+    useMediaSoup: boolean,
+    options?: { convert?: boolean },
+  ) => void;
 }) => {
   const context = useContext(MetadataContext);
   const { closeModal } = props;
+  const [convert, setConvert] = useState(false);
+  const canConvert = isClientTranscodeSupported();
   const subscribeButton = <SubscribeButton />;
   return (
     <Modal
@@ -26,7 +31,6 @@ export const FileShareModal = (props: {
             <Table.Th />
             <Table.Th>WatchParty Free</Table.Th>
             <Table.Th>WatchParty Plus (Relay)</Table.Th>
-            <Table.Th>WatchParty Plus (Convert)</Table.Th>
           </Table.Tr>
         </Table.Thead>
 
@@ -34,36 +38,26 @@ export const FileShareModal = (props: {
           <Table.Tr>
             <Table.Td>Method</Table.Td>
             <Table.Td>
-              Stream your video to each viewer from your device. May not work
-              with codecs not playable in browsers.
+              Stream your video to each viewer from your device.
             </Table.Td>
             <Table.Td>
               Stream your video to our relay server, which sends it to each
-              viewer, reducing bandwidth usage. May not work with codecs not
-              playable in browsers.
-            </Table.Td>
-            <Table.Td>
-              We convert your video in real-time to a web-compatible format and
-              serve the result. Avoids codec compatibility issues and allows
-              more viewers.
+              viewer, reducing bandwidth usage.
             </Table.Td>
           </Table.Tr>
           <Table.Tr>
             <Table.Td>Latency</Table.Td>
             <Table.Td>{`<1s`}</Table.Td>
             <Table.Td>{`<1s`}</Table.Td>
-            <Table.Td>{`~5s`}</Table.Td>
           </Table.Tr>
           <Table.Tr>
             <Table.Td>Recommended Max Viewers</Table.Td>
             <Table.Td>5</Table.Td>
             <Table.Td>20</Table.Td>
-            <Table.Td>100</Table.Td>
           </Table.Tr>
           <Table.Tr>
             <Table.Td>Recommended Upload Speed</Table.Td>
             <Table.Td>5 Mbps per viewer</Table.Td>
-            <Table.Td>5 Mbps</Table.Td>
             <Table.Td>5 Mbps</Table.Td>
           </Table.Tr>
           <Table.Tr>
@@ -71,7 +65,7 @@ export const FileShareModal = (props: {
             <Table.Td>
               <Button
                 onClick={() => {
-                  props.startFileShare(false);
+                  props.startFileShare(false, { convert });
                   props.closeModal();
                 }}
               >
@@ -83,7 +77,7 @@ export const FileShareModal = (props: {
                 <Button
                   color="orange"
                   onClick={() => {
-                    props.startFileShare(true);
+                    props.startFileShare(true, { convert });
                     props.closeModal();
                   }}
                 >
@@ -93,24 +87,21 @@ export const FileShareModal = (props: {
                 subscribeButton
               )}
             </Table.Td>
-            <Table.Td>
-              {context.isSubscriber ? (
-                <Button
-                  color="orange"
-                  onClick={() => {
-                    props.startConvert();
-                    props.closeModal();
-                  }}
-                >
-                  Start Fileshare w/Convert
-                </Button>
-              ) : (
-                subscribeButton
-              )}
-            </Table.Td>
           </Table.Tr>
         </Table.Tbody>
       </Table>
+      <Checkbox
+        mt="md"
+        disabled={!canConvert}
+        checked={convert}
+        onChange={(e) => setConvert(e.currentTarget.checked)}
+        label="Convert video on my device before sharing (use if video or audio doesn't share)"
+        description={
+          canConvert
+            ? "Converts to a web-compatible format, which uses your CPU/GPU."
+            : "Your browser doesn't support WebCodecs, which is required for converting."
+        }
+      />
     </Modal>
   );
 };

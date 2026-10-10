@@ -3,6 +3,7 @@ import {
   debounce,
   getYouTubeResults,
   getStreamPathResults,
+  pickSingleLargeFile,
 } from "../../utils/utils";
 import { Loader, Select } from "@mantine/core";
 import {
@@ -69,6 +70,15 @@ export class SearchComponent extends React.Component<SearchComponentProps> {
         "&fileIndex=" +
         i,
     }));
+    const candidate = pickSingleLargeFile<{ length: number; url: string }>(
+      multiStreamSelection,
+    );
+    if (candidate) {
+      // Only one file could be the video, so skip the picker
+      this.props.setShowMultiSelect(false);
+      this.props.setMedia(candidate.url);
+      return;
+    }
     this.props.setFileSelection(multiStreamSelection);
   };
 

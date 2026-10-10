@@ -5,7 +5,6 @@ export const DEFAULT_STATE = {
   user: undefined as firebase.User | undefined,
   isSubscriber: undefined as boolean | undefined,
   streamPath: undefined as string | undefined,
-  convertPath: undefined as string | undefined,
   beta: false,
 };
 

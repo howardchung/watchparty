@@ -53,7 +53,6 @@ class WatchParty extends React.Component {
           this.setState({
             isSubscriber: data.isSubscriber,
             streamPath: data.streamPath,
-            convertPath: data.convertPath,
             beta: data.beta,
           });
         }
