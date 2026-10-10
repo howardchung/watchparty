@@ -2241,22 +2241,6 @@ export class App extends React.Component<AppProps, AppState> {
                         mediaPath={this.state.mediaPath}
                         disabled={!this.haveLock()}
                       />
-                      {isClientTranscodeSupported() && (
-                        <Tooltip
-                          multiline
-                          w={280}
-                          label="Convert videos on your device so they play even if their format isn't supported by your browser. Applies to direct video links, and only affects your own playback. Uses your CPU/GPU."
-                        >
-                          <Switch
-                            label="Convert"
-                            checked={this.state.convertEnabled}
-                            onChange={(e) =>
-                              this.setConvertEnabled(e.currentTarget.checked)
-                            }
-                            style={{ flexShrink: 0, alignSelf: "center" }}
-                          />
-                        </Tooltip>
-                      )}
                     </div>
                     <div className={styles.mobileStack}>
                       {this.localStreamToPublish && (
@@ -2480,6 +2464,23 @@ export class App extends React.Component<AppProps, AppState> {
                           )}
                         </Menu.Dropdown>
                       </Menu>
+                      {isClientTranscodeSupported() && (
+                        <Tooltip
+                          multiline
+                          w={280}
+                          refProp="rootRef"
+                          label="Use CPU/GPU to convert before playback on your device (use if video or audio doesn't play)"
+                        >
+                          <Switch
+                            label="Convert"
+                            checked={this.state.convertEnabled}
+                            onChange={(e) =>
+                              this.setConvertEnabled(e.currentTarget.checked)
+                            }
+                            style={{ flexShrink: 0, alignSelf: "center" }}
+                          />
+                        </Tooltip>
+                      )}
                     </div>
                   </React.Fragment>
                 )}
@@ -2606,23 +2607,18 @@ export class App extends React.Component<AppProps, AppState> {
                           zIndex: 1,
                         }}
                       >
-                    {Boolean(this.state.total) && (<>
-                        {Math.min(
+                        {[
+Boolean(this.state.total) && Math.min(
                           (this.state.downloaded / this.state.total) * 100,
                           100,
                         ).toFixed(2) +
-                          "% - " +
-                          formatSpeed(this.state.speed) +
-                          " - " +
-                          this.state.connections +
-                          " connections"}
-                      </>)}
-                    {this.state.convertProgress !== undefined && (<>
-                      {" " +
-                        (this.state.convertProgress * 100).toFixed(1) +
-                        "% converted"}
-                        </>
-                      )}
+                          "% downloaded",
+                          Boolean(this.state.total) && formatSpeed(this.state.speed),
+                          Boolean(this.state.total) && this.state.connections +
+                          " connections",
+this.state.convertProgress !== undefined && (this.state.convertProgress * 100).toFixed(1) +
+                        "% converted",
+                        ].filter(Boolean).join(" - ")}
                     </div>
                   </div>
                 </div>

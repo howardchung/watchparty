@@ -95,10 +95,10 @@ export const FileShareModal = (props: {
         disabled={!canConvert}
         checked={convert}
         onChange={(e) => setConvert(e.currentTarget.checked)}
-        label="Convert video on my device (use if the video or audio doesn't play)"
+        label="Convert video on my device before sharing (use if video or audio doesn't share)"
         description={
           canConvert
-            ? "Converts to a web-compatible format in your browser, which uses your CPU/GPU while sharing. Supports MP4, MOV, MKV, WebM and MPEG-TS (not AVI)."
+            ? "Converts to a web-compatible format, which uses your CPU/GPU."
             : "Your browser doesn't support WebCodecs, which is required for converting."
         }
       />
