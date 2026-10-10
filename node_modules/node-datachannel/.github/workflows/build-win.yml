@@ -1,0 +1,74 @@
+name: Build - Win
+
+on:
+  workflow_dispatch:
+  # push:
+  #   tags:
+  #     - v*
+
+env:
+  ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+
+jobs:
+  build-windows-x64:
+    runs-on: windows-2019
+    strategy:
+      matrix:
+        node-version: [16.x]
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Install OpenSSL
+        run: choco install openssl
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Build
+        run: set npm_config_cache= && set NPM_CONFIG_CACHE= && npm install --build-from-source
+        env:
+          CI: true
+      # - name: Test
+      #   run: npm run test
+      #   env:
+      #     CI: true
+      - name: Upload
+        run: node_modules/.bin/prebuild -r napi --upload -u ${{ secrets.GITHUB_TOKEN }}
+        env:
+          CI: true
+
+  build-windows-x86:
+    runs-on: windows-2019
+    strategy:
+      matrix:
+        node_version: [16.x]
+        node_arch:
+          - x86
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x86
+      - name: Install OpenSSL
+      # openssl v3.1.1 [Approved]
+      # openssl package files install completed. Performing other installation steps.
+      # ERROR: 32-bit installation is not supported for openssl
+        run: choco install openssl --x86=true --version=1.1.1.2100
+      - name: Use Node.js ${{ matrix.node_version }}
+        uses: aminya/setup-node@x86
+        with:
+          node-version: ${{ matrix.node_version }}
+          node-arch: ${{ matrix.node_arch }}
+      - name: Build
+        run: set npm_config_cache= && set NPM_CONFIG_CACHE= && npm install --build-from-source
+        env:
+          CI: true
+      # - name: Test
+      #   run: npm run test
+      #   env:
+      #     CI: true
+      - name: Upload
+        run: node_modules/.bin/prebuild -r napi --upload -u ${{ secrets.GITHUB_TOKEN }}
+        env:
+          CI: true

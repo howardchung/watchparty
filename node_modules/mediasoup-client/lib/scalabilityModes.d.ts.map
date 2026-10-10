@@ -1,0 +1,1 @@
+{"version":3,"file":"scalabilityModes.d.ts","sourceRoot":"","sources":["../src/scalabilityModes.ts"],"names":[],"mappings":"AAEA,MAAM,MAAM,eAAe,GAAG;IAC7B,aAAa,EAAE,MAAM,CAAC;IACtB,cAAc,EAAE,MAAM,CAAC;CACvB,CAAC;AAEF,wBAAgB,KAAK,CAAC,eAAe,CAAC,EAAE,MAAM,GAAG,eAAe,CAc/D"}

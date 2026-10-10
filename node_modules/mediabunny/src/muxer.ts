@@ -1,0 +1,76 @@
+/*!
+ * Copyright (c) 2026-present, Vanilagy and contributors
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+import { AsyncMutex } from './misc';
+import { Output, OutputAudioTrack, OutputSubtitleTrack, OutputTrack, OutputVideoTrack } from './output';
+import { EncodedPacket } from './packet';
+import { SubtitleCue, SubtitleMetadata } from './subtitles';
+
+export abstract class Muxer {
+	output: Output;
+	mutex = new AsyncMutex();
+
+	constructor(output: Output) {
+		this.output = output;
+	}
+
+	abstract start(): Promise<void>;
+	abstract getMimeType(): Promise<string>;
+	abstract addEncodedVideoPacket(
+		track: OutputVideoTrack,
+		packet: EncodedPacket,
+		meta?: EncodedVideoChunkMetadata
+	): Promise<void>;
+	abstract addEncodedAudioPacket(
+		track: OutputAudioTrack,
+		packet: EncodedPacket,
+		meta?: EncodedAudioChunkMetadata
+	): Promise<void>;
+	abstract addSubtitleCue(track: OutputSubtitleTrack, cue: SubtitleCue, meta?: SubtitleMetadata): Promise<void>;
+	abstract finalize(): Promise<void>;
+
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	onTrackClose(track: OutputTrack) {}
+
+	private trackTimestampInfo = new WeakMap<OutputTrack, {
+		maxTimestamp: number;
+		maxTimestampBeforeLastKeyPacket: number | null;
+	}>();
+
+	protected validateTimestamp(track: OutputTrack, timestampInSeconds: number, isKeyPacket: boolean) {
+		let timestampInfo = this.trackTimestampInfo.get(track);
+		if (!timestampInfo) {
+			if (!isKeyPacket) {
+				throw new Error('First packet must be a key packet.');
+			}
+
+			timestampInfo = {
+				maxTimestamp: timestampInSeconds,
+				maxTimestampBeforeLastKeyPacket: null,
+			};
+			this.trackTimestampInfo.set(track, timestampInfo);
+		} else {
+			if (isKeyPacket) {
+				timestampInfo.maxTimestampBeforeLastKeyPacket = timestampInfo.maxTimestamp;
+			}
+
+			if (
+				timestampInfo.maxTimestampBeforeLastKeyPacket !== null
+				&& timestampInSeconds < timestampInfo.maxTimestampBeforeLastKeyPacket
+			) {
+				throw new Error(
+					`Timestamps cannot be smaller than the largest timestamp of the previous GOP (a GOP begins with a`
+					+ ` key packet and ends right before the next key packet). Got ${timestampInSeconds}s, but largest`
+					+ ` timestamp is ${timestampInfo.maxTimestampBeforeLastKeyPacket}s.`,
+				);
+			}
+
+			timestampInfo.maxTimestamp = Math.max(timestampInfo.maxTimestamp, timestampInSeconds);
+		}
+	}
+}

@@ -1,0 +1,1 @@
+{"version":3,"file":"AudioChannelConfiguration.d.ts","sourceRoot":"","sources":["../../../../../../../src/cmaf/ham/types/mapper/dash/AudioChannelConfiguration.ts"],"names":[],"mappings":"AAAA;;;;;GAKG;AACH,MAAM,MAAM,yBAAyB,GAAG;IACvC,CAAC,EAAE;QACF,WAAW,EAAE,MAAM,CAAC;QACpB,KAAK,EAAE,MAAM,CAAC;KACd,CAAC;CACF,CAAC"}

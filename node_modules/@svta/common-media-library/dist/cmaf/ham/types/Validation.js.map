@@ -1,0 +1,1 @@
+{"version":3,"file":"Validation.js","sourceRoot":"","sources":["../../../../src/cmaf/ham/types/Validation.ts"],"names":[],"mappings":"","sourcesContent":["/**\n * CMAF-HAM Validation type\n *\n * @group CMAF\n * @alpha\n */\nexport type Validation = {\n\tstatus: boolean;\n\terrorMessages: string[];\n};\n"]}

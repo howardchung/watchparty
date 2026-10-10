@@ -1,0 +1,1 @@
+{"version":3,"file":"NR_ROWS.js","sourceRoot":"","sources":["../../../../../src/cta/608/utils/NR_ROWS.ts"],"names":[],"mappings":";;;AAAa,QAAA,OAAO,GAAG,EAAE,CAAC","sourcesContent":["export const NR_ROWS = 15;\n"]}

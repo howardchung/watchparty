@@ -1,0 +1,40 @@
+@media (prefers-reduced-motion: reduce) {
+    [data-respect-reduced-motion] [data-reduce-motion] {
+      transition: none;
+      animation: none;
+    }
+  }
+
+[data-mantine-color-scheme='light'] .mantine-light-hidden {
+    display: none;
+}
+
+[data-mantine-color-scheme='dark'] .mantine-dark-hidden {
+    display: none;
+}
+
+.mantine-focus-auto:focus-visible {
+    outline: 2px solid var(--mantine-primary-color-filled);
+    outline-offset: 2px;
+  }
+
+.mantine-focus-always:focus {
+    outline: 2px solid var(--mantine-primary-color-filled);
+    outline-offset: 2px;
+  }
+
+.mantine-focus-never:focus {
+    outline: none;
+  }
+
+.mantine-active:active {
+    transform: translateY(calc(0.0625rem * var(--mantine-scale)));
+  }
+
+fieldset:disabled .mantine-active:active {
+    transform: none;
+  }
+
+:where([dir="rtl"]) .mantine-rotate-rtl {
+    transform: rotate(180deg);
+}

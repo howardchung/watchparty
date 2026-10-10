@@ -1,0 +1,1 @@
+{"version":3,"file":"KEY.js","sourceRoot":"","sources":["../../../src/structuredfield/utils/KEY.ts"],"names":[],"mappings":"AAAA,MAAM,CAAC,MAAM,GAAG,GAAG,KAAK,CAAC","sourcesContent":["export const KEY = 'Key';\n"]}

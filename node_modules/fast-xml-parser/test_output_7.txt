@@ -1,0 +1,48 @@
+Randomized with seed 51667
+Started
+......FFF.F
+
+Failures:
+1) XMLParser v6 should skip tag arguments
+  Message:
+    Expected $.rootNode.intTag = '45' to equal 45.
+    Expected $.rootNode.floatTag = '65.34' to equal 65.34.
+  Stack:
+        at <Jasmine>
+        at UserContext.<anonymous> (file:///home/amit/code/git/temp/fast-xml-parser/spec/v6/xmlParser_spec.js:165:20)
+        at <Jasmine>
+
+2) XMLParser v6 should ignore namespace and text node attributes
+  Message:
+    Expected object to have properties
+        node: Object({ tag: Object({ @_arg: 'value', #text: 'value' }), intTag: Object({ @_arg: 'value', @_arg2: 'value2', #text: 45 }), floatTag: 65.34, nsTag: Object({ @_attr: 'tns' }), nsTagNoAttr: '' })
+    Expected object not to have properties
+        root:node: Object({ tag: Object({ @_ns:arg: 'value', #text: 'value' }), intTag: Object({ @_ns:arg: 'value', @_ns:arg2: 'value2', #text: '45' }), floatTag: '65.34', nsTag: Object({ @_xmlns:tns-ns: 'urn:none', @_tns-ns:attr: 'tns' }), nsTagNoAttr: Object({ @_xmlns:tns-ns: 'urn:none' }) })
+  Stack:
+        at <Jasmine>
+        at UserContext.<anonymous> (file:///home/amit/code/git/temp/fast-xml-parser/spec/v6/xmlParser_spec.js:207:20)
+        at <Jasmine>
+
+3) XMLParser v6 should parse all values as string, int, boolean, float, hexadecimal
+  Message:
+    Expected $.rootNode.boolean = 'true' to equal true.
+    Expected $.rootNode.intTag = '045' to equal 45.
+    Expected $.rootNode.floatTag = '65.34' to equal 65.34.
+    Expected $.rootNode.hexadecimal = '0x15' to equal 21.
+  Stack:
+        at <Jasmine>
+        at UserContext.<anonymous> (file:///home/amit/code/git/temp/fast-xml-parser/spec/v6/xmlParser_spec.js:28:20)
+        at <Jasmine>
+
+4) XMLParser v6 should parse repeated nodes in array
+  Message:
+    Expected $.rootNode.tag[1] = '45' to equal 45.
+    Expected $.rootNode.tag[2] = '65.34' to equal 65.34.
+  Stack:
+        at <Jasmine>
+        at UserContext.<anonymous> (file:///home/amit/code/git/temp/fast-xml-parser/spec/v6/xmlParser_spec.js:259:20)
+        at <Jasmine>
+
+11 specs, 4 failures
+Finished in 0.023 seconds
+Randomized with seed 51667 (jasmine --random=true --seed=51667)

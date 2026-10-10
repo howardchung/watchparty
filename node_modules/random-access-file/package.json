@@ -1,0 +1,46 @@
+{
+  "name": "random-access-file",
+  "version": "4.1.2",
+  "description": "Continuous reading or writing to a file using random offsets and lengths",
+  "main": "index.js",
+  "scripts": {
+    "test": "standard && brittle test/*.js"
+  },
+  "browser": "./browser.js",
+  "files": [
+    "index.js",
+    "browser.js"
+  ],
+  "imports": {
+    "fs": {
+      "bare": "bare-fs",
+      "default": "fs"
+    },
+    "path": {
+      "bare": "bare-path",
+      "default": "path"
+    }
+  },
+  "dependencies": {
+    "bare-fs": "^4.0.1",
+    "bare-path": "^3.0.0",
+    "random-access-storage": "^3.0.0"
+  },
+  "optionalDependencies": {
+    "fs-native-extensions": "^1.3.1"
+  },
+  "devDependencies": {
+    "brittle": "^3.3.0",
+    "standard": "^17.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/random-access-storage/random-access-file.git"
+  },
+  "author": "Mathias Buus (@mafintosh)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/random-access-storage/random-access-file/issues"
+  },
+  "homepage": "https://github.com/random-access-storage/random-access-file"
+}

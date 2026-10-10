@@ -1,0 +1,34 @@
+{
+  "name": "k-rpc-socket",
+  "version": "1.11.1",
+  "description": "Low level implementation of the k-rpc network layer that the BitTorrent DHT uses",
+  "main": "index.js",
+  "chromeapp": {
+    "dgram": "chrome-dgram",
+    "dns": "chrome-dns",
+    "net": "chrome-net"
+  },
+  "dependencies": {
+    "bencode": "^2.0.0",
+    "chrome-dgram": "^3.0.2",
+    "chrome-dns": "^1.0.0",
+    "chrome-net": "^3.3.2"
+  },
+  "devDependencies": {
+    "standard": "*",
+    "tape": "^4.4.0"
+  },
+  "scripts": {
+    "test": "standard && tape test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mafintosh/k-rpc-socket.git"
+  },
+  "author": "Mathias Buus (@mafintosh)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mafintosh/k-rpc-socket/issues"
+  },
+  "homepage": "https://github.com/mafintosh/k-rpc-socket"
+}

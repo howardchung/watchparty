@@ -1,0 +1,6 @@
+ARG version=3.16
+ARG node_version=16
+FROM node:${node_version}-alpine${version}
+RUN apk add build-base openssl-libs-static openssl-dev
+
+WORKDIR /usr/app/

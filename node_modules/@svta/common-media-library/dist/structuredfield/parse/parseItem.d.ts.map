@@ -1,0 +1,1 @@
+{"version":3,"file":"parseItem.d.ts","sourceRoot":"","sources":["../../../src/structuredfield/parse/parseItem.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,eAAe,EAAE,MAAM,uBAAuB,CAAC;AAC7D,OAAO,EAAE,MAAM,EAAE,MAAM,cAAc,CAAC;AACtC,OAAO,KAAK,EAAE,WAAW,EAAE,MAAM,kBAAkB,CAAC;AAkBpD,wBAAgB,SAAS,CAAC,GAAG,EAAE,MAAM,EAAE,OAAO,CAAC,EAAE,eAAe,GAAG,WAAW,CAAC,MAAM,CAAC,CAWrF"}

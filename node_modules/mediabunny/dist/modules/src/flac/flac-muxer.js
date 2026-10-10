@@ -1,0 +1,275 @@
+/*!
+ * Copyright (c) 2026-present, Vanilagy and contributors
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+import { validateAudioChunkMetadata } from '../codec.js';
+import { createVorbisComments, FlacBlockType } from '../codec-data.js';
+import { assert, textEncoder, toDataView, toUint8Array, } from '../misc.js';
+import { Muxer } from '../muxer.js';
+import { FileSlice, readBytes } from '../reader.js';
+import { metadataTagsAreEmpty } from '../metadata.js';
+import { readBlockSize, getBlockSizeOrUncommon, readCodedNumber, } from './flac-misc.js';
+import { Bitstream } from '../../shared/bitstream.js';
+const FLAC_HEADER = /* #__PURE__ */ new Uint8Array([0x66, 0x4c, 0x61, 0x43]); // 'fLaC'
+const STREAMINFO_SIZE = 38;
+const STREAMINFO_BLOCK_SIZE = 34;
+export class FlacMuxer extends Muxer {
+    constructor(output, format) {
+        super(output);
+        this.metadataWritten = false;
+        this.blockSizes = [];
+        this.frameSizes = [];
+        this.sampleRate = null;
+        this.channels = null;
+        this.bitsPerSample = null;
+        this.format = format;
+    }
+    async start() {
+        const release = await this.mutex.acquire();
+        this.writer = await this.output._getRootWriter(!!this.format._options.appendOnly);
+        this.writer.write(FLAC_HEADER);
+        // If the track already tells us what the stream looks like, we can pin the stream info down right now
+        const track = this.output.tracks[0];
+        assert(track?.isAudioTrack());
+        if (track.metadata.decoderConfig) {
+            validateAudioChunkMetadata({ decoderConfig: track.metadata.decoderConfig }, track.source._codec);
+            this.applyDecoderConfig(track.metadata.decoderConfig);
+        }
+        release();
+    }
+    applyDecoderConfig(decoderConfig) {
+        assert(decoderConfig.description);
+        this.sampleRate = decoderConfig.sampleRate;
+        this.channels = decoderConfig.numberOfChannels;
+        const descriptionBitstream = new Bitstream(toUint8Array(decoderConfig.description));
+        // skip 'fLaC' + block size + frame size + sample rate + number of channels
+        // See demuxer for the exact structure
+        descriptionBitstream.skipBits(103 + 64);
+        this.bitsPerSample = descriptionBitstream.readBits(5) + 1;
+        if (this.format._options.appendOnly) {
+            // Write STREAMINFO immediately since we can't seek back later.
+            this.writeHeader({
+                // https://www.rfc-editor.org/rfc/rfc9639.html#name-streaminfo
+                // Per RFC 9639, min/max block sizes can be looser than
+                // actual values, so we use the full valid range (16–65535).
+                // "The actual max block size MAY be smaller than what's
+                // listed, and the actual min (excluding last block) MAY be
+                // larger. This is because the encoder has to write these
+                // fields before receiving any input audio data and cannot
+                // know beforehand what block sizes it will use."
+                minimumBlockSize: 16,
+                maximumBlockSize: 65535,
+                // https://www.rfc-editor.org/rfc/rfc9639.html#name-streaminfo
+                // "A value of 0 signifies that the value is not known."
+                minimumFrameSize: 0,
+                maximumFrameSize: 0,
+                sampleRate: this.sampleRate,
+                channels: this.channels,
+                bitsPerSample: this.bitsPerSample,
+                totalSamples: 0,
+            });
+        }
+    }
+    writeHeader({ bitsPerSample, minimumBlockSize, maximumBlockSize, minimumFrameSize, maximumFrameSize, sampleRate, channels, totalSamples, }) {
+        assert(this.writer.getPos() === 4);
+        const hasMetadata = !metadataTagsAreEmpty(this.output._metadataTags);
+        const headerBitstream = new Bitstream(new Uint8Array(4));
+        headerBitstream.writeBits(1, Number(!hasMetadata)); // isLastMetadata
+        headerBitstream.writeBits(7, FlacBlockType.STREAMINFO); // metaBlockType = streaminfo
+        headerBitstream.writeBits(24, STREAMINFO_BLOCK_SIZE); // size
+        this.writer.write(headerBitstream.bytes);
+        const contentBitstream = new Bitstream(new Uint8Array(18));
+        contentBitstream.writeBits(16, minimumBlockSize);
+        contentBitstream.writeBits(16, maximumBlockSize);
+        contentBitstream.writeBits(24, minimumFrameSize);
+        contentBitstream.writeBits(24, maximumFrameSize);
+        contentBitstream.writeBits(20, sampleRate);
+        contentBitstream.writeBits(3, channels - 1);
+        contentBitstream.writeBits(5, bitsPerSample - 1);
+        // Bitstream operations are only safe until 32bit, breaks when using 36 bits
+        // Splitting up into writing 4 0 bits and then 32 bits is safe
+        // This is safe for audio up to (2 ** 32 / 44100 / 3600) -> 27 hours
+        // Not implementing support for more than 32 bits now
+        if (totalSamples >= 2 ** 32) {
+            throw new Error('This muxer only supports writing up to 2 ** 32 samples');
+        }
+        contentBitstream.writeBits(4, 0);
+        contentBitstream.writeBits(32, totalSamples);
+        this.writer.write(contentBitstream.bytes);
+        // The MD5 hash is calculated from decoded audio data, but we do not have access
+        // to it here. We are allowed to set 0:
+        // "A value of 0 signifies that the value is not known."
+        // https://www.rfc-editor.org/rfc/rfc9639.html#name-streaminfo
+        this.writer.write(new Uint8Array(16));
+    }
+    writePictureBlock(picture) {
+        // Header size:
+        // 4 bytes: picture type
+        // 4 bytes: media type length
+        // x bytes: media type
+        // 4 bytes: description length
+        // y bytes: description
+        // 1 bytes: width
+        // 1 bytes: height
+        // 1 bytes: color depth
+        // 1 bytes: number of indexed colors
+        // 4 bytes: picture data length
+        // z bytes: picture data
+        // Total: 20 + x + y + z
+        const headerSize = 32
+            + picture.mimeType.length
+            + (picture.description?.length ?? 0)
+            + picture.data.length;
+        const header = new Uint8Array(headerSize);
+        let offset = 0;
+        const dataView = toDataView(header);
+        dataView.setUint32(offset, picture.kind === 'coverFront' ? 3 : picture.kind === 'coverBack' ? 4 : 0);
+        offset += 4;
+        dataView.setUint32(offset, picture.mimeType.length);
+        offset += 4;
+        header.set(textEncoder.encode(picture.mimeType), 8);
+        offset += picture.mimeType.length;
+        dataView.setUint32(offset, picture.description?.length ?? 0);
+        offset += 4;
+        header.set(textEncoder.encode(picture.description ?? ''), offset);
+        offset += picture.description?.length ?? 0;
+        offset += 4 + 4 + 4 + 4; // setting width, height, color depth, number of indexed colors to 0
+        dataView.setUint32(offset, picture.data.length);
+        offset += 4;
+        header.set(picture.data, offset);
+        offset += picture.data.length;
+        assert(offset === headerSize);
+        const headerBitstream = new Bitstream(new Uint8Array(4));
+        headerBitstream.writeBits(1, 0); // Last metadata block -> false, will be continued by vorbis comment
+        headerBitstream.writeBits(7, FlacBlockType.PICTURE); // Type -> Picture
+        headerBitstream.writeBits(24, headerSize);
+        this.writer.write(headerBitstream.bytes);
+        this.writer.write(header);
+    }
+    writeVorbisCommentAndPictureBlock() {
+        if (!this.format._options.appendOnly) {
+            this.writer.seek(STREAMINFO_SIZE + FLAC_HEADER.byteLength);
+        }
+        if (metadataTagsAreEmpty(this.output._metadataTags)) {
+            this.metadataWritten = true;
+            return;
+        }
+        const pictures = this.output._metadataTags.images ?? [];
+        for (const picture of pictures) {
+            this.writePictureBlock(picture);
+        }
+        const vorbisComment = createVorbisComments(new Uint8Array(0), this.output._metadataTags, false);
+        const headerBitstream = new Bitstream(new Uint8Array(4));
+        headerBitstream.writeBits(1, 1); // Last metadata block -> true
+        headerBitstream.writeBits(7, FlacBlockType.VORBIS_COMMENT); // Type -> Vorbis comment
+        headerBitstream.writeBits(24, vorbisComment.length);
+        this.writer.write(headerBitstream.bytes);
+        this.writer.write(vorbisComment);
+        this.metadataWritten = true;
+    }
+    async getMimeType() {
+        return 'audio/flac';
+    }
+    async addEncodedVideoPacket() {
+        throw new Error('FLAC does not support video.');
+    }
+    async addEncodedAudioPacket(track, packet, meta) {
+        const release = await this.mutex.acquire();
+        try {
+            this.validateTimestamp(track, packet.timestamp, packet.type === 'key');
+            if (this.sampleRate === null) {
+                // It's the first packet
+                validateAudioChunkMetadata(meta, track.source._codec);
+                assert(meta);
+                assert(meta.decoderConfig);
+                this.applyDecoderConfig(meta.decoderConfig);
+            }
+            if (!this.metadataWritten) {
+                this.writeVorbisCommentAndPictureBlock();
+            }
+            const slice = FileSlice.tempFromBytes(packet.data);
+            slice.skip(2);
+            const bytes = readBytes(slice, 2);
+            const bitstream = new Bitstream(bytes);
+            const blockSizeOrUncommon = getBlockSizeOrUncommon(bitstream.readBits(4));
+            if (blockSizeOrUncommon === null) {
+                throw new Error('Invalid FLAC frame: Invalid block size.');
+            }
+            readCodedNumber(slice); // num
+            const blockSize = readBlockSize(slice, blockSizeOrUncommon);
+            if (!this.format._options.appendOnly) {
+                this.blockSizes.push(blockSize);
+                this.frameSizes.push(packet.data.length);
+            }
+            const startPos = this.writer.getPos();
+            this.writer.write(packet.data);
+            if (this.format._options.onFrame) {
+                this.format._options.onFrame(packet.data, startPos);
+            }
+            await this.writer.flush();
+        }
+        finally {
+            release();
+        }
+    }
+    addSubtitleCue() {
+        throw new Error('FLAC does not support subtitles.');
+    }
+    async finalize() {
+        const release = await this.mutex.acquire();
+        if (this.sampleRate === null) {
+            throw new Error('Cannot finalize an empty FLAC file: no packets were added and the track specified no decoderConfig in'
+                + ' its metadata, so there\'s no telling what the file should look like.');
+        }
+        if (!this.metadataWritten) {
+            // Not a single packet came in, so this never happened yet
+            this.writeVorbisCommentAndPictureBlock();
+        }
+        if (!this.format._options.appendOnly) {
+            let minimumBlockSize = Infinity;
+            let maximumBlockSize = 0;
+            let minimumFrameSize = Infinity;
+            let maximumFrameSize = 0;
+            let totalSamples = 0;
+            for (let i = 0; i < this.blockSizes.length; i++) {
+                minimumFrameSize = Math.min(minimumFrameSize, this.frameSizes[i]);
+                maximumFrameSize = Math.max(maximumFrameSize, this.frameSizes[i]);
+                maximumBlockSize = Math.max(maximumBlockSize, this.blockSizes[i]);
+                totalSamples += this.blockSizes[i];
+                // Excluding the last frame from block size calculation
+                // https://www.rfc-editor.org/rfc/rfc9639.html#name-streaminfo
+                // "The minimum block size (in samples) used in the stream, excluding the last block."
+                const isLastFrame = i === this.blockSizes.length - 1;
+                if (isLastFrame) {
+                    continue;
+                }
+                minimumBlockSize = Math.min(minimumBlockSize, this.blockSizes[i]);
+            }
+            if (this.blockSizes.length === 0) {
+                // There are no frames to derive these from, so let's use the full valid range like we do for
+                // append-only output
+                minimumBlockSize = 16;
+                maximumBlockSize = 65535;
+                minimumFrameSize = 0;
+                maximumFrameSize = 0;
+            }
+            assert(this.channels !== null);
+            assert(this.bitsPerSample !== null);
+            this.writer.seek(4);
+            this.writeHeader({
+                minimumBlockSize,
+                maximumBlockSize,
+                minimumFrameSize,
+                maximumFrameSize,
+                sampleRate: this.sampleRate,
+                channels: this.channels,
+                bitsPerSample: this.bitsPerSample,
+                totalSamples,
+            });
+        }
+        release();
+    }
+}

@@ -1,0 +1,21 @@
+Error: While loading /home/amit/code/git/temp/fast-xml-parser/spec/v6/xmlParser_spec.js: SyntaxError: The requested module './OutputBuilders/JsObjBuilder.js' does not provide an export named 'JsObjOutputBuilder'
+    at fixupImportException (/home/amit/code/git/temp/fast-xml-parser/node_modules/jasmine/lib/loader.js:152:12)
+    at /home/amit/code/git/temp/fast-xml-parser/node_modules/jasmine/lib/loader.js:31:37
+    at async Jasmine._loadFiles (/home/amit/code/git/temp/fast-xml-parser/node_modules/jasmine/lib/jasmine.js:142:7)
+    ... 5 lines matching cause stack trace ...
+    at async Command.run (/home/amit/code/git/temp/fast-xml-parser/node_modules/jasmine/lib/command.js:72:9) {
+  [cause]: file:///home/amit/code/git/temp/fast-xml-parser/src/v6/OptionsBuilder.js:2
+  import {JsObjOutputBuilder} from './OutputBuilders/JsObjBuilder.js';
+          ^^^^^^^^^^^^^^^^^^
+  SyntaxError: The requested module './OutputBuilders/JsObjBuilder.js' does not provide an export named 'JsObjOutputBuilder'
+      at ModuleJob._instantiate (node:internal/modules/esm/module_job:180:21)
+      at async ModuleJob.run (node:internal/modules/esm/module_job:263:5)
+      at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:578:26)
+      at async Jasmine._loadFiles (/home/amit/code/git/temp/fast-xml-parser/node_modules/jasmine/lib/jasmine.js:142:7)
+      at async Jasmine.loadSpecs (/home/amit/code/git/temp/fast-xml-parser/node_modules/jasmine/lib/jasmine.js:133:5)
+      at async /home/amit/code/git/temp/fast-xml-parser/node_modules/jasmine/lib/jasmine.js:223:9
+      at async Jasmine.withinGlobalSetup_ (/home/amit/code/git/temp/fast-xml-parser/node_modules/jasmine/lib/runner_base.js:420:7)
+      at async Jasmine.execute (/home/amit/code/git/temp/fast-xml-parser/node_modules/jasmine/lib/jasmine.js:222:7)
+      at async runJasmine (/home/amit/code/git/temp/fast-xml-parser/node_modules/jasmine/lib/command.js:209:5)
+      at async Command.run (/home/amit/code/git/temp/fast-xml-parser/node_modules/jasmine/lib/command.js:72:9)
+}

@@ -1,0 +1,1 @@
+{"version":3,"file":"Segment.js","sourceRoot":"","sources":["../../../../../src/cmaf/ham/types/model/Segment.ts"],"names":[],"mappings":"","sourcesContent":["/**\n * CMAF-HAM Segment type\n *\n * @group CMAF\n * @alpha\n */\nexport type Segment = {\n\tduration: number;\n\turl: string;\n\tbyteRange?: string;\n};\n"]}

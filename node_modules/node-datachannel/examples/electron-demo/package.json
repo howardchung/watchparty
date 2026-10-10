@@ -1,0 +1,44 @@
+{
+    "name": "electron-demo",
+    "productName": "electron-demo",
+    "version": "1.0.0",
+    "description": "My Electron application description",
+    "main": ".webpack/main",
+    "scripts": {
+        "start": "electron-forge start",
+        "package": "electron-forge package",
+        "make": "electron-forge make",
+        "publish": "electron-forge publish",
+        "lint": "echo \"No linting configured\""
+    },
+    "keywords": [],
+    "author": {
+        "name": "Murat Dogan",
+        "email": "doganmurat@gmail.com"
+    },
+    "license": "MIT",
+    "devDependencies": {
+        "@electron-forge/cli": "^6.4.2",
+        "@electron-forge/maker-deb": "^6.4.2",
+        "@electron-forge/maker-rpm": "^6.4.2",
+        "@electron-forge/maker-squirrel": "^6.4.2",
+        "@electron-forge/maker-zip": "^6.4.2",
+        "@electron-forge/plugin-auto-unpack-natives": "^6.4.2",
+        "@electron-forge/plugin-webpack": "^6.4.2",
+        "@electron/rebuild": "^3.3.0",
+        "@vercel/webpack-asset-relocator-loader": "^1.7.3",
+        "copy-webpack-plugin": "^12.0.2",
+        "css-loader": "^6.8.1",
+        "electron": "26.2.4",
+        "node-loader": "^2.0.0",
+        "style-loader": "^3.3.3"
+    },
+    "dependencies": {
+        "electron-squirrel-startup": "^1.0.0",
+        "node-datachannel": "^0.8.0"
+    },
+    "cmake-js": {
+        "runtime": "electron",
+        "runtimeVersion": "26.2.0"
+    }
+}
