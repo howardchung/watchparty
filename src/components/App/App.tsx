@@ -19,6 +19,8 @@ import {
   isHls,
   isScreenShare,
   isFileShare,
+  isDirectVideoUrl,
+  pickSingleLargeFile,
   isVBrowser,
   isDash,
   VIDEO_MAX_HEIGHT_CSS,
@@ -53,7 +55,14 @@ import styles from "./App.module.css";
 import config from "../../config";
 import { MetadataContext } from "../../MetadataContext";
 import ChatVideoCard from "../ChatVideoCard/ChatVideoCard";
-import { ActionIcon, Badge, TextInput, Button } from "@mantine/core";
+import {
+  ActionIcon,
+  Badge,
+  TextInput,
+  Button,
+  Switch,
+  Tooltip,
+} from "@mantine/core";
 import {
   IconAntennaBars5,
   IconBrowser,
@@ -173,6 +182,7 @@ interface AppState {
   isLiveStream: boolean;
   settingsModalOpen: boolean;
   convertProgress: number | undefined;
+  convertEnabled: boolean;
 }
 
 export class App extends React.Component<AppProps, AppState> {
@@ -254,6 +264,7 @@ export class App extends React.Component<AppProps, AppState> {
     isLiveStream: false,
     settingsModalOpen: false,
     convertProgress: undefined,
+    convertEnabled: window.localStorage.getItem("watchparty-convert") === "1",
   };
   socket: Socket = null!;
   mediasoupPubSocket: Socket | null = null;
@@ -545,6 +556,9 @@ export class App extends React.Component<AppProps, AppState> {
                 let target;
                 if (fileIndex != null && fileIndex !== "") {
                   target = files[Number(fileIndex)];
+                }
+                if (!target) {
+                  target = pickSingleLargeFile(files);
                 }
                 if (!target) {
                   // Open the selector
@@ -1072,6 +1086,7 @@ export class App extends React.Component<AppProps, AppState> {
       return;
     }
     this.stopConvert();
+    await this.releaseLocalShare();
     this.Player().clearState();
     const leftVideo = this.HTMLInterface.getVideoEl();
     if (options?.convert) {
@@ -1097,9 +1112,15 @@ export class App extends React.Component<AppProps, AppState> {
         console.error(err);
         if (this.transcoder === transcoder) {
           this.stopConvert();
-          this.showError(
-            err instanceof Error ? err.message : "Unable to convert this file",
-          );
+          const reason =
+            err instanceof Error ? err.message : "Unable to convert this file";
+          if (options.sourceUrl) {
+            // Typically a CORS restriction or a link that isn't a media file. Play it normally instead.
+            this.showError(`${reason}. Playing without conversion.`);
+            this.socket.emit("CMD:host", options.sourceUrl);
+          } else {
+            this.showError(reason);
+          }
         }
         return;
       }
@@ -1121,10 +1142,6 @@ export class App extends React.Component<AppProps, AppState> {
       });
     }
   };
-
-  // Convert a media URL in this browser and share it as a file
-  startConvert = (sourceUrl: string) =>
-    this.startFileShare(false, { convert: true, sourceUrl });
 
   startScreenShare = async (useMediaSoup: boolean) => {
     if (navigator.mediaDevices.getDisplayMedia) {
@@ -1862,7 +1879,54 @@ export class App extends React.Component<AppProps, AppState> {
   };
 
   roomSetMedia = (value: string) => {
+    const sharer = this.state.participants.find((p) => p.isScreenShare);
+    const someoneElseSharing = sharer && sharer.id !== getOrCreateClientId();
+    if (
+      this.state.convertEnabled &&
+      isClientTranscodeSupported() &&
+      isDirectVideoUrl(value) &&
+      !someoneElseSharing
+    ) {
+      // Convert in this browser and share it, rather than having everyone load the URL directly
+      this.startFileShare(false, { convert: true, sourceUrl: value });
+      return;
+    }
     this.socket.emit("CMD:host", value);
+  };
+
+  setConvertEnabled = (convertEnabled: boolean) => {
+    window.localStorage.setItem(
+      "watchparty-convert",
+      convertEnabled ? "1" : "0",
+    );
+    this.setState({ convertEnabled });
+  };
+
+  // If we're currently sharing, stop and wait for the server to confirm. The server rejects a new share while one
+  // exists, and the REC:host confirming the old share ended would otherwise tear down the new one.
+  releaseLocalShare = async () => {
+    if (!this.localStreamToPublish) {
+      return;
+    }
+    const confirmed = new Promise<void>((resolve) => {
+      const onHost = (data: HostState) => {
+        if (
+          !isFileShare(data.video || "") &&
+          !isScreenShare(data.video || "")
+        ) {
+          this.socket.off("REC:host", onHost);
+          resolve();
+        }
+      };
+      this.socket.on("REC:host", onHost);
+    });
+    await this.stopPublishingLocalStream();
+    await Promise.race([
+      confirmed,
+      new Promise((resolve) => setTimeout(resolve, 3000)),
+    ]);
+    // Give the REC:host handler time to finish resetting the player
+    await new Promise((resolve) => setTimeout(resolve, 100));
   };
 
   roomPlaylistPlay = (index: number) => {
@@ -2033,7 +2097,6 @@ export class App extends React.Component<AppProps, AppState> {
             streams={this.state.fileSelection}
             setMedia={this.roomSetMedia}
             resetMultiSelect={this.resetMultiSelect}
-            startConvert={this.startConvert}
           />
         )}
         {this.state.isVBrowserModalOpen && (
@@ -2052,6 +2115,7 @@ export class App extends React.Component<AppProps, AppState> {
           <FileShareModal
             closeModal={() => this.setState({ isFileShareModalOpen: false })}
             startFileShare={this.startFileShare}
+            defaultConvert={this.state.convertEnabled}
           />
         )}
         {this.state.isSubtitleModalOpen && (
@@ -2183,6 +2247,22 @@ export class App extends React.Component<AppProps, AppState> {
                         mediaPath={this.state.mediaPath}
                         disabled={!this.haveLock()}
                       />
+                      {isClientTranscodeSupported() && (
+                        <Tooltip
+                          multiline
+                          w={280}
+                          label="Convert videos on your device so they play even if their format isn't supported by browsers. Applies to direct video links. Uses your CPU/GPU and upload bandwidth."
+                        >
+                          <Switch
+                            label="Convert"
+                            checked={this.state.convertEnabled}
+                            onChange={(e) =>
+                              this.setConvertEnabled(e.currentTarget.checked)
+                            }
+                            style={{ flexShrink: 0, alignSelf: "center" }}
+                          />
+                        </Tooltip>
+                      )}
                     </div>
                     <div className={styles.mobileStack}>
                       {this.localStreamToPublish && (

@@ -101,6 +101,32 @@ export const isMagnet = (input: string) => {
   return input.startsWith("magnet:");
 };
 
+// Direct links to video files, i.e. things the browser can fetch and play (or convert) as a plain media file.
+// Excludes pages/streams that are resolved or played by dedicated players (YouTube, HLS, DASH, Reddit/Twitch
+// links that the server resolves, etc.)
+export const isDirectVideoUrl = (input: string) => {
+  return (
+    isHttp(input) &&
+    !isYouTube(input) &&
+    !isHls(input) &&
+    !isDash(input) &&
+    !isMpegTs(input) &&
+    !/^https?:\/\/(www\.|old\.)?(reddit|twitch)\.(com|tv)(\/|$)/.test(input)
+  );
+};
+
+// Files smaller than this are assumed not to be the video we want (samples, subtitles, NFOs, etc.)
+const MIN_VIDEO_FILE_BYTES = 10 * 1024 * 1024;
+
+// If exactly one file in a multi-file source (e.g. a torrent) is big enough to plausibly be the video, return it
+// so it can be played without asking the user to choose.
+export const pickSingleLargeFile = <T extends { length: number }>(
+  files: T[],
+): T | undefined => {
+  const large = files.filter((f) => f.length >= MIN_VIDEO_FILE_BYTES);
+  return large.length === 1 ? large[0] : undefined;
+};
+
 export const isHls = (input: string) => {
   return input.includes(".m3u8");
 };
