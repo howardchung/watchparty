@@ -22,7 +22,6 @@ import {
   isVBrowser,
   isDash,
   VIDEO_MAX_HEIGHT_CSS,
-  createUuid,
   softWhite,
   getSavedPasswords,
 } from "../../utils/utils";
@@ -42,6 +41,10 @@ import { ErrorModal } from "../Modal/ErrorModal";
 import { PasswordModal } from "../Modal/PasswordModal";
 import { ScreenShareModal } from "../Modal/ScreenShareModal";
 import { FileShareModal } from "../Modal/FileShareModal";
+import {
+  ClientTranscoder,
+  isClientTranscodeSupported,
+} from "../../utils/clientTranscode";
 import firebase from "firebase/compat/app";
 import { SubtitleModal } from "../Modal/SubtitleModal";
 import { HTML } from "./HTML";
@@ -169,7 +172,7 @@ interface AppState {
   roomPlaybackRate: number;
   isLiveStream: boolean;
   settingsModalOpen: boolean;
-  uploadController: AbortController | undefined;
+  convertProgress: number | undefined;
 }
 
 export class App extends React.Component<AppProps, AppState> {
@@ -250,7 +253,7 @@ export class App extends React.Component<AppProps, AppState> {
     roomPlaybackRate: 0,
     isLiveStream: false,
     settingsModalOpen: false,
-    uploadController: undefined,
+    convertProgress: undefined,
   };
   socket: Socket = null!;
   mediasoupPubSocket: Socket | null = null;
@@ -258,6 +261,7 @@ export class App extends React.Component<AppProps, AppState> {
   ytDebounce = true;
   localStreamToPublish?: MediaStream;
   isLocalStreamAFile = false;
+  transcoder?: ClientTranscoder;
   publisherConns: PCDict = {};
   consumerConn?: RTCPeerConnection;
   progressUpdater?: number;
@@ -649,10 +653,6 @@ export class App extends React.Component<AppProps, AppState> {
               }
               // Resync to leader since the loading might have taken some time
               this.localSeek(ts);
-              if (this.state.uploadController) {
-                // Jump back to the start of the video
-                this.roomSeek(0);
-              }
               if (data.playbackRate) {
                 // Set playback rate again since it might have been lost
                 console.log("setting playback rate again", data.playbackRate);
@@ -1036,88 +1036,80 @@ export class App extends React.Component<AppProps, AppState> {
     this.socket.emit("CMD:deleteChatMessages", {});
   };
 
-  startConvert = async (sourceUrl?: string) => {
-    let stream = new ReadableStream();
-    let file: File;
-    if (!sourceUrl) {
+  showError = (message: string) => {
+    this.setState({ errorMessage: message });
+    setTimeout(() => {
+      this.setState({ errorMessage: "" });
+    }, 3000);
+  };
+
+  // Stops client-side conversion (if running) and releases its resources
+  stopConvert = () => {
+    this.transcoder?.stop();
+    this.transcoder = undefined;
+    if (this.state.convertProgress !== undefined) {
+      this.setState({ convertProgress: undefined });
+    }
+  };
+
+  // Shares a file (or URL, if convert is set) from this device.
+  // With convert, the file is transcoded in this browser using WebCodecs into a format browsers can play
+  // (see clientTranscode.ts), then shared the same way as an unconverted file.
+  startFileShare = async (
+    useMediaSoup: boolean,
+    options?: { convert?: boolean; sourceUrl?: string },
+  ) => {
+    let source: File | string | undefined = options?.sourceUrl;
+    if (!source) {
       const files = await openFileSelector();
       if (!files) {
         return;
       }
-      file = files[0];
-      // Start uploading stream
-      stream = file.stream();
+      source = files[0];
     }
-    const uuid = createUuid();
-    const convertPath = this.context.convertPath;
-    // const convertPath = 'https://azure.howardchung.net:5001';
-    let convertUrl = convertPath + "/" + uuid + ".m3u8";
-    convertUrl += sourceUrl ? "?url=" + encodeURIComponent(sourceUrl) : "";
-    // Wait for the playlist to get generated
-    const poll = async () => {
-      let ok = false;
-      let i = 0;
-      while (!ok && i < 30) {
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        const resp = await fetch(convertUrl);
-        ok = resp.ok;
-        i += 1;
-      }
-      // Same URL but GET
-      this.roomSetMedia(convertUrl);
-    };
-    poll();
-    const reader = stream.getReader();
-    const start = Date.now();
-    let bytes = 0;
-    const ws = new WebSocket(convertUrl.replace("http", "ws"));
-    ws.onmessage = async (_ev) => {
-      // Server sends a message whenever it wants next chunk
-      const { done, value } = await reader.read();
-      if (value) {
-        ws.send(value);
-      }
-      if (done) {
-        ws.close();
-      }
-      const end = Date.now();
-      bytes += value?.length ?? 0;
-      this.setState({
-        downloaded: bytes,
-        total: file?.size,
-        speed: done ? 0 : bytes / ((end - start) / 1000),
-        connections: 1,
-      });
-    };
-    ws.onclose = () => {
-      this.setState({ uploadController: undefined });
-    };
-    const controller = new AbortController();
-    controller.signal.onabort = (_ev) => {
-      ws.close();
-    };
-    this.setState({
-      uploadController: controller,
-    });
-    // Note: If using fetch we can't read the response until the request completes
-    // await fetch(convertUrl, {
-    //   method: 'POST',
-    //   body: stream,
-    //   signal: this.state.uploadController?.signal,
-    //   //@ts-expect-error
-    //   duplex: 'half',
-    // });
-  };
-
-  startFileShare = async (useMediaSoup: boolean) => {
-    const files = await openFileSelector();
-    if (!files) {
+    if (options?.convert && !isClientTranscodeSupported()) {
+      this.showError("Your browser doesn't support converting videos");
       return;
     }
-    const file = files[0];
+    this.stopConvert();
     this.Player().clearState();
     const leftVideo = this.HTMLInterface.getVideoEl();
-    leftVideo.src = URL.createObjectURL(file);
+    if (options?.convert) {
+      const transcoder = new ClientTranscoder({
+        source,
+        video: leftVideo,
+        onProgress: (fraction) => {
+          if (this.transcoder === transcoder) {
+            this.setState({ convertProgress: fraction });
+          }
+        },
+        onError: (err) => {
+          // Conversion failed mid-share
+          this.showError(`Conversion failed: ${err.message}`);
+          this.stopPublishingLocalStream();
+        },
+      });
+      this.transcoder = transcoder;
+      this.setState({ convertProgress: 0 });
+      try {
+        await transcoder.start();
+      } catch (err) {
+        console.error(err);
+        if (this.transcoder === transcoder) {
+          this.stopConvert();
+          this.showError(
+            err instanceof Error ? err.message : "Unable to convert this file",
+          );
+        }
+        return;
+      }
+      if (this.transcoder !== transcoder) {
+        // Cancelled while starting up
+        return;
+      }
+    } else {
+      leftVideo.src = URL.createObjectURL(source as File);
+    }
     leftVideo.play();
     //@ts-expect-error
     this.localStreamToPublish = leftVideo?.captureStream();
@@ -1129,6 +1121,10 @@ export class App extends React.Component<AppProps, AppState> {
       });
     }
   };
+
+  // Convert a media URL in this browser and share it as a file
+  startConvert = (sourceUrl: string) =>
+    this.startFileShare(false, { convert: true, sourceUrl });
 
   startScreenShare = async (useMediaSoup: boolean) => {
     if (navigator.mediaDevices.getDisplayMedia) {
@@ -1508,6 +1504,7 @@ export class App extends React.Component<AppProps, AppState> {
   };
 
   stopPublishingLocalStream = async () => {
+    this.stopConvert();
     if (this.localStreamToPublish) {
       this.socket.emit("CMD:leaveScreenShare");
       // We don't actually need to unmute if it's a fileshare but this is fine
@@ -2055,7 +2052,6 @@ export class App extends React.Component<AppProps, AppState> {
           <FileShareModal
             closeModal={() => this.setState({ isFileShareModalOpen: false })}
             startFileShare={this.startFileShare}
-            startConvert={this.startConvert}
           />
         )}
         {this.state.isSubtitleModalOpen && (
@@ -2338,17 +2334,6 @@ export class App extends React.Component<AppProps, AppState> {
                             File
                           </Button>
                         )}
-                      {this.state.uploadController && (
-                        <Button
-                          color="red"
-                          onClick={() => {
-                            this.state.uploadController?.abort();
-                          }}
-                          leftSection={<IconX />}
-                        >
-                          Stop Convert
-                        </Button>
-                      )}
                       {false && (
                         <SearchComponent
                           setMedia={this.roomSetMedia}
@@ -2535,6 +2520,25 @@ export class App extends React.Component<AppProps, AppState> {
                         onClick={this.roomTogglePlay}
                       ></video>
                     )}
+                    {this.state.convertProgress !== undefined &&
+                      this.state.convertProgress < 1 && (
+                        <div
+                          style={{
+                            color: softWhite,
+                            fontWeight: 400,
+                            fontSize: 10,
+                            lineHeight: "8px",
+                            position: "absolute",
+                            bottom: 0,
+                            right: 0,
+                            zIndex: 1,
+                          }}
+                        >
+                          {"Converted " +
+                            (this.state.convertProgress * 100).toFixed(0) +
+                            "%"}
+                        </div>
+                      )}
                     {Boolean(this.state.total) && (
                       <div
                         style={{

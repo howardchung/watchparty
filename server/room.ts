@@ -609,9 +609,6 @@ export class Room {
     if (config.STREAM_PATH && data?.startsWith(config.STREAM_PATH)) {
       redisCount("streamStarts");
     }
-    if (config.CONVERT_PATH && data?.startsWith(config.CONVERT_PATH)) {
-      redisCount("convertStarts");
-    }
     // If a reddit URL, extract video URL
     if (
       data?.startsWith("https://www.reddit.com") ||

@@ -11,7 +11,7 @@ A website for watching videos together.
 - Supports:
   - Screen sharing (full screen, browser tab or application)
   - Launch a shared virtual browser in the cloud (similar to rabb.it)
-  - Stream-your-own-file
+  - Stream-your-own-file (optionally converted in your browser via WebCodecs, for formats browsers can't play)
   - Video files on the Internet (anything accessible via HTTP)
   - YouTube videos
   - Magnet links (via WebTorrent)
