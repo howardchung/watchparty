@@ -159,7 +159,7 @@ export class SubtitleModal extends React.Component<{
                   >
                     By title
                   </Button>
-                  <Button
+                  {/* <Button
                     loading={this.state.loading}
                     color="blue"
                     disabled={!this.props.haveLock()}
@@ -177,7 +177,7 @@ export class SubtitleModal extends React.Component<{
                     leftSection={<IconSearch />}
                   >
                     By hash
-                  </Button>
+                  </Button> */}
                 </div>
               }
             ></TextInput>
