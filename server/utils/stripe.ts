@@ -1,5 +1,6 @@
 import config from "../config.ts";
 import Stripe from "stripe";
+import { postgres } from "./postgres.ts";
 
 export const stripe = new Stripe(config.STRIPE_SECRET_KEY, {
   apiVersion: "2022-11-15",
@@ -26,11 +27,21 @@ export async function getIsSubscriberByUid(uid: string | undefined) {
   if (!uid) {
     return false;
   }
+  if (postgres) {
+    // This runs on every metadata request and socket login so use the local table
+    // The syncSubs job refreshes it from Stripe every minute
+    const { rows } = await postgres.query(
+      "SELECT 1 FROM subscriber WHERE uid = $1 AND status = 'active'",
+      [uid],
+    );
+    if (rows.length > 0) {
+      return true;
+    }
+  }
   const customer = await getCustomerByUid(uid);
-  const isSubscriber = Boolean(
+  return Boolean(
     customer?.subscriptions?.data?.find((sub) => sub?.status === "active"),
   );
-  return isSubscriber;
 }
 
 export async function createSelfServicePortal(

@@ -1922,6 +1922,7 @@ export class App extends React.Component<AppProps, AppState> {
       convertEnabled ? "1" : "0",
     );
     this.setState({ convertEnabled });
+    window.location.reload();
   };
 
   roomPlaylistPlay = (index: number) => {
@@ -2469,7 +2470,7 @@ export class App extends React.Component<AppProps, AppState> {
                           multiline
                           w={280}
                           refProp="rootRef"
-                          label="Use CPU/GPU to convert before playback on your device (use if video or audio doesn't play)"
+                          label="Use CPU/GPU to convert content before playback (only with links, use if video or audio doesn't play)"
                         >
                           <Switch
                             label="Convert"

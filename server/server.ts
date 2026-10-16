@@ -27,6 +27,31 @@ import { gzipSync } from "node:zlib";
 import { resolveShard } from "./utils/resolveShard.ts";
 import { makeRoomName, makeUserName } from "./utils/moniker.ts";
 import { getStats } from "./utils/getStats.ts";
+import { assertPublicUrl, safeAxiosConfig } from "./utils/ssrf.ts";
+
+// Last-resort safety net: a stray rejected promise shouldn't take down every room on this shard.
+// Socket handlers are individually guarded in room.ts, this catches anything we missed.
+process.on("unhandledRejection", (reason) => {
+  console.error("[unhandledRejection]", reason);
+});
+
+// Run an async job on an interval without overlapping runs or unhandled rejections
+function safeInterval(name: string, fn: () => Promise<void>, ms: number) {
+  let running = false;
+  return setInterval(async () => {
+    if (running) {
+      return;
+    }
+    running = true;
+    try {
+      await fn();
+    } catch (e) {
+      console.warn("[%s] failed:", name, e);
+    } finally {
+      running = false;
+    }
+  }, ms);
+}
 
 if (process.env.NODE_ENV === "development") {
   axios.interceptors.request.use(
@@ -58,42 +83,49 @@ io.engine.use(async (req: any, res: Response, next: () => void) => {
   if (!roomId) {
     return next();
   }
-  // Attempt to ensure the room being connected to is loaded in memory
-  // If it doesn't exist, we may fail later with "invalid namespace"
-  const shard = resolveShard(roomId);
-  const key = "/" + roomId;
-  // Check to make sure this shard should load this room
-  const isCorrectShard = !config.SHARD || shard === Number(config.SHARD);
-  // Get the room data from postgres
-  const persistedRoom = (
-    await postgres?.query<PersistentRoom>(
-      `SELECT * from room where "roomId" = $1`,
-      [key],
-    )
-  )?.rows?.[0];
-  // Don't await after this because we may have a race condition where 2 rquests both try to load the room
-  if (isCorrectShard && !rooms.has(key)) {
-    const data = persistedRoom?.data
-      ? JSON.stringify(persistedRoom.data)
-      : undefined;
-    if (data) {
-      const room = new Room(io, key, data);
-      rooms.set(key, room);
-      console.log(
-        "loading room %s into memory on shard %s",
-        roomId,
-        config.SHARD,
-      );
+  try {
+    // Attempt to ensure the room being connected to is loaded in memory
+    // If it doesn't exist, we may fail later with "invalid namespace"
+    const shard = resolveShard(roomId);
+    const key = "/" + roomId;
+    // Check to make sure this shard should load this room
+    const isCorrectShard = !config.SHARD || shard === Number(config.SHARD);
+    if (isCorrectShard && !rooms.has(key)) {
+      // Get the room data from postgres
+      const persistedRoom = (
+        await postgres?.query<PersistentRoom>(
+          `SELECT * from room where "roomId" = $1`,
+          [key],
+        )
+      )?.rows?.[0];
+      // Re-check after the await in case a concurrent request already loaded the room
+      if (!rooms.has(key)) {
+        const data = persistedRoom?.data
+          ? JSON.stringify(persistedRoom.data)
+          : undefined;
+        if (data) {
+          const room = new Room(io, key, data);
+          rooms.set(key, room);
+          console.log(
+            "loading room %s into memory on shard %s",
+            roomId,
+            config.SHARD,
+          );
+        }
+      }
     }
+  } catch (e) {
+    // Fall through, the connection will fail later with "invalid namespace" if the room isn't loaded
+    console.warn("failed to load room %s:", roomId, e);
   }
   next();
 });
 
 const rooms = new Map<string, Room>();
 // Following functions iterate over in-memory rooms
-setInterval(minuteMetrics, 60 * 1000);
-setInterval(release, releaseInterval);
-setInterval(saveRooms, 1000);
+safeInterval("minuteMetrics", minuteMetrics, 60 * 1000);
+safeInterval("release", release, releaseInterval);
+safeInterval("saveRooms", saveRooms, 1000);
 if (process.env.NODE_ENV === "development") {
   try {
     import("./vmWorker.ts");
@@ -121,6 +153,10 @@ app.get("/subtitle/:hash", async (req, res) => {
     return;
   }
   await redis?.expire(key, 24 * 60 * 60);
+  // User-uploaded content served from our origin: make sure it can never be rendered as HTML
+  res.setHeader("Content-Type", "text/plain; charset=utf-8");
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("Content-Security-Policy", "sandbox; default-src 'none'");
   res.setHeader("Content-Encoding", "gzip");
   res.end(buf);
 });
@@ -128,14 +164,20 @@ app.get("/subtitle/:hash", async (req, res) => {
 app.use(compression());
 
 app.post("/subtitle", async (req, res) => {
-  const data = req.body;
   if (!redis) {
+    res.status(503).json({ error: "subtitle storage is not available" });
+    return;
+  }
+  const data = req.body;
+  // body-parser only produces a Buffer for text/plain bodies
+  if (!Buffer.isBuffer(data) || data.length === 0) {
+    res.status(400).json({ error: "expected a non-empty text/plain body" });
     return;
   }
   // calculate hash, gzip and save to redis
   const hash = crypto
     .createHash("sha256")
-    .update(data, "utf8")
+    .update(data)
     .digest()
     .toString("hex");
   let gzipData = gzipSync(data);
@@ -190,54 +232,36 @@ app.get("/downloadSubtitles", async (req, res) => {
 });
 
 app.get("/searchSubtitles", async (req, res) => {
+  let result: unknown = [];
   try {
-    const title = req.query.title ? String(req.query.title) : "";
-    const url = req.query.url ? String(req.query.url) : "";
-    let subUrl = "";
-    if (url) {
-      const startResp = await axios({
-        method: "get",
-        url: url,
-        headers: {
-          Range: "bytes=0-65535",
-        },
-        responseType: "arraybuffer",
-      });
-      const start = startResp.data;
-      const size = Number(startResp.headers["content-range"].split("/")[1]);
-      const endResp = await axios({
-        method: "get",
-        url: url,
-        headers: {
-          Range: `bytes=${size - 65536}-`,
-        },
-        responseType: "arraybuffer",
-      });
-      const end = endResp.data;
-      // console.log(start, end, size);
-      let hash = computeOpenSubtitlesHash(start, end, size);
-      // hash = 'f65334e75574f00f';
-      // Search API for subtitles by hash
-      subUrl = `https://api.opensubtitles.com/api/v1/subtitles?moviehash=${hash}&languages=en`;
-    } else if (title) {
-      subUrl = `https://api.opensubtitles.com/api/v1/subtitles?query=${title}&languages=en`;
+    const title =
+      typeof req.query.title === "string" ? req.query.title.slice(0, 200) : "";
+    let params: Record<string, string> | undefined = undefined;
+    if (title) {
+      params = { languages: "en", query: title };
     }
-    // Alternative, web client calls this to get back some JS with the download URL embedded
-    // https://www.opensubtitles.com/nocache/download/7585196/subreq.js?file_name=Borgen.S04E01.en&locale=en&np=true&sub_frmt=srt&subtitle_id=6615808&ext_installed=false
-    // Up to 10 downloads per IP per day, but proxyable and doesn't require key
-    const response = await axios.get(subUrl, {
-      headers: {
-        "User-Agent": "watchparty v1",
-        "Api-Key": config.OPENSUBTITLES_KEY,
-      },
-    });
-    // console.log(subUrl, response.data);
-    const subtitles = response.data;
-    res.json(subtitles.data);
+    if (params) {
+      // Alternative, web client calls this to get back some JS with the download URL embedded
+      // https://www.opensubtitles.com/nocache/download/7585196/subreq.js?file_name=Borgen.S04E01.en&locale=en&np=true&sub_frmt=srt&subtitle_id=6615808&ext_installed=false
+      // Up to 10 downloads per IP per day, but proxyable and doesn't require key
+      const response = await axios.get(
+        "https://api.opensubtitles.com/api/v1/subtitles",
+        {
+          // axios URL-encodes these, so titles like "Law & Order" survive intact
+          params,
+          headers: {
+            "User-Agent": "watchparty v1",
+            "Api-Key": config.OPENSUBTITLES_KEY,
+          },
+        },
+      );
+      result = response.data.data;
+    }
   } catch (e: any) {
     console.error(e.message);
-    res.json([]);
+    result = [];
   }
+  res.json(result ?? []);
   redisCount("subSearchesOS");
 });
 
@@ -292,40 +316,76 @@ app.get("/youtubePlaylist/:playlistId", async (req, res) => {
 });
 
 app.post("/createRoom", async (req, res) => {
-  const genName = () => "/" + makeRoomName(config.SHARD);
-  let name = genName();
+  // Pick a name nobody else is using. Collisions in memory or in the DB just retry.
+  let name = "";
+  for (let attempt = 0; attempt < 5 && !name; attempt++) {
+    const candidate = "/" + makeRoomName(config.SHARD);
+    if (rooms.has(candidate)) {
+      continue;
+    }
+    if (postgres) {
+      const now = new Date();
+      try {
+        await insertObject(postgres, "room", {
+          roomId: candidate,
+          lastUpdateTime: now,
+          creationTime: now,
+        });
+      } catch (e) {
+        redisCount("createRoomError");
+        throw e;
+      }
+    }
+    name = candidate;
+  }
+  if (!name) {
+    res.status(503).json({ error: "could not allocate a room name" });
+    return;
+  }
   console.log("createRoom: ", name);
+  // Only construct the Room once the name is secured, since it registers a namespace and a timer
   const newRoom = new Room(io, name);
-  if (postgres) {
-    const now = new Date();
-    const roomObj = {
-      roomId: newRoom.roomId,
-      lastUpdateTime: now,
-      creationTime: now,
-    };
-    try {
-      await insertObject(postgres, "room", roomObj);
-    } catch (e) {
-      redisCount("createRoomError");
-      throw e;
-    }
-  }
-  const decoded = await validateUserToken(req.body?.uid, req.body?.token);
-  newRoom.creator = decoded?.email;
-  const preload = (req.body?.video || "").slice(0, 20000);
-  if (preload) {
-    redisCount("createRoomPreload");
-    newRoom.video = preload;
-    newRoom.paused = true;
-    await newRoom.saveRoom();
-  }
-  const prePlaylist = Array.isArray(req.body?.playlist) && req.body?.playlist;
-  if (prePlaylist) {
-    for (let item of req.body.playlist) {
-      newRoom.playlistAdd(null, item);
-    }
-  }
   rooms.set(name, newRoom);
+  try {
+    const decoded = await validateUserToken(req.body?.uid, req.body?.token);
+    newRoom.creator = decoded?.email;
+    const preload =
+      typeof req.body?.video === "string" ? req.body.video.slice(0, 20000) : "";
+    if (preload) {
+      redisCount("createRoomPreload");
+      newRoom.video = preload;
+      newRoom.paused = true;
+      await newRoom.saveRoom();
+    }
+    // Only accept reasonably sized strings, cap the number of items
+    const prePlaylist: string[] = Array.isArray(req.body?.playlist)
+      ? req.body.playlist
+          .filter(
+            (item: unknown): item is string =>
+              typeof item === "string" &&
+              item.length > 0 &&
+              item.length <= 20000,
+          )
+          .slice(0, 25)
+      : [];
+    if (prePlaylist.length) {
+      // Add in order in the background, a failing item shouldn't affect the others or the request
+      (async () => {
+        for (const item of prePlaylist) {
+          try {
+            await newRoom.playlistAdd(null, item);
+          } catch (e) {
+            console.warn(e);
+          }
+        }
+      })();
+    }
+  } catch (e) {
+    // Don't leave a half-created room (and its timer/namespace) behind
+    newRoom.destroy();
+    rooms.delete(name);
+    throw e;
+  }
   res.json({ name });
 });
 
@@ -371,6 +431,7 @@ app.post("/checkoutSub", async (req, res) => {
       },
     ],
     // Redirect back to the user's room, passed in the body
+    // Note: We could add a subSuccess handler and proactively insert the user into subscriber table before going back
     success_url: req.body.return_url,
     cancel_url: req.body.return_url,
   });
@@ -612,38 +673,51 @@ app.get("/generateName", async (req, res) => {
 });
 
 // Proxy video segments
+// Hostname only: no scheme, port, userinfo or path, so it can't be used to redirect the request elsewhere
+const PROXY_HOST_RE =
+  /^(?=.{1,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/i;
 app.get("/proxy/*splat", async (req, res) => {
   redisCount("proxyReqs");
   try {
     const parsed = new URL("http://localhost" + req.url);
     const pathname = parsed.pathname.slice("/proxy".length);
-    const host = parsed.searchParams.get("host");
+    const host = parsed.searchParams.get("host") ?? "";
+    if (!PROXY_HOST_RE.test(host)) {
+      res.status(400).end();
+      return;
+    }
+    const upstream = new URL("https://" + host + pathname);
+    if (upstream.hostname !== host.toLowerCase()) {
+      res.status(400).end();
+      return;
+    }
+    // Refuse private/loopback addresses (hostnames are re-checked when connecting)
+    assertPublicUrl(upstream);
+    const upstreamConfig = {
+      ...safeAxiosConfig,
+      maxContentLength: 50 * 1024 * 1024,
+    };
+    // Upstream content is untrusted, never let it be interpreted as HTML on our origin
+    res.setHeader("X-Content-Type-Options", "nosniff");
     if (pathname.endsWith("index-dvr.m3u8")) {
       // VOD
       // https://d2vjef5jvl6bfs.cloudfront.net/3012391a6c3e84c79ef6_gamesdonequick_41198403369_1681059003/chunked/index-dvr.m3u8
-      const resp = await axios.get("https://" + host + pathname);
+      const resp = await axios.get(upstream.href, upstreamConfig);
       const re2 = /(.*.ts)/g;
-      let repl = resp.data.replaceAll(re2, `$1?host=${host}`);
+      let repl = String(resp.data).replaceAll(re2, `$1?host=${host}`);
       // Mark this as a VOD
       repl += "#EXT-X-ENDLIST";
-      res.send(repl);
+      res.type("application/vnd.apple.mpegurl").send(repl);
     } else if (pathname.endsWith(".m3u8")) {
       // Stream
-      // https://video-weaver.sea02.hls.ttvnw.net/v1/playlist/CrQEgv7Mz6nnsfJH3XtVQxeYXk8mViy1zNGWglcybvxZsI1rv3iLnjAnnqwCiVXCJ-DdD27J6RuFrLy7YUYwHUCKazIKICIupUCn9UXtaBYhBM5JIYqg9dz6NWYrCWU9HZJj2TGROv9mAOKuTR51YS82hdYL4PFZa3xxWXhgDsxXQHNDB03kY6S0aG0-EVva1xYrn5Ge6IAXRwug9QDGlb-ydtF3BtYppoTklVI7CVLySPPwbbt5Ow1JXdnKhLSwQEs4bh3BLwMnRBwUFI5nmE18BLYbkMOUivgYP5SSMgnGGlSkJO-iJNPWvepunEgyBUzB_7L-b1keTcV-Qak9IcWIITIWbRvmg6qB3ZSuWdcJgWKmdXdIn4qoRM4o16G1_0N_WRqPtMQFo0hmTlAVmHrzRArJQmaSgqAxZxRbFMd9RFeX6qjP9NtwguPbSeStdVbQxMNC34iavYUIxo8Ug812BHsG7J_kIlof2zkIqkEbP3oV3UkSByIo7xh9EEVargjaGDuQRt8zPQ6-fNBWJJe9F6IFu7lXBPIJ016lopyfcvTWjbLbBHsVkg6vG-3UISh0nud7KB5g5ipQePhtcFSI5hvjlfX1DAVHEpTWXkvlnL4wNqEqpBYL2btSXYeE1Cb-RAvrAT0s61usERcL2eI-S5aTcSO8_hxQ2afC7c9vlypOWgP6p6XNpViZHXmdXv4t-d68Z-MpLtSU7VbB3pRWnSswFFyA3W39ITic4lb97Djp3wHhGgz0Sy8aDb9r0tnphIYgASoJdXMtZWFzdC0yMKQG.m3u8
+      // https://video-weaver.sea02.hls.ttvnw.net/v1/playlist/<token>.m3u8
       // Extract the edge URL host and add it to URL so proxy can fetch
-      const resp = await axios.get("https://" + host + pathname);
-      // const re = /https:\/\/(.*)\/v1\/segment\/(.*)/g;
-      // const match = re.exec(resp.data);
-      // const edgehost = match?.[1];
-      // const repl = resp.data.replaceAll(
-      //   re,
-      //   `/proxy/v1/segment/$2?host=${edgehost}`,
-      // );
-      const repl = resp.data;
-      res.send(repl);
+      const resp = await axios.get(upstream.href, upstreamConfig);
+      res.type("application/vnd.apple.mpegurl").send(String(resp.data));
     } else if (pathname.endsWith(".ts")) {
       // Segment
-      const resp = await axios.get("https://" + host + pathname, {
+      const resp = await axios.get(upstream.href, {
+        ...upstreamConfig,
         responseType: "arraybuffer",
       });
       res.writeHead(200, {
@@ -661,6 +735,12 @@ app.get("/proxy/*splat", async (req, res) => {
   } catch (e) {
     // console.log(e);
     console.log("proxy failed: %s", req.url);
+    // Always answer, otherwise the client hangs until it times out
+    if (!res.headersSent) {
+      res.status(502).end();
+    } else {
+      res.end();
+    }
   }
 });
 
@@ -767,41 +847,46 @@ async function minuteMetrics() {
   const roomArr = Array.from(rooms.values());
   let vbWaiting = 0;
   for (let room of roomArr) {
-    if (room.vBrowser && room.vBrowser.id) {
-      // Update the heartbeat
-      await postgres?.query(
-        `UPDATE vbrowser SET "heartbeatTime" = NOW() WHERE "roomId" = $1 and vmid = $2`,
-        [room.roomId, room.vBrowser.id],
-      );
+    try {
+      if (room.vBrowser && room.vBrowser.id) {
+        // Update the heartbeat
+        await postgres?.query(
+          `UPDATE vbrowser SET "heartbeatTime" = NOW() WHERE "roomId" = $1 and vmid = $2`,
+          [room.roomId, room.vBrowser.id],
+        );
 
-      const expireTime = getStartOfDay() / 1000 + 86400;
-      if (room.vBrowser?.creatorClientID) {
-        await redis?.zincrby(
-          "vBrowserClientIDMinutes",
-          1,
-          room.vBrowser.creatorClientID,
-        );
-        await redis?.expireat("vBrowserClientIDMinutes", expireTime);
+        const expireTime = getStartOfDay() / 1000 + 86400;
+        if (room.vBrowser?.creatorClientID) {
+          await redis?.zincrby(
+            "vBrowserClientIDMinutes",
+            1,
+            room.vBrowser.creatorClientID,
+          );
+          await redis?.expireat("vBrowserClientIDMinutes", expireTime);
+        }
+        if (room.vBrowser?.creatorUID) {
+          await redis?.zincrby(
+            "vBrowserUIDMinutes",
+            1,
+            room.vBrowser?.creatorUID,
+          );
+          await redis?.expireat("vBrowserUIDMinutes", expireTime);
+        }
       }
-      if (room.vBrowser?.creatorUID) {
-        await redis?.zincrby(
-          "vBrowserUIDMinutes",
-          1,
-          room.vBrowser?.creatorUID,
+      const users = room.roster.length;
+      if (users) {
+        await redis?.setex(`roomCounts:${room.roomId}`, 120, users);
+        await redis?.setex(
+          `roomRosters:${room.roomId}`,
+          120,
+          JSON.stringify(room.getRosterForStats()),
         );
-        await redis?.expireat("vBrowserUIDMinutes", expireTime);
       }
+      vbWaiting += room.vBrowserQueue ? 1 : 0;
+    } catch (e) {
+      // One room's failure shouldn't stop metrics for the rest
+      console.warn("[minuteMetrics] room %s failed:", room.roomId, e);
     }
-    const users = room.roster.length;
-    if (users) {
-      await redis?.setex(`roomCounts:${room.roomId}`, 120, users);
-      await redis?.setex(
-        `roomRosters:${room.roomId}`,
-        120,
-        JSON.stringify(room.getRosterForStats()),
-      );
-    }
-    vbWaiting += room.vBrowserQueue ? 1 : 0;
   }
   // Report shard metrics
   const obj: ShardMetric = {
@@ -816,21 +901,4 @@ async function minuteMetrics() {
     120,
     JSON.stringify(obj),
   );
-}
-
-function computeOpenSubtitlesHash(first: Buffer, last: Buffer, size: number) {
-  // console.log(first.length, last.length, size);
-  let temp = BigInt(size);
-  process(first);
-  process(last);
-
-  temp = temp & BigInt("0xffffffffffffffff");
-  return temp.toString(16).padStart(16, "0");
-
-  function process(chunk: Buffer) {
-    for (let i = 0; i < chunk.length; i += 8) {
-      const long = chunk.readBigUInt64LE(i);
-      temp += long;
-    }
-  }
 }
