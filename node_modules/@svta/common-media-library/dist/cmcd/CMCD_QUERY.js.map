@@ -1,0 +1,1 @@
+{"version":3,"file":"CMCD_QUERY.js","sourceRoot":"","sources":["../../src/cmcd/CMCD_QUERY.ts"],"names":[],"mappings":"AAAA;;;;;;GAMG;AACH,MAAM,CAAC,MAAM,UAAU,GAAG,OAAO,CAAC","sourcesContent":["/**\n * CMCD `query` transmission mode.\n *\n * @group CMCD\n *\n * @beta\n */\nexport const CMCD_QUERY = 'query';\n"]}

@@ -1,0 +1,11 @@
+TypeError: Cannot read properties of undefined (reading 'preserveOrder')
+    at buildOptions (file:///home/amit/code/git/temp/fast-xml-parser/src/v6/OutputBuilders/ParserOptionsBuilder.js:53:12)
+    at new OutputBuilder (file:///home/amit/code/git/temp/fast-xml-parser/src/v6/OutputBuilders/JsObjBuilder.js:7:22)
+    at file:///home/amit/code/git/temp/fast-xml-parser/src/v6/OptionsBuilder.js:35:18
+    at ModuleJob.run (node:internal/modules/esm/module_job:271:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:578:26)
+    at async Jasmine._loadFiles (/home/amit/code/git/temp/fast-xml-parser/node_modules/jasmine/lib/jasmine.js:142:7)
+    at async Jasmine.loadSpecs (/home/amit/code/git/temp/fast-xml-parser/node_modules/jasmine/lib/jasmine.js:133:5)
+    at async /home/amit/code/git/temp/fast-xml-parser/node_modules/jasmine/lib/jasmine.js:223:9
+    at async Jasmine.withinGlobalSetup_ (/home/amit/code/git/temp/fast-xml-parser/node_modules/jasmine/lib/runner_base.js:420:7)
+    at async Jasmine.execute (/home/amit/code/git/temp/fast-xml-parser/node_modules/jasmine/lib/jasmine.js:222:7)

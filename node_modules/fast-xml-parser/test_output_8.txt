@@ -1,0 +1,30 @@
+Randomized with seed 18744
+Started
+.....FF....
+
+Failures:
+1) XMLParser v6 should parse nested nodes in nested properties
+  Message:
+    Expected $.rootNode.parenttag.tag[1] = '45' to equal 45.
+    Expected $.rootNode.parenttag.tag[2] = '65.34' to equal 65.34.
+  Stack:
+        at <Jasmine>
+        at UserContext.<anonymous> (file:///home/amit/code/git/temp/fast-xml-parser/spec/v6/xmlParser_spec.js:281:20)
+        at <Jasmine>
+
+2) XMLParser v6 should ignore namespace and text node attributes
+  Message:
+    ReferenceError: reportError is not defined
+  Stack:
+        at resolveNameSpace (file:///home/amit/code/git/temp/fast-xml-parser/src/v6/Xml2JsParser.js:232:12)
+        at Xml2JsParser.processTagName (file:///home/amit/code/git/temp/fast-xml-parser/src/v6/Xml2JsParser.js:185:12)
+        at Xml2JsParser.readClosingTag (file:///home/amit/code/git/temp/fast-xml-parser/src/v6/Xml2JsParser.js:87:26)
+        at Xml2JsParser.parseXml (file:///home/amit/code/git/temp/fast-xml-parser/src/v6/Xml2JsParser.js:69:16)
+        at Xml2JsParser.parse (file:///home/amit/code/git/temp/fast-xml-parser/src/v6/Xml2JsParser.js:35:10)
+        at XMLParser.parse (file:///home/amit/code/git/temp/fast-xml-parser/src/v6/XMLParser.js:34:23)
+        at UserContext.<anonymous> (file:///home/amit/code/git/temp/fast-xml-parser/spec/v6/xmlParser_spec.js:205:25)
+        at <Jasmine>
+
+11 specs, 2 failures
+Finished in 0.02 seconds
+Randomized with seed 18744 (jasmine --random=true --seed=18744)

@@ -1,0 +1,17 @@
+Randomized with seed 74872
+Started
+..F..
+
+Failures:
+1) XMLParser v6 should parse all values as string, int, boolean, float, hexadecimal
+  Message:
+    Expected $.rootNode.boolean = 'true' to equal true.
+    Expected $.rootNode.intTag = '045' to equal 45.
+  Stack:
+        at <Jasmine>
+        at UserContext.<anonymous> (file:///home/amit/code/git/temp/fast-xml-parser/spec/v6/xmlParser_spec.js:28:20)
+        at <Jasmine>
+
+5 specs, 1 failure
+Finished in 0.014 seconds
+Randomized with seed 74872 (jasmine --random=true --seed=74872)

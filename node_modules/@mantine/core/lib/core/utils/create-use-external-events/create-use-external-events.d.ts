@@ -1,0 +1,1 @@
+export declare function createUseExternalEvents<Handlers extends Record<string, (detail: any) => void>>(prefix: string): readonly [(events: Handlers) => void, <EventKey extends keyof Handlers>(event: EventKey) => (...payload: Parameters<Handlers[EventKey]>[0] extends undefined ? [undefined?] : [Parameters<Handlers[EventKey]>[0]]) => void];

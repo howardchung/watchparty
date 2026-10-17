@@ -1,0 +1,29 @@
+{
+  "name": "@webtorrent/http-node",
+  "version": "1.3.0",
+  "description": "Node.js http as a standalone package",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/webtorrent/http-node.git"
+  },
+  "main": "http.js",
+  "license": "MIT",
+  "chromeapp": {
+    "net": "chrome-net"
+  },
+  "dependencies": {
+    "freelist": "^1.0.3",
+    "http-parser-js": "^0.4.3"
+  },
+  "author": {
+    "name": "Jan Schär",
+    "email": "jscissr@gmail.com"
+  },
+  "devDependencies": {
+    "@webtorrent/semantic-release-config": "^1.0.7",
+    "semantic-release": "^18.0.1"
+  },
+  "release": {
+    "extends": "@webtorrent/semantic-release-config"
+  }
+}
