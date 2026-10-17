@@ -436,6 +436,7 @@ app.post("/checkoutSub", async (req, res) => {
     }));
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
+    allow_promotion_codes: true,
     client_reference_id: decoded.uid,
     customer: customer.id,
     line_items: [
