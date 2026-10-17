@@ -20,28 +20,71 @@ export async function getCustomerByUid(uid: string) {
 }
 
 export async function getIsSubscriberByUid(uid: string | undefined) {
-  if (!config.STRIPE_SECRET_KEY) {
+  if (!config.STRIPE_SECRET_KEY || !postgres) {
     // If Stripe isn't set up assume everyone is a subscriber
     return true;
   }
+  // This runs on every metadata request and socket login, so it only reads the local
+  // subscriber table (never Stripe). The table is written by /subSuccess right after
+  // checkout and refreshed from Stripe every minute by the syncSubs job.
   if (!uid) {
     return false;
   }
-  if (postgres) {
-    // This runs on every metadata request and socket login so use the local table
-    // The syncSubs job refreshes it from Stripe every minute
-    const { rows } = await postgres.query(
-      "SELECT 1 FROM subscriber WHERE uid = $1 AND status = 'active'",
-      [uid],
-    );
-    if (rows.length > 0) {
-      return true;
+  const { rows } = await postgres.query(
+    "SELECT 1 FROM subscriber WHERE uid = $1 AND status = 'active'",
+    [uid],
+  );
+  return rows.length > 0;
+}
+
+/**
+ * Called when Stripe sends the user back after checkout.
+ * Looks the session up in Stripe (the session id is the only thing we trust from the
+ * request) and, if it resulted in an active subscription, records the subscriber
+ * immediately instead of waiting for the next syncSubs run.
+ * Always returns the return URL we stored when creating the session, if any.
+ */
+export async function recordCheckoutSession(sessionId: string) {
+  const session = await stripe.checkout.sessions.retrieve(sessionId, {
+    expand: ["subscription", "customer"],
+  });
+  const returnUrl = session.metadata?.return_url;
+  const uid = session.client_reference_id;
+  const subscription = session.subscription;
+  const customer = session.customer;
+  let recorded = false;
+  if (
+    postgres &&
+    uid &&
+    session.mode === "subscription" &&
+    session.status === "complete" &&
+    subscription &&
+    typeof subscription === "object" &&
+    subscription.status === "active" &&
+    customer &&
+    typeof customer === "object" &&
+    !customer.deleted
+  ) {
+    try {
+      await postgres.query(
+        `INSERT INTO subscriber ("customerId", email, status, uid)
+        VALUES ($1, $2, $3, $4)
+        ON CONFLICT (uid) DO UPDATE
+        SET "customerId" = EXCLUDED."customerId", email = EXCLUDED.email, status = EXCLUDED.status`,
+        [customer.id, customer.email, subscription.status, uid],
+      );
+      // Same as syncSubs: the subscriber's existing rooms become sub rooms
+      await postgres.query(
+        `UPDATE room SET "isSubRoom" = true WHERE owner = $1`,
+        [uid],
+      );
+      recorded = true;
+    } catch (e) {
+      // Not fatal, syncSubs will pick the subscription up on its next run
+      console.warn("failed to record subscriber %s:", uid, e);
     }
   }
-  const customer = await getCustomerByUid(uid);
-  return Boolean(
-    customer?.subscriptions?.data?.find((sub) => sub?.status === "active"),
-  );
+  return { returnUrl, recorded };
 }
 
 export async function createSelfServicePortal(

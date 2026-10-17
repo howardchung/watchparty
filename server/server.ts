@@ -14,6 +14,7 @@ import {
   getCustomerByUid,
   createSelfServicePortal,
   getIsSubscriberByUid,
+  recordCheckoutSession,
   stripe,
 } from "./utils/stripe.ts";
 import { deleteUser, validateUserToken } from "./utils/firebase.ts";
@@ -146,6 +147,10 @@ app.get("/ping", (_req, res) => {
 
 // Data's already compressed so go before the compression middleware
 app.get("/subtitle/:hash", async (req, res) => {
+  if (!/^[0-9a-f]{64}$/.test(req.params.hash)) {
+    res.status(404).end("not found");
+    return;
+  }
   const key = "subtitle:" + req.params.hash;
   const buf = await redis?.getBuffer(key);
   if (!buf) {
@@ -332,8 +337,9 @@ app.post("/createRoom", async (req, res) => {
           creationTime: now,
         });
       } catch (e) {
+        console.error(e);
         redisCount("createRoomError");
-        throw e;
+        continue;
       }
     }
     name = candidate;
@@ -409,6 +415,17 @@ app.post("/checkoutSub", async (req, res) => {
       return;
     }
   }
+  const returnUrl = req.body?.return_url
+  if (!returnUrl) {
+    res.status(400).json({ error: "invalid return_url" });
+    return;
+  }
+  // Stripe redirects to success_url on our server first, so we can record the subscription
+  // before sending the user back to their room
+  const proto = (req.get("x-forwarded-proto") ?? req.protocol)
+    .split(",")[0]
+    .trim();
+  const serverUrl = `${proto === "https" ? "https" : "http"}://${req.get("host")}`;
   // Reuse the existing customer for this user, or create one tagged with their UID
   // so we can find it later even if their email changes
   const customer =
@@ -430,12 +447,26 @@ app.post("/checkoutSub", async (req, res) => {
         quantity: 1,
       },
     ],
-    // Redirect back to the user's room, passed in the body
-    // Note: We could add a subSuccess handler and proactively insert the user into subscriber table before going back
-    success_url: req.body.return_url,
-    cancel_url: req.body.return_url,
+    // {CHECKOUT_SESSION_ID} is filled in by Stripe, so it must not be URL-encoded
+    success_url: `${serverUrl}/subSuccess?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: returnUrl,
+    // /subSuccess redirects here. Stored on the session (not in the success URL) so
+    // the redirect target can't be changed by editing a link.
+    metadata: { return_url: returnUrl },
   });
   res.json({ url: session.url });
+});
+
+// Stripe sends the user here after a successful checkout
+app.get("/subSuccess", async (req, res) => {
+  const sessionId =
+    typeof req.query.session_id === "string" ? req.query.session_id : "";
+  let returnUrl: string | undefined = undefined;
+  const result = await recordCheckoutSession(sessionId);
+  returnUrl = result.returnUrl;
+  // Only ever redirect to the URL we validated and stored when creating the session
+  // (never to something from this request's query string). If we couldn't read it, go home.
+  res.redirect(returnUrl || "/");
 });
 
 app.post("/manageSub", async (req, res) => {
