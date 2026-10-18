@@ -98,7 +98,7 @@ export const FileShareModal = (props: {
         label="Convert video on my device before sharing (use if video or audio doesn't share)"
         description={
           canConvert
-            ? "Converts to a web-compatible format, which uses your CPU/GPU."
+            ? "Converts to a web-compatible format, which uses your CPU/GPU. Also allows choosing between audio tracks of converted files (e.g. languages)."
             : "Your browser doesn't support WebCodecs, which is required for converting."
         }
       />

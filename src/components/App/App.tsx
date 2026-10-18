@@ -46,6 +46,7 @@ import { FileShareModal } from "../Modal/FileShareModal";
 import {
   ClientTranscoder,
   isClientTranscodeSupported,
+  type AudioTrackInfo,
 } from "../../utils/clientTranscode";
 import firebase from "firebase/compat/app";
 import { SubtitleModal } from "../Modal/SubtitleModal";
@@ -183,6 +184,9 @@ interface AppState {
   settingsModalOpen: boolean;
   convertProgress: number | undefined;
   convertEnabled: boolean;
+  // Audio tracks of the file being converted on this device, and which one is playing
+  audioTracks: AudioTrackInfo[] | undefined;
+  audioTrackId: number | undefined;
 }
 
 export class App extends React.Component<AppProps, AppState> {
@@ -265,6 +269,8 @@ export class App extends React.Component<AppProps, AppState> {
     settingsModalOpen: false,
     convertProgress: undefined,
     convertEnabled: window.localStorage.getItem("watchparty-convert") === "1",
+    audioTracks: undefined,
+    audioTrackId: undefined,
   };
   socket: Socket = null!;
   mediasoupPubSocket: Socket | null = null;
@@ -1068,8 +1074,28 @@ export class App extends React.Component<AppProps, AppState> {
   stopConvert = () => {
     this.transcoder?.stop();
     this.transcoder = undefined;
-    if (this.state.convertProgress !== undefined) {
-      this.setState({ convertProgress: undefined });
+    if (
+      this.state.convertProgress !== undefined ||
+      this.state.audioTracks !== undefined
+    ) {
+      this.setState({
+        convertProgress: undefined,
+        audioTracks: undefined,
+        audioTrackId: undefined,
+      });
+    }
+  };
+
+  // Switches the audio track of the file being converted (e.g. another language). Local to this device for links,
+  // for a shared file it changes what everyone hears since viewers receive the converted stream.
+  localSetAudioTrack = async (id: number) => {
+    try {
+      await this.transcoder?.selectAudioTrack(id);
+    } catch (err) {
+      console.error(err);
+      this.showError(
+        err instanceof Error ? err.message : "Unable to change audio track",
+      );
     }
   };
 
@@ -1086,6 +1112,11 @@ export class App extends React.Component<AppProps, AppState> {
       onProgress: (fraction) => {
         if (this.transcoder === transcoder) {
           this.setState({ convertProgress: fraction });
+        }
+      },
+      onAudioTracks: (audioTracks, audioTrackId) => {
+        if (this.transcoder === transcoder) {
+          this.setState({ audioTracks, audioTrackId });
         }
       },
       onError,
@@ -2084,6 +2115,9 @@ export class App extends React.Component<AppProps, AppState> {
         localSetSubtitleMode={this.Player().setSubtitleMode}
         roomPlaylistPlay={this.roomPlaylistPlay}
         playlist={this.state.playlist}
+        audioTracks={this.state.audioTracks}
+        audioTrackId={this.state.audioTrackId}
+        localSetAudioTrack={this.localSetAudioTrack}
       />
     );
     return (
@@ -2470,7 +2504,7 @@ export class App extends React.Component<AppProps, AppState> {
                           multiline
                           w={280}
                           refProp="rootRef"
-                          label="Use CPU/GPU to convert content before playback (only with links, use if video or audio doesn't play)"
+                          label="Use CPU/GPU to convert content before playback (only with links, use if video or audio doesn't play, or to choose between audio tracks)"
                         >
                           <Switch
                             label="Convert"

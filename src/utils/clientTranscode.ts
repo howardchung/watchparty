@@ -13,6 +13,10 @@
  * Tracks that the browser can already play are copied without re-encoding, so MP4/MKV files with H.264 + AAC cost
  * almost nothing.
  *
+ * Multi-track files (e.g. an MKV with several languages or a commentary track) can only be played with one audio
+ * track at a time. start() reports the file's audio tracks via onAudioTracks, plays the primary one (or the first one
+ * that's playable in this browser), and selectAudioTrack() switches to another at the current position.
+ *
  * Pacing and seeking:
  * - Transcoding is throttled to stay LOOKAHEAD_SECONDS ahead of the playhead (so we don't encode a whole movie
  *   while the host is paused, and memory use stays bounded).
@@ -61,6 +65,16 @@ export interface ClientTranscoderOptions {
   onProgress?: (fraction: number) => void;
   /** Called if conversion fails after start() has resolved. The transcoder stops itself. */
   onError?: (err: Error) => void;
+  /** Which audio track (AudioTrackInfo.id) to start with. Defaults to the primary track, or the first playable one. */
+  audioTrackId?: number;
+  /**
+   * Called once the file's audio tracks are known (before conversion starts), and again whenever the selected track
+   * changes. Lists every audio track, including ones this browser may not be able to play.
+   */
+  onAudioTracks?: (
+    tracks: AudioTrackInfo[],
+    selectedId: number | undefined,
+  ) => void;
 }
 
 /** Whether this browser has everything required to transcode client-side. */
@@ -92,6 +106,113 @@ const registerAc3 = async () => {
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+/** An audio track in the source file that can be selected for playback. */
+export interface AudioTrackInfo {
+  /** Identifies the track within the file. Pass to selectAudioTrack() */
+  id: number;
+  /** Human readable description, unique among the file's tracks, e.g. "Japanese · Commentary · AC-3 5.1" */
+  label: string;
+  /** ISO 639-2 language code from the file, "und" if unknown */
+  languageCode: string;
+  /** The track's title from the file, if any */
+  name: string | null;
+  codec: string | null;
+  channels: number;
+}
+
+const CODEC_NAMES: Record<string, string> = {
+  aac: "AAC",
+  mp3: "MP3",
+  opus: "Opus",
+  vorbis: "Vorbis",
+  flac: "FLAC",
+  ac3: "AC-3",
+  eac3: "E-AC-3",
+  dts: "DTS",
+};
+
+const channelLabel = (channels: number): string => {
+  switch (channels) {
+    case 0:
+      return "";
+    case 1:
+      return "Mono";
+    case 2:
+      return "Stereo";
+    case 6:
+      return "5.1";
+    case 8:
+      return "7.1";
+    default:
+      return `${channels}ch`;
+  }
+};
+
+/** Turns a language code from a media file (usually ISO 639-2, e.g. "jpn") into a name like "Japanese". */
+export const languageName = (code: string): string | undefined => {
+  if (!code || code === "und") {
+    return undefined;
+  }
+  try {
+    return new Intl.DisplayNames(undefined, {
+      type: "language",
+      fallback: "none",
+    }).of(code);
+  } catch {
+    return undefined;
+  }
+};
+
+/** Builds the list shown to the user, with labels made unique so identical-looking tracks can still be told apart. */
+export const describeAudioTracks = (
+  tracks: Pick<
+    InputAudioTrack,
+    "id" | "languageCode" | "name" | "codec" | "numberOfChannels"
+  >[],
+): AudioTrackInfo[] => {
+  const infos = tracks.map((track, index): AudioTrackInfo => {
+    const language =
+      languageName(track.languageCode) ??
+      (track.languageCode && track.languageCode !== "und"
+        ? track.languageCode.toUpperCase()
+        : undefined);
+    const name = track.name?.trim() || undefined;
+    const format = [
+      track.codec
+        ? (CODEC_NAMES[track.codec] ?? track.codec.toUpperCase())
+        : "",
+      channelLabel(track.numberOfChannels),
+    ]
+      .filter(Boolean)
+      .join(" ");
+    const parts = [
+      language,
+      // Titles often just repeat the language ("English")
+      name && name.toLowerCase() !== language?.toLowerCase() ? name : undefined,
+      format || undefined,
+    ].filter(Boolean);
+    return {
+      id: track.id,
+      label: parts.length ? parts.join(" · ") : `Track ${index + 1}`,
+      languageCode: track.languageCode,
+      name: track.name,
+      codec: track.codec,
+      channels: track.numberOfChannels,
+    };
+  });
+  // e.g. two plain "English · AAC Stereo" tracks
+  const seen = new Map<string, number>();
+  infos.forEach((info) =>
+    seen.set(info.label, (seen.get(info.label) ?? 0) + 1),
+  );
+  return infos.map((info, index) => {
+    if ((seen.get(info.label) ?? 0) < 2) {
+      return info;
+    }
+    return { ...info, label: `${info.label} (#${index + 1})` };
+  });
+};
+
 export class ClientTranscoder {
   private mb!: Mediabunny;
   private input?: Input;
@@ -100,6 +221,14 @@ export class ClientTranscoder {
   private sourceBufferMime?: string;
   private objectUrl?: string;
   private duration = 0;
+
+  /** All audio tracks in the source, and which one is being converted */
+  private audioTracks: InputAudioTrack[] = [];
+  private audioInfos: AudioTrackInfo[] = [];
+  private selectedAudioTrackId?: number;
+  /** True once the user picked a track, so failing to play it is an error instead of silently dropping audio */
+  private audioChosenByUser = false;
+  private primaryVideoTrackId?: number;
 
   /** Incremented whenever a conversion is started or the transcoder is stopped, to invalidate older work */
   private generation = 0;
@@ -137,17 +266,17 @@ export class ClientTranscoder {
       formats: mb.ALL_FORMATS,
     });
     try {
-      // The AC-3 decoder is a sizeable WASM download, so only fetch it if this file needs it
-      const audioCodec = (await this.input.getPrimaryAudioTrack())?.codec;
-      if (audioCodec === "ac3" || audioCodec === "eac3") {
-        await registerAc3();
-      }
+      this.audioTracks = await this.input.getAudioTracks();
+      this.audioInfos = describeAudioTracks(this.audioTracks);
+      this.primaryVideoTrackId = (await this.input.getPrimaryVideoTrack())?.id;
+      this.selectedAudioTrackId = await this.chooseInitialAudioTrack();
       this.duration = await this.input.computeDuration();
     } catch (e) {
       throw new Error(
         `Couldn't read this file${e instanceof Error ? `: ${e.message}` : ""}`,
       );
     }
+    this.notifyAudioTracks();
 
     const mediaSource = new MediaSource();
     this.mediaSource = mediaSource;
@@ -177,6 +306,101 @@ export class ClientTranscoder {
     this.started = true;
   }
 
+  /** The audio tracks in the source file (empty until start() has read it) */
+  getAudioTracks(): AudioTrackInfo[] {
+    return this.audioInfos;
+  }
+
+  getSelectedAudioTrackId(): number | undefined {
+    return this.selectedAudioTrackId;
+  }
+
+  /**
+   * Switches the audio track, continuing from the current playback position. Throws (and keeps playing the
+   * previous track) if this browser can't play the requested one.
+   */
+  async selectAudioTrack(trackId: number): Promise<void> {
+    if (
+      this.stopped ||
+      !this.started ||
+      trackId === this.selectedAudioTrackId
+    ) {
+      return;
+    }
+    const track = this.audioTracks.find((t) => t.id === trackId);
+    if (!track) {
+      throw new Error("That audio track doesn't exist");
+    }
+    const previousId = this.selectedAudioTrackId;
+    const previousChosen = this.audioChosenByUser;
+    this.selectedAudioTrackId = trackId;
+    this.audioChosenByUser = true;
+    this.notifyAudioTracks();
+    const resumeAt = this.opts.video.currentTime;
+    try {
+      await this.prepareAudioDecoder(track);
+      await this.begin(resumeAt, true);
+    } catch (e) {
+      if (this.stopped) {
+        throw e;
+      }
+      // Go back to what was playing before
+      this.selectedAudioTrackId = previousId;
+      this.audioChosenByUser = previousChosen;
+      this.notifyAudioTracks();
+      try {
+        await this.begin(resumeAt, true);
+      } catch (e2) {
+        this.onConversionError(this.generation, e2);
+      }
+      throw e;
+    }
+  }
+
+  private notifyAudioTracks() {
+    this.opts.onAudioTracks?.(this.audioInfos, this.selectedAudioTrackId);
+  }
+
+  /** The AC-3 decoder is a sizeable WASM download, so only fetch it if a track we might play needs it */
+  private async prepareAudioDecoder(track: InputAudioTrack) {
+    if (track.codec === "ac3" || track.codec === "eac3") {
+      await registerAc3();
+    }
+  }
+
+  /** Whether this browser can play the track, either by copying it as-is or by decoding and re-encoding it */
+  private async isAudioPlayable(track: InputAudioTrack): Promise<boolean> {
+    await this.prepareAudioDecoder(track);
+    return (await this.canCopyAudio(track)) || (await track.canDecode());
+  }
+
+  /** Picks the track to start with: the requested one, else the primary one, else the first that's playable */
+  private async chooseInitialAudioTrack(): Promise<number | undefined> {
+    const requested = this.audioTracks.find(
+      (t) => t.id === this.opts.audioTrackId,
+    );
+    if (requested) {
+      this.audioChosenByUser = true;
+      await this.prepareAudioDecoder(requested);
+      return requested.id;
+    }
+    const primary = await this.input!.getPrimaryAudioTrack();
+    if (!primary) {
+      return undefined;
+    }
+    if (await this.isAudioPlayable(primary)) {
+      return primary.id;
+    }
+    // e.g. a DTS track listed before an AC-3 one. Otherwise the file would play without sound
+    for (const track of this.audioTracks) {
+      if (track !== primary && (await this.isAudioPlayable(track))) {
+        return track.id;
+      }
+    }
+    // Nothing is playable, let the conversion report why
+    return primary.id;
+  }
+
   /** Stops conversion and releases resources. Safe to call multiple times. */
   stop() {
     if (this.stopped) {
@@ -202,11 +426,11 @@ export class ClientTranscoder {
   }
 
   /** Starts (or restarts) conversion at the given media time, in the source file's timeline. */
-  private async begin(startTime: number): Promise<void> {
+  private async begin(startTime: number, flushAhead = false): Promise<void> {
     const generation = ++this.generation;
     this.beginning = true;
     try {
-      await this.beginInner(startTime, generation);
+      await this.beginInner(startTime, generation, flushAhead);
     } finally {
       if (generation === this.generation) {
         this.beginning = false;
@@ -214,13 +438,26 @@ export class ClientTranscoder {
     }
   }
 
-  private async beginInner(startTime: number, generation: number) {
+  private async beginInner(
+    startTime: number,
+    generation: number,
+    flushAhead: boolean,
+  ) {
     const mb = this.mb;
     await this.cancelActive();
     // Let any in-flight SourceBuffer work for the old conversion drain (it exits quickly once stale)
     await this.chain;
     if (this.isStale(generation)) {
       return;
+    }
+    if (flushAhead && this.sourceBuffer) {
+      // Whatever is buffered from here on was converted with the previous audio track. Normally the new conversion
+      // overwrites it faster than the playhead gets there, but if it can't keep up (e.g. a heavy re-encode), the
+      // playhead would run into the old track's audio. Better to buffer for a moment, like after a seek.
+      await this.sourceBufferOp((sb) => sb.remove(startTime, Infinity));
+      if (this.isStale(generation)) {
+        return;
+      }
     }
     this.pending = [];
     this.sessionStart = startTime;
@@ -238,15 +475,37 @@ export class ClientTranscoder {
     const conversion = await mb.Conversion.init({
       input: this.input!,
       output,
-      // Only the main video + audio track: MP4 for MSE should carry a single track of each
-      tracks: "primary",
+      // MP4 for MSE should carry a single track of each type, so every track except the main video and the
+      // selected audio track is discarded. ("primary" would only ever offer the file's default audio track.)
+      tracks: "all",
       trim: startTime > 0 ? { start: startTime } : undefined,
-      video: (track) => this.videoOptions(track),
-      audio: (track) => this.audioOptions(track),
+      video: (track) =>
+        track.id === this.primaryVideoTrackId
+          ? this.videoOptions(track)
+          : { discard: true },
+      audio: (track) =>
+        track.id === this.selectedAudioTrackId
+          ? this.audioOptions(track)
+          : { discard: true },
       showWarnings: false,
     });
     if (!conversion.isValid) {
       throw new Error(describeDiscardedTracks(conversion));
+    }
+    // A conversion without the selected audio track is still "valid" (it just has no sound)
+    const audioProblem = conversion.discardedTracks.find(
+      ({ track, reason }) =>
+        track.id === this.selectedAudioTrackId &&
+        track.type === "audio" &&
+        reason !== "discarded_by_user",
+    );
+    if (audioProblem) {
+      const message = `Can't play audio track "${this.audioInfos.find((t) => t.id === audioProblem.track.id)?.label}" in this browser (${audioProblem.reason.replace(/_/g, " ")})`;
+      if (this.audioChosenByUser) {
+        await conversion.cancel();
+        throw new Error(message);
+      }
+      console.warn("[clientTranscode]", message);
     }
     if (this.isStale(generation)) {
       await conversion.cancel();
@@ -542,17 +801,23 @@ export class ClientTranscoder {
     );
   }
 
+  /** Whether the track can go into the output as-is, because the browser can already play it from an MP4 */
+  private async canCopyAudio(track: InputAudioTrack): Promise<boolean> {
+    const mb = this.mb;
+    const codecString = await track.getCodecParameterString();
+    return Boolean(
+      track.codec &&
+      codecString &&
+      new mb.Mp4OutputFormat().getSupportedCodecs().includes(track.codec) &&
+      MediaSource.isTypeSupported(`audio/mp4; codecs="${codecString}"`),
+    );
+  }
+
   private async audioOptions(
     track: InputAudioTrack,
   ): Promise<ConversionAudioOptions> {
     const mb = this.mb;
-    const codecString = await track.getCodecParameterString();
-    if (
-      track.codec &&
-      codecString &&
-      new mb.Mp4OutputFormat().getSupportedCodecs().includes(track.codec) &&
-      MediaSource.isTypeSupported(`audio/mp4; codecs="${codecString}"`)
-    ) {
+    if (await this.canCopyAudio(track)) {
       return {};
     }
     for (const { codec, probe } of AUDIO_CANDIDATES) {
@@ -578,10 +843,13 @@ export class ClientTranscoder {
 }
 
 const describeDiscardedTracks = (conversion: Conversion): string => {
-  const reasons = conversion.discardedTracks.map(
-    ({ track, reason }) =>
-      `${track.type} track (${track.codec ?? "unknown codec"}): ${reason.replace(/_/g, " ")}`,
-  );
+  const reasons = conversion.discardedTracks
+    // Tracks we skipped on purpose (video/audio we weren't asked to play) aren't why this failed
+    .filter(({ reason }) => reason !== "discarded_by_user")
+    .map(
+      ({ track, reason }) =>
+        `${track.type} track (${track.codec ?? "unknown codec"}): ${reason.replace(/_/g, " ")}`,
+    );
   return (
     "This file can't be converted in your browser" +
     (reasons.length ? ` — ${reasons.join("; ")}` : "")
