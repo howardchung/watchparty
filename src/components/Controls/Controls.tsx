@@ -65,9 +65,16 @@ export const Controls = (props: ControlsProps) => {
   const getLength = () => getEnd() - getStart();
   const getCurrent = () => props.currentTime;
   const getPercent = () => (getCurrent() - getStart()) / getLength();
+  // The wall clock time that media time 0 corresponds to, for live streams where the duration is the live edge.
+  // Only computed once the duration is known: an infinite one (e.g. a DASH stream before it has a seekable range)
+  // would give a time that is never valid, and the memo wouldn't recompute when the duration later became finite.
+  const hasFiniteDuration = Number.isFinite(props.duration);
   const zeroTime = useMemo(
-    () => Math.floor(Date.now() / 1000) - props.duration,
-    [props.video, Boolean(props.duration)],
+    () =>
+      hasFiniteDuration
+        ? Math.floor(Date.now() / 1000) - props.duration
+        : undefined,
+    [props.video, hasFiniteDuration],
   );
   const onMouseOver = () => {
     setShowTimestamp(true);

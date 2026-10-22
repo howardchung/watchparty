@@ -615,8 +615,11 @@ export class App extends React.Component<AppProps, AppState> {
                 // for a live stream:
                 // html.currenttime is time since stream start
                 // html.duration is infinite
-                // player.duration is the seekable range
-                const isLiveStream = this.Player().getDuration() >= Infinity;
+                // html.seekable ends at the live edge (see getDuration)
+                // player.duration is the size of the seekable range, not a position
+                const isLiveStream = Boolean(
+                  window.watchparty.dash?.isDynamic(),
+                );
                 console.log("DASH stream initialized: isLive %s", isLiveStream);
                 this.setState({
                   isLiveStream,
@@ -1768,12 +1771,26 @@ export class App extends React.Component<AppProps, AppState> {
     return this.playingScreenShare() || this.playingVBrowser();
   };
 
+  // The duration of the media. For a live stream this is the live edge on the same timeline as the current time,
+  // which is what hls.js reports as the duration. dash.js leaves it at Infinity, so use the end of the seekable range.
+  // The controls and seeking math below depend on it being finite.
+  getDuration = () => {
+    const duration = this.Player().getDuration();
+    if (this.state.isLiveStream && duration === Infinity) {
+      const seekable = this.Player().getVideoEl()?.seekable;
+      if (seekable?.length) {
+        return seekable.end(seekable.length - 1);
+      }
+    }
+    return duration;
+  };
+
   localSeek = (customTime?: number) => {
     // Jump to the leader's position, or a custom one
     let target = customTime ?? this.getLeaderTime();
     // For live this is the offset from the leading edge (negative)
     if (this.state.isLiveStream) {
-      target = this.Player().getDuration() + (customTime ?? 0);
+      target = this.getDuration() + (customTime ?? 0);
     }
     if (target >= 0 && target < Infinity) {
       console.log("syncing self to leader or custom:", target);
@@ -1873,7 +1890,7 @@ export class App extends React.Component<AppProps, AppState> {
     // Take the passed time and compute the offset from the end time (negative)
     // Each client should use this value to compute the time to set when starting playback
     if (this.state.isLiveStream) {
-      target = time - this.Player().getDuration();
+      target = time - this.getDuration();
     }
     // Otherwise just return the time
     return target;
@@ -2095,7 +2112,7 @@ export class App extends React.Component<AppProps, AppState> {
         volume={this.Player().getVolume()}
         subtitled={this.Player().isSubtitled()}
         currentTime={this.Player().getCurrentTime()}
-        duration={this.Player().getDuration()}
+        duration={this.getDuration()}
         disabled={!this.haveLock()}
         leaderTime={this.hasDuration() ? this.getLeaderTime() : undefined}
         isPauseDisabled={this.isPauseDisabled()}
