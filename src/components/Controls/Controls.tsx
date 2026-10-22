@@ -34,6 +34,12 @@ interface ControlsProps {
   roomPlaybackRate: number;
   isYouTube: boolean;
   isLiveStream: boolean;
+  /** Live streams: start of the seekable window. It runs from here to `duration`, which is the live edge */
+  liveStart?: number;
+  /** Live streams: the wall clock time (in seconds) that media time 0 corresponds to, if the player knows it exactly */
+  liveZeroTime?: number;
+  /** Live streams: how far behind the live edge (in seconds) still counts as being live */
+  liveThreshold?: number;
   timeRanges: { start: number; end: number }[];
   loop: boolean;
   roomTogglePlay: () => void;
@@ -61,21 +67,42 @@ export const Controls = (props: ControlsProps) => {
   });
   const [showTimestamp, setShowTimestamp] = useState(false);
   const getEnd = () => props.duration;
-  const getStart = () => 0;
+  // A live stream only lets you seek within a window that ends at the live edge (and may start long after 0)
+  const getStart = () =>
+    props.isLiveStream && Number.isFinite(props.liveStart)
+      ? Math.min(props.liveStart as number, getEnd())
+      : 0;
   const getLength = () => getEnd() - getStart();
   const getCurrent = () => props.currentTime;
-  const getPercent = () => (getCurrent() - getStart()) / getLength();
-  // The wall clock time that media time 0 corresponds to, for live streams where the duration is the live edge.
+  const getPercent = () =>
+    Math.min(Math.max((getCurrent() - getStart()) / getLength(), 0), 1);
+  // Best guess at the wall clock time that media time 0 corresponds to, for live streams where the duration is the
+  // live edge: assume the edge is "now". Used when the player can't tell us exactly (see liveZeroTime).
   // Only computed once the duration is known: an infinite one (e.g. a DASH stream before it has a seekable range)
   // would give a time that is never valid, and the memo wouldn't recompute when the duration later became finite.
   const hasFiniteDuration = Number.isFinite(props.duration);
-  const zeroTime = useMemo(
+  const approxZeroTime = useMemo(
     () =>
       hasFiniteDuration
         ? Math.floor(Date.now() / 1000) - props.duration
         : undefined,
     [props.video, hasFiniteDuration],
   );
+  const zeroTime = Number.isFinite(props.liveZeroTime)
+    ? props.liveZeroTime
+    : approxZeroTime;
+  // How far the playhead is behind the live edge, and whether that's close enough to call it live.
+  // Players deliberately stay a few seconds back from the edge, so being exactly at it isn't possible.
+  const liveBehind = Math.max(props.duration - props.currentTime, 0);
+  const atLive = liveBehind <= (props.liveThreshold ?? 8);
+  // e.g. "-00:35", and the wall clock time at that position when we know it
+  const liveLabel = (time: number) => {
+    const behind = Math.max(getEnd() - time, 0);
+    const offset = behind < 1 ? "LIVE" : formatTimestamp(-behind);
+    return zeroTime !== undefined
+      ? `${offset} · ${formatTimestamp(time, zeroTime)}`
+      : offset;
+  };
   const onMouseOver = () => {
     setShowTimestamp(true);
   };
@@ -124,8 +151,10 @@ export const Controls = (props: ControlsProps) => {
       : getEnd() - getCurrent();
   const isBehind = behindTime > behindThreshold;
   const buffers = timeRanges.map(({ start, end }) => {
-    const buffStartPct = (start / getLength()) * 100;
-    const buffLengthPct = ((end - start) / getLength()) * 100;
+    // Clamp to the window, a live stream's buffer can start before the part that can still be seeked to
+    const clampedStart = Math.max(start, getStart());
+    const buffStartPct = ((clampedStart - getStart()) / getLength()) * 100;
+    const buffLengthPct = (Math.max(end - clampedStart, 0) / getLength()) * 100;
     return (
       <div
         key={start}
@@ -192,7 +221,12 @@ export const Controls = (props: ControlsProps) => {
           </div> */}
       </div>
       <div className={` ${styles.text}`}>
-        {formatTimestamp(getCurrent(), isLiveStream ? zeroTime : undefined)}
+        {isLiveStream
+          ? // How far behind live, nothing at all when live (the LIVE badge says so)
+            atLive
+            ? ""
+            : formatTimestamp(-liveBehind)
+          : formatTimestamp(getCurrent())}
       </div>
       <Progress.Root
         radius="0px"
@@ -205,9 +239,8 @@ export const Controls = (props: ControlsProps) => {
               const max = rect.width;
               const pct = x / max;
               // roomseek operates on actual media element times, not timestamps
-              // for DASH we set getStart() value to when stream started, so left side is 0 video time
-              // even though it's not all seekable this makes the click to seek simple
-              let target = getLength() * pct;
+              // the bar spans the seekable window: 0 to the end for a video, the live window for a live stream
+              let target = getStart() + getLength() * pct;
               roomSeek(target);
             }
           }
@@ -259,16 +292,28 @@ export const Controls = (props: ControlsProps) => {
               display: "inline-block",
             }}
           >
-            {formatTimestamp(
-              hoverState.hoverTimestamp,
-              isLiveStream ? zeroTime : undefined,
-            )}
+            {isLiveStream
+              ? liveLabel(hoverState.hoverTimestamp)
+              : formatTimestamp(hoverState.hoverTimestamp)}
           </Badge>
         )}
       </Progress.Root>
-      <div className={` ${styles.text}`}>{formatTimestamp(getEnd())}</div>
+      {!isLiveStream && (
+        <div className={` ${styles.text}`}>{formatTimestamp(getEnd())}</div>
+      )}
       {isLiveStream && (
-        <Badge size="xs" color="red">
+        // Red when live. When behind it turns grey and takes everyone in the room back to the live edge
+        <Badge
+          size="xs"
+          color={atLive ? "red" : "gray"}
+          title={atLive ? "Watching live" : "Jump to live"}
+          style={{ cursor: atLive || disabled ? "default" : "pointer" }}
+          onClick={() => {
+            if (!atLive && !disabled) {
+              roomSeek(props.duration);
+            }
+          }}
+        >
           LIVE
         </Badge>
       )}
