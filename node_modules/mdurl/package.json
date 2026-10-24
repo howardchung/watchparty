@@ -1,0 +1,43 @@
+{
+  "name": "mdurl",
+  "version": "2.1.0",
+  "description": "URL utilities for markdown-it",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/markdown-it/mdurl.git"
+  },
+  "license": "MIT",
+  "main": "build/index.cjs.js",
+  "module": "index.mjs",
+  "types": "lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "require": "./build/index.cjs.js",
+      "import": "./index.mjs"
+    },
+    "./*": {
+      "require": "./*",
+      "import": "./*"
+    }
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "build": "rollup -c",
+    "type-check": "tsc --noEmit --strict --target ESNext --module ESNext --moduleResolution Bundler test/types.ts",
+    "test": "npm run lint && npm run build && npm run type-check && c8 --exclude build --exclude test -r text -r html -r lcov node --test test/**/*.test.*",
+    "prepack": "npm run build"
+  },
+  "files": [
+    "index.mjs",
+    "lib/",
+    "build/"
+  ],
+  "devDependencies": {
+    "c8": "^12.0.0",
+    "eslint": "^8.54.0",
+    "eslint-config-standard": "^17.1.0",
+    "rollup": "^4.62.2",
+    "typescript": "^7.0.2"
+  }
+}

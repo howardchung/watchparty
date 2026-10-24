@@ -1,0 +1,68 @@
+{
+  "name": "bittorrent-peerid",
+  "description": "Map a BitTorrent peer ID to a human-readable client name and version",
+  "version": "2.0.2",
+  "author": {
+    "name": "WebTorrent LLC",
+    "email": "feross@webtorrent.io",
+    "url": "https://webtorrent.io"
+  },
+  "bugs": {
+    "url": "https://github.com/webtorrent/bittorrent-peerid/issues"
+  },
+  "type": "module",
+  "dependencies": {},
+  "devDependencies": {
+    "@webtorrent/semantic-release-config": "1.0.11",
+    "semantic-release": "25.0.3",
+    "standard": "*",
+    "tape": "5.9.0"
+  },
+  "keywords": [
+    ".torrent",
+    "bittorrent",
+    "peer",
+    "peer-to-peer",
+    "torrent",
+    "webtorrent"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=12.20.0"
+  },
+  "exports": {
+    "import": "./index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/webtorrent/bittorrent-peerid.git"
+  },
+  "scripts": {
+    "test": "standard && tape test/*.js"
+  },
+  "funding": [
+    {
+      "type": "github",
+      "url": "https://github.com/sponsors/feross"
+    },
+    {
+      "type": "patreon",
+      "url": "https://www.patreon.com/feross"
+    },
+    {
+      "type": "consulting",
+      "url": "https://feross.org/support"
+    }
+  ],
+  "renovate": {
+    "extends": [
+      "github>webtorrent/renovate-config"
+    ],
+    "lockFileMaintenance": {
+      "enabled": false
+    }
+  },
+  "release": {
+    "extends": "@webtorrent/semantic-release-config"
+  }
+}

@@ -1,0 +1,34 @@
+{
+    "name": "@types/parse-torrent",
+    "version": "5.8.7",
+    "description": "TypeScript definitions for parse-torrent",
+    "homepage": "https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/parse-torrent",
+    "license": "MIT",
+    "contributors": [
+        {
+            "name": "Bazyli Brzóska",
+            "githubUsername": "niieani",
+            "url": "https://github.com/niieani"
+        },
+        {
+            "name": "Tomasz Łaziuk",
+            "githubUsername": "tlaziuk",
+            "url": "https://github.com/tlaziuk"
+        }
+    ],
+    "main": "",
+    "types": "index.d.ts",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/DefinitelyTyped/DefinitelyTyped.git",
+        "directory": "types/parse-torrent"
+    },
+    "scripts": {},
+    "dependencies": {
+        "@types/magnet-uri": "*",
+        "@types/node": "*",
+        "@types/parse-torrent-file": "*"
+    },
+    "typesPublisherContentHash": "c2778767719d197b6a774e2917b07389e44c0a531c0ad09cc6dccf0102fd58da",
+    "typeScriptVersion": "4.5"
+}

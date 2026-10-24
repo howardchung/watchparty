@@ -1,0 +1,26 @@
+{
+  "name": "which-runtime",
+  "version": "1.3.2",
+  "description": "Detect if you are in Bare or Node and which os etc",
+  "main": "index.js",
+  "files": [
+    "index.js"
+  ],
+  "dependencies": {},
+  "devDependencies": {
+    "standard": "^17.0.0"
+  },
+  "scripts": {
+    "test": "standard"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/holepunchto/which-runtime.git"
+  },
+  "author": "Holepunch Inc.",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/holepunchto/which-runtime/issues"
+  },
+  "homepage": "https://github.com/holepunchto/which-runtime"
+}

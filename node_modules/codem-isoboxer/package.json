@@ -1,0 +1,47 @@
+{
+  "name": "codem-isoboxer",
+  "version": "0.3.10",
+  "description": "A lightweight JavaScript MP4 (MPEG-4, ISOBMFF) file/box parser.",
+  "keywords": [
+    "mp4",
+    "mpeg-4",
+    "mpeg4",
+    "isobmff",
+    "parser"
+  ],
+  "homepage": "https://github.com/madebyhiro/codem-isoboxer",
+  "main": "dist/iso_boxer.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/madebyhiro/codem-isoboxer"
+  },
+  "bugs": {
+    "url": "https://github.com/madebyhiro/codem-isoboxer/issues"
+  },
+  "author": {
+    "name": "Sjoerd Tieleman",
+    "email": "sjoerd@hiro.nl",
+    "url": "https://hiro.nl/"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "arraybuffer-equal": "^1.0.4",
+    "grunt": "^1.0.1",
+    "grunt-contrib-concat": "^1.0.1",
+    "grunt-contrib-uglify": "^2.0.0",
+    "grunt-contrib-watch": "^1.0.0",
+    "grunt-preprocess": "^5.1.0",
+    "jasmine-node": "^1.16.0",
+    "jshint": "^2.9.4"
+  },
+  "scripts": {
+    "test": "grunt && jasmine-node test/spec",
+    "jshint": "jshint src/*.js src/**/*.js",
+    "build": "grunt",
+    "watch": "grunt watch"
+  },
+  "files": [
+    "dist",
+    "CHANGELOG.md"
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "name": "random-access-storage",
+  "version": "3.0.2",
+  "description": "Easily make random-access-storage instances",
+  "main": "index.js",
+  "imports": {
+    "events": {
+      "bare": "bare-events",
+      "default": "events"
+    }
+  },
+  "dependencies": {
+    "bare-events": "^2.2.0",
+    "queue-tick": "^1.0.0"
+  },
+  "devDependencies": {
+    "brittle": "^3.0.0",
+    "standard": "^17.0.0"
+  },
+  "files": [
+    "index.js"
+  ],
+  "scripts": {
+    "test": "standard && brittle test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/random-access-storage/random-access-storage.git"
+  },
+  "author": "Mathias Buus (@mafintosh)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/random-access-storage/random-access-storage/issues"
+  },
+  "homepage": "https://github.com/random-access-storage/random-access-storage"
+}

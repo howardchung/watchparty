@@ -1,0 +1,14 @@
+/**
+ * @license @tabler/icons-react v3.35.0 - MIT
+ *
+ * This source code is licensed under the MIT license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+import createReactComponent from '../createReactComponent.mjs';
+
+const __iconNode = [["path", { "d": "M9 4a3 3 0 0 1 3 3v1m0 9a3 3 0 0 1 -3 3", "key": "svg-0" }], ["path", { "d": "M15 4a3 3 0 0 0 -3 3v1m0 4v5a3 3 0 0 0 3 3", "key": "svg-1" }], ["path", { "d": "M3 3l18 18", "key": "svg-2" }]];
+const IconCursorOff = createReactComponent("outline", "cursor-off", "CursorOff", __iconNode);
+
+export { __iconNode, IconCursorOff as default };
+//# sourceMappingURL=IconCursorOff.mjs.map

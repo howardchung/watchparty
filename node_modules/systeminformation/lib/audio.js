@@ -1,0 +1,335 @@
+'use strict';
+// @ts-check
+// ==================================================================================
+// audio.js
+// ----------------------------------------------------------------------------------
+// Description:   System Information - library
+//                for Node.js
+// Copyright:     (c) 2014 - 2026
+// Author:        Sebastian Hildebrandt
+// ----------------------------------------------------------------------------------
+// License:       MIT
+// ==================================================================================
+// 16. audio
+// ----------------------------------------------------------------------------------
+
+const exec = require('child_process').exec;
+const execSync = require('child_process').execSync;
+const util = require('./util');
+
+const _platform = process.platform;
+
+const _linux = _platform === 'linux' || _platform === 'android';
+const _darwin = _platform === 'darwin';
+const _windows = _platform === 'win32';
+const _freebsd = _platform === 'freebsd';
+const _openbsd = _platform === 'openbsd';
+const _netbsd = _platform === 'netbsd';
+const _sunos = _platform === 'sunos';
+
+function parseAudioType(str, input, output) {
+  str = str.toLowerCase();
+  let result = '';
+
+  if (str.indexOf('input') >= 0) {
+    result = 'Microphone';
+  }
+  if (str.indexOf('display audio') >= 0) {
+    result = 'Speaker';
+  }
+  if (str.indexOf('speak') >= 0) {
+    result = 'Speaker';
+  }
+  if (str.indexOf('laut') >= 0) {
+    result = 'Speaker';
+  }
+  if (str.indexOf('loud') >= 0) {
+    result = 'Speaker';
+  }
+  if (str.indexOf('head') >= 0) {
+    result = 'Headset';
+  }
+  if (str.indexOf('mic') >= 0) {
+    result = 'Microphone';
+  }
+  if (str.indexOf('mikr') >= 0) {
+    result = 'Microphone';
+  }
+  if (str.indexOf('phone') >= 0 && str.indexOf('headphone') < 0) {
+    result = 'Phone';
+  }
+  if (str.indexOf('controll') >= 0) {
+    result = 'Controller';
+  }
+  if (str.indexOf('line o') >= 0) {
+    result = 'Line Out';
+  }
+  if (str.indexOf('digital o') >= 0) {
+    result = 'Digital Out';
+  }
+  if (str.indexOf('smart sound technology') >= 0) {
+    result = 'Digital Signal Processor';
+  }
+  if (str.indexOf('high definition audio') >= 0) {
+    result = 'Sound Driver';
+  }
+
+  if (!result && output) {
+    result = 'Speaker';
+  } else if (!result && input) {
+    result = 'Microphone';
+  }
+  return result;
+}
+
+function getLinuxAudioPci() {
+  const cmd = 'lspci -v 2>/dev/null';
+  const result = [];
+  try {
+    const parts = execSync(cmd, util.execOptsLinux).toString().split('\n\n');
+    parts.forEach((element) => {
+      const lines = element.split('\n');
+      if (lines && lines.length && lines[0].toLowerCase().indexOf('audio') >= 0) {
+        const audio = {};
+        audio.slotId = lines[0].split(' ')[0];
+        audio.driver = util.getValue(lines, 'Kernel driver in use', ':', true) || util.getValue(lines, 'Kernel modules', ':', true);
+        result.push(audio);
+      }
+    });
+    return result;
+  } catch {
+    return result;
+  }
+}
+
+// ARM boards (e.g. Raspberry Pi) have no PCI bus at all - ALSA lists the sound cards instead (#545)
+function parseLinuxAudioAlsa(stdout) {
+  const result = [];
+  const parts = stdout.split('--pcm--');
+  const cards = parts[0] || '';
+  const pcms = parts[1] || '';
+  const lines = cards.split('\n');
+  lines.forEach((line, i) => {
+    // ' 1 [Device         ]: USB-Audio - USB Audio Device'
+    const card = line.match(/^\s*(\d+)\s+\[(.+?)\s*\]:\s*(.*)$/);
+    if (card && card[3].trim()) {
+      const index = card[1];
+      // some drivers (e.g. bcm2835) print an unterminated driver string, gluing the name to it
+      const sep = card[3].lastIndexOf(' - ');
+      const name = (sep >= 0 ? card[3].substring(sep + 3) : card[3]).trim();
+      let driver = (sep >= 0 ? card[3].substring(0, sep) : '').trim();
+      if (name && driver.endsWith(name)) {
+        driver = driver.substring(0, driver.length - name.length).trim();
+      }
+      // second line holds the long name, which is prefixed with the manufacturer on USB devices
+      const longName = (lines[i + 1] || '').trim();
+      const manufacturer = longName.indexOf(name) > 0 ? longName.substring(0, longName.indexOf(name)).trim() : '';
+      const devices = pcms.split('\n').filter((pcm) => pcm.indexOf('/card' + index + '/pcm') >= 0);
+      const out = devices.some((pcm) => pcm.trim().endsWith('p'));
+      const isIn = devices.some((pcm) => pcm.trim().endsWith('c'));
+      const usb = (driver + ' ' + longName).toLowerCase().indexOf('usb') >= 0;
+      const hdmi = (card[2] + ' ' + name).toLowerCase().indexOf('hdmi') >= 0;
+      result.push({
+        id: 'hw:' + index,
+        name,
+        manufacturer,
+        revision: null,
+        driver,
+        default: null,
+        channel: usb ? 'USB' : hdmi ? 'HDMI' : 'Onboard',
+        type: parseAudioType(name, isIn, out),
+        in: devices.length ? isIn : null,
+        out: devices.length ? out : null,
+        status: 'online'
+      });
+    }
+  });
+  return result;
+}
+
+function parseWinAudioStatus(n) {
+  const num = parseInt(n, 10);
+  let status = n;
+  if (num === 1) {
+    status = 'other';
+  } else if (num === 2) {
+    status = 'unknown';
+  } else if (num === 3) {
+    status = 'enabled';
+  } else if (num === 4) {
+    status = 'disabled';
+  } else if (num === 5) {
+    status = 'not applicable';
+  }
+  return status;
+}
+
+function parseLinuxAudioPciMM(lines, audioPCI) {
+  const result = {};
+  const slotId = util.getValue(lines, 'Slot');
+
+  const pciMatch = audioPCI.filter((item) => item.slotId === slotId);
+
+  result.id = slotId;
+  result.name = util.getValue(lines, 'SDevice');
+  result.manufacturer = util.getValue(lines, 'SVendor');
+  result.revision = util.getValue(lines, 'Rev');
+  result.driver = pciMatch && pciMatch.length === 1 && pciMatch[0].driver ? pciMatch[0].driver : '';
+  result.default = null;
+  result.channel = 'PCIe';
+  result.type = parseAudioType(result.name, null, null);
+  result.in = null;
+  result.out = null;
+  result.status = 'online';
+
+  return result;
+}
+
+function parseDarwinChannel(str) {
+  let result = '';
+
+  if (str.indexOf('builtin') >= 0) {
+    result = 'Built-In';
+  }
+  if (str.indexOf('extern') >= 0) {
+    result = 'Audio-Jack';
+  }
+  if (str.indexOf('hdmi') >= 0) {
+    result = 'HDMI';
+  }
+  if (str.indexOf('displayport') >= 0) {
+    result = 'Display-Port';
+  }
+  if (str.indexOf('usb') >= 0) {
+    result = 'USB';
+  }
+  if (str.indexOf('pci') >= 0) {
+    result = 'PCIe';
+  }
+
+  return result;
+}
+
+function parseDarwinAudio(audioObject, id) {
+  const result = {};
+  const channelStr = ((audioObject.coreaudio_device_transport || '') + ' ' + (audioObject._name || '')).toLowerCase();
+
+  result.id = id;
+  result.name = audioObject._name;
+  result.manufacturer = audioObject.coreaudio_device_manufacturer;
+  result.revision = null;
+  result.driver = null;
+  result.default = !!(audioObject.coreaudio_default_audio_input_device || '') || !!(audioObject.coreaudio_default_audio_output_device || '');
+  result.channel = parseDarwinChannel(channelStr);
+  result.type = parseAudioType(result.name, !!(audioObject.coreaudio_device_input || ''), !!(audioObject.coreaudio_device_output || ''));
+  result.in = !!(audioObject.coreaudio_device_input || '');
+  result.out = !!(audioObject.coreaudio_device_output || '');
+  result.status = 'online';
+
+  return result;
+}
+
+function parseWindowsAudio(lines) {
+  const result = {};
+  const status = parseWinAudioStatus(util.getValue(lines, 'StatusInfo', ':'));
+
+  result.id = util.getValue(lines, 'DeviceID', ':'); // PNPDeviceID??
+  result.name = util.getValue(lines, 'name', ':');
+  result.manufacturer = util.getValue(lines, 'manufacturer', ':');
+  result.revision = null;
+  result.driver = null;
+  result.default = null;
+  result.channel = null;
+  result.type = parseAudioType(result.name, null, null);
+  result.in = null;
+  result.out = null;
+  result.status = status;
+
+  return result;
+}
+
+function audio(callback) {
+  return new Promise((resolve) => {
+    process.nextTick(() => {
+      const result = [];
+      if (_linux || _freebsd || _openbsd || _netbsd) {
+        const cmd = 'lspci -vmm 2>/dev/null';
+        exec(cmd, (error, stdout) => {
+          // PCI
+          if (!error) {
+            const audioPCI = getLinuxAudioPci();
+            const parts = stdout.toString().split('\n\n');
+            parts.forEach((element) => {
+              const lines = element.split('\n');
+              if (util.getValue(lines, 'class', ':', true).toLowerCase().indexOf('audio') >= 0) {
+                const audio = parseLinuxAudioPciMM(lines, audioPCI);
+                result.push(audio);
+              }
+            });
+          }
+          if (!result.length) {
+            const cmdAlsa = 'cat /proc/asound/cards 2>/dev/null; echo "--pcm--"; ls -d /proc/asound/card*/pcm* 2>/dev/null';
+            exec(cmdAlsa, util.execOptsLinux, (error, stdout) => {
+              if (!error) {
+                parseLinuxAudioAlsa(stdout.toString()).forEach((item) => result.push(item));
+              }
+              if (callback) {
+                callback(result);
+              }
+              resolve(result);
+            });
+          } else {
+            if (callback) {
+              callback(result);
+            }
+            resolve(result);
+          }
+        });
+      }
+      if (_darwin) {
+        const cmd = 'system_profiler SPAudioDataType -json';
+        exec(cmd, (error, stdout) => {
+          if (!error) {
+            try {
+              const outObj = JSON.parse(stdout.toString());
+              if (outObj.SPAudioDataType && outObj.SPAudioDataType.length && outObj.SPAudioDataType[0] && outObj.SPAudioDataType[0]['_items'] && outObj.SPAudioDataType[0]['_items'].length) {
+                for (let i = 0; i < outObj.SPAudioDataType[0]['_items'].length; i++) {
+                  const audio = parseDarwinAudio(outObj.SPAudioDataType[0]['_items'][i], i);
+                  result.push(audio);
+                }
+              }
+            } catch {
+              util.noop();
+            }
+          }
+          if (callback) {
+            callback(result);
+          }
+          resolve(result);
+        });
+      }
+      if (_windows) {
+        util.powerShell('Get-CimInstance Win32_SoundDevice | select DeviceID,StatusInfo,Name,Manufacturer | fl').then((stdout, error) => {
+          if (!error) {
+            const parts = stdout.toString().split(/\n\s*\n/);
+            parts.forEach((element) => {
+              const lines = element.split('\n');
+              if (util.getValue(lines, 'name', ':')) {
+                result.push(parseWindowsAudio(lines));
+              }
+            });
+          }
+          if (callback) {
+            callback(result);
+          }
+          resolve(result);
+        });
+      }
+      if (_sunos) {
+        resolve(null);
+      }
+    });
+  });
+}
+
+exports.audio = audio;
