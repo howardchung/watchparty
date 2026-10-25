@@ -1771,18 +1771,73 @@ export class App extends React.Component<AppProps, AppState> {
     return this.playingScreenShare() || this.playingVBrowser();
   };
 
+  // The part of a live stream that can be seeked to: from the oldest position still available up to the live edge,
+  // on the same timeline as the current time
+  getLiveRange = (): { start: number; end: number } | undefined => {
+    if (!this.state.isLiveStream) {
+      return undefined;
+    }
+    const seekable = this.Player().getVideoEl()?.seekable;
+    if (!seekable?.length) {
+      return undefined;
+    }
+    return { start: seekable.start(0), end: seekable.end(seekable.length - 1) };
+  };
+
   // The duration of the media. For a live stream this is the live edge on the same timeline as the current time,
   // which is what hls.js reports as the duration. dash.js leaves it at Infinity, so use the end of the seekable range.
   // The controls and seeking math below depend on it being finite.
   getDuration = () => {
     const duration = this.Player().getDuration();
-    if (this.state.isLiveStream && duration === Infinity) {
-      const seekable = this.Player().getVideoEl()?.seekable;
-      if (seekable?.length) {
-        return seekable.end(seekable.length - 1);
-      }
+    if (duration === Infinity) {
+      return this.getLiveRange()?.end ?? duration;
     }
     return duration;
+  };
+
+  // The wall clock time (in seconds) that media time 0 of a live stream corresponds to, when the player knows exactly.
+  // Otherwise the controls assume the live edge is "now". The singleton players are left over from earlier media,
+  // so only ask the one that's actually playing.
+  getLiveZeroTime = (): number | undefined => {
+    if (!this.state.isLiveStream) {
+      return undefined;
+    }
+    try {
+      const media = this.state.roomMedia;
+      if (isDash(media) && window.watchparty.dash) {
+        // For a live stream the DVR window is in the same units as the video element's time
+        const { end, endAsUtc } = window.watchparty.dash.getDvrWindow();
+        if (Number.isFinite(end) && Number.isFinite(endAsUtc)) {
+          return endAsUtc - end;
+        }
+      } else if (isHls(media) && window.watchparty.hls) {
+        // Only available if the playlist has EXT-X-PROGRAM-DATE-TIME tags
+        const playingDate = window.watchparty.hls.playingDate;
+        if (playingDate) {
+          return playingDate.getTime() / 1000 - this.Player().getCurrentTime();
+        }
+      }
+    } catch (e) {
+      // The player isn't ready yet
+    }
+    return undefined;
+  };
+
+  // How far behind the live edge (in seconds) still counts as being live. Players deliberately stay some seconds
+  // back from the edge, so allow for that plus some slack.
+  getLiveThreshold = (): number => {
+    let latency = 0;
+    try {
+      const media = this.state.roomMedia;
+      if (isDash(media)) {
+        latency = window.watchparty.dash?.getTargetLiveDelay() ?? 0;
+      } else if (isHls(media)) {
+        latency = window.watchparty.hls?.targetLatency ?? 0;
+      }
+    } catch (e) {
+      // The player isn't ready yet
+    }
+    return Math.max(6, latency + 3);
   };
 
   localSeek = (customTime?: number) => {
@@ -2108,6 +2163,9 @@ export class App extends React.Component<AppProps, AppState> {
         paused={this.state.roomPaused}
         roomPlaybackRate={this.state.roomPlaybackRate}
         isLiveStream={this.state.isLiveStream}
+        liveStart={this.getLiveRange()?.start}
+        liveZeroTime={this.getLiveZeroTime()}
+        liveThreshold={this.getLiveThreshold()}
         muted={this.Player().isMuted()}
         volume={this.Player().getVolume()}
         subtitled={this.Player().isSubtitled()}
