@@ -2068,6 +2068,9 @@ export class App extends React.Component<AppProps, AppState> {
   };
 
   onVideoEnded = (url: string) => {
+    if (this.state.loading) {
+      return;
+    }
     this.localPause();
     // check if looping is on, if so set time back to 0 and restart
     if (this.state.roomLoop) {

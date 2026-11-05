@@ -693,13 +693,18 @@ export class Room {
 
   private playlistNext = (raw: unknown) => {
     const data = raw ? String(raw) : null;
+    if (data && this.preventTSUpdate) {
+      return;
+    }
+    const dataYtId = data ? getYoutubeVideoID(data) : undefined;
+    const videoYtId = this.video ? getYoutubeVideoID(this.video) : undefined;
     // Clients may pass the URL that should be the current one.
     // If we've already advanced the playlist, we can ignore duplicate calls
     if (
       data &&
       this.video &&
       data !== this.video &&
-      getYoutubeVideoID(data) !== getYoutubeVideoID(this.video)
+      (!dataYtId || !videoYtId || dataYtId !== videoYtId)
     ) {
       // Validation didn't match
       return;
