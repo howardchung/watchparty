@@ -491,6 +491,28 @@ app.post("/manageSub", async (req, res) => {
   res.json(session);
 });
 
+app.post("/updateEmail", async (req, res) => {
+  const decoded = await validateUserToken(
+    String(req.body?.uid),
+    String(req.body?.token),
+  );
+  if (!decoded) {
+    res.status(400).json({ error: "invalid user token" });
+    return;
+  }
+  const email =
+    typeof req.body?.email === "string" ? req.body.email.trim() : "";
+  if (!email) {
+    res.status(400).json({ error: "invalid email" });
+    return;
+  }
+  const customer = await getCustomerByUid(decoded.uid);
+  if (customer) {
+    await stripe.customers.update(customer.id, { email });
+  }
+  res.json({});
+});
+
 app.delete("/deleteAccount", async (req, res) => {
   // TODO pass this in req.query instead
   const decoded = await validateUserToken(req.body?.uid, req.body?.token);
