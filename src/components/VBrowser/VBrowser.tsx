@@ -4,9 +4,26 @@ import { EVENT } from "./events";
 import { NekoClient } from "./client";
 import GuacamoleKeyboard from "./keyboard";
 import config from "../../config";
-import { VIDEO_MAX_HEIGHT_CSS } from "../../utils/utils";
-import { Button } from "@mantine/core";
-import { IconClipboard, IconKeyboardFilled } from "@tabler/icons-react";
+import { ActionIcon, Button, TextInput } from "@mantine/core";
+import {
+  IconArrowDown,
+  IconArrowLeft,
+  IconArrowRight,
+  IconArrowUp,
+  IconBackspace,
+  IconChevronDown,
+  IconChevronUp,
+  IconClipboard,
+  IconCopy,
+  IconCornerDownLeft,
+  IconMouse,
+  IconPointer,
+  IconSend,
+} from "@tabler/icons-react";
+
+const SHIFTED_CHARS = new Set(
+  '~!@#$%^&*()_+{}|:"<>?ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(""),
+);
 
 export class VBrowser extends React.Component<{
   username: string;
@@ -19,9 +36,16 @@ export class VBrowser extends React.Component<{
   setQuality: (quality: string) => void;
   doPlay: () => Promise<void>;
   isMobile: boolean;
+  showTouchControls: boolean;
 }> {
-  state = { dummyValue: "" };
-  // private observer = new ResizeObserver(this.onResize);
+  state = {
+    cursorPos: { x: 640, y: 360 },
+    mobileTextInput: "",
+    ctrlActive: false,
+    altActive: false,
+    shiftActive: false,
+  };
+  private resizeObserver?: ResizeObserver;
   private keyboard = GuacamoleKeyboard();
   private focused = false;
   private fullscreen = false;
@@ -33,6 +57,19 @@ export class VBrowser extends React.Component<{
   private height = 720;
   private rate = 30;
   private keepAliveInterval = 0;
+  private cursorX = 640;
+  private cursorY = 360;
+  private touchStartX = 0;
+  private touchStartY = 0;
+  private touchMoved = false;
+  private twoFingerGesture = false;
+  private twoFingerMoved = false;
+  private lastTwoFingerX = 0;
+  private lastTwoFingerY = 0;
+  private scrollAccumX = 0;
+  private scrollAccumY = 0;
+  private longPressTriggered = false;
+  private longPressTimer?: number;
   // private _component = React.createRef<HTMLDivElement>();
   private _container = React.createRef<HTMLDivElement>();
   private _overlay = React.createRef<HTMLDivElement>();
@@ -61,6 +98,8 @@ export class VBrowser extends React.Component<{
       this.width = data.width;
       this.height = data.height;
       this.rate = data.rate;
+      this.cursorX = Math.min(this.cursorX, this.width);
+      this.cursorY = Math.min(this.cursorY, this.height);
       // Update our state with the resolution sent from server
       this.props.setResolution(`${this.width}x${this.height}@${this.rate}`);
       this.props.setQuality(String(data.quality));
@@ -123,6 +162,13 @@ export class VBrowser extends React.Component<{
       this.$client.sendData("keyup", { key: this.keyMap(key) });
     };
     this.keyboard.listenTo(document.getElementById("leftOverlay")!);
+
+    if (typeof ResizeObserver !== "undefined" && this._video.current) {
+      this.resizeObserver = new ResizeObserver(() => {
+        this.forceUpdate();
+      });
+      this.resizeObserver.observe(this._video.current);
+    }
   }
 
   componentDidUpdate(prevProps: any) {
@@ -141,6 +187,8 @@ export class VBrowser extends React.Component<{
 
   componentWillUnmount() {
     window.clearInterval(this.keepAliveInterval);
+    window.clearTimeout(this.longPressTimer);
+    this.resizeObserver?.disconnect();
     this.$client.removeAllListeners();
     this.$client.logout();
   }
@@ -227,10 +275,305 @@ export class VBrowser extends React.Component<{
   onMousePos = (e: MouseEvent | React.MouseEvent) => {
     const { w, h } = { w: this.width, h: this.height };
     const rect = this._overlay.current!.getBoundingClientRect();
+    if (!rect.width || !rect.height) {
+      return;
+    }
+    const x = Math.round((w / rect.width) * (e.clientX - rect.left));
+    const y = Math.round((h / rect.height) * (e.clientY - rect.top));
+    this.cursorX = Math.max(0, Math.min(w, x));
+    this.cursorY = Math.max(0, Math.min(h, y));
     this.$client.sendData("mousemove", {
-      x: Math.round((w / rect.width) * (e.clientX - rect.left)),
-      y: Math.round((h / rect.height) * (e.clientY - rect.top)),
+      x: this.cursorX,
+      y: this.cursorY,
     });
+  };
+
+  moveCursorTo = (x: number, y: number) => {
+    if (!this.controlling) {
+      return;
+    }
+    this.cursorX = Math.max(0, Math.min(this.width, Math.round(x)));
+    this.cursorY = Math.max(0, Math.min(this.height, Math.round(y)));
+    this.$client.sendData("mousemove", {
+      x: this.cursorX,
+      y: this.cursorY,
+    });
+    this.setState({ cursorPos: { x: this.cursorX, y: this.cursorY } });
+  };
+
+  moveCursorBy = (dx: number, dy: number) => {
+    this.moveCursorTo(this.cursorX + dx, this.cursorY + dy);
+  };
+
+  clickAtCursor = (button: number = 1) => {
+    if (!this.controlling) {
+      return;
+    }
+    this.$client.sendData("mousemove", {
+      x: this.cursorX,
+      y: this.cursorY,
+    });
+    this.$client.sendData("mousedown", { key: button });
+    this.$client.sendData("mouseup", { key: button });
+  };
+
+  scrollAtCursor = (dx: number, dy: number) => {
+    if (!this.controlling) {
+      return;
+    }
+    this.$client.sendData("mousemove", {
+      x: this.cursorX,
+      y: this.cursorY,
+    });
+    this.$client.sendData("wheel", { x: dx, y: dy });
+  };
+
+  handleSurfaceTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!this.controlling) {
+      return;
+    }
+    e.stopPropagation();
+    window.clearTimeout(this.longPressTimer);
+
+    if (e.touches.length === 1) {
+      const touch = e.touches[0];
+      this.touchStartX = touch.clientX;
+      this.touchStartY = touch.clientY;
+      this.touchMoved = false;
+      this.twoFingerGesture = false;
+      this.longPressTriggered = false;
+
+      if (this._overlay.current) {
+        const rect = this._overlay.current.getBoundingClientRect();
+        if (rect.width && rect.height) {
+          this.moveCursorTo(
+            (this.width / rect.width) * (touch.clientX - rect.left),
+            (this.height / rect.height) * (touch.clientY - rect.top),
+          );
+        }
+      }
+
+      this.longPressTimer = window.setTimeout(() => {
+        if (!this.touchMoved && !this.twoFingerGesture) {
+          this.longPressTriggered = true;
+          this.clickAtCursor(3);
+        }
+      }, 450);
+    } else if (e.touches.length >= 2) {
+      this.twoFingerGesture = true;
+      this.twoFingerMoved = false;
+      this.scrollAccumX = 0;
+      this.scrollAccumY = 0;
+      this.lastTwoFingerX =
+        (e.touches[0].clientX + e.touches[1].clientX) / 2;
+      this.lastTwoFingerY =
+        (e.touches[0].clientY + e.touches[1].clientY) / 2;
+    }
+  };
+
+  handleSurfaceTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!this.controlling) {
+      return;
+    }
+    e.stopPropagation();
+
+    if (e.touches.length === 1 && !this.twoFingerGesture) {
+      const touch = e.touches[0];
+      const totalDist = Math.hypot(
+        touch.clientX - this.touchStartX,
+        touch.clientY - this.touchStartY,
+      );
+      if (totalDist > 6) {
+        this.touchMoved = true;
+        window.clearTimeout(this.longPressTimer);
+      }
+      if (this._overlay.current) {
+        const rect = this._overlay.current.getBoundingClientRect();
+        if (rect.width && rect.height) {
+          this.moveCursorTo(
+            (this.width / rect.width) * (touch.clientX - rect.left),
+            (this.height / rect.height) * (touch.clientY - rect.top),
+          );
+        }
+      }
+    } else if (e.touches.length >= 2) {
+      window.clearTimeout(this.longPressTimer);
+      const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+      const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+      const dx = midX - this.lastTwoFingerX;
+      const dy = midY - this.lastTwoFingerY;
+      this.lastTwoFingerX = midX;
+      this.lastTwoFingerY = midY;
+
+      this.scrollAccumX += dx;
+      this.scrollAccumY += dy;
+      const step = 14;
+      if (
+        Math.abs(this.scrollAccumX) >= step ||
+        Math.abs(this.scrollAccumY) >= step
+      ) {
+        this.twoFingerMoved = true;
+        const wheelX =
+          Math.abs(this.scrollAccumX) >= step
+            ? Math.sign(this.scrollAccumX) * this.scroll
+            : 0;
+        const wheelY =
+          Math.abs(this.scrollAccumY) >= step
+            ? Math.sign(this.scrollAccumY) * this.scroll
+            : 0;
+        if (wheelX !== 0) {
+          this.scrollAccumX %= step;
+        }
+        if (wheelY !== 0) {
+          this.scrollAccumY %= step;
+        }
+        this.scrollAtCursor(wheelX, wheelY);
+      }
+    }
+  };
+
+  handleSurfaceTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!this.controlling) {
+      return;
+    }
+    e.stopPropagation();
+    window.clearTimeout(this.longPressTimer);
+
+    if (this.twoFingerGesture) {
+      if (e.touches.length === 0) {
+        if (!this.twoFingerMoved) {
+          this.clickAtCursor(3);
+        }
+        this.twoFingerGesture = false;
+      }
+      return;
+    }
+
+    if (e.touches.length === 0 && !this.touchMoved && !this.longPressTriggered) {
+      this.clickAtCursor(1);
+    }
+  };
+
+  sendKeyTap = (keysym: number) => {
+    if (!this.controlling) {
+      return;
+    }
+    const { ctrlActive, altActive, shiftActive } = this.state;
+    if (ctrlActive) {
+      this.$client.sendData("keydown", { key: 0xffe3 });
+    }
+    if (altActive) {
+      this.$client.sendData("keydown", { key: 0xffe9 });
+    }
+    if (shiftActive) {
+      this.$client.sendData("keydown", { key: 0xffe1 });
+    }
+    const mapped = this.keyMap(keysym);
+    this.$client.sendData("keydown", { key: mapped });
+    this.$client.sendData("keyup", { key: mapped });
+    if (shiftActive) {
+      this.$client.sendData("keyup", { key: 0xffe1 });
+    }
+    if (altActive) {
+      this.$client.sendData("keyup", { key: 0xffe9 });
+    }
+    if (ctrlActive) {
+      this.$client.sendData("keyup", { key: 0xffe3 });
+    }
+    if (ctrlActive || altActive || shiftActive) {
+      this.setState({
+        ctrlActive: false,
+        altActive: false,
+        shiftActive: false,
+      });
+    }
+  };
+
+  charToKeysym = (ch: string): number | null => {
+    if (ch === "\n" || ch === "\r") {
+      return 0xff0d;
+    }
+    if (ch === "\t") {
+      return 0xff09;
+    }
+    const codepoint = ch.codePointAt(0);
+    if (codepoint === undefined) {
+      return null;
+    }
+    if (codepoint <= 0xff) {
+      return codepoint;
+    }
+    return 0x01000000 | codepoint;
+  };
+
+  sendText = (text: string, sendEnter: boolean = false) => {
+    if (!this.controlling || !text) {
+      if (this.controlling && sendEnter) {
+        this.sendKeyTap(0xff0d);
+      }
+      return;
+    }
+    const { ctrlActive, altActive, shiftActive } = this.state;
+    if ((ctrlActive || altActive || shiftActive) && text.length === 1) {
+      const keysym = this.charToKeysym(text.toLowerCase());
+      if (keysym !== null) {
+        this.sendKeyTap(keysym);
+      }
+      if (sendEnter) {
+        this.sendKeyTap(0xff0d);
+      }
+      return;
+    }
+    for (const ch of text) {
+      const keysym = this.charToKeysym(ch);
+      if (keysym === null) {
+        continue;
+      }
+      const needsShift = SHIFTED_CHARS.has(ch);
+      if (needsShift) {
+        this.$client.sendData("keydown", { key: 0xffe1 });
+      }
+      this.$client.sendData("keydown", { key: keysym });
+      this.$client.sendData("keyup", { key: keysym });
+      if (needsShift) {
+        this.$client.sendData("keyup", { key: 0xffe1 });
+      }
+    }
+    if (sendEnter) {
+      this.sendKeyTap(0xff0d);
+    }
+  };
+
+  sendCtrlShortcut = (keysym: number) => {
+    if (!this.controlling) {
+      return;
+    }
+    this.$client.sendData("keydown", { key: 0xffe3 });
+    this.$client.sendData("keydown", { key: keysym });
+    this.$client.sendData("keyup", { key: keysym });
+    this.$client.sendData("keyup", { key: 0xffe3 });
+  };
+
+  pasteToVBrowser = async () => {
+    if (!this.controlling) {
+      return;
+    }
+    let text = this.state.mobileTextInput;
+    if (
+      !text &&
+      navigator.clipboard &&
+      typeof navigator.clipboard.readText === "function"
+    ) {
+      try {
+        text = await navigator.clipboard.readText();
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+    if (text) {
+      this.$client.sendMessage(EVENT.CONTROL.CLIPBOARD, { text });
+    }
+    this.sendCtrlShortcut(118); // Ctrl+V
   };
 
   onWheel = (e: WheelEvent) => {
@@ -367,51 +710,24 @@ export class VBrowser extends React.Component<{
   render() {
     // leftVideoParent is the target for fullscreen, which loses its style when set to fullscreenElement
     // extra container layer is to be able to keep styling for overlay/video
+    const cursorLeftPct = this.width
+      ? (this.state.cursorPos.x / this.width) * 100
+      : 50;
+    const cursorTopPct = this.height
+      ? (this.state.cursorPos.y / this.height) * 100
+      : 50;
     return (
       <>
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            display: "flex",
-            gap: "4px",
-          }}
-        >
-          {this.props.isMobile && this.props.controlling && (
-            <Button
-              onClick={() => {
-                const dummy = document.getElementById("dummy");
-                dummy?.focus();
-              }}
-              leftSection={<IconKeyboardFilled />}
-            >
-              Open Keyboard
-            </Button>
-          )}
-          {this.props.isMobile && this.props.controlling && (
-            <Button
-              onClick={async () => {
-                // Guacamole ctrl v codes
-                this.$client.sendData("keydown", { key: 65507 });
-                this.$client.sendData("keydown", { key: 118 });
-                this.$client.sendData("keyup", { key: 65507 });
-                this.$client.sendData("keyup", { key: 118 });
-              }}
-              leftSection={<IconClipboard />}
-            >
-              Paste
-            </Button>
-          )}
-        </div>
         <div
           id="leftVideoParent"
           style={{
             display: "flex",
+            flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
             width: "100%",
             height: "100%",
+            position: "relative",
           }}
         >
           <div
@@ -426,6 +742,7 @@ export class VBrowser extends React.Component<{
               playsInline
               ref={this._video}
               id="leftVideo"
+              onLoadedMetadata={() => this.forceUpdate()}
               style={{
                 position: "absolute",
                 top: 0,
@@ -446,6 +763,8 @@ export class VBrowser extends React.Component<{
                 height: document.getElementById("leftVideo")?.clientHeight,
                 // disable firefox scrollbars?
                 scrollbarWidth: "none",
+                touchAction: this.props.controlling ? "none" : "auto",
+                overflow: "hidden",
               }}
               onClick={this.onClick}
               onContextMenu={this.onContextMenu}
@@ -455,64 +774,269 @@ export class VBrowser extends React.Component<{
               onMouseUp={this.onMouseUp}
               onMouseEnter={this.onMouseEnter}
               onMouseLeave={this.onMouseLeave}
-            />
+              onTouchStart={this.handleSurfaceTouchStart}
+              onTouchMove={this.handleSurfaceTouchMove}
+              onTouchEnd={this.handleSurfaceTouchEnd}
+            >
+              {this.props.controlling && this.props.showTouchControls && (
+                <div
+                  style={{
+                    position: "absolute",
+                    left: `${cursorLeftPct}%`,
+                    top: `${cursorTopPct}%`,
+                    width: 14,
+                    height: 14,
+                    borderRadius: "50%",
+                    border: "2px solid #fff",
+                    backgroundColor: "rgba(33, 133, 208, 0.8)",
+                    boxShadow: "0 0 4px rgba(0,0,0,0.8)",
+                    transform: "translate(-50%, -50%)",
+                    pointerEvents: "none",
+                    zIndex: 5,
+                  }}
+                />
+              )}
+            </div>
             <audio id="iPhoneAudio" />
-            {/* <div id="debug" style={{ position: 'fixed', top: 0, fontSize: 24 }} /> */}
-            <input
-              type="text"
-              id="dummy"
-              value={this.state.dummyValue}
-              style={{
-                position: "absolute",
-                left: 0,
-                top: 0,
-                height: 0,
-                opacity: 0,
-              }}
-              onFocus={() => {
-                this.focused = true;
-                this.setState({ dummyValue: "" });
-              }}
-              onBlur={() => {
-                this.focused = false;
-                this.setState({ dummyValue: "" });
-              }}
-              onKeyDown={(e) => {
-                e.nativeEvent.preventDefault();
-                // document.getElementById('debug')!.innerHTML = e.key;
-                // On mobile this is "unidentified" for content chars, so this is meant for backspace/enter
-                if (e.key !== "Unidentified") {
-                  document
-                    .getElementById("leftOverlay")
-                    ?.dispatchEvent(
-                      new KeyboardEvent("keydown", { key: e.key }),
-                    );
-                  document
-                    .getElementById("leftOverlay")
-                    ?.dispatchEvent(new KeyboardEvent("keyup", { key: e.key }));
-                }
-              }}
-              onBeforeInputCapture={(
-                e: React.CompositionEvent<HTMLInputElement>,
-              ) => {
-                e.nativeEvent.preventDefault();
-                // document.getElementById('debug')!.innerHTML = e.type + ' ' + e.data;
-                if (e.type === "beforeinput") {
-                  document.getElementById("leftOverlay")?.dispatchEvent(
-                    new KeyboardEvent("keydown", {
-                      key: e.data,
-                      shiftKey: e.data === e.data.toUpperCase(),
-                    }),
-                  );
-                  document.getElementById("leftOverlay")?.dispatchEvent(
-                    new KeyboardEvent("keyup", {
-                      key: e.data,
-                    }),
-                  );
-                }
-              }}
-            />
           </div>
+          {this.props.controlling && this.props.showTouchControls && (
+            <div
+              style={{
+                width: "100%",
+                backgroundColor: "rgba(20, 22, 26, 0.95)",
+                borderTop: "1px solid rgba(255, 255, 255, 0.12)",
+                padding: "6px 8px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "6px",
+                zIndex: 10,
+              }}
+            >
+              {/* Mouse controls row */}
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  alignItems: "center",
+                  gap: "4px",
+                }}
+              >
+                <Button
+                  size="compact-xs"
+                  color="blue"
+                  leftSection={<IconMouse size={14} />}
+                  onClick={() => this.clickAtCursor(1)}
+                >
+                  Left Click
+                </Button>
+                <Button
+                  size="compact-xs"
+                  color="indigo"
+                  leftSection={<IconPointer size={14} />}
+                  onClick={() => this.clickAtCursor(3)}
+                >
+                  Right Click
+                </Button>
+                <Button
+                  size="compact-xs"
+                  color="gray"
+                  leftSection={<IconChevronUp size={14} />}
+                  onClick={() =>
+                    this.scrollAtCursor(
+                      0,
+                      this.scroll_invert ? this.scroll : -this.scroll,
+                    )
+                  }
+                >
+                  Scroll Up
+                </Button>
+                <Button
+                  size="compact-xs"
+                  color="gray"
+                  leftSection={<IconChevronDown size={14} />}
+                  onClick={() =>
+                    this.scrollAtCursor(
+                      0,
+                      this.scroll_invert ? -this.scroll : this.scroll,
+                    )
+                  }
+                >
+                  Scroll Down
+                </Button>
+              </div>
+
+              {/* Text input bar */}
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (this.state.mobileTextInput) {
+                    this.sendText(this.state.mobileTextInput, true);
+                    this.setState({ mobileTextInput: "" });
+                  } else {
+                    this.sendKeyTap(0xff0d);
+                  }
+                }}
+                style={{
+                  display: "flex",
+                  gap: "4px",
+                  alignItems: "center",
+                }}
+              >
+                <TextInput
+                  size="xs"
+                  style={{ flexGrow: 1 }}
+                  placeholder="Type text or URL..."
+                  value={this.state.mobileTextInput}
+                  onChange={(e) =>
+                    this.setState({ mobileTextInput: e.currentTarget.value })
+                  }
+                />
+                <Button
+                  size="compact-xs"
+                  color="blue"
+                  leftSection={<IconSend size={14} />}
+                  onClick={() => {
+                    if (this.state.mobileTextInput) {
+                      this.sendText(this.state.mobileTextInput, false);
+                      this.setState({ mobileTextInput: "" });
+                    }
+                  }}
+                >
+                  Send
+                </Button>
+                <Button
+                  size="compact-xs"
+                  color="green"
+                  type="submit"
+                  leftSection={<IconCornerDownLeft size={14} />}
+                >
+                  Enter
+                </Button>
+              </form>
+
+              {/* Special keys & shortcuts bar */}
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "4px",
+                  alignItems: "center",
+                }}
+              >
+                <Button
+                  size="compact-xs"
+                  color={this.state.ctrlActive ? "yellow" : "dark"}
+                  onClick={() =>
+                    this.setState({ ctrlActive: !this.state.ctrlActive })
+                  }
+                >
+                  Ctrl
+                </Button>
+                <Button
+                  size="compact-xs"
+                  color={this.state.altActive ? "yellow" : "dark"}
+                  onClick={() =>
+                    this.setState({ altActive: !this.state.altActive })
+                  }
+                >
+                  Alt
+                </Button>
+                <Button
+                  size="compact-xs"
+                  color={this.state.shiftActive ? "yellow" : "dark"}
+                  onClick={() =>
+                    this.setState({ shiftActive: !this.state.shiftActive })
+                  }
+                >
+                  Shift
+                </Button>
+                <Button
+                  size="compact-xs"
+                  color="dark"
+                  onClick={() => this.sendKeyTap(0xff1b)}
+                >
+                  Esc
+                </Button>
+                <Button
+                  size="compact-xs"
+                  color="dark"
+                  onClick={() => this.sendKeyTap(0xff09)}
+                >
+                  Tab
+                </Button>
+                <Button
+                  size="compact-xs"
+                  color="dark"
+                  onClick={() => this.sendKeyTap(0x0020)}
+                >
+                  Space
+                </Button>
+                <ActionIcon
+                  size="sm"
+                  color="dark"
+                  title="Backspace"
+                  onClick={() => this.sendKeyTap(0xff08)}
+                >
+                  <IconBackspace size={16} />
+                </ActionIcon>
+                <ActionIcon
+                  size="sm"
+                  color="dark"
+                  title="Left Arrow"
+                  onClick={() => this.sendKeyTap(0xff51)}
+                >
+                  <IconArrowLeft size={16} />
+                </ActionIcon>
+                <ActionIcon
+                  size="sm"
+                  color="dark"
+                  title="Up Arrow"
+                  onClick={() => this.sendKeyTap(0xff52)}
+                >
+                  <IconArrowUp size={16} />
+                </ActionIcon>
+                <ActionIcon
+                  size="sm"
+                  color="dark"
+                  title="Down Arrow"
+                  onClick={() => this.sendKeyTap(0xff54)}
+                >
+                  <IconArrowDown size={16} />
+                </ActionIcon>
+                <ActionIcon
+                  size="sm"
+                  color="dark"
+                  title="Right Arrow"
+                  onClick={() => this.sendKeyTap(0xff53)}
+                >
+                  <IconArrowRight size={16} />
+                </ActionIcon>
+                <Button
+                  size="compact-xs"
+                  color="dark"
+                  leftSection={<IconCopy size={12} />}
+                  onClick={() => this.sendCtrlShortcut(99)}
+                >
+                  Copy
+                </Button>
+                <Button
+                  size="compact-xs"
+                  color="dark"
+                  leftSection={<IconClipboard size={12} />}
+                  onClick={this.pasteToVBrowser}
+                >
+                  Paste
+                </Button>
+                <Button
+                  size="compact-xs"
+                  color="dark"
+                  onClick={() => this.sendCtrlShortcut(97)}
+                >
+                  Select All
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </>
     );

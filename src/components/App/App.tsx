@@ -69,6 +69,7 @@ import {
   IconBrowser,
   IconChevronLeft,
   IconChevronRight,
+  IconDeviceMobile,
   IconFile,
   IconKeyboardFilled,
   IconList,
@@ -152,6 +153,7 @@ interface AppState {
   settings: Settings;
   vBrowserResolution: string;
   vBrowserQuality: string;
+  vBrowserTouchControls: boolean;
   isVBrowserLarge: boolean;
   nonPlayableMedia: boolean;
   currentTab: string;
@@ -225,6 +227,8 @@ export class App extends React.Component<AppProps, AppState> {
     settings: {},
     vBrowserResolution: "1280x720@30",
     vBrowserQuality: "1",
+    vBrowserTouchControls:
+      isMobile() || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent),
     isVBrowserLarge: false,
     nonPlayableMedia: false,
     currentTab:
@@ -1924,10 +1928,10 @@ export class App extends React.Component<AppProps, AppState> {
     // Default: fullscreen the body (theater mode)
     let container = document.body as HTMLElement;
     if (bVideoOnly || isMobile()) {
-      if (this.playingVBrowser() && !isMobile()) {
+      const vBrowserParent = document.getElementById("leftVideoParent");
+      if (this.playingVBrowser() && vBrowserParent?.requestFullscreen) {
         // vbrowser needs to fullscreen the control wrapper div
-        // Can't really control the VBrowser on mobile anyway, so just fullscreen the video
-        container = document.getElementById("leftVideoParent") as HTMLElement;
+        container = vBrowserParent;
       } else {
         // fullscreen just the video
         container = this.Player().getVideoEl();
@@ -2425,6 +2429,24 @@ export class App extends React.Component<AppProps, AppState> {
                               },
                             ]}
                           ></Select>
+                          {this.state.controller === clientId && (
+                            <Button
+                              color={
+                                this.state.vBrowserTouchControls
+                                  ? "teal"
+                                  : "grey"
+                              }
+                              onClick={() =>
+                                this.setState({
+                                  vBrowserTouchControls:
+                                    !this.state.vBrowserTouchControls,
+                                })
+                              }
+                              leftSection={<IconDeviceMobile />}
+                            >
+                              Touch Controls
+                            </Button>
+                          )}
                         </>
                       )}
                       {!this.localStreamToPublish &&
@@ -2629,6 +2651,7 @@ export class App extends React.Component<AppProps, AppState> {
                           this.setState({ vBrowserQuality: data });
                         }}
                         isMobile={isMobile()}
+                        showTouchControls={this.state.vBrowserTouchControls}
                       />
                     ) : (
                       <video
