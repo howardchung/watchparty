@@ -1,0 +1,61 @@
+{
+  "name": "@pm2/io",
+  "version": "6.1.0",
+  "description": "PM2.io NodeJS APM",
+  "main": "build/main/index.js",
+  "typings": "build/main/index.d.ts",
+  "types": "build/main/index.d.ts",
+  "module": "build/module/index.js",
+  "repository": "https://github.com/keymetrics/pm2-io-apm",
+  "author": {
+    "name": "PM2.io tech team",
+    "email": "tech@pm2.io",
+    "url": "https://pm2.io"
+  },
+  "license": "Apache-2",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "build:module": "tsc -p config/exports/tsconfig.module.json",
+    "unit": "npm run build && bash test.sh",
+    "test": "npm run unit",
+    "watch": "tsc -w",
+    "prepublishOnly": "npm run build"
+  },
+  "engines": {
+    "node": ">=6.0"
+  },
+  "devDependencies": {
+    "@types/mocha": "5.2.5",
+    "@types/node": "~10.12.21",
+    "chai": "4.1.2",
+    "mocha": "~7.1.0",
+    "express": "^4.17.1",
+    "source-map-support": "~0.5.9",
+    "ts-node": "~7.0.1",
+    "typescript": "^5.2.2"
+  },
+  "keywords": [],
+  "nyc": {
+    "extension": [
+      ".ts"
+    ],
+    "exclude": [
+      "build/",
+      "config/",
+      "examples/",
+      "test/"
+    ],
+    "cache": true,
+    "all": true
+  },
+  "dependencies": {
+    "async": "~2.6.1",
+    "debug": "~4.3.1",
+    "eventemitter2": "^6.3.1",
+    "require-in-the-middle": "^5.0.0",
+    "semver": "~7.5.4",
+    "shimmer": "^1.2.0",
+    "signal-exit": "^3.0.3",
+    "tslib": "1.9.3"
+  }
+}

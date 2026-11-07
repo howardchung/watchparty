@@ -1,0 +1,1 @@
+{"version":3,"file":"DATE.js","sourceRoot":"","sources":["../../../src/structuredfield/utils/DATE.ts"],"names":[],"mappings":"AAAA,MAAM,CAAC,MAAM,IAAI,GAAG,MAAM,CAAC","sourcesContent":["export const DATE = 'Date';\n"]}

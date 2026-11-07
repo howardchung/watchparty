@@ -1,0 +1,74 @@
+{
+  "name": "@sapphire/snowflake",
+  "version": "3.5.5",
+  "description": "Deconstructs and generates snowflake IDs using BigInts",
+  "author": "@sapphire",
+  "license": "MIT",
+  "main": "dist/cjs/index.cjs",
+  "module": "dist/esm/index.mjs",
+  "browser": "dist/iife/index.global.js",
+  "unpkg": "dist/iife/index.global.js",
+  "types": "dist/cjs/index.d.cts",
+  "exports": {
+    "import": {
+      "types": "./dist/esm/index.d.mts",
+      "default": "./dist/esm/index.mjs"
+    },
+    "require": {
+      "types": "./dist/cjs/index.d.cts",
+      "default": "./dist/cjs/index.cjs"
+    },
+    "browser": "./dist/iife/index.global.js"
+  },
+  "sideEffects": false,
+  "homepage": "https://github.com/sapphiredev/utilities/tree/main/packages/snowflake",
+  "scripts": {
+    "test": "vitest run",
+    "lint": "eslint src tests --ext ts --fix -c ../../.eslintrc",
+    "build": "yarn gen-index && tsup && yarn build:rename-cjs-index",
+    "build:rename-cjs-index": "tsx ../../scripts/rename-cjs-index.cts",
+    "docs": "typedoc-json-parser",
+    "prepack": "yarn build",
+    "bump": "cliff-jumper",
+    "check-update": "cliff-jumper --dry-run",
+    "gen-index": "tsx ../../scripts/gen-index.cts snowflake --write"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sapphiredev/utilities.git",
+    "directory": "packages/snowflake"
+  },
+  "files": [
+    "dist/"
+  ],
+  "engines": {
+    "node": ">=v14.0.0",
+    "npm": ">=7.0.0"
+  },
+  "keywords": [
+    "@sapphire/snowflake",
+    "bot",
+    "typescript",
+    "ts",
+    "yarn",
+    "discord",
+    "sapphire",
+    "standalone"
+  ],
+  "bugs": {
+    "url": "https://github.com/sapphiredev/utilities/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "@favware/cliff-jumper": "^5.0.0",
+    "@vitest/coverage-v8": "^2.1.4",
+    "tsup": "^8.3.5",
+    "tsx": "^4.19.2",
+    "typedoc": "^0.25.13",
+    "typedoc-json-parser": "^10.1.6",
+    "typescript": "~5.4.5",
+    "vitest": "^2.1.4"
+  }
+}

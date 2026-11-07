@@ -1,0 +1,22 @@
+{
+"name":"ansis",
+"version":"4.0.0-node10",
+"description":"ANSI color lib",
+"keywords":["ansi","colors","cli"],
+"license":"ISC",
+"author":"webdiscus",
+"repository":"webdiscus/ansis",
+"type":"module",
+"types": "./index.d.ts",
+"main": "./index.cjs",
+"module": "./index.mjs",
+"exports":{
+	".":{
+		"types":"./index.d.ts",
+		"require":"./index.cjs",
+		"import":"./index.mjs"
+	}
+},
+"sideEffects":false,
+"engines":{"node":">=10"}
+}

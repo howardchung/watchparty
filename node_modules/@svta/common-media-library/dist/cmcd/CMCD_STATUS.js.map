@@ -1,0 +1,1 @@
+{"version":3,"file":"CMCD_STATUS.js","sourceRoot":"","sources":["../../src/cmcd/CMCD_STATUS.ts"],"names":[],"mappings":"AAAA;;;;;;GAMG;AACH,MAAM,CAAC,MAAM,WAAW,GAAG,aAAa,CAAC","sourcesContent":["/**\n * CMCD status header name.\n *\n * @group CMCD\n *\n * @beta\n */\nexport const CMCD_STATUS = 'CMCD-Status';\n"]}
