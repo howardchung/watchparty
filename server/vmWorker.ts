@@ -1,12 +1,11 @@
 import config from "./config.ts";
 import { getBgVMManagers } from "./vm/utils.ts";
 import express from "express";
-import bodyParser from "body-parser";
 
 const app = express();
 const vmManagers = getBgVMManagers();
 
-app.use(bodyParser.json());
+app.use(express.json());
 
 Object.values(vmManagers).forEach((manager) => {
   manager?.runBackgroundJobs();

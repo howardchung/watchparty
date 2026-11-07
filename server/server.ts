@@ -1,7 +1,6 @@
 import config from "./config.ts";
 import fs from "node:fs";
 import express, { type Response } from "express";
-import bodyParser from "body-parser";
 import compression from "compression";
 import cors from "cors";
 import https from "node:https";
@@ -125,8 +124,8 @@ if (process.env.NODE_ENV === "development") {
 }
 
 app.use(cors());
-app.use(bodyParser.json());
-app.use(bodyParser.raw({ type: "text/plain", limit: 1000000 }));
+app.use(express.json());
+app.use(express.raw({ type: "text/plain", limit: 1000000 }));
 
 app.get("/ping", (_req, res) => {
   res.json("pong");
