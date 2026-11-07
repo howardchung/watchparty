@@ -1,5 +1,4 @@
 import config from "../config.ts";
-import axios from "axios";
 import { redis, redisCount } from "../utils/redis.ts";
 import { postgres as pg } from "../utils/postgres.ts";
 import type { PoolConfig, PoolRegion } from "./utils.ts";
@@ -253,13 +252,16 @@ export abstract class VMManager {
       // if (!out.toString().startsWith('OK') && !out.toString().startsWith('404 page not found')) {
       //   throw new Error('mismatched response from health');
       // }
-      const resp = await axios({
+      const resp = await fetch(url, {
         method: "GET",
-        url,
-        timeout: 1000,
+        signal: AbortSignal.timeout(1000),
       });
+      if (!resp.ok) {
+        throw new Error(`HTTP ${resp.status}`);
+      }
+      const data = await resp.text();
       // Check to make sure the VM was recently rebooted (we could also check on the password to ensure reset)
-      const timeSinceBoot = Date.now() / 1000 - Number(resp.data);
+      const timeSinceBoot = Date.now() / 1000 - Number(data);
       // console.log(timeSinceBoot);
       return this.reuseVMs ? timeSinceBoot < 150 * 1000 : true;
     } catch (e) {
@@ -295,12 +297,7 @@ export abstract class VMManager {
         try {
           await this.startVMWrapper();
         } catch (e: any) {
-          console.log(
-            e.response?.status,
-            JSON.stringify(e.response?.data),
-            e.config?.url,
-            e.config?.data,
-          );
+          console.log(e);
         }
       }
     };
@@ -386,7 +383,7 @@ export abstract class VMManager {
             await this.resetVM(server.id);
             //this.terminateVMWrapper(server.id);
           } catch (e: any) {
-            console.warn("[CLEANUP]", this.getPoolName(), e.response?.data);
+            console.warn("[CLEANUP]", this.getPoolName(), e);
           }
           await new Promise((resolve) => setTimeout(resolve, 2000));
         }
@@ -430,8 +427,8 @@ export abstract class VMManager {
           try {
             vm = await this.getVM(vmid);
           } catch (e: any) {
-            console.warn(e.response?.data);
-            if (e.response?.status === 404) {
+            console.warn(e);
+            if (e.status === 404) {
               // Remove the VM because the provider says it doesn't exist
               await postgres.query("DELETE FROM vbrowser WHERE id = $1", [
                 rowid,
@@ -503,12 +500,14 @@ export abstract class VMManager {
             "key=" +
             config.VBROWSER_ADMIN_KEY;
           // console.log(passUrl);
-          const resp2 = await axios({
+          const resp2 = await fetch(passUrl, {
             method: "GET",
-            url: passUrl,
-            timeout: 1000,
+            signal: AbortSignal.timeout(1000),
           });
-          const pass = resp2.data;
+          if (!resp2.ok) {
+            throw new Error(`HTTP ${resp2.status}`);
+          }
+          const pass = await resp2.text();
           // password is a uuid so it should never match the previous value, if it does we probably didn't reset properly
           const { rows } = await postgres.query(
             `UPDATE vbrowser SET state = 'available', pass = $2 WHERE id = $1 AND pass IS DISTINCT FROM $2`,

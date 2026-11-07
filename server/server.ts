@@ -22,13 +22,12 @@ import path from "node:path";
 import { getStartOfDay } from "./utils/time.ts";
 import { getSessionLimitSeconds } from "./vm/utils.ts";
 import { postgres, insertObject, upsertObject } from "./utils/postgres.ts";
-import axios, { isAxiosError } from "axios";
 import crypto from "node:crypto";
 import { gzipSync } from "node:zlib";
 import { resolveShard } from "./utils/resolveShard.ts";
 import { makeRoomName, makeUserName } from "./utils/moniker.ts";
 import { getStats } from "./utils/getStats.ts";
-import { assertPublicUrl, safeAxiosConfig } from "./utils/ssrf.ts";
+import { assertPublicUrl, safeFetch } from "./utils/ssrf.ts";
 
 // Last-resort safety net: a stray rejected promise shouldn't take down every room on this shard.
 // Socket handlers are individually guarded in room.ts, this catches anything we missed.
@@ -52,18 +51,6 @@ function safeInterval(name: string, fn: () => Promise<void>, ms: number) {
       running = false;
     }
   }, ms);
-}
-
-if (process.env.NODE_ENV === "development") {
-  axios.interceptors.request.use(
-    (config) => {
-      // console.log(config);
-      return config;
-    },
-    (error) => {
-      console.error(error);
-    },
-  );
 }
 
 const releaseInterval = 5 * 60 * 1000;
@@ -194,44 +181,49 @@ app.post("/subtitle", async (req, res) => {
 app.get("/downloadSubtitles", async (req, res) => {
   // Request the URL from OS
   try {
-    const urlResp = await axios<{ link: string }>({
-      url: "https://api.opensubtitles.com/api/v1/download",
-      method: "POST",
-      headers: {
-        "User-Agent": "watchparty v1",
-        "Api-Key": config.OPENSUBTITLES_KEY,
-        Accept: "application/json",
-        "Content-Type": "application/json",
-        // 'Authorization': 'Bearer ' + config.OPENSUBTITLES_KEY,
+    const urlResp = await fetch(
+      "https://api.opensubtitles.com/api/v1/download",
+      {
+        method: "POST",
+        headers: {
+          "User-Agent": "watchparty v1",
+          "Api-Key": config.OPENSUBTITLES_KEY,
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          // 'Authorization': 'Bearer ' + config.OPENSUBTITLES_KEY,
+        },
+        body: JSON.stringify({
+          file_id: req.query.file_id,
+          // sub_format: 'srt',
+        }),
       },
-      data: {
-        file_id: req.query.file_id,
-        // sub_format: 'srt',
-      },
-    });
+    );
+    if (!urlResp.ok) {
+      throw new Error(`OpenSubtitles download failed: ${urlResp.status}`);
+    }
+    const urlData: { link: string } = await urlResp.json();
     redisCount("subDownloadsOS");
     if (!redis) {
       // Return the direct link to the user, will work for about 3 hours
-      res.json(urlResp.data);
+      res.json(urlData);
       return;
     }
     // Cache the contents in Redis (longer retention)
-    const subResp = await axios.get(urlResp.data.link, {
-      responseType: "arraybuffer",
-    });
-    const data = subResp.data;
+    const subResp = await fetch(urlData.link);
+    if (!subResp.ok) {
+      throw new Error(`Subtitle file fetch failed: ${subResp.status}`);
+    }
+    const data = Buffer.from(await subResp.arrayBuffer());
     const hash = crypto
       .createHash("sha256")
-      .update(data, "utf8")
+      .update(data)
       .digest()
       .toString("hex");
     let gzipData = gzipSync(data);
     await redis.setex("subtitle:" + hash, 24 * 60 * 60, gzipData);
     res.json({ link: "/subtitle/" + hash });
   } catch (e) {
-    if (isAxiosError(e)) {
-      console.log(e.response);
-    }
+    console.log(e);
     throw e;
   }
 });
@@ -241,26 +233,29 @@ app.get("/searchSubtitles", async (req, res) => {
   try {
     const title =
       typeof req.query.title === "string" ? req.query.title.slice(0, 200) : "";
-    let params: Record<string, string> | undefined = undefined;
+    let params: URLSearchParams | undefined = undefined;
     if (title) {
-      params = { languages: "en", query: title };
+      params = new URLSearchParams({ languages: "en", query: title });
     }
     if (params) {
       // Alternative, web client calls this to get back some JS with the download URL embedded
       // https://www.opensubtitles.com/nocache/download/7585196/subreq.js?file_name=Borgen.S04E01.en&locale=en&np=true&sub_frmt=srt&subtitle_id=6615808&ext_installed=false
       // Up to 10 downloads per IP per day, but proxyable and doesn't require key
-      const response = await axios.get(
-        "https://api.opensubtitles.com/api/v1/subtitles",
+      const response = await fetch(
+        // URLSearchParams URL-encodes these, so titles like "Law & Order" survive intact
+        `https://api.opensubtitles.com/api/v1/subtitles?${params}`,
         {
-          // axios URL-encodes these, so titles like "Law & Order" survive intact
-          params,
           headers: {
             "User-Agent": "watchparty v1",
             "Api-Key": config.OPENSUBTITLES_KEY,
           },
         },
       );
-      result = response.data.data;
+      if (!response.ok) {
+        throw new Error(`OpenSubtitles search failed: ${response.status}`);
+      }
+      const data = await response.json();
+      result = data.data;
     }
   } catch (e: any) {
     console.error(e.message);
@@ -280,9 +275,10 @@ app.get("/stats", async (req, res) => {
 });
 
 app.get("/health/:metric", async (req, res) => {
-  const vmManagerStats = (
-    await axios.get("http://localhost:" + config.VMWORKER_PORT + "/stats")
-  ).data;
+  const resp = await fetch(
+    "http://localhost:" + config.VMWORKER_PORT + "/stats",
+  );
+  const vmManagerStats = await resp.json();
   const result = vmManagerStats[req.params.metric]?.availableVBrowsers?.length;
   res.status(result ? 200 : 500).json(result);
 });
@@ -543,11 +539,11 @@ app.get("/metadata", async (req, res) => {
   // const customer = await getCustomerByUid(decoded.uid);
   let isFreePoolFull = false;
   try {
-    isFreePoolFull = (
-      await axios.get(
-        "http://localhost:" + config.VMWORKER_PORT + "/isFreePoolFull",
-      )
-    ).data.isFull;
+    const resp = await fetch(
+      "http://localhost:" + config.VMWORKER_PORT + "/isFreePoolFull",
+    );
+    const data = await resp.json();
+    isFreePoolFull = data.isFull;
   } catch (e: any) {
     console.warn("[WARNING]: free pool check failed: %s", e.code);
   }
@@ -674,14 +670,19 @@ app.post("/linkAccount", async (req, res) => {
     const tokenType = req.body?.tokenType;
     const accessToken = req.body.accessToken;
     // Get the token and verify the user
-    const response = await axios.get("https://discord.com/api/users/@me", {
+    const response = await fetch("https://discord.com/api/users/@me", {
       headers: {
         authorization: `${tokenType} ${accessToken}`,
       },
     });
-    const accountid = response.data.id;
-    const accountname = response.data.username;
-    const discriminator = response.data.discriminator;
+    if (!response.ok) {
+      res.status(400).json({ error: "invalid discord token" });
+      return;
+    }
+    const data = await response.json();
+    const accountid = data.id;
+    const accountname = data.username;
+    const discriminator = data.discriminator;
     // Store the user id, username, discriminator
     await upsertObject(
       postgres,
@@ -747,18 +748,15 @@ app.get("/proxy/*splat", async (req, res) => {
     }
     // Refuse private/loopback addresses (hostnames are re-checked when connecting)
     assertPublicUrl(upstream);
-    const upstreamConfig = {
-      ...safeAxiosConfig,
-      maxContentLength: 50 * 1024 * 1024,
-    };
     // Upstream content is untrusted, never let it be interpreted as HTML on our origin
     res.setHeader("X-Content-Type-Options", "nosniff");
     if (pathname.endsWith("index-dvr.m3u8")) {
       // VOD
       // https://d2vjef5jvl6bfs.cloudfront.net/3012391a6c3e84c79ef6_gamesdonequick_41198403369_1681059003/chunked/index-dvr.m3u8
-      const resp = await axios.get(upstream.href, upstreamConfig);
+      const resp = await safeFetch(upstream);
+      const data = await resp.text();
       const re2 = /(.*.ts)/g;
-      let repl = String(resp.data).replaceAll(re2, `$1?host=${host}`);
+      let repl = String(data).replaceAll(re2, `$1?host=${host}`);
       // Mark this as a VOD
       repl += "#EXT-X-ENDLIST";
       res.type("application/vnd.apple.mpegurl").send(repl);
@@ -766,21 +764,20 @@ app.get("/proxy/*splat", async (req, res) => {
       // Stream
       // https://video-weaver.sea02.hls.ttvnw.net/v1/playlist/<token>.m3u8
       // Extract the edge URL host and add it to URL so proxy can fetch
-      const resp = await axios.get(upstream.href, upstreamConfig);
-      res.type("application/vnd.apple.mpegurl").send(String(resp.data));
+      const resp = await safeFetch(upstream);
+      const data = await resp.text();
+      res.type("application/vnd.apple.mpegurl").send(String(data));
     } else if (pathname.endsWith(".ts")) {
       // Segment
-      const resp = await axios.get(upstream.href, {
-        ...upstreamConfig,
-        responseType: "arraybuffer",
-      });
+      const resp = await safeFetch(upstream);
+      const data = Buffer.from(await resp.arrayBuffer());
       res.writeHead(200, {
         "Content-Type": "application/octet-stream",
         "Accept-Ranges": "bytes",
-        "Content-Length": resp.data.length,
+        "Content-Length": data.length,
         "Transfer-Encoding": "chunked",
       });
-      res.write(resp.data);
+      res.write(data);
       res.end();
     } else {
       res.status(404);

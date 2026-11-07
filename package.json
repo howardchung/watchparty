@@ -23,7 +23,6 @@
   "dependencies": {
     "@googleapis/youtube": "^8.0.2",
     "@mediabunny/ac3": "^1.61.3",
-    "axios": "^1.13.2",
     "body-parser": "^1.20.4",
     "compression": "^1.8.1",
     "cors": "^2.8.5",

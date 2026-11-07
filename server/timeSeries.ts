@@ -1,5 +1,4 @@
 import config from "./config.ts";
-import axios from "axios";
 import { redis } from "./utils/redis.ts";
 import { getStats } from "./utils/getStats.ts";
 
@@ -11,11 +10,10 @@ async function statsTimeSeries() {
     console.time("timeSeries");
     try {
       const stats = await getStats();
-      const isFreePoolFull = (
-        await axios.get(
-          "http://localhost:" + config.VMWORKER_PORT + "/isFreePoolFull",
-        )
-      ).data.isFull;
+      const resp = await fetch(
+        "http://localhost:" + config.VMWORKER_PORT + "/isFreePoolFull",
+      );
+      const { isFull: isFreePoolFull } = await resp.json();
       const datapoint: AnyDict = {
         time: new Date(),
         currentUsers: stats.counts.currentUsers,

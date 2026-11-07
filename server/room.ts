@@ -1,5 +1,4 @@
 import config from "./config.ts";
-import axios from "axios";
 import { Server, Socket } from "socket.io";
 import { getUser, validateUserToken } from "./utils/firebase.ts";
 import { redis, redisCount, redisCountDistinct } from "./utils/redis.ts";
@@ -566,14 +565,18 @@ export class Room {
       if (stateless) {
         await stateless.terminateVM(vm.id);
       } else {
-        await axios.post(
+        await fetch(
           "http://localhost:" + config.VMWORKER_PORT + "/releaseVM",
           {
-            provider: vm.provider,
-            isLarge: vm.large ?? false,
-            region: vm.region ?? "",
-            id: vm.id,
-            roomId: this.roomId,
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              provider: vm.provider,
+              isLarge: vm.large ?? false,
+              region: vm.region ?? "",
+              id: vm.id,
+              roomId: this.roomId,
+            }),
           },
         );
       }
@@ -1193,16 +1196,22 @@ export class Room {
               assignTime: Date.now(),
             };
           } else {
-            const { data } = await axios.post<AssignedVM>(
+            const resp = await fetch(
               "http://localhost:" + config.VMWORKER_PORT + "/assignVM",
               {
-                isLarge,
-                region,
-                uid,
-                roomId,
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  isLarge,
+                  region,
+                  uid,
+                  roomId,
+                }),
               },
             );
-            assignment = data;
+            if (resp.ok) {
+              assignment = await resp.json();
+            }
           }
         } catch (e) {
           console.warn(e);

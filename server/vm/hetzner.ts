@@ -1,5 +1,4 @@
 import config from "../config.ts";
-import axios from "axios";
 import { VMManager, type VM } from "./base.ts";
 import fs from "node:fs";
 import { redis } from "../utils/redis.ts";
@@ -55,79 +54,109 @@ export class Hetzner extends VMManager {
       },
       location: this.getRandomDatacenter(),
     };
-    const response = await axios({
+    const response = await fetch(`https://api.hetzner.cloud/v1/servers`, {
       method: "POST",
-      url: `https://api.hetzner.cloud/v1/servers`,
       headers: {
         Authorization: "Bearer " + HETZNER_TOKEN,
         "Content-Type": "application/json",
         "User-Agent": "test",
       },
-      data,
+      body: JSON.stringify(data),
     });
-    const id = response.data.server.id;
+    if (!response.ok) {
+      throw Object.assign(
+        new Error(`HTTP ${response.status}: ${await response.text()}`),
+        { status: response.status },
+      );
+    }
+    const respData = await response.json();
+    const id = respData.server.id;
     return id;
   };
 
   terminateVM = async (id: string) => {
-    await axios({
+    const response = await fetch(`https://api.hetzner.cloud/v1/servers/${id}`, {
       method: "DELETE",
-      url: `https://api.hetzner.cloud/v1/servers/${id}`,
       headers: {
         Authorization: "Bearer " + HETZNER_TOKEN,
         "User-Agent": "test",
       },
     });
+    if (!response.ok) {
+      throw Object.assign(
+        new Error(`HTTP ${response.status}: ${await response.text()}`),
+        { status: response.status },
+      );
+    }
   };
 
   rebootVM = async (id: string) => {
     // Reboot the VM
-    await axios({
-      method: "POST",
-      url: `https://api.hetzner.cloud/v1/servers/${id}/actions/reboot`,
-      headers: {
-        Authorization: "Bearer " + HETZNER_TOKEN,
-        "User-Agent": "test",
+    const response = await fetch(
+      `https://api.hetzner.cloud/v1/servers/${id}/actions/reboot`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer " + HETZNER_TOKEN,
+          "User-Agent": "test",
+        },
       },
-    });
+    );
+    if (!response.ok) {
+      throw Object.assign(
+        new Error(`HTTP ${response.status}: ${await response.text()}`),
+        { status: response.status },
+      );
+    }
     return;
   };
 
   reimageVM = async (id: string) => {
     // Rebuild the VM
-    await axios({
-      method: "POST",
-      url: `https://api.hetzner.cloud/v1/servers/${id}/actions/rebuild`,
-      headers: {
-        Authorization: "Bearer " + HETZNER_TOKEN,
-        "User-Agent": "test",
+    const response = await fetch(
+      `https://api.hetzner.cloud/v1/servers/${id}/actions/rebuild`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer " + HETZNER_TOKEN,
+          "Content-Type": "application/json",
+          "User-Agent": "test",
+        },
+        body: JSON.stringify({
+          image: Number(this.imageId),
+        }),
       },
-      data: {
-        image: Number(this.imageId),
-      },
-    });
+    );
+    if (!response.ok) {
+      throw Object.assign(
+        new Error(`HTTP ${response.status}: ${await response.text()}`),
+        { status: response.status },
+      );
+    }
     return;
   };
 
   getVM = async (id: string) => {
-    const response: any = await axios({
+    const response = await fetch(`https://api.hetzner.cloud/v1/servers/${id}`, {
       method: "GET",
-      url: `https://api.hetzner.cloud/v1/servers/${id}`,
       headers: {
         Authorization: "Bearer " + HETZNER_TOKEN,
         "User-Agent": "test",
       },
     });
-    console.log(
-      "[GETVM] %s: %s rate limit remaining",
-      id,
-      response?.headers["ratelimit-remaining"],
-    );
-    await redis?.set(
-      "hetznerApiRemaining",
-      response?.headers["ratelimit-remaining"],
-    );
-    const server = this.mapServerObject(response.data.server);
+    if (!response.ok) {
+      throw Object.assign(
+        new Error(`HTTP ${response.status}: ${await response.text()}`),
+        { status: response.status },
+      );
+    }
+    const remaining = response.headers.get("ratelimit-remaining");
+    console.log("[GETVM] %s: %s rate limit remaining", id, remaining);
+    if (remaining) {
+      await redis?.set("hetznerApiRemaining", remaining);
+    }
+    const data = await response.json();
+    const server = this.mapServerObject(data.server);
     return server;
   };
 
@@ -136,25 +165,34 @@ export class Hetzner extends VMManager {
     const pageCount = Math.ceil((limit || 1) / 50);
     const pages = Array.from(Array(pageCount).keys()).map((i) => i + 1);
     const responses: any[] = await Promise.all(
-      pages.map((page) =>
-        axios({
-          method: "GET",
-          url: `https://api.hetzner.cloud/v1/servers`,
-          headers: {
-            Authorization: "Bearer " + HETZNER_TOKEN,
-            "User-Agent": "test",
+      pages.map(async (page) => {
+        const params = new URLSearchParams({
+          sort: "id:asc",
+          page: String(page),
+          per_page: "50",
+          label_selector: filter,
+        });
+        const resp = await fetch(
+          `https://api.hetzner.cloud/v1/servers?${params}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: "Bearer " + HETZNER_TOKEN,
+              "User-Agent": "test",
+            },
           },
-          params: {
-            sort: "id:asc",
-            page,
-            per_page: 50,
-            label_selector: filter,
-          },
-        }),
-      ),
+        );
+        if (!resp.ok) {
+          throw Object.assign(
+            new Error(`HTTP ${resp.status}: ${await resp.text()}`),
+            { status: resp.status },
+          );
+        }
+        return resp.json();
+      }),
     );
-    const responsesMapped = responses.map((response) =>
-      response.data.servers.map(this.mapServerObject),
+    const responsesMapped = responses.map((data) =>
+      data.servers.map(this.mapServerObject),
     );
     return responsesMapped.flat();
   };
@@ -162,15 +200,20 @@ export class Hetzner extends VMManager {
   powerOn = async (id: string) => {
     // Poweron the server (usually not needed)
     try {
-      await axios({
-        method: "POST",
-        url: `https://api.hetzner.cloud/v1/servers/${id}/actions/poweron`,
-        headers: {
-          Authorization: "Bearer " + HETZNER_TOKEN,
-          "Content-Type": "application/json",
-          "User-Agent": "test",
+      const response = await fetch(
+        `https://api.hetzner.cloud/v1/servers/${id}/actions/poweron`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer " + HETZNER_TOKEN,
+            "Content-Type": "application/json",
+            "User-Agent": "test",
+          },
         },
-      });
+      );
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
     } catch (e) {
       console.log("%s failed to poweron", id);
     }
@@ -179,43 +222,40 @@ export class Hetzner extends VMManager {
   attachToNetwork = async (id: string) => {
     // // Attach server to network (usually not needed)
     // try {
-    //   const response: any = await axios({
+    //   const response: any = await fetch(`https://api.hetzner.cloud/v1/servers/${id}`, {
     //     method: 'GET',
-    //     url: `https://api.hetzner.cloud/v1/servers/${id}`,
     //     headers: {
     //       Authorization: 'Bearer ' + HETZNER_TOKEN,
     //     },
     //   });
-    //   if (response.data.server.private_net?.[0] == null) {
-    //     await axios({
+    //   const data = await response.json();
+    //   if (data.server.private_net?.[0] == null) {
+    //     await fetch(`https://api.hetzner.cloud/v1/servers/${id}/actions/attach_to_network`, {
     //       method: 'POST',
-    //       url: `https://api.hetzner.cloud/v1/servers/${id}/actions/attach_to_network`,
     //       headers: {
     //         Authorization: 'Bearer ' + HETZNER_TOKEN,
     //         'Content-Type': 'application/json',
     //       },
-    //       data: {
+    //       body: JSON.stringify({
     //         network:
     //           this.networks[Math.floor(Math.random() * this.networks.length)],
-    //       },
+    //       }),
     //     });
     //   }
     // } catch (e: any) {
     //   console.log('%s failed to attach to network', id);
-    //   console.log(e.response?.data);
     // }
   };
 
   updateSnapshot = async () => {
-    const response = await axios({
+    const response = await fetch(`https://api.hetzner.cloud/v1/servers`, {
       method: "POST",
-      url: `https://api.hetzner.cloud/v1/servers`,
       headers: {
         Authorization: "Bearer " + HETZNER_TOKEN,
         "Content-Type": "application/json",
         "User-Agent": "test",
       },
-      data: {
+      body: JSON.stringify({
         name: "vBrowserSnapshot",
         server_type: "cpx11",
         start_after_create: true,
@@ -226,23 +266,39 @@ export class Hetzner extends VMManager {
           .toString()
           .replace("{VBROWSER_ADMIN_KEY}", config.VBROWSER_ADMIN_KEY),
         location: this.getRandomDatacenter(),
-      },
+      }),
     });
-    const id = response.data.server.id;
+    if (!response.ok) {
+      throw Object.assign(
+        new Error(`HTTP ${response.status}: ${await response.text()}`),
+        { status: response.status },
+      );
+    }
+    const data = await response.json();
+    const id = data.server.id;
     await new Promise((resolve) => setTimeout(resolve, 4 * 60 * 1000));
     // Validate snapshot server was created successfully
-    // const response3 = await axios(
-    //   'http://' + response.data.server.public_net?.ipv4?.ip + ':5000'
+    // const response3 = await fetch(
+    //   'http://' + data.server.public_net?.ipv4?.ip + ':5000'
     // );
-    const response2 = await axios({
-      method: "POST",
-      url: `https://api.hetzner.cloud/v1/servers/${id}/actions/create_image`,
-      headers: {
-        Authorization: "Bearer " + HETZNER_TOKEN,
-        "Content-Type": "application/json",
+    const response2 = await fetch(
+      `https://api.hetzner.cloud/v1/servers/${id}/actions/create_image`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer " + HETZNER_TOKEN,
+          "Content-Type": "application/json",
+        },
       },
-    });
-    const imageId = response2.data.image.id;
+    );
+    if (!response2.ok) {
+      throw Object.assign(
+        new Error(`HTTP ${response2.status}: ${await response2.text()}`),
+        { status: response2.status },
+      );
+    }
+    const data2 = await response2.json();
+    const imageId = data2.image.id;
     await this.terminateVM(id);
     return imageId;
   };

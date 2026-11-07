@@ -1,5 +1,4 @@
 import config from "../config.ts";
-import axios from "axios";
 import { VMManager, type VM } from "./base.ts";
 
 const DO_TOKEN = config.DO_TOKEN;
@@ -15,14 +14,13 @@ export class DigitalOcean extends VMManager {
   id = "DO";
   imageId = config.DO_IMAGE;
   startVM = async (name: string) => {
-    const response = await axios({
+    const response = await fetch(`https://api.digitalocean.com/v2/droplets`, {
       method: "POST",
-      url: `https://api.digitalocean.com/v2/droplets`,
       headers: {
         Authorization: "Bearer " + DO_TOKEN,
         "Content-Type": "application/json",
       },
-      data: {
+      body: JSON.stringify({
         name: name,
         region: region,
         size: this.isLarge ? this.largeSize : this.size,
@@ -31,85 +29,134 @@ export class DigitalOcean extends VMManager {
         private_networking: true,
         // user_data: cloudInit(),
         tags: [this.getTag()],
-      },
+      }),
     });
-    const id = response.data.droplet.id;
+    if (!response.ok) {
+      throw Object.assign(
+        new Error(`HTTP ${response.status}: ${await response.text()}`),
+        { status: response.status },
+      );
+    }
+    const data = await response.json();
+    const id = data.droplet.id;
     return id;
   };
 
   terminateVM = async (id: string) => {
-    const response = await axios({
-      method: "DELETE",
-      url: `https://api.digitalocean.com/v2/droplets/${id}`,
-      headers: {
-        Authorization: "Bearer " + DO_TOKEN,
-        "Content-Type": "application/json",
+    const response = await fetch(
+      `https://api.digitalocean.com/v2/droplets/${id}`,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: "Bearer " + DO_TOKEN,
+          "Content-Type": "application/json",
+        },
       },
-    });
+    );
+    if (!response.ok) {
+      throw Object.assign(
+        new Error(`HTTP ${response.status}: ${await response.text()}`),
+        { status: response.status },
+      );
+    }
   };
 
   rebootVM = async (id: string) => {
     // Reboot the VM
-    const response2 = await axios({
-      method: "POST",
-      url: `https://api.digitalocean.com/v2/droplets/${id}/actions`,
-      headers: {
-        Authorization: "Bearer " + DO_TOKEN,
-        "Content-Type": "application/json",
+    const response2 = await fetch(
+      `https://api.digitalocean.com/v2/droplets/${id}/actions`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer " + DO_TOKEN,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          type: "reboot",
+        }),
       },
-      data: {
-        type: "reboot",
-      },
-    });
+    );
+    if (!response2.ok) {
+      throw Object.assign(
+        new Error(`HTTP ${response2.status}: ${await response2.text()}`),
+        { status: response2.status },
+      );
+    }
     return;
   };
 
   reimageVM = async (id: string) => {
     // Rebuild the VM
-    const response2 = await axios({
-      method: "POST",
-      url: `https://api.digitalocean.com/v2/droplets/${id}/actions`,
-      headers: {
-        Authorization: "Bearer " + DO_TOKEN,
-        "Content-Type": "application/json",
+    const response2 = await fetch(
+      `https://api.digitalocean.com/v2/droplets/${id}/actions`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer " + DO_TOKEN,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          type: "rebuild",
+          image: Number(this.imageId),
+        }),
       },
-      data: {
-        type: "rebuild",
-        image: Number(this.imageId),
-      },
-    });
+    );
+    if (!response2.ok) {
+      throw Object.assign(
+        new Error(`HTTP ${response2.status}: ${await response2.text()}`),
+        { status: response2.status },
+      );
+    }
     return;
   };
 
   getVM = async (id: string) => {
-    const response = await axios({
-      method: "GET",
-      url: `https://api.digitalocean.com/v2/droplets/${id}`,
-      headers: {
-        Authorization: "Bearer " + DO_TOKEN,
-        "Content-Type": "application/json",
+    const response = await fetch(
+      `https://api.digitalocean.com/v2/droplets/${id}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: "Bearer " + DO_TOKEN,
+          "Content-Type": "application/json",
+        },
       },
-    });
-    let server = this.mapServerObject(response.data.droplet);
+    );
+    if (!response.ok) {
+      throw Object.assign(
+        new Error(`HTTP ${response.status}: ${await response.text()}`),
+        { status: response.status },
+      );
+    }
+    const data = await response.json();
+    let server = this.mapServerObject(data.droplet);
     return server;
   };
 
   listVMs = async (filter: string) => {
     // console.log(filter, tags);
-    const response = await axios({
-      method: "GET",
-      url: `https://api.digitalocean.com/v2/droplets`,
-      headers: {
-        Authorization: "Bearer " + DO_TOKEN,
-        "Content-Type": "application/json",
-      },
-      params: {
-        // TODO need to update if over 100 results
-        per_page: 100,
-        tag_name: filter,
-      },
+    const params = new URLSearchParams({
+      // TODO need to update if over 100 results
+      per_page: "100",
+      tag_name: filter,
     });
-    return response.data.droplets.map(this.mapServerObject);
+    const response = await fetch(
+      `https://api.digitalocean.com/v2/droplets?${params}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: "Bearer " + DO_TOKEN,
+          "Content-Type": "application/json",
+        },
+      },
+    );
+    if (!response.ok) {
+      throw Object.assign(
+        new Error(`HTTP ${response.status}: ${await response.text()}`),
+        { status: response.status },
+      );
+    }
+    const data = await response.json();
+    return data.droplets.map(this.mapServerObject);
   };
 
   powerOn = async (_id: string) => {};

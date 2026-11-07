@@ -1,16 +1,9 @@
 import dns from "node:dns";
-import http from "node:http";
-import https from "node:https";
 import net from "node:net";
 
 /**
  * Helpers for making server-side requests to URLs that users control.
  * Blocks loopback, private, link-local and other non-public addresses.
- *
- * Two layers are needed:
- * - assertPublicUrl: rejects IP-literal URLs (Node never calls `lookup` for those)
- * - the agents' `lookup`: rejects hostnames that resolve to non-public IPs,
- *   checked at connect time so DNS rebinding can't swap the address afterwards
  */
 
 const blocked = new net.BlockList();
@@ -67,7 +60,6 @@ export function isPrivateIP(ip: string): boolean {
 
 /**
  * Throws unless the URL is http(s) and doesn't point at a non-public IP literal or localhost.
- * Hostnames are checked again at connect time by the agents below.
  */
 export function assertPublicUrl(input: string | URL): URL {
   const url = typeof input === "string" ? new URL(input) : input;
@@ -84,42 +76,46 @@ export function assertPublicUrl(input: string | URL): URL {
   return url;
 }
 
-const safeLookup = (
-  hostname: string,
-  options: any,
-  callback: (err: any, address?: any, family?: any) => void,
-) => {
-  dns.lookup(hostname, options, (err, address, family) => {
-    if (err) {
-      callback(err);
-      return;
-    }
-    // With `all: true` the address is an array
-    const addresses: string[] = Array.isArray(address)
-      ? address.map((a: { address: string }) => a.address)
-      : [address as string];
-    const bad = addresses.find((a) => isPrivateIP(a));
-    if (bad) {
-      callback(new Error(`Blocked address ${bad}`));
-      return;
-    }
-    callback(null, address, family);
-  });
-};
+const MAX_CONTENT_LENGTH = 50 * 1024 * 1024;
 
-const safeHttpAgent = new http.Agent({ lookup: safeLookup });
-const safeHttpsAgent = new https.Agent({ lookup: safeLookup });
-
-/**
- * Spread into an axios request config.
- * Redirect targets are re-validated since IP-literal redirects skip DNS lookup.
- */
-export const safeAxiosConfig = {
-  httpAgent: safeHttpAgent,
-  httpsAgent: safeHttpsAgent,
-  maxRedirects: 3,
-  timeout: 15000,
-  beforeRedirect: (options: { protocol?: string; hostname?: string }) => {
-    assertPublicUrl(`${options.protocol}//${options.hostname}`);
-  },
-};
+export async function safeFetch(
+  input: string | URL,
+  init?: RequestInit,
+): Promise<Response> {
+  let url = assertPublicUrl(input);
+  for (let redirects = 0; redirects <= 3; redirects++) {
+    const host = url.hostname.replace(/^\[|\]$/g, "").toLowerCase();
+    if (!net.isIP(host)) {
+      const addresses = await dns.promises.lookup(host, { all: true });
+      const bad = addresses.find((a) => isPrivateIP(a.address));
+      if (bad) {
+        throw new Error(`Blocked address ${bad.address}`);
+      }
+    }
+    const resp = await fetch(url, {
+      ...init,
+      redirect: "manual",
+      signal: init?.signal ?? AbortSignal.timeout(15000),
+    });
+    if (
+      resp.status >= 300 &&
+      resp.status < 400 &&
+      resp.headers.get("location")
+    ) {
+      if (redirects === 3) {
+        throw new Error("Too many redirects");
+      }
+      url = assertPublicUrl(new URL(resp.headers.get("location")!, url));
+      continue;
+    }
+    if (!resp.ok) {
+      throw new Error(`HTTP ${resp.status}`);
+    }
+    const contentLength = Number(resp.headers.get("content-length"));
+    if (contentLength > MAX_CONTENT_LENGTH) {
+      throw new Error("Response too large");
+    }
+    return resp;
+  }
+  throw new Error("Too many redirects");
+}

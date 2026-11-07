@@ -1,5 +1,4 @@
 import config from "../config.ts";
-import axios from "axios";
 import { VMManager, type VM } from "./base.ts";
 
 const SCW_SECRET_KEY = config.SCW_SECRET_KEY;
@@ -15,79 +14,118 @@ export class Scaleway extends VMManager {
   id = "Scaleway";
   imageId = config.SCW_IMAGE;
   startVM = async (name: string) => {
-    const response = await axios({
-      method: "POST",
-      url: `https://api.scaleway.com/instance/v1/zones/${region}/servers`,
-      headers: {
-        "X-Auth-Token": SCW_SECRET_KEY,
-        "Content-Type": "application/json",
+    const response = await fetch(
+      `https://api.scaleway.com/instance/v1/zones/${region}/servers`,
+      {
+        method: "POST",
+        headers: {
+          "X-Auth-Token": SCW_SECRET_KEY,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: name,
+          dynamic_ip_required: true,
+          commercial_type: this.isLarge ? this.largeSize : this.size,
+          image: this.imageId,
+          volumes: {},
+          organization: SCW_ORGANIZATION_ID,
+          tags: [this.getTag()],
+        }),
       },
-      data: {
-        name: name,
-        dynamic_ip_required: true,
-        commercial_type: this.isLarge ? this.largeSize : this.size,
-        image: this.imageId,
-        volumes: {},
-        organization: SCW_ORGANIZATION_ID,
-        tags: [this.getTag()],
+    );
+    if (!response.ok) {
+      throw Object.assign(
+        new Error(`HTTP ${response.status}: ${await response.text()}`),
+        { status: response.status },
+      );
+    }
+    const data = await response.json();
+    // console.log(data);
+    const id = data.server.id;
+    const response2 = await fetch(
+      `https://api.scaleway.com/instance/v1/zones/${region}/servers/${id}/user_data/cloud-init`,
+      {
+        method: "PATCH",
+        headers: {
+          "X-Auth-Token": SCW_SECRET_KEY,
+          "Content-Type": "text/plain",
+        },
+        // set userdata for boot action
+        //body: cloudInit(),
       },
-    });
-    // console.log(response.data);
-    const id = response.data.server.id;
-    const response2 = await axios({
-      method: "PATCH",
-      url: `https://api.scaleway.com/instance/v1/zones/${region}/servers/${id}/user_data/cloud-init`,
-      headers: {
-        "X-Auth-Token": SCW_SECRET_KEY,
-        "Content-Type": "text/plain",
-      },
-      // set userdata for boot action
-      //data: cloudInit(),
-    });
-    // console.log(response2.data);
+    );
+    if (!response2.ok) {
+      throw Object.assign(
+        new Error(`HTTP ${response2.status}: ${await response2.text()}`),
+        { status: response2.status },
+      );
+    }
     // boot the instance
-    const response3 = await axios({
-      method: "POST",
-      url: `https://api.scaleway.com/instance/v1/zones/${region}/servers/${id}/action`,
-      headers: {
-        "X-Auth-Token": SCW_SECRET_KEY,
-        "Content-Type": "application/json",
+    const response3 = await fetch(
+      `https://api.scaleway.com/instance/v1/zones/${region}/servers/${id}/action`,
+      {
+        method: "POST",
+        headers: {
+          "X-Auth-Token": SCW_SECRET_KEY,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "poweron",
+        }),
       },
-      data: {
-        action: "poweron",
-      },
-    });
-    // console.log(response3.data);
+    );
+    if (!response3.ok) {
+      throw Object.assign(
+        new Error(`HTTP ${response3.status}: ${await response3.text()}`),
+        { status: response3.status },
+      );
+    }
     return id;
   };
 
   terminateVM = async (id: string) => {
-    const response = await axios({
-      method: "POST",
-      url: `https://api.scaleway.com/instance/v1/zones/${region}/servers/${id}/action`,
-      headers: {
-        "X-Auth-Token": SCW_SECRET_KEY,
-        "Content-Type": "application/json",
+    const response = await fetch(
+      `https://api.scaleway.com/instance/v1/zones/${region}/servers/${id}/action`,
+      {
+        method: "POST",
+        headers: {
+          "X-Auth-Token": SCW_SECRET_KEY,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "terminate",
+        }),
       },
-      data: {
-        action: "terminate",
-      },
-    });
+    );
+    if (!response.ok) {
+      throw Object.assign(
+        new Error(`HTTP ${response.status}: ${await response.text()}`),
+        { status: response.status },
+      );
+    }
   };
 
   rebootVM = async (id: string) => {
     // Reboot the VM (also destroys the Docker container since it has --rm flag)
-    const response2 = await axios({
-      method: "POST",
-      url: `https://api.scaleway.com/instance/v1/zones/${region}/servers/${id}/action`,
-      headers: {
-        "X-Auth-Token": SCW_SECRET_KEY,
-        "Content-Type": "application/json",
+    const response2 = await fetch(
+      `https://api.scaleway.com/instance/v1/zones/${region}/servers/${id}/action`,
+      {
+        method: "POST",
+        headers: {
+          "X-Auth-Token": SCW_SECRET_KEY,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "reboot",
+        }),
       },
-      data: {
-        action: "reboot",
-      },
-    });
+    );
+    if (!response2.ok) {
+      throw Object.assign(
+        new Error(`HTTP ${response2.status}: ${await response2.text()}`),
+        { status: response2.status },
+      );
+    }
     return;
   };
 
@@ -97,15 +135,24 @@ export class Scaleway extends VMManager {
   };
 
   getVM = async (id: string) => {
-    const response = await axios({
-      method: "GET",
-      url: `https://api.scaleway.com/instance/v1/zones/${region}/servers/${id}`,
-      headers: {
-        "X-Auth-Token": SCW_SECRET_KEY,
-        "Content-Type": "application/json",
+    const response = await fetch(
+      `https://api.scaleway.com/instance/v1/zones/${region}/servers/${id}`,
+      {
+        method: "GET",
+        headers: {
+          "X-Auth-Token": SCW_SECRET_KEY,
+          "Content-Type": "application/json",
+        },
       },
-    });
-    let server = this.mapServerObject(response.data.server);
+    );
+    if (!response.ok) {
+      throw Object.assign(
+        new Error(`HTTP ${response.status}: ${await response.text()}`),
+        { status: response.status },
+      );
+    }
+    const data = await response.json();
+    let server = this.mapServerObject(data.server);
     return server;
   };
 
@@ -114,24 +161,33 @@ export class Scaleway extends VMManager {
     const pageCount = Math.ceil((limit || 1) / 100);
     const pages = Array.from(Array(pageCount).keys()).map((i) => i + 1);
     const responses: any[] = await Promise.all(
-      pages.map((page) =>
-        axios({
-          method: "GET",
-          url: `https://api.scaleway.com/instance/v1/zones/${region}/servers`,
-          headers: {
-            "X-Auth-Token": SCW_SECRET_KEY,
-            "Content-Type": "application/json",
+      pages.map(async (page) => {
+        const params = new URLSearchParams({
+          page: String(page),
+          per_page: "100",
+          tags: filter,
+        });
+        const resp = await fetch(
+          `https://api.scaleway.com/instance/v1/zones/${region}/servers?${params}`,
+          {
+            method: "GET",
+            headers: {
+              "X-Auth-Token": SCW_SECRET_KEY,
+              "Content-Type": "application/json",
+            },
           },
-          params: {
-            page,
-            per_page: 100,
-            tags: filter,
-          },
-        }),
-      ),
+        );
+        if (!resp.ok) {
+          throw Object.assign(
+            new Error(`HTTP ${resp.status}: ${await resp.text()}`),
+            { status: resp.status },
+          );
+        }
+        return resp.json();
+      }),
     );
-    const responsesMapped = responses.map((response) =>
-      response.data.servers.map(this.mapServerObject),
+    const responsesMapped = responses.map((data) =>
+      data.servers.map(this.mapServerObject),
     );
     return responsesMapped.flat();
   };

@@ -1,4 +1,3 @@
-import axios from "axios";
 import fs from "node:fs";
 import s3 from "s3-client";
 
