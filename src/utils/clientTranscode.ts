@@ -4,7 +4,7 @@
  * The host's browser demuxes the chosen file (MP4, MKV, WebM, MOV, ...), decodes and re-encodes any track the
  * browser can't natively play (e.g. HEVC video, AC-3/DTS-less audio, 10-bit H.264), and streams the result as
  * fragmented MP4 into a MediaSource attached to the host's <video> element. The existing fileshare pipeline
- * (video.captureStream() -> WebRTC, optionally via mediasoup) then distributes it exactly as it would a plain file,
+ * (video.captureStream() -> WebRTC, optionally via LiveKit) then distributes it exactly as it would a plain file,
  * so no server-side conversion is needed.
  *
  * Demuxing/muxing and the WebCodecs plumbing are handled by mediabunny; it is imported lazily so none of it is

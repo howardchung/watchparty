@@ -1,4 +1,4 @@
-import type MediasoupClient from "mediasoup-client";
+import type { Room as LiveKitRoom } from "livekit-client";
 import React from "react";
 import { Alert, Loader, Menu, Overlay, Select, Title } from "@mantine/core";
 import io, { Socket } from "socket.io-client";
@@ -277,8 +277,8 @@ export class App extends React.Component<AppProps, AppState> {
     audioTrackId: undefined,
   };
   socket: Socket = null!;
-  mediasoupPubSocket: Socket | null = null;
-  mediasoupSubSocket: Socket | null = null;
+  livekitRoom: LiveKitRoom | null = null;
+  livekitToken?: string;
   ytDebounce = true;
   localStreamToPublish?: MediaStream;
   isLocalStreamAFile = false;
@@ -422,6 +422,15 @@ export class App extends React.Component<AppProps, AppState> {
     socket.on("kicked", () => {
       window.location.assign("/");
     });
+    socket.on(
+      "REC:livekitToken",
+      (data: { token: string; url: string; isPublisher: boolean }) => {
+        this.livekitToken = data.token;
+        if (data.isPublisher) {
+          this.publishLiveKit(data.url, data.token);
+        }
+      },
+    );
     socket.on("REC:play", () => {
       this.localPlay();
     });
@@ -1210,7 +1219,7 @@ export class App extends React.Component<AppProps, AppState> {
     if (this.localStreamToPublish) {
       this.socket.emit("CMD:joinScreenShare", {
         file: true,
-        mediasoup: useMediaSoup,
+        livekit: useMediaSoup,
       });
     }
   };
@@ -1233,363 +1242,86 @@ export class App extends React.Component<AppProps, AppState> {
       this.isLocalStreamAFile = false;
       this.socket.emit("CMD:joinScreenShare", {
         file: false,
-        mediasoup: useMediaSoup,
+        livekit: useMediaSoup,
       });
     }
   };
 
-  // Share the video to mediasoup
-  publishMediasoup = async (mediasoupURL: string) => {
+  // Share the video via LiveKit
+  publishLiveKit = async (livekitURL: string, token: string) => {
+    if (this.livekitRoom) {
+      return;
+    }
     const localStream = this.localStreamToPublish;
-    let device: MediasoupClient.types.Device = null as any;
-    let producerTransport: MediasoupClient.types.Transport = null as any;
-
-    // =========== socket.io ==========
-    const connectSocket = (mediasoupURL: string) => {
-      return new Promise<void>((resolve, reject) => {
-        this.mediasoupPubSocket = io(mediasoupURL, {
-          transports: ["websocket"],
-        });
-
-        const socket = this.mediasoupPubSocket;
-        socket?.on("connect", function () {
-          console.log("PUBLISH: connected to socket.io");
-          resolve();
-        });
-        socket?.on("error", function (err) {
-          console.error("PUBLISH: socket.io ERROR:", err);
-          reject(err);
-        });
+    if (!localStream) {
+      return;
+    }
+    try {
+      const { Room } = await import("livekit-client");
+      const room = new Room({
+        adaptiveStream: true,
+        dynacast: true,
       });
-    };
+      this.livekitRoom = room;
+      await room.connect(livekitURL, token);
 
-    const sendRequest = (type: string, data: any) => {
-      return new Promise<any>((resolve, reject) => {
-        const socket = this.mediasoupPubSocket;
-        socket?.emit(type, data, (err: any, response: any) => {
-          if (!err) {
-            // Success response, so pass the mediasoup response to the local Room.
-            resolve(response);
-          } else {
-            reject(err);
-          }
-        });
-      });
-    };
-
-    async function publish() {
-      // --- get transport info ---
-      console.log("PUBLISH: --- createProducerTransport --");
-      const params = await sendRequest("createProducerTransport", {});
-      console.log("PUBLISH: transport params:", params);
-      producerTransport = device.createSendTransport(params);
-      console.log("PUBLISH: createSendTransport:", producerTransport);
-
-      // --- join & start publish --
-      producerTransport.on(
-        "connect",
-        async (
-          {
-            dtlsParameters,
-          }: { dtlsParameters: MediasoupClient.types.DtlsParameters },
-          callback: () => void,
-          errback: (error: Error) => void,
-        ) => {
-          console.log("PUBLISH: --transport connect");
-          sendRequest("connectProducerTransport", {
-            dtlsParameters: dtlsParameters,
-          })
-            .then(callback)
-            .catch(errback);
-        },
-      );
-
-      producerTransport.on(
-        "produce",
-        async (
-          {
-            kind,
-            rtpParameters,
-          }: {
-            kind: string;
-            rtpParameters: MediasoupClient.types.RtpParameters;
-          },
-          callback: ({ id }: { id: string }) => void,
-          errback: (error: Error) => void,
-        ) => {
-          console.log("PUBLISH: --transport produce");
-          try {
-            const { id } = await sendRequest("produce", {
-              transportId: producerTransport.id,
-              kind,
-              rtpParameters,
-            });
-            callback({ id });
-          } catch (err: any) {
-            errback(err);
-          }
-        },
-      );
-
-      // producerTransport.on('connectionstatechange', (state: string) => {
-      //   switch (state) {
-      //     case 'connecting':
-      //       console.log('PUBLISH: connecting');
-      //       break;
-
-      //     case 'connected':
-      //       console.log('PUBLISH: connected');
-      //       break;
-
-      //     case 'failed':
-      //       console.log('PUBLISH: failed');
-      //       producerTransport.close();
-      //       break;
-
-      //     default:
-      //       break;
-      //   }
-      // });
-
-      const videoTrack = localStream?.getVideoTracks()[0];
+      const videoTrack = localStream.getVideoTracks()[0];
       if (videoTrack) {
-        const trackParams = { track: videoTrack };
-        await producerTransport.produce(trackParams);
+        await room.localParticipant.publishTrack(videoTrack, {
+          name: "video",
+        });
       }
-      const audioTrack = localStream?.getAudioTracks()[0];
+      const audioTrack = localStream.getAudioTracks()[0];
       if (audioTrack) {
-        const trackParams = { track: audioTrack };
-        await producerTransport.produce(trackParams);
+        await room.localParticipant.publishTrack(audioTrack, {
+          name: "audio",
+        });
       }
+    } catch (e) {
+      console.error("LiveKit publish error:", e);
     }
-
-    async function loadDevice(
-      routerRtpCapabilities: MediasoupClient.types.RtpCapabilities,
-    ) {
-      const { Device } = await import("mediasoup-client");
-      device = new Device();
-      await device.load({ routerRtpCapabilities });
-    }
-
-    await connectSocket(mediasoupURL);
-    // --- get capabilities --
-    const data = await sendRequest("getRouterRtpCapabilities", {});
-    console.log("PUBLISH: getRouterRtpCapabilities:", data);
-    await loadDevice(data);
-    await publish();
   };
 
-  // Play the video from MediaSoup
-  subscribeMediasoup = async (mediaSoupURL: string) => {
-    let device: MediasoupClient.types.Device = null as any;
-    let consumerTransport: MediasoupClient.types.Transport = null as any;
-    // =========== socket.io ==========
-
-    const connectSocket = () => {
-      return new Promise<void>((resolve, reject) => {
-        this.mediasoupSubSocket = io(mediaSoupURL, {
-          transports: ["websocket"],
-        });
-        const socket = this.mediasoupSubSocket;
-        socket?.on("connect", function () {
-          console.log("SUBSCRIBE: connected to socket.io");
-          resolve();
-        });
-        socket?.on("error", function (err) {
-          console.error("SUBSCRIBE: socket.io ERROR:", err);
-          reject(err);
-        });
-        socket?.on("newProducer", async function (message) {
-          console.log("SUBSCRIBE: socket.io newProducer:", message);
-          if (consumerTransport) {
-            // start consume
-            if (message.kind === "video") {
-              await consumeAndResume(message.kind);
-            } else if (message.kind === "audio") {
-              await consumeAndResume(message.kind);
+  // Play the video from LiveKit
+  subscribeLiveKit = async (livekitURL: string) => {
+    if (this.livekitRoom) {
+      return;
+    }
+    try {
+      // Fetch subscriber token from server if we don't have one
+      const tokenData = await new Promise<{ token: string; url: string }>(
+        (resolve, reject) => {
+          this.socket.emit("CMD:getLiveKitToken", {}, (err: any, data: any) => {
+            if (err) {
+              reject(err);
+            } else {
+              resolve(data);
             }
-          }
-        });
-
-        // socket?.on('producerClosed', function (message) {
-        //   console.log('socket.io producerClosed:', message);
-        //   const localId = message.localId;
-        //   const remoteId = message.remoteId;
-        //   const kind = message.kind;
-        //   if (kind === 'video') {
-        //     if (videoConsumer) {
-        //       videoConsumer.close();
-        //       videoConsumer = null;
-        //     }
-        //   } else if (kind === 'audio') {
-        //     if (audioConsumer) {
-        //       audioConsumer.close();
-        //       audioConsumer = null;
-        //     }
-        //   }
-        // });
-      });
-    };
-
-    const sendRequest = (type: string, data: any) => {
-      return new Promise<any>((resolve, reject) => {
-        const socket = this.mediasoupSubSocket;
-        socket?.emit(type, data, (err: Error, response: any) => {
-          if (!err) {
-            // Success response, so pass the mediasoup response to the local Room.
-            resolve(response);
-          } else {
-            reject(err);
-          }
-        });
-      });
-    };
-
-    // =========== media handling ==========
-    const addRemoteTrack = (track: MediaStreamTrack) => {
-      let video = this.HTMLInterface.getVideoEl();
-      if (video.srcObject) {
-        // Track already exists, add it
-        (video.srcObject as MediaStream).addTrack(track);
-      } else {
-        const mediaStream = new MediaStream();
-        mediaStream.addTrack(track);
-        video.srcObject = mediaStream;
-      }
-      this.localPlay();
-    };
-
-    async function consumeAndResume(kind: string) {
-      const consumer = await consume(consumerTransport, kind);
-      if (consumer) {
-        console.log("SUBSCRIBE: -- track exist, consumer ready. kind=" + kind);
-        if (kind === "video") {
-          console.log("SUBSCRIBE: -- resume kind=" + kind);
-          sendRequest("resume", { kind: kind })
-            .then(() => {
-              console.log("SUBSCRIBE: resume OK");
-              return consumer;
-            })
-            .catch((err) => {
-              console.error("SUBSCRIBE: resume ERROR:", err);
-              return consumer;
-            });
-        } else {
-          console.log("SUBSCRIBE: -- do not resume kind=" + kind);
-        }
-      } else {
-        console.log("SUBSCRIBE: -- no consumer yet. kind=" + kind);
-        return null;
-      }
-    }
-
-    async function loadDevice(
-      routerRtpCapabilities: MediasoupClient.types.RtpCapabilities,
-    ) {
-      try {
-        const { Device } = await import("mediasoup-client");
-        device = new Device();
-        await device.load({ routerRtpCapabilities });
-      } catch (error: any) {
-        if (error.name === "UnsupportedError") {
-          console.error("browser not supported");
-        }
-      }
-    }
-
-    async function consume(
-      transport: MediasoupClient.types.Transport,
-      trackKind: string,
-    ) {
-      console.log("SUBSCRIBE: --start of consume --kind=" + trackKind);
-      const { rtpCapabilities } = device;
-      const data = await sendRequest("consume", {
-        rtpCapabilities: rtpCapabilities,
-        kind: trackKind,
-      }).catch((err) => {
-        console.error("SUBSCRIBE: ERROR:", err);
-      });
-      const { producerId, id, kind, rtpParameters } = data;
-
-      if (producerId) {
-        let codecOptions = {};
-        const consumer = await transport.consume({
-          id,
-          producerId,
-          kind,
-          rtpParameters,
-          //@ts-expect-error
-          codecOptions,
-        });
-
-        addRemoteTrack(consumer.track);
-        console.log("SUBSCRIBE: --end of consume");
-        return consumer;
-      } else {
-        console.warn("SUBSCRIBE: ---remote producer NOT READY");
-        return null;
-      }
-    }
-
-    async function subscribe() {
-      console.log("SUBSCRIBE: ---createConsumerTransport --");
-      const params = await sendRequest("createConsumerTransport", {});
-      console.log("SUBSCRIBE: transport params:", params);
-      consumerTransport = device.createRecvTransport(params);
-      console.log("SUBSCRIBE: createConsumerTransport:", consumerTransport);
-
-      // --- join & start watching
-      consumerTransport.on(
-        "connect",
-        async (
-          {
-            dtlsParameters,
-          }: { dtlsParameters: MediasoupClient.types.DtlsParameters },
-          callback: () => void,
-          errback: (err: Error) => void,
-        ) => {
-          console.log("SUBSCRIBE: ---consumer transport connect");
-          sendRequest("connectConsumerTransport", {
-            dtlsParameters: dtlsParameters,
-          })
-            .then(callback)
-            .catch(errback);
+          });
         },
       );
 
-      // consumerTransport.on('connectionstatechange', (state: string) => {
-      //   switch (state) {
-      //     case 'connecting':
-      //       console.log('SUBSCRIBE: connecting');
-      //       break;
+      const { Room, RoomEvent } = await import("livekit-client");
+      const room = new Room({
+        adaptiveStream: true,
+        dynacast: true,
+      });
+      this.livekitRoom = room;
 
-      //     case 'connected':
-      //       console.log('SUBSCRIBE: connected');
-      //       break;
+      const leftVideo = this.HTMLInterface.getVideoEl();
+      leftVideo.srcObject = null;
 
-      //     case 'failed':
-      //       console.log('SUBSCRIBE: failed');
-      //       consumerTransport.close();
-      //       break;
+      room.on(RoomEvent.TrackSubscribed, (track) => {
+        if (track.kind === "video" || track.kind === "audio") {
+          track.attach(leftVideo);
+          this.localPlay();
+        }
+      });
 
-      //     default:
-      //       break;
-      //   }
-      // });
-
-      await consumeAndResume("video");
-      await consumeAndResume("audio");
+      await room.connect(tokenData.url || livekitURL, tokenData.token);
+    } catch (e) {
+      console.error("LiveKit subscribe error:", e);
     }
-
-    // Clear the srcobject so we load our stream when received
-    const leftVideo = this.HTMLInterface.getVideoEl();
-    leftVideo.srcObject = null;
-    await connectSocket();
-    // --- get capabilities --
-    const data = await sendRequest("getRouterRtpCapabilities", {});
-    console.log("getRouterRtpCapabilities:", data);
-    await loadDevice(data);
-    await subscribe();
   };
 
   stopPublishingLocalStream = async () => {
@@ -1613,14 +1345,11 @@ export class App extends React.Component<AppProps, AppState> {
     });
     this.publisherConns = {};
     this.isLocalStreamAFile = false;
-    if (this.mediasoupPubSocket) {
-      this.mediasoupPubSocket.close();
-      this.mediasoupPubSocket = null;
+    if (this.livekitRoom) {
+      this.livekitRoom.disconnect();
+      this.livekitRoom = null;
     }
-    if (this.mediasoupSubSocket) {
-      this.mediasoupSubSocket.close();
-      this.mediasoupSubSocket = null;
-    }
+    this.livekitToken = undefined;
   };
 
   setupRTCConnections = async () => {
@@ -1640,14 +1369,15 @@ export class App extends React.Component<AppProps, AppState> {
         prefix = "fileshare://";
       }
       const unprefixed = this.state.roomMedia.replace(prefix, "");
-      const mediasoupURL = unprefixed.split("@")[1];
-      if (sharer?.id === selfId && this.mediasoupPubSocket == null) {
-        await this.publishMediasoup(mediasoupURL);
-      }
-      // If we're not sharing a file, also start watching
-      // avoid duplicate watching if the socket already exists
-      if (!this.isLocalStreamAFile && this.mediasoupSubSocket == null) {
-        await this.subscribeMediasoup(mediasoupURL);
+      const livekitURL = unprefixed.split("@")[1];
+      if (sharer?.id === selfId) {
+        if (this.livekitToken) {
+          await this.publishLiveKit(livekitURL, this.livekitToken);
+        }
+      } else {
+        if (!this.isLocalStreamAFile && this.livekitRoom == null) {
+          await this.subscribeLiveKit(livekitURL);
+        }
       }
       return;
     }

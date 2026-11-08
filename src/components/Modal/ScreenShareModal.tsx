@@ -8,7 +8,7 @@ export const ScreenShareModal = ({
   startScreenShare,
 }: {
   closeModal: () => void;
-  startScreenShare: (useMediaSoup: boolean) => void;
+  startScreenShare: (useRelay: boolean) => void;
 }) => {
   const { isSubscriber } = useContext(MetadataContext);
   const subscribeButton = <SubscribeButton />;
