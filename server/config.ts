@@ -56,7 +56,9 @@ const defaults = {
   DISCORD_ADMIN_BOT_TOKEN: "", // Optional, for Discord bot to set subscriber roles
   DISCORD_ADMIN_BOT_SERVER_ID: "708181150220156929", // Optional, ID of the Discord server
   DISCORD_ADMIN_BOT_SUB_ROLE_ID: "722202622345609246", // Optional, ID of subscriber role
-  MEDIASOUP_SERVER: "", // Optional, URL of the MediaSoup server to broadcast to for larger screen/file shares
+  LIVEKIT_URL: "", // Optional, WebSocket URL of the LiveKit server to broadcast to for larger screen/file shares
+  LIVEKIT_API_KEY: "", // Optional, LiveKit API key
+  LIVEKIT_API_SECRET: "", // Optional, LiveKit API secret
   TWITCH_PROXY_PATH: "", // Optional, URL of the server that can proxy twitch HLS stream playlists and segments
   VBROWSER_ADMIN_KEY: "", // Optional, the key to hit admin endpoints on the vbrowser
   OPENSUBTITLES_KEY: "", // Optional, key to OpenSubtitles API

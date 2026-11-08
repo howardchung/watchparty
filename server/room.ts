@@ -15,6 +15,7 @@ import {
 import twitch from "twitch-m3u8";
 import { type QueryResult } from "pg";
 import { Docker } from "./vm/docker.ts";
+import { AccessToken } from "livekit-server-sdk";
 
 // Stateless pool instance to use for VMs if full management isn't needed
 let stateless: Docker | undefined = undefined;
@@ -334,6 +335,16 @@ export class Room {
       });
       on("CMD:userMute", (data: unknown) => this.setUserMute(socket, data));
       on("CMD:leaveScreenShare", () => this.leaveScreenSharing(socket));
+      on("CMD:getLiveKitToken", async (data: unknown, callback: unknown) => {
+        if (typeof callback === "function") {
+          try {
+            const token = await this.generateLiveKitToken(socket.clientId, false);
+            callback(null, { token, url: config.LIVEKIT_URL });
+          } catch (e: any) {
+            callback(e.message);
+          }
+        }
+      });
       on("CMD:startVBrowser", (data: unknown) => {
         validateLock() && this.startVBrowser(socket, data);
       });
@@ -1017,8 +1028,33 @@ export class Room {
     this.io.of(this.roomId).emit("roster", this.getRosterForApp());
   };
 
-  private joinScreenSharing = (socket: Socket, raw: unknown) => {
-    const data = raw as { file: boolean; mediasoup?: boolean };
+  private getLiveKitRoomName = () => {
+    return "wp-" + this.roomId.replace(/[^a-zA-Z0-9_-]/g, "");
+  };
+
+  private generateLiveKitToken = async (
+    identity: string,
+    canPublish: boolean,
+  ): Promise<string> => {
+    if (!config.LIVEKIT_API_KEY || !config.LIVEKIT_API_SECRET) {
+      throw new Error("LiveKit is not configured");
+    }
+    const roomName = this.getLiveKitRoomName();
+    const at = new AccessToken(config.LIVEKIT_API_KEY, config.LIVEKIT_API_SECRET, {
+      identity,
+      ttl: "6h",
+    });
+    at.addGrant({
+      roomJoin: true,
+      room: roomName,
+      canPublish,
+      canSubscribe: true,
+    });
+    return at.toJwt();
+  };
+
+  private joinScreenSharing = async (socket: Socket, raw: unknown) => {
+    const data = raw as { file: boolean; livekit?: boolean; mediasoup?: boolean };
     if (!data) {
       return;
     }
@@ -1031,21 +1067,32 @@ export class Room {
       );
       return;
     }
-    let mediasoupSuffix = "";
-    if (data?.mediasoup) {
-      // TODO validate the user has permissions to ask for a mediasoup
-      // TODO set up the room on the remote server rather than letting the remote server create
-      mediasoupSuffix =
-        "@" + config.MEDIASOUP_SERVER + "/" + crypto.randomUUID();
-      redisCount("mediasoupStarts");
+    const useRelay = Boolean(data?.livekit ?? data?.mediasoup);
+    let relaySuffix = "";
+    if (useRelay) {
+      // TODO validate the user is a subscriber
+      if (config.LIVEKIT_URL && config.LIVEKIT_API_KEY && config.LIVEKIT_API_SECRET) {
+        try {
+          const token = await this.generateLiveKitToken(socket.clientId, true);
+          socket.emit("REC:livekitToken", {
+            token,
+            url: config.LIVEKIT_URL,
+            isPublisher: true,
+          });
+          relaySuffix = "@" + config.LIVEKIT_URL;
+          redisCount("livekitStarts");
+        } catch (e: any) {
+          console.warn("Failed to generate LiveKit publisher token:", e);
+        }
+      }
     }
     if (data && data.file) {
-      this.cmdHost(socket, "fileshare://" + socket.clientId + mediasoupSuffix);
+      this.cmdHost(socket, "fileshare://" + socket.clientId + relaySuffix);
       redisCount("fileShareStarts");
     } else {
       this.cmdHost(
         socket,
-        "screenshare://" + socket.clientId + mediasoupSuffix,
+        "screenshare://" + socket.clientId + relaySuffix,
       );
       redisCount("screenShareStarts");
     }
