@@ -18,15 +18,15 @@ Rooms
 ----
 - By default, rooms are temporary and expire after one day of inactivity.
 - Users have the option of making a room permanent, which can be undone at any time.
-- We do not keep logs of the content that users watch.
+- We do not log the content/URL history of rooms (aside from the chat message indication)
 
 Personal Information
 ----
-- You are not required to register to use the service, but you have the option to sign in with an email or authentication provider, which will be used to display your name and picture in the rooms you join.
+- You are not required to register to use the service (except for VBrowser requests), but you have the option to sign in with an email or authentication provider, which will be used to display your name and picture in the rooms you join.
 - If you provide this information, we may use it to contact you regarding your use of the service, or to link your account to a subscription.
 - We do not sell personal information to third parties.
-- You have the right to request deletion of your user data, in accordance with various laws governing data protection. Please contact support@watchparty.me to request user data deletion.
-- Payment information is handled by providers such as Stripe. We do not collect or access financial information directly.
+- You can delete your account and user data associated with it at any time via the Delete Account button. This will permanently delete any rooms and linked services for that account.
+- Payment information is handled by Stripe. We do not collect or access financial information directly.
 
 Cookies
 ----
@@ -35,7 +35,7 @@ Cookies
 Virtual Browsers
 ----
 - Virtual machines are recycled after each session ends and any data on them is destroyed.
-- Your commands are encrypted while in-transit to the virtual machine.
+- Your commands are encrypted while in-transit to the virtual machine
 
 YouTube
 ----
@@ -55,7 +55,7 @@ Terms of Service
 ====
 By using this service you agree to the following terms:
 - You are over 13 years of age
-- Your use of the service may be terminated if you are found to be sharing illegal or infringing content
+- Your use of the service may be terminated if you are found to be sharing illegal or infringing content and we receive a notice under the DMCA.
 - The service provides no guarantee of uptime or availability
 - You use the service at your own risk of encountering objectionable content, as we do not actively moderate rooms unless content is found to be illegal or infringing
 
@@ -91,11 +91,11 @@ VBrowser sessions are also limited to a maximum of 3 hours for free users, and 2
 
 Does everyone in the room need to be a subscriber to get the benefits?
 ----
-No, only the person who created the VBrowser needs to be.
+No, only the person who created the VBrowser, room, or is sharing the content needs to be.
 
 How do I access sites that have a "not available" message in the VBrowser?
 ----
-Some sites may block traffic that's detected as coming from the cloud. You may need to install a VPN extension inside the virtual browser.
+Some sites may block traffic from cloud providers. You may need to install a VPN extension inside the virtual browser, such as Hola.
 
 How come I'm not getting any audio when screensharing?
 ----
