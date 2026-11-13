@@ -83,6 +83,21 @@ export class SubtitleModal extends React.Component<{
     });
     reader.readAsText(file);
   };
+
+  searchSubtitles = async () => {
+    if (!this.props.haveLock()) {
+      return;
+    }
+    this.setState({ loading: true });
+    const resp = await fetch(
+      serverPath +
+        "/searchSubtitles?title=" +
+        this.state.titleQuery,
+    );
+    const json = await resp.json();
+    this.setState({ searchResults: json });
+    this.setState({ loading: false });
+  };
   render() {
     const { closeModal } = this.props;
     return (
@@ -136,51 +151,22 @@ export class SubtitleModal extends React.Component<{
             <TextInput
               value={this.state.titleQuery}
               onChange={(e) => this.setState({ titleQuery: e.target.value })}
+              onKeyDown={(e) => e.key === "Enter" && this.searchSubtitles()}
               disabled={!this.props.haveLock()}
-              rightSectionWidth={230}
+              rightSectionWidth={85}
               rightSection={
-                <div style={{ display: "flex", gap: "4px" }}>
-                  <Button
-                    loading={this.state.loading}
-                    color="green"
-                    disabled={!this.props.haveLock()}
-                    onClick={async () => {
-                      this.setState({ loading: true });
-                      const resp = await fetch(
-                        serverPath +
-                          "/searchSubtitles?title=" +
-                          this.state.titleQuery,
-                      );
-                      const json = await resp.json();
-                      this.setState({ searchResults: json });
-                      this.setState({ loading: false });
-                    }}
-                    leftSection={<IconSearch />}
-                  >
-                    By title
-                  </Button>
-                  {/* <Button
-                    loading={this.state.loading}
-                    color="blue"
-                    disabled={!this.props.haveLock()}
-                    onClick={async () => {
-                      this.setState({ loading: true });
-                      const resp = await fetch(
-                        serverPath +
-                          "/searchSubtitles?url=" +
-                          this.props.roomMedia,
-                      );
-                      const json = await resp.json();
-                      this.setState({ searchResults: json });
-                      this.setState({ loading: false });
-                    }}
-                    leftSection={<IconSearch />}
-                  >
-                    By hash
-                  </Button> */}
-                </div>
+                <Button
+                  size="compact-xs"
+                  loading={this.state.loading}
+                  color="green"
+                  disabled={!this.props.haveLock()}
+                  onClick={this.searchSubtitles}
+                  leftSection={<IconSearch size={14} />}
+                >
+                  By title
+                </Button>
               }
-            ></TextInput>
+            />
             <div
               style={{ display: "flex", flexDirection: "column", gap: "4px" }}
             >
