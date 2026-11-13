@@ -1,0 +1,43 @@
+{
+  "name": "speed-limiter",
+  "version": "1.0.2",
+  "description": "Throttle the speed of streams",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm run test:lint && npm run test:tape",
+    "test:lint": "standard",
+    "test:tape": "tape test/*.js"
+  },
+  "dependencies": {
+    "limiter": "^1.1.5",
+    "streamx": "^2.10.3"
+  },
+  "devDependencies": {
+    "async": "^3.2.0",
+    "null-duplex-stream": "^0.0.3",
+    "random-bytes-readable-stream": "^2.1.0",
+    "speedometer": "^1.1.0",
+    "standard": "^16.0.3",
+    "tape": "^5.2.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alxhotel/speed-limiter.git"
+  },
+  "keywords": [
+    "throttle",
+    "stream",
+    "speed",
+    "limiter",
+    "bandwidth",
+    "limit",
+    "rate",
+    "chunk"
+  ],
+  "author": "Alex <alxmorais8@msn.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/alxhotel/speed-limiter/issues"
+  },
+  "homepage": "https://github.com/alxhotel/speed-limiter#readme"
+}

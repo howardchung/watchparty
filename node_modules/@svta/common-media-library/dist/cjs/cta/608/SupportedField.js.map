@@ -1,0 +1,1 @@
+{"version":3,"file":"SupportedField.js","sourceRoot":"","sources":["../../../../src/cta/608/SupportedField.ts"],"names":[],"mappings":"","sourcesContent":["/**\n * SupportedField\n *\n * @group CTA-608\n * @beta\n */\nexport type SupportedField = 1 | 3;\n"]}

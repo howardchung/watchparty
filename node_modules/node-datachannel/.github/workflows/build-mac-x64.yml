@@ -1,0 +1,40 @@
+name: Build - Mac x64
+
+on:
+  workflow_dispatch:
+  # push:
+  #   tags:
+  #     - v*
+
+env:
+  ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+
+jobs:
+  build-macos:
+    runs-on: macos-13
+    strategy:
+      matrix:
+        node-version: [16.x]
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install OpenSSL
+        run: HOMEBREW_NO_INSTALL_CLEANUP=1 brew reinstall openssl@1.1
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Build
+        run: npm install --build-from-source
+        env:
+          CI: true
+          OPENSSL_ROOT_DIR: /usr/local/opt/openssl@1.1
+          OPENSSL_LIBRARIES: /usr/local/opt/openssl@1.1/lib
+      - name: Test
+        run: npm run test
+        env:
+          CI: true
+      - name: Upload
+        run: node_modules/.bin/prebuild -r napi --upload -u ${{ secrets.GITHUB_TOKEN }}
+        env:
+          CI: true

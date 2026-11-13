@@ -1,0 +1,1 @@
+{"version":3,"file":"CMCD_HEADERS.js","sourceRoot":"","sources":["../../src/cmcd/CMCD_HEADERS.ts"],"names":[],"mappings":"AAAA;;;;;;GAMG;AACH,MAAM,CAAC,MAAM,YAAY,GAAG,SAAS,CAAC","sourcesContent":["/**\n * CMCD `headers` transmission mode.\n *\n * @group CMCD\n *\n * @beta\n */\nexport const CMCD_HEADERS = 'headers';\n"]}

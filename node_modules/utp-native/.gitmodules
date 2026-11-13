@@ -1,0 +1,3 @@
+[submodule "libutp"]
+	path = deps/libutp
+	url = git://github.com/mafintosh/libutp.git

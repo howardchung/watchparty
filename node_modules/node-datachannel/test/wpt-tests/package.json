@@ -1,0 +1,19 @@
+{
+  "name": "wpt-tests",
+  "version": "1.0.0",
+  "description": "git clone https://github.com/web-platform-tests/wpt.git cd wpt ./wpt make-hosts-file | sudo tee -a /etc/hosts ./wpt serve",
+  "type": "module",
+  "main": "wpt.js",
+  "scripts": {
+    "test": "npm run run:wpt & (sleep 8 && (npm run run:test | tee last-test-results.md) )",
+    "run:wpt": "cd wpt && ./wpt serve",
+    "run:test": "node index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "jsdom": "^24.1.0",
+    "puppeteer": "^22.12.1"
+  }
+}

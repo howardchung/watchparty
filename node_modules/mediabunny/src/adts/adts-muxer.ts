@@ -1,0 +1,129 @@
+/*!
+ * Copyright (c) 2026-present, Vanilagy and contributors
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+import { buildAdtsHeaderTemplate, parseAacAudioSpecificConfig, writeAdtsFrameLength } from '../../shared/aac-misc';
+import { Bitstream } from '../../shared/bitstream';
+import { validateAudioChunkMetadata } from '../codec';
+import { Id3V2Writer } from '../id3';
+import { metadataTagsAreEmpty } from '../metadata';
+import { assert, toUint8Array } from '../misc';
+import { Muxer } from '../muxer';
+import { Output, OutputAudioTrack } from '../output';
+import { AdtsOutputFormat } from '../output-format';
+import { EncodedPacket } from '../packet';
+import { Writer } from '../writer';
+
+export class AdtsMuxer extends Muxer {
+	private format: AdtsOutputFormat;
+	private writer!: Writer;
+	private header: Uint8Array | null = null;
+	private headerBitstream: Bitstream | null = null;
+	private inputIsAdts: boolean | null = null;
+
+	constructor(output: Output, format: AdtsOutputFormat) {
+		super(output);
+
+		this.format = format;
+	}
+
+	async start() {
+		const release = await this.mutex.acquire();
+
+		this.writer = await this.output._getRootWriter(true);
+
+		if (!metadataTagsAreEmpty(this.output._metadataTags)) {
+			const id3Writer = new Id3V2Writer(this.writer);
+			id3Writer.writeId3V2Tag(this.output._metadataTags);
+		}
+
+		release();
+	}
+
+	async getMimeType() {
+		return 'audio/aac';
+	}
+
+	async addEncodedVideoPacket() {
+		throw new Error('ADTS does not support video.');
+	}
+
+	async addEncodedAudioPacket(
+		track: OutputAudioTrack,
+		packet: EncodedPacket,
+		meta?: EncodedAudioChunkMetadata,
+	) {
+		const release = await this.mutex.acquire();
+
+		try {
+			this.validateTimestamp(track, packet.timestamp, packet.type === 'key');
+
+			// First packet - determine input format from metadata
+			if (this.inputIsAdts === null) {
+				validateAudioChunkMetadata(meta, track.source._codec);
+
+				const description = meta?.decoderConfig?.description;
+
+				// Follows from the Mediabunny Codec Registry:
+				this.inputIsAdts = !description;
+
+				if (!this.inputIsAdts) {
+					const config = parseAacAudioSpecificConfig(toUint8Array(description!));
+					const template = buildAdtsHeaderTemplate(config);
+					this.header = template.header;
+					this.headerBitstream = template.bitstream;
+				}
+			}
+
+			if (this.inputIsAdts) {
+				// Packets are already ADTS frames, write them directly
+				const startPos = this.writer.getPos();
+				this.writer.write(packet.data);
+
+				if (this.format._options.onFrame) {
+					this.format._options.onFrame(packet.data, startPos);
+				}
+			} else {
+				assert(this.header);
+
+				// Packets are raw AAC, we gotta turn it into ADTS
+				const frameLength = packet.data.byteLength + this.header.byteLength;
+				writeAdtsFrameLength(this.headerBitstream!, frameLength);
+
+				const startPos = this.writer.getPos();
+				this.writer.write(this.header);
+				this.writer.write(packet.data);
+
+				if (this.format._options.onFrame) {
+					const frameBytes = new Uint8Array(frameLength);
+					frameBytes.set(this.header, 0);
+					frameBytes.set(packet.data, this.header.byteLength);
+
+					this.format._options.onFrame(frameBytes, startPos);
+				}
+			}
+
+			await this.writer.flush();
+		} finally {
+			release();
+		}
+	}
+
+	async addSubtitleCue() {
+		throw new Error('ADTS does not support subtitles.');
+	}
+
+	async finalize() {
+		const release = await this.mutex.acquire(); // Required so that finalize() can't resolve before other calls
+
+		if (this.inputIsAdts === null) {
+			throw new Error('Cannot finalize an empty ADTS file: not a single packet was added.');
+		}
+
+		release();
+	}
+}

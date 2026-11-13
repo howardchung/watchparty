@@ -1,0 +1,1 @@
+{"version":3,"file":"CMSD_STATIC.js","sourceRoot":"","sources":["../../../src/cmsd/CMSD_STATIC.ts"],"names":[],"mappings":";;;AAAA;;;;;;GAMG;AACU,QAAA,WAAW,GAAG,aAAa,CAAC","sourcesContent":["/**\n * CMSD static header name.\n *\n * @group CMSD\n *\n * @beta\n */\nexport const CMSD_STATIC = 'CMSD-Static';\n"]}
