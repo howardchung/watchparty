@@ -1,0 +1,27 @@
+{
+    "name": "@types/magnet-uri",
+    "version": "5.1.5",
+    "description": "TypeScript definitions for magnet-uri",
+    "homepage": "https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/magnet-uri",
+    "license": "MIT",
+    "contributors": [
+        {
+            "name": "Tomasz Łaziuk",
+            "githubUsername": "tlaziuk",
+            "url": "https://github.com/tlaziuk"
+        }
+    ],
+    "main": "",
+    "types": "index.d.ts",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/DefinitelyTyped/DefinitelyTyped.git",
+        "directory": "types/magnet-uri"
+    },
+    "scripts": {},
+    "dependencies": {
+        "@types/node": "*"
+    },
+    "typesPublisherContentHash": "b7eb2d591608573c9110397ef173aa4cb3db9247be35fe6bb9c55fc54c369d8f",
+    "typeScriptVersion": "4.5"
+}

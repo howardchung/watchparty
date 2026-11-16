@@ -1,0 +1,3203 @@
+/*!
+ * Copyright (c) 2026-present, Vanilagy and contributors
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+import { buildAacAudioSpecificConfig, parseAacAudioSpecificConfig } from '../shared/aac-misc';
+import {
+	AUDIO_CODECS,
+	AudioCodec,
+	extractVideoCodecString,
+	MediaCodec,
+	parsePcmCodec,
+	PCM_AUDIO_CODECS,
+	PcmAudioCodec,
+	SUBTITLE_CODECS,
+	SubtitleCodec,
+	VIDEO_CODECS,
+	VideoCodec,
+} from './codec';
+import { OutputAudioTrack, OutputSubtitleTrack, OutputTrack, OutputVideoTrack } from './output';
+import {
+	assert,
+	assertNever,
+	binarySearchLessOrEqual,
+	CallSerializer,
+	clamp,
+	clearIntervalUnthrottled,
+	floorToDivisor,
+	isCodecReclaimedError,
+	isThenable,
+	last,
+	missingWebCodecsClassMessage,
+	promiseWithResolvers,
+	roundToDivisor,
+	setInt24,
+	setIntervalUnthrottled,
+	setUint24,
+	toUint8Array,
+	UnthrottledTimerHandle,
+	wait,
+} from './misc';
+import { Muxer } from './muxer';
+import { SubtitleParser } from './subtitles';
+import { toAlaw, toUlaw } from './pcm';
+import {
+	CustomVideoEncoder,
+	CustomAudioEncoder,
+	customVideoEncoders,
+	customAudioEncoders,
+} from './custom-coder';
+import { EncodedPacket, EncodedPacketSideData, PacketType } from './packet';
+import {
+	AudioSample,
+	audioSampleToInterleavedFormat,
+	toInterleavedAudioFormat,
+	VideoSample,
+	VideoSamplePixelFormat,
+} from './sample';
+import {
+	AudioEncodingConfig,
+	buildAudioEncoderConfig,
+	buildQuantizerEncodeOptions,
+	buildVideoEncoderConfigs,
+	resolveQuality,
+	validateAudioEncodingConfig,
+	validateVideoEncodingConfig,
+	VideoEncoderConfigCandidate,
+	VideoEncodingConfig,
+} from './encode';
+import { AudioResampler } from './resample';
+import {
+	determineVideoPacketType,
+	extractAv1CodecInfoFromPacket,
+	extractAvcDecoderConfigurationRecord,
+	extractHevcDecoderConfigurationRecord,
+	extractVp9CodecInfoFromPacket,
+} from './codec-data';
+import { Logging } from './logging';
+
+/**
+ * Base class for media sources. Media sources are used to add media samples to an output file.
+ * @group Media sources
+ * @public
+ */
+export abstract class MediaSource {
+	/** @internal */
+	abstract readonly _codec: MediaCodec;
+	/** @internal */
+	_connectedTrack: OutputTrack | null = null;
+	/** @internal */
+	_closingPromise: Promise<void> | null = null;
+	/** @internal */
+	_closed = false;
+	/**
+	 * Set when the encoder is configured with a bitrate.
+	 * @internal
+	 */
+	_nominalBitrate: number | null = null;
+
+	/** @internal */
+	_ensureValidAdd() {
+		if (!this._connectedTrack) {
+			throw new Error('Source is not connected to an output track.');
+		}
+
+		if (this._connectedTrack.output.state === 'canceled') {
+			throw new Error('Output has been canceled.');
+		}
+
+		if (this._connectedTrack.output.state === 'finalizing' || this._connectedTrack.output.state === 'finalized') {
+			throw new Error('Output has been finalized.');
+		}
+
+		if (this._connectedTrack.output.state === 'pending') {
+			throw new Error('Output has not started.');
+		}
+
+		if (this._closed) {
+			throw new Error('Source is closed.');
+		}
+	}
+
+	/** @internal */
+	async _start() {}
+	/** @internal */
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	async _flushAndClose(forceClose: boolean) {}
+
+	/**
+	 * Closes this source. This prevents future samples from being added and signals to the output file that no further
+	 * samples will come in for this track. Calling `.close()` is optional but recommended after adding the
+	 * last sample - for improved performance and reduced memory usage.
+	 */
+	close() {
+		if (this._closingPromise) {
+			return;
+		}
+
+		const connectedTrack = this._connectedTrack;
+
+		if (!connectedTrack) {
+			throw new Error('Cannot call close without connecting the source to an output track.');
+		}
+
+		if (connectedTrack.output.state === 'pending') {
+			throw new Error('Cannot call close before output has been started.');
+		}
+
+		this._closingPromise = (async () => {
+			await this._flushAndClose(false);
+
+			this._closed = true;
+
+			if (connectedTrack.output.state === 'finalizing' || connectedTrack.output.state === 'finalized') {
+				return;
+			}
+
+			connectedTrack.output._muxer.onTrackClose(connectedTrack);
+		})();
+	}
+
+	/** @internal */
+	async _flushOrWaitForOngoingClose(forceClose: boolean) {
+		return this._closingPromise ??= (async () => {
+			await this._flushAndClose(forceClose);
+			this._closed = true;
+		})();
+	}
+}
+
+/**
+ * Base class for video sources - sources for video tracks.
+ * @group Media sources
+ * @public
+ */
+export abstract class VideoSource extends MediaSource {
+	/** @internal */
+	declare _connectedTrack: OutputVideoTrack | null;
+	/** @internal */
+	override readonly _codec: VideoCodec;
+
+	/** Internal constructor. */
+	constructor(codec: VideoCodec) {
+		super();
+
+		if (!VIDEO_CODECS.includes(codec)) {
+			throw new TypeError(`Invalid video codec '${codec}'. Must be one of: ${VIDEO_CODECS.join(', ')}.`);
+		}
+
+		this._codec = codec;
+	}
+}
+
+const maybeEnsureIsKeyPacket = (track: OutputVideoTrack, packet: EncodedPacket) => {
+	if (track.metadata.hasOnlyKeyPackets && packet.type !== 'key') {
+		throw new Error('Cannot add non-key packets to a hasOnlyKeyPackets video track.');
+	}
+};
+
+/**
+ * The most basic video source; can be used to directly pipe encoded packets into the output file.
+ * @group Media sources
+ * @public
+ */
+export class EncodedVideoPacketSource extends VideoSource {
+	/** Creates a new {@link EncodedVideoPacketSource} whose packets are encoded using `codec`. */
+	constructor(codec: VideoCodec) {
+		super(codec);
+	}
+
+	/**
+	 * Adds an encoded packet to the output video track. Packets must be added in *decode order*, while a packet's
+	 * timestamp must be its *presentation timestamp*. B-frames are handled automatically.
+	 *
+	 * @param meta - Additional metadata from the encoder. You should pass this for the first call, including a valid
+	 * decoder config.
+	 *
+	 * @returns A Promise that resolves once the output is ready to receive more samples. You should await this Promise
+	 * to respect writer and encoder backpressure.
+	 */
+	add(packet: EncodedPacket, meta?: EncodedVideoChunkMetadata) {
+		if (!(packet instanceof EncodedPacket)) {
+			throw new TypeError('packet must be an EncodedPacket.');
+		}
+		if (packet.isMetadataOnly) {
+			throw new TypeError('Metadata-only packets cannot be added.');
+		}
+		if (meta !== undefined && (!meta || typeof meta !== 'object')) {
+			throw new TypeError('meta, when provided, must be an object.');
+		}
+
+		this._ensureValidAdd();
+
+		maybeEnsureIsKeyPacket(this._connectedTrack!, packet);
+		return this._connectedTrack!.output._muxer.addEncodedVideoPacket(this._connectedTrack!, packet, meta);
+	}
+}
+
+class VideoEncoderWrapper {
+	private ensureEncoderPromise: Promise<void> | null = null;
+	private encoderInitialized = false;
+	private encoder: VideoEncoder | null = null;
+	private encoderConfig: VideoEncoderConfig | null = null;
+	// Set when the browser closed our encoders due to inactivity; they'll be recreated on the next encode
+	private encodersReclaimed = false;
+	private muxer: Muxer | null = null;
+	private lastMultipleOfKeyFrameInterval = -1;
+	private emittedEncoderPackets = 0;
+
+	// Tracks the input dimensions of the first frame
+	private codedWidth: number | null = null;
+	private codedHeight: number | null = null;
+	// Tracks the output dimensions of the first frame (used to lock dimensions for fill/contain/cover)
+	private outputWidth: number | null = null;
+	private outputHeight: number | null = null;
+
+	// Frame rate normalization state
+	private frameRateLastSample: VideoSample | null = null;
+	private frameRateLastTimestamp: number | null = null;
+	private frameRateLastEndTimestamp: number | null = null;
+
+	// VideoEncoder converts everything to microseconds, so we need to do some bookkeeping to restore the original
+	// timing information
+	private preciseTimings: {
+		microsecondTimestamp: number;
+		timestamp: number;
+		duration: number;
+		timestampIsValid: boolean;
+		durationIsValid: boolean;
+	}[] = [];
+
+	private customEncoder: CustomVideoEncoder | null = null;
+	private customEncoderCallSerializer = new CallSerializer();
+	private customEncoderQueueSize = 0;
+
+	// Set when the encoder uses quantizer-based rate control; carries the quantizer value applied to each frame
+	private defaultEncodeOptions: VideoEncoderEncodeOptions = {};
+
+	// Alpha stuff
+	private alphaEncoder: VideoEncoder | null = null;
+	private splitter: ColorAlphaSplitter | null = null;
+	private splitterCreationFailed = false;
+	private alphaFrameQueue: (VideoFrame | null)[] = [];
+
+	/**
+	 * Encoders typically throw their errors "out of band", meaning asynchronously in some other execution context.
+	 * However, we want to surface these errors to the user within the normal control flow, so they don't go uncaught.
+	 * So, we keep track of the encoder error and throw it as soon as we get the chance.
+	 */
+	private error: unknown = null;
+	private errorSet = false;
+
+	private setError(error: unknown) {
+		if (!this.errorSet) {
+			this.error = error;
+			this.errorSet = true;
+		}
+	}
+
+	private lastMuxerPromise: Promise<void> = Promise.resolve();
+	private closed = false;
+
+	constructor(private source: VideoSource, private encodingConfig: VideoEncodingConfig) {}
+
+	async add(videoSample: VideoSample, shouldClose: boolean, encodeOptions?: VideoEncoderEncodeOptions) {
+		const originalSample = videoSample;
+
+		try {
+			this.checkForEncoderError();
+			this.source._ensureValidAdd();
+
+			const config = this.encodingConfig;
+			const sizeChangeBehavior = config.sizeChangeBehavior ?? 'deny';
+			let isSizeChange = false;
+
+			// Ensure video sample size remains constant or handle the change
+			if (this.codedWidth !== null && this.codedHeight !== null) {
+				if (videoSample.codedWidth !== this.codedWidth || videoSample.codedHeight !== this.codedHeight) {
+					isSizeChange = true;
+					if (sizeChangeBehavior === 'deny') {
+						throw new Error(
+							`Video sample size must remain constant. Expected ${this.codedWidth}x${this.codedHeight},`
+							+ ` got ${videoSample.codedWidth}x${videoSample.codedHeight}. To allow the sample size to`
+							+ ` change over time, set \`sizeChangeBehavior\` to a value other than 'deny' in the`
+							+ ` encoding options.`,
+						);
+					}
+				}
+			} else {
+				this.codedWidth = videoSample.codedWidth;
+				this.codedHeight = videoSample.codedHeight;
+			}
+
+			// Determine if we need to apply transformations via canvas
+			const hasTransformConfig = config.transform?.width !== undefined
+				|| config.transform?.height !== undefined
+				|| config.transform?.rotate !== undefined
+				|| config.transform?.flip !== undefined
+				|| config.transform?.crop !== undefined
+				|| config.transform?.force === true;
+			const needsTransform = hasTransformConfig || (isSizeChange && sizeChangeBehavior !== 'passThrough');
+
+			if (needsTransform) {
+				let targetWidth = config.transform?.width;
+				let targetHeight = config.transform?.height;
+				let appliedFit: 'fill' | 'contain' | 'cover' = config.transform?.fit ?? 'fill';
+
+				// If the size changed and behavior is fill/contain/cover, lock to the original output dimensions
+				if (isSizeChange && sizeChangeBehavior !== 'passThrough') {
+					assert(this.outputWidth);
+					assert(this.outputHeight);
+					assert(sizeChangeBehavior !== 'deny');
+
+					targetWidth = this.outputWidth!;
+					targetHeight = this.outputHeight!;
+					appliedFit = sizeChangeBehavior;
+				}
+
+				const transformed = await videoSample.transform({
+					width: targetWidth,
+					height: targetHeight,
+					roundDimensionsTo: 2,
+					crop: config.transform?.crop,
+					rotate: config.transform?.rotate,
+					flip: config.transform?.flip,
+					fit: appliedFit,
+					alpha: config.alpha,
+				});
+
+				// Save the output dimensions of the first frame
+				if (this.outputWidth === null || this.outputHeight === null) {
+					this.outputWidth = transformed.displayWidth;
+					this.outputHeight = transformed.displayHeight;
+				}
+
+				if (shouldClose) {
+					videoSample.close();
+				}
+
+				videoSample = transformed;
+				shouldClose = true;
+			} else {
+				// If no canvas is needed, we still need to record the output dimensions for the first frame
+				if (this.outputWidth === null || this.outputHeight === null) {
+					this.outputWidth = videoSample.codedWidth;
+					this.outputHeight = videoSample.codedHeight;
+				}
+			}
+
+			const frameRate = config.transform?.frameRate;
+			if (frameRate !== undefined) {
+				// Apply frame rate normalization
+				const originalEndTimestamp = videoSample.timestamp + videoSample.duration;
+				const alignedTimestamp = floorToDivisor(videoSample.timestamp, frameRate);
+
+				if (this.frameRateLastSample !== null) {
+					if (alignedTimestamp <= this.frameRateLastTimestamp!) {
+						// Same frame rate slot, replace stored sample with the newer one
+						this.frameRateLastSample.close();
+						this.frameRateLastSample = videoSample.clone();
+						this.frameRateLastEndTimestamp = originalEndTimestamp;
+						return;
+					} else {
+						// Pad the gap by repeating the previous frame
+						await this.padFrameRate(alignedTimestamp, encodeOptions);
+					}
+				}
+
+				// Clone if the sample is still the user's, to avoid mutating externally-owned data
+				if (videoSample === originalSample) {
+					videoSample = videoSample.clone();
+					shouldClose = true;
+				}
+
+				videoSample.setTimestamp(alignedTimestamp);
+				videoSample.setDuration(1 / frameRate);
+
+				this.frameRateLastSample?.close();
+				this.frameRateLastSample = videoSample.clone();
+				this.frameRateLastTimestamp = alignedTimestamp;
+				this.frameRateLastEndTimestamp = originalEndTimestamp;
+			}
+
+			await this.processAndEncode(videoSample, encodeOptions);
+		} finally {
+			if (shouldClose) {
+				videoSample.close();
+			}
+		}
+	}
+
+	/**
+	 * Runs the process function (if any) and encodes the resulting samples.
+	 */
+	private async processAndEncode(
+		videoSample: VideoSample,
+		encodeOptions?: VideoEncoderEncodeOptions,
+	) {
+		const config = this.encodingConfig;
+		let samplesToEncode: VideoSample[];
+
+		// Apply the user-defined process function, if any
+		if (config.transform?.process) {
+			let processed = config.transform.process(videoSample);
+			if (isThenable(processed)) {
+				processed = await processed;
+			}
+
+			if (processed === null) {
+				return;
+			}
+
+			if (!Array.isArray(processed)) {
+				processed = [processed];
+			}
+
+			const mappedSamples: VideoSample[] = [];
+
+			try {
+				for (const x of processed) {
+					if (x instanceof VideoSample) {
+						mappedSamples.push(x);
+					} else if (typeof VideoFrame !== 'undefined' && x instanceof VideoFrame) {
+						mappedSamples.push(new VideoSample(x));
+					} else {
+						// Calling the VideoSample constructor here will automatically handle input validation for us
+						// (it throws for any non-legal argument).
+						mappedSamples.push(new VideoSample(x as CanvasImageSource, {
+							timestamp: videoSample.timestamp,
+							duration: videoSample.duration,
+						}));
+					}
+				}
+			} catch (error) {
+				// One of the returned elements was invalid; close everything closable so no resource is leaked
+				for (const sample of mappedSamples) {
+					if (sample !== videoSample) {
+						sample.close();
+					}
+				}
+				for (const x of processed) {
+					if (x instanceof VideoSample && x !== videoSample) {
+						x.close();
+					} else if (typeof VideoFrame !== 'undefined' && x instanceof VideoFrame) {
+						x.close();
+					}
+				}
+
+				throw error;
+			}
+
+			samplesToEncode = mappedSamples;
+		} else {
+			samplesToEncode = [videoSample];
+		}
+
+		try {
+			for (const sampleToEncode of samplesToEncode) {
+				if (!this.encoderInitialized) {
+					if (!this.ensureEncoderPromise) {
+						this.ensureEncoder(sampleToEncode);
+					}
+
+					// No, this "if" statement is not useless. Sometimes, the above call to
+					// `ensureEncoder` might have synchronously completed and the encoder is
+					// already initialized. In this case, we don't need to await the promise
+					// anymore. This also fixes nasty async race condition bugs when multiple
+					// code paths are calling this method: It's important that the call that
+					// initialized the encoder go through this code first.
+					if (!this.encoderInitialized) {
+						await this.ensureEncoderPromise;
+					}
+				}
+				assert(this.encoderInitialized);
+
+				if (this.closed) {
+					break;
+				}
+
+				if (this.encodersReclaimed) {
+					this.recreateWebCodecsEncoders();
+				}
+
+				const keyFrameInterval = this.encodingConfig.keyFrameInterval ?? 2;
+				const multipleOfKeyFrameInterval = Math.floor(sampleToEncode.timestamp / keyFrameInterval);
+
+				const mergedEncodeOptions = {
+					...this.defaultEncodeOptions,
+					...sampleToEncode.encodeOptions,
+					...encodeOptions,
+				};
+
+				const finalEncodeOptions = {
+					...mergedEncodeOptions,
+					keyFrame: mergedEncodeOptions.keyFrame !== undefined
+						? mergedEncodeOptions.keyFrame
+						// Ensure a key frame every keyFrameInterval seconds. It is important that all video tracks
+						// follow the same "key frame" rhythm, because aligned key frames are required to start new
+						// fragments in ISOBMFF or clusters in Matroska (or at least desirable).
+						: keyFrameInterval === 0
+							|| multipleOfKeyFrameInterval !== this.lastMultipleOfKeyFrameInterval,
+				};
+				this.lastMultipleOfKeyFrameInterval = multipleOfKeyFrameInterval;
+
+				this.encodingConfig.onEncodedSample?.(sampleToEncode);
+
+				if (this.customEncoder) {
+					this.customEncoderQueueSize++;
+
+					// We clone the sample so it cannot be closed on us from the outside before it reaches the encoder
+					const clonedSample = sampleToEncode.clone();
+
+					const promise = this.customEncoderCallSerializer
+						.call(() => this.customEncoder!.encode(clonedSample, finalEncodeOptions))
+						.catch((error: unknown) => this.setError(error))
+						.finally(() => {
+							this.customEncoderQueueSize--;
+							clonedSample.close();
+						});
+
+					if (this.customEncoderQueueSize >= 4) {
+						await promise;
+					}
+				} else {
+					assert(this.encoder);
+
+					const videoFrame = sampleToEncode.toVideoFrame();
+
+					const preciseTimingIndex = binarySearchLessOrEqual(
+						this.preciseTimings,
+						videoFrame.timestamp,
+						x => x.microsecondTimestamp,
+					);
+					const existingEntry = preciseTimingIndex !== -1
+						? this.preciseTimings[preciseTimingIndex]
+						: null;
+					if (existingEntry && existingEntry.microsecondTimestamp === videoFrame.timestamp) {
+						if (existingEntry.timestamp !== sampleToEncode.timestamp) {
+							// Mapping isn't unique, can't use the timestamp
+							existingEntry.timestampIsValid = false;
+						}
+						if (existingEntry.duration !== sampleToEncode.duration) {
+							// Mapping isn't unique, can't use the duration
+							existingEntry.durationIsValid = false;
+						}
+					} else {
+						this.preciseTimings.splice(preciseTimingIndex + 1, 0, {
+							microsecondTimestamp: videoFrame.timestamp,
+							timestamp: sampleToEncode.timestamp,
+							duration: sampleToEncode.duration,
+							timestampIsValid: true,
+							durationIsValid: true,
+						});
+
+						// Make sure it doesn't grow indefinitely
+						if (this.preciseTimings.length > 128) {
+							this.preciseTimings.shift();
+						}
+					}
+
+					if (!this.alphaEncoder) {
+						// No alpha encoder, simple case
+						try {
+							this.encoder.encode(videoFrame, finalEncodeOptions);
+						} finally {
+							videoFrame.close();
+						}
+					} else {
+						// We're expected to encode alpha as well
+						const frameDefinitelyHasNoAlpha = !!videoFrame.format && !videoFrame.format.includes('A');
+
+						if (frameDefinitelyHasNoAlpha || this.splitterCreationFailed) {
+							this.alphaFrameQueue.push(null);
+							try {
+								this.encoder.encode(videoFrame, finalEncodeOptions);
+							} finally {
+								videoFrame.close();
+							}
+						} else {
+							if (!this.splitter) {
+								this.splitter = new ColorAlphaSplitter();
+							}
+
+							// The splitter takes ownership, so no need to close the frames ourselves
+							const { colorFrame, alphaFrame } = await this.splitter.split(videoFrame);
+
+							this.alphaFrameQueue.push(alphaFrame);
+							try {
+								this.encoder.encode(colorFrame, finalEncodeOptions);
+							} finally {
+								colorFrame.close();
+							}
+						}
+					}
+
+					// We need to do this after sending the frame to the encoder as the frame otherwise might be closed
+					if (this.encoder.encodeQueueSize >= 4) {
+						await new Promise(resolve =>
+							this.encoder!.addEventListener('dequeue', resolve, { once: true }),
+						);
+					}
+				}
+
+				await this.lastMuxerPromise; // Allow the writer to apply backpressure
+			}
+		} finally {
+			for (const sample of samplesToEncode) {
+				if (sample !== videoSample) {
+					sample.close();
+				}
+			}
+		}
+	}
+
+	/** Repeats the last frame rate sample to fill the gap up to the given timestamp. */
+	private async padFrameRate(until: number, encodeOptions?: VideoEncoderEncodeOptions) {
+		const frameRate = this.encodingConfig.transform!.frameRate!;
+		assert(this.frameRateLastSample);
+
+		const frameDifference = Math.round((until - this.frameRateLastTimestamp!) * frameRate);
+
+		for (let i = 1; i < frameDifference; i++) {
+			using sample = this.frameRateLastSample.clone();
+			sample.setTimestamp(this.frameRateLastTimestamp! + i / frameRate);
+			sample.setDuration(1 / frameRate);
+			await this.processAndEncode(sample, encodeOptions);
+		}
+	}
+
+	private ensureEncoder(videoSample: VideoSample) {
+		this.ensureEncoderPromise = (async () => {
+			// eslint-disable-next-line @typescript-eslint/no-deprecated
+			const quality = resolveQuality(this.encodingConfig.quality, this.encodingConfig.bitrate);
+			assert(quality !== undefined);
+
+			const candidates = buildVideoEncoderConfigs({
+				...this.encodingConfig,
+				quality,
+				width: videoSample.codedWidth,
+				height: videoSample.codedHeight,
+				squarePixelWidth: videoSample.squarePixelWidth,
+				squarePixelHeight: videoSample.squarePixelHeight,
+				framerate: this.source._connectedTrack?.metadata.frameRate,
+			});
+
+			// Try the candidate configs in order of preference until we find one that is supported
+			let selected: VideoEncoderConfigCandidate | null = null;
+			let MatchingCustomEncoder: (typeof customVideoEncoders)[number] | undefined;
+
+			for (const candidate of candidates) {
+				const candidateConfig = candidate.config;
+				this.encodingConfig.onEncoderConfig?.(candidateConfig);
+
+				MatchingCustomEncoder = customVideoEncoders.find(x => x.supports(
+					this.encodingConfig.codec,
+					candidateConfig,
+				));
+				if (MatchingCustomEncoder) {
+					selected = candidate;
+					break;
+				}
+
+				if (typeof VideoEncoder === 'undefined') {
+					continue;
+				}
+
+				candidateConfig.alpha = 'discard'; // Since we handle alpha ourselves
+
+				if (this.encodingConfig.alpha === 'keep') {
+					// Encoding alpha requires using two parallel encoders, so we need to make sure they stay in sync
+					// and that neither of them drops frames. Setting latencyMode to 'quality' achieves this, because
+					// "User Agents MUST not drop frames to achieve the target bitrate and/or framerate."
+					candidateConfig.latencyMode = 'quality';
+				}
+
+				const hasOddDimension = candidateConfig.width % 2 === 1 || candidateConfig.height % 2 === 1;
+				if (
+					hasOddDimension
+					&& (this.encodingConfig.codec === 'avc' || this.encodingConfig.codec === 'hevc')
+				) {
+					// Throw a special error for this case as it gets hit often
+					throw new Error(
+						`The dimensions ${candidateConfig.width}x${candidateConfig.height} are not supported for codec`
+						+ ` '${this.encodingConfig.codec}'; both width and height must be even numbers. Make sure to`
+						+ ` round your dimensions to the nearest even number.`,
+					);
+				}
+
+				try {
+					const support = await VideoEncoder.isConfigSupported(candidateConfig);
+					if (support.supported) {
+						selected = candidate;
+						break;
+					}
+				} catch {
+					// Not supported
+				}
+			}
+
+			if (!selected) {
+				if (typeof VideoEncoder === 'undefined') {
+					throw new Error(missingWebCodecsClassMessage('VideoEncoder'));
+				}
+
+				// The candidates only differ in their rate control, so we describe them as one config with a
+				// slash-separated list of the attempted rate control methods
+				const firstConfig = candidates[0]!.config;
+				const rateControls = candidates.map(({ config, quantizer }) =>
+					quantizer !== null ? `quantizer ${quantizer}` : `${config.bitrate} bps`,
+				);
+
+				throw new Error(
+					`This specific encoder configuration (${firstConfig.codec}, ${rateControls.join(' / ')},`
+					+ ` ${firstConfig.width}x${firstConfig.height}, hardware acceleration:`
+					+ ` ${firstConfig.hardwareAcceleration ?? 'no-preference'}) is not supported in this environment.`
+					+ ` Consider using another codec or changing your video parameters.`,
+				);
+			}
+
+			const encoderConfig = selected.config;
+			if (selected.quantizer !== null) {
+				// The chosen config uses quantizer-based rate control, so each frame must carry the quantizer value
+				this.defaultEncodeOptions = buildQuantizerEncodeOptions(
+					this.encodingConfig.codec,
+					selected.quantizer,
+				);
+			} else {
+				this.source._nominalBitrate = encoderConfig.bitrate ?? null;
+			}
+
+			if (MatchingCustomEncoder) {
+				// @ts-expect-error "Can't create instance of abstract class 🤓"
+				this.customEncoder = new MatchingCustomEncoder() as CustomVideoEncoder;
+				// @ts-expect-error It's technically readonly
+				this.customEncoder.codec = this.encodingConfig.codec;
+				// @ts-expect-error It's technically readonly
+				this.customEncoder.config = encoderConfig;
+				// @ts-expect-error It's technically readonly
+				this.customEncoder.onPacket = (packet, meta) => {
+					if (!(packet instanceof EncodedPacket)) {
+						throw new TypeError('The first argument passed to onPacket must be an EncodedPacket.');
+					}
+					if (meta !== undefined && (!meta || typeof meta !== 'object')) {
+						throw new TypeError('The second argument passed to onPacket must be an object or undefined.');
+					}
+
+					maybeEnsureIsKeyPacket(this.source._connectedTrack!, packet);
+
+					this.encodingConfig.onEncodedPacket?.(packet, meta);
+					this.lastMuxerPromise
+						= this.muxer!.addEncodedVideoPacket(this.source._connectedTrack!, packet, meta)
+							.catch((error) => {
+								this.setError(error);
+							});
+				};
+				// @ts-expect-error It's technically readonly
+				this.customEncoder.onError = (error) => {
+					this.setError(error);
+				};
+
+				await this.customEncoder.init();
+			} else {
+				this.encoderConfig = encoderConfig;
+				this.createWebCodecsEncoders();
+			}
+
+			assert(this.source._connectedTrack);
+			this.muxer = this.source._connectedTrack.output._muxer;
+
+			this.encoderInitialized = true;
+		})();
+	}
+
+	private createWebCodecsEncoders() {
+		const encoderConfig = this.encoderConfig;
+		assert(encoderConfig);
+
+		/** Queue of color chunks waiting for their alpha counterpart. */
+		const colorChunkQueue: {
+			chunk: EncodedVideoChunk;
+			meta: EncodedVideoChunkMetadata | undefined;
+		}[] = [];
+		/** Each value is the number of encoded alpha chunks at which a null alpha chunk should be added. */
+		const nullAlphaChunkQueue: number[] = [];
+		let encodedAlphaChunkCount = 0;
+		let alphaEncoderQueue = 0;
+
+		const handleError = (error: DOMException, stack: string | undefined) => {
+			if (isCodecReclaimedError(error)) {
+				this.encodersReclaimed = true;
+				return;
+			}
+
+			error.stack = stack; // Provide a more useful stack trace, the default one sucks
+			this.setError(error);
+		};
+
+		const stack = new Error('Encoding error').stack;
+
+		this.encoder = new VideoEncoder({
+			output: (chunk, meta) => {
+				if (!this.alphaEncoder) {
+					// We're done
+					this.addPacket(chunk, null, meta);
+					return;
+				}
+
+				const alphaFrame = this.alphaFrameQueue.shift();
+				assert(alphaFrame !== undefined);
+
+				if (alphaFrame) {
+					this.alphaEncoder.encode(alphaFrame, {
+						...this.defaultEncodeOptions,
+						// Crucial: The alpha frame is forced to be a key frame whenever the color frame
+						// also is. Without this, playback can glitch and even crash in some browsers.
+						// This is the reason why the two encoders are wired in series and not in parallel.
+						keyFrame: chunk.type === 'key',
+					});
+					alphaEncoderQueue++;
+					alphaFrame.close();
+					colorChunkQueue.push({ chunk, meta });
+				} else {
+					// There was no alpha component for this frame
+					if (alphaEncoderQueue === 0) {
+						// No pending alpha encodes either, so we're done
+						this.addPacket(chunk, null, meta);
+					} else {
+						// There are still alpha encodes pending, so we can't add the packet immediately since
+						// we'd end up with out-of-order packets. Instead, let's queue a null alpha chunk to be
+						// added in the future, after the current encoder workload has completed:
+						nullAlphaChunkQueue.push(encodedAlphaChunkCount + alphaEncoderQueue);
+						colorChunkQueue.push({ chunk, meta });
+					}
+				}
+			},
+			error: error => handleError(error, stack),
+		});
+		this.encoder.configure(encoderConfig);
+
+		if (this.encodingConfig.alpha === 'keep') {
+			const stack = new Error('Encoding error').stack;
+
+			// We need to encode alpha as well, which we do with a separate encoder
+			this.alphaEncoder = new VideoEncoder({
+				// We ignore the alpha chunk's metadata
+				// eslint-disable-next-line @typescript-eslint/no-unused-vars
+				output: (chunk, meta) => {
+					alphaEncoderQueue--;
+
+					// There has to be a color chunk because the encoders are wired in series
+					const colorChunk = colorChunkQueue.shift();
+					assert(colorChunk !== undefined);
+
+					this.addPacket(colorChunk.chunk, chunk, colorChunk.meta);
+
+					// See if there are any null alpha chunks queued up
+					encodedAlphaChunkCount++;
+					while (
+						nullAlphaChunkQueue.length > 0
+						&& nullAlphaChunkQueue[0] === encodedAlphaChunkCount
+					) {
+						nullAlphaChunkQueue.shift();
+						const colorChunk = colorChunkQueue.shift();
+						assert(colorChunk !== undefined);
+
+						this.addPacket(colorChunk.chunk, null, colorChunk.meta);
+					}
+				},
+				error: error => handleError(error, stack),
+			});
+			this.alphaEncoder.configure(encoderConfig);
+		}
+	}
+
+	private addPacket(
+		colorChunk: EncodedVideoChunk,
+		alphaChunk: EncodedVideoChunk | null,
+		meta: EncodedVideoChunkMetadata | undefined,
+	) {
+		const sideData: EncodedPacketSideData = {};
+
+		if (alphaChunk) {
+			const alphaData = new Uint8Array(alphaChunk.byteLength);
+			alphaChunk.copyTo(alphaData);
+
+			sideData.alpha = alphaData;
+		}
+
+		let packet = EncodedPacket.fromEncodedChunk(colorChunk, sideData);
+
+		const encoderConfig = this.encoderConfig;
+		assert(encoderConfig);
+
+		if (meta?.decoderConfig) {
+			// Let's correct the codec string based on the actual bitstream data, rather than leaving it on the default
+			// value (which is just what was in the encoder config). This provides better consistency.
+			meta.decoderConfig.codec = extractVideoCodecString({
+				width: encoderConfig.width,
+				height: encoderConfig.height,
+				codec: this.encodingConfig.codec,
+				codecDescription: meta.decoderConfig.description
+					? toUint8Array(meta.decoderConfig.description)
+					: null,
+				colorSpace: meta.decoderConfig.colorSpace ?? null,
+				avcType: encoderConfig.codec.includes('avc1.')
+					? 1
+					: encoderConfig.codec.includes('avc3.')
+						? 3
+						: null,
+				avcCodecInfo: this.encodingConfig.codec === 'avc' && !meta.decoderConfig.description
+					? extractAvcDecoderConfigurationRecord(packet.data)
+					: null,
+				hevcCodecInfo: this.encodingConfig.codec === 'hevc' && !meta.decoderConfig.description
+					? extractHevcDecoderConfigurationRecord(packet.data)
+					: null,
+				vp9CodecInfo: this.encodingConfig.codec === 'vp9'
+					? extractVp9CodecInfoFromPacket(packet.data)
+					: null,
+				av1CodecInfo: this.encodingConfig.codec === 'av1'
+					? extractAv1CodecInfoFromPacket(packet.data)
+					: null,
+				proresFormat: null, // Can't be encoded by WebCodecs
+			});
+		}
+
+		// See if there's a relevant timing entry to refine the packet's timing data
+		const preciseTimingIndex = binarySearchLessOrEqual(
+			this.preciseTimings,
+			colorChunk.timestamp,
+			x => x.microsecondTimestamp,
+		);
+		const entry = preciseTimingIndex !== -1
+			? this.preciseTimings[preciseTimingIndex]
+			: null;
+
+		let actualType: PacketType | null = null;
+		if (this.emittedEncoderPackets === 0 && packet.type === 'delta' && meta?.decoderConfig) {
+			// https://github.com/Vanilagy/mediabunny/issues/365
+			// We expect the first packet to be a key packet. If it's not, let's actually verify that it's
+			// not by getting the actual type.
+			actualType = determineVideoPacketType(
+				this.encodingConfig.codec,
+				meta.decoderConfig,
+				packet.data,
+			);
+		}
+
+		// Define the packet
+		if ((entry && entry.microsecondTimestamp === colorChunk.timestamp) || actualType !== null) {
+			packet = packet.clone({
+				timestamp: entry?.timestampIsValid ? entry.timestamp : undefined,
+				duration: entry?.durationIsValid ? entry.duration : undefined,
+				type: actualType ?? undefined,
+			});
+		}
+
+		maybeEnsureIsKeyPacket(this.source._connectedTrack!, packet);
+
+		this.encodingConfig.onEncodedPacket?.(packet, meta);
+		this.lastMuxerPromise
+			= this.muxer!.addEncodedVideoPacket(this.source._connectedTrack!, packet, meta)
+				.catch((error) => {
+					this.setError(error);
+				});
+
+		this.emittedEncoderPackets++;
+	}
+
+	// Browsers may reclaim codecs that have been inactive for a while (see
+	// https://github.com/Vanilagy/mediabunny/issues/531), closing them and reporting a QuotaExceededError. Since a
+	// reclaimed encoder was idle, no frames are lost, so we transparently replace the encoders with fresh ones.
+	private recreateWebCodecsEncoders() {
+		assert(this.encoder);
+
+		if (this.encoder.state !== 'closed') {
+			this.encoder.close();
+		}
+		if (this.alphaEncoder && this.alphaEncoder.state !== 'closed') {
+			this.alphaEncoder.close();
+		}
+
+		this.alphaFrameQueue.forEach(x => x?.close());
+		this.alphaFrameQueue.length = 0;
+
+		this.encodersReclaimed = false;
+		this.lastMultipleOfKeyFrameInterval = -1; // The fresh encoder must start with a key frame
+
+		this.createWebCodecsEncoders();
+	}
+
+	async flushAndClose(forceClose: boolean) {
+		try {
+			if (!forceClose) {
+				this.checkForEncoderError();
+
+				// Final frame rate padding: fill remaining frames up to the last sample's original end timestamp
+				if (this.frameRateLastSample) {
+					const frameRate = this.encodingConfig.transform!.frameRate!;
+					const alignedEnd = floorToDivisor(this.frameRateLastEndTimestamp!, frameRate);
+					await this.padFrameRate(alignedEnd);
+				}
+			}
+
+			this.closed = true;
+
+			if (!forceClose) {
+				if (this.customEncoder) {
+					void this.customEncoderCallSerializer.call(() => this.customEncoder!.flush());
+				} else if (this.encoder && !this.encodersReclaimed) {
+					// These are wired in series, therefore they must also be flushed in series
+					await this.encoder.flush();
+					await this.alphaEncoder?.flush();
+
+					// Workaround for https://issues.chromium.org/issues/529852980 to give it time for errors to
+					// surface
+					await wait(25);
+				}
+			}
+		} finally {
+			// This cleanup must also run when padding or flushing threw (e.g. due to an encoder error), otherwise
+			// samples, frames and encoders would be left dangling
+			this.closed = true;
+
+			this.frameRateLastSample?.close();
+			this.frameRateLastSample = null;
+
+			if (this.customEncoder) {
+				await this.customEncoderCallSerializer.call(() => this.customEncoder!.close())
+					.catch((error: unknown) => this.setError(error));
+			} else if (this.encoder) {
+				if (this.encoder.state !== 'closed') {
+					this.encoder.close();
+				}
+				if (this.alphaEncoder && this.alphaEncoder.state !== 'closed') {
+					this.alphaEncoder.close();
+				}
+
+				this.alphaFrameQueue.forEach(x => x?.close());
+				this.alphaFrameQueue.length = 0;
+
+				this.splitter?.close();
+			}
+		}
+
+		if (!forceClose) {
+			this.checkForEncoderError();
+		}
+	}
+
+	getQueueSize() {
+		if (this.customEncoder) {
+			return this.customEncoderQueueSize;
+		} else {
+			// Because the color and alpha encoders are wired in series, there's no need to also include the alpha
+			// encoder's queue size here
+			return this.encoder?.encodeQueueSize ?? 0;
+		}
+	}
+
+	checkForEncoderError() {
+		if (this.errorSet) {
+			throw this.error;
+		}
+	}
+}
+
+let splitterWorkerUrl: string | null = null;
+
+/** Utility class for splitting a composite frame into separate color and alpha parts on the CPU in a worker. */
+export class ColorAlphaSplitter {
+	private worker: Worker | null = null;
+	private pendingRequests = new Map<
+		number,
+		ReturnType<typeof promiseWithResolvers<{ colorFrame: VideoFrame; alphaFrame: VideoFrame }>>
+	>();
+
+	private nextRequestId = 0;
+
+	split(sourceFrame: VideoFrame): Promise<{ colorFrame: VideoFrame; alphaFrame: VideoFrame }> {
+		if (!this.worker) {
+			if (!splitterWorkerUrl) {
+				const blob = new Blob(
+					[`(${colorAlphaSplitterWorkerCode.toString()})()`],
+					{ type: 'application/javascript' },
+				);
+				splitterWorkerUrl = URL.createObjectURL(blob);
+			}
+
+			this.worker = new Worker(splitterWorkerUrl);
+
+			this.worker.addEventListener('message', (event: MessageEvent<ColorAlphaSplitterWorkerResponse>) => {
+				const data = event.data;
+				const pending = this.pendingRequests.get(data.id);
+				if (!pending) {
+					return;
+				}
+				this.pendingRequests.delete(data.id);
+
+				if ('error' in data) {
+					pending.reject(new Error(data.error));
+				} else {
+					pending.resolve({ colorFrame: data.colorFrame, alphaFrame: data.alphaFrame });
+				}
+			});
+
+			this.worker.addEventListener('error', (event) => {
+				const error = new Error(event.message || 'Color/alpha splitter worker error.');
+				for (const pending of this.pendingRequests.values()) {
+					pending.reject(error);
+				}
+				this.pendingRequests.clear();
+			});
+		}
+
+		const id = this.nextRequestId++;
+		const pending = promiseWithResolvers<{ colorFrame: VideoFrame; alphaFrame: VideoFrame }>();
+		this.pendingRequests.set(id, pending);
+		this.worker.postMessage({ id, sourceFrame }, { transfer: [sourceFrame] });
+
+		return pending.promise;
+	}
+
+	close() {
+		this.worker?.terminate();
+		this.worker = null;
+
+		const error = new Error('Color/alpha splitter closed.');
+		for (const pending of this.pendingRequests.values()) {
+			pending.reject(error);
+		}
+		this.pendingRequests.clear();
+	}
+}
+
+type ColorAlphaSplitterWorkerRequest = {
+	id: number;
+	sourceFrame: VideoFrame;
+};
+
+type ColorAlphaSplitterWorkerResponse =
+	| { id: number; colorFrame: VideoFrame; alphaFrame: VideoFrame }
+	| { id: number; error: string };
+
+const colorAlphaSplitterWorkerCode = () => {
+	// Reused across frames as long as the size matches, since consecutive frames usually share dimensions.
+	let cpuSourceBuffer: Uint8Array | null = null;
+
+	// Serialize execution internally so concurrent requests don't race on the shared cpuSourceBuffer.
+	let chain: Promise<void> = Promise.resolve();
+	self.addEventListener('message', (event: MessageEvent<ColorAlphaSplitterWorkerRequest>) => {
+		const { id, sourceFrame } = event.data;
+		chain = chain.then(async () => {
+			try {
+				const { colorFrame, alphaFrame } = await split(sourceFrame);
+				self.postMessage({ id, colorFrame, alphaFrame }, { transfer: [colorFrame, alphaFrame] });
+			} catch (error) {
+				self.postMessage({ id, error: (error as Error).message });
+			} finally {
+				sourceFrame.close();
+			}
+		});
+	});
+
+	const split = async (sourceFrame: VideoFrame) => {
+		const format = sourceFrame.format as VideoSamplePixelFormat | null;
+		if (!format) {
+			throw new Error('CPU color/alpha splitting requires a known VideoFrame format.');
+		}
+
+		const sourceSize = sourceFrame.allocationSize();
+
+		if (!cpuSourceBuffer || cpuSourceBuffer.byteLength !== sourceSize) {
+			cpuSourceBuffer = new Uint8Array(sourceSize);
+		}
+		await sourceFrame.copyTo(cpuSourceBuffer);
+
+		if (format === 'RGBA' || format === 'BGRA') {
+			return splitInterleavedRgba(cpuSourceBuffer, format, sourceFrame);
+		} else if (
+			format === 'I420A' || format === 'I420AP10' || format === 'I420AP12'
+			|| format === 'I422A' || format === 'I422AP10' || format === 'I422AP12'
+			|| format === 'I444A' || format === 'I444AP10' || format === 'I444AP12'
+		) {
+			return splitPlanarYuvA(cpuSourceBuffer, format, sourceFrame);
+		}
+
+		throw new Error(`CPU color/alpha splitting does not support format '${format}'.`);
+	};
+
+	const splitInterleavedRgba = (
+		source: Uint8Array,
+		format: 'RGBA' | 'BGRA',
+		sourceFrame: VideoFrame,
+	) => {
+		const width = sourceFrame.visibleRect?.width ?? sourceFrame.codedWidth;
+		const height = sourceFrame.visibleRect?.height ?? sourceFrame.codedHeight;
+
+		const pixelCount = width * height;
+		const chromaW = Math.ceil(width / 2);
+		const chromaH = Math.ceil(height / 2);
+		const alphaSize = pixelCount + chromaW * chromaH * 2;
+
+		// Encode alpha as I420: Y = source A bytes, UV = 128
+		const alphaBuffer = new Uint8Array(alphaSize);
+		for (let i = 0, j = 3; i < pixelCount; i++, j += 4) {
+			alphaBuffer[i] = source[j]!;
+		}
+		alphaBuffer.fill(128, pixelCount);
+
+		// Hand the source buffer straight to VideoFrame as RGBX/BGRX so the A bytes are ignored
+		const colorFrame = new VideoFrame(source, {
+			format: format === 'RGBA' ? 'RGBX' : 'BGRX',
+			codedWidth: width,
+			codedHeight: height,
+			timestamp: sourceFrame.timestamp,
+			duration: sourceFrame.duration ?? undefined,
+			// No transfer!
+		});
+		const alphaInit = {
+			format: 'I420' as const,
+			codedWidth: width,
+			codedHeight: height,
+			timestamp: sourceFrame.timestamp,
+			duration: sourceFrame.duration ?? undefined,
+			colorSpace: {
+				fullRange: true,
+				matrix: 'bt709',
+				primaries: 'bt709',
+				transfer: 'bt709',
+			} as const,
+			transfer: [alphaBuffer.buffer],
+		};
+		const alphaFrame = new VideoFrame(alphaBuffer, alphaInit);
+		return { colorFrame, alphaFrame };
+	};
+
+	const splitPlanarYuvA = (
+		source: Uint8Array,
+		format:
+			| 'I420A' | 'I420AP10' | 'I420AP12'
+			| 'I422A' | 'I422AP10' | 'I422AP12'
+			| 'I444A' | 'I444AP10' | 'I444AP12',
+		sourceFrame: VideoFrame,
+	) => {
+		const width = sourceFrame.visibleRect?.width ?? sourceFrame.codedWidth;
+		const height = sourceFrame.visibleRect?.height ?? sourceFrame.codedHeight;
+
+		const is10 = format.includes('P10');
+		const is12 = format.includes('P12');
+		const bytesPerSample = (is10 || is12) ? 2 : 1;
+
+		let chromaW: number;
+		let chromaH: number;
+		if (format.startsWith('I420')) {
+			chromaW = Math.ceil(width / 2);
+			chromaH = Math.ceil(height / 2);
+		} else if (format.startsWith('I422')) {
+			chromaW = Math.ceil(width / 2);
+			chromaH = height;
+		} else {
+			chromaW = width;
+			chromaH = height;
+		}
+
+		const ySamples = width * height;
+		const uvSamples = chromaW * chromaH;
+		const yBytes = ySamples * bytesPerSample;
+		const uvBytes = uvSamples * bytesPerSample;
+		const aBytes = ySamples * bytesPerSample;
+
+		const colorBytes = yBytes + uvBytes * 2;
+		const colorFormat = format.replace('A', '') as VideoPixelFormat;
+
+		const alphaChromaW = Math.ceil(width / 2);
+		const alphaChromaH = Math.ceil(height / 2);
+		const alphaUvSamples = alphaChromaW * alphaChromaH;
+		const alphaUvBytes = alphaUvSamples * bytesPerSample;
+		const alphaSize = aBytes + 2 * alphaUvBytes;
+		const alphaBuffer = new Uint8Array(alphaSize);
+
+		const aPlaneStart = colorBytes;
+		alphaBuffer.set(source.subarray(aPlaneStart, aPlaneStart + aBytes), 0);
+
+		// Fill UV planes with the neutral chroma value
+		const uvOffset = aBytes;
+		const neutralChroma = is10 ? 512 : (is12 ? 2048 : 128);
+
+		if (bytesPerSample === 1) {
+			alphaBuffer.fill(neutralChroma, uvOffset);
+		} else {
+			const uvView = new Uint16Array(alphaBuffer.buffer, uvOffset, 2 * alphaUvSamples);
+			uvView.fill(neutralChroma);
+		}
+
+		const alphaFormat = (is10 ? 'I420P10' : (is12 ? 'I420P12' : 'I420')) as VideoPixelFormat;
+
+		// Color frame is simply a prefix of the combined bytes
+		const colorFrame = new VideoFrame(source.subarray(0, colorBytes), {
+			format: colorFormat,
+			codedWidth: width,
+			codedHeight: height,
+			timestamp: sourceFrame.timestamp,
+			duration: sourceFrame.duration ?? undefined,
+		});
+		const alphaInit = {
+			format: alphaFormat,
+			codedWidth: width,
+			codedHeight: height,
+			timestamp: sourceFrame.timestamp,
+			duration: sourceFrame.duration ?? undefined,
+			colorSpace: {
+				fullRange: true,
+				matrix: 'bt709',
+				primaries: 'bt709',
+				transfer: 'bt709',
+			} as const,
+			transfer: [alphaBuffer.buffer],
+		};
+		const alphaFrame = new VideoFrame(alphaBuffer, alphaInit);
+		return { colorFrame, alphaFrame };
+	};
+};
+
+/**
+ * This source can be used to add raw, unencoded video samples (frames) to an output video track. These frames will
+ * automatically be encoded and then piped into the output.
+ * @group Media sources
+ * @public
+ */
+export class VideoSampleSource extends VideoSource {
+	/** @internal */
+	private _encoder: VideoEncoderWrapper;
+
+	/**
+	 * Creates a new {@link VideoSampleSource} whose samples are encoded according to the specified
+	 * {@link VideoEncodingConfig}.
+	 */
+	constructor(encodingConfig: VideoEncodingConfig) {
+		validateVideoEncodingConfig(encodingConfig);
+
+		super(encodingConfig.codec);
+		this._encoder = new VideoEncoderWrapper(this, encodingConfig);
+	}
+
+	/**
+	 * Encodes a video sample (frame) and then adds it to the output.
+	 *
+	 * @returns A Promise that resolves once the output is ready to receive more samples. You should await this Promise
+	 * to respect writer and encoder backpressure.
+	 */
+	add(videoSample: VideoSample, encodeOptions?: VideoEncoderEncodeOptions) {
+		if (!(videoSample instanceof VideoSample)) {
+			throw new TypeError('videoSample must be a VideoSample.');
+		}
+
+		return this._encoder.add(videoSample, false, encodeOptions);
+	}
+
+	/** @internal */
+	override _flushAndClose(forceClose: boolean) {
+		return this._encoder.flushAndClose(forceClose);
+	}
+}
+
+/**
+ * This source can be used to add video frames to the output track from a fixed canvas element. Since canvases are often
+ * used for rendering, this source provides a convenient wrapper around {@link VideoSampleSource}.
+ * @group Media sources
+ * @public
+ */
+export class CanvasSource extends VideoSource {
+	/** @internal */
+	private _encoder: VideoEncoderWrapper;
+	/** @internal */
+	private _canvas: HTMLCanvasElement | OffscreenCanvas;
+
+	/**
+	 * Creates a new {@link CanvasSource} from a canvas element or `OffscreenCanvas` whose samples are encoded
+	 * according to the specified {@link VideoEncodingConfig}.
+	 */
+	constructor(canvas: HTMLCanvasElement | OffscreenCanvas, encodingConfig: VideoEncodingConfig) {
+		if (
+			!(typeof HTMLCanvasElement !== 'undefined' && canvas instanceof HTMLCanvasElement)
+			&& !(typeof OffscreenCanvas !== 'undefined' && canvas instanceof OffscreenCanvas)
+		) {
+			throw new TypeError('canvas must be an HTMLCanvasElement or OffscreenCanvas.');
+		}
+		validateVideoEncodingConfig(encodingConfig);
+
+		super(encodingConfig.codec);
+		this._encoder = new VideoEncoderWrapper(this, encodingConfig);
+		this._canvas = canvas;
+	}
+
+	/**
+	 * Captures the current canvas state as a video sample (frame), encodes it and adds it to the output.
+	 *
+	 * @param timestamp - The timestamp of the sample, in seconds.
+	 * @param duration - The duration of the sample, in seconds.
+	 *
+	 * @returns A Promise that resolves once the output is ready to receive more samples. You should await this Promise
+	 * to respect writer and encoder backpressure.
+	 */
+	add(timestamp: number, duration = 0, encodeOptions?: VideoEncoderEncodeOptions) {
+		if (!Number.isFinite(timestamp)) {
+			throw new TypeError('timestamp must be a finite number.');
+		}
+		if (!Number.isFinite(duration) || duration < 0) {
+			throw new TypeError('duration must be a non-negative number.');
+		}
+
+		const sample = new VideoSample(this._canvas, { timestamp, duration });
+		return this._encoder.add(sample, true, encodeOptions);
+	}
+
+	/** @internal */
+	override _flushAndClose(forceClose: boolean) {
+		return this._encoder.flushAndClose(forceClose);
+	}
+}
+
+/**
+ * Options for {@link MediaStreamVideoTrackSource}.
+ * @group Media sources
+ * @public
+ */
+export type MediaStreamVideoTrackSourceOptions = {
+	/**
+	 * The frame rate at which the underlying video track is sampled. Defaults to the frame rate specified in the
+	 * track's [`MediaTrackSettings`](https://developer.mozilla.org/en-US/docs/Web/API/MediaTrackSettings). Set to
+	 * `null` to only add a frame whenever the underlying track pushes one - this minimizes frame count but can
+	 * lead to wildly irregular FPS.
+	 */
+	frameRate?: number | null;
+	/**
+	 * Controls the basis (zero point) for video frame timestamps.
+	 *
+	 * When set to `'synced-zero'`, timestamps will be relative to the first chunk of media from a `MediaStreamTrack`
+	 * added to the {@link Output}.
+	 *
+	 * When set to `'zero'`, timestamps will be relative to the first video frame emitted by this source.
+	 *
+	 * When set to `'unix'`, timestamps will be relative to the Unix epoch, so clearly associated with a distinct point
+	 * in time. Here, pausing via {@link MediaStreamVideoTrackSource.pause} will also create gaps in timestamps. Be sure
+	 * to pair this mode with {@link BaseTrackMetadata.isRelativeToUnixEpoch}.
+	 *
+	 * Defaults to `'synced-zero'`.
+	 */
+	timestampBase?: 'synced-zero' | 'zero' | 'unix';
+};
+
+/**
+ * Video source that encodes the frames of a
+ * [`MediaStreamVideoTrack`](https://developer.mozilla.org/en-US/docs/Web/API/MediaStreamTrack) and pipes them into the
+ * output. This is useful for capturing live or real-time data such as webcams or screen captures. Frames will
+ * automatically start being captured once the connected {@link Output} is started, and will keep being captured until
+ * the {@link Output} is finalized or this source is closed.
+ * @group Media sources
+ * @public
+ */
+export class MediaStreamVideoTrackSource extends VideoSource {
+	/** @internal */
+	private _options: MediaStreamVideoTrackSourceOptions;
+	/** @internal */
+	private _encoder: VideoEncoderWrapper;
+	/** @internal */
+	private _abortController: AbortController | null = null;
+	/** @internal */
+	private _track: MediaStreamVideoTrack;
+	/** @internal */
+	private _workerTrackId: number | null = null;
+	/** @internal */
+	private _workerListener: ((event: MessageEvent) => void) | null = null;
+	/** @internal */
+	private _promiseWithResolvers = promiseWithResolvers();
+	/** @internal */
+	private _errorPromiseAccessed = false;
+	/** @internal */
+	private _paused = false;
+	/** @internal */
+	private _lastVideoFrame: VideoFrame | null = null;
+	/** @internal */
+	private _timerHandle: UnthrottledTimerHandle | null = null;
+	/** @internal */
+	private _videoElement: HTMLVideoElement | null = null;
+
+	/** A promise that rejects upon any error within this source. This promise never resolves. */
+	get errorPromise() {
+		this._errorPromiseAccessed = true;
+		return this._promiseWithResolvers.promise;
+	}
+
+	/** Whether this source is currently paused as a result of calling `.pause()`. */
+	get paused() {
+		return this._paused;
+	}
+
+	/**
+	 * Creates a new {@link MediaStreamVideoTrackSource} from a
+	 * [`MediaStreamVideoTrack`](https://developer.mozilla.org/en-US/docs/Web/API/MediaStreamTrack), which will pull
+	 * video samples from the stream in real time and encode them according to {@link VideoEncodingConfig}.
+	 */
+	constructor(
+		track: MediaStreamVideoTrack,
+		encodingConfig: VideoEncodingConfig,
+		options: MediaStreamVideoTrackSourceOptions = {},
+	) {
+		if (!(track instanceof MediaStreamTrack) || track.kind !== 'video') {
+			throw new TypeError('track must be a video MediaStreamTrack.');
+		}
+		validateVideoEncodingConfig(encodingConfig);
+		if (typeof options !== 'object' || !options) {
+			throw new TypeError('options must be an object.');
+		}
+		if (options.frameRate != null && (typeof options.frameRate !== 'number' || options.frameRate <= 0)) {
+			throw new TypeError('options.frameRate, when provided, must be either a positive number or null.');
+		}
+		if (
+			options.timestampBase !== undefined
+			&& options.timestampBase !== 'synced-zero'
+			&& options.timestampBase !== 'zero'
+			&& options.timestampBase !== 'unix'
+		) {
+			throw new TypeError(
+				'options.timestampBase, when provided, must be one of \'synced-zero\', \'zero\', or \'unix\'.',
+			);
+		}
+
+		encodingConfig = {
+			...encodingConfig,
+			latencyMode: 'realtime',
+		};
+
+		super(encodingConfig.codec);
+
+		this._options = options;
+		this._encoder = new VideoEncoderWrapper(this, encodingConfig);
+		this._track = track;
+	}
+
+	/** @internal */
+	override async _start() {
+		if (!this._errorPromiseAccessed) {
+			Logging._warn(
+				'Make sure not to ignore the `errorPromise` field on MediaStreamVideoTrackSource, so that any internal'
+				+ ' errors get bubbled up properly.',
+			);
+		}
+
+		const frameRate = this._options.frameRate !== undefined
+			? this._options.frameRate
+			: (this._track.getSettings().frameRate ?? null);
+
+		this._abortController = new AbortController();
+
+		let firstVideoFrameTimestamp: number | null = null;
+		let lastFrameTime: number | null = null;
+		let frameCount = 0;
+		let errored = false;
+		let lastSampleTimestamp: number | null = null;
+		let timestampOffset = 0;
+
+		const tick = () => {
+			assert(frameRate !== null);
+
+			if (!this._lastVideoFrame) {
+				return;
+			}
+
+			assert(lastFrameTime !== null);
+			assert(firstVideoFrameTimestamp !== null);
+
+			const now = performance.now();
+
+			// Add as many frames as warranted by the elapsed time.
+			// > instead of >= intentionally because tick() is called before the _lastVideoFrame is changed
+			while (now - lastFrameTime > 1000 / frameRate) {
+				lastFrameTime += 1000 / frameRate;
+				const timestamp = firstVideoFrameTimestamp + frameCount / frameRate;
+
+				const frame = new VideoFrame(this._videoElement ?? this._lastVideoFrame, {
+					timestamp: 1e6 * timestamp,
+					duration: 1e6 / frameRate,
+				});
+
+				addVideoFrame(frame, now);
+			}
+		};
+
+		if (frameRate !== null) {
+			this._timerHandle = setIntervalUnthrottled(tick, 4); // Run it at 250 Hz
+		}
+
+		const onVideoFrame = (videoFrame: VideoFrame) => {
+			if (frameRate === null) {
+				addVideoFrame(videoFrame);
+			} else {
+				const now = performance.now();
+
+				if (!this._lastVideoFrame) {
+					addVideoFrame(videoFrame.clone(), now);
+					lastFrameTime = now;
+					this._lastVideoFrame = videoFrame;
+				} else {
+					tick();
+					this._lastVideoFrame?.close();
+					this._lastVideoFrame = videoFrame;
+				}
+			}
+		};
+
+		const addVideoFrame = (videoFrame: VideoFrame, now = performance.now()) => {
+			if (errored) {
+				videoFrame.close();
+				return;
+			}
+
+			frameCount++;
+			const currentTimestamp = videoFrame.timestamp / 1e6;
+
+			if (this._paused) {
+				const frameSeen = firstVideoFrameTimestamp !== null;
+				if (frameSeen) {
+					if (lastSampleTimestamp !== null && this._options.timestampBase !== 'unix') {
+						// In addition to dropping this frame, let's also keep track of the time we have lost due to the
+						// pause. Doing it like this instead of simply keeping track of the paused time is better since
+						// it retains the frame rate of the underlying source.
+						const timeDelta = currentTimestamp - lastSampleTimestamp;
+						timestampOffset -= timeDelta;
+					}
+					lastSampleTimestamp = currentTimestamp;
+				}
+
+				videoFrame.close();
+				return;
+			}
+
+			if (firstVideoFrameTimestamp === null) {
+				firstVideoFrameTimestamp = currentTimestamp;
+
+				let target: number;
+				const timestampBase = this._options.timestampBase ?? 'synced-zero';
+				if (timestampBase === 'unix') {
+					target = Date.now() / 1000;
+				} else if (timestampBase === 'zero') {
+					target = 0;
+				} else {
+					const output = this._connectedTrack!.output;
+					if (output._firstMediaStreamTimestamp === null) {
+						output._firstMediaStreamTimestamp = now / 1000;
+						target = 0;
+					} else {
+						target = now / 1000 - output._firstMediaStreamTimestamp;
+					}
+				}
+
+				timestampOffset = target - firstVideoFrameTimestamp;
+			}
+
+			lastSampleTimestamp = currentTimestamp;
+
+			if (this._encoder.getQueueSize() >= 8) {
+				// Drop frames if the encoder is overloaded
+				videoFrame.close();
+				return;
+			}
+
+			const sample = new VideoSample(videoFrame, {
+				timestamp: currentTimestamp + timestampOffset,
+			});
+
+			void this._encoder.add(sample, true)
+				.catch((error) => {
+					errored = true;
+
+					this._abortController?.abort();
+					this._promiseWithResolvers.reject(error);
+
+					if (this._workerTrackId !== null) {
+						// Tell the worker to stop the track
+						sendMessageToMediaStreamTrackProcessorWorker({
+							type: 'stopTrack',
+							trackId: this._workerTrackId,
+						});
+					}
+				});
+		};
+
+		if (typeof MediaStreamTrackProcessor !== 'undefined') {
+			// We can do it here directly, perfect
+			const processor = new MediaStreamTrackProcessor({ track: this._track });
+			const consumer = new WritableStream<VideoFrame>({ write: onVideoFrame });
+
+			processor.readable.pipeTo(consumer, {
+				signal: this._abortController.signal,
+			}).catch((error) => {
+				// Handle AbortError silently
+				if (error instanceof DOMException && error.name === 'AbortError') return;
+
+				this._promiseWithResolvers.reject(error);
+			});
+		} else {
+			// It might still be supported in a worker, so let's check that
+			const supportedInWorker = await mediaStreamTrackProcessorIsSupportedInWorker();
+
+			if (supportedInWorker) {
+				this._workerTrackId = nextMediaStreamTrackProcessorWorkerId++;
+
+				sendMessageToMediaStreamTrackProcessorWorker({
+					type: 'videoTrack',
+					trackId: this._workerTrackId,
+					track: this._track,
+				});
+
+				this._workerListener = (event: MessageEvent) => {
+					const message = event.data as MediaStreamTrackProcessorWorkerMessage;
+
+					if (message.type === 'videoFrame' && message.trackId === this._workerTrackId) {
+						onVideoFrame(message.videoFrame);
+					} else if (message.type === 'error' && message.trackId === this._workerTrackId) {
+						this._promiseWithResolvers.reject(message.error);
+					}
+				};
+
+				mediaStreamTrackProcessorWorker!.addEventListener('message', this._workerListener);
+			} else if (frameRate !== null) {
+				// No MediaStreamTrackProcessor support at all (e.g. Firefox), but we have a frame rate, so we can
+				// manually sample from a hidden <video> element instead.
+				const video = document.createElement('video');
+				video.style.position = 'fixed';
+				video.style.left = '-10000px';
+				video.style.top = '-10000px';
+				video.style.width = '1px';
+				video.style.height = '1px';
+				video.style.opacity = '0';
+				video.style.pointerEvents = 'none';
+				video.muted = true;
+				video.srcObject = new MediaStream([this._track]);
+				document.body.appendChild(video);
+				this._videoElement = video;
+
+				video.addEventListener('loadeddata', () => {
+					if (errored || !this._videoElement) {
+						return;
+					}
+
+					// This will be the first frame
+					const frame = new VideoFrame(video, {
+						timestamp: 1000 * performance.now(),
+					});
+					onVideoFrame(frame);
+					frame.close();
+				}, { once: true });
+
+				void video.play().catch((error) => {
+					errored = true;
+					this._promiseWithResolvers.reject(error);
+				});
+			} else {
+				throw new Error(
+					'When no explicit frame rate is set, MediaStreamTrackProcessor is required; but it\'s not available'
+					+ ' in this environment.',
+				);
+			}
+		}
+	}
+
+	/**
+	 * Pauses the capture of video frames - any video frames emitted by the underlying media stream will be ignored
+	 * while paused. This does *not* close the underlying `MediaStreamVideoTrack`, it just ignores its output.
+	 */
+	pause() {
+		this._paused = true;
+	}
+
+	/** Resumes the capture of video frames after being paused. */
+	resume() {
+		this._paused = false;
+	}
+
+	/** @internal */
+	override async _flushAndClose(forceClose: boolean) {
+		try {
+			if (this._abortController) {
+				this._abortController.abort();
+				this._abortController = null;
+			}
+
+			if (this._timerHandle) {
+				clearIntervalUnthrottled(this._timerHandle);
+			}
+			this._lastVideoFrame?.close();
+
+			if (this._videoElement) {
+				this._videoElement.srcObject = null;
+				this._videoElement.remove();
+				this._videoElement = null;
+			}
+
+			if (this._workerTrackId !== null) {
+				assert(this._workerListener);
+
+				sendMessageToMediaStreamTrackProcessorWorker({
+					type: 'stopTrack',
+					trackId: this._workerTrackId,
+				});
+
+				// Wait for the worker to stop the track
+				await new Promise<void>((resolve) => {
+					const listener = (event: MessageEvent) => {
+						const message = event.data as MediaStreamTrackProcessorWorkerMessage;
+
+						if (message.type === 'trackStopped' && message.trackId === this._workerTrackId) {
+							assert(this._workerListener);
+							mediaStreamTrackProcessorWorker!.removeEventListener('message', this._workerListener);
+							mediaStreamTrackProcessorWorker!.removeEventListener('message', listener);
+
+							resolve();
+						}
+					};
+
+					mediaStreamTrackProcessorWorker!.addEventListener('message', listener);
+				});
+			}
+		} finally {
+			// The encoder must be closed even if the track teardown above threw
+			await this._encoder.flushAndClose(forceClose);
+		}
+	}
+}
+
+/**
+ * Base class for audio sources - sources for audio tracks.
+ * @group Media sources
+ * @public
+ */
+export abstract class AudioSource extends MediaSource {
+	/** @internal */
+	declare _connectedTrack: OutputAudioTrack | null;
+	/** @internal */
+	override readonly _codec: AudioCodec;
+
+	/** Internal constructor. */
+	constructor(codec: AudioCodec) {
+		super();
+
+		if (!AUDIO_CODECS.includes(codec)) {
+			throw new TypeError(`Invalid audio codec '${codec}'. Must be one of: ${AUDIO_CODECS.join(', ')}.`);
+		}
+
+		this._codec = codec;
+	}
+}
+
+/**
+ * The most basic audio source; can be used to directly pipe encoded packets into the output file.
+ * @group Media sources
+ * @public
+ */
+export class EncodedAudioPacketSource extends AudioSource {
+	/** Creates a new {@link EncodedAudioPacketSource} whose packets are encoded using `codec`. */
+	constructor(codec: AudioCodec) {
+		super(codec);
+	}
+
+	/**
+	 * Adds an encoded packet to the output audio track. Packets must be added in *decode order*.
+	 *
+	 * @param meta - Additional metadata from the encoder. You should pass this for the first call, including a valid
+	 * decoder config.
+	 *
+	 * @returns A Promise that resolves once the output is ready to receive more samples. You should await this Promise
+	 * to respect writer and encoder backpressure.
+	 */
+	add(packet: EncodedPacket, meta?: EncodedAudioChunkMetadata) {
+		if (!(packet instanceof EncodedPacket)) {
+			throw new TypeError('packet must be an EncodedPacket.');
+		}
+		if (packet.isMetadataOnly) {
+			throw new TypeError('Metadata-only packets cannot be added.');
+		}
+		if (meta !== undefined && (!meta || typeof meta !== 'object')) {
+			throw new TypeError('meta, when provided, must be an object.');
+		}
+
+		this._ensureValidAdd();
+		return this._connectedTrack!.output._muxer.addEncodedAudioPacket(this._connectedTrack!, packet, meta);
+	}
+}
+
+class AudioEncoderWrapper {
+	private ensureEncoderPromise: Promise<void> | null = null;
+	private encoderInitialized = false;
+	private encoder: AudioEncoder | null = null;
+	private muxer: Muxer | null = null;
+	private lastNumberOfChannels: number | null = null;
+	private lastSampleRate: number | null = null;
+
+	private isPcmEncoder = false;
+	private outputSampleSize: number | null = null;
+	private writeOutputValue: ((view: DataView, byteOffset: number, value: number) => void) | null = null;
+
+	private customEncoder: CustomAudioEncoder | null = null;
+	private customEncoderCallSerializer = new CallSerializer();
+	private customEncoderQueueSize = 0;
+
+	private lastEndSampleIndex: number | null = null;
+
+	private resampler: AudioResampler | null = null;
+
+	/**
+	 * Encoders typically throw their errors "out of band", meaning asynchronously in some other execution context.
+	 * However, we want to surface these errors to the user within the normal control flow, so they don't go uncaught.
+	 * So, we keep track of the encoder error and throw it as soon as we get the chance.
+	 */
+	private error: unknown = null;
+	private errorSet = false;
+
+	private setError(error: unknown) {
+		if (!this.errorSet) {
+			this.error = error;
+			this.errorSet = true;
+		}
+	}
+
+	private lastMuxerPromise: Promise<void> = Promise.resolve();
+	private closed = false;
+
+	constructor(private source: AudioSource, private encodingConfig: AudioEncodingConfig) {}
+
+	async add(audioSample: AudioSample, shouldClose: boolean) {
+		try {
+			this.checkForEncoderError();
+			this.source._ensureValidAdd();
+
+			// Ensure audio parameters remain constant
+			if (this.lastNumberOfChannels !== null && this.lastSampleRate !== null) {
+				if (
+					audioSample.numberOfChannels !== this.lastNumberOfChannels
+					|| audioSample.sampleRate !== this.lastSampleRate
+				) {
+					throw new Error(
+						`Audio parameters must remain constant. Expected ${this.lastNumberOfChannels} channels at`
+						+ ` ${this.lastSampleRate} Hz, got ${audioSample.numberOfChannels} channels at`
+						+ ` ${audioSample.sampleRate} Hz.`,
+					);
+				}
+			} else {
+				this.lastNumberOfChannels = audioSample.numberOfChannels;
+				this.lastSampleRate = audioSample.sampleRate;
+			}
+
+			const config = this.encodingConfig;
+			const needsResample = config.transform?.numberOfChannels !== undefined
+				|| config.transform?.sampleRate !== undefined;
+
+			if (needsResample) {
+				if (!this.resampler) {
+					// Initialize the resampler on first sample
+					this.resampler = new AudioResampler({
+						targetNumberOfChannels: config.transform!.numberOfChannels
+							?? audioSample.numberOfChannels,
+						targetSampleRate: config.transform!.sampleRate
+							?? audioSample.sampleRate,
+						onSample: async (sample) => {
+							await this.processAndEncode(sample, true);
+						},
+					});
+				}
+
+				await this.resampler.add(audioSample);
+			} else {
+				await this.processAndEncode(audioSample, shouldClose);
+			}
+		} finally {
+			if (shouldClose) {
+				audioSample.close();
+			}
+		}
+	}
+
+	/**
+	 * Runs the process function (if any) and encodes the resulting samples.
+	 */
+	private async processAndEncode(audioSample: AudioSample, shouldClose: boolean) {
+		const config = this.encodingConfig;
+
+		if (
+			config.transform?.sampleFormat !== undefined
+			&& toInterleavedAudioFormat(audioSample.format) !== config.transform.sampleFormat
+		) {
+			// Do a sample format conversion
+			const newSample = audioSampleToInterleavedFormat(audioSample, config.transform.sampleFormat);
+
+			if (shouldClose) {
+				audioSample.close();
+			}
+
+			audioSample = newSample;
+			shouldClose = true;
+		}
+
+		if (config.transform?.process) {
+			try {
+				let processed = config.transform.process(audioSample);
+				if (isThenable(processed)) {
+					processed = await processed;
+				}
+
+				if (processed === null) {
+					return;
+				}
+
+				if (!Array.isArray(processed)) {
+					processed = [processed];
+				}
+
+				try {
+					for (const sample of processed) {
+						if (!(sample instanceof AudioSample)) {
+							throw new TypeError(
+								'The audio process function must return an AudioSample, null, or an array of'
+								+ ' AudioSamples.',
+							);
+						}
+					}
+
+					for (const sample of processed) {
+						await this.encodeSample(sample, true);
+					}
+				} finally {
+					// encodeSample closes the samples it was passed; this additionally covers the samples never
+					// reached because an earlier one threw (closing is idempotent)
+					for (const sample of processed) {
+						if (sample instanceof AudioSample) {
+							sample.close();
+						}
+					}
+				}
+			} finally {
+				if (shouldClose) {
+					audioSample.close();
+				}
+			}
+		} else {
+			await this.encodeSample(audioSample, shouldClose);
+		}
+	}
+
+	/**
+	 * Encodes a single audio sample, handling encoder init, gap padding, and backpressure.
+	 */
+	private async encodeSample(audioSample: AudioSample, shouldClose: boolean) {
+		try {
+			if (!this.encoderInitialized) {
+				if (!this.ensureEncoderPromise) {
+					this.ensureEncoder(audioSample);
+				}
+
+				// No, this "if" statement is not useless. Sometimes, the above call to `ensureEncoder` might have
+				// synchronously completed and the encoder is already initialized. In this case, we don't need to await
+				// the promise anymore. This also fixes nasty async race condition bugs when multiple code paths are
+				// calling this method: It's important that the call that initialized the encoder go through this
+				// code first.
+				if (!this.encoderInitialized) {
+					await this.ensureEncoderPromise;
+				}
+			}
+			assert(this.encoderInitialized);
+
+			if (this.closed) {
+				return;
+			}
+
+			// Handle padding of gaps with silence to avoid audio drift over time, like in
+			// https://github.com/Vanilagy/mediabunny/issues/176
+			// TODO An open question is how encoders deal with the first AudioData having a non-zero timestamp, and with
+			// AudioDatas that have an overlapping timestamp range.
+			{
+				const startSampleIndex = Math.round(
+					audioSample.timestamp * audioSample.sampleRate,
+				);
+				const endSampleIndex = Math.round(
+					(audioSample.timestamp + audioSample.duration) * audioSample.sampleRate,
+				);
+
+				if (this.lastEndSampleIndex === null) {
+					this.lastEndSampleIndex = endSampleIndex;
+				} else {
+					const sampleDiff = startSampleIndex - this.lastEndSampleIndex;
+
+					if (sampleDiff >= 64) {
+						// The gap is big enough, let's add a correction sample
+						const fillSample = new AudioSample({
+							data: new Float32Array(sampleDiff * audioSample.numberOfChannels),
+							format: 'f32-planar',
+							sampleRate: audioSample.sampleRate,
+							numberOfChannels: audioSample.numberOfChannels,
+							numberOfFrames: sampleDiff,
+							timestamp: this.lastEndSampleIndex / audioSample.sampleRate,
+						});
+
+						await this.encodeSample(fillSample, true); // Recursive call
+					}
+
+					this.lastEndSampleIndex += audioSample.numberOfFrames;
+				}
+			}
+
+			this.encodingConfig.onEncodedSample?.(audioSample);
+
+			if (this.customEncoder) {
+				this.customEncoderQueueSize++;
+
+				// We clone the sample so it cannot be closed on us from the outside before it reaches the encoder
+				const clonedSample = audioSample.clone();
+
+				const promise = this.customEncoderCallSerializer
+					.call(() => this.customEncoder!.encode(clonedSample))
+					.catch((error: unknown) => this.setError(error))
+					.finally(() => {
+						this.customEncoderQueueSize--;
+						clonedSample.close();
+					});
+
+				if (this.customEncoderQueueSize >= 4) {
+					await promise;
+				}
+
+				await this.lastMuxerPromise; // Allow the writer to apply backpressure
+			} else if (this.isPcmEncoder) {
+				await this.doPcmEncoding(audioSample, shouldClose);
+			} else {
+				assert(this.encoder);
+				const audioData = audioSample.toAudioData();
+				this.encoder.encode(audioData);
+				audioData.close();
+
+				if (shouldClose) {
+					audioSample.close();
+				}
+
+				if (this.encoder.encodeQueueSize >= 4) {
+					await new Promise(resolve => this.encoder!.addEventListener('dequeue', resolve, { once: true }));
+				}
+
+				await this.lastMuxerPromise; // Allow the writer to apply backpressure
+			}
+		} finally {
+			if (shouldClose) {
+				audioSample.close();
+			}
+		}
+	}
+
+	private async doPcmEncoding(audioSample: AudioSample, shouldClose: boolean) {
+		assert(this.outputSampleSize);
+		assert(this.writeOutputValue);
+
+		// Need to extract data from the audio data before we close it
+		const { numberOfChannels, numberOfFrames, sampleRate, timestamp } = audioSample;
+
+		const CHUNK_SIZE = 2048;
+		const outputs: {
+			frameCount: number;
+			view: DataView;
+		}[] = [];
+
+		// Prepare all of the output buffers, each being bounded by CHUNK_SIZE so we don't generate huge packets
+		for (let frame = 0; frame < numberOfFrames; frame += CHUNK_SIZE) {
+			const frameCount = Math.min(CHUNK_SIZE, audioSample.numberOfFrames - frame);
+			const outputSize = frameCount * numberOfChannels * this.outputSampleSize;
+			const outputBuffer = new ArrayBuffer(outputSize);
+			const outputView = new DataView(outputBuffer);
+
+			outputs.push({ frameCount, view: outputView });
+		}
+
+		const isS32 = audioSample.format === 's32' || audioSample.format === 's32-planar';
+		const readFormat = isS32 ? 's32-planar' : 'f32-planar'; // Can't read in f32-planar due to precision loss
+		const scale = isS32 ? 1 / 2147483648 : 1;
+
+		const allocationSize = audioSample.allocationSize(({ planeIndex: 0, format: readFormat }));
+		const values = isS32
+			? new Int32Array(allocationSize / 4)
+			: new Float32Array(allocationSize / 4);
+
+		for (let i = 0; i < numberOfChannels; i++) {
+			audioSample.copyTo(values, { planeIndex: i, format: readFormat });
+
+			for (let j = 0; j < outputs.length; j++) {
+				const { frameCount, view } = outputs[j]!;
+
+				for (let k = 0; k < frameCount; k++) {
+					this.writeOutputValue(
+						view,
+						(k * numberOfChannels + i) * this.outputSampleSize,
+						values[j * CHUNK_SIZE + k]! * scale,
+					);
+				}
+			}
+		}
+
+		if (shouldClose) {
+			audioSample.close();
+		}
+
+		const meta: EncodedAudioChunkMetadata = {
+			decoderConfig: {
+				codec: this.encodingConfig.codec,
+				numberOfChannels,
+				sampleRate,
+			},
+		};
+
+		for (let i = 0; i < outputs.length; i++) {
+			const { frameCount, view } = outputs[i]!;
+			const outputBuffer = view.buffer;
+			const startFrame = i * CHUNK_SIZE;
+
+			const packet = new EncodedPacket(
+				new Uint8Array(outputBuffer),
+				'key',
+				timestamp + startFrame / sampleRate,
+				frameCount / sampleRate,
+			);
+
+			this.encodingConfig.onEncodedPacket?.(packet, meta);
+			await this.muxer!.addEncodedAudioPacket(this.source._connectedTrack!, packet, meta); // With backpressure
+		}
+	}
+
+	private ensureEncoder(audioSample: AudioSample) {
+		this.ensureEncoderPromise = (async () => {
+			const { numberOfChannels, sampleRate } = audioSample;
+
+			// eslint-disable-next-line @typescript-eslint/no-deprecated
+			const quality = resolveQuality(this.encodingConfig.quality, this.encodingConfig.bitrate);
+
+			const encoderConfig = buildAudioEncoderConfig({
+				numberOfChannels,
+				sampleRate,
+				...this.encodingConfig,
+				quality,
+			});
+			this.encodingConfig.onEncoderConfig?.(encoderConfig);
+			this.source._nominalBitrate = encoderConfig.bitrate ?? null;
+
+			const MatchingCustomEncoder = customAudioEncoders.find(x => x.supports(
+				this.encodingConfig.codec,
+				encoderConfig,
+			));
+
+			if (MatchingCustomEncoder) {
+				// @ts-expect-error "Can't create instance of abstract class 🤓"
+				this.customEncoder = new MatchingCustomEncoder() as CustomAudioEncoder;
+				// @ts-expect-error It's technically readonly
+				this.customEncoder.codec = this.encodingConfig.codec;
+				// @ts-expect-error It's technically readonly
+				this.customEncoder.config = encoderConfig;
+				// @ts-expect-error It's technically readonly
+				this.customEncoder.onPacket = (packet, meta) => {
+					if (!(packet instanceof EncodedPacket)) {
+						throw new TypeError('The first argument passed to onPacket must be an EncodedPacket.');
+					}
+					if (meta !== undefined && (!meta || typeof meta !== 'object')) {
+						throw new TypeError('The second argument passed to onPacket must be an object or undefined.');
+					}
+
+					this.encodingConfig.onEncodedPacket?.(packet, meta);
+					this.lastMuxerPromise
+						= this.muxer!.addEncodedAudioPacket(this.source._connectedTrack!, packet, meta)
+							.catch((error) => {
+								this.setError(error);
+							});
+				};
+				// @ts-expect-error It's technically readonly
+				this.customEncoder.onError = (error) => {
+					this.setError(error);
+				};
+
+				await this.customEncoder.init();
+			} else if ((PCM_AUDIO_CODECS as readonly string[]).includes(this.encodingConfig.codec)) {
+				this.initPcmEncoder();
+			} else {
+				if (typeof AudioEncoder === 'undefined') {
+					throw new Error(missingWebCodecsClassMessage('AudioEncoder'));
+				}
+
+				let supported: boolean;
+
+				try {
+					const support = await AudioEncoder.isConfigSupported(encoderConfig);
+					supported = support.supported ?? false;
+				} catch {
+					supported = false;
+				}
+
+				if (!supported) {
+					throw new Error(
+						`This specific encoder configuration (${encoderConfig.codec}, ${encoderConfig.bitrate} bps,`
+						+ ` ${encoderConfig.numberOfChannels} channels, ${encoderConfig.sampleRate} Hz) is not`
+						+ ` supported in this environment. Consider using another codec or changing your`
+						+ ` audio parameters.`,
+					);
+				}
+
+				const stack = new Error('Encoding error').stack;
+
+				this.encoder = new AudioEncoder({
+					output: (chunk, meta) => {
+						// WebKit emits an invalid description for AAC (https://bugs.webkit.org/show_bug.cgi?id=302253),
+						// which we try to detect here. If detected, we'll provide our own description instead, derived
+						// from the codec string and audio parameters.
+						if (this.encodingConfig.codec === 'aac' && meta?.decoderConfig) {
+							let needsDescriptionOverwrite = false;
+							if (!meta.decoderConfig.description || meta.decoderConfig.description.byteLength < 2) {
+								needsDescriptionOverwrite = true;
+							} else {
+								const audioSpecificConfig = parseAacAudioSpecificConfig(
+									toUint8Array(meta.decoderConfig.description),
+								);
+
+								needsDescriptionOverwrite = audioSpecificConfig.objectType === 0;
+							}
+
+							if (needsDescriptionOverwrite) {
+								const objectType = Number(last(encoderConfig.codec.split('.')));
+
+								meta.decoderConfig.description = buildAacAudioSpecificConfig({
+									objectType,
+									outputNumberOfChannels: meta.decoderConfig.numberOfChannels,
+									outputSampleRate: meta.decoderConfig.sampleRate,
+								});
+							}
+						}
+
+						let packet = EncodedPacket.fromEncodedChunk(chunk);
+
+						// Snap the timing information to the sample rate to recover information lost in microsecond
+						// conversion
+						packet = packet.clone({
+							timestamp: roundToDivisor(packet.timestamp, encoderConfig.sampleRate),
+							duration: chunk.duration != null
+								? roundToDivisor(packet.duration, encoderConfig.sampleRate)
+								: undefined,
+						});
+
+						this.encodingConfig.onEncodedPacket?.(packet, meta);
+						this.lastMuxerPromise
+							= this.muxer!.addEncodedAudioPacket(this.source._connectedTrack!, packet, meta)
+								.catch((error) => {
+									this.setError(error);
+								});
+					},
+					error: (error) => {
+						error.stack = stack; // Provide a more useful stack trace
+						this.setError(error);
+					},
+				});
+				this.encoder.configure(encoderConfig);
+			}
+
+			assert(this.source._connectedTrack);
+			this.muxer = this.source._connectedTrack.output._muxer;
+
+			this.encoderInitialized = true;
+		})();
+	}
+
+	private initPcmEncoder() {
+		this.isPcmEncoder = true;
+
+		const codec = this.encodingConfig.codec as PcmAudioCodec;
+		const { dataType, sampleSize, littleEndian } = parsePcmCodec(codec);
+
+		this.outputSampleSize = sampleSize;
+
+		// All these functions receive a float sample as input and map it into the desired format
+
+		switch (sampleSize) {
+			case 1: {
+				if (dataType === 'unsigned') {
+					this.writeOutputValue = (view, byteOffset, value) =>
+						view.setUint8(byteOffset, clamp(Math.round(value * 128) + 128, 0, 255));
+				} else if (dataType === 'signed') {
+					this.writeOutputValue = (view, byteOffset, value) => {
+						view.setInt8(byteOffset, clamp(Math.round(value * 128), -128, 127));
+					};
+				} else if (dataType === 'ulaw') {
+					this.writeOutputValue = (view, byteOffset, value) => {
+						const int16 = clamp(Math.round(value * 32768), -32768, 32767);
+						view.setUint8(byteOffset, toUlaw(int16));
+					};
+				} else if (dataType === 'alaw') {
+					this.writeOutputValue = (view, byteOffset, value) => {
+						const int16 = clamp(Math.round(value * 32768), -32768, 32767);
+						view.setUint8(byteOffset, toAlaw(int16));
+					};
+				} else {
+					assert(false);
+				}
+			}; break;
+			case 2: {
+				if (dataType === 'unsigned') {
+					this.writeOutputValue = (view, byteOffset, value) =>
+						view.setUint16(byteOffset, clamp(Math.round(value * 32768) + 32768, 0, 65535), littleEndian);
+				} else if (dataType === 'signed') {
+					this.writeOutputValue = (view, byteOffset, value) =>
+						view.setInt16(byteOffset, clamp(Math.round(value * 32768), -32768, 32767), littleEndian);
+				} else {
+					assert(false);
+				}
+			}; break;
+			case 3: {
+				if (dataType === 'unsigned') {
+					this.writeOutputValue = (view, byteOffset, value) =>
+						setUint24(
+							view,
+							byteOffset,
+							clamp(Math.round(value * 8388608) + 8388608, 0, 16777215),
+							littleEndian,
+						);
+				} else if (dataType === 'signed') {
+					this.writeOutputValue = (view, byteOffset, value) =>
+						setInt24(
+							view,
+							byteOffset,
+							clamp(Math.round(value * 8388608), -8388608, 8388607),
+							littleEndian,
+						);
+				} else {
+					assert(false);
+				}
+			}; break;
+			case 4: {
+				if (dataType === 'unsigned') {
+					this.writeOutputValue = (view, byteOffset, value) =>
+						view.setUint32(
+							byteOffset,
+							clamp(Math.round(value * 2147483648) + 2147483648, 0, 4294967295),
+							littleEndian,
+						);
+				} else if (dataType === 'signed') {
+					this.writeOutputValue = (view, byteOffset, value) =>
+						view.setInt32(
+							byteOffset,
+							clamp(Math.round(value * 2147483648), -2147483648, 2147483647),
+							littleEndian,
+						);
+				} else if (dataType === 'float') {
+					this.writeOutputValue = (view, byteOffset, value) =>
+						view.setFloat32(byteOffset, value, littleEndian);
+				} else {
+					assert(false);
+				}
+			}; break;
+			case 8: {
+				if (dataType === 'float') {
+					this.writeOutputValue = (view, byteOffset, value) =>
+						view.setFloat64(byteOffset, value, littleEndian);
+				} else {
+					assert(false);
+				}
+			}; break;
+			default: {
+				assertNever(sampleSize);
+				assert(false);
+			};
+		}
+	}
+
+	async flushAndClose(forceClose: boolean) {
+		try {
+			if (!forceClose) {
+				this.checkForEncoderError();
+
+				// Finalize the resampler to flush any buffered audio
+				if (this.resampler) {
+					await this.resampler.finalize();
+				}
+			}
+
+			this.closed = true;
+
+			if (!forceClose) {
+				if (this.customEncoder) {
+					void this.customEncoderCallSerializer.call(() => this.customEncoder!.flush());
+				} else if (this.encoder) {
+					await this.encoder.flush();
+				}
+			}
+		} finally {
+			// This cleanup must also run when flushing threw (e.g. due to an encoder error), otherwise the encoder
+			// would be left dangling
+			this.closed = true;
+			this.resampler = null;
+
+			if (this.customEncoder) {
+				await this.customEncoderCallSerializer.call(() => this.customEncoder!.close())
+					.catch((error: unknown) => this.setError(error));
+			} else if (this.encoder && this.encoder.state !== 'closed') {
+				this.encoder.close();
+			}
+		}
+
+		if (!forceClose) {
+			this.checkForEncoderError();
+		}
+	}
+
+	getQueueSize() {
+		if (this.customEncoder) {
+			return this.customEncoderQueueSize;
+		} else if (this.isPcmEncoder) {
+			return 0;
+		} else {
+			return this.encoder?.encodeQueueSize ?? 0;
+		}
+	}
+
+	checkForEncoderError() {
+		if (this.errorSet) {
+			throw this.error;
+		}
+	}
+}
+
+/**
+ * This source can be used to add raw, unencoded audio samples to an output audio track. These samples will
+ * automatically be encoded and then piped into the output.
+ * @group Media sources
+ * @public
+ */
+export class AudioSampleSource extends AudioSource {
+	/** @internal */
+	private _encoder: AudioEncoderWrapper;
+
+	/**
+	 * Creates a new {@link AudioSampleSource} whose samples are encoded according to the specified
+	 * {@link AudioEncodingConfig}.
+	 */
+	constructor(encodingConfig: AudioEncodingConfig) {
+		validateAudioEncodingConfig(encodingConfig);
+
+		super(encodingConfig.codec);
+		this._encoder = new AudioEncoderWrapper(this, encodingConfig);
+	}
+
+	/**
+	 * Encodes an audio sample and then adds it to the output.
+	 *
+	 * @returns A Promise that resolves once the output is ready to receive more samples. You should await this Promise
+	 * to respect writer and encoder backpressure.
+	 */
+	add(audioSample: AudioSample) {
+		if (!(audioSample instanceof AudioSample)) {
+			throw new TypeError('audioSample must be an AudioSample.');
+		}
+
+		return this._encoder.add(audioSample, false);
+	}
+
+	/** @internal */
+	override _flushAndClose(forceClose: boolean) {
+		return this._encoder.flushAndClose(forceClose);
+	}
+}
+
+/**
+ * Options for {@link AudioBufferSource}.
+ * @group Media sources
+ * @public
+ */
+export type AudioBufferSourceOptions = {
+	/**
+	 * The timestamp of the first `AudioBuffer`, in seconds. Subsequent buffers are placed directly after the previous
+	 * one. Defaults to 0.
+	 */
+	startTimestamp?: number;
+};
+
+/**
+ * This source can be used to add audio data from an AudioBuffer to the output track. This is useful when working with
+ * the Web Audio API.
+ * @group Media sources
+ * @public
+ */
+export class AudioBufferSource extends AudioSource {
+	/** @internal */
+	private _encoder: AudioEncoderWrapper;
+	/** @internal */
+	private _accumulatedTime: number;
+
+	/**
+	 * Creates a new {@link AudioBufferSource} whose `AudioBuffer` instances are encoded according to the specified
+	 * {@link AudioEncodingConfig} and {@link AudioBufferSourceOptions}.
+	 */
+	constructor(encodingConfig: AudioEncodingConfig, options: AudioBufferSourceOptions = {}) {
+		validateAudioEncodingConfig(encodingConfig);
+		if (typeof options !== 'object' || !options) {
+			throw new TypeError('options must be an object.');
+		}
+		if (options.startTimestamp !== undefined && !Number.isFinite(options.startTimestamp)) {
+			throw new TypeError('options.startTimestamp, when provided, must be a finite number.');
+		}
+
+		super(encodingConfig.codec);
+		this._encoder = new AudioEncoderWrapper(this, encodingConfig);
+		this._accumulatedTime = options.startTimestamp ?? 0;
+	}
+
+	/**
+	 * Converts an AudioBuffer to audio samples, encodes them and adds them to the output. The first `AudioBuffer` will
+	 * be played at the configured start timestamp (the default is 0), and each subsequent `AudioBuffer` will be placed
+	 * directly after the previous one.
+	 *
+	 * @returns A Promise that resolves once the output is ready to receive more samples. You should await this Promise
+	 * to respect writer and encoder backpressure.
+	 */
+	async add(audioBuffer: AudioBuffer) {
+		if (!(audioBuffer instanceof AudioBuffer)) {
+			throw new TypeError('audioBuffer must be an AudioBuffer.');
+		}
+
+		const iterator = AudioSample._fromAudioBuffer(audioBuffer, this._accumulatedTime);
+		this._accumulatedTime += audioBuffer.duration;
+
+		for (const audioSample of iterator) {
+			await this._encoder.add(audioSample, true);
+		}
+	}
+
+	/** @internal */
+	override _flushAndClose(forceClose: boolean) {
+		return this._encoder.flushAndClose(forceClose);
+	}
+}
+
+/**
+ * Options for {@link MediaStreamAudioTrackSource}.
+ * @group Media sources
+ * @public
+ */
+export type MediaStreamAudioTrackSourceOptions = {
+	/**
+	 * Controls the basis (zero point) for audio sample timestamps.
+	 *
+	 * When set to `'synced-zero'`, timestamps will be relative to the first chunk of media from a `MediaStreamTrack`
+	 * added to the {@link Output}.
+	 *
+	 * When set to `'zero'`, timestamps will be relative to the first audio sample emitted by this source.
+	 *
+	 * When set to `'unix'`, timestamps will be relative to the Unix epoch, so clearly associated with a distinct point
+	 * in time. Here, pausing via {@link MediaStreamAudioTrackSource.pause} will also create gaps in timestamps. Be sure
+	 * to pair this mode with {@link BaseTrackMetadata.isRelativeToUnixEpoch}.
+	 *
+	 * Defaults to `'synced-zero'`.
+	 */
+	timestampBase?: 'synced-zero' | 'zero' | 'unix';
+};
+
+/**
+ * Audio source that encodes the data of a
+ * [`MediaStreamAudioTrack`](https://developer.mozilla.org/en-US/docs/Web/API/MediaStreamTrack) and pipes it into the
+ * output. This is useful for capturing live or real-time audio such as microphones or audio from other media elements.
+ * Audio will automatically start being captured once the connected {@link Output} is started, and will keep being
+ * captured until the {@link Output} is finalized or this source is closed.
+ * @group Media sources
+ * @public
+ */
+export class MediaStreamAudioTrackSource extends AudioSource {
+	/** @internal */
+	private _options: MediaStreamAudioTrackSourceOptions;
+	/** @internal */
+	private _encoder: AudioEncoderWrapper;
+	/** @internal */
+	private _abortController: AbortController | null = null;
+	/** @internal */
+	private _track: MediaStreamAudioTrack;
+	/** @internal */
+	private _audioContext: AudioContext | null = null;
+	/** @internal */
+	// eslint-disable-next-line @typescript-eslint/no-deprecated
+	private _scriptProcessorNode: ScriptProcessorNode | null = null; // Deprecated but goated
+	/** @internal */
+	private _promiseWithResolvers = promiseWithResolvers();
+	/** @internal */
+	private _errorPromiseAccessed = false;
+	/** @internal */
+	private _paused = false;
+
+	/** A promise that rejects upon any error within this source. This promise never resolves. */
+	get errorPromise() {
+		this._errorPromiseAccessed = true;
+		return this._promiseWithResolvers.promise;
+	}
+
+	/** Whether this source is currently paused as a result of calling `.pause()`. */
+	get paused() {
+		return this._paused;
+	}
+
+	/**
+	 * Creates a new {@link MediaStreamAudioTrackSource} from a `MediaStreamAudioTrack`, which will pull audio samples
+	 * from the stream in real time and encode them according to {@link AudioEncodingConfig}.
+	 */
+	constructor(
+		track: MediaStreamAudioTrack,
+		encodingConfig: AudioEncodingConfig,
+		options: MediaStreamAudioTrackSourceOptions = {},
+	) {
+		if (!(track instanceof MediaStreamTrack) || track.kind !== 'audio') {
+			throw new TypeError('track must be an audio MediaStreamTrack.');
+		}
+		validateAudioEncodingConfig(encodingConfig);
+		if (typeof options !== 'object' || !options) {
+			throw new TypeError('options must be an object.');
+		}
+		if (
+			options.timestampBase !== undefined
+			&& options.timestampBase !== 'synced-zero'
+			&& options.timestampBase !== 'zero'
+			&& options.timestampBase !== 'unix'
+		) {
+			throw new TypeError(
+				'options.timestampBase, when provided, must be one of \'synced-zero\', \'zero\', or \'unix\'.',
+			);
+		}
+
+		super(encodingConfig.codec);
+		this._options = options;
+		this._encoder = new AudioEncoderWrapper(this, encodingConfig);
+		this._track = track;
+	}
+
+	/** @internal */
+	override async _start() {
+		if (!this._errorPromiseAccessed) {
+			Logging._warn(
+				'Make sure not to ignore the `errorPromise` field on MediaStreamAudioTrackSource, so that any internal'
+				+ ' errors get bubbled up properly.',
+			);
+		}
+
+		this._abortController = new AbortController();
+
+		let firstAudioDataTimestamp: number | null = null;
+		let errored = false;
+		let lastSampleTimestamp: number | null = null;
+		let timestampOffset = 0;
+
+		const onAudioSample = (audioSample: AudioSample) => {
+			if (errored) {
+				audioSample.close();
+				return;
+			}
+
+			const currentTimestamp = audioSample.timestamp;
+
+			if (this._paused) {
+				const dataSeen = firstAudioDataTimestamp !== null;
+				if (dataSeen) {
+					if (lastSampleTimestamp !== null && this._options.timestampBase !== 'unix') {
+						// In addition to dropping this sample, let's also keep track of the time we have lost due to
+						// the pause. Doing it like this instead of simply keeping track of the paused time is better
+						// since it retains the sample rate of the underlying source.
+						const timeDelta = currentTimestamp - lastSampleTimestamp;
+						timestampOffset -= timeDelta;
+					}
+					lastSampleTimestamp = currentTimestamp;
+				}
+
+				audioSample.close();
+				return;
+			}
+
+			if (firstAudioDataTimestamp === null) {
+				firstAudioDataTimestamp = audioSample.timestamp;
+
+				let target: number;
+				const timestampBase = this._options.timestampBase ?? 'synced-zero';
+				if (timestampBase === 'unix') {
+					target = Date.now() / 1000;
+				} else if (timestampBase === 'zero') {
+					target = 0;
+				} else {
+					const output = this._connectedTrack!.output;
+					if (output._firstMediaStreamTimestamp === null) {
+						output._firstMediaStreamTimestamp = performance.now() / 1000;
+						target = 0;
+					} else {
+						target = performance.now() / 1000 - output._firstMediaStreamTimestamp;
+					}
+				}
+
+				timestampOffset = target - firstAudioDataTimestamp;
+			}
+
+			lastSampleTimestamp = currentTimestamp;
+
+			if (this._encoder.getQueueSize() >= 8) {
+				// Drop data if the encoder is overloaded
+				audioSample.close();
+				return;
+			}
+
+			audioSample.setTimestamp(currentTimestamp + timestampOffset);
+
+			void this._encoder.add(audioSample, true)
+				.catch((error) => {
+					errored = true;
+
+					this._abortController?.abort();
+					this._promiseWithResolvers.reject(error);
+					void this._audioContext?.suspend();
+				});
+		};
+
+		if (typeof MediaStreamTrackProcessor !== 'undefined') {
+			// Great, MediaStreamTrackProcessor is supported, this is the preferred way of doing things
+			const processor = new MediaStreamTrackProcessor({ track: this._track });
+			const consumer = new WritableStream<AudioData>({
+				write: audioData => onAudioSample(new AudioSample(audioData)),
+			});
+
+			processor.readable.pipeTo(consumer, {
+				signal: this._abortController.signal,
+			}).catch((error) => {
+				// Handle AbortError silently
+				if (error instanceof DOMException && error.name === 'AbortError') return;
+
+				this._promiseWithResolvers.reject(error);
+			});
+		} else {
+			// Let's fall back to an AudioContext approach
+
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+			const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+
+			this._audioContext = new AudioContext({ sampleRate: this._track.getSettings().sampleRate });
+			const sourceNode = this._audioContext.createMediaStreamSource(new MediaStream([this._track]));
+			// eslint-disable-next-line @typescript-eslint/no-deprecated
+			this._scriptProcessorNode = this._audioContext.createScriptProcessor(4096);
+
+			if (this._audioContext.state === 'suspended') {
+				await this._audioContext.resume();
+			}
+
+			sourceNode.connect(this._scriptProcessorNode);
+			this._scriptProcessorNode.connect(this._audioContext.destination);
+
+			let totalDuration = 0;
+
+			// eslint-disable-next-line @typescript-eslint/no-deprecated
+			this._scriptProcessorNode.onaudioprocess = (event) => {
+				// eslint-disable-next-line @typescript-eslint/no-deprecated
+				const iterator = AudioSample._fromAudioBuffer(event.inputBuffer, totalDuration);
+				// eslint-disable-next-line @typescript-eslint/no-deprecated
+				totalDuration += event.inputBuffer.duration;
+
+				for (const audioSample of iterator) {
+					onAudioSample(audioSample);
+				}
+			};
+		}
+	}
+
+	/**
+	 * Pauses the capture of audio data - any audio data emitted by the underlying media stream will be ignored
+	 * while paused. This does *not* close the underlying `MediaStreamAudioTrack`, it just ignores its output.
+	 */
+	pause() {
+		this._paused = true;
+	}
+
+	/** Resumes the capture of audio data after being paused. */
+	resume() {
+		this._paused = false;
+	}
+
+	/** @internal */
+	override async _flushAndClose(forceClose: boolean) {
+		try {
+			if (this._abortController) {
+				this._abortController.abort();
+				this._abortController = null;
+			}
+
+			if (this._audioContext) {
+				assert(this._scriptProcessorNode);
+
+				this._scriptProcessorNode.disconnect();
+				await this._audioContext.suspend();
+			}
+		} finally {
+			// The encoder must be closed even if the track teardown above threw
+			await this._encoder.flushAndClose(forceClose);
+		}
+	}
+}
+
+// === MEDIA STREAM TRACK PROCESSOR WORKER ===
+
+type MediaStreamTrackProcessorWorkerMessage = {
+	type: 'support';
+	supported: boolean;
+} | {
+	type: 'videoFrame';
+	trackId: number;
+	videoFrame: VideoFrame;
+} | {
+	type: 'trackStopped';
+	trackId: number;
+} | {
+	type: 'error';
+	trackId: number;
+	error: unknown;
+};
+
+type MediaStreamTrackProcessorControllerMessage = {
+	type: 'videoTrack';
+	trackId: number;
+	track: MediaStreamVideoTrack;
+} | {
+	type: 'stopTrack';
+	trackId: number;
+};
+
+const mediaStreamTrackProcessorWorkerCode = () => {
+	const sendMessage = (message: MediaStreamTrackProcessorWorkerMessage, transfer?: Transferable[]) => {
+		if (transfer) {
+			self.postMessage(message, { transfer });
+		} else {
+			self.postMessage(message);
+		}
+	};
+
+	// Immediately send a message to the main thread, letting them know of the support
+	sendMessage({
+		type: 'support',
+		supported: typeof MediaStreamTrackProcessor !== 'undefined',
+	});
+
+	const abortControllers = new Map<number, AbortController>();
+	const activeTracks = new Map<number, MediaStreamVideoTrack>();
+
+	self.addEventListener('message', (event) => {
+		const message = event.data as MediaStreamTrackProcessorControllerMessage;
+
+		switch (message.type) {
+			case 'videoTrack': {
+				activeTracks.set(message.trackId, message.track);
+
+				const processor = new MediaStreamTrackProcessor({ track: message.track });
+				const consumer = new WritableStream<VideoFrame>({
+					write: (videoFrame) => {
+						if (!activeTracks.has(message.trackId)) {
+							videoFrame.close();
+							return;
+						}
+
+						// Send it to the main thread
+						sendMessage({
+							type: 'videoFrame',
+							trackId: message.trackId,
+							videoFrame,
+						}, [videoFrame]);
+					},
+				});
+
+				const abortController = new AbortController();
+				abortControllers.set(message.trackId, abortController);
+
+				processor.readable.pipeTo(consumer, {
+					signal: abortController.signal,
+				}).catch((error: unknown) => {
+					// Handle AbortError silently
+					if (error instanceof DOMException && error.name === 'AbortError') return;
+
+					sendMessage({
+						type: 'error',
+						trackId: message.trackId,
+						error,
+					});
+				});
+			}; break;
+
+			case 'stopTrack': {
+				const abortController = abortControllers.get(message.trackId);
+				if (abortController) {
+					abortController.abort();
+					abortControllers.delete(message.trackId);
+				}
+
+				const track = activeTracks.get(message.trackId);
+				track?.stop();
+				activeTracks.delete(message.trackId);
+
+				sendMessage({
+					type: 'trackStopped',
+					trackId: message.trackId,
+				});
+			}; break;
+
+			default: assertNever(message);
+		}
+	});
+};
+
+let nextMediaStreamTrackProcessorWorkerId = 0;
+let mediaStreamTrackProcessorWorker: Worker | null = null;
+
+const initMediaStreamTrackProcessorWorker = () => {
+	const blob = new Blob(
+		[`(${mediaStreamTrackProcessorWorkerCode.toString()})()`],
+		{ type: 'application/javascript' },
+	);
+	const url = URL.createObjectURL(blob);
+
+	mediaStreamTrackProcessorWorker = new Worker(url);
+};
+
+let mediaStreamTrackProcessorIsSupportedInWorkerCache: boolean | null = null;
+const mediaStreamTrackProcessorIsSupportedInWorker = async () => {
+	if (mediaStreamTrackProcessorIsSupportedInWorkerCache !== null) {
+		return mediaStreamTrackProcessorIsSupportedInWorkerCache;
+	}
+
+	if (!mediaStreamTrackProcessorWorker) {
+		initMediaStreamTrackProcessorWorker();
+	}
+
+	return new Promise<boolean>((resolve) => {
+		assert(mediaStreamTrackProcessorWorker);
+
+		const listener = (event: MessageEvent) => {
+			const message = event.data as MediaStreamTrackProcessorWorkerMessage;
+
+			if (message.type === 'support') {
+				mediaStreamTrackProcessorIsSupportedInWorkerCache = message.supported;
+				mediaStreamTrackProcessorWorker!.removeEventListener('message', listener);
+
+				resolve(message.supported);
+			}
+		};
+
+		mediaStreamTrackProcessorWorker.addEventListener('message', listener);
+	});
+};
+
+const sendMessageToMediaStreamTrackProcessorWorker = (
+	message: MediaStreamTrackProcessorControllerMessage,
+	transfer?: Transferable[],
+) => {
+	assert(mediaStreamTrackProcessorWorker);
+
+	if (transfer) {
+		mediaStreamTrackProcessorWorker.postMessage(message, transfer);
+	} else {
+		mediaStreamTrackProcessorWorker.postMessage(message);
+	}
+};
+
+/**
+ * Base class for subtitle sources - sources for subtitle tracks.
+ * @group Media sources
+ * @public
+ */
+export abstract class SubtitleSource extends MediaSource {
+	/** @internal */
+	declare _connectedTrack: OutputSubtitleTrack | null;
+	/** @internal */
+	override readonly _codec: SubtitleCodec;
+
+	/** Internal constructor. */
+	constructor(codec: SubtitleCodec) {
+		super();
+
+		if (!SUBTITLE_CODECS.includes(codec)) {
+			throw new TypeError(`Invalid subtitle codec '${codec}'. Must be one of: ${SUBTITLE_CODECS.join(', ')}.`);
+		}
+
+		this._codec = codec;
+	}
+}
+
+/**
+ * This source can be used to add subtitles from a subtitle text file.
+ * @group Media sources
+ * @public
+ */
+export class TextSubtitleSource extends SubtitleSource {
+	/** @internal */
+	private _parser: SubtitleParser;
+	/** @internal */
+	private _error: unknown = null;
+	/** @internal */
+	private _errorSet = false;
+	/** @internal */
+	private _lastMuxerPromise: Promise<void> = Promise.resolve();
+
+	/** Creates a new {@link TextSubtitleSource} where added text chunks are in the specified `codec`. */
+	constructor(codec: SubtitleCodec) {
+		super(codec);
+
+		this._parser = new SubtitleParser({
+			codec,
+			output: (cue, metadata) => {
+				this._lastMuxerPromise
+					= this._connectedTrack!.output._muxer.addSubtitleCue(this._connectedTrack!, cue, metadata)
+						.catch((error) => {
+							this._setError(error);
+						});
+			},
+		});
+	}
+
+	/**
+	 * Parses the subtitle text according to the specified codec and adds it to the output track. You don't have to
+	 * add the entire subtitle file at once here; you can provide it in chunks.
+	 *
+	 * @returns A Promise that resolves once the output is ready to receive more samples. You should await this Promise
+	 * to respect writer and encoder backpressure.
+	 */
+	add(text: string) {
+		if (typeof text !== 'string') {
+			throw new TypeError('text must be a string.');
+		}
+
+		this._checkForError();
+
+		this._ensureValidAdd();
+		this._parser.parse(text);
+
+		return this._lastMuxerPromise; // Allow the writer to apply backpressure
+	}
+
+	/** @internal */
+	private _setError(error: unknown) {
+		if (!this._errorSet) {
+			this._error = error;
+			this._errorSet = true;
+		}
+	}
+
+	/** @internal */
+	_checkForError() {
+		if (this._errorSet) {
+			throw this._error;
+		}
+	}
+
+	/** @internal */
+	override async _flushAndClose(forceClose: boolean) {
+		if (!forceClose) {
+			this._checkForError();
+		}
+	}
+}

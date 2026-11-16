@@ -1,0 +1,54 @@
+{
+  "name": "pidusage",
+  "version": "4.1.0",
+  "description": "Cross-platform process cpu % and memory usage of a PID",
+  "license": "MIT",
+  "homepage": "https://github.com/soyuka/pidusage",
+  "repository": "github:soyuka/pidusage",
+  "bugs": {
+    "url": "https://github.com/soyuka/pidusage/issues"
+  },
+  "author": "soyuka",
+  "contributors": [
+    "Simone Primarosa <simonepri@outlook.com> (https://simoneprimarosa.com)"
+  ],
+  "main": "index.js",
+  "files": [
+    "lib",
+    "index.js"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "lint": "standard",
+    "test": "c8 ava -m \"!*benchmark*\"",
+    "coverage": "c8 ava",
+    "bench": "ava -m \"*benchmark*\""
+  },
+  "devDependencies": {
+    "ava": "^6.4.1",
+    "c8": "^10.1.3",
+    "mockdate": "^3.0.5",
+    "mockery": "^2.1.0",
+    "standard": "^17.1.2"
+  },
+  "keywords": [
+    "pid",
+    "usage",
+    "ps",
+    "cpu",
+    "memory",
+    "proc"
+  ],
+  "ava": {
+    "verbose": true,
+    "failWithoutAssertions": false
+  },
+  "c8": {
+    "reporter": [
+      "lcovonly",
+      "text"
+    ]
+  }
+}

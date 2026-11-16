@@ -1,0 +1,1 @@
+{"version":3,"file":"mantine-html-props.mjs","sources":["../../../src/core/MantineProvider/mantine-html-props.ts"],"sourcesContent":["export const mantineHtmlProps = {\n  suppressHydrationWarning: true,\n  'data-mantine-color-scheme': 'light',\n};\n"],"names":[],"mappings":"AAAO,MAAM,gBAAA,GAAmB;AAAA,EAC9B,wBAAA,EAA0B,IAAA;AAAA,EAC1B,2BAAA,EAA6B;AAC/B;;;;"}

@@ -1,0 +1,1 @@
+{"version":3,"file":"INTEGER.js","sourceRoot":"","sources":["../../../../src/structuredfield/utils/INTEGER.ts"],"names":[],"mappings":";;;AAAa,QAAA,OAAO,GAAW,SAAS,CAAC","sourcesContent":["export const INTEGER: string = 'Integer';\n"]}

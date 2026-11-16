@@ -1,0 +1,6 @@
+.m_9e117634 {
+  display: block;
+  object-fit: var(--image-object-fit, cover);
+  width: 100%;
+  border-radius: var(--image-radius, 0);
+}

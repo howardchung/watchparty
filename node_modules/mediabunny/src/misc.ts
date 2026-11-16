@@ -1,0 +1,1721 @@
+/*!
+ * Copyright (c) 2026-present, Vanilagy and contributors
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+import { Bitstream } from '../shared/bitstream';
+import { Logging } from './logging';
+
+export function assert(x: unknown): asserts x {
+	if (!x) {
+		throw new Error('Assertion failed.');
+	}
+}
+
+/**
+ * Represents a clockwise rotation in degrees.
+ * @group Miscellaneous
+ * @public
+ */
+export type Rotation = 0 | 90 | 180 | 270;
+
+export const DEG_TO_RAD = Math.PI / 180;
+export const RAD_TO_DEG = 180 / Math.PI;
+
+export const normalizeRotation = (rotation: number) => {
+	const mappedRotation = (rotation % 360 + 360) % 360;
+
+	if (mappedRotation === 0 || mappedRotation === 90 || mappedRotation === 180 || mappedRotation === 270) {
+		return mappedRotation as Rotation;
+	} else {
+		throw new Error(`Invalid rotation ${rotation}.`);
+	}
+};
+
+/**
+ * Row-major 3x3 affine transformation matrix.
+ * @group Miscellaneous
+ * @public
+ */
+export type TransformationMatrix = [
+	a: number,
+	b: number,
+	u: number,
+	c: number,
+	d: number,
+	v: number,
+	x: number,
+	y: number,
+	w: number,
+];
+
+export const IDENTITY_MATRIX: TransformationMatrix = [1, 0, 0, 0, 1, 0, 0, 0, 1];
+
+/**
+ * Applies a linear transformation (no translation) to a width-by-height frame about its center, with the result
+ * sitting in the positive quadrant.
+ */
+export const centeredTransformationMatrix = (linear: TransformationMatrix, width: number, height: number) => {
+	const [a, b, , c, d] = linear;
+
+	// Bounding box of the transformed frame
+	const transformedWidth = Math.abs(a) * width + Math.abs(c) * height;
+	const transformedHeight = Math.abs(b) * width + Math.abs(d) * height;
+
+	// The transformation happens about the origin (the frame's top-left corner), so we move the center to the
+	// origin, transform, then move it back
+	return multiplyMatrices(
+		multiplyMatrices(
+			translationMatrix(-width / 2, -height / 2),
+			linear,
+		),
+		translationMatrix(transformedWidth / 2, transformedHeight / 2),
+	);
+};
+
+/**
+ * Extracts the rotation from a transformation matrix, assuming the matrix has the form "rotate, then maybe flip
+ * horizontally", and snapping to the nearest multiple of 90 degrees.
+ */
+export const extractRotationFromMatrix = (matrix: TransformationMatrix) => {
+	const [a, b] = matrix;
+
+	// (1, 0) projects onto (a, b), so that's all we need. The rotation is applied before flipping though, so we
+	// first need to undo the flip to isolate the rotation.
+	const radians = Math.atan2(b, matrixIsFlipped(matrix) ? -a : a);
+	return normalizeRotation(roundToMultiple(radians * RAD_TO_DEG, 90));
+};
+
+/** Whether the transformation matrix flips the frame, i.e. has a negative determinant. */
+export const matrixIsFlipped = (matrix: TransformationMatrix) => {
+	const [a, b, , c, d] = matrix;
+	const det = a * d - b * c;
+
+	return det < 0;
+};
+
+export const rotationMatrix = (rotationInDegrees: number): TransformationMatrix => {
+	const theta = rotationInDegrees * DEG_TO_RAD;
+	const cosTheta = Math.round(Math.cos(theta));
+	const sinTheta = Math.round(Math.sin(theta));
+
+	// Points are row vectors, meaning this is the transpose of your typical rotation matrix
+	return [
+		cosTheta, sinTheta, 0,
+		-sinTheta, cosTheta, 0,
+		0, 0, 1,
+	];
+};
+
+export const translationMatrix = (x: number, y: number): TransformationMatrix => {
+	// Points are row vectors, meaning this is the transpose of your typical translation matrix
+	return [
+		1, 0, 0,
+		0, 1, 0,
+		x, y, 1,
+	];
+};
+
+export const scaleMatrix = (x: number, y: number): TransformationMatrix => {
+	return [
+		x, 0, 0,
+		0, y, 0,
+		0, 0, 1,
+	];
+};
+
+/** Computes a * b. Since points are row vectors, this applies a first, then b. */
+export const multiplyMatrices = (a: TransformationMatrix, b: TransformationMatrix): TransformationMatrix => {
+	const result = new Array<number>(9) as TransformationMatrix;
+
+	for (let i = 0; i < 3; i++) {
+		for (let j = 0; j < 3; j++) {
+			result[3 * i + j] = a[3 * i]! * b[j]! + a[3 * i + 1]! * b[3 + j]! + a[3 * i + 2]! * b[6 + j]!;
+		}
+	}
+
+	return result;
+};
+
+/**
+ * Composes two "rotate, then flip" transformations into one. A flip conjugates any rotation that follows it, meaning
+ * the second rotation flips direction if the first flip is set.
+ */
+export const composeRotationAndFlip = (
+	rotation1: Rotation,
+	flip1: boolean,
+	rotation2: Rotation,
+	flip2: boolean,
+) => {
+	return {
+		rotation: normalizeRotation(rotation1 + (flip1 ? -rotation2 : rotation2)),
+		flip: flip1 !== flip2,
+	};
+};
+
+export const last = <T>(arr: T[]) => {
+	return arr && arr[arr.length - 1];
+};
+
+export const isU32 = (value: number) => {
+	return value >= 0 && value < 2 ** 32;
+};
+
+export const isI32 = (value: number) => {
+	return value >= -(2 ** 31) && value < 2 ** 31;
+};
+
+/** Reads an exponential-Golomb universal code from a Bitstream.  */
+export const readExpGolomb = (bitstream: Bitstream) => {
+	let leadingZeroBits = 0;
+	while (bitstream.readBits(1) === 0 && leadingZeroBits < 32) {
+		leadingZeroBits++;
+	}
+
+	if (leadingZeroBits >= 32) {
+		throw new Error('Invalid exponential-Golomb code.');
+	}
+
+	const result = (1 << leadingZeroBits) - 1 + bitstream.readBits(leadingZeroBits);
+	return result;
+};
+
+export const writeExpGolomb = (bitstream: Bitstream, value: number) => {
+	const codeNum = value + 1;
+	const leadingZeroBits = Math.floor(Math.log2(codeNum));
+	bitstream.writeBits(leadingZeroBits, 0);
+	bitstream.writeBits(1, 1);
+	bitstream.writeBits(leadingZeroBits, codeNum - 2 ** leadingZeroBits);
+};
+
+/** Reads a signed exponential-Golomb universal code from a Bitstream. */
+export const readSignedExpGolomb = (bitstream: Bitstream) => {
+	const codeNum = readExpGolomb(bitstream);
+
+	return ((codeNum & 1) === 0)
+		? -(codeNum >> 1)
+		: ((codeNum + 1) >> 1);
+};
+
+export const writeBits = (bytes: Uint8Array, start: number, end: number, value: number) => {
+	for (let i = start; i < end; i++) {
+		const byteIndex = Math.floor(i / 8);
+		let byte = bytes[byteIndex]!;
+		const bitIndex = 0b111 - (i & 0b111);
+
+		byte &= ~(1 << bitIndex);
+		byte |= ((value & (1 << (end - i - 1))) >> (end - i - 1)) << bitIndex;
+		bytes[byteIndex] = byte;
+	}
+};
+
+export const toUint8Array = (source: AllowSharedBufferSource): Uint8Array => {
+	if (source.constructor === Uint8Array) { // We want a true Uint8Array, not something that extends it like Buffer
+		return source;
+	} else if (ArrayBuffer.isView(source)) {
+		return new Uint8Array(source.buffer, source.byteOffset, source.byteLength);
+	} else {
+		return new Uint8Array(source);
+	}
+};
+
+export const toDataView = (source: AllowSharedBufferSource): DataView => {
+	if (source.constructor === DataView) {
+		return source;
+	} else if (ArrayBuffer.isView(source)) {
+		return new DataView(source.buffer, source.byteOffset, source.byteLength);
+	} else {
+		return new DataView(source);
+	}
+};
+
+// Include a polyfill for environments that don't have TextEncoder (like AudioWorkletGlobalScope)
+export const TextEncoder = typeof globalThis.TextEncoder !== 'undefined'
+	? globalThis.TextEncoder
+	: class TextEncoder {
+		readonly encoding = 'utf-8';
+
+		encode(input = '') {
+			// UTF-8 needs at most 3 bytes per UTF-16 code unit
+			const bytes = new Uint8Array(3 * input.length);
+			let n = 0;
+
+			for (let i = 0; i < input.length; i++) {
+				let c = input.charCodeAt(i);
+				if (c < 0x80) {
+					bytes[n++] = c;
+				} else if (c < 0x800) {
+					bytes[n++] = 0xc0 | (c >> 6);
+					bytes[n++] = 0x80 | (c & 63);
+				} else if (c < 0xd800 || c > 0xdfff) {
+					bytes[n++] = 0xe0 | (c >> 12);
+					bytes[n++] = 0x80 | ((c >> 6) & 63);
+					bytes[n++] = 0x80 | (c & 63);
+				} else {
+					const next = i + 1 < input.length ? input.charCodeAt(i + 1) : 0;
+					if (c < 0xdc00 && next >= 0xdc00 && next <= 0xdfff) {
+						c = 0x10000 + ((c - 0xd800) << 10) + (next - 0xdc00);
+						i++;
+						bytes[n++] = 0xf0 | (c >> 18);
+						bytes[n++] = 0x80 | ((c >> 12) & 63);
+						bytes[n++] = 0x80 | ((c >> 6) & 63);
+						bytes[n++] = 0x80 | (c & 63);
+					} else {
+						bytes[n++] = 0xef;
+						bytes[n++] = 0xbf;
+						bytes[n++] = 0xbd;
+					}
+				}
+			}
+
+			return bytes.slice(0, n);
+		}
+	};
+
+// Include a polyfill for environments that don't have TextEncoder (like AudioWorkletGlobalScope)
+export const TextDecoder = typeof globalThis.TextDecoder !== 'undefined'
+	? globalThis.TextDecoder
+	: class TextDecoder {
+		readonly encoding: 'utf-8' | 'utf-16le' | 'utf-16be';
+
+		constructor(label = 'utf-8') {
+			const normalized = label.trim().toLowerCase();
+			if (normalized === 'utf-8' || normalized === 'utf8' || normalized === 'unicode-1-1-utf-8') {
+				this.encoding = 'utf-8';
+			} else if (normalized === 'utf-16le' || normalized === 'utf-16') {
+				this.encoding = 'utf-16le';
+			} else if (normalized === 'utf-16be') {
+				this.encoding = 'utf-16be';
+			} else {
+				throw new RangeError(`The encoding label provided ('${label}') is invalid.`);
+			}
+		}
+
+		decode(input?: AllowSharedBufferSource) {
+			const bytes = input ? toUint8Array(input) : new Uint8Array(0);
+			const units: number[] = [];
+
+			if (this.encoding === 'utf-8') {
+				let i = bytes.length >= 3 && bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf ? 3 : 0;
+
+				while (i < bytes.length) {
+					const lead = bytes[i]!;
+					if (lead < 0x80) {
+						units.push(lead);
+						i++;
+						continue;
+					}
+
+					let continuationCount: number;
+					let codePoint: number;
+					if (lead >= 0xc2 && lead < 0xe0) {
+						continuationCount = 1;
+						codePoint = lead & 0x1f;
+					} else if (lead >= 0xe0 && lead < 0xf0) {
+						continuationCount = 2;
+						codePoint = lead & 0x0f;
+					} else if (lead >= 0xf0 && lead < 0xf5) {
+						continuationCount = 3;
+						codePoint = lead & 0x07;
+					} else {
+						units.push(0xfffd);
+						i++;
+						continue;
+					}
+
+					let lowerBound = lead === 0xe0 ? 0xa0 : lead === 0xf0 ? 0x90 : 0x80;
+					let upperBound = lead === 0xed ? 0x9f : lead === 0xf4 ? 0x8f : 0xbf;
+
+					let j = 1;
+					for (; j <= continuationCount; j++) {
+						const byte = i + j < bytes.length ? bytes[i + j]! : 0;
+						if (byte < lowerBound || byte > upperBound) {
+							break;
+						}
+						codePoint = (codePoint << 6) | (byte & 0x3f);
+						lowerBound = 0x80;
+						upperBound = 0xbf;
+					}
+
+					i += j;
+
+					if (j <= continuationCount) {
+						units.push(0xfffd);
+					} else if (codePoint >= 0x10000) {
+						codePoint -= 0x10000;
+						units.push(0xd800 | (codePoint >> 10), 0xdc00 | (codePoint & 0x3ff));
+					} else {
+						units.push(codePoint);
+					}
+				}
+			} else {
+				const littleEndian = this.encoding === 'utf-16le';
+				const bomLow = littleEndian ? 0xff : 0xfe;
+				const bomHigh = littleEndian ? 0xfe : 0xff;
+				let i = bytes.length >= 2 && bytes[0] === bomLow && bytes[1] === bomHigh ? 2 : 0;
+
+				while (i + 1 < bytes.length) {
+					const unit = littleEndian
+						? bytes[i]! | (bytes[i + 1]! << 8)
+						: (bytes[i]! << 8) | bytes[i + 1]!;
+					i += 2;
+
+					if (unit >= 0xd800 && unit <= 0xdbff) {
+						const next = i + 1 < bytes.length
+							? (littleEndian ? bytes[i]! | (bytes[i + 1]! << 8) : (bytes[i]! << 8) | bytes[i + 1]!)
+							: -1;
+						if (next >= 0xdc00 && next <= 0xdfff) {
+							units.push(unit, next);
+							i += 2;
+						} else {
+							units.push(0xfffd);
+						}
+					} else if (unit >= 0xdc00 && unit <= 0xdfff) {
+						units.push(0xfffd);
+					} else {
+						units.push(unit);
+					}
+				}
+
+				if (i < bytes.length) {
+					units.push(0xfffd); // Dangling odd byte
+				}
+			}
+
+			let result = '';
+			for (let i = 0; i < units.length; i += 8192) {
+				result += String.fromCharCode(...units.slice(i, i + 8192));
+			}
+
+			return result;
+		}
+	};
+
+export const textDecoder = /* #__PURE__ */ new TextDecoder();
+export const textEncoder = /* #__PURE__ */ new TextEncoder();
+
+export const isIso88591Compatible = (text: string) => {
+	for (let i = 0; i < text.length; i++) {
+		const code = text.charCodeAt(i);
+		if (code > 255) {
+			return false;
+		}
+	}
+
+	return true;
+};
+
+const invertObject = <K extends PropertyKey, V extends PropertyKey>(object: Record<K, V>) => {
+	return Object.fromEntries(Object.entries(object).map(([key, value]) => [value, key])) as Record<V, K>;
+};
+
+// For the color space mappings, see Rec. ITU-T H.273.
+
+export const COLOR_PRIMARIES_MAP = {
+	bt709: 1, // ITU-R BT.709
+	bt470bg: 5, // ITU-R BT.470BG
+	smpte170m: 6, // ITU-R BT.601 525 - SMPTE 170M
+	bt2020: 9, // ITU-R BT.202
+	smpte432: 12, // SMPTE EG 432-1
+};
+export const COLOR_PRIMARIES_MAP_INVERSE = /* #__PURE__ */ invertObject(COLOR_PRIMARIES_MAP);
+
+export const TRANSFER_CHARACTERISTICS_MAP = {
+	'bt709': 1, // ITU-R BT.709
+	'smpte170m': 6, // SMPTE 170M
+	'linear': 8, // Linear transfer characteristics
+	'iec61966-2-1': 13, // IEC 61966-2-1
+	'pq': 16, // Rec. ITU-R BT.2100-2 perceptual quantization (PQ) system
+	'hlg': 18, // Rec. ITU-R BT.2100-2 hybrid loggamma (HLG) system
+};
+export const TRANSFER_CHARACTERISTICS_MAP_INVERSE = /* #__PURE__ */ invertObject(TRANSFER_CHARACTERISTICS_MAP);
+
+export const MATRIX_COEFFICIENTS_MAP = {
+	'rgb': 0, // Identity
+	'bt709': 1, // ITU-R BT.709
+	'bt470bg': 5, // ITU-R BT.470BG
+	'smpte170m': 6, // SMPTE 170M
+	'bt2020-ncl': 9, // ITU-R BT.2020-2 (non-constant luminance)
+};
+export const MATRIX_COEFFICIENTS_MAP_INVERSE = /* #__PURE__ */ invertObject(MATRIX_COEFFICIENTS_MAP);
+
+export type RequiredNonNull<T> = {
+	[K in keyof T]-?: NonNullable<T[K]>;
+};
+
+export const colorSpaceIsComplete = (
+	colorSpace: VideoColorSpaceInit | undefined,
+): colorSpace is RequiredNonNull<VideoColorSpaceInit> => {
+	return (
+		!!colorSpace
+		&& !!colorSpace.primaries
+		&& !!colorSpace.transfer
+		&& !!colorSpace.matrix
+		&& colorSpace.fullRange !== undefined
+	);
+};
+
+export const colorSpaceIsEmpty = (colorSpace: VideoColorSpaceInit | undefined) => {
+	return (
+		!colorSpace
+		|| (
+			colorSpace.primaries == null
+			&& colorSpace.transfer == null
+			&& colorSpace.matrix == null
+			&& colorSpace.fullRange == null
+		)
+	);
+};
+
+export const EMPTY_COLOR_SPACE: VideoColorSpaceInit = {
+	primaries: undefined,
+	transfer: undefined,
+	matrix: undefined,
+	fullRange: undefined,
+};
+
+export const isAllowSharedBufferSource = (x: unknown) => {
+	return (
+		x instanceof ArrayBuffer
+		|| (typeof SharedArrayBuffer !== 'undefined' && x instanceof SharedArrayBuffer)
+		|| ArrayBuffer.isView(x)
+	);
+};
+
+export class AsyncMutex {
+	currentPromise = Promise.resolve();
+	pending = 0;
+
+	async acquire() {
+		let resolver: () => void;
+		const nextPromise = new Promise<void>((resolve) => {
+			let resolved = false;
+
+			resolver = () => {
+				if (resolved) {
+					return;
+				}
+
+				resolve();
+				this.pending--;
+				resolved = true;
+			};
+		});
+
+		const currentPromiseAlias = this.currentPromise;
+		this.currentPromise = nextPromise;
+		this.pending++;
+
+		await currentPromiseAlias;
+
+		return resolver!;
+	}
+}
+
+export const HEX_STRING_REGEX = /^[0-9a-fA-F]+$/;
+
+export const bytesToHexString = (bytes: Uint8Array) => {
+	return [...bytes].map(x => x.toString(16).padStart(2, '0')).join('');
+};
+
+export const hexStringToBytes = (hexString: string) => {
+	assert(hexString.length % 2 === 0);
+	const bytes = new Uint8Array(hexString.length / 2);
+	for (let i = 0; i < hexString.length; i += 2) {
+		bytes[i / 2] = parseInt(hexString.slice(i, i + 2), 16);
+	}
+	return bytes;
+};
+
+export const reverseBitsU32 = (x: number): number => {
+	x = ((x >> 1) & 0x55555555) | ((x & 0x55555555) << 1);
+	x = ((x >> 2) & 0x33333333) | ((x & 0x33333333) << 2);
+	x = ((x >> 4) & 0x0f0f0f0f) | ((x & 0x0f0f0f0f) << 4);
+	x = ((x >> 8) & 0x00ff00ff) | ((x & 0x00ff00ff) << 8);
+	x = ((x >> 16) & 0x0000ffff) | ((x & 0x0000ffff) << 16);
+	return x >>> 0; // Ensure it's treated as an unsigned 32-bit integer
+};
+
+/** Returns the smallest index i such that val[i] === key, or -1 if no such index exists. */
+export const binarySearchExact = <T>(arr: T[], key: number, valueGetter: (x: T) => number): number => {
+	let low = 0;
+	let high = arr.length - 1;
+	let ans = -1;
+
+	while (low <= high) {
+		const mid = (low + high) >> 1;
+		const midVal = valueGetter(arr[mid]!);
+
+		if (midVal === key) {
+			ans = mid;
+			high = mid - 1; // Continue searching left to find the lowest index
+		} else if (midVal < key) {
+			low = mid + 1;
+		} else {
+			high = mid - 1;
+		}
+	}
+
+	return ans;
+};
+
+/** Returns the largest index i such that val[i] <= key, or -1 if no such index exists. */
+export const binarySearchLessOrEqual = <T>(arr: T[], key: number, valueGetter: (x: T) => number) => {
+	let low = 0;
+	let high = arr.length - 1;
+	let ans = -1;
+
+	while (low <= high) {
+		const mid = (low + (high - low + 1) / 2) | 0;
+		const midVal = valueGetter(arr[mid]!);
+
+		if (midVal <= key) {
+			ans = mid;
+			low = mid + 1;
+		} else {
+			high = mid - 1;
+		}
+	}
+
+	return ans;
+};
+
+/** Assumes the array is already sorted. */
+export const insertSorted = <T>(arr: T[], item: T, valueGetter: (x: T) => number) => {
+	const insertionIndex = binarySearchLessOrEqual(arr, valueGetter(item), valueGetter);
+	arr.splice(insertionIndex + 1, 0, item); // This even behaves correctly for the -1 case
+};
+
+export const promiseWithResolvers = <T = void>() => {
+	let resolve: (value: T) => void;
+	let reject: (reason: unknown) => void;
+	const promise = new Promise<T>((res, rej) => {
+		resolve = res;
+		reject = rej;
+	});
+
+	return { promise, resolve: resolve!, reject: reject! };
+};
+
+export const removeItem = <T>(arr: T[], item: T) => {
+	const index = arr.indexOf(item);
+	if (index !== -1) {
+		arr.splice(index, 1);
+	}
+};
+
+export const findLast = <T>(arr: T[], predicate: (x: T) => boolean) => {
+	for (let i = arr.length - 1; i >= 0; i--) {
+		if (predicate(arr[i]!)) {
+			return arr[i];
+		}
+	}
+
+	return undefined;
+};
+
+export const findLastIndex = <T>(arr: T[], predicate: (x: T) => boolean) => {
+	for (let i = arr.length - 1; i >= 0; i--) {
+		if (predicate(arr[i]!)) {
+			return i;
+		}
+	}
+
+	return -1;
+};
+
+/**
+ * Sync or async iterable.
+ * @group Miscellaneous
+ * @public
+ */
+export type AnyIterable<T> =
+	| Iterable<T>
+	| AsyncIterable<T>;
+
+export const toAsyncIterator = async function* <T>(source: AnyIterable<T>): AsyncGenerator<T, void, unknown> {
+	if (Symbol.iterator in source) {
+		// @ts-expect-error Trust me
+		yield* source[Symbol.iterator]();
+	} else {
+		// @ts-expect-error Trust me
+		yield* source[Symbol.asyncIterator]();
+	}
+};
+
+export const validateAnyIterable = (iterable: AnyIterable<unknown>) => {
+	if (!(Symbol.iterator in iterable) && !(Symbol.asyncIterator in iterable)) {
+		throw new TypeError('Argument must be an iterable or async iterable.');
+	}
+};
+
+export const assertNever = (x: never) => {
+	// eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+	throw new Error(`Unexpected value: ${x}`);
+};
+
+export const getUint24 = (view: DataView, byteOffset: number, littleEndian: boolean) => {
+	const byte1 = view.getUint8(byteOffset);
+	const byte2 = view.getUint8(byteOffset + 1);
+	const byte3 = view.getUint8(byteOffset + 2);
+
+	if (littleEndian) {
+		return byte1 | (byte2 << 8) | (byte3 << 16);
+	} else {
+		return (byte1 << 16) | (byte2 << 8) | byte3;
+	}
+};
+
+export const getInt24 = (view: DataView, byteOffset: number, littleEndian: boolean) => {
+	// The left shift pushes the most significant bit into the sign bit region, and the subsequent right shift
+	// then correctly interprets the sign bit.
+	return getUint24(view, byteOffset, littleEndian) << 8 >> 8;
+};
+
+export const setUint24 = (view: DataView, byteOffset: number, value: number, littleEndian: boolean) => {
+	// Ensure the value is within 24-bit unsigned range (0 to 16777215)
+	value = value >>> 0; // Convert to unsigned 32-bit
+	value = value & 0xFFFFFF; // Mask to 24 bits
+
+	if (littleEndian) {
+		view.setUint8(byteOffset, value & 0xFF);
+		view.setUint8(byteOffset + 1, (value >>> 8) & 0xFF);
+		view.setUint8(byteOffset + 2, (value >>> 16) & 0xFF);
+	} else {
+		view.setUint8(byteOffset, (value >>> 16) & 0xFF);
+		view.setUint8(byteOffset + 1, (value >>> 8) & 0xFF);
+		view.setUint8(byteOffset + 2, value & 0xFF);
+	}
+};
+
+export const setInt24 = (view: DataView, byteOffset: number, value: number, littleEndian: boolean) => {
+	// Ensure the value is within 24-bit signed range (-8388608 to 8388607)
+	value = clamp(value, -8388608, 8388607);
+
+	// Convert negative values to their 24-bit representation
+	if (value < 0) {
+		value = (value + 0x1000000) & 0xFFFFFF;
+	}
+
+	setUint24(view, byteOffset, value, littleEndian);
+};
+
+export const setInt64 = (view: DataView, byteOffset: number, value: number, littleEndian: boolean) => {
+	if (littleEndian) {
+		view.setUint32(byteOffset + 0, value, true);
+		view.setInt32(byteOffset + 4, Math.floor(value / 2 ** 32), true);
+	} else {
+		view.setInt32(byteOffset + 0, Math.floor(value / 2 ** 32), true);
+		view.setUint32(byteOffset + 4, value, true);
+	}
+};
+
+/**
+ * Calls a function on each value spat out by an async generator. The reason for writing this manually instead of
+ * using a generator function is that the generator function queues return() calls - here, we forward them immediately.
+ */
+export const mapAsyncGenerator = <T, U>(
+	generator: AsyncGenerator<T, void, unknown>,
+	map: (t: T) => U,
+): AsyncGenerator<U, void, unknown> => {
+	return {
+		async next() {
+			const result = await generator.next();
+			if (result.done) {
+				return { value: undefined, done: true };
+			} else {
+				return { value: map(result.value), done: false };
+			}
+		},
+		return() {
+			return generator.return() as ReturnType<AsyncGenerator<U, void, unknown>['return']>;
+		},
+		throw(error) {
+			return generator.throw(error) as ReturnType<AsyncGenerator<U, void, unknown>['throw']>;
+		},
+		[Symbol.asyncIterator]() {
+			return this;
+		},
+	};
+};
+
+export const clamp = (value: number, min: number, max: number) => {
+	return Math.max(min, Math.min(max, value));
+};
+
+export const lerp = (from: number, to: number, t: number) => {
+	return from + (to - from) * t;
+};
+
+export const modEuclid = (value: number, modulus: number) => {
+	return value - Math.floor(value / modulus) * modulus;
+};
+
+export const UNDETERMINED_LANGUAGE = 'und';
+
+export const roundIfAlmostInteger = (value: number) => {
+	const rounded = Math.round(value);
+
+	if (Math.abs(value / rounded - 1) < 10 * Number.EPSILON) {
+		return rounded;
+	} else {
+		return value;
+	}
+};
+
+export const roundToMultiple = (value: number, multiple: number) => {
+	return Math.round(value / multiple) * multiple;
+};
+
+export const roundToDivisor = (value: number, multiple: number) => {
+	return Math.round(value * multiple) / multiple;
+};
+
+export const floorToMultiple = (value: number, multiple: number) => {
+	return Math.floor(value / multiple) * multiple;
+};
+
+export const floorToDivisor = (value: number, multiple: number) => {
+	return Math.floor(value * multiple) / multiple;
+};
+
+export const ilog = (x: number) => {
+	let ret = 0;
+	while (x) {
+		ret++;
+		x >>= 1;
+	}
+	return ret;
+};
+
+export const popcount = (value: number) => {
+	let count = 0;
+
+	while (value !== 0) {
+		value &= value - 1;
+		count++;
+	}
+
+	return count;
+};
+
+const ISO_639_2_REGEX = /^[a-z]{3}$/;
+export const isIso639Dash2LanguageCode = (x: string) => {
+	return ISO_639_2_REGEX.test(x);
+};
+
+// Since the result will be truncated, add a bit of eps to compensate for floating point errors
+export const SECOND_TO_MICROSECOND_FACTOR = 1e6 * (1 + Number.EPSILON);
+
+/**
+ * Sets all keys K of T to be required.
+ * @group Miscellaneous
+ * @public
+ */
+export type SetRequired<T, K extends keyof T> = T & Required<Pick<T, K>>;
+
+/**
+ * Recursively makes all properties of T readonly.
+ * @group Miscellaneous
+ * @public
+ */
+export type DeepReadonly<T> = T extends object ? {
+	readonly [K in keyof T]: DeepReadonly<T[K]>;
+} : T;
+
+/**
+ * Sets all keys K of T to be optional.
+ * @group Miscellaneous
+ * @public
+ */
+export type SetOptional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
+
+/**
+ * Merges two RequestInit objects with special handling for headers.
+ * Headers are merged case-insensitively, but original casing is preserved.
+ * init2 headers take precedence and will override case-insensitive matches from init1.
+ */
+export const mergeRequestInit = (init1: RequestInit, init2: RequestInit): RequestInit => {
+	const merged: RequestInit = { ...init1, ...init2 };
+
+	// Special handling for headers
+	if (init1.headers || init2.headers) {
+		const headers1 = init1.headers ? normalizeHeaders(init1.headers) : {};
+		const headers2 = init2.headers ? normalizeHeaders(init2.headers) : {};
+
+		const mergedHeaders = { ...headers1 };
+
+		// For each header in headers2, check if a case-insensitive match exists in mergedHeaders
+		Object.entries(headers2).forEach(([key2, value2]) => {
+			const existingKey = Object.keys(mergedHeaders).find(
+				key1 => key1.toLowerCase() === key2.toLowerCase(),
+			);
+
+			if (existingKey) {
+				delete mergedHeaders[existingKey];
+			}
+
+			mergedHeaders[key2] = value2;
+		});
+
+		merged.headers = mergedHeaders;
+	}
+
+	return merged;
+};
+
+/** Normalizes HeadersInit to a Record<string, string> format. */
+export const normalizeHeaders = (headers: HeadersInit): Record<string, string> => {
+	if (headers instanceof Headers) {
+		const result: Record<string, string> = {};
+		headers.forEach((value, key) => {
+			result[key] = value;
+		});
+		return result;
+	}
+
+	if (Array.isArray(headers)) {
+		const result: Record<string, string> = {};
+		headers.forEach(([key, value]) => {
+			result[key] = value;
+		});
+		return result;
+	}
+
+	return headers;
+};
+
+export const retriedFetch = async (
+	fetchFn: typeof fetch,
+	url: string | URL | Request,
+	requestInit: RequestInit,
+	getRetryDelay: (previousAttempts: number, error: unknown, url: string | URL | Request) => number | null,
+	shouldStop: () => boolean,
+) => {
+	let attempts = 0;
+
+	while (true) {
+		try {
+			return await fetchFn(url, requestInit);
+		} catch (error) {
+			if (shouldStop()) {
+				throw error;
+			}
+
+			attempts++;
+			const retryDelayInSeconds = getRetryDelay(attempts, error, url);
+
+			if (retryDelayInSeconds === null) {
+				throw error;
+			}
+
+			Logging._error('Retrying failed fetch. Error:', error);
+
+			if (!Number.isFinite(retryDelayInSeconds) || retryDelayInSeconds < 0) {
+				throw new TypeError('Retry delay must be a non-negative finite number.');
+			}
+
+			if (retryDelayInSeconds > 0) {
+				await wait(1000 * retryDelayInSeconds);
+			}
+
+			if (shouldStop()) {
+				throw error;
+			}
+		}
+	}
+};
+
+export const computeRationalApproximation = (x: number, maxDenominator: number): Rational => {
+	// Handle negative numbers
+	const sign = x < 0 ? -1 : 1;
+	x = Math.abs(x);
+
+	let prevNumerator = 0, prevDenominator = 1;
+	let currNumerator = 1, currDenominator = 0;
+
+	// Continued fraction algorithm
+	let remainder = x;
+
+	while (true) {
+		const integer = Math.floor(remainder);
+
+		// Calculate next convergent
+		const nextNumerator = integer * currNumerator + prevNumerator;
+		const nextDenominator = integer * currDenominator + prevDenominator;
+
+		if (nextDenominator > maxDenominator) {
+			return {
+				num: sign * currNumerator,
+				den: currDenominator,
+			};
+		}
+
+		prevNumerator = currNumerator;
+		prevDenominator = currDenominator;
+		currNumerator = nextNumerator;
+		currDenominator = nextDenominator;
+
+		remainder = 1 / (remainder - integer);
+
+		// Guard against precision issues
+		if (!isFinite(remainder)) {
+			break;
+		}
+	}
+
+	return {
+		num: sign * currNumerator,
+		den: currDenominator,
+	};
+};
+
+export class CallSerializer {
+	currentPromise = Promise.resolve();
+
+	call(fn: () => Promise<void> | void) {
+		return this.currentPromise = this.currentPromise.then(fn);
+	}
+}
+
+let isWebKitCache: boolean | null = null;
+export const isWebKit = () => {
+	if (isWebKitCache !== null) {
+		return isWebKitCache;
+	}
+
+	// This even returns true for WebKit-wrapping browsers such as Chrome on iOS
+	return isWebKitCache = !!(
+		typeof navigator !== 'undefined'
+		&& (
+			// eslint-disable-next-line @typescript-eslint/no-deprecated
+			navigator.vendor?.match(/apple/i)
+			// Or, in workers:
+			|| (/AppleWebKit/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent))
+			|| /\b(iPad|iPhone|iPod)\b/.test(navigator.userAgent)
+		)
+	);
+};
+
+let isFirefoxCache: boolean | null = null;
+export const isFirefox = () => {
+	if (isFirefoxCache !== null) {
+		return isFirefoxCache;
+	}
+
+	return isFirefoxCache = typeof navigator !== 'undefined' && navigator.userAgent?.includes('Firefox');
+};
+
+let isChromiumCache: boolean | null = null;
+export const isChromium = () => {
+	if (isChromiumCache !== null) {
+		return isChromiumCache;
+	}
+
+	return isChromiumCache = !!(
+		typeof navigator !== 'undefined'
+		// eslint-disable-next-line @typescript-eslint/no-deprecated
+		&& (navigator.vendor?.includes('Google Inc') || /Chrome/.test(navigator.userAgent))
+	);
+};
+
+let chromiumVersionCache: number | null = null;
+export const getChromiumVersion = () => {
+	if (chromiumVersionCache !== null) {
+		return chromiumVersionCache;
+	}
+
+	if (typeof navigator === 'undefined') {
+		return null;
+	}
+
+	const match = /\bChrome\/(\d+)/.exec(navigator.userAgent);
+	if (!match) {
+		return null;
+	}
+
+	return chromiumVersionCache = Number(match[1]!);
+};
+
+export const missingWebCodecsClassMessage = (className: string) => {
+	if (typeof globalThis.isSecureContext !== 'undefined' && !globalThis.isSecureContext) {
+		// WebCodecs is not exposed in insecure contexts
+		return `${className} is not available in this environment; this may be because this page is running in an`
+			+ ` insecure context. Try serving your page over HTTPS or use localhost.`;
+	}
+
+	return `${className} is not available in this environment.`;
+};
+
+// Browsers (at least Chromium) close codecs that have been idle for a long time and report this error
+export const isCodecReclaimedError = (error: unknown) => {
+	return error instanceof DOMException
+		&& error.name === 'QuotaExceededError'
+		&& /reclaimed/i.test(error.message);
+};
+
+/**
+ * T or a promise that resolves to T.
+ * @group Miscellaneous
+ * @public
+ */
+export type MaybePromise<T> = T | Promise<T>;
+
+const NativePromiseConstructor = /* #__PURE__ */ (async () => {})().constructor as PromiseConstructor;
+
+/**
+ * Needed to properly deal with custom Promise implementations and because this is closer to how the JS spec does it.
+ */
+export const isThenable = <T>(value: MaybePromise<T>): value is Promise<T> => {
+	if (value instanceof NativePromiseConstructor || value instanceof Promise) {
+		return true;
+	}
+
+	// Fall back to a crude duck typing check
+	return typeof (value as PromiseLike<T> | null | undefined)?.then === 'function';
+};
+
+/** Acts like `??` except the condition is -1 and not null/undefined. */
+export const coalesceIndex = (a: number, b: number) => {
+	return a !== -1 ? a : b;
+};
+
+export const closedIntervalsOverlap = (startA: number, endA: number, startB: number, endB: number) => {
+	return startA <= endB && startB <= endA;
+};
+
+type KeyValuePair<T extends Record<string, unknown>> = {
+	[K in keyof T]-?: {
+		key: K;
+		value: T[K] extends infer R | undefined ? R : T[K];
+	}
+}[keyof T];
+
+export const keyValueIterator = function* <T extends Record<string, unknown>>(object: T) {
+	for (const key in object) {
+		const value = object[key];
+		if (value === undefined) {
+			continue;
+		}
+
+		yield { key, value } as KeyValuePair<T>;
+	}
+};
+
+export const imageMimeTypeToExtension = (mimeType: string) => {
+	switch (mimeType.toLowerCase()) {
+		case 'image/jpeg':
+		case 'image/jpg':
+			return '.jpg';
+		case 'image/png':
+			return '.png';
+		case 'image/gif':
+			return '.gif';
+		case 'image/webp':
+			return '.webp';
+		case 'image/bmp':
+			return '.bmp';
+		case 'image/svg+xml':
+			return '.svg';
+		case 'image/tiff':
+			return '.tiff';
+		case 'image/avif':
+			return '.avif';
+		case 'image/x-icon':
+		case 'image/vnd.microsoft.icon':
+			return '.ico';
+		default:
+			return null;
+	}
+};
+
+export const base64ToBytes = (base64: string) => {
+	const decoded = atob(base64);
+	const bytes = new Uint8Array(decoded.length);
+
+	for (let i = 0; i < decoded.length; i++) {
+		bytes[i] = decoded.charCodeAt(i);
+	}
+
+	return bytes;
+};
+
+export const bytesToBase64 = (bytes: Uint8Array) => {
+	let string = '';
+
+	for (let i = 0; i < bytes.length; i++) {
+		string += String.fromCharCode(bytes[i]!);
+	}
+
+	return btoa(string);
+};
+
+export const uint8ArraysAreEqual = (a: Uint8Array, b: Uint8Array) => {
+	if (a.length !== b.length) {
+		return false;
+	}
+
+	for (let i = 0; i < a.length; i++) {
+		if (a[i] !== b[i]) {
+			return false;
+		}
+	}
+
+	return true;
+};
+
+export const polyfillSymbolDispose = () => {
+	// https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-2.html
+	// @ts-expect-error Readonly
+	Symbol.dispose ??= Symbol('Symbol.dispose');
+};
+
+export const isNumber = (x: unknown) => {
+	return typeof x === 'number' && !Number.isNaN(x);
+};
+
+/**
+ * A path to a file. File paths can be relative or absolute, and be local paths or full URLs. Paths must be POSIX-like,
+ * using `/` as the separator.
+ *
+ * Examples of valid paths:
+ * - `'video.mp4'`
+ * - `'path/to/video.mp4'`
+ * - `'./video.mp4'`
+ * - `'../video.mp4'`
+ * - `'/path/to/video.mp4'`
+ * - `'https://example.com/video.mp4'`
+ * - `'file:///home/user/video.mp4'`
+ * - `'video.mp4?key=foo'`
+ *
+ * @group Miscellaneous
+ * @public
+ */
+export type FilePath = string;
+
+export const joinPaths = (basePath: FilePath, relativePath: FilePath) => {
+	// If relativePath is a full URL with protocol, return it as-is
+	if (relativePath.includes('://')) {
+		return relativePath;
+	}
+
+	// Strip query parameters from URL base paths so their contents don't mess up the join
+	if (basePath.includes('://')) {
+		const queryIndex = basePath.indexOf('?');
+		if (queryIndex !== -1) {
+			basePath = basePath.slice(0, queryIndex);
+		}
+	}
+
+	let result: string;
+
+	if (relativePath.startsWith('/')) {
+		const protocolIndex = basePath.indexOf('://');
+		if (protocolIndex === -1) {
+			result = relativePath;
+		} else {
+			const pathStart = basePath.indexOf('/', protocolIndex + 3);
+			if (pathStart === -1) {
+				result = basePath + relativePath;
+			} else {
+				result = basePath.slice(0, pathStart) + relativePath;
+			}
+		}
+	} else {
+		const lastSlash = basePath.lastIndexOf('/');
+		if (lastSlash === -1) {
+			result = relativePath;
+		} else {
+			result = basePath.slice(0, lastSlash + 1) + relativePath;
+		}
+	}
+
+	// Normalize ./ and ../
+
+	let prefix = '';
+	const protocolIndex = result.indexOf('://');
+	if (protocolIndex !== -1) {
+		const pathStart = result.indexOf('/', protocolIndex + 3);
+		if (pathStart !== -1) {
+			prefix = result.slice(0, pathStart);
+			result = result.slice(pathStart);
+		}
+	}
+
+	const segments = result.split('/');
+	const normalized: string[] = [];
+	for (const segment of segments) {
+		if (segment === '..') {
+			normalized.pop();
+		} else if (segment !== '.') {
+			normalized.push(segment);
+		}
+	}
+
+	return prefix + normalized.join('/');
+};
+
+// eg. path `/media.m3u8?token=abc%20123` and name `token` resolve to `abc 123`
+export const getQueryParameter = (path: string, name: string) => {
+	const queryIndex = path.indexOf('?');
+	if (queryIndex === -1) {
+		return null;
+	}
+
+	const fragmentIndex = path.indexOf('#', queryIndex);
+	const query = path.slice(queryIndex + 1, fragmentIndex === -1 ? undefined : fragmentIndex);
+
+	for (const parameter of query.split('&')) {
+		const equalsIndex = parameter.indexOf('=');
+		const encodedName = equalsIndex === -1 ? parameter : parameter.slice(0, equalsIndex);
+		if (decodeURIComponent(encodedName) !== name) {
+			continue;
+		}
+
+		const encodedValue = equalsIndex === -1 ? '' : parameter.slice(equalsIndex + 1);
+		return decodeURIComponent(encodedValue);
+	}
+
+	return null;
+};
+
+export const arrayCount = <T>(array: T[], predicate: (item: T) => boolean) => {
+	let count = 0;
+
+	for (let i = 0; i < array.length; i++) {
+		if (predicate(array[i]!)) {
+			count++;
+		}
+	}
+
+	return count;
+};
+
+export const arrayArgmin = <T>(array: T[], getValue: (item: T) => number): number => {
+	let minIndex = -1;
+	let minValue = Infinity;
+
+	for (let i = 0; i < array.length; i++) {
+		const value = getValue(array[i]!);
+		if (value < minValue) {
+			minValue = value;
+			minIndex = i;
+		}
+	}
+
+	return minIndex;
+};
+
+export const arrayArgmax = <T>(array: T[], getValue: (item: T) => number): number => {
+	let maxIndex = -1;
+	let maxValue = -Infinity;
+
+	for (let i = 0; i < array.length; i++) {
+		const value = getValue(array[i]!);
+		if (value > maxValue) {
+			maxValue = value;
+			maxIndex = i;
+		}
+	}
+
+	return maxIndex;
+};
+
+/**
+ * A rational number; a ratio of two integers.
+ * @group Miscellaneous
+ * @public
+ */
+export type Rational = {
+	/** The numerator of the rational number. */
+	num: number;
+	/** The denominator of the rational number. */
+	den: number;
+};
+
+export const simplifyRational = (rational: Rational): Rational => {
+	assert(Number.isInteger(rational.num));
+	assert(Number.isInteger(rational.den));
+	assert(rational.den !== 0);
+
+	let a = Math.abs(rational.num);
+	let b = Math.abs(rational.den);
+
+	// Euclidean algorithm
+	while (b !== 0) {
+		const t = a % b;
+		a = b;
+		b = t;
+	}
+
+	const gcd = a || 1;
+	return {
+		num: rational.num / gcd,
+		den: rational.den / gcd,
+	};
+};
+
+/**
+ * Specifies a rectangular region where all quantities must be non-negative integers.
+ * @group Miscellaneous
+ * @public
+ */
+export type Rectangle = {
+	/** The distance in pixels to the left edge of the rectangle. */
+	left: number;
+	/** The distance in pixels to the top edge of the rectangle. */
+	top: number;
+	/** The width in pixels of the rectangle. */
+	width: number;
+	/** The height in pixels of the rectangle. */
+	height: number;
+};
+
+export const validateRectangle = (rect: Rectangle, propertyPath: string) => {
+	if (typeof rect !== 'object' || !rect) {
+		throw new TypeError(`${propertyPath} must be an object.`);
+	}
+	if (!Number.isInteger(rect.left) || rect.left < 0) {
+		throw new TypeError(`${propertyPath}.left must be a non-negative integer.`);
+	}
+	if (!Number.isInteger(rect.top) || rect.top < 0) {
+		throw new TypeError(`${propertyPath}.top must be a non-negative integer.`);
+	}
+	if (!Number.isInteger(rect.width) || rect.width < 0) {
+		throw new TypeError(`${propertyPath}.width must be a non-negative integer.`);
+	}
+	if (!Number.isInteger(rect.height) || rect.height < 0) {
+		throw new TypeError(`${propertyPath}.height must be a non-negative integer.`);
+	}
+};
+
+export type NonFunctionKeys<T> = {
+	[K in keyof T]-?: T[K] extends ((...args: never[]) => unknown) ? never : K
+}[keyof T];
+
+export type UnthrottledTimerHandle = {
+	id: ReturnType<typeof setTimeout> | number;
+};
+
+type UnthrottledTimerMessage =
+	| { type: 'set-timeout'; timerId: number; delay: number }
+	| { type: 'set-interval'; timerId: number; delay: number }
+	| { type: 'clear-timeout'; timerId: number }
+	| { type: 'clear-interval'; timerId: number };
+
+type UnthrottledTimerEvent = { type: 'fire'; timerId: number };
+
+let unthrottledTimerWorker: Worker | undefined;
+let nextUnthrottledTimerId = 1;
+const unthrottledTimeoutCallbacks = new Map<number, () => void>();
+const unthrottledIntervalCallbacks = new Map<number, () => void>();
+
+const shouldUseNativeTimers = () => {
+	return typeof window === 'undefined';
+};
+
+const unthrottledTimerWorkerMain = () => {
+	const timeoutHandles = new Map<number, ReturnType<typeof setTimeout>>();
+	const intervalHandles = new Map<number, ReturnType<typeof setInterval>>();
+
+	self.onmessage = (event: MessageEvent<UnthrottledTimerMessage>) => {
+		const message = event.data;
+
+		switch (message.type) {
+			case 'set-timeout': {
+				const handle = setTimeout(() => {
+					timeoutHandles.delete(message.timerId);
+					self.postMessage({ type: 'fire', timerId: message.timerId });
+				}, message.delay);
+
+				timeoutHandles.set(message.timerId, handle);
+			}; break;
+
+			case 'set-interval': {
+				const handle = setInterval(() => {
+					self.postMessage({ type: 'fire', timerId: message.timerId });
+				}, message.delay);
+
+				intervalHandles.set(message.timerId, handle);
+			}; break;
+
+			case 'clear-timeout': {
+				const handle = timeoutHandles.get(message.timerId);
+				if (handle !== undefined) {
+					clearTimeout(handle);
+					timeoutHandles.delete(message.timerId);
+				}
+			}; break;
+
+			case 'clear-interval': {
+				const handle = intervalHandles.get(message.timerId);
+				if (handle !== undefined) {
+					clearInterval(handle);
+					intervalHandles.delete(message.timerId);
+				}
+			}; break;
+		}
+	};
+};
+
+const getUnthrottledTimerWorker = () => {
+	if (unthrottledTimerWorker) {
+		return unthrottledTimerWorker;
+	}
+
+	const workerSource = `(${unthrottledTimerWorkerMain.toString()})();`;
+	const workerURL = URL.createObjectURL(new Blob([workerSource], { type: 'text/javascript' }));
+	unthrottledTimerWorker = new Worker(workerURL);
+	URL.revokeObjectURL(workerURL);
+
+	unthrottledTimerWorker.onmessage = (event: MessageEvent<UnthrottledTimerEvent>) => {
+		const message = event.data;
+
+		const timeoutCallback = unthrottledTimeoutCallbacks.get(message.timerId);
+		if (timeoutCallback) {
+			unthrottledTimeoutCallbacks.delete(message.timerId);
+			timeoutCallback();
+			return;
+		}
+
+		const intervalCallback = unthrottledIntervalCallbacks.get(message.timerId);
+		if (intervalCallback) {
+			intervalCallback();
+		}
+	};
+
+	return unthrottledTimerWorker;
+};
+
+export const setTimeoutUnthrottled = (
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+	callback: Function,
+	delay: number,
+): UnthrottledTimerHandle => {
+	if (shouldUseNativeTimers()) {
+		return { id: setTimeout(callback, delay) };
+	}
+
+	const timerId = nextUnthrottledTimerId++;
+	unthrottledTimeoutCallbacks.set(timerId, () => {
+		(callback as () => void)();
+	});
+
+	getUnthrottledTimerWorker().postMessage({
+		type: 'set-timeout',
+		timerId,
+		delay,
+	} satisfies UnthrottledTimerMessage);
+
+	return { id: timerId };
+};
+
+export const clearTimeoutUnthrottled = (timer: UnthrottledTimerHandle) => {
+	if (shouldUseNativeTimers()) {
+		clearTimeout(timer.id);
+		return;
+	}
+
+	assert(typeof timer.id === 'number');
+	unthrottledTimeoutCallbacks.delete(timer.id);
+
+	getUnthrottledTimerWorker().postMessage({
+		type: 'clear-timeout',
+		timerId: timer.id,
+	} satisfies UnthrottledTimerMessage);
+};
+
+export const setIntervalUnthrottled = (
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+	callback: Function,
+	delay: number,
+): UnthrottledTimerHandle => {
+	if (shouldUseNativeTimers()) {
+		return { id: setInterval(callback, delay) };
+	}
+
+	const timerId = nextUnthrottledTimerId++;
+	unthrottledIntervalCallbacks.set(timerId, () => {
+		(callback as () => void)();
+	});
+
+	getUnthrottledTimerWorker().postMessage({
+		type: 'set-interval',
+		timerId,
+		delay,
+	} satisfies UnthrottledTimerMessage);
+
+	return { id: timerId };
+};
+
+export const clearIntervalUnthrottled = (timer: UnthrottledTimerHandle) => {
+	if (shouldUseNativeTimers()) {
+		clearInterval(timer.id);
+		return;
+	}
+
+	assert(typeof timer.id === 'number');
+	unthrottledIntervalCallbacks.delete(timer.id);
+
+	getUnthrottledTimerWorker().postMessage({
+		type: 'clear-interval',
+		timerId: timer.id,
+	} satisfies UnthrottledTimerMessage);
+};
+
+export const wait = (ms: number) => {
+	return new Promise(resolve => setTimeout(resolve, ms));
+};
+
+export const rejectAfter = (ms: number, message = 'Promise rejected') => {
+	return new Promise((_, reject) => {
+		setTimeout(() => reject(new Error(message)), ms);
+	});
+};
+
+export const toArray = <T>(x: T | T[]) => {
+	if (Array.isArray(x)) {
+		return x;
+	} else {
+		return [x];
+	}
+};
+
+/**
+ * Options for {@link EventEmitter.on}.
+ *
+ * @group Miscellaneous
+ * @public
+ */
+export type EventListenerOptions = {
+	/** If `true`, the listener will be automatically removed after being called once. Defaults to `false`. */
+	once?: boolean;
+};
+
+/**
+ * A class that manages event listeners and dispatches events to them.
+ *
+ * @group Miscellaneous
+ * @public
+ */
+export class EventEmitter<TEvents extends Record<string, unknown>> {
+	/** @internal */
+	_listeners = new Map<keyof TEvents, Set<{ fn: (data: never) => unknown; once: boolean }>>();
+
+	/** Registers a listener for the given event. Returns a function that, when called, removes the listener again. */
+	on<K extends keyof TEvents>(
+		event: K,
+		listener: (data: TEvents[K]) => unknown,
+		options?: EventListenerOptions,
+	): () => void {
+		if (!this._listeners.has(event)) {
+			this._listeners.set(event, new Set());
+		}
+		const entry = { fn: listener as (data: never) => void, once: options?.once ?? false };
+		this._listeners.get(event)!.add(entry);
+
+		return () => {
+			this._listeners.get(event)?.delete(entry);
+		};
+	}
+
+	/** @internal */
+	_emit<K extends keyof TEvents>(
+		...args: TEvents[K] extends void ? [event: K] : [event: K, data: TEvents[K]]
+	): void {
+		const [event, data] = args;
+		const listeners = this._listeners.get(event);
+		if (!listeners) {
+			return;
+		}
+
+		for (const entry of listeners) {
+			try {
+				(entry.fn as (data: unknown) => void)(data);
+			} catch (error) {
+				// Deliberately not routed through Logging here: Logging emits via an EventEmitter, so a throwing
+				// log listener would recurse straight back into this handler.
+				console.error(error);
+			}
+
+			if (entry.once) {
+				listeners.delete(entry);
+			}
+		}
+	}
+}
+
+export const ceilToMultipleOfTwo = (value: number) => Math.ceil(value / 2) * 2;
+
+/**
+ * Utility class for running async functions in parallel up to a certain level of parallelism. Can be used to apply
+ * backpressure only if the concurrency level would be exceeded.
+ *
+ * @group Miscellaneous
+ * @public
+*/
+export class ConcurrentRunner {
+	/** @internal */
+	_queue: Promise<unknown>[] = [];
+	/** @internal */
+	_errored = false;
+
+	/**
+	 * The maximum number of in-flight promises. You can also think of it as the "high water mark".
+	 * You can set this value to dynamically change the level of parallelism.
+	 */
+	parallelism: number;
+
+	constructor(parallelism: number) {
+		this.parallelism = parallelism;
+	}
+
+	/** Whether any function has errored. The runner is effectively bricked if this is `true`, by design. */
+	get errored() {
+		return this._errored;
+	}
+
+	/** The number of tasks currently running. */
+	get inFlightCount() {
+		return this._queue.length;
+	}
+
+	/**
+	 * Schedules an async function to be run. If the maximum allowed level of parallelism has not yet been reached,
+	 * the function will be executed immediately and `run()` will resolve immediately. Otherwise, the function will be
+	 * called as soon as any currently-running function finishes, and `run()` will only resolve then.
+	 *
+	 * Throws if the runner is errored.
+	 */
+	async run(fn: () => Promise<unknown>) {
+		if (this._errored) {
+			await Promise.race(this._queue); // Will surface the error
+		}
+
+		while (this._queue.length >= this.parallelism) {
+			await Promise.race(this._queue);
+		}
+
+		const promise = fn();
+		this._queue.push(promise);
+
+		void promise
+			.then(() => removeItem(this._queue, promise))
+			.catch(() => this._errored = true);
+	}
+
+	/** Waits for all currently running functions to finish. Throws if the runner is errored. */
+	async flush() {
+		await Promise.all(this._queue);
+	}
+}
+
+export const isRecordStringString = (value: unknown): value is Record<string, string> => {
+	return value !== null
+		&& typeof value === 'object'
+		&& Object.getPrototypeOf(value) === Object.prototype
+		&& Object.values(value).every(x => typeof x === 'string');
+};

@@ -1,0 +1,14 @@
+/**
+ * @license @tabler/icons-react v3.35.0 - MIT
+ *
+ * This source code is licensed under the MIT license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+import createReactComponent from '../createReactComponent.mjs';
+
+const __iconNode = [["path", { "d": "M4 20l16 0", "key": "svg-0" }], ["path", { "d": "M12 14l0 -10", "key": "svg-1" }], ["path", { "d": "M12 14l4 -4", "key": "svg-2" }], ["path", { "d": "M12 14l-4 -4", "key": "svg-3" }]];
+const IconArrowBarToDown = createReactComponent("outline", "arrow-bar-to-down", "ArrowBarToDown", __iconNode);
+
+export { __iconNode, IconArrowBarToDown as default };
+//# sourceMappingURL=IconArrowBarToDown.mjs.map

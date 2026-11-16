@@ -1,0 +1,1 @@
+{"version":3,"file":"CmdHistory.js","sourceRoot":"","sources":["../../../../src/cta/608/CmdHistory.ts"],"names":[],"mappings":"","sourcesContent":["/**\n * Command history for CTA-608.\n *\n * @group CTA-608\n * @beta\n */\nexport type CmdHistory = {\n\ta: number | null;\n\tb: number | null;\n};\n"]}

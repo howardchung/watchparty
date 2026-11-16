@@ -1,0 +1,24 @@
+{
+  "name": "last-one-wins",
+  "version": "1.0.4",
+  "description": "Make sure the last sync call to an async function is executed after all previous ones have finished",
+  "main": "index.js",
+  "dependencies": {},
+  "devDependencies": {
+    "standard": "^5.4.1",
+    "tape": "^4.2.2"
+  },
+  "scripts": {
+    "test": "standard && tape test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mafintosh/last-one-wins.git"
+  },
+  "author": "Mathias Buus (@mafintosh)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mafintosh/last-one-wins/issues"
+  },
+  "homepage": "https://github.com/mafintosh/last-one-wins"
+}

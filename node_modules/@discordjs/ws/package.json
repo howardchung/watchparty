@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "@discordjs/ws",
+  "version": "1.2.3",
+  "description": "Wrapper around Discord's gateway",
+  "exports": {
+    ".": {
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      }
+    },
+    "./defaultWorker": {
+      "require": {
+        "types": null,
+        "default": "./dist/defaultWorker.js"
+      },
+      "import": {
+        "types": null,
+        "default": "./dist/defaultWorker.mjs"
+      }
+    }
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "directories": {
+    "lib": "src",
+    "test": "__tests__"
+  },
+  "files": [
+    "dist"
+  ],
+  "contributors": [
+    "Crawl <icrawltogo@gmail.com>",
+    "Amish Shah <amishshah.2k@gmail.com>",
+    "SpaceEEC <spaceeec@yahoo.com>",
+    "Vlad Frangu <kingdgrizzle@gmail.com>",
+    "Aura Román <kyradiscord@gmail.com>",
+    "DD <didinele.dev@gmail.com>"
+  ],
+  "license": "Apache-2.0",
+  "keywords": [
+    "discord",
+    "api",
+    "gateway",
+    "discordapp",
+    "discordjs"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/discordjs/discord.js.git",
+    "directory": "packages/ws"
+  },
+  "bugs": {
+    "url": "https://github.com/discordjs/discord.js/issues"
+  },
+  "homepage": "https://discord.js.org",
+  "funding": "https://github.com/discordjs/discord.js?sponsor",
+  "dependencies": {
+    "@discordjs/rest": "^2.5.1",
+    "@sapphire/async-queue": "^1.5.2",
+    "@types/ws": "^8.5.10",
+    "@vladfrangu/async_event_emitter": "^2.2.4",
+    "discord-api-types": "^0.38.1",
+    "tslib": "^2.6.2",
+    "ws": "^8.17.0",
+    "@discordjs/collection": "^2.1.0",
+    "@discordjs/util": "^1.1.0"
+  },
+  "devDependencies": {
+    "@favware/cliff-jumper": "^3.0.3",
+    "@types/node": "18.17.9",
+    "@vitest/coverage-v8": "^1.6.0",
+    "cross-env": "^7.0.3",
+    "esbuild-plugin-version-injector": "^1.2.1",
+    "eslint": "^8.57.0",
+    "eslint-config-neon": "^0.1.62",
+    "eslint-formatter-pretty": "^6.0.1",
+    "mock-socket": "^9.3.1",
+    "prettier": "^3.3.0",
+    "tsd": "^0.31.0",
+    "tsup": "^8.1.0",
+    "turbo": "^1.13.3",
+    "typescript": "^5.4.5",
+    "undici": "6.21.3",
+    "vitest": "^1.6.0",
+    "zlib-sync": "^0.1.10",
+    "@discordjs/api-extractor": "^7.38.1",
+    "@discordjs/scripts": "^0.1.0"
+  },
+  "engines": {
+    "node": ">=16.11.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "test": "vitest run",
+    "build": "tsc --noEmit && tsup",
+    "build:docs": "tsc -p tsconfig.docs.json",
+    "lint": "prettier --check . && cross-env TIMING=1 eslint --format=pretty src __tests__",
+    "format": "prettier --write . && cross-env TIMING=1 eslint --fix --format=pretty src __tests__",
+    "docs": "pnpm run build:docs && api-extractor run --local --minify && generate-split-documentation",
+    "changelog": "git cliff --prepend ./CHANGELOG.md -u -c ./cliff.toml -r ../../ --include-path 'packages/ws/*'",
+    "release": "cliff-jumper"
+  }
+}

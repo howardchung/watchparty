@@ -1,0 +1,27 @@
+{
+  "name": "default-gateway",
+  "version": "7.2.2",
+  "description": "Get the default network gateway, cross-platform.",
+  "author": "silverwind",
+  "repository": "silverwind/default-gateway",
+  "license": "BSD-2-Clause",
+  "type": "module",
+  "sideEffects": false,
+  "exports": "./index.js",
+  "engines": {
+    "node": ">= 16"
+  },
+  "files": [
+    "./index.js"
+  ],
+  "dependencies": {
+    "execa": "^7.1.1"
+  },
+  "devDependencies": {
+    "eslint": "8.42.0",
+    "eslint-config-silverwind": "73.0.2",
+    "updates": "14.1.1",
+    "versions": "11.0.1",
+    "vitest": "0.32.0"
+  }
+}

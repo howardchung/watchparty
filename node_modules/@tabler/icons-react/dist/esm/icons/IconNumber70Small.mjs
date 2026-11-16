@@ -1,0 +1,14 @@
+/**
+ * @license @tabler/icons-react v3.35.0 - MIT
+ *
+ * This source code is licensed under the MIT license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+import createReactComponent from '../createReactComponent.mjs';
+
+const __iconNode = [["path", { "d": "M14 10v4a2 2 0 1 0 4 0v-4a2 2 0 1 0 -4 0", "key": "svg-0" }], ["path", { "d": "M6 8h4l-2 8", "key": "svg-1" }]];
+const IconNumber70Small = createReactComponent("outline", "number-70-small", "Number70Small", __iconNode);
+
+export { __iconNode, IconNumber70Small as default };
+//# sourceMappingURL=IconNumber70Small.mjs.map
