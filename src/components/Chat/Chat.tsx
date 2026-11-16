@@ -5,11 +5,9 @@ import {
   Button,
   HoverCard,
   TextInput,
-} from "@mantine/core";
-// import data from '@emoji-mart/data';
+} from "../UI/UI";
 import Picker from "@emoji-mart/react";
 import { init } from "emoji-mart";
-// import onClickOutside from 'react-onclickoutside';
 //@ts-expect-error
 import Linkify from "react-linkify";
 import { SecureLink } from "react-secure-link";
@@ -122,7 +120,6 @@ export class Chat extends React.Component<ChatProps> {
   };
 
   updateChatMsg = (e: any) => {
-    // console.log(e.target.selectionStart);
     this.setState({ chatMsg: e.target.value });
   };
 
@@ -239,24 +236,13 @@ export class Chat extends React.Component<ChatProps> {
   render() {
     return (
       <div
-        className={this.props.className}
+        className={`${styles.chatPanel} ${this.props.className || ""}`}
         style={{
           display: this.props.hide ? "none" : "flex",
-          flexDirection: "column",
-          flexGrow: 1,
-          minHeight: 0,
-          marginTop: 0,
-          marginBottom: 0,
-          padding: "8px",
-          backgroundColor: "rgba(30,30,30,1)",
         }}
       >
-        <div
-          className={styles.chatContainer}
-          ref={this.messagesRef}
-          style={{ position: "relative" }}
-        >
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+        <div className={styles.chatContainer} ref={this.messagesRef}>
+          <div className={styles.messagesList}>
             {this.props.chat.map((msg) => (
               <ChatMessage
                 key={msg.timestamp + msg.id}
@@ -278,7 +264,6 @@ export class Chat extends React.Component<ChatProps> {
                 onReply={this.setReplyTo}
               />
             ))}
-            {/* <div ref={this.messagesEndRef} /> */}
           </div>
           {!this.state.isNearBottom && (
             <Button
@@ -286,7 +271,7 @@ export class Chat extends React.Component<ChatProps> {
               onClick={this.scrollToBottom}
               style={{
                 position: "sticky",
-                bottom: 0,
+                bottom: 4,
                 display: "block",
                 margin: "0 auto",
               }}
@@ -296,7 +281,7 @@ export class Chat extends React.Component<ChatProps> {
           )}
         </div>
         {this.state.isPickerOpen && (
-          <div style={{ position: "absolute", bottom: "60px" }}>
+          <div style={{ position: "absolute", bottom: "60px", zIndex: 300 }}>
             <Picker
               theme="dark"
               previewPosition="none"
@@ -320,6 +305,7 @@ export class Chat extends React.Component<ChatProps> {
           <div
             style={{
               position: "fixed",
+              zIndex: 700,
               top: Math.min(
                 this.state.reactionMenu.yPosition - 150,
                 window.innerHeight - 450,
@@ -339,29 +325,12 @@ export class Chat extends React.Component<ChatProps> {
               }}
             />
           </div>
-          {/* <ReactionMenu
-            handleReactionClick={this.handleReactionClick}
-            closeMenu={() => this.setReactionMenu(false)}
-            yPosition={this.state.reactionMenu.yPosition}
-            xPosition={this.state.reactionMenu.xPosition}
-          /> */}
         </CSSTransition>
         {this.state.replyTo && (
-          <div
-            className={styles.replyComposer}
-            style={{
-              marginTop: 10,
-              padding: "6px 8px",
-              borderLeft: "2px solid rgb(46, 137, 212)",
-              background: "rgba(255, 255, 255, 0.06)",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              gap: 8,
-            }}
-          >
+          <div className={styles.replyComposer}>
             <div className={styles.small + " " + styles.light}>
-              Replying to {this.props.nameMap[this.state.replyTo.id] || "Unknown"}
+              Replying to{" "}
+              {this.props.nameMap[this.state.replyTo.id] || "Unknown"}
               {this.state.replyTo.msg ? (
                 <div
                   style={{
@@ -382,7 +351,7 @@ export class Chat extends React.Component<ChatProps> {
         )}
         <TextInput
           ref={this.chatInputRef}
-          style={{ marginTop: "10px" }}
+          style={{ marginTop: "8px" }}
           onKeyDown={(e: any) => e.key === "Enter" && this.sendChatMsg()}
           onChange={this.updateChatMsg}
           value={this.state.chatMsg}
@@ -395,21 +364,20 @@ export class Chat extends React.Component<ChatProps> {
           }
           rightSection={
             <ActionIcon
+              size="sm"
               onClick={() => {
-                // Add a delay to prevent the click from triggering onClickOutside
                 const curr = this.state.isPickerOpen;
                 setTimeout(() => this.setState({ isPickerOpen: !curr }), 100);
               }}
               disabled={this.props.isChatDisabled}
+              style={{ background: "transparent", border: "none" }}
             >
               <span role="img" aria-label="Emoji">
                 😀
               </span>
             </ActionIcon>
           }
-        >
-          {/* <Icon onClick={this.sendChatMsg} name="send" inverted circular link /> */}
-        </TextInput>
+        />
       </div>
     );
   }
@@ -449,17 +417,10 @@ const ChatMessage = ({
   const { user } = useContext(MetadataContext);
   const { id, timestamp, cmd, msg, system, isSub, reactions, videoTS } =
     message;
-  const spellFull = 5; // the number of people whose names should be written out in full in the reaction popup
+  const spellFull = 5;
   const imageMsg = renderImageString(msg);
   return (
     <div
-      style={{
-        display: "flex",
-        gap: "8px",
-        alignItems: "center",
-        position: "relative",
-        overflowWrap: "anywhere",
-      }}
       className={`${styles.comment} ${className} ${
         message.replyToUserId === clientId ? styles.replyMessage : ""
       }`}
@@ -472,13 +433,13 @@ const ChatMessage = ({
           }
         />
       ) : null}
-      <div>
+      <div style={{ flexGrow: 1, minWidth: 0 }}>
         <div
           style={{
             display: "flex",
             gap: "8px",
-            alignItems: "flex-end",
-            fontSize: 14,
+            alignItems: "baseline",
+            fontSize: 13.5,
           }}
         >
           <UserMenu
@@ -507,9 +468,11 @@ const ChatMessage = ({
             </div>
           </div>
         </div>
-        <div className={styles.light + " " + styles.system}>
-          {cmd && formatMessage(cmd, msg)}
-        </div>
+        {cmd && (
+          <div className={styles.light + " " + styles.system}>
+            {formatMessage(cmd, msg)}
+          </div>
+        )}
         {message.replyToUserId && (
           <HoverCard withinPortal={false} openDelay={120}>
             <HoverCard.Target>
@@ -546,27 +509,19 @@ const ChatMessage = ({
         <div className={styles.commentMenu}>
           {id && id !== clientId && (
             <ActionIcon
+              size="sm"
               onClick={() => onReply(id, timestamp, msg)}
               disabled={isChatDisabled}
-              style={{
-                opacity: 1,
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                padding: 0,
-                margin: 0,
-                marginRight: 4,
-              }}
             >
-              <span role="img" aria-label="Reply" style={{ margin: 0, fontSize: 16 }}>
+              <span role="img" aria-label="Reply" style={{ fontSize: 14 }}>
                 ↩
               </span>
             </ActionIcon>
           )}
           <ActionIcon
+            size="sm"
             onClick={(e) => {
-              //@ts-expect-error
-              const viewportOffset = e.target.getBoundingClientRect();
+              const viewportOffset = e.currentTarget.getBoundingClientRect();
               setTimeout(() => {
                 setReactionMenu(
                   true,
@@ -578,20 +533,8 @@ const ChatMessage = ({
               }, 100);
             }}
             disabled={isChatDisabled}
-            style={{
-              opacity: 1,
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              padding: 0,
-              margin: 0,
-            }}
           >
-            <span
-              role="img"
-              aria-label="React"
-              style={{ margin: 0, fontSize: 18 }}
-            >
+            <span role="img" aria-label="React" style={{ fontSize: 15 }}>
               😀
             </span>
           </ActionIcon>
@@ -624,9 +567,8 @@ const ChatMessage = ({
                     >
                       <span
                         style={{
-                          fontSize: 17,
+                          fontSize: 15,
                           position: "relative",
-                          bottom: 1,
                         }}
                       >
                         {key}
@@ -645,13 +587,7 @@ const ChatMessage = ({
                           }
                           unmountOnExit
                         >
-                          <span
-                            className={styles.reactionCounter}
-                            style={{
-                              color: "rgba(255, 255, 255, 0.85)",
-                              marginLeft: 3,
-                            }}
-                          >
+                          <span className={styles.reactionCounter}>
                             {reactions[key].length}
                           </span>
                         </CSSTransition>
@@ -687,54 +623,20 @@ const ChatMessage = ({
 export const renderImageString = (
   input: string | undefined,
 ): React.ReactNode | null => {
-  // If a valid image string, return an image
-  let regex =
+  const regex =
     /^https?:\/\/.*\/.*\.(png|gif|webp|jpeg|jpg|heic|heif|jfif)\??.*$/gim;
   if (String(input)?.match(regex)) {
-    return <img style={{ maxWidth: "100%" }} src={input} />;
+    return (
+      <img
+        style={{
+          maxWidth: "100%",
+          borderRadius: "var(--radius-sm)",
+          marginTop: 4,
+        }}
+        src={input}
+        alt=""
+      />
+    );
   }
   return null;
 };
-
-// class ReactionMenuInner extends React.Component<{
-//   handleReactionClick: (value: string, id?: string, timestamp?: string) => void;
-//   closeMenu: () => void;
-//   yPosition: number;
-//   xPosition: number;
-// }> {
-//   state = {
-//     containerWidth: 0,
-//   };
-//   handleClickOutside = () => {
-//     this.props.closeMenu();
-//   };
-//   containerRef = React.createRef<HTMLDivElement>();
-//   componentDidMount() {
-//     this.setState({ containerWidth: this.containerRef.current?.offsetWidth });
-//   }
-//   render() {
-//     return (
-//       <div
-//         ref={this.containerRef}
-//         className={styles.reactionMenuContainer}
-//         style={{
-//           top: this.props.yPosition - 9,
-//           left: this.props.xPosition - this.state.containerWidth - 35,
-//         }}
-//       >
-//         {reactionEmojis.map((reaction) => (
-//           <div
-//             onClick={() => {
-//               this.props.handleReactionClick(reaction);
-//               this.props.closeMenu();
-//             }}
-//             style={{ cursor: 'pointer' }}
-//           >
-//             {reaction}
-//           </div>
-//         ))}
-//       </div>
-//     );
-//   }
-// }
-// const ReactionMenu = onClickOutside(ReactionMenuInner);

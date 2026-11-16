@@ -1,6 +1,6 @@
 import React, { useContext, useRef } from "react";
 import { createRoom } from "../TopBar/TopBar";
-import { Loader } from "@mantine/core";
+import { Loader } from "../UI/UI";
 import { MetadataContext } from "../../MetadataContext";
 
 export const Create = () => {
@@ -16,12 +16,15 @@ export const Create = () => {
         flexDirection: "column",
         justifyContent: "center",
         alignItems: "center",
+        gap: "14px",
         width: "100vw",
         height: "100vh",
       }}
     >
-      <Loader></Loader>
-      <div>Creating room. . .</div>
+      <Loader />
+      <div style={{ color: "var(--text-secondary)", fontWeight: 500 }}>
+        Creating room...
+      </div>
       <button
         style={{ display: "none" }}
         ref={buttonEl}

@@ -1,5 +1,5 @@
 import React from "react";
-import { ActionIcon, Button } from "@mantine/core";
+import { ActionIcon, Button } from "../UI/UI";
 import { Socket } from "socket.io-client";
 
 import {
@@ -18,7 +18,7 @@ import {
   IconScreenShare,
   IconVideo,
   IconX,
-} from "@tabler/icons-react";
+} from "../Icons/Icons";
 
 interface VideoChatProps {
   socket: Socket;
@@ -57,7 +57,6 @@ export class VideoChat extends React.Component<VideoChatProps> {
   };
 
   handleSignal = async (data: any) => {
-    // Handle messages received from signaling server
     const msg = data.msg;
     const from = data.from;
     let pc = window.watchparty.videoPCs[from];
@@ -68,7 +67,6 @@ export class VideoChat extends React.Component<VideoChatProps> {
     if (msg.ice !== undefined) {
       pc.addIceCandidate(new RTCIceCandidate(msg.ice));
     } else if (msg.sdp && msg.sdp.type === "offer") {
-      // If our PC is stale, replace it with a fresh one before handling the offer
       if (pc.connectionState === "failed" || pc.connectionState === "closed") {
         pc.close();
         delete window.watchparty.videoPCs[from];
@@ -88,15 +86,13 @@ export class VideoChat extends React.Component<VideoChatProps> {
   };
 
   setupWebRTC = async () => {
-    // Set up our own video
-    // Create default stream
-    let black = ({ width = 640, height = 480 } = {}) => {
-      let canvas: any = Object.assign(document.createElement("canvas"), {
+    const black = ({ width = 640, height = 480 } = {}) => {
+      const canvas: any = Object.assign(document.createElement("canvas"), {
         width,
         height,
       });
       canvas.getContext("2d")?.fillRect(0, 0, width, height);
-      let stream = canvas.captureStream();
+      const stream = canvas.captureStream();
       return Object.assign(stream.getVideoTracks()[0], { enabled: false });
     };
     let stream = new MediaStream([black()]);
@@ -119,7 +115,6 @@ export class VideoChat extends React.Component<VideoChatProps> {
       }
     }
     window.watchparty.ourStream = stream;
-    // alert server we've joined video chat
     this.socket.emit("CMD:joinVideo");
     this.emitUserMute();
   };
@@ -177,13 +172,10 @@ export class VideoChat extends React.Component<VideoChatProps> {
     const videoPCs = window.watchparty.videoPCs;
     const videoRefs = window.watchparty.videoRefs;
     if (!ourStream) {
-      // We haven't started video chat, exit
       return;
     }
     const selfId = getOrCreateClientId();
 
-    // Delete and close any connections that aren't in the current member list (maybe someone disconnected)
-    // This allows them to rejoin later
     const clientIds = new Set(
       this.props.participants.filter((p) => p.isVideoChat).map((p) => p.id),
     );
@@ -197,7 +189,6 @@ export class VideoChat extends React.Component<VideoChatProps> {
     this.props.participants.forEach((user) => {
       const id = user.id;
       if (!user.isVideoChat || videoPCs[id]) {
-        // User isn't in video chat, or we already have a connection to them
         return;
       }
       if (id === selfId) {
@@ -206,36 +197,29 @@ export class VideoChat extends React.Component<VideoChatProps> {
       } else {
         const pc = new RTCPeerConnection({ iceServers: iceServers() });
         videoPCs[id] = pc;
-        // Add our own video as outgoing stream
         ourStream?.getTracks().forEach((track) => {
           if (ourStream) {
             pc.addTrack(track, ourStream);
           }
         });
         pc.onicecandidate = (event) => {
-          // We generated an ICE candidate, send it to peer
           if (event.candidate) {
             this.sendSignal(id, { ice: event.candidate });
           }
         };
         pc.ontrack = (event: RTCTrackEvent) => {
-          // Mount the stream from peer
-          // console.log(stream);
           videoRefs[id].srcObject = event.streams[0];
         };
         pc.oniceconnectionstatechange = () => {
           if (pc.iceConnectionState === "failed") {
-            // ICE failed (permanently, not a temporary disconnection, which would be "disconnected"), tear down and attempt to re-establish
             pc.close();
             delete videoPCs[id];
             this.updateWebRTC();
           }
         };
-        // For each pair, have the lexicographically smaller ID be the offerer
         const isOfferer = selfId < id;
         if (isOfferer) {
           pc.onnegotiationneeded = async () => {
-            // Start connection for peer's video
             const offer = await pc.createOffer();
             await pc.setLocalDescription(offer);
             this.sendSignal(id, { sdp: pc.localDescription });
@@ -255,12 +239,15 @@ export class VideoChat extends React.Component<VideoChatProps> {
       this.props;
     const ourStream = window.watchparty.ourStream;
     const videoRefs = window.watchparty.videoRefs;
-    const videoChatSize = participants.length > 2 ? 180 : 250;
+    const videoChatSize = participants.length > 2 ? 175 : 230;
     const videoChatContentStyle: React.CSSProperties = {
       height: videoChatSize,
       width: videoChatSize,
       objectFit: "cover",
       position: "relative",
+      borderRadius: "var(--radius-md)",
+      border: "1px solid var(--border-default)",
+      display: "block",
     };
     const selfId = getOrCreateClientId();
     return (
@@ -269,8 +256,8 @@ export class VideoChat extends React.Component<VideoChatProps> {
           display: "flex",
           flexWrap: "wrap",
           justifyContent: "center",
-          gap: "4px",
-          padding: "4px",
+          gap: "8px",
+          padding: "8px",
         }}
       >
         {participants.map((p) => {
@@ -279,6 +266,8 @@ export class VideoChat extends React.Component<VideoChatProps> {
               <div
                 style={{
                   position: "relative",
+                  borderRadius: "var(--radius-md)",
+                  overflow: "hidden",
                 }}
               >
                 <div>
@@ -293,10 +282,10 @@ export class VideoChat extends React.Component<VideoChatProps> {
                       <IconDotsVertical
                         style={{
                           position: "absolute",
-                          right: 0,
-                          top: 0,
+                          right: 6,
+                          top: 6,
                           cursor: "pointer",
-                          zIndex: 1,
+                          zIndex: 2,
                           visibility: Boolean(
                             owner && owner === this.context.user?.uid,
                           )
@@ -312,17 +301,17 @@ export class VideoChat extends React.Component<VideoChatProps> {
                       justifyContent: "center",
                       gap: "4px",
                       position: "absolute",
-                      top: 0,
-                      left: 0,
-                      zIndex: 1,
+                      top: 6,
+                      left: 6,
+                      zIndex: 2,
                     }}
                   >
                     {!ourStream && p.id === selfId && (
                       <Button
                         size="xs"
-                        color={"purple"}
+                        color="purple"
                         onClick={this.setupWebRTC}
-                        leftSection={<IconVideo />}
+                        leftSection={<IconVideo size={14} />}
                       >
                         Join
                       </Button>
@@ -330,9 +319,9 @@ export class VideoChat extends React.Component<VideoChatProps> {
                     {ourStream && p.id === selfId && (
                       <Button
                         size="xs"
-                        color={"red"}
+                        color="red"
                         onClick={this.stopWebRTC}
-                        leftSection={<IconX />}
+                        leftSection={<IconX size={14} />}
                       >
                         Leave
                       </Button>
@@ -340,16 +329,18 @@ export class VideoChat extends React.Component<VideoChatProps> {
                     {ourStream && p.id === selfId && (
                       <>
                         <ActionIcon
+                          size="sm"
                           color={this.getVideoWebRTC() ? "green" : "red"}
                           onClick={this.toggleVideoWebRTC}
                         >
-                          <IconVideo />
+                          <IconVideo size={15} />
                         </ActionIcon>
                         <ActionIcon
+                          size="sm"
                           color={this.getAudioWebRTC() ? "green" : "red"}
                           onClick={this.toggleAudioWebRTC}
                         >
-                          <IconMicrophone />
+                          <IconMicrophone size={15} />
                         </ActionIcon>
                       </>
                     )}
@@ -358,7 +349,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
                         {p.isVideoChat && <IconVideo color={softWhite} />}
                         {p.isVideoChat && (
                           <IconMicrophone
-                            color={p.isMuted ? "red" : softWhite}
+                            color={p.isMuted ? "var(--accent-danger)" : softWhite}
                           />
                         )}
                       </>
@@ -368,23 +359,24 @@ export class VideoChat extends React.Component<VideoChatProps> {
                   <div
                     style={{
                       position: "absolute",
-                      bottom: "4px",
-                      left: "0px",
-                      width: "100%",
-                      backgroundColor: "rgba(0,0,0,0)",
+                      bottom: "6px",
+                      left: "6px",
+                      right: "6px",
                       color: softWhite,
-                      borderRadius: "4px",
-                      fontSize: "10px",
-                      fontWeight: 700,
+                      borderRadius: "var(--radius-sm)",
+                      overflow: "hidden",
+                      fontSize: "11px",
+                      fontWeight: 600,
                       display: "flex",
-                      zIndex: 1,
+                      zIndex: 2,
                     }}
                   >
                     <div
                       title={nameMap[p.id] || p.id}
                       style={{
-                        backdropFilter: "brightness(80%)",
-                        padding: "4px",
+                        background: "rgba(9, 11, 16, 0.78)",
+                        backdropFilter: "blur(6px)",
+                        padding: "4px 6px",
                         textOverflow: "ellipsis",
                         whiteSpace: "nowrap",
                         overflow: "hidden",
@@ -395,19 +387,16 @@ export class VideoChat extends React.Component<VideoChatProps> {
                     </div>
                     <div
                       style={{
-                        backdropFilter: "brightness(60%)",
-                        padding: "4px",
+                        background: "rgba(17, 21, 30, 0.88)",
+                        backdropFilter: "blur(6px)",
+                        padding: "4px 6px",
                         flexGrow: 1,
                         display: "flex",
                         justifyContent: "center",
+                        fontFamily: "var(--font-mono)",
                       }}
                     >
-                      {formatTimestamp(tsMap[p.id] || 0)}{" "}
-                      {/* {this.context.beta &&
-                          `(${(
-                            (tsMap[p.id] - this.props.getLeaderTime()) *
-                            1000
-                          ).toFixed(0)}ms)`} */}
+                      {formatTimestamp(tsMap[p.id] || 0)}
                     </div>
                   </div>
                   {ourStream && p.isVideoChat ? (
@@ -419,8 +408,6 @@ export class VideoChat extends React.Component<VideoChatProps> {
                       }}
                       style={{
                         ...videoChatContentStyle,
-                        // mirror the video if it's our stream. this style mimics Zoom where your
-                        // video is mirrored only for you)
                         transform: `scaleX(${p.id === selfId ? "-1" : "1"})`,
                       }}
                       autoPlay
@@ -437,6 +424,7 @@ export class VideoChat extends React.Component<VideoChatProps> {
                           getColorForStringHex(p.id),
                         )
                       }
+                      alt=""
                     />
                   )}
                 </div>

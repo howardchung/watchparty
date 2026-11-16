@@ -1,9 +1,8 @@
 import React from "react";
-import { Modal, Title, Table, Button } from "@mantine/core";
+import { Modal, Title, Table, Button } from "../UI/UI";
 import { SignInButton } from "../TopBar/TopBar";
-import config from "../../config";
 import { MetadataContext } from "../../MetadataContext";
-import { IconBrandStripeFilled, IconCheck } from "@tabler/icons-react";
+import { IconBrandStripeFilled, IconCheck } from "../Icons/Icons";
 import { serverPath } from "../../utils/utils";
 
 export class SubscribeModal extends React.Component<{
@@ -29,7 +28,6 @@ export class SubscribeModal extends React.Component<{
       });
       const json = await resp.json();
       if (json?.url) {
-        // Go to the checkout page
         window.location.href = json.url;
       } else {
         throw Error();
@@ -48,7 +46,7 @@ export class SubscribeModal extends React.Component<{
         size="auto"
         title="Subscribe to WatchParty Plus"
       >
-        <div>
+        <div style={{ color: "var(--text-secondary)", marginBottom: 12 }}>
           Subscriptions help us maintain the service and build new features!
           Please consider supporting us if you're enjoying WatchParty.
         </div>
@@ -63,14 +61,13 @@ export class SubscribeModal extends React.Component<{
           </Table.Thead>
 
           <Table.Tbody>
-            {/* Priority support */}
             <Table.Tr>
               <Table.Td>Synchronized watching, chat, screenshare</Table.Td>
               <Table.Td>
-                <IconCheck />
+                <IconCheck color="var(--accent-emerald)" size={18} />
               </Table.Td>
               <Table.Td>
-                <IconCheck />
+                <IconCheck color="var(--accent-emerald)" size={18} />
               </Table.Td>
             </Table.Tr>
             <Table.Tr>
@@ -78,11 +75,6 @@ export class SubscribeModal extends React.Component<{
               <Table.Td>1</Table.Td>
               <Table.Td>20</Table.Td>
             </Table.Tr>
-            {/* <Table.Tr>
-                  <Table.Td>Max Room Capacity</Table.Td>
-                  <Table.Td>20</Table.Td>
-                  <Table.Td>100</Table.Td>
-                </Table.Tr> */}
             <Table.Tr>
               <Table.Td>VBrowser Access</Table.Td>
               <Table.Td>When capacity allows</Table.Td>
@@ -107,7 +99,7 @@ export class SubscribeModal extends React.Component<{
               <Table.Td>VBrowser Region Selection</Table.Td>
               <Table.Td></Table.Td>
               <Table.Td>
-                <IconCheck />
+                <IconCheck color="var(--accent-emerald)" size={18} />
               </Table.Td>
             </Table.Tr>
             <Table.Tr>
@@ -116,28 +108,28 @@ export class SubscribeModal extends React.Component<{
               </Table.Td>
               <Table.Td></Table.Td>
               <Table.Td>
-                <IconCheck />
+                <IconCheck color="var(--accent-emerald)" size={18} />
               </Table.Td>
             </Table.Tr>
             <Table.Tr>
               <Table.Td>Custom room URLs and titles</Table.Td>
               <Table.Td></Table.Td>
               <Table.Td>
-                <IconCheck />
+                <IconCheck color="var(--accent-emerald)" size={18} />
               </Table.Td>
             </Table.Tr>
             <Table.Tr>
               <Table.Td>Discord subscriber role (with linked account)</Table.Td>
               <Table.Td></Table.Td>
               <Table.Td>
-                <IconCheck />
+                <IconCheck color="var(--accent-emerald)" size={18} />
               </Table.Td>
             </Table.Tr>
             <Table.Tr>
               <Table.Td>Colored names in chat</Table.Td>
               <Table.Td></Table.Td>
               <Table.Td>
-                <IconCheck />
+                <IconCheck color="var(--accent-emerald)" size={18} />
               </Table.Td>
             </Table.Tr>
             <Table.Tr>
@@ -147,18 +139,25 @@ export class SubscribeModal extends React.Component<{
             </Table.Tr>
           </Table.Tbody>
         </Table>
-        <div style={{ textAlign: "right" }}>
-          {/* if user isn't logged in, provide login prompt */}
+        <div style={{ textAlign: "right", marginTop: 12 }}>
           {this.context.user && this.context.user.email ? (
             <Button
-              leftSection={<IconBrandStripeFilled />}
+              leftSection={<IconBrandStripeFilled size={18} />}
               onClick={this.onSubscribe}
             >
               Subscribe with Stripe
             </Button>
           ) : (
-            <div>
-              Please sign in to subscribe: <SignInButton />
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "flex-end",
+                gap: 8,
+              }}
+            >
+              <span>Please sign in to subscribe:</span>
+              <SignInButton />
             </div>
           )}
         </div>

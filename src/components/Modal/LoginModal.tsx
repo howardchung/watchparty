@@ -6,13 +6,13 @@ import {
   TextInput,
   PasswordInput,
   Divider,
-} from "@mantine/core";
+} from "../UI/UI";
 import firebase from "firebase/compat/app";
 import "firebase/compat/auth";
 import {
   IconBrandFacebookFilled,
   IconBrandGoogleFilled,
-} from "@tabler/icons-react";
+} from "../Icons/Icons";
 import config from "../../config";
 
 export class LoginModal extends React.Component<{
@@ -29,20 +29,11 @@ export class LoginModal extends React.Component<{
   emailSignIn = async (email: string, password: string) => {
     try {
       await firebase.auth().signInWithEmailAndPassword(email, password);
-
       this.props.closeModal();
     } catch (e: any) {
-      // handle exceptions
       this.setState({ error: e.message });
     }
   };
-
-  // emailLinkSignIn = async () => {
-  //   await firebase.auth().sendSignInLinkToEmail(this.state.email, {
-  //     url: window.location.href,
-  //     handleCodeInApp: true,
-  //   });
-  // };
 
   facebookSignIn = async () => {
     const provider = new firebase.auth.FacebookAuthProvider();
@@ -69,10 +60,11 @@ export class LoginModal extends React.Component<{
         )}
         <Modal opened onClose={closeModal} title="Login" size="auto" centered>
           <div>
-            <div style={{ display: "flex", gap: "4px" }}>
+            <div style={{ display: "flex", gap: "8px" }}>
               {enabledOptions.includes("facebook") && (
                 <Button
-                  leftSection={<IconBrandFacebookFilled />}
+                  fullWidth
+                  leftSection={<IconBrandFacebookFilled size={17} />}
                   onClick={this.facebookSignIn}
                 >
                   Facebook
@@ -80,7 +72,8 @@ export class LoginModal extends React.Component<{
               )}
               {enabledOptions.includes("google") && (
                 <Button
-                  leftSection={<IconBrandGoogleFilled />}
+                  fullWidth
+                  leftSection={<IconBrandGoogleFilled size={17} />}
                   onClick={this.googleSignIn}
                 >
                   Google
@@ -102,7 +95,7 @@ export class LoginModal extends React.Component<{
                   style={{
                     display: "flex",
                     flexDirection: "column",
-                    gap: "8px",
+                    gap: "10px",
                   }}
                 >
                   {this.state.error && (
@@ -130,18 +123,20 @@ export class LoginModal extends React.Component<{
                 <div
                   style={{
                     display: "flex",
-                    gap: "4px",
+                    gap: "8px",
                     justifyContent: "center",
                   }}
                 >
                   <Button
                     size="xs"
+                    color="grey"
                     onClick={() => this.setState({ showCreate: true })}
                   >
                     Create account
                   </Button>
                   <Button
                     size="xs"
+                    color="grey"
                     onClick={() => this.setState({ showReset: true })}
                   >
                     Reset password
@@ -165,7 +160,6 @@ export class CreateModal extends React.Component<{
     try {
       await firebase.auth().createUserWithEmailAndPassword(email, password);
     } catch (e: any) {
-      // handle exceptions
       this.setState({ error: e.message });
     }
   };
@@ -185,7 +179,7 @@ export class CreateModal extends React.Component<{
             e.preventDefault();
             this.createAccount(this.state.email, this.state.password);
           }}
-          style={{ display: "flex", flexDirection: "column", gap: "8px" }}
+          style={{ display: "flex", flexDirection: "column", gap: "10px" }}
         >
           {this.state.error && (
             <Alert color="red" title="Error">
@@ -221,7 +215,6 @@ export class ResetModal extends React.Component<{
       await firebase.auth().sendPasswordResetEmail(this.state.email);
       this.props.closeModal();
     } catch (e: any) {
-      // handle exceptions
       this.setState({ error: e.message });
     }
   };
@@ -235,7 +228,7 @@ export class ResetModal extends React.Component<{
             e.preventDefault();
             this.resetPassword();
           }}
-          style={{ display: "flex", flexDirection: "column", gap: "8px" }}
+          style={{ display: "flex", flexDirection: "column", gap: "10px" }}
         >
           {this.state.error && (
             <Alert color="red" title="Error">

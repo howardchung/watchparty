@@ -1,5 +1,5 @@
 import React from "react";
-import { ActionIcon } from "@mantine/core";
+import { ActionIcon } from "../UI/UI";
 import { decodeEntities, formatTimestamp } from "../../utils/utils";
 
 import classes from "./ChatVideoCard.module.css";
@@ -11,7 +11,7 @@ import {
   IconPlayerPlayFilled,
   IconPlaylistAdd,
   IconTrash,
-} from "@tabler/icons-react";
+} from "../Icons/Icons";
 
 const ChatVideoCard: React.FC<{
   video: PlaylistVideo;
@@ -36,14 +36,11 @@ const ChatVideoCard: React.FC<{
     onPlaylistAdd,
   } = props;
 
-  const handlePlayClick = React.useCallback(
-    (e: any) => {
-      if (onPlay) {
-        onPlay(index);
-      }
-    },
-    [onPlay, index],
-  );
+  const handlePlayClick = React.useCallback(() => {
+    if (onPlay) {
+      onPlay(index);
+    }
+  }, [onPlay, index]);
 
   const handlePlayNextClick = React.useCallback(
     (e: any) => {
@@ -73,7 +70,7 @@ const ChatVideoCard: React.FC<{
       className={classes.Card}
       onClick={
         onSetMedia
-          ? (e) => {
+          ? () => {
               onSetMedia(video.url);
             }
           : undefined
@@ -95,9 +92,11 @@ const ChatVideoCard: React.FC<{
           )}
         </div>
         <div style={{ flexShrink: 0 }}>
-          {video.type === "youtube" && <IconBrandYoutubeFilled color="red" />}
-          {video.type === "file" && <IconFile />}
-          {video.type === "magnet" && <IconMagnetFilled />}
+          {video.type === "youtube" && (
+            <IconBrandYoutubeFilled color="var(--accent-danger)" size={20} />
+          )}
+          {video.type === "file" && <IconFile size={18} />}
+          {video.type === "magnet" && <IconMagnetFilled size={18} />}
         </div>
         <div className={classes.Content}>
           <div className={classes.Title}>{decodeEntities(video.name)}</div>
@@ -113,7 +112,7 @@ const ChatVideoCard: React.FC<{
                 onPlaylistAdd(video.url);
               }}
             >
-              <IconPlaylistAdd />
+              <IconPlaylistAdd size={18} />
             </ActionIcon>
           </div>
         )}
@@ -125,7 +124,7 @@ const ChatVideoCard: React.FC<{
               onClick={handlePlayClick}
               disabled={disabled}
             >
-              <IconPlayerPlayFilled size={16} />
+              <IconPlayerPlayFilled size={15} />
             </ActionIcon>
             <ActionIcon
               color="black"
@@ -133,7 +132,7 @@ const ChatVideoCard: React.FC<{
               onClick={handlePlayNextClick}
               disabled={disabled}
             >
-              <IconArrowUp size={16} />
+              <IconArrowUp size={15} />
             </ActionIcon>
             <ActionIcon
               color="red"
@@ -141,7 +140,7 @@ const ChatVideoCard: React.FC<{
               onClick={handleRemoveClick}
               disabled={disabled}
             >
-              <IconTrash size={16} />
+              <IconTrash size={15} />
             </ActionIcon>
           </div>
         )}

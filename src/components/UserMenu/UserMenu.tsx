@@ -1,9 +1,7 @@
-import React, { useContext, useState } from "react";
-import { Menu } from "@mantine/core";
+import React from "react";
+import { Menu } from "../UI/UI";
 import { Socket } from "socket.io-client";
-// import styles from './UserMenu.module.css';
-import { MetadataContext } from "../../MetadataContext";
-import { IconBan, IconTrashFilled, IconX } from "@tabler/icons-react";
+import { IconBan, IconTrashFilled, IconX } from "../Icons/Icons";
 
 export const UserMenu = ({
   socket,
@@ -23,7 +21,6 @@ export const UserMenu = ({
   timestamp?: string;
   isChatMessage?: boolean;
 }) => {
-  const { user } = useContext(MetadataContext);
   return (
     <Menu
       closeOnItemClick
@@ -36,7 +33,7 @@ export const UserMenu = ({
         <Menu.Label>{displayName}</Menu.Label>
         {isChatMessage && (
           <Menu.Item
-            leftSection={<IconX />}
+            leftSection={<IconX size={16} />}
             onClick={async () => {
               socket.emit("CMD:deleteChatMessages", {
                 author: userToManage,
@@ -48,7 +45,7 @@ export const UserMenu = ({
           </Menu.Item>
         )}
         <Menu.Item
-          leftSection={<IconTrashFilled />}
+          leftSection={<IconTrashFilled size={16} />}
           onClick={async () => {
             socket.emit("CMD:deleteChatMessages", {
               author: userToManage,
@@ -58,7 +55,7 @@ export const UserMenu = ({
           Delete User's Messages
         </Menu.Item>
         <Menu.Item
-          leftSection={<IconBan />}
+          leftSection={<IconBan size={16} />}
           onClick={async () => {
             socket.emit("CMD:kickUser", {
               userToBeKicked: userToManage,

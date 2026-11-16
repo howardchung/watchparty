@@ -1,106 +1,92 @@
-.subscriber {
-  color: rgb(33, 186, 69);
+.chatPanel {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  min-height: 0;
+  padding: 10px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
 }
-
-/* .subscriber {
-  position: relative;
-} */
-
-/* .subscriber img {
-  border: 3px solid transparent;
-} */
-
-/* .subscriber:before {
-  content: '';
-  background: linear-gradient(
-    60deg,
-    #f79533,
-    #f37055,
-    #ef4e7b,
-    #a166ab,
-    #5073b8,
-    #1098ad,
-    #07b39b,
-    #6fba82
-  );
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  z-index: -1;
-  border-radius: 2px;
-  animation: animatedgradient 2.5s ease infinite;
-  background-size: 200% 200%;
-} */
-
-/* @keyframes animatedgradient {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-} */
 
 .chatContainer {
   flex-grow: 1;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+  padding-right: 4px;
+}
+
+.messagesList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.subscriber {
+  color: var(--accent-emerald-hover);
 }
 
 .hoverEffect:hover {
-  filter: brightness(0.8);
+  opacity: 0.85;
 }
 
 .light {
-  color: gainsboro;
-  font-size: 14px;
+  color: var(--text-primary);
+  font-size: 13.5px;
+  line-height: 1.45;
 }
 
 .light.emoji {
   font-size: 24px;
+  line-height: 1.2;
 }
 
 .dark {
-  color: gray;
+  color: var(--text-muted);
 }
 
 .small {
-  font-size: 12px;
+  font-size: 11.5px;
 }
 
 .system {
-  font-size: 10px;
+  font-size: 11px;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+}
+
+.comment {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  position: relative;
+  overflow-wrap: anywhere;
+  padding: 6px 8px;
+  border-radius: var(--radius-md);
+  transition: background-color var(--transition-fast);
 }
 
 .comment .commentMenu {
   display: none;
+  align-items: center;
   justify-content: center;
+  gap: 4px;
   position: absolute;
-  right: 5px;
-  top: -13px;
-  padding: 4px !important;
-  border-radius: 3px;
-  cursor: pointer;
-}
-
-.comment .commentMenu:hover,
-.comment.selected .commentMenu {
-  background: rgb(46, 137, 212);
-  transition: background 0.2s ease-in-out;
+  right: 6px;
+  top: -10px;
+  padding: 3px 4px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  box-shadow: var(--shadow-sm);
+  z-index: 5;
 }
 
 .comment:hover,
 .comment.selected {
-  border-radius: 5px;
-  background: radial-gradient(
-    at top right,
-    #7eaee02a,
-    transparent 70%
-  ) !important;
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .comment:hover .commentMenu,
@@ -109,73 +95,65 @@
 }
 
 .replyMessage {
-  background: radial-gradient(
-    at top right,
-    rgba(255, 176, 96, 0.22),
-    transparent 70%
+  background: linear-gradient(
+    90deg,
+    rgba(245, 158, 11, 0.14) 0%,
+    transparent 85%
   );
+  border-left: 2px solid var(--accent-amber);
 }
 
 .replyInfo {
-  color: rgba(180, 200, 220, 0.95);
+  color: var(--accent-primary-hover);
   font-size: 12px;
   margin-bottom: 2px;
 }
 
 .replyTooltip {
-  background: rgba(20, 28, 36, 0.45);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  color: rgba(240, 248, 255, 0.94);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
   backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  max-width: 360px;
-  padding: 6px 8px;
+  max-width: 340px;
+  padding: 6px 10px;
   font-size: 12px;
-  line-height: 1.2;
+  line-height: 1.35;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   pointer-events: none;
 }
 
-.reactionMenuContainer {
-  display: flex;
-  flex-wrap: nowrap;
-  border-radius: 5px;
-  position: fixed;
-  font-size: 24px;
-  overflow: hidden;
-  background: rgba(255, 255, 255, 0.91);
-}
-
-.reactionMenuContainer div {
-  line-height: 30px;
-  padding: 5px;
-}
-
-.reactionMenuContainer div:hover {
-  background-color: rgb(46, 137, 212);
-  transition: background-color 0.2s ease-in-out;
-}
-
 .reactionContainer {
   display: inline-flex;
   align-items: center;
-  padding: 3px;
-  border-radius: 5px;
-  background: rgba(255, 255, 255, 0.16);
-  margin-right: 3px;
-  margin-top: 1px;
-  min-width: 39px;
+  padding: 2px 6px;
+  border-radius: var(--radius-full);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  margin-right: 4px;
+  margin-top: 4px;
+  min-width: 38px;
   cursor: pointer;
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast);
 }
 
 .reactionContainer.highlighted {
-  background: rgb(66, 111, 129);
+  background: var(--accent-primary-subtle);
+  border-color: rgba(99, 102, 241, 0.5);
 }
 
 .reactionContainer:hover {
-  background-color: rgb(46, 137, 212);
-  transition: background-color 0.2s ease-in-out;
+  background: var(--bg-elevated-hover);
+  border-color: var(--border-strong);
+}
+
+.reactionCounter {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-left: 4px;
 }
 
 .reaction-enter {
@@ -195,7 +173,7 @@
 
 .reactionCounter-enter {
   transform: scale(0);
-  color: rgb(255, 136, 0) !important;
+  color: var(--accent-amber) !important;
 }
 .reactionCounter-enter-active {
   transform: scale(1);
@@ -203,7 +181,7 @@
 }
 .reactionCounter-exit {
   transform: scale(1);
-  color: rgb(255, 136, 0) !important;
+  color: var(--accent-amber) !important;
 }
 .reactionCounter-exit-active {
   transform: scale(0);
@@ -241,6 +219,15 @@
 }
 
 .replyComposer {
+  margin-top: 8px;
+  padding: 6px 10px;
+  border-left: 2px solid var(--accent-primary);
+  background: var(--bg-elevated);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
   animation: replyComposerIn 220ms cubic-bezier(0.22, 0.8, 0.25, 1);
 }
 

@@ -1,5 +1,5 @@
 import React, { useContext, useState } from "react";
-import { Modal, Button, Table, Checkbox } from "@mantine/core";
+import { Modal, Button, Table, Checkbox } from "../UI/UI";
 import { SubscribeButton } from "../SubscribeButton/SubscribeButton";
 import { MetadataContext } from "../../MetadataContext";
 import { isClientTranscodeSupported } from "../../utils/clientTranscode";
@@ -24,7 +24,9 @@ export const FileShareModal = (props: {
       size="auto"
       centered
     >
-      <div>You're about to share a file from your device.</div>
+      <div style={{ color: "var(--text-secondary)", marginBottom: 8 }}>
+        You're about to share a file from your device.
+      </div>
       <Table striped>
         <Table.Thead>
           <Table.Tr>

@@ -1,23 +1,33 @@
 .Card {
-  background: rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
   padding: 8px;
+  width: 100%;
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.Card:hover {
+  background: var(--bg-elevated-hover);
+  border-color: var(--border-default);
 }
 
 .Wrapper {
   display: flex;
   align-items: center;
-  display: flex;
-  gap: 8px;
+  gap: 10px;
 }
 
 .ThumbnailWrapper {
   flex: 0 0 auto;
-  width: 100px;
-  height: 56px;
+  width: 96px;
+  height: 54px;
   overflow: hidden;
   position: relative;
-  background: rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-sm);
+  background: var(--bg-base);
 }
 
 .Thumbnail {
@@ -31,19 +41,22 @@
 
 .Content {
   flex-grow: 1;
+  min-width: 0;
 }
 
 .Title {
-  line-height: 1.5;
-  /* max-width: 400px; */
+  line-height: 1.4;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text-primary);
   overflow: hidden;
-  /* text-overflow: ellipsis;
-  white-space: nowrap; */
   overflow-wrap: anywhere;
 }
 
 .ChannelName {
-  margin-top: 4px;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--text-secondary);
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -52,12 +65,14 @@
 .DurationLabel {
   position: absolute;
   z-index: 1;
-  bottom: 0;
-  right: 0;
-  padding: 2px 4px;
-  background: rgba(0, 0, 0, 0.95);
-  color: #fff;
-  font-size: 12px;
+  bottom: 4px;
+  right: 4px;
+  padding: 1px 5px;
+  border-radius: var(--radius-xs);
+  background: rgba(9, 11, 16, 0.88);
+  color: #f8fafc;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
   font-weight: 600;
   pointer-events: none;
 }
@@ -65,5 +80,6 @@
 .Controls {
   margin-left: auto;
   display: flex;
-  gap: 4px;
+  gap: 6px;
+  flex-shrink: 0;
 }

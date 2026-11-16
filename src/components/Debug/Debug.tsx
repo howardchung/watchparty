@@ -11,21 +11,13 @@ import {
 import { serverPath } from "../../utils/utils";
 import { useFetch } from "../../utils/useFetch.hook";
 import CountUp from "react-countup";
-import { Table } from "@mantine/core";
+import { Table } from "../UI/UI";
 
 const timeSeriesUrl = serverPath + `/timeSeries${window.location.search}`;
-// const timeSeriesUrl = 'https://www.watchparty.me' + `/timeSeries${window.location.search}`;
 const statsUrl = serverPath + `/stats${window.location.search}`;
-// const statsUrl = 'https://www.watchparty.me' + `/stats${window.location.search}`;
-
-// Rendering:
-// Anything that's a Record<string, number> should render as 2 column table
-// e.g. counts, roomsizecounts, per shard stats
-// vBrowserClientIDs etc. should be converted to key/value pairs
-// vmManagerStats and currentRoomData should render in JSON blocks
 
 const Debug = () => {
-  let timeSeries: any[] = useFetch(timeSeriesUrl) ?? [];
+  const timeSeries: any[] = useFetch(timeSeriesUrl) ?? [];
   const rev = [...timeSeries].reverse();
   const [state, setState] = useState({
     current: {} as Record<string, any>,
@@ -38,16 +30,14 @@ const Debug = () => {
       const json = await resp.json();
       const nextState = { current: json, last };
       setState(nextState);
-      // Save the value for the next update
       last = nextState.current;
     };
     update();
     setInterval(update, 10000);
   }, []);
-  // Get the keys from the last/mostrecent element
   const keys = Object.keys(timeSeries.slice(-1)[0] ?? {});
   return (
-    <div>
+    <div style={{ padding: 16 }}>
       <div
         style={{
           display: "flex",
@@ -55,36 +45,37 @@ const Debug = () => {
           flexWrap: "wrap",
           flexDirection: "column",
           height: "2000px",
+          gap: 16,
         }}
       >
         {Object.keys(state.current).map((k) => {
           if (k === "vmManagerStats") {
             return (
-              <div style={{ overflow: "auto" }}>
-                <pre style={{ fontSize: 12 }} key={k}>
+              <div key={k} style={{ overflow: "auto" }}>
+                <pre style={{ fontSize: 12 }}>
                   {JSON.stringify(state.current[k], null, 2)}
                 </pre>
               </div>
             );
           } else if (Array.isArray(state.current[k])) {
-            // One column table
             return (
               <div
+                key={k}
                 style={{
                   maxWidth: k === "currentRoomData" ? "400px" : undefined,
                   overflow: "auto",
                 }}
               >
-                <Table style={{}} key={k}>
+                <Table>
                   <Table.Thead>
                     <Table.Tr>
                       <Table.Th>{k}</Table.Th>
                     </Table.Tr>
                   </Table.Thead>
                   <Table.Tbody>
-                    {state.current[k].map((row) => {
+                    {state.current[k].map((row: any, idx: number) => {
                       return (
-                        <Table.Tr>
+                        <Table.Tr key={idx}>
                           <Table.Td>
                             {k === "currentRoomData" ? (
                               <div style={{ wordBreak: "break-all" }}>
@@ -102,12 +93,13 @@ const Debug = () => {
               </div>
             );
           } else {
-            // Map
             return (
-              <div style={{ overflow: "auto" }}>
-                <Table style={{}} key={k}>
+              <div key={k} style={{ overflow: "auto" }}>
+                <Table>
                   <Table.Thead>
-                    <div>{k}</div>
+                    <Table.Tr>
+                      <Table.Th colSpan={2}>{k}</Table.Th>
+                    </Table.Tr>
                     <Table.Tr>
                       <Table.Th>Key</Table.Th>
                       <Table.Th>Value</Table.Th>
@@ -116,7 +108,7 @@ const Debug = () => {
                   <Table.Tbody>
                     {Object.keys(state.current[k]).map((key) => {
                       return (
-                        <Table.Tr>
+                        <Table.Tr key={key}>
                           <Table.Td>{key}</Table.Td>
                           <Table.Td>
                             <CountUp
@@ -144,6 +136,7 @@ const Debug = () => {
         .map((key) => {
           return (
             <LineChart
+              key={key}
               width={1400}
               height={400}
               data={rev}
@@ -153,12 +146,12 @@ const Debug = () => {
                 bottom: 5,
               }}
             >
-              <CartesianGrid />
+              <CartesianGrid stroke="rgba(255,255,255,0.08)" />
               <XAxis dataKey="time" />
               <YAxis />
               <Tooltip />
               <Legend />
-              <Line type="monotone" dataKey={key} stroke="#8884d8" />
+              <Line type="monotone" dataKey={key} stroke="#818cf8" />
             </LineChart>
           );
         })}

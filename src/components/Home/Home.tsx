@@ -1,5 +1,5 @@
-import React, { useContext } from "react";
-import { Button, Stepper } from "@mantine/core";
+import React from "react";
+import { Button, Stepper } from "../UI/UI";
 import {
   IconBrandDiscordFilled,
   IconBrandYoutubeFilled,
@@ -12,13 +12,11 @@ import {
   IconRefresh,
   IconScreenShare,
   IconVideo,
-} from "@tabler/icons-react";
+} from "../Icons/Icons";
 import { NewRoomButton } from "../TopBar/TopBar";
 import styles from "./Home.module.css";
-import { MetadataContext } from "../../MetadataContext";
 
 export const Home = () => {
-  const { user } = useContext(MetadataContext);
   return (
     <div>
       <div className={styles.container}>
@@ -26,7 +24,7 @@ export const Home = () => {
           heroText={"Watch videos together with friends anywhere."}
           subText={"No registration or download required."}
           action={
-            <div style={{ marginTop: "8px", width: "300px" }}>
+            <div className={styles.heroAction}>
               <NewRoomButton size="xl" />
             </div>
           }
@@ -96,26 +94,14 @@ export const Home = () => {
           }
           image={"/screenshot14.png"}
         />
-        <div
-          style={{
-            padding: "30px",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-          }}
-        >
+        <div className={styles.getStartedSection}>
           <div className={styles.heroText}>Get started!</div>
-          <div className={styles.featureSection}>
-            <Stepper active={-1}>
-              <Stepper.Step label="Make a room" />
-              <Stepper.Step label="Share link with friends" />
-              <Stepper.Step label="Pick something to watch" />
-              <Stepper.Step label="Success!" />
-            </Stepper>
-          </div>
-          {/* <div style={{ width: '160px' }}>
-            <NewRoomButton />
-          </div> */}
+          <Stepper active={-1}>
+            <Stepper.Step label="Make a room" />
+            <Stepper.Step label="Share link with friends" />
+            <Stepper.Step label="Pick something to watch" />
+            <Stepper.Step label="Success!" />
+          </Stepper>
         </div>
       </div>
       <DiscordBot />
@@ -128,22 +114,15 @@ const Feature = ({
   text,
   title,
 }: {
-  Icon: React.ForwardRefExoticComponent<IconProps>;
+  Icon: React.ComponentType<IconProps>;
   text: string;
   title: string;
 }) => {
   return (
-    <div
-      style={{
-        display: "flex",
-        flex: "1 1 0px",
-        flexDirection: "column",
-        alignItems: "center",
-        padding: "10px",
-        minWidth: "180px",
-      }}
-    >
-      <Icon size={80} />
+    <div className={styles.featureCard}>
+      <div className={styles.featureIconWrap}>
+        <Icon size={26} />
+      </div>
       <h4 className={styles.featureTitle}>{title}</h4>
       <div className={styles.featureText}>{text}</div>
     </div>
@@ -168,25 +147,18 @@ export const Hero = ({
   return (
     <div className={`${styles.hero} ${color === "green" ? styles.green : ""}`}>
       <div
-        style={{ flexDirection: color === "green" ? "row-reverse" : undefined }}
-        className={styles.heroInner}
+        className={`${styles.heroInner} ${
+          color === "green" ? styles.heroInnerReverse : ""
+        }`}
       >
-        <div style={{ padding: "30px", flex: "1 1 0" }}>
+        <div className={styles.heroCopy}>
           <div className={styles.heroText}>{heroText}</div>
-          <div className={styles.subText}>{subText}</div>
-          <div className={styles.subText}>{subText2}</div>
+          {subText && <div className={styles.subText}>{subText}</div>}
+          {subText2 && <div className={styles.subText}>{subText2}</div>}
           {action}
         </div>
-        <div
-          style={{
-            flex: "1 1 0",
-          }}
-        >
-          <img
-            alt="hero"
-            style={{ width: "100%", borderRadius: "10px" }}
-            src={image}
-          />
+        <div className={styles.heroMedia}>
+          <img alt="hero" className={styles.heroImage} src={image} />
         </div>
       </div>
     </div>
@@ -204,15 +176,17 @@ export const DiscordBot = () => {
         subText={"/watch to generate a new empty room"}
         subText2={"/watch video <URL_HERE> to create a room with a video"}
         action={
-          <Button
-            leftSection={<IconBrandDiscordFilled />}
-            component="a"
-            size="lg"
-            target="_blank"
-            href="https://discord.com/api/oauth2/authorize?client_id=1071394728513380372&permissions=2147485696&scope=bot"
-          >
-            Add to Discord
-          </Button>
+          <div className={styles.heroAction}>
+            <Button
+              leftSection={<IconBrandDiscordFilled size={18} />}
+              component="a"
+              size="lg"
+              target="_blank"
+              href="https://discord.com/api/oauth2/authorize?client_id=1071394728513380372&permissions=2147485696&scope=bot"
+            >
+              Add to Discord
+            </Button>
+          </div>
         }
         image={"/screenshot5.png"}
       />

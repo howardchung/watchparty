@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { Modal, TextInput, ActionIcon } from "@mantine/core";
-import { IconCopy } from "@tabler/icons-react";
+import { Modal, TextInput, ActionIcon } from "../UI/UI";
+import { IconCopy } from "../Icons/Icons";
 
 export const InviteModal = ({
   closeInviteModal,
@@ -25,15 +25,17 @@ export const InviteModal = ({
         label="Copy and share this link:"
         readOnly
         rightSection={
-          <ActionIcon onClick={handleCopyInviteLink} color="teal">
-            <IconCopy size={16} />
+          <ActionIcon size="sm" onClick={handleCopyInviteLink} color="teal">
+            <IconCopy size={15} />
           </ActionIcon>
         }
         defaultValue={window.location.href}
       />
       {inviteLinkCopied && (
-        <div style={{ marginTop: 15 }}>
-          <b style={{ color: "green" }}>Link copied to clipboard.</b>
+        <div style={{ marginTop: 12 }}>
+          <b style={{ color: "var(--accent-emerald)" }}>
+            Link copied to clipboard.
+          </b>
         </div>
       )}
     </Modal>

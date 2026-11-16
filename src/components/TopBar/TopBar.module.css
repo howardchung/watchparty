@@ -1,0 +1,109 @@
+.topBar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 10px 18px;
+  gap: 12px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+  min-height: 60px;
+}
+
+.brandLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.logoImg {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-md);
+  object-fit: contain;
+}
+
+.brandText {
+  display: flex;
+  align-items: center;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.brandWatch {
+  color: #f8fafc;
+}
+
+.brandParty {
+  background: linear-gradient(135deg, #818cf8 0%, #34d399 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.roomHeader {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin-left: 6px;
+}
+
+.roomTitle {
+  font-size: 20px;
+  line-height: 1.2;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+}
+
+.roomDescription {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+.rightActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+
+.socialGroup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.avatarTrigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.avatarTrigger:hover {
+  transform: scale(1.04);
+  box-shadow: 0 0 0 2px var(--accent-primary);
+}
+
+.roomMenuItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+}
+
+@media only screen and (max-width: 600px) {
+  .topBar {
+    padding: 8px 12px;
+  }
+  .rightActions {
+    width: 100%;
+    justify-content: space-between;
+  }
+}

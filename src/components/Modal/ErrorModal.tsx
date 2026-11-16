@@ -1,6 +1,6 @@
 import React from "react";
-import { Modal, Button } from "@mantine/core";
-import { IconHome, IconRefresh } from "@tabler/icons-react";
+import { Modal, Button } from "../UI/UI";
+import { IconHome, IconRefresh } from "../Icons/Icons";
 
 export const ErrorModal = ({ error }: { error: string }) => {
   return (
@@ -10,24 +10,25 @@ export const ErrorModal = ({ error }: { error: string }) => {
           display: "flex",
           flexWrap: "wrap",
           justifyContent: "center",
-          gap: "8px",
+          gap: "10px",
         }}
       >
         <Button
-          size="xl"
+          size="lg"
           onClick={() => {
             window.location.reload();
           }}
-          leftSection={<IconRefresh />}
+          leftSection={<IconRefresh size={18} />}
         >
           Try again
         </Button>
         <Button
-          size="xl"
+          size="lg"
+          color="grey"
           onClick={() => {
             window.location.href = "/";
           }}
-          leftSection={<IconHome />}
+          leftSection={<IconHome size={18} />}
         >
           Go to home
         </Button>
