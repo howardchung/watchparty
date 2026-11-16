@@ -1,17 +1,20 @@
 import React from "react";
 
 const mdStyle: React.CSSProperties = {
-  maxWidth: "100vw",
-  width: "800px",
-  padding: "10px",
+  maxWidth: "820px",
+  width: "100%",
+  margin: "32px auto",
+  padding: "28px",
+  background: "var(--bg-surface)",
+  border: "1px solid var(--border-subtle)",
+  borderRadius: "var(--radius-lg)",
 };
 
 export const Privacy = () => {
   return (
     <div style={mdStyle}>
-      <pre style={{ whiteSpace: "pre-wrap" }}>
-        {`
-Privacy Policy
+      <pre style={{ whiteSpace: "pre-wrap", fontFamily: "var(--font-sans)", lineHeight: 1.65 }}>
+        {`Privacy Policy
 ====
 
 Rooms
@@ -39,8 +42,7 @@ Virtual Browsers
 
 YouTube
 ----
-- The service provides the ability to search and play YouTube videos. Google/YouTube may use data provided to the search service in accordance with the [Google Privacy Policy](https://policies.google.com/privacy).
-`}
+- The service provides the ability to search and play YouTube videos. Google/YouTube may use data provided to the search service in accordance with the [Google Privacy Policy](https://policies.google.com/privacy).`}
       </pre>
     </div>
   );
@@ -49,9 +51,8 @@ YouTube
 export const Terms = () => {
   return (
     <div style={mdStyle}>
-      <pre style={{ whiteSpace: "pre-wrap" }}>
-        {`
-Terms of Service
+      <pre style={{ whiteSpace: "pre-wrap", fontFamily: "var(--font-sans)", lineHeight: 1.65 }}>
+        {`Terms of Service
 ====
 By using this service you agree to the following terms:
 - You are over 13 years of age
@@ -66,8 +67,7 @@ Subscriptions
 
 YouTube
 ----
-The service provides the ability to search and play YouTube videos. By using the YouTube search you agree to the [YouTube Terms of Service](https://www.youtube.com/t/terms).
-`}
+The service provides the ability to search and play YouTube videos. By using the YouTube search you agree to the [YouTube Terms of Service](https://www.youtube.com/t/terms).`}
       </pre>
     </div>
   );
@@ -76,9 +76,8 @@ The service provides the ability to search and play YouTube videos. By using the
 export const FAQ = () => {
   return (
     <div style={mdStyle}>
-      <pre style={{ whiteSpace: "pre-wrap" }}>
-        {`
-FAQ
+      <pre style={{ whiteSpace: "pre-wrap", fontFamily: "var(--font-sans)", lineHeight: 1.65 }}>
+        {`FAQ
 ====
 What's a VBrowser?
 ----
@@ -107,9 +106,7 @@ Currently there isn't a hard limit, although the service hasn't been tested with
 
 I own a website and I'd like to have a link that generates a WatchParty room with a specific video already set. How do I do this?
 ----
-You can link to https://www.watchparty.me/create?video=URL_HERE to do this!
-
-`}
+You can link to https://www.watchparty.me/create?video=URL_HERE to do this!`}
       </pre>
     </div>
   );

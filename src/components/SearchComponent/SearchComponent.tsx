@@ -5,13 +5,13 @@ import {
   getStreamPathResults,
   pickSingleLargeFile,
 } from "../../utils/utils";
-import { Loader, Select } from "@mantine/core";
+import { Loader, Select } from "../UI/UI";
 import {
   YouTubeSearchResult,
   StreamPathSearchResult,
 } from "../SearchResult/SearchResult";
 import { MetadataContext } from "../../MetadataContext";
-import { IconBrandYoutubeFilled, IconMovie } from "@tabler/icons-react";
+import { IconBrandYoutubeFilled, IconMovie } from "../Icons/Icons";
 
 interface SearchComponentProps {
   setMedia: (value: string) => void;
@@ -35,9 +35,9 @@ export class SearchComponent extends React.Component<SearchComponentProps> {
   doSearch = async (value?: string) => {
     this.setState({ inputMedia: value || "" });
     this.setState({ loading: true });
-    let query = value || "";
+    const query = value || "";
     let results: SearchResult[] = [];
-    let timestamp = Date.now();
+    const timestamp = Date.now();
     if (this.props.type === "youtube") {
       results = await getYouTubeResults(query);
     } else if (this.props.type === "stream" && this.context.streamPath) {
@@ -54,13 +54,12 @@ export class SearchComponent extends React.Component<SearchComponentProps> {
 
   onSelectItem = async (result: SearchResult) => {
     this.props.setShowMultiSelect(true);
-    let response = await fetch(
+    const response = await fetch(
       this.context.streamPath +
         "/data?torrent=" +
         encodeURIComponent(result.magnet!),
     );
-    let metadata = await response.json();
-    // console.log(metadata);
+    const metadata = await response.json();
     const multiStreamSelection = metadata.files.map((file: any, i: number) => ({
       ...file,
       url:
@@ -74,7 +73,6 @@ export class SearchComponent extends React.Component<SearchComponentProps> {
       multiStreamSelection,
     );
     if (candidate) {
-      // Only one file could be the video, so skip the picker
       this.props.setShowMultiSelect(false);
       this.props.setMedia(candidate.url);
       return;
@@ -84,10 +82,10 @@ export class SearchComponent extends React.Component<SearchComponentProps> {
 
   render() {
     let placeholder = "Search or enter magnet";
-    let icon = <IconMovie />;
+    let icon = <IconMovie size={17} />;
     if (this.props.type === "youtube") {
       placeholder = "Search YouTube";
-      icon = <IconBrandYoutubeFilled />;
+      icon = <IconBrandYoutubeFilled size={17} />;
     }
     const renderOption = ({
       option,

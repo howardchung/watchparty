@@ -1,4 +1,19 @@
 .sectionHeader {
   font-weight: 700;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  margin-top: 8px;
+  margin-bottom: 10px;
+}
+
+.settingRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
   margin-top: 10px;
+  width: 100%;
+  position: relative;
 }

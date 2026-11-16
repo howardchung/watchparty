@@ -1,6 +1,6 @@
 import type MediasoupClient from "mediasoup-client";
 import React from "react";
-import { Alert, Loader, Menu, Overlay, Select, Title } from "@mantine/core";
+import { Alert, Loader, Menu, Overlay, Select, Title } from "../UI/UI";
 import io, { Socket } from "socket.io-client";
 import {
   formatSpeed,
@@ -63,7 +63,7 @@ import {
   Button,
   Switch,
   Tooltip,
-} from "@mantine/core";
+} from "../UI/UI";
 import {
   IconAntennaBars5,
   IconBrowser,
@@ -80,7 +80,7 @@ import {
   IconUsersGroup,
   IconVolume,
   IconX,
-} from "@tabler/icons-react";
+} from "../Icons/Icons";
 import { InviteButton } from "../InviteButton/InviteButton";
 import type WebTorrent from "webtorrent";
 import type Hls from "hls.js";
@@ -2269,7 +2269,11 @@ export class App extends React.Component<AppProps, AppState> {
         {
           <div
             className={styles.mobileStack}
-            style={{ margin: "0 8px", display: "flex", columnGap: "32px" }}
+            style={{
+              margin: "8px 12px 0",
+              display: "flex",
+              columnGap: "24px",
+            }}
           >
             <div
               className={
@@ -2286,7 +2290,7 @@ export class App extends React.Component<AppProps, AppState> {
                   flexDirection: "column",
                   height: "100%",
                   position: "relative",
-                  gap: "4px",
+                  gap: "6px",
                 }}
               >
                 {!this.state.fullScreen && (
@@ -2733,7 +2737,7 @@ this.state.convertProgress !== undefined && (this.state.convertProgress * 100).t
                 width: this.state.showChatColumn ? 400 : 0,
                 maxWidth: 400,
                 overflow: "hidden",
-                gap: "4px",
+                gap: "6px",
               }}
               className={`${
                 (this.state.fullScreen
@@ -2743,9 +2747,8 @@ this.state.convertProgress !== undefined && (this.state.convertProgress * 100).t
                 styles.rightColumn
               }`}
             >
-              <div style={{ display: "flex", width: "100%", gap: "4px" }}>
+              <div style={{ display: "flex", width: "100%", gap: "6px" }}>
                 <TextInput
-                  // description="Name"
                   style={{
                     visibility: this.state.showChatColumn
                       ? undefined
@@ -2757,7 +2760,7 @@ this.state.convertProgress !== undefined && (this.state.convertProgress * 100).t
                     this.updateName(e.target.value);
                   }}
                   onFocus={(e) => e.target.select()}
-                  leftSection={<IconUser />}
+                  leftSection={<IconUser size={16} />}
                   rightSectionWidth={70}
                   rightSection={
                     <Button
@@ -2772,7 +2775,7 @@ this.state.convertProgress !== undefined && (this.state.convertProgress * 100).t
                 />
                 <InviteButton />
               </div>
-              <div style={{ display: "flex", gap: "4px" }}>
+              <div style={{ display: "flex", gap: "6px" }}>
                 <Button
                   color="grey"
                   onClick={() =>
@@ -2781,7 +2784,7 @@ this.state.convertProgress !== undefined && (this.state.convertProgress * 100).t
                     })
                   }
                   fullWidth
-                  leftSection={<IconUsersGroup />}
+                  leftSection={<IconUsersGroup size={17} />}
                   rightSection={
                     <Badge circle>{this.state.participants.length}</Badge>
                   }
@@ -2795,7 +2798,7 @@ this.state.convertProgress !== undefined && (this.state.convertProgress * 100).t
                   onClick={() => {
                     this.setSettingsModalOpen(true);
                   }}
-                  leftSection={<IconSettings />}
+                  leftSection={<IconSettings size={17} />}
                 >
                   Settings
                 </Button>
@@ -2804,17 +2807,21 @@ this.state.convertProgress !== undefined && (this.state.convertProgress * 100).t
                 <div
                   style={{
                     position: "absolute",
-                    background: "rgba(10, 10, 10, 0.6)",
+                    background: "var(--bg-glass)",
+                    backdropFilter: "blur(12px)",
+                    borderRadius: "var(--radius-lg)",
+                    border: this.state.showPeopleColumn
+                      ? "1px solid var(--border-default)"
+                      : "none",
                     zIndex: 200,
                     left: 0,
-                    top: 76,
+                    top: 84,
                     height: this.state.showPeopleColumn
-                      ? "calc(100% - 120px)"
+                      ? "calc(100% - 134px)"
                       : "0%",
                     width: "100%",
                     overflowY: "auto",
-                    // visibility: this.state.showPeopleColumn ? 'visible' : 'hidden',
-                    transition: "height ease-out 0.5s",
+                    transition: "height var(--transition-normal)",
                   }}
                 >
                   <VideoChat

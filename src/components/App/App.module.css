@@ -8,6 +8,7 @@
   left: 0;
   width: 100%;
   height: 100%;
+  border-radius: var(--radius-lg);
 }
 
 .playerContainer {
@@ -16,8 +17,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Making this larger causes issues on mobile */
   min-height: 48vh;
+  background: #05070a;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
 }
 
 .flexCenter {
@@ -28,8 +33,11 @@
 
 .mobileStack {
   display: flex;
-  gap: 4px;
-  @media only screen and (max-width: 600px) {
+  gap: 8px;
+}
+
+@media only screen and (max-width: 600px) {
+  .mobileStack {
     flex-direction: column;
     width: calc(100% - 8px);
   }
@@ -43,6 +51,7 @@
 
 .leftColumn {
   flex-grow: 1;
+  min-width: 0;
 }
 
 .rightColumn {
@@ -55,25 +64,27 @@
   align-items: center;
   justify-content: center;
   top: 50%;
-  right: -30px;
+  right: -22px;
+  transform: translateY(-50%);
+  z-index: 50;
 }
 
 .fullHeightColumn {
-  height: calc(100vh - 72px);
-  transition: width ease-out 0.5s;
-  &.leftColumn {
-    @media only screen and (max-width: 600px) {
-      /* video height doesn't matter on mobile since things are stacked */
-      height: initial;
-    }
+  height: calc(100vh - 76px);
+  transition: width var(--transition-normal);
+}
+
+@media only screen and (max-width: 600px) {
+  .fullHeightColumn.leftColumn {
+    height: initial;
   }
 }
 
 .fullHeightColumnFullscreen {
-  height: calc(100vh);
-  transition: width ease-out 0.5s;
+  height: 100vh;
+  transition: width var(--transition-normal);
 }
 
 .shareButton {
-  min-width: 150px;
+  min-width: 136px;
 }

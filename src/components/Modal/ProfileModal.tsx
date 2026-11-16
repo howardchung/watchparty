@@ -8,7 +8,7 @@ import {
   Alert,
   TextInput,
   PasswordInput,
-} from "@mantine/core";
+} from "../UI/UI";
 import firebase from "firebase/compat/app";
 import "firebase/compat/auth";
 import { serverPath } from "../../utils/utils";
@@ -24,7 +24,7 @@ import {
   IconLogout,
   IconMailFilled,
   IconTrashFilled,
-} from "@tabler/icons-react";
+} from "../Icons/Icons";
 
 export class ProfileModal extends React.Component<{
   close: () => void;
@@ -193,7 +193,7 @@ export class ProfileModal extends React.Component<{
   render() {
     const { close, userImage } = this.props;
     return (
-      <Modal opened onClose={close} centered>
+      <Modal opened onClose={close} title="Your Account" centered>
         <Modal
           opened={this.state.changeEmailOpen}
           onClose={() => {
@@ -212,7 +212,7 @@ export class ProfileModal extends React.Component<{
               e.preventDefault();
               this.changeEmail();
             }}
-            style={{ display: "flex", flexDirection: "column", gap: "8px" }}
+            style={{ display: "flex", flexDirection: "column", gap: "10px" }}
           >
             {this.state.changeEmailError && (
               <Alert color="red" title="Error">
@@ -258,15 +258,17 @@ export class ProfileModal extends React.Component<{
             NOT automatically cancel it and you will need to contact
             support@watchparty.me to cancel.
           </p>
-          <div style={{ display: "flex", gap: "4px" }}>
+          <div style={{ display: "flex", gap: "8px" }}>
             <Button
+              color="red"
               onClick={async () => {
                 await this.deleteAccount();
               }}
             >
-              Yes
+              Yes, Delete
             </Button>
             <Button
+              color="grey"
               onClick={() => {
                 this.setState({ deleteConfirmOpen: false });
               }}
@@ -280,15 +282,16 @@ export class ProfileModal extends React.Component<{
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            gap: "8px",
+            gap: "10px",
+            marginBottom: "14px",
           }}
         >
           <Avatar src={userImage} />
-          {this.context.user?.email}
+          <span style={{ fontWeight: 600 }}>{this.context.user?.email}</span>
           {this.context.user?.emailVerified && (
             <IconCircleCheckFilled
               title="This email is verified"
-              color="green"
+              color="var(--accent-emerald)"
             />
           )}
         </div>
@@ -297,12 +300,11 @@ export class ProfileModal extends React.Component<{
             display: "flex",
             flexDirection: "column",
             gap: "10px",
-            margin: "10px",
           }}
         >
           <Button
             component="a"
-            leftSection={<IconBrandGravatar />}
+            leftSection={<IconBrandGravatar size={17} />}
             href="https://gravatar.com"
             target="_blank"
             color="blue"
@@ -313,7 +315,7 @@ export class ProfileModal extends React.Component<{
             disabled={
               this.context.user?.emailVerified || this.state.verifyDisabled
             }
-            leftSection={<IconCircleCheck />}
+            leftSection={<IconCircleCheck size={17} />}
             color="purple"
             onClick={this.verifyEmail}
           >
@@ -323,7 +325,7 @@ export class ProfileModal extends React.Component<{
             (p) => p?.providerId === "password",
           ) && (
             <Button
-              leftSection={<IconMailFilled />}
+              leftSection={<IconMailFilled size={17} />}
               color="teal"
               onClick={() =>
                 this.setState({
@@ -341,7 +343,7 @@ export class ProfileModal extends React.Component<{
           {this.context.isSubscriber && <ManageSubButton />}
           {this.state.linkedDiscord ? (
             <Button
-              leftSection={<IconBrandDiscordFilled />}
+              leftSection={<IconBrandDiscordFilled size={17} />}
               color="red"
               onClick={this.deleteDiscord}
             >
@@ -358,7 +360,8 @@ export class ProfileModal extends React.Component<{
               </HoverCard.Dropdown>
               <HoverCard.Target>
                 <Button
-                  leftSection={<IconBrandDiscordFilled />}
+                  fullWidth
+                  leftSection={<IconBrandDiscordFilled size={17} />}
                   color="orange"
                   onClick={this.authDiscord}
                 >
@@ -369,20 +372,24 @@ export class ProfileModal extends React.Component<{
           )}
           <Button
             disabled={this.state.resetDisabled}
-            leftSection={<IconKeyFilled />}
+            leftSection={<IconKeyFilled size={17} />}
             color="green"
             onClick={this.resetPassword}
           >
             Reset Password
           </Button>
           <Button
-            leftSection={<IconTrashFilled />}
+            leftSection={<IconTrashFilled size={17} />}
             color="red"
             onClick={this.deleteAccountConfirm}
           >
             Delete Account
           </Button>
-          <Button leftSection={<IconLogout />} onClick={this.onSignOut}>
+          <Button
+            color="grey"
+            leftSection={<IconLogout size={17} />}
+            onClick={this.onSignOut}
+          >
             Sign out
           </Button>
         </div>

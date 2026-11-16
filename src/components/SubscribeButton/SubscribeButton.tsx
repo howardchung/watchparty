@@ -1,9 +1,9 @@
 import React, { useCallback, useContext, useState } from "react";
-import { Button } from "@mantine/core";
+import { Button } from "../UI/UI";
 import { serverPath } from "../../utils/utils";
 import { SubscribeModal } from "../Modal/SubscribeModal";
 import { MetadataContext } from "../../MetadataContext";
-import { IconStarFilled, IconTool } from "@tabler/icons-react";
+import { IconStarFilled, IconTool } from "../Icons/Icons";
 
 export const SubscribeButton = () => {
   const { isSubscriber } = useContext(MetadataContext);
@@ -17,7 +17,7 @@ export const SubscribeButton = () => {
         <SubscribeModal closeSubscribe={() => setIsSubscribeModalOpen(false)} />
       )}
       <Button
-        leftSection={<IconStarFilled />}
+        leftSection={<IconStarFilled size={16} />}
         color="orange"
         onClick={() => setIsSubscribeModalOpen(true)}
       >
@@ -46,7 +46,11 @@ export const ManageSubButton = ({}: {}) => {
     window.location.assign(session.url);
   }, [user]);
   return (
-    <Button leftSection={<IconTool />} color="orange" onClick={onManage}>
+    <Button
+      leftSection={<IconTool size={16} />}
+      color="orange"
+      onClick={onManage}
+    >
       Manage Subscription
     </Button>
   );

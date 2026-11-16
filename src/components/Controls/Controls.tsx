@@ -1,13 +1,11 @@
 import React, { useMemo, useState } from "react";
-import { Badge, Button, Menu, Progress, Slider } from "@mantine/core";
-import { formatTimestamp, softWhite } from "../../utils/utils";
+import { Badge, Button, Menu, Progress, Slider } from "../UI/UI";
+import { formatTimestamp } from "../../utils/utils";
 import styles from "./Controls.module.css";
-import { MetadataContext } from "../../MetadataContext";
 import type { AudioTrackInfo } from "../../utils/clientTranscode";
 import {
   IconPlayerPlayFilled,
   IconPlayerPauseFilled,
-  IconRefresh,
   IconCheck,
   IconRepeat,
   IconBadgeCc,
@@ -17,7 +15,7 @@ import {
   IconTheater,
   IconMaximize,
   IconPlayerSkipForwardFilled,
-} from "@tabler/icons-react";
+} from "../Icons/Icons";
 
 interface ControlsProps {
   duration: number;
@@ -48,7 +46,6 @@ interface ControlsProps {
   localSetSubtitleMode: (mode: TextTrackMode, lang?: string) => void;
   roomPlaylistPlay: (index: number) => void;
   playlist: PlaylistVideo[];
-  /** Audio tracks of the file being converted on this device (only set when there's a choice to make) */
   audioTracks?: AudioTrackInfo[];
   audioTrackId?: number;
   localSetAudioTrack?: (id: number) => void;
@@ -65,9 +62,7 @@ export const Controls = (props: ControlsProps) => {
   const getLength = () => getEnd() - getStart();
   const getCurrent = () => props.currentTime;
   const getPercent = () => (getCurrent() - getStart()) / getLength();
-  // The wall clock time that media time 0 corresponds to, for live streams where the duration is the live edge.
-  // Only computed once the duration is known: an infinite one (e.g. a DASH stream before it has a seekable range)
-  // would give a time that is never valid, and the memo wouldn't recompute when the duration later became finite.
+
   const hasFiniteDuration = Number.isFinite(props.duration);
   const zeroTime = useMemo(
     () =>
@@ -82,15 +77,13 @@ export const Controls = (props: ControlsProps) => {
   const onMouseOut = () => {
     setShowTimestamp(false);
   };
-  const onMouseMove = (e: any) => {
-    const rect = e.target.getBoundingClientRect();
+  const onMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const max = rect.width;
     const pct = x / max;
-    // console.log(x, max);
     const target = getStart() + pct * getLength();
-    // console.log(pct);
-    if (pct >= 0) {
+    if (pct >= 0 && pct <= 1) {
       setHoverState({ hoverTimestamp: target, hoverPos: pct });
     }
   };
@@ -116,39 +109,38 @@ export const Controls = (props: ControlsProps) => {
     roomSetPlaybackRate,
     roomPlaybackRate,
   } = props;
-  // console.log(leaderTime, currentTime);
+
   const behindThreshold = 10;
   const behindTime =
     !isLiveStream && leaderTime && leaderTime < Infinity
       ? leaderTime - currentTime
       : getEnd() - getCurrent();
   const isBehind = behindTime > behindThreshold;
+
   const buffers = timeRanges.map(({ start, end }) => {
     const buffStartPct = (start / getLength()) * 100;
     const buffLengthPct = ((end - start) / getLength()) * 100;
     return (
       <div
         key={start}
+        className={styles.bufferSegment}
         style={{
-          position: "absolute",
-          height: "8px",
-          backgroundColor: "grey",
           left: buffStartPct + "%",
           width: buffLengthPct + "%",
-          bottom: "0em",
-          zIndex: 0,
-          pointerEvents: "none",
         }}
-      ></div>
+      />
     );
   });
+
   const playPauseProps = {
+    size: 26,
     onClick: () => {
       roomTogglePlay();
     },
-    className: ` ${styles.action}`,
+    className: styles.action,
     disabled: disabled || isPauseDisabled,
   };
+
   return (
     <div className={styles.controls}>
       {paused ? (
@@ -158,105 +150,55 @@ export const Controls = (props: ControlsProps) => {
       )}
       {playlist.length > 0 && (
         <IconPlayerSkipForwardFilled
+          size={24}
           title="Skip to next"
           className={styles.action}
           onClick={() => roomPlaylistPlay(0)}
         />
       )}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flexDirection: "column",
-          position: "relative",
+      <Button
+        size="compact-xs"
+        color={isBehind ? "blue" : "grey"}
+        title="Sync"
+        onClick={() => {
+          if (isLiveStream) {
+            roomSeek(props.duration);
+          } else {
+            localSeek();
+          }
         }}
       >
-        <Button
-          size="compact-xs"
-          color={isBehind ? "blue" : "grey"}
-          title="Sync"
-          onClick={() => {
-            if (isLiveStream) {
-              // in live case we want to seek the entire room to edge
-              roomSeek(props.duration);
-            } else {
-              localSeek();
-            }
-          }}
-        >
-          Sync
-        </Button>
-        {/* <div style={{ position: 'absolute', fontSize: '6px', zIndex: -1 }}>
-            {Math.max(Math.floor(behindTime), 0)}
-          </div> */}
-      </div>
-      <div className={` ${styles.text}`}>
+        Sync
+      </Button>
+      <div className={styles.text}>
         {formatTimestamp(getCurrent(), isLiveStream ? zeroTime : undefined)}
       </div>
       <Progress.Root
-        radius="0px"
-        onClick={(e: any) => {
+        className={styles.progressWrapper}
+        onClick={(e: React.MouseEvent<HTMLDivElement>) => {
           if (!disabled) {
-            // Read the time from the click event
-            if (e) {
-              const rect = e.target.getBoundingClientRect();
-              const x = e.clientX - rect.left;
-              const max = rect.width;
-              const pct = x / max;
-              // roomseek operates on actual media element times, not timestamps
-              // for DASH we set getStart() value to when stream started, so left side is 0 video time
-              // even though it's not all seekable this makes the click to seek simple
-              let target = getLength() * pct;
-              roomSeek(target);
-            }
+            const rect = e.currentTarget.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const max = rect.width;
+            const pct = x / max;
+            const target = getLength() * pct;
+            roomSeek(target);
           }
         }}
         onMouseOver={onMouseOver}
         onMouseOut={onMouseOut}
         onMouseMove={onMouseMove}
-        style={{
-          flexGrow: 1,
-          marginTop: 0,
-          marginBottom: 0,
-          position: "relative",
-          minWidth: "50px",
-          overflow: "visible",
-          cursor: "pointer",
-        }}
       >
         <Progress.Section
           style={{ pointerEvents: "none", zIndex: 1 }}
           value={getPercent() * 100}
-        ></Progress.Section>
+        />
         {buffers}
-        {/* {
-            <div
-              style={{
-                position: 'absolute',
-                bottom: '0px',
-                left: `calc(${this.getPercent() * 100 + '% - 6px'})`,
-                pointerEvents: 'none',
-                width: '12px',
-                height: '12px',
-                transform:
-                  this.getLength() < Infinity && showTimestamp
-                    ? 'scale(1, 1)'
-                    : 'scale(0, 0)',
-                transition: '0.25s all',
-                borderRadius: '50%',
-                backgroundColor: '#54c8ff',
-              }}
-            ></div>
-          } */}
         {getLength() < Infinity && showTimestamp && (
           <Badge
+            className={styles.hoverTimestamp}
             style={{
-              position: "absolute",
-              bottom: "10px",
-              left: `calc(${hoverState.hoverPos * 100 + "%"})`,
-              transform: "translate(-50%)",
-              display: "inline-block",
+              left: `${hoverState.hoverPos * 100}%`,
             }}
           >
             {formatTimestamp(
@@ -266,67 +208,54 @@ export const Controls = (props: ControlsProps) => {
           </Badge>
         )}
       </Progress.Root>
-      <div className={` ${styles.text}`}>{formatTimestamp(getEnd())}</div>
+      <div className={styles.text}>{formatTimestamp(getEnd())}</div>
       {isLiveStream && (
         <Badge size="xs" color="red">
           LIVE
         </Badge>
       )}
-      {
-        <Menu disabled={disabled}>
-          <Menu.Target>
-            <div
-              className={`${styles.text} ${styles.action}`}
-              style={{
-                backgroundColor: "rgba(100,100,100, 0.6)",
-                fontSize: 10,
-                borderRadius: "4px",
-                padding: "2px",
-              }}
+      <Menu disabled={disabled}>
+        <Menu.Target>
+          <div className={`${styles.rateChip} ${styles.action}`}>
+            {props.playbackRate?.toFixed(2)}x
+          </div>
+        </Menu.Target>
+        <Menu.Dropdown>
+          {[
+            { key: "Auto", text: "Auto", value: 0 },
+            { key: "0.25", text: "0.25x", value: 0.25 },
+            { key: "0.5", text: "0.5x", value: 0.5 },
+            { key: "1", text: "1x", value: 1 },
+            { key: "1.5", text: "1.5x", value: 1.5 },
+            { key: "2", text: "2x", value: 2 },
+            { key: "3", text: "3x", value: 3 },
+          ].map((item) => (
+            <Menu.Item
+              key={item.key}
+              onClick={() => roomSetPlaybackRate(item.value)}
+              rightSection={
+                roomPlaybackRate === item.value ? <IconCheck size={15} /> : null
+              }
             >
-              {props.playbackRate?.toFixed(2)}x
-            </div>
-          </Menu.Target>
-          <Menu.Dropdown>
-            {[
-              { key: "Auto", text: "Auto", value: 0 },
-              { key: "0.25", text: "0.25x", value: 0.25 },
-              { key: "0.5", text: "0.5x", value: 0.5 },
-              // { key: '0.75', text: '0.75x', value: 0.75 },
-              { key: "1", text: "1x", value: 1 },
-              // { key: '1.25', text: '1.25x', value: 1.25 },
-              { key: "1.5", text: "1.5x", value: 1.5 },
-              // { key: '1.75', text: '1.75x', value: 1.75 },
-              { key: "2", text: "2x", value: 2 },
-              { key: "3", text: "3x", value: 3 },
-            ].map((item) => (
-              <Menu.Item
-                key={item.key}
-                onClick={() => roomSetPlaybackRate(item.value)}
-                rightSection={
-                  roomPlaybackRate === item.value ? <IconCheck /> : null
-                }
-              >
-                {item.text}
-              </Menu.Item>
-            ))}
-          </Menu.Dropdown>
-        </Menu>
-      }
+              {item.text}
+            </Menu.Item>
+          ))}
+        </Menu.Dropdown>
+      </Menu>
       <IconRepeat
+        size={26}
         onClick={() => {
           if (!disabled) {
             props.roomSetLoop(Boolean(!props.loop));
           }
         }}
-        className={` ${styles.action}`}
+        className={`${styles.action} ${props.loop ? styles.actionActive : ""}`}
         title="Loop"
-        color={props.loop ? "green" : softWhite}
       />
       {props.isYouTube ? (
         <Menu>
           <Menu.Target>
-            <IconBadgeCc className={styles.action} />
+            <IconBadgeCc size={26} className={styles.action} />
           </Menu.Target>
           <Menu.Dropdown>
             {[
@@ -350,22 +279,21 @@ export const Controls = (props: ControlsProps) => {
         </Menu>
       ) : (
         <IconBadgeCc
+          size={26}
           onClick={() => {
             localSubtitleModal();
           }}
-          className={` ${styles.action}`}
+          className={`${styles.action} ${subtitled ? styles.actionActive : ""}`}
           title="Captions"
-          color={subtitled ? "green" : softWhite}
         />
       )}
       {props.audioTracks && props.audioTracks.length > 1 && (
-        // Local to this device, so unlike the room controls it isn't affected by the lock
         <Menu>
           <Menu.Target>
             <IconHeadphones
+              size={26}
               className={styles.action}
               title="Audio track"
-              color={softWhite}
             />
           </Menu.Target>
           <Menu.Dropdown>
@@ -375,7 +303,9 @@ export const Controls = (props: ControlsProps) => {
                 key={track.id}
                 onClick={() => props.localSetAudioTrack?.(track.id)}
                 rightSection={
-                  props.audioTrackId === track.id ? <IconCheck /> : null
+                  props.audioTrackId === track.id ? (
+                    <IconCheck size={15} />
+                  ) : null
                 }
               >
                 {track.label}
@@ -385,31 +315,31 @@ export const Controls = (props: ControlsProps) => {
         </Menu>
       )}
       <IconTheater
+        size={26}
         onClick={() => localFullScreen(false)}
-        className={` ${styles.action}`}
+        className={styles.action}
         title="Theater Mode"
       />
       <IconMaximize
+        size={26}
         onClick={() => localFullScreen(true)}
-        className={` ${styles.action}`}
+        className={styles.action}
         title="Fullscreen"
       />
       {muted ? (
         <IconVolumeOff
-          onClick={() => {
-            localToggleMute();
-          }}
-          className={` ${styles.action}`}
+          size={26}
+          onClick={localToggleMute}
+          className={styles.action}
         />
       ) : (
         <IconVolume
-          onClick={() => {
-            localToggleMute();
-          }}
-          className={` ${styles.action}`}
+          size={26}
+          onClick={localToggleMute}
+          className={styles.action}
         />
       )}
-      <div style={{ width: "100px" }}>
+      <div className={styles.volumeSliderWrap}>
         <Slider
           defaultValue={volume}
           disabled={muted}

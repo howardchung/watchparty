@@ -1,31 +1,93 @@
-.controlsContainer {
-  position: absolute;
-  width: 100%;
-  bottom: 0px;
-}
-
 .controls {
-  color: whitesmoke;
   display: flex;
   align-items: center;
-  line-height: 14px;
-  padding-left: 10px;
-  padding-top: 4px;
-  padding-bottom: 4px;
-  gap: 6px;
+  gap: 8px;
+  padding: 6px 12px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+}
+
+.action {
+  cursor: pointer;
+  color: var(--text-secondary);
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.action:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.actionActive {
+  color: var(--accent-emerald);
+}
+
+.actionActive:hover {
+  color: var(--accent-emerald-hover);
+}
+
+.text {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.rateChip {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 11px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  padding: 3px 6px;
+  color: var(--text-primary);
+}
+
+.progressWrapper {
+  flex-grow: 1;
+  position: relative;
+  min-width: 60px;
+  cursor: pointer;
+  overflow: visible !important;
+}
+
+.bufferSegment {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.22);
+  pointer-events: none;
+  z-index: 0;
+  border-radius: var(--radius-full);
+}
+
+.hoverTimestamp {
+  position: absolute;
+  bottom: 16px;
+  transform: translateX(-50%);
+  pointer-events: none;
+  z-index: 10;
+  font-family: var(--font-mono);
+}
+
+.volumeSliderWrap {
+  width: 88px;
+  display: flex;
+  align-items: center;
 }
 
 @media only screen and (max-width: 600px) {
   .controls {
     flex-wrap: wrap;
+    padding: 8px;
   }
-}
-
-.text {
-  font-weight: 700;
-  font-size: 0.8em;
-}
-
-.action {
-  cursor: pointer;
 }

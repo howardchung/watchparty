@@ -9,13 +9,13 @@ import {
 } from "../../utils/utils";
 import { examples } from "../../utils/examples";
 import ChatVideoCard from "../ChatVideoCard/ChatVideoCard";
-import { IconLink, IconX } from "@tabler/icons-react";
+import { IconLink, IconX } from "../Icons/Icons";
 import {
   ActionIcon,
   Autocomplete,
   Loader,
   type AutocompleteProps,
-} from "@mantine/core";
+} from "../UI/UI";
 
 type ComboBoxProps = {
   roomSetMedia: (value: string) => void;
@@ -51,7 +51,6 @@ export class ComboBox extends React.Component<ComboBoxProps, ComboBoxState> {
     let items = examples;
     if (
       query === "" ||
-      // Anything that doesn't pass this check we pass to YouTube as a search query
       (query && (isHttp(query) || isMagnet(query)))
     ) {
       if (!value && this.props.mediaPath) {
@@ -65,7 +64,6 @@ export class ComboBox extends React.Component<ComboBoxProps, ComboBoxState> {
         if (isMagnet(query)) {
           type = "magnet";
         }
-        // Create entry from user input
         items = [
           {
             name: query,
@@ -98,7 +96,7 @@ export class ComboBox extends React.Component<ComboBoxProps, ComboBoxState> {
       return (
         <div
           key={option.value}
-          onClick={(e) => this.setMediaAndClose(option.value)}
+          onClick={() => this.setMediaAndClose(option.value)}
           style={{ width: "100%" }}
         >
           {video && (
@@ -120,7 +118,6 @@ export class ComboBox extends React.Component<ComboBoxProps, ComboBoxState> {
         onFocus={(e: any) => {
           this.setState(
             {
-              // Display the real string value (currentMedia) when focused
               inputMedia:
                 isHttp(currentMedia) || isMagnet(currentMedia)
                   ? currentMedia
@@ -153,14 +150,17 @@ export class ComboBox extends React.Component<ComboBoxProps, ComboBoxState> {
         }}
         rightSection={
           <ActionIcon
+            size="sm"
             color="red"
-            onClick={(e: any) => this.setMediaAndClose("")}
+            onClick={() => this.setMediaAndClose("")}
             title="Clear"
           >
-            <IconX />
+            <IconX size={15} />
           </ActionIcon>
         }
-        leftSection={this.state.loading ? <Loader size="sm" /> : <IconLink />}
+        leftSection={
+          this.state.loading ? <Loader size="sm" /> : <IconLink size={17} />
+        }
         placeholder="Enter video file URL, magnet link, YouTube link, or YouTube search term"
         value={
           this.state.inputMedia !== undefined

@@ -4,7 +4,7 @@ import { EVENT } from "./events";
 import { NekoClient } from "./client";
 import GuacamoleKeyboard from "./keyboard";
 import config from "../../config";
-import { ActionIcon, Button, TextInput } from "@mantine/core";
+import { ActionIcon, Button, TextInput } from "../UI/UI";
 import {
   IconArrowDown,
   IconArrowLeft,
@@ -19,7 +19,7 @@ import {
   IconMouse,
   IconPointer,
   IconSend,
-} from "@tabler/icons-react";
+} from "../Icons/Icons";
 
 const SHIFTED_CHARS = new Set(
   '~!@#$%^&*()_+{}|:"<>?ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(""),

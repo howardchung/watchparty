@@ -1,11 +1,11 @@
 import React from "react";
-import { Modal, Button, Table, Alert, Select, Avatar } from "@mantine/core";
+import { Modal, Button, Table, Alert, Select, Avatar } from "../UI/UI";
 import { SignInButton } from "../TopBar/TopBar";
 import { serverPath } from "../../utils/utils";
 import { SubscribeButton } from "../SubscribeButton/SubscribeButton";
 import config from "../../config";
 import { MetadataContext } from "../../MetadataContext";
-import { IconHourglass } from "@tabler/icons-react";
+import { IconHourglass } from "../Icons/Icons";
 
 export class VBrowserModal extends React.Component<{
   closeModal: () => void;
@@ -67,7 +67,7 @@ export class VBrowserModal extends React.Component<{
       <Alert
         style={{ maxWidth: "300px" }}
         color="red"
-        icon={<IconHourglass />}
+        icon={<IconHourglass size={18} />}
         title="No Free VBrowsers Available"
       >
         <div>
@@ -91,7 +91,7 @@ export class VBrowserModal extends React.Component<{
         centered
         size="auto"
       >
-        <div>
+        <div style={{ color: "var(--text-secondary)", marginBottom: 8 }}>
           You're about to launch a virtual browser to share in this room.
         </div>
         <Table striped>
@@ -126,10 +126,12 @@ export class VBrowserModal extends React.Component<{
             </Table.Tr>
             <Table.Tr>
               <Table.Td>Region</Table.Td>
-              <Table.Td>Where available </Table.Td>
+              <Table.Td>Where available</Table.Td>
               <Table.Td>
                 <Select
-                  onChange={(value, option) => this.setState({ region: value })}
+                  onChange={(value) =>
+                    this.setState({ region: value || "any" })
+                  }
                   value={this.state.region}
                   data={regionOptions}
                   renderOption={({ option }: { option: any }) => (
@@ -141,7 +143,9 @@ export class VBrowserModal extends React.Component<{
                         alignItems: "center",
                       }}
                     >
-                      <Avatar radius="xs" src={option.image.src} />
+                      {option.image?.src ? (
+                        <Avatar radius="xs" src={option.image.src} />
+                      ) : null}
                       {option.label}
                     </div>
                   )}

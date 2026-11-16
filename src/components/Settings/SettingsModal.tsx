@@ -11,7 +11,7 @@ import {
   Loader,
   Text,
   Divider,
-} from "@mantine/core";
+} from "../UI/UI";
 import { getCurrentSettings, updateSettings } from "./LocalSettings";
 import { serverPath } from "../../utils/utils";
 import { PermanentRoomModal } from "../Modal/PermanentRoomModal";
@@ -25,7 +25,7 @@ import {
   IconPaintFilled,
   IconTrash,
   IconX,
-} from "@tabler/icons-react";
+} from "../Icons/Icons";
 import styles from "./Settings.module.css";
 
 const defaultRoomTitleColor = "#FFFFFF";
@@ -128,7 +128,6 @@ export const SettingsModal = ({
         data.vanity &&
         data.vanity !== roomLink.split("/").slice(-1)[0]
       ) {
-        // Already exists and doesn't match current room
         setValidVanity(false);
       } else {
         setValidVanity(true);
@@ -171,8 +170,9 @@ export const SettingsModal = ({
             }
             helpIcon={
               <IconHelpCircle
+                size={18}
                 onClick={() => setPermModalOpen(true)}
-                style={{ cursor: "pointer" }}
+                style={{ cursor: "pointer", color: "var(--text-secondary)" }}
               />
             }
             checked={Boolean(owner)}
@@ -203,7 +203,7 @@ export const SettingsModal = ({
         </div>
 
         <Divider my="lg" />
-        {<div className={styles.sectionHeader}>Permanent Room Settings</div>}
+        <div className={styles.sectionHeader}>Permanent Room Settings</div>
         {!owner && (
           <Alert color="yellow">
             The room must be permanent to modify these settings.
@@ -266,9 +266,9 @@ export const SettingsModal = ({
           <SettingRow
             disabled={false}
             content={
-              <div style={{ display: "flex", gap: "14px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
                 <ActionIcon color="red" size="lg" onClick={() => clearChat()}>
-                  <IconTrash />
+                  <IconTrash size={18} />
                 </ActionIcon>
                 <div>
                   <Text>Clear Chat</Text>
@@ -283,8 +283,6 @@ export const SettingsModal = ({
         {owner && owner === user?.uid && (
           <SettingRow
             toggle={false}
-            // name={`Set Custom Room URL`}
-            // description="Set a custom URL for this room. Inappropriate names may be revoked."
             checked={Boolean(roomLock)}
             disabled={!isSubscriber}
             subOnly={true}
@@ -302,15 +300,15 @@ export const SettingsModal = ({
                 leftSection={`/r/`}
                 rightSection={
                   <>
-                    {validVanityLoading && <Loader />}
+                    {validVanityLoading && <Loader size="sm" />}
                     {validVanity ? (
-                      <IconCheck color="green" />
+                      <IconCheck color="var(--accent-emerald)" size={16} />
                     ) : (
-                      <IconX color="red" />
+                      <IconX color="var(--accent-danger)" size={16} />
                     )}
                   </>
                 }
-              ></TextInput>
+              />
             }
           />
         )}
@@ -321,7 +319,7 @@ export const SettingsModal = ({
             subOnly={true}
             content={
               <div
-                style={{ display: "flex", flexDirection: "column", gap: "4px" }}
+                style={{ display: "flex", flexDirection: "column", gap: "6px" }}
               >
                 <TextInput
                   label={`Set Room Title, Description & Color`}
@@ -338,7 +336,9 @@ export const SettingsModal = ({
                     <Popover>
                       <Popover.Dropdown>
                         <React.Fragment>
-                          <h5>Edit Title Color</h5>
+                          <h5 style={{ margin: "0 0 8px 0" }}>
+                            Edit Title Color
+                          </h5>
                           <HexColorPicker
                             color={
                               roomTitleColorInput ||
@@ -352,7 +352,14 @@ export const SettingsModal = ({
                           />
                           <HexColorInput
                             placeholder="enter hex color"
-                            style={{ marginTop: 8 }}
+                            style={{
+                              marginTop: 8,
+                              width: "100%",
+                              padding: "6px 8px",
+                              borderRadius: "var(--radius-sm)",
+                              border: "1px solid var(--border-default)",
+                              background: "var(--bg-input)",
+                            }}
                             color={
                               roomTitleColorInput ||
                               roomTitleColor ||
@@ -368,15 +375,16 @@ export const SettingsModal = ({
                       </Popover.Dropdown>
                       <Popover.Target>
                         <ActionIcon
+                          size="sm"
                           color={roomTitleColorInput}
                           disabled={!isSubscriber}
                         >
-                          <IconPaintFilled size={16} />
+                          <IconPaintFilled size={15} />
                         </ActionIcon>
                       </Popover.Target>
                     </Popover>
                   }
-                ></TextInput>
+                />
                 <TextInput
                   value={roomDescriptionInput ?? roomDescription ?? ""}
                   disabled={!isSubscriber}
@@ -393,7 +401,7 @@ export const SettingsModal = ({
         )}
         {owner && owner === user?.uid && (
           <Button
-            style={{ marginTop: "8px" }}
+            style={{ marginTop: "14px" }}
             disabled={!validVanity || !adminSettingsChanged}
             onClick={() => {
               setRoomState({
@@ -410,7 +418,7 @@ export const SettingsModal = ({
               });
               setAdminSettingsChanged(false);
             }}
-            leftSection={<IconDeviceFloppy />}
+            leftSection={<IconDeviceFloppy size={17} />}
           >
             Save Settings
           </Button>
@@ -445,43 +453,34 @@ const SettingRow = ({
   label?: string;
 }) => {
   return (
-    <>
-      <div
-        style={{
-          display: "flex",
-          marginTop: "4px",
-          width: "100%",
-          position: "relative",
-        }}
-      >
-        <div style={{ position: "absolute", top: 0, right: 0 }}>
-          {label ? (
-            <Badge size="xs" color="red">
-              {label}
-            </Badge>
-          ) : null}
-          {subOnly ? (
-            <Badge size="xs" color="orange">
-              Subscriber only
-            </Badge>
-          ) : null}
-        </div>
-        <div>
-          {toggle && (
-            <Switch
-              label={name}
-              description={description}
-              checked={checked}
-              disabled={disabled}
-              onChange={onChange}
-            />
-          )}
-          {content}
-        </div>
-        <div style={{ display: "flex", alignItems: "flex-end" }}>
-          {helpIcon}
-        </div>
+    <div className={styles.settingRow}>
+      <div style={{ position: "absolute", top: 0, right: 0 }}>
+        {label ? (
+          <Badge size="xs" color="red">
+            {label}
+          </Badge>
+        ) : null}
+        {subOnly ? (
+          <Badge size="xs" color="orange">
+            Subscriber only
+          </Badge>
+        ) : null}
       </div>
-    </>
+      <div style={{ flexGrow: 1 }}>
+        {toggle && (
+          <Switch
+            label={name}
+            description={description}
+            checked={checked}
+            disabled={disabled}
+            onChange={onChange}
+          />
+        )}
+        {content}
+      </div>
+      {helpIcon && (
+        <div style={{ display: "flex", alignItems: "center" }}>{helpIcon}</div>
+      )}
+    </div>
   );
 };

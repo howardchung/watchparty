@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { Button } from "@mantine/core";
+import { Button } from "../UI/UI";
 import styles from "./Announce.module.css";
 import config from "../../config";
 
@@ -27,7 +27,6 @@ const Announce = () => {
           }),
       );
       const data: { items: Issue[] } = await response.json();
-      //   console.log(data);
       const top = data?.items?.[0];
       if (
         top?.number > Number(localStorage.getItem("announcement-dismiss")) &&
@@ -47,10 +46,13 @@ const Announce = () => {
 
   return announcement != null ? (
     <div className={styles.announce}>
-      {/* <h4>{announcement.title}</h4> */}
       <pre style={{ whiteSpace: "pre-wrap" }}>{announcement.body}</pre>
       <aside>
-        <Button color="blue" onClick={() => onDismiss(announcement.number)}>
+        <Button
+          size="xs"
+          color="blue"
+          onClick={() => onDismiss(announcement.number)}
+        >
           Dismiss
         </Button>
       </aside>

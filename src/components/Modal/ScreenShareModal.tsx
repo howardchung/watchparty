@@ -1,5 +1,5 @@
 import React, { useContext } from "react";
-import { Modal, Button, Table } from "@mantine/core";
+import { Modal, Button, Table } from "../UI/UI";
 import { SubscribeButton } from "../SubscribeButton/SubscribeButton";
 import { MetadataContext } from "../../MetadataContext";
 
@@ -20,8 +20,10 @@ export const ScreenShareModal = ({
       centered
       size="auto"
     >
-      <div>You're about to share your screen.</div>
-      <ul>
+      <div style={{ color: "var(--text-secondary)" }}>
+        You're about to share your screen.
+      </div>
+      <ul style={{ color: "var(--text-secondary)", paddingLeft: 20 }}>
         <li>This feature is only supported on Chrome and Edge on desktop.</li>
         <li>
           Audio sharing only works if sharing your entire screen or a browser

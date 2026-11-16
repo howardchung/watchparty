@@ -2,23 +2,21 @@ import React from "react";
 import {
   Modal,
   Button,
-  Radio,
   Switch,
   Title,
   TextInput,
   ActionIcon,
   Divider,
-} from "@mantine/core";
+} from "../UI/UI";
 import { Socket } from "socket.io-client";
 import { openFileSelector, serverPath } from "../../utils/utils";
-import config from "../../config";
 import { MetadataContext } from "../../MetadataContext";
 import {
   IconDownload,
   IconSearch,
   IconUpload,
   IconX,
-} from "@tabler/icons-react";
+} from "../Icons/Icons";
 
 export class SubtitleModal extends React.Component<{
   closeModal: () => void;
@@ -48,7 +46,6 @@ export class SubtitleModal extends React.Component<{
       if (match) {
         const fileIndex = match[1];
         if (fileIndex) {
-          // Fetch title from the data endpoint
           const response = await fetch(
             this.props.roomMedia.replace("/stream", "/data"),
           );
@@ -68,13 +65,11 @@ export class SubtitleModal extends React.Component<{
     const reader = new FileReader();
     reader.addEventListener("load", async (event) => {
       const subData = event.target?.result;
-      // Upload to server
       const resp = await fetch(serverPath + "/subtitle", {
         method: "POST",
         body: subData,
         headers: { "Content-Type": "text/plain" },
       });
-      // Once URL obtained, make those the room subtitles
       const json = await resp.json();
       this.props.socket.emit(
         "CMD:subtitle",
@@ -90,9 +85,7 @@ export class SubtitleModal extends React.Component<{
     }
     this.setState({ loading: true });
     const resp = await fetch(
-      serverPath +
-        "/searchSubtitles?title=" +
-        this.state.titleQuery,
+      serverPath + "/searchSubtitles?title=" + this.state.titleQuery,
     );
     const json = await resp.json();
     this.setState({ searchResults: json });
@@ -108,7 +101,7 @@ export class SubtitleModal extends React.Component<{
         title="Subtitles"
         size="50rem"
       >
-        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
           <Switch
             checked={this.props.getSubtitleMode() === "showing"}
             label="Toggle subtitles for myself"
@@ -118,7 +111,7 @@ export class SubtitleModal extends React.Component<{
           />
           <Divider my="lg" />
           <Title order={6}>Room subtitles</Title>
-          <div style={{ display: "flex", gap: "4px", flexDirection: "column" }}>
+          <div style={{ display: "flex", gap: "8px", flexDirection: "column" }}>
             <TextInput
               placeholder="Subtitle URL"
               value={this.props.roomSubtitle}
@@ -128,13 +121,14 @@ export class SubtitleModal extends React.Component<{
               }
               rightSection={
                 <ActionIcon
+                  size="sm"
                   color="red"
                   disabled={!this.props.haveLock()}
                   onClick={() => {
                     this.props.socket.emit("CMD:subtitle", "");
                   }}
                 >
-                  <IconX />
+                  <IconX size={15} />
                 </ActionIcon>
               }
             />
@@ -142,7 +136,7 @@ export class SubtitleModal extends React.Component<{
               color="violet"
               onClick={() => this.uploadSubtitle()}
               disabled={!this.props.haveLock()}
-              leftSection={<IconUpload />}
+              leftSection={<IconUpload size={17} />}
             >
               Upload (.srt / .vtt)
             </Button>
@@ -153,7 +147,7 @@ export class SubtitleModal extends React.Component<{
               onChange={(e) => this.setState({ titleQuery: e.target.value })}
               onKeyDown={(e) => e.key === "Enter" && this.searchSubtitles()}
               disabled={!this.props.haveLock()}
-              rightSectionWidth={85}
+              rightSectionWidth={95}
               rightSection={
                 <Button
                   size="compact-xs"
@@ -161,14 +155,14 @@ export class SubtitleModal extends React.Component<{
                   color="green"
                   disabled={!this.props.haveLock()}
                   onClick={this.searchSubtitles}
-                  leftSection={<IconSearch size={14} />}
+                  leftSection={<IconSearch size={13} />}
                 >
                   By title
                 </Button>
               }
             />
             <div
-              style={{ display: "flex", flexDirection: "column", gap: "4px" }}
+              style={{ display: "flex", flexDirection: "column", gap: "6px" }}
             >
               {this.state.searchResults.map(
                 (result: {
@@ -176,10 +170,18 @@ export class SubtitleModal extends React.Component<{
                   type: string;
                   attributes: Record<string, any>;
                 }) => (
-                  <div key={result.id} style={{ display: "flex", gap: "4px" }}>
+                  <div
+                    key={result.id}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                    }}
+                  >
                     <ActionIcon
+                      size="sm"
                       disabled={!this.props.haveLock()}
-                      onClick={async (e) => {
+                      onClick={async () => {
                         const resp = await fetch(
                           serverPath +
                             "/downloadSubtitles?file_id=" +
@@ -192,7 +194,7 @@ export class SubtitleModal extends React.Component<{
                         );
                       }}
                     >
-                      <IconDownload />
+                      <IconDownload size={15} />
                     </ActionIcon>
                     <span>{result.attributes.release}</span>
                   </div>

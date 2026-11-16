@@ -1,27 +1,21 @@
 import React, { useCallback, useContext } from "react";
 import { serverPath, getUserImage, softWhite } from "../../utils/utils";
-import { ActionIcon, Avatar, Button, Menu, Text } from "@mantine/core";
+import { ActionIcon, Avatar, Button, Menu, Text } from "../UI/UI";
 import firebase from "firebase/compat/app";
 import "firebase/compat/auth";
 import { LoginModal } from "../Modal/LoginModal";
 import { SubscribeButton } from "../SubscribeButton/SubscribeButton";
 import { ProfileModal } from "../Modal/ProfileModal";
 import Announce from "../Announce/Announce";
-import { InviteButton } from "../InviteButton/InviteButton";
-import appStyles from "../App/App.module.css";
 import { MetadataContext } from "../../MetadataContext";
-import config from "../../config";
 import {
   IconBrandDiscord,
-  IconBrandFacebookFilled,
   IconBrandGithub,
-  IconBrandGoogleFilled,
   IconCirclePlusFilled,
   IconDatabase,
   IconLogin,
-  IconMailFilled,
   IconTrash,
-} from "@tabler/icons-react";
+} from "../Icons/Icons";
 import styles from "./TopBar.module.css";
 
 export async function createRoom(
@@ -63,7 +57,7 @@ export const NewRoomButton = (props: {
     <Button
       size={props.size}
       onClick={onClick}
-      leftSection={<IconCirclePlusFilled />}
+      leftSection={<IconCirclePlusFilled size={18} />}
     >
       New Room
     </Button>
@@ -77,7 +71,7 @@ export class SignInButton extends React.Component<SignInButtonProps> {
   declare context: React.ContextType<typeof MetadataContext>;
   public state = { isLoginOpen: false, isProfileOpen: false, userImage: null };
 
-  async componentDidUpdate(prevProps: SignInButtonProps) {
+  async componentDidUpdate() {
     if (this.context.user && !this.state.userImage) {
       this.setState({ userImage: await getUserImage(this.context.user) });
     }
@@ -86,15 +80,7 @@ export class SignInButton extends React.Component<SignInButtonProps> {
   render() {
     if (this.context.user) {
       return (
-        <div
-          style={{
-            margin: "4px",
-            minWidth: "40px",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: "pointer",
-          }}
-        >
+        <div className={styles.avatarTrigger}>
           <Avatar
             src={this.state.userImage}
             onClick={() => this.setState({ isProfileOpen: true })}
@@ -116,7 +102,8 @@ export class SignInButton extends React.Component<SignInButtonProps> {
           />
         )}
         <Button
-          leftSection={<IconLogin />}
+          color="grey"
+          leftSection={<IconLogin size={17} />}
           onClick={() => this.setState({ isLoginOpen: true })}
         >
           Sign in
@@ -167,7 +154,7 @@ export class ListRoomsButton extends React.Component<{}> {
           <Button
             color="grey"
             onClick={this.refreshRooms}
-            leftSection={<IconDatabase />}
+            leftSection={<IconDatabase size={16} />}
           >
             My rooms
           </Button>
@@ -185,7 +172,7 @@ export class ListRoomsButton extends React.Component<{}> {
                   room.vanity ? "/r/" + room.vanity : "/watch" + room.roomId
                 }
               >
-                <div style={{ display: "flex", alignItems: "center" }}>
+                <div className={styles.roomMenuItem}>
                   <div>
                     <Text>
                       {room.vanity
@@ -196,19 +183,18 @@ export class ListRoomsButton extends React.Component<{}> {
                       {room.roomId}
                     </Text>
                   </div>
-                  <div style={{ marginLeft: "auto", paddingLeft: "20px" }}>
-                    <ActionIcon
-                      onClick={(e: React.MouseEvent) => {
-                        e.stopPropagation();
-                        e.nativeEvent.stopImmediatePropagation();
-                        e.preventDefault();
-                        this.deleteRoom(room.roomId);
-                      }}
-                      color="red"
-                    >
-                      <IconTrash size={16} />
-                    </ActionIcon>
-                  </div>
+                  <ActionIcon
+                    size="sm"
+                    onClick={(e: React.MouseEvent) => {
+                      e.stopPropagation();
+                      e.nativeEvent.stopImmediatePropagation();
+                      e.preventDefault();
+                      this.deleteRoom(room.roomId);
+                    }}
+                    color="red"
+                  >
+                    <IconTrash size={14} />
+                  </ActionIcon>
                 </div>
               </Menu.Item>
             );
@@ -230,160 +216,60 @@ export const TopBar = (props: {
   const context = useContext(MetadataContext);
   const subscribeButton = <SubscribeButton />;
   return (
-    <React.Fragment>
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          padding: "4px 8px",
-          rowGap: "8px",
-        }}
-      >
-        <a href="/" style={{ display: "flex" }}>
-          <img style={{ width: "56px", height: "56px" }} src="/logo192.png" />
-          {/* <div
-              style={{
-                height: '48px',
-                width: '48px',
-                marginRight: '10px',
-                borderRadius: '50%',
-                position: 'relative',
-                backgroundColor: '#' + colorMappings.blue,
-              }}
-            >
-              <Icon
-                inverted
-                name="film"
-                size="large"
-                style={{
-                  position: 'absolute',
-                  top: 8,
-                  width: '100%',
-                  margin: '0 auto',
-                }}
-              />
-              <Icon
-                inverted
-                name="group"
-                size="large"
-                color="green"
-                style={{
-                  position: 'absolute',
-                  bottom: 8,
-                  width: '100%',
-                  margin: '0 auto',
-                }}
-              />
-            </div> */}
-        </a>
-        {props.roomTitle || props.roomDescription ? (
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-              marginRight: 10,
-              marginLeft: 10,
-            }}
-          >
-            <div
-              style={{
-                fontSize: "30px",
-                lineHeight: "30px",
-                color: props.roomTitleColor || softWhite,
-                fontWeight: 700,
-                letterSpacing: 1,
-              }}
-            >
-              {props.roomTitle?.toUpperCase()}
-            </div>
-            <Text size="sm" style={{}}>
-              {props.roomDescription}
-            </Text>
+    <header className={styles.topBar}>
+      <a href="/" className={styles.brandLink}>
+        <img className={styles.logoImg} src="/logo192.png" alt="WatchParty" />
+        {!(props.roomTitle || props.roomDescription) && (
+          <div className={styles.brandText}>
+            <span className={styles.brandWatch}>Watch</span>
+            <span className={styles.brandParty}>Party</span>
           </div>
-        ) : (
-          <React.Fragment>
-            <a href="/" style={{ display: "flex", textDecoration: "none" }}>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                }}
-              >
-                <div
-                  style={{
-                    textTransform: "uppercase",
-                    fontWeight: 700,
-                    color: "#2185d0",
-                    fontSize: "30px",
-                    lineHeight: "30px",
-                  }}
-                >
-                  Watch
-                </div>
-                <div
-                  style={{
-                    textTransform: "uppercase",
-                    fontWeight: 700,
-                    color: "#21ba45",
-                    fontSize: "30px",
-                    lineHeight: "30px",
-                    marginLeft: "auto",
-                  }}
-                >
-                  Party
-                </div>
-              </div>
-            </a>
-          </React.Fragment>
         )}
-        <Announce />
-        <div
-          className={appStyles.mobileStack}
-          style={{
-            display: "flex",
-            marginLeft: "auto",
-            alignItems: "center",
-            gap: "4px",
-          }}
-        >
+      </a>
+      {(props.roomTitle || props.roomDescription) && (
+        <div className={styles.roomHeader}>
           <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "4px",
-            }}
+            className={styles.roomTitle}
+            style={{ color: props.roomTitleColor || softWhite }}
           >
-            <ActionIcon
-              component="a"
-              color="gray"
-              size="lg"
-              href="https://discord.gg/3rYj5HV"
-              target="_blank"
-              rel="noopener noreferrer"
-              title="Discord"
-            >
-              <IconBrandDiscord />
-            </ActionIcon>
-            <ActionIcon
-              component="a"
-              color="gray"
-              size="lg"
-              href="https://github.com/howardchung/watchparty"
-              target="_blank"
-              rel="noopener noreferrer"
-              title="GitHub"
-            >
-              <IconBrandGithub />
-            </ActionIcon>
+            {props.roomTitle?.toUpperCase()}
           </div>
-          {!props.hideNewRoom && <NewRoomButton openNewTab />}
-          {!props.hideMyRooms && context.user && <ListRoomsButton />}
-          {subscribeButton}
-          {!props.hideSignin && <SignInButton />}
+          {props.roomDescription && (
+            <div className={styles.roomDescription}>{props.roomDescription}</div>
+          )}
         </div>
+      )}
+      <Announce />
+      <div className={styles.rightActions}>
+        <div className={styles.socialGroup}>
+          <ActionIcon
+            component="a"
+            color="gray"
+            size="lg"
+            href="https://discord.gg/3rYj5HV"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Discord"
+          >
+            <IconBrandDiscord size={18} />
+          </ActionIcon>
+          <ActionIcon
+            component="a"
+            color="gray"
+            size="lg"
+            href="https://github.com/howardchung/watchparty"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="GitHub"
+          >
+            <IconBrandGithub size={18} />
+          </ActionIcon>
+        </div>
+        {!props.hideNewRoom && <NewRoomButton openNewTab />}
+        {!props.hideMyRooms && context.user && <ListRoomsButton />}
+        {subscribeButton}
+        {!props.hideSignin && <SignInButton />}
       </div>
-    </React.Fragment>
+    </header>
   );
 };

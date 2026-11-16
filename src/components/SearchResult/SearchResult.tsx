@@ -1,7 +1,7 @@
 import React from "react";
-import { Button, Text } from "@mantine/core";
+import { Button, Text } from "../UI/UI";
 import { decodeEntities, formatSize } from "../../utils/utils";
-import { IconBrandYoutubeFilled } from "@tabler/icons-react";
+import { IconBrandYoutubeFilled } from "../Icons/Icons";
 
 export const YouTubeSearchResult = (
   props: SearchResult & {
@@ -13,16 +13,24 @@ export const YouTubeSearchResult = (
   const setMedia = props.setMedia;
   return (
     <div
-      onClick={(e) => {
+      onClick={() => {
         setMedia(result.url);
       }}
+      style={{ width: "100%" }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-        <img style={{ height: "50px" }} src={result.img} alt={result.name} />
-        <IconBrandYoutubeFilled color="red" />
-        <div>{decodeEntities(result.name)}</div>
+        <img
+          style={{ height: "48px", borderRadius: "var(--radius-xs)" }}
+          src={result.img}
+          alt={result.name}
+        />
+        <IconBrandYoutubeFilled color="var(--accent-danger)" size={18} />
+        <div style={{ flexGrow: 1, fontSize: 13 }}>
+          {decodeEntities(result.name)}
+        </div>
         <div style={{ marginLeft: "auto" }}>
           <Button
+            size="xs"
             onClick={(e) => {
               e.stopPropagation();
               e.nativeEvent.stopImmediatePropagation();
@@ -44,11 +52,10 @@ export const MediaPathSearchResult = (
   const setMedia = props.setMedia;
   return (
     <div
-      onClick={(e) => {
+      onClick={() => {
         setMedia(result.url);
       }}
       key={result.url}
-      // leftSection={<IconFile />}
     >
       {result.name}
     </div>
@@ -62,12 +69,11 @@ export const StreamPathSearchResult = (
 ) => {
   const result = props;
   return (
-    <div key={result.url} onClick={() => props.onSelectItem(result)}>
-      {/* <Badge
-            circle
-            size="xs"
-            color={Number(result.seeders) ? 'green' : 'red'}
-          /> */}
+    <div
+      key={result.url}
+      onClick={() => props.onSelectItem(result)}
+      style={{ width: "100%" }}
+    >
       <div
         style={{
           display: "flex",
@@ -76,7 +82,7 @@ export const StreamPathSearchResult = (
         }}
       >
         <Text>{result.name}</Text>
-        <Text size="xs">
+        <Text size="xs" c="grey">
           {typeof result.size === "number"
             ? formatSize(result.size)
             : result.size}

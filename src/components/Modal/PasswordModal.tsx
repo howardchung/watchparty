@@ -1,6 +1,6 @@
 import React, { useCallback, useContext, useEffect } from "react";
-import { Modal, PasswordInput, ActionIcon } from "@mantine/core";
-import { IconKey } from "@tabler/icons-react";
+import { Modal, PasswordInput, ActionIcon } from "../UI/UI";
+import { IconKey } from "../Icons/Icons";
 import { addAndSavePassword, serverPath } from "../../utils/utils";
 import { MetadataContext } from "../../MetadataContext";
 
@@ -15,7 +15,6 @@ export const PasswordModal = ({ roomId }: { roomId: string }) => {
   const { user } = useContext(MetadataContext);
   useEffect(() => {
     const update = async () => {
-      // Make sure we have the password for this room if we're the owner
       if (user) {
         const token = await user.getIdToken();
         const response = await fetch(
@@ -44,10 +43,11 @@ export const PasswordModal = ({ roomId }: { roomId: string }) => {
     >
       <PasswordInput
         id="roomPassword"
+        placeholder="Enter room password..."
         onKeyDown={(e: any) => e.key === "Enter" && setPassword()}
         rightSection={
-          <ActionIcon onClick={setPassword}>
-            <IconKey size={16} />
+          <ActionIcon size="sm" onClick={setPassword}>
+            <IconKey size={15} />
           </ActionIcon>
         }
       />

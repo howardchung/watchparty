@@ -1,6 +1,6 @@
 import React from "react";
-import { Modal, Loader, Menu, Text } from "@mantine/core";
-import { IconFile } from "@tabler/icons-react";
+import { Modal, Loader, Menu, Text } from "../UI/UI";
+import { IconFile } from "../Icons/Icons";
 
 export const MultiStreamModal = ({
   streams,
@@ -14,24 +14,27 @@ export const MultiStreamModal = ({
   return (
     <Modal opened onClose={resetMultiSelect} centered title="Select a file">
       {streams.length === 0 ? (
-        <Loader />
+        <div style={{ display: "flex", justifyContent: "center", padding: 20 }}>
+          <Loader />
+        </div>
       ) : (
-        <>
-          <Menu>
-            {streams.map((file) => (
-              <Menu.Item
-                leftSection={<IconFile />}
-                onClick={() => {
-                  setMedia(file.url);
-                  resetMultiSelect();
-                }}
-              >
-                {file.name}
-                <Text size="sm">{file.length.toLocaleString()} bytes</Text>
-              </Menu.Item>
-            ))}
-          </Menu>
-        </>
+        <Menu>
+          {streams.map((file) => (
+            <Menu.Item
+              key={file.url}
+              leftSection={<IconFile size={17} />}
+              onClick={() => {
+                setMedia(file.url);
+                resetMultiSelect();
+              }}
+            >
+              <div>{file.name}</div>
+              <Text size="xs" c="grey">
+                {file.length.toLocaleString()} bytes
+              </Text>
+            </Menu.Item>
+          ))}
+        </Menu>
       )}
     </Modal>
   );

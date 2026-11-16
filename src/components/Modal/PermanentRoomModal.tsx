@@ -1,12 +1,12 @@
 import React from "react";
-import { Modal, Table } from "@mantine/core";
-import { IconCheck } from "@tabler/icons-react";
+import { Modal, Table } from "../UI/UI";
+import { IconCheck } from "../Icons/Icons";
 
 export const PermanentRoomModal = (props: { closeModal: () => void }) => {
   const { closeModal } = props;
   return (
     <Modal opened onClose={closeModal} title="Permanent Rooms">
-      <div>
+      <div style={{ color: "var(--text-secondary)", marginBottom: 8 }}>
         Registered users have the ability to make their rooms permanent.
         Subscribed users can create multiple permanent rooms.
       </div>
@@ -29,35 +29,30 @@ export const PermanentRoomModal = (props: { closeModal: () => void }) => {
             <Table.Td>Room Passwords</Table.Td>
             <Table.Td></Table.Td>
             <Table.Td>
-              <IconCheck />
+              <IconCheck color="var(--accent-emerald)" size={18} />
             </Table.Td>
           </Table.Tr>
           <Table.Tr>
             <Table.Td>Disable Chat</Table.Td>
             <Table.Td></Table.Td>
             <Table.Td>
-              <IconCheck />
+              <IconCheck color="var(--accent-emerald)" size={18} />
             </Table.Td>
           </Table.Tr>
           <Table.Tr>
             <Table.Td>Kick Users</Table.Td>
             <Table.Td></Table.Td>
             <Table.Td>
-              <IconCheck />
+              <IconCheck color="var(--accent-emerald)" size={18} />
             </Table.Td>
           </Table.Tr>
           <Table.Tr>
             <Table.Td>Custom Room URLs (subscribers)</Table.Td>
             <Table.Td></Table.Td>
             <Table.Td>
-              <IconCheck />
+              <IconCheck color="var(--accent-emerald)" size={18} />
             </Table.Td>
           </Table.Tr>
-          {/* <Table.Tr>
-                  <Table.Td>Max Room Capacity (subscribers)</Table.Td>
-                    <Table.Td>20</Table.Td>
-                    <Table.Td>100</Table.Td>
-                  </Table.Tr> */}
         </Table.Tbody>
       </Table>
     </Modal>
