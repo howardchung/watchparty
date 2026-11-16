@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server/server.ts",
     "ui": "vite --host",
-    "dev": "node --watch-path . server/server.ts",
+    "dev": "node --watch-path server server/server.ts",
     "build": "npm run buildReact && npm run typecheckServer",
     "buildReact": "vite build && npm run typecheck",
     "pm2": "pm2 start server/server.ts",
