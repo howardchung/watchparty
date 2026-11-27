@@ -104,7 +104,7 @@ paths:
       tags:
       - Guest sessions
       operationId: updateProfile
-      summary: Update the caller's avatar and language; name is derived from avatar
+      summary: Update the caller's display name, avatar and language
       security:
       - bearerAuth: []
       requestBody:
@@ -729,7 +729,7 @@ components:
             $ref: '#/components/schemas/Error'
   schemas:
     GuestSessionRequest:
-      description: Avatar determines the canonical display name (docs/avatar-names.md). Legacy name input is ignored.
+      description: The localized avatar character name is the default when the request omits a name.
       type: object
       required:
       - avatar
@@ -737,8 +737,7 @@ components:
       properties:
         name:
           type: string
-          deprecated: true
-          description: Optional legacy input; ignored. The server derives the name from avatar.
+          description: Optional display name. The trimmed value must contain 1 to 48 Unicode code points.
         avatar:
           type: string
           maxLength: 32

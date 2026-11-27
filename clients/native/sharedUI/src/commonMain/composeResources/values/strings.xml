@@ -347,4 +347,7 @@
     <string name="local_skip">Skip · no video</string>
     <string name="local_file_failed">Could not open this file. Choose it again.</string>
     <string name="local_sync_failed">Couldn’t sync. Back to where you were.</string>
+    <string name="edit_display_name">Edit display name</string>
+    <string name="use_name">Use name</string>
+    <string name="name_help">Use 1–48 characters. This name appears in your rooms.</string>
 </resources>

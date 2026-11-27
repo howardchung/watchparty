@@ -707,3 +707,7 @@ Automatic failures retain normalized application frames, safe failure classes an
 Manual reports retain the ordered safe session history, minimal technical metadata, the user's authored description (including pasted HTTP and HTTPS links) and any images they selected. The service projects incoming logs and client metadata before storage and again before external delivery. Authenticated report ownership, retry fingerprints, expiry and stable delivery IDs retain their existing semantics. This supersedes earlier requirements to retain arbitrary console/Kermit messages or full device profiles.
 
 Usage analytics send only explicit product events, a random installation identifier and release/platform context. Operator diagnostics retain fixed event labels, safe source frames and counters.
+
+## Tap to rename a profile
+
+The profile spotlight shows a pencil beside the saved name. Confirming a name stages it alongside avatar and language changes. Saving the profile applies it. Back discards the draft. New profiles start with their localized character name. This supersedes the mandatory avatar-derived display names in DD-054 and DD-061.

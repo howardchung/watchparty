@@ -1,5 +1,5 @@
 import type { AvatarId, Identity, Party, PartyPreview } from '../types';
-import { avatarOptions, avatarName } from './avatarCatalog';
+import { avatarOptions } from './avatarCatalog';
 
 export interface IdentityDto { id: string; name: string; avatar: string; language: string }
 export interface RoomDto { id: string; code: string; title: string; ownerIdentityId: string; endedAt?: string }
@@ -15,7 +15,7 @@ export interface SyncResult { requestId: string; status: 'APPLIED' | 'UNAVAILABL
 
 export const avatarId = (value: string): AvatarId => avatarOptions.some(a => a.id === value.toLowerCase()) ? value.toLowerCase() as AvatarId : 'comet';
 export const identityModel = (value: IdentityDto): Identity => ({ name: value.name, avatarId: avatarId(value.avatar), language: value.language === 'fa' ? 'فارسی' : 'English' });
-export const profileBody = (value: Identity) => ({ name: avatarName(value.avatarId, value.language), avatar: value.avatarId, language: value.language === 'فارسی' ? 'fa' : 'en' });
+export const profileBody = (value: Identity) => ({ name: value.name, avatar: value.avatarId, language: value.language === 'فارسی' ? 'fa' : 'en' });
 export const previewModel = (value: PreviewDto): PartyPreview => ({ id: value.code, title: value.title, ownerName: value.ownerName, ownerPresent: value.ownerPresent, participantCount: value.participantCount, availability: value.availability === 'OPEN' ? 'available' : value.availability === 'FULL' ? 'full' : 'ended', streamStatus: value.streamState === 'ACTIVE' ? 'playing' : 'waiting' });
 export function partyModel(value: Snapshot, identityId: string): Party {
   const owner = value.members.find(m => m.isOwner);

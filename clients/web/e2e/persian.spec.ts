@@ -9,7 +9,7 @@ async function chooseLanguage(page: Page, language: 'English' | 'فارسی', pe
 
 test('Persian profile choice sends fa, persists after reload, and switches back to English', async ({ page }) => {
   let language = 'en';
-  const name = () => language === 'fa' ? 'ملکهٔ یخی' : 'Ice Queen';
+  const name = () => 'Ice Queen';
   await page.route('**/v1/guest-sessions/**', async route => {
     if (route.request().method() === 'PATCH') {
       const body = route.request().postDataJSON();
@@ -21,7 +21,7 @@ test('Persian profile choice sends fa, persists after reload, and switches back 
   await page.goto('/');
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
   await chooseLanguage(page, 'فارسی');
-  await expect(page.locator('.profile-spotlight strong')).toHaveText('ملکهٔ یخی');
+  await expect(page.locator('.profile-spotlight strong')).toHaveText('Ice Queen');
   await page.getByRole('button', { name: 'Save changes', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'با هم ببینید' })).toBeVisible();
   expect(language).toBe('fa');

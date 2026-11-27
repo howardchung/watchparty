@@ -169,14 +169,7 @@ internal fun WatchPartyNavigation(
                     state = state,
                     onAction = { action ->
                         viewModel.onAction(action)
-                        when (action) {
-                            SettingsAction.BackClicked -> navigateBack()
-                            SettingsAction.SaveClicked,
-                            is SettingsAction.AvatarSelected,
-                            is SettingsAction.ColorSelected,
-                            is SettingsAction.LanguageSelected,
-                            -> Unit
-                        }
+                        if (action == SettingsAction.BackClicked) navigateBack()
                     },
                 )
             }

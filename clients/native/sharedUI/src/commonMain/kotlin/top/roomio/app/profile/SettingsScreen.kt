@@ -43,6 +43,19 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import watchparty.sharedui.generated.resources.edit_display_name
+import watchparty.sharedui.generated.resources.use_name
+import watchparty.sharedui.generated.resources.name_help
+import watchparty.sharedui.generated.resources.display_name
+import watchparty.sharedui.generated.resources.cancel
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -119,6 +132,7 @@ internal fun SettingsScreen(
             ) {
                 ProfileSpotlight(
                     name = state.displayName,
+                    onRename = { onAction(SettingsAction.NameSelected(it)) },
                     avatar = state.draftAvatar,
                 )
                 ProfileSection(
@@ -212,11 +226,48 @@ private fun ProfileTopBar(onBack: () -> Unit) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ProfileSpotlight(
     name: String,
+    onRename: (String) -> Unit,
     avatar: ProfileAvatar,
 ) {
+    var pendingName by rememberSaveable { mutableStateOf<String?>(null) }
+    pendingName?.let { draft ->
+        val trimmed = draft.trim()
+        // A UTF-16 surrogate pair represents one Unicode code point.
+        val length = trimmed.count { !it.isLowSurrogate() }
+        ModalBottomSheet(
+            onDismissRequest = { pendingName = null },
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        ) {
+            Column(
+                Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                Text(stringResource(Res.string.edit_display_name), style = MaterialTheme.typography.headlineSmall)
+                OutlinedTextField(
+                    value = draft,
+                    onValueChange = { pendingName = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    label = { Text(stringResource(Res.string.display_name)) },
+                    supportingText = { Text(stringResource(Res.string.name_help)) },
+                )
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    TextButton(onClick = { pendingName = null }) { Text(stringResource(Res.string.cancel)) }
+                    Button(
+                        enabled = length in 1..48,
+                        onClick = {
+                            onRename(trimmed)
+                            pendingName = null
+                        },
+                    ) { Text(stringResource(Res.string.use_name)) }
+                }
+            }
+        }
+    }
     val previewLabel = stringResource(Res.string.profile_preview)
     val avatarDescription = name
     Surface(
@@ -251,6 +302,9 @@ private fun ProfileSpotlight(
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                 )
+            }
+            IconButton(onClick = { pendingName = name }) {
+                Icon(WatchPartyIcons.Pencil, contentDescription = stringResource(Res.string.edit_display_name))
             }
         }
     }

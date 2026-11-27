@@ -48,23 +48,24 @@ class PresentationViewModelTest {
     }
 
     @Test
-    fun avatarSelectionDerivesNameAndSaveCommitsThePair() {
+    fun customNameSurvivesAvatarAndLanguageChanges() {
         val repository = TestProfileRepository()
         val viewModel = SettingsViewModel(repository, TestThemePreferencesRepository())
-        assertEquals("Ice Queen", viewModel.state.value.displayName)
+        assertEquals("Nika", viewModel.state.value.displayName)
+        viewModel.onAction(SettingsAction.NameSelected("  Riley  "))
         viewModel.onAction(SettingsAction.AvatarSelected(ProfileAvatar.BERRY))
-        assertEquals("Captain Octopus", viewModel.state.value.displayName)
+        assertEquals("Riley", viewModel.state.value.displayName)
         assertEquals(ProfileAvatarId.COMET, repository.currentProfile().avatar)
         viewModel.onAction(SettingsAction.SaveClicked)
-        assertEquals("Captain Octopus", repository.currentProfile().name)
+        assertEquals("Riley", repository.currentProfile().name)
         assertEquals(ProfileAvatarId.BERRY, repository.currentProfile().avatar)
         viewModel.onAction(SettingsAction.LanguageSelected(top.roomio.domain.profile.AppLanguage.PERSIAN))
-        assertEquals("کاپیتان اختاپوس", viewModel.state.value.displayName)
-        assertEquals("Captain Octopus", repository.currentProfile().name)
+        assertEquals("Riley", viewModel.state.value.displayName)
+        assertEquals("Riley", repository.currentProfile().name)
         viewModel.onAction(SettingsAction.SaveClicked)
-        assertEquals("کاپیتان اختاپوس", repository.currentProfile().name)
+        assertEquals("Riley", repository.currentProfile().name)
         viewModel.onAction(SettingsAction.LanguageSelected(top.roomio.domain.profile.AppLanguage.ENGLISH))
-        assertEquals("Captain Octopus", viewModel.state.value.displayName)
+        assertEquals("Riley", viewModel.state.value.displayName)
     }
 
     @Test

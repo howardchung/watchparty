@@ -38,7 +38,7 @@ test('chat HTTP durability, room isolation, ordered realtime, recovery pages, re
     const response=await request(owner,'POST',payload);
     assert.equal(response.status,201); assert.equal(response.headers.get('cache-control'),'no-store');
     const accepted=(await response.json()).message;
-    assert.equal(accepted.displayName,'Ice Queen'); assert.equal(accepted.identityId,owner.identity.id);
+    assert.equal(accepted.displayName,'Nika'); assert.equal(accepted.identityId,owner.identity.id);
     const until=async(check:()=>boolean)=>{for(let n=0;n<150;n++){if(check())return; await new Promise(r=>setTimeout(r,20));}assert.fail('event not delivered');};
     await until(()=>events.some(e=>e.topic==='chat.message'));
     const event=events.find(e=>e.topic==='chat.message');

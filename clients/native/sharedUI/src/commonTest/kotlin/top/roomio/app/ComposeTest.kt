@@ -109,7 +109,7 @@ class ComposeTest {
     }
 
     @Test
-    fun homeSettingsSetsNameFromAvatarWithoutCustomInput() = runComposeUiTest {
+    fun homeSettingsPreservesNameWhenAvatarChanges() = runComposeUiTest {
         setContent {
             WatchPartyUi(TestProfileRepository())
         }
@@ -126,7 +126,7 @@ class ComposeTest {
         onNodeWithText("Frog Wizard").performScrollTo().performClick()
         onNodeWithText("Save changes").performClick()
 
-        onNodeWithText("Frog Wizard").assertExists()
+        onNodeWithText("Nika").assertExists()
         onNodeWithText("Stream and chill").assertExists()
         onNodeWithText("Your next watch party is one room away.").assertDoesNotExist()
         onNodeWithText("READY WHEN EVERYONE IS").assertDoesNotExist()

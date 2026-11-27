@@ -1,13 +1,13 @@
 import { expect, test } from '@playwright/test';
 
-test('avatar sets the saved name, discards drafts, and retains a failed save for retry', async ({ page }) => {
+test('pencil edits the saved name, discards drafts, and retains a failed save for retry', async ({ page }) => {
   let identity = { id: 'same-durable-guest', name: 'Ice Queen', avatar: 'comet', language: 'en' };
   let failSave = false;
   await page.route('**/v1/guest-sessions/**', async route => {
     if (route.request().method() === 'PATCH') {
       if (failSave) return route.fulfill({ status: 503, json: { code: 'UNAVAILABLE' } });
       const body = route.request().postDataJSON();
-      expect(body).toMatchObject({ name: 'Frog Wizard', avatar: 'mint' });
+      expect(body).toMatchObject({ name: 'Clover', avatar: 'mint' });
       identity = { ...identity, ...body };
       return route.fulfill({ json: { identity } });
     }
@@ -19,11 +19,21 @@ test('avatar sets the saved name, discards drafts, and retains a failed save for
   await open();
   await expect(page.getByRole('textbox')).toHaveCount(0);
   await expect(page.locator('.spotlight-picker').getByRole('radio')).toHaveCount(12);
+  await page.getByRole('button', { name: 'Edit display name' }).click();
+  await page.getByLabel('Display name', { exact: true }).fill('   ');
+  await expect(page.getByRole('button', { name: 'Use name' })).toBeDisabled();
+  await page.getByLabel('Display name', { exact: true }).fill(' Clover ');
+  await page.getByRole('button', { name: 'Use name' }).click();
   await frog().click();
-  await expect(page.locator('.profile-spotlight strong')).toHaveText('Frog Wizard');
+  await expect(page.locator('.profile-spotlight strong')).toHaveText('Clover');
   await page.getByRole('button', { name: 'Back', exact: true }).click();
   await open();
   await expect(page.locator('.profile-spotlight strong')).toHaveText('Ice Queen');
+  await page.getByRole('button', { name: 'Edit display name' }).click();
+  await page.getByLabel('Display name', { exact: true }).fill('   ');
+  await expect(page.getByRole('button', { name: 'Use name' })).toBeDisabled();
+  await page.getByLabel('Display name', { exact: true }).fill(' Clover ');
+  await page.getByRole('button', { name: 'Use name' }).click();
   await frog().click();
   failSave = true;
   await page.getByRole('button', { name: 'Save changes', exact: true }).click();
@@ -34,6 +44,6 @@ test('avatar sets the saved name, discards drafts, and retains a failed save for
   await expect(page.getByRole('heading', { name: 'Stream and chill' })).toBeVisible();
   await page.reload();
   await open();
-  await expect(page.locator('.profile-spotlight strong')).toHaveText('Frog Wizard');
+  await expect(page.locator('.profile-spotlight strong')).toHaveText('Clover');
   expect(identity.id).toBe('same-durable-guest');
 });

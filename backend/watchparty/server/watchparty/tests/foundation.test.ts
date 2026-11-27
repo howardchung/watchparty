@@ -25,10 +25,11 @@ test("configuration rejects unsafe origins and malformed TURN settings", () => {
   assert.throws(() => config({ DATABASE_URL: "postgresql://localhost/db", TURN_SHARED_SECRET: "too-short" }));
   assert.throws(() => config({ DATABASE_URL: "postgresql://localhost/db", TURN_URLS: "https://example.invalid" }));
 });
-test("profile derives avatar names, ignores custom input, and rejects unknown avatars", () => {
-  assert.deepEqual(profile({name:"Custom name",avatar:"MINT",language:"fa"}), {name:"قورباغهٔ جادوگر",avatar:"mint",language:"fa"});
+test("profile accepts custom names and defaults omitted names to avatar labels", () => {
+  assert.deepEqual(profile({name:"  Custom name  ",avatar:"MINT",language:"fa"}), {name:"Custom name",avatar:"mint",language:"fa"});
   assert.equal(profile({avatar:"berry",language:"en"}).name, "Captain Octopus");
-  assert.equal(profile({name:"",avatar:"comet",language:"en"}).name, "Ice Queen");
+  for (const name of [" ", 5, "😀".repeat(49)]) assert.throws(() => profile({name,avatar:"comet",language:"en"}));
+  assert.equal(profile({name:"😀".repeat(48),avatar:"comet",language:"en"}).name, "😀".repeat(48));
   assert.throws(() => profile({avatar:"unknown",language:"en"}));
   assert.throws(() => profile({avatar:"comet",language:""}));
 });

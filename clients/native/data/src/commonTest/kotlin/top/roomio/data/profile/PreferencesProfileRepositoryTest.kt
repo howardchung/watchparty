@@ -40,7 +40,7 @@ class PreferencesProfileRepositoryTest {
         )
 
         val restoredProfile = PreferencesProfileRepository(settings).currentProfile()
-        assertEquals("Frog Wizard", restoredProfile.name)
+        assertEquals("Mira", restoredProfile.name)
         assertEquals(ProfileAvatarId.MINT, restoredProfile.avatar)
     }
     @Test
@@ -49,8 +49,8 @@ class PreferencesProfileRepositoryTest {
         val repository = PreferencesProfileRepository(settings)
         val profile = repository.currentProfile().copy(language = top.roomio.domain.profile.AppLanguage.PERSIAN)
         repository.saveProfile(profile).getOrThrow()
-        assertEquals(profile.copy(name = profile.avatar.displayName(profile.language)), PreferencesProfileRepository(settings).currentProfile())
-        assertEquals(profile.avatar.displayName(profile.language), repository.currentProfile().name)
+        assertEquals(profile, PreferencesProfileRepository(settings).currentProfile())
+        assertEquals(profile.name, repository.currentProfile().name)
         settings.putString("profile.language", "unknown")
         assertEquals(top.roomio.domain.profile.AppLanguage.ENGLISH, PreferencesProfileRepository(settings).currentProfile().language)
     }
@@ -64,7 +64,7 @@ class PreferencesProfileRepositoryTest {
         val repository = PreferencesProfileRepository(settings)
         assertEquals("قورباغهٔ جادوگر", repository.currentProfile().name)
         repository.saveProfile(repository.currentProfile().copy(language = top.roomio.domain.profile.AppLanguage.ENGLISH)).getOrThrow()
-        assertEquals("Frog Wizard", repository.currentProfile().name)
+        assertEquals("قورباغهٔ جادوگر", repository.currentProfile().name)
         assertEquals(repository.currentProfile(), PreferencesProfileRepository(settings).currentProfile())
     }
 

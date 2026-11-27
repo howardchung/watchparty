@@ -44,6 +44,9 @@ test('real services: persistent profile, preview/cancel, two identities, owner a
     const owner = await ownerContext.newPage(); const guest = await guestContext.newPage();
     await openHome(owner);
     await owner.getByRole('button', { name: /settings|profile/i }).first().click();
+    await owner.getByRole('button', { name: 'Edit display name' }).click();
+    await owner.getByLabel('Display name', { exact: true }).fill('Browser host');
+    await owner.getByRole('button', { name: 'Use name' }).click();
     await owner.getByRole('radio', { name: 'Frog Wizard', exact: true }).click();
     await owner.getByRole('button', { name: 'Save changes', exact: true }).click();
     await owner.reload();

@@ -4,11 +4,11 @@ import { ColorPicker } from '../components/ColorPicker';
 import { AvatarPicker } from '../components/AvatarPicker';
 import type { useThemePalette } from '../theme';
 import { useState } from 'react';
-import { avatarName } from '../data/avatarCatalog';
+import { Pencil } from 'lucide-react';
 import type { Identity } from '../types';
 import { AppBar } from '../components/AppBar';
 import { Avatar } from '../components/Avatar';
-import { Button } from '../components/Material';
+import { Button, Dialog, IconButton, TextField } from '../components/Material';
 
 interface SettingsScreenProps {
   palette: ReturnType<typeof useThemePalette>;
@@ -30,7 +30,14 @@ export function SettingsScreen({
   saving = false,
 }: SettingsScreenProps) {
   const [draft, setDraft] = useState(identity);
-  const name = avatarName(draft.avatarId, draft.language);
+  const [pendingName, setPendingName] = useState<string | null>(null);
+  const name = pendingName?.trim() ?? '';
+  const validName = name.length > 0 && [...name].length <= 48;
+  const applyName = () => {
+    if (!validName) return;
+    setDraft(current => ({ ...current, name }));
+    setPendingName(null);
+  };
 
   return (
     <div className="screen settings-screen screen-enter">
@@ -44,12 +51,26 @@ export function SettingsScreen({
 
       <main className="form-page">
         <section className="profile-spotlight" aria-label={t("Profile preview")}>
-          <Avatar avatarId={draft.avatarId} label={name} size="large" />
+          <Avatar avatarId={draft.avatarId} label={draft.name} size="large" />
           <div>
             <span>{t("Ready to watch")}</span>
-            <strong>{name}</strong>
+            <strong dir="auto">{draft.name}</strong>
           </div>
+          <IconButton icon={Pencil} label={t("Edit display name")} aria-haspopup="dialog"
+            disabled={saving} onClick={() => setPendingName(draft.name)} />
         </section>
+
+        <Dialog open={pendingName !== null} title={t("Edit display name")} className="rename-dialog"
+          onClose={() => setPendingName(null)}
+          actions={<>
+            <Button variant="text" onClick={() => setPendingName(null)}>{t("Cancel")}</Button>
+            <Button disabled={!validName} onClick={applyName}>{t("Use name")}</Button>
+          </>}>
+          <form onSubmit={event => { event.preventDefault(); applyName(); }}>
+            <TextField label={t("Display name")} value={pendingName ?? ''} onChange={setPendingName}
+              supportingText={t("Use 1–48 characters. This name appears in your rooms.")} />
+          </form>
+        </Dialog>
 
         <section className="form-section" aria-labelledby="avatar-heading">
           <div className="section-heading">
@@ -88,7 +109,7 @@ export function SettingsScreen({
           <Button
             fullWidth
             disabled={saving}
-            onClick={() => onSave({ ...draft, name })}
+            onClick={() => onSave(draft)}
           >
             {saving ? t("Saving…") : t("Save profile")}
           </Button>

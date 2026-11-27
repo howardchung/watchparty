@@ -1,6 +1,6 @@
 # Avatar names
 
-DD-054 replaces editable/random guest names in browser and native clients. Each avatar determines a fixed display name in the user’s saved language: Persian for `fa`, English for `en`. Everyone sees that saved name in profiles, rooms and new chat messages, regardless of their own interface language. See DD-061. Avatar IDs and guest UUIDs stay stable.
+The localized character names below label the avatar picker and provide initial profile names. Users can rename themselves in Settings.
 
 | Avatar ID | English name | Persian name / picker label |
 | --- | --- | --- |
@@ -17,9 +17,7 @@ DD-054 replaces editable/random guest names in browser and native clients. Each 
 | spark | Frankie | فرانکی |
 | bloom | Mummy Barista | مومیایی باریستا |
 
-Save commits avatar and language; Back discards the draft. Selecting an avatar or draft language updates the name preview immediately. There is no custom name input or blank-name state. Fixed choices remain available offline; browser Save retains its existing loading/error/retry states. Native local persistence failures retain the saved profile.
-
-The backend derives the name from the avatar and saved language on creation and profile updates. Migration `0008_localized_avatar_names.sql` updates existing Persian identities and membership snapshots without altering past chat messages. The legacy request `name` field is optional and ignored. Avatar IDs are case-insensitive on input and stored lowercase; unsupported IDs are rejected. Existing profiles and membership labels are normalized in a new migration, preserving guest IDs, credentials, membership IDs and ownership. Previously sent chat messages retain their historical name/avatar snapshots. Unsupported historical avatar IDs fall back to comet.
+The profile pencil opens the name editor. Confirming a trimmed name of 1–48 Unicode code points updates the profile draft. Save commits name, avatar and language together. Names stay independent of avatar and language changes. Rooms use the saved profile when admitting the user. Historical messages keep their sender snapshots.
 
 Duplicate names and avatars are allowed, including within one room. Authentication, ownership, membership, voice and chat use UUIDs rather than display names. Existing You/Owner indicators distinguish roles, but two other guests with the same avatar remain visually ambiguous. Do not invent numeric suffixes or restrict avatar availability.
 

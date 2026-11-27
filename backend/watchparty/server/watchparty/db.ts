@@ -23,10 +23,13 @@ export function profile(body: unknown): Profile {
     throw new ApiError(400, "INVALID_PROFILE");
   const avatar = (data.avatar as string).trim().toLowerCase();
   if (!Object.hasOwn(avatarNames, avatar)) throw new ApiError(400, "INVALID_PROFILE");
+  if (data.name !== undefined && typeof data.name !== "string") throw new ApiError(400, "INVALID_PROFILE");
+  const language = (data.language as string).trim();
+  const names = language === "fa" ? persianAvatarNames : avatarNames;
   const value = {
-    name: ((data.language as string).trim() === "fa" ? persianAvatarNames : avatarNames)[avatar as keyof typeof avatarNames],
+    name: data.name === undefined ? names[avatar as keyof typeof names] : data.name.trim(),
     avatar,
-    language: (data.language as string).trim(),
+    language,
   };
   if (
     !value.name ||

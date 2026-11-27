@@ -347,4 +347,7 @@
     <string name="local_skip">نمیام · بدون فیلم</string>
     <string name="local_file_failed">فایل باز نشد. دوباره انتخابش کن.</string>
     <string name="local_sync_failed">هماهنگ نشد. برگشتیم به حالت قبلی.</string>
+    <string name="edit_display_name">ویرایش نام نمایشی</string>
+    <string name="use_name">انتخاب نام</string>
+    <string name="name_help">نامی با ۱ تا ۴۸ نویسه وارد کنید. این نام در دورهمی‌ها نمایش داده می‌شود.</string>
 </resources>

@@ -26,7 +26,7 @@ class PreferencesProfileRepository(
     override fun currentProfile(): UserProfile = mutableProfile.value
 
     override fun saveProfile(profile: UserProfile): Result<Unit> = loggedRunCatching("PreferencesProfileRepository.run1") {
-        val namedProfile = profile.copy(name = profile.avatar.displayName(profile.language))
+        val namedProfile = profile.copy(name = profile.name.trim())
         settings.putString(NAME_KEY, namedProfile.name)
         settings.putString(AVATAR_KEY, profile.avatar.name)
         settings.putString("profile.language", profile.language.tag)
@@ -41,14 +41,15 @@ class PreferencesProfileRepository(
 
         val language = top.roomio.domain.profile.AppLanguage.fromTag(settings.getString("profile.language", "en"))
         return UserProfile(
-            name = avatar.displayName(language),
+            name = settings.getString(NAME_KEY, avatar.displayName(language)),
             avatar = avatar,
             language = language,
         )
     }
 
     private companion object {
-        const val NAME_KEY = "profile.name"
+        // Older releases ignored profile.name and always displayed the localized avatar name.
+        const val NAME_KEY = "profile.display-name"
         const val AVATAR_KEY = "profile.avatar"
 
     }

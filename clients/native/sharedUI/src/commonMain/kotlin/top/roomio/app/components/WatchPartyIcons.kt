@@ -14,6 +14,9 @@ import androidx.compose.ui.unit.dp
  * Directional navigation/send icons retain native RTL mirroring.
  */
 internal object WatchPartyIcons {
+    val Pencil: ImageVector by lazy { outline("pencil", false,
+        "m15 5 4 4", "M3 21l4-1 13-13a2.8 2.8 0 0 0-4-4L3 16z"
+    ) }
     val FolderOpen: ImageVector by lazy { outline("folder-open", false,
         "m6 14 1.5-3a2 2 0 0 1 1.8-1H20a2 2 0 0 1 1.9 2.6l-2.3 7a2 2 0 0 1-1.9 1.4H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2v2"
     ) }

@@ -21,7 +21,7 @@ test('character renames preserve saved avatars, credentials, ownership and histo
     ];
     for (const [avatar, legacy, english, persian] of labels) for (const language of ['en', 'fa']) {
       const expected = language === 'fa' ? persian : english;
-      const session = await auth.create({ name: 'Ignored', avatar, language });
+      const session = await auth.create({ name: expected, avatar, language });
       assert.equal(session.identity.name, expected);
       const admission = await rooms.create(session.identity.id, 'Character rename', randomUUID());
       const roomId = admission.body.room.id;

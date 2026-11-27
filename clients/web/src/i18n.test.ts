@@ -7,7 +7,7 @@ describe('Persian localization', () => {
   it('round-trips the backend profile language and safely falls back for unsupported tags', () => {
     const identity = identityModel({ id: 'guest', name: 'نیکا', avatar: 'COMET', language: 'fa' });
     expect(identity.language).toBe('فارسی');
-    expect(profileBody(identity)).toMatchObject({ name: 'ملکهٔ یخی', language: 'fa' });
+    expect(profileBody(identity)).toMatchObject({ name: 'نیکا', language: 'fa' });
     expect(normalizeLanguage('de')).toBe('en');
     expect(identityModel({ id: 'guest', name: 'Mira', avatar: 'COMET', language: 'de' }).language).toBe('English');
   });

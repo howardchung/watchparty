@@ -973,6 +973,8 @@ strong {
 }
 
 .profile-spotlight > div {
+  flex: 1;
+  overflow-wrap: anywhere;
   min-width: 0;
   display: grid;
 }
@@ -2347,3 +2349,8 @@ input[type="range"]::-moz-range-thumb {
 :root[lang="fa"] input, :root[lang="fa"] textarea, :root[lang="fa"] button { letter-spacing: normal; }
 [dir="rtl"] .directional-icon svg { transform: scaleX(-1); }
 .player-progress, .transport, .player-time, .volume-control input, .invite-code, .invite-link { direction: ltr; unicode-bidi: isolate; }
+
+.profile-spotlight > button { flex-shrink: 0; }
+@media (max-width: 600px) {
+  dialog.rename-dialog { margin: auto 0 0; width: 100%; max-width: 100%; border-end-start-radius: 0; border-end-end-radius: 0; }
+}

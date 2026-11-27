@@ -9,7 +9,7 @@ describe('avatar names follow the saved or draft profile language', () => {
     setLanguage('en');
     for (const avatar of avatarOptions) {
       expect(avatarName(avatar.id, 'fa')).toBe(fa[avatar.label]);
-      expect(profileBody({ avatarId: avatar.id, language: 'فارسی', name: 'Old name' }).name).toBe(fa[avatar.label]);
+      expect(profileBody({ avatarId: avatar.id, language: 'فارسی', name: 'Old name' }).name).toBe('Old name');
       expect(avatarName(avatar.id, 'en')).toBe(avatar.label);
     }
   });
