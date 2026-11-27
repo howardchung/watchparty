@@ -1,0 +1,4 @@
+# Go build output
+/bin/
+/api
+*.out

@@ -1,0 +1,98 @@
+name: watchparty
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      HAM_DOMAIN: ${HAM_DOMAIN}
+      HAM_LIVEKIT_DOMAIN: ${HAM_LIVEKIT_DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    # LiveKit runs with host networking, so reach it through the host gateway.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - api
+      - livekit
+    logging: *default-logging
+    mem_limit: 256m
+
+  api:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      HAM_DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable
+      # LiveKit settings are derived from the shared secrets so the API and the
+      # LiveKit server can never drift out of sync.
+      HAM_LIVEKIT_URL: wss://${HAM_LIVEKIT_DOMAIN}
+      HAM_LIVEKIT_API_KEY: ${LIVEKIT_API_KEY}
+      HAM_LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET}
+    # Published on the loopback interface so the host-networked LiveKit server
+    # can deliver webhooks; Caddy still reaches it over the compose network.
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "/api", "-healthcheck"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging: *default-logging
+    mem_limit: 512m
+
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    logging: *default-logging
+    mem_limit: 1g
+    shm_size: 256mb
+
+  livekit:
+    image: livekit/livekit-server:v1.8
+    restart: unless-stopped
+    # Host networking is LiveKit's recommended Docker setup: it avoids Docker's
+    # UDP NAT/userland proxy, which otherwise breaks WebRTC media (ICE connects
+    # but DTLS never completes). The RTC/TURN ports must be open in the firewall.
+    network_mode: host
+    command: ["--config", "/etc/livekit.yaml"]
+    environment:
+      LIVEKIT_KEYS: "${LIVEKIT_API_KEY}: ${LIVEKIT_API_SECRET}"
+      # LiveKit reads any config path from the environment. These two values are
+      # deployment-specific, so they come from .env instead of livekit.yaml.
+      LIVEKIT_TURN_DOMAIN: ${HAM_TURN_DOMAIN}
+      LIVEKIT_WEBHOOK_API_KEY: ${LIVEKIT_API_KEY}
+    volumes:
+      - ./livekit.yaml:/etc/livekit.yaml:ro
+    logging: *default-logging
+    mem_limit: 1g
+
+volumes:
+  postgres_data:
+  caddy_data:
+  caddy_config:

@@ -1,0 +1,42 @@
+port: 7880
+
+rtc:
+  tcp_port: 7881
+  udp_port: 7882
+  # On a cloud VM, let LiveKit discover the public (Elastic) IP for ICE/TURN.
+  use_external_ip: true
+
+# LiveKit's built-in TURN server. It advertises itself to clients and issues
+# short-lived relay credentials automatically, so no separate Coturn container
+# or shared static-auth-secret is required.
+turn:
+  enabled: true
+  # Overridden by LIVEKIT_TURN_DOMAIN from .env.
+  domain: turn.example.com
+  udp_port: 3478
+  # Relay allocation range. This MUST match the UDP ports published by Docker
+  # and opened in the security group (50000-50100). LiveKit's default is
+  # 30000-40000, which is not published, so TURN would silently fail.
+  relay_range_start: 50000
+  relay_range_end: 50100
+  # TURN-over-TLS is disabled for v1; relayed media is still DTLS-SRTP
+  # encrypted. Set a cert and tls_port later if you need TURN on 5349.
+  tls_port: 0
+  external_tls: false
+
+logging:
+  level: info
+
+room:
+  # Eight identities per room (owner reserved seat included).
+  max_participants: 8
+  empty_timeout: 30
+
+webhook:
+  # Signed with the LiveKit API secret; the API verifies it to maintain voice
+  # presence and release room resources. LiveKit uses host networking, so it
+  # reaches the API on the host loopback where compose publishes it.
+  urls:
+    - http://127.0.0.1:8080/internal/livekit/webhook
+  # Overridden by LIVEKIT_WEBHOOK_API_KEY from .env.
+  api_key: ""

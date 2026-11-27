@@ -1,0 +1,62 @@
+.media-source-tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  padding-block: 8px;
+}
+.media-source-tiles .md-button {
+  height: auto;
+  min-height: 160px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  white-space: normal;
+  text-align: center;
+  border-radius: var(--md-sys-shape-corner-extra-large);
+}
+.media-source-tiles .md-button > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.cinema-source-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.cinema-source-actions .md-button {
+  height: auto;
+  min-height: 48px;
+  white-space: normal;
+}
+.local-file-summary {
+  margin-block: 12px;
+  padding: 20px;
+  overflow-wrap: anywhere;
+}
+.local-file-summary small {
+  font-size: 0.8rem;
+}
+.local-source-waiting {
+  min-height: 320px;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 20px;
+  text-align: center;
+  padding: 24px;
+  border-radius: var(--md-sys-shape-corner-extra-large);
+  background: var(--md-sys-color-surface-container);
+}
+.source-row strong {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 400px) {
+  .media-source-tiles {
+    gap: 8px;
+  }
+  .media-source-tiles .md-button {
+    padding: 16px 8px;
+    min-height: 148px;
+  }
+}

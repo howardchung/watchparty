@@ -1,0 +1,17 @@
+.android-download-row {
+  display: flex;
+  align-items: center;
+  gap: var(--md-sys-spacing-sm);
+  padding: var(--md-sys-spacing-sm);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-large);
+  color: var(--md-sys-color-on-surface);
+}
+.android-download-row > svg { flex-shrink: 0; color: var(--md-sys-color-primary); }
+.android-download-row > div { flex: 1; min-width: 0; }
+.android-download-row strong { font-size: var(--md-sys-typescale-title-medium-size); }
+.android-download-row p { font-size: var(--md-sys-typescale-body-medium-size); color: var(--md-sys-color-on-surface-variant); }
+.android-download-row a { flex-shrink: 0; text-decoration: none; }
+.android-download-row a:focus-visible { outline: 3px solid var(--md-sys-color-tertiary); outline-offset: 3px; }
+.android-download-row a:active { transform: scale(.96); }
+@media (prefers-reduced-motion: reduce) { .android-download-row a:active { transform: none; } }

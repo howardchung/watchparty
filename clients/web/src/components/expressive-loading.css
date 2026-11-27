@@ -1,0 +1,40 @@
+/* Filled, morphing shapes in the app's Material 3 colors. */
+.preview-loading {
+  min-height: 70dvh;
+  display: grid;
+  place-items: center;
+  padding: var(--md-sys-spacing-md);
+}
+.md-loading--expressive {
+  flex-direction: column;
+  gap: var(--md-sys-spacing-sm);
+  text-align: center;
+  color: var(--md-sys-color-primary);
+}
+.md-expressive-loading {
+  display: grid;
+  place-items: center;
+  inline-size: 72px;
+  block-size: 72px;
+  flex-shrink: 0;
+  background: var(--md-sys-color-primary-container);
+  border-radius: var(--md-sys-shape-corner-full);
+}
+.md-expressive-loading > span {
+  display: block;
+  inline-size: 40px;
+  block-size: 40px;
+  background: var(--md-sys-color-primary);
+  border-radius: 24%;
+  animation: expressive-loading-morph 2400ms cubic-bezier(.4, 0, .2, 1) infinite;
+}
+@keyframes expressive-loading-morph {
+  0% { transform: rotate(0deg) scale(.85); border-radius: 24%; }
+  25% { transform: rotate(90deg) scale(1); border-radius: 50% 12% 50% 12%; }
+  50% { transform: rotate(180deg) scale(.85); border-radius: 50%; }
+  75% { transform: rotate(270deg) scale(1); border-radius: 12% 50% 12% 50%; }
+  100% { transform: rotate(360deg) scale(.85); border-radius: 24%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .md-expressive-loading > span { animation: none; border-radius: 50% 12% 50% 12%; }
+}

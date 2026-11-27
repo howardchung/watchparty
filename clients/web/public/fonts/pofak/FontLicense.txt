@@ -1,0 +1,6 @@
+Pofak is proprietary font software by FontIran.
+This set of fonts is used in watchparty under project license: 94QXL3U1
+For terms and permitted use, visit https://fontiran.com/about-licenses
+Bundling these fonts with this application does not grant permission to reuse,
+modify, sell, or redistribute them independently. Obtain your own appropriate
+license from https://fontiran.com before using them in another project.

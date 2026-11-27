@@ -1,84 +1,81 @@
-# WatchParty
+<h3 align="center"><img src="docs/assets/readme/watchparty-icon.png" width="56" height="56" align="absmiddle" alt="">&nbsp;watchparty</h3>
 
-![screenshot](https://github.com/howardchung/watchparty/raw/master/public/screenshot_full.png)
+<p align="center"><strong>A watch party where everyone has the remote.</strong></p>
 
-A website for watching videos together.
+<p align="center">Pause or rewind on your own. When you want to watch a scene together, the host can invite everyone back to the same moment. Each viewer chooses whether to join.</p>
 
-## Description
+<p align="center"><a href="https://watchparty.top"><strong>Try it on the web</strong></a> &nbsp;·&nbsp; <a href="clients/native/README.md"><strong>Build the Android client</strong></a> &nbsp;·&nbsp; <a href="LICENSE">MIT license</a></p>
 
-- Synchronizes the video being watched with the current room
-- Plays, pauses, and seeks are synced to all watchers
-- Supports:
-  - Screen sharing (full screen, browser tab or application)
-  - Launch a shared virtual browser in the cloud (similar to rabb.it)
-  - Stream-your-own-file (optionally converted in your browser via WebCodecs, for formats browsers can't play)
-  - Video files on the Internet (anything accessible via HTTP)
-  - YouTube videos
-  - Magnet links (via WebTorrent)
-  - .m3u8 streams (HLS)
-- Create separate rooms for users on demand
-- Text chat
-- Video chat
+<p align="center"><img src="docs/assets/readme/hero.png" width="100%" alt="watchparty’s desktop watch party playing the MDN flower video beside the voice panel, alongside the Android home screen on a floating phone."></p>
 
-## Quick Start
+## Inside a party
 
-- Clone this repo via `git clone git@github.com:howardchung/watchparty.git`
-- Install npm dependencies for the project via `npm install`
-- Start the server via `npm run dev`
-  - Defaults to port 8080, customize with `PORT` env var
-  - Set `SSL_KEY_FILE` and `SSL_CRT_FILE` for HTTPS.
-- Start the React application in a separate shell and port via `npm run ui`
-  - Point to server using `VITE_SERVER_HOST` env var if you customized it above
-  - Set `SSL_KEY_FILE` and `SSL_CRT_FILE` for HTTPS.
-  - HTTPS is required by the browser for some WebRTC features (camera, etc.)
-- Duplicate the `.env.example` file
-- Rename it to `.env`
-- Add config for the features you want as described in the advanced setup
+<table>
+<tr>
+<td width="45%"><h3>Join with a code</h3>
+<p>Open an invite or enter the code a friend sends you. Before joining, see who’s hosting, how many people are there, and whether the movie has started. Your last room stays on the home screen for next time.</p></td>
+<td width="55%"><img src="docs/assets/readme/join.gif" width="100%" alt="A guest enters MOON-42, checks the room preview and joins Mira’s late show as a flower opens on screen."></td>
+</tr>
+<tr>
+<td><h3>Bring the movie</h3>
+<p>The host can paste a direct video link or pick a file. For a local movie, each viewer opens their own copy and the video stays on their device. Volume, audio tracks and subtitles are personal choices.</p>
+<p><a href="docs/local-file-contract.md">How local files work →</a></p></td>
+<td><img src="docs/assets/readme/video-source.png" width="100%" alt="The host’s browser with a direct video URL entered and the Start stream button ready."></td>
+</tr>
+<tr>
+<td><h3>Sync together</h3>
+<p>The host seeks to a scene and taps <strong>Ask for sync</strong>. Their player pauses, and everyone gets an invitation with the timestamp.</p>
+<p>Choose <strong>Accept &amp; pause</strong> to join, or <strong>Not joining</strong> to keep watching. You can withdraw until the host starts. Once at least one guest accepts, the host can start a shared countdown for those who joined.</p></td>
+<td><a href="docs/assets/readme/sync-invitation.gif"><img src="docs/assets/readme/sync-invitation.gif" width="100%" alt="While the flower video plays, Mira sends a sync request. The guest accepts and pauses, then resumes watching after 3, 2, 1, Action."></a></td>
+</tr>
+<tr>
+<td><h3>Pick your movie-night face</h3>
+<p>Choose an illustrated avatar and friends will see its character name beside your messages. Pick a color palette, switch between light and dark, or use the app in Persian with a right-to-left layout.</p></td>
+<td><img src="docs/assets/readme/profile.gif" width="100%" alt="Choosing Frog Wizard, applying the Sage palette and returning to the home screen."></td>
+</tr>
+</table>
 
-## Advanced Setup (optional)
+**Talk over the credits.** Join voice muted and turn on your microphone when you want to speak. A speaking indicator shows who’s talking. The room also has text chat for the moments you’d rather watch quietly. [Room chat](docs/chat-contract.md)
 
-All of these are optional and the application should work without them. Some functionality may be missing.
+## On Android
 
-### YouTube API (video search)
+The native app uses the same party codes as the browser. Check the room before joining, share an invitation through the Android share sheet, and keep voice connected in the background.
 
-This project uses the YouTube API for video search, which requires an API key. You can get one from Google [here](https://console.developers.google.com).
+<p align="center">
+  <img src="docs/assets/readme/native-room.png" width="36%" alt="Native Compose room preview with Mira as host, three people and a movie already playing.">
+  &nbsp;
+  <img src="docs/assets/readme/android-party.png" width="36%" alt="Inside Mira’s late show on Android, with the flower video, playback controls, Sync to room and party chat.">
+</p>
 
-Without an API key you won't be able to search for videos via the searchbox.
+## Try it locally
 
-After creating a **YouTube Data API V3** access, you can create an API key which you can add to your environment variables by copying the `.env.example`, renaming it to `.env` and adding the key to the YOUTUBE_API_KEY variable.
+For a walkthrough with sample guests, start the browser client with Node.js 24 and npm. From the repository root, run
 
-After that restart your server to enable the YouTube API access on your server.
+```sh
+cd clients/web
+npm ci
+npm run dev -- --host 127.0.0.1
+```
 
-### Firebase Config (user authentication)
+Open the [local home preview](http://127.0.0.1:5173/?preview=home), choose **Got a code?**, and enter `MOON-42` to join Mira’s late show.
 
-This project uses Firebase for authentication. This is used for user login, account management, subscriptions, and handling some features like room locking/permanence.
+For a real two-person party, start the Node service and PostgreSQL using the [local backend guide](backend/local/README.md), then open the [local app](http://127.0.0.1:5173/) in two separate browser profiles. Create a room in the first and use its code in the second. Each profile gets its own guest identity automatically.
 
-To set up, create a new Firebase app (or reuse an old one) from [here](https://console.firebase.google.com/). After creating an application, click on the settings cog icon in the left menu next to "Project overview" and click on project settings. From there, scroll down, create a web application and copy the Firebase SDK configuration snippet JSON data.
+## Developing
 
-Next, you have to stringify it: `JSON.stringify(PASTE_CONFIG_HERE)` in your browser console, then add it to `VITE_FIREBASE_CONFIG` in your .env file.
+| Component | Where to start |
+| --- | --- |
+| Browser | React, TypeScript and Vite. [Setup and tests](clients/web/README.md) |
+| Native clients | Kotlin Multiplatform and Compose, for Android and desktop. [Build and run](clients/native/README.md) |
+| Backend | Node.js, PostgreSQL, Socket.IO and Coturn for voice relay. [Local services](backend/local/README.md) |
+| Shared behavior | [Product requirements](docs/requirements.md) · [Design decisions](docs/design-decisions.md) · [HTTP contracts](backend/openapi/) · [Realtime contracts](backend/asyncapi/) |
 
-For server verification of accounts you'll also need `FIREBASE_ADMIN_SDK_CONFIG`, which you should do the same steps for.
+For APK signing, automatic website deployments, and manual API deployments, see the [release guide](.github/RELEASING.md).
 
-### Virtual Browser Setup
+## Special thanks
 
-This project supports creating virtual browsers (using https://github.com/m1k1o/neko) either on a cloud provider or with Docker containers. For development, Docker is easiest.
+Thank you to Howard Chung and the contributors to the original [WatchParty](https://github.com/howardchung/watchparty). Their work gave this fork its starting point, and we’re grateful they shared it under the MIT License.
 
-- Install Docker: `curl -fsSL https://get.docker.com | sh`
-- Make sure you have an SSH key pair set up on the server (`id_rsa` in `~/.ssh` directory), if not, use `ssh-keygen`.
-- Configure `DOCKER_VM_HOST_SSH_USER` if `root` is not the correct user
-- Note: If your web client is not running on the same physical machine as the server, you will also need to configure `DOCKER_VM_HOST` to a publically-resolvable value (i.e. not localhost)
-- If you want to run managed instance pools (whether on cloud or with Docker), configure `VM_MANAGER_CONFIG` and run the vmWorker service.
+## License
 
-### Room Persistence
-
-- Configure Postgres by adding DATABASE_URL to your .env file and then setting up the database schema
-- This allows rooms to persist between server restarts
-
-## Tech
-
-- React
-- TypeScript
-- Node.js
-- Redis
-- PostgreSQL
-- Docker
+watchparty is distributed under the [MIT License](LICENSE). The backend retains its [upstream WatchParty attribution](backend/watchparty/LICENSE).

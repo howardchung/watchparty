@@ -1,0 +1,23 @@
+watchparty uses libmedia AVPlayer 1.3.1, by Gaoxing Zhao and contributors.
+License: LGPL-3.0-or-later. Copyright notices remain in the distributed JavaScript.
+Upstream source and corresponding version: https://github.com/zhaohappy/libmedia/tree/152f629d3021fd8013efa464fcb7b55f9fbe7753
+Package: https://www.npmjs.com/package/@libmedia/avplayer/v/1.3.1
+The license texts accompany these assets as COPYING.LGPLv3 and COPYING.GPLv3.
+watchparty modifies subtitle-queue reset ordering during seek. The corresponding
+source change accompanies these assets as avplayer-seek.patch.
+
+AVPlayer includes assjs and ass-compiler, licensed under MIT.
+Their original licenses accompany the assets as ASSJS-LICENSE and ASS-COMPILER-LICENSE.
+Source: https://github.com/weizhenye/ASS
+
+The optional HEVC/AAC software playback modules are the upstream 32-bit
+WebAssembly builds from the same revision, under dist/decode (hevc and aac),
+dist/resample and dist/stretchpitch. They are served from this origin on demand.
+FFmpeg provides the video/audio decoders and audio resampler. SoundTouch provides
+the audio time-stretch module. Their LGPL-2.1 license text accompanies the modules
+in codecs/COPYING.LGPL-2.1. See the pinned upstream README_en.md and build
+scripts for the component sources and notices. The accompanying
+avplayer-local-buffer.patch describes watchparty’s local-file packet-buffer changes.
+
+watchparty stops the MSE mux timer when its track's SourceBuffer is detached.
+The corresponding source change accompanies these assets as avplayer-mse-detach.patch.

@@ -1,0 +1,98 @@
+name: Android
+on:
+  pull_request:
+    branches: [main]
+  push:
+    tags: ['android-v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Android APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: |
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'platforms;android-36' 'build-tools;37.0.0'
+      - name: Write public monitoring configuration
+        if: github.event_name != 'pull_request'
+        working-directory: clients/native
+        env:
+          SENTRY_DSN: ${{ vars.ANDROID_SENTRY_DSN }}
+          POSTHOG_TOKEN: ${{ vars.VITE_POSTHOG_TOKEN }}
+          POSTHOG_HOST: ${{ vars.VITE_POSTHOG_HOST }}
+        run: |
+          printf 'sentry.dsn=%s\nposthog.token=%s\nposthog.host=%s\n' "$SENTRY_DSN" "$POSTHOG_TOKEN" "$POSTHOG_HOST" > observability.properties
+      - name: Assemble APK
+        working-directory: clients/native
+        env:
+          VARIANT: ${{ github.event_name == 'pull_request' && 'Debug' || 'Release' }}
+        run: bash gradlew --no-daemon --max-workers=2 ":androidApp:assemble$VARIANT"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: android-build
+          path: clients/native/androidApp/build/outputs/apk/*/*.apk
+          if-no-files-found: error
+          retention-days: 7
+
+  sign:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/android-v')
+    needs: build
+    runs-on: ubuntu-latest
+    environment: android-release
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: android-build
+          path: build
+      - run: |
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'build-tools;37.0.0'
+      - name: Verify package and version, sign and verify certificate
+        env:
+          KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          set -euo pipefail
+          umask 077
+          tools="$ANDROID_HOME/build-tools/37.0.0"
+          apk=build/release/androidApp-release-unsigned.apk
+          metadata=$("$tools/aapt" dump badging "$apk" | sed -n '/^package: /p')
+          version=$(cut -d "'" -f6 <<< "$metadata")
+          [[ "$metadata" == "package: name='top.watchparty.app' "* && "$GITHUB_REF_NAME" == "android-v$version" ]]
+          trap 'rm -f "$RUNNER_TEMP/signing.jks"' EXIT
+          printf '%s' "$KEYSTORE" | base64 -d > "$RUNNER_TEMP/signing.jks"
+          "$tools/apksigner" sign --ks "$RUNNER_TEMP/signing.jks" --ks-key-alias "$KEY_ALIAS" --ks-pass env:STORE_PASSWORD --key-pass env:KEY_PASSWORD --out watchparty.apk "$apk"
+          "$tools/apksigner" verify --print-certs watchparty.apk > "$RUNNER_TEMP/certificates"
+          fingerprints=$(sed -nE 's/^(V[0-9.]+ Signer:|Signer #[0-9]+) certificate SHA-256 digest: ([0-9a-f]{64})$/\2/p' "$RUNNER_TEMP/certificates" | sort -u)
+          [[ "$fingerprints" == '195cb06fd908490a7217bebbd7fccdf0c1abe133acb300b2768b1b625c09e227' ]]
+          sha256sum watchparty.apk > watchparty.apk.sha256
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: signed-release
+          path: |
+            watchparty.apk
+            watchparty.apk.sha256
+  publish:
+    needs: sign
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: signed-release
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" watchparty.apk watchparty.apk.sha256 --verify-tag --repo "$GITHUB_REPOSITORY" --title "WatchParty ${GITHUB_REF_NAME#android-v}" --generate-notes

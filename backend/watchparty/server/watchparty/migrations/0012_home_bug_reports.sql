@@ -1,0 +1,1 @@
+ALTER TABLE bug_reports ALTER COLUMN room_id DROP NOT NULL;

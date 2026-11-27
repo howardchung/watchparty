@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="session_channel_name">دورهمی تماشای فیلم</string>
+    <string name="session_channel_description">دورهمی شما را در پس‌زمینه متصل نگه می‌دارد</string>
+    <string name="session_notification_title">دورهمی watchparty فعال است</string>
+    <string name="session_notification_text">اتاق شما متصل می‌ماند</string>
+    <string name="session_notification_text_voice">گفت‌وگو روشن است · اتاق شما متصل می‌ماند</string>
+    <string name="session_action_unmute">روشن کردن میکروفون</string>
+    <string name="session_action_mute">خاموش کردن میکروفون</string>
+    <string name="session_action_leave">خروج</string>
+</resources>

@@ -1,0 +1,7 @@
+.bug-report-editor { display: grid; gap: 1rem; min-width: 0; }
+.bug-report-screenshots { display: grid; gap: 0.75rem; min-width: 0; }
+.bug-report-screenshots p { margin: 0; color: var(--md-sys-color-on-surface-variant); }
+.bug-report-screenshots figure { margin: 0; min-width: 0; }
+.bug-report-screenshots img { display: block; max-width: 100%; max-height: 10rem; object-fit: contain; border-radius: 0.75rem; }
+.bug-report-screenshots figcaption { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.bug-report-screenshots [role="alert"] { color: var(--md-sys-color-error); }

@@ -1,0 +1,40 @@
+# Isolated development database. The old Go/LiveKit volume is never mounted.
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: watchparty
+      POSTGRES_PASSWORD: local-development-only
+      POSTGRES_DB: watchparty
+    ports:
+      - "127.0.0.1:15432:5432"
+    volumes:
+      - watchparty_local_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U watchparty -d watchparty"]
+      interval: 2s
+      timeout: 2s
+      retries: 20
+  coturn:
+    image: coturn/coturn:4.6.3
+    profiles: [voice]
+    environment:
+      TURN_SHARED_SECRET: ${TURN_SHARED_SECRET:-}
+      TURN_EXTERNAL_IP: ${TURN_EXTERNAL_IP:-}
+    command:
+      - /bin/sh
+      - -c
+      - >-
+        test -n "$${TURN_SHARED_SECRET}" || { echo 'Set TURN_SHARED_SECRET in the environment' >&2; exit 1; };
+        test -n "$${TURN_EXTERNAL_IP}" || { echo 'Set TURN_EXTERNAL_IP in the environment' >&2; exit 1; };
+        exec turnserver --no-cli --fingerprint --lt-cred-mech --use-auth-secret
+        --static-auth-secret="$${TURN_SHARED_SECRET}" --realm=watchparty.local
+        --external-ip="$${TURN_EXTERNAL_IP}" --listening-ip=0.0.0.0 --listening-port=3478 --min-port=49160 --max-port=49200
+        --no-multicast-peers
+    ports:
+      - "${TURN_BIND_ADDRESS:-127.0.0.1}:3478:3478/tcp"
+      - "${TURN_BIND_ADDRESS:-127.0.0.1}:3478:3478/udp"
+      - "${TURN_BIND_ADDRESS:-127.0.0.1}:49160-49200:49160-49200/udp"
+    restart: unless-stopped
+volumes:
+  watchparty_local_pg:

@@ -1,0 +1,9 @@
+# WatchParty releases
+
+Configure the fork’s deployment environments and protect the main branch before the first release. Pull requests build a downloadable debug APK, build and test the browser client, and test the API against PostgreSQL. The build jobs use GitHub-hosted runners with read-only repository access.
+
+- **Website** deploys the tested Vite output when changes under `clients/web/` reach main. Under Actions, run Website on main to rebuild and check the host, or select **Deploy the website after testing** to publish. Caddy keeps serving the existing downloads and older hashed assets while CI replaces the entry point last.
+- **Deploy backend** runs the API checks again on the selected main revision. Select **Run workflow** to build and deploy just the API. Clear the deploy checkbox for a transfer and configuration check. The API applies migrations at startup. A failed readiness check restores the previous image configuration. Schema migrations must remain compatible with that image.
+- **Android** builds the unsigned release APK when run manually. To publish, update the Android version name and increment its version code, merge to main, then push a tag named `android-v<versionName>` at that commit. A protected job signs and verifies the package. The GitHub Release contains `watchparty.apk` and its SHA-256 checksum. The website's existing direct APK download remains on its existing independent publication schedule.
+
+GitHub's production-web and production-backend environments each hold a separate SSH key, pinned server host key, and hostname. Each key invokes a fixed server-side receiver. The host administrator installs the root-owned receiver from `backend/deploy/ci-receive.py`. Receiver updates and changes to the production API Dockerfile require separate installation on the host. The android-release environment holds the keystore, alias, and passwords. Keep an offline backup of the production signing key.

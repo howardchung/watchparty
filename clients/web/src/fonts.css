@@ -1,0 +1,12 @@
+/*! Pofak is proprietary font software by FontIran.
+ * Terms: https://fontiran.com/about-licenses
+ * This set of fonts is used in this project under the license: 94QXL3U1
+ * See /fonts/pofak/FontLicense.txt.
+ */
+@font-face {
+  font-family: "Pofak";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/fonts/pofak/PofakVF.woff2") format("woff2");
+}

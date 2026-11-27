@@ -1,0 +1,108 @@
+name: watchparty
+services:
+  postgres:
+    image: postgres@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-watchparty}
+      POSTGRES_DB: ${POSTGRES_DB:-watchparty}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?required}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+    logging: &logging
+      driver: json-file
+      options: {max-size: 10m, max-file: '3'}
+  api:
+    image: watchparty-api:${RELEASE_ID:?required}
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    environment:
+      NODE_ENV: production
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      SENTRY_ENVIRONMENT: production
+      SENTRY_RELEASE: ${RELEASE_ID}
+      HOST: 0.0.0.0
+      PORT: '8080'
+      DATABASE_URL: postgresql://${POSTGRES_USER:-watchparty}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-watchparty}
+      SOCKET_NAMESPACE_PREFIX: ${SOCKET_NAMESPACE_PREFIX:-watchparty}
+      AUTH_ALLOWED_ORIGINS: https://${SITE_DOMAIN:?required}
+      TRUSTED_PROXIES: 172.30.55.254/32
+      TURN_URLS: turn:${TURN_DOMAIN}:3478?transport=udp,turn:${TURN_DOMAIN}:3478?transport=tcp,turns:${TURN_DOMAIN}:5349?transport=tcp,turns:${TURN_DOMAIN}:443?transport=tcp
+      TURN_SHARED_SECRET: ${TURN_SHARED_SECRET:?required}
+    depends_on:
+      postgres: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:8080/readyz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    stop_grace_period: 20s
+    restart: unless-stopped
+    logging: *logging
+  caddy:
+    image: caddy@sha256:d8542f48d34a9cf4e4c11a478865229840e87e4c96ea3f439101f31a5d35f75f
+    environment:
+      SITE_DOMAIN: ${SITE_DOMAIN:?required}
+      TURN_DOMAIN: ${TURN_DOMAIN:?required}
+    ports: ['80:80', '127.0.0.1:8443:443', '443:443/udp']
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./web:/srv:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      default: {ipv4_address: 172.30.55.254}
+    depends_on:
+      api: {condition: service_healthy}
+    restart: unless-stopped
+    logging: *logging
+  tls-router:
+    ulimits:
+      nofile: {soft: 65536, hard: 65536}
+    user: "0:0" # Bind privileged host443, then drop privileges in haproxy.cfg.
+    image: haproxy@sha256:5893840576071e6217cd52ebdcc14f454c6f7a631056fa6f4e0f40d3cac4215b
+    network_mode: host
+    environment:
+      TURN_DOMAIN: ${TURN_DOMAIN:?required}
+    volumes:
+      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    depends_on:
+      caddy: {condition: service_started}
+    restart: unless-stopped
+    logging: *logging
+  coturn:
+    ulimits:
+      nofile: {soft: 65536, hard: 65536}
+    image: coturn/coturn@sha256:71c3c990283385567f11794ee692e3a47b66fd9b0bb39e42afbe776e331dd888
+    network_mode: host
+    environment:
+      TURN_DOMAIN: ${TURN_DOMAIN}
+      TURN_SHARED_SECRET: ${TURN_SHARED_SECRET}
+      PUBLIC_IP: ${PUBLIC_IP:?required}
+      TURN_MIN_PORT: ${TURN_MIN_PORT:-49160}
+      TURN_MAX_PORT: ${TURN_MAX_PORT:-65535}
+      TURN_USER_QUOTA: ${TURN_USER_QUOTA:-128}
+      TURN_TOTAL_QUOTA: ${TURN_TOTAL_QUOTA:-16000}
+      TURN_MAX_BPS: ${TURN_MAX_BPS:-256000}
+      TURN_BPS_CAPACITY: ${TURN_BPS_CAPACITY:-512000000}
+    volumes:
+      - /opt/watchparty/turn-tls:/tls:ro
+      - ./turn-entrypoint.sh:/turn-entrypoint.sh:ro
+      - ./turn-log.awk:/turn-log.awk:ro
+    entrypoint: [/bin/sh, /turn-entrypoint.sh]
+    restart: unless-stopped
+    logging: *logging
+networks:
+  default:
+    ipam:
+      config: [{subnet: 172.30.55.0/24, gateway: 172.30.55.1}]
+volumes:
+  postgres_data:
+  caddy_data:
+  caddy_config:

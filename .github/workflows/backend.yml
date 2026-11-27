@@ -1,0 +1,85 @@
+name: Deploy backend
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: Deploy the tested backend to production
+        type: boolean
+        default: true
+permissions:
+  contents: read
+jobs:
+  build:
+    name: API and PostgreSQL tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend/watchparty
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: watchparty
+          POSTGRES_PASSWORD: local-development-only
+          POSTGRES_DB: watchparty
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U watchparty -d watchparty"
+          --health-interval 2s --health-timeout 2s --health-retries 20
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://watchparty:local-development-only@127.0.0.1:5432/watchparty
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24.18.1
+          cache: npm
+          cache-dependency-path: backend/watchparty/package-lock.json
+      - run: npm ci
+      - run: npm run build
+      - run: npm run test:backend
+      - run: npm run test:integration
+      - name: Verify upgrades retain the existing migration history
+        env:
+          WATCHPARTY_MIGRATION_LEDGER: existing_install_migrations
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c 'ALTER TABLE watchparty_migrations RENAME TO existing_install_migrations'
+          node --input-type=module <<'JS'
+          import { migrate, pool } from './server/watchparty/db.ts';
+          const db = pool(process.env.DATABASE_URL);
+          try {
+            await migrate(db);
+            const { rows } = await db.query("SELECT to_regclass('watchparty_migrations') AS unexpected");
+            if (rows[0].unexpected) throw new Error('Created a second migration ledger');
+          } finally {
+            await db.end();
+          }
+          JS
+
+  deploy:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    environment: production-backend
+    concurrency: production-backend
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Prepare tested API
+        run: tar -czf api.tgz -C backend/watchparty server sql package.json package-lock.json -C ../deploy Dockerfile.api
+      - name: Check host or deploy tested API
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          MODE: ${{ inputs.deploy && 'deploy' || 'check' }}
+        run: bash scripts/ci/send-release.sh "$MODE" < api.tgz

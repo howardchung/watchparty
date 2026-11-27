@@ -1,0 +1,19 @@
+
+*.iml
+.gradle
+.idea
+.kotlin
+.DS_Store
+build
+*/build
+captures
+.externalNativeBuild
+.cxx
+local.properties
+*.jks
+*.gpg
+*yarn.lock
+keystore.properties
+
+# Private deployment access
+/.local-server/

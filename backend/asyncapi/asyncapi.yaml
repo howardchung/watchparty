@@ -1,0 +1,563 @@
+asyncapi: 3.0.0
+info:
+  title: watchparty Room Realtime
+  version: 3.0.0
+  description: Socket.IO protocol 3 namespaces on Engine.IO v4 /socket.io/, WebSocket-only transport.
+    Room namespace admission uses {ticket,protocolVersion:3}; voice uses protocolVersion:4; tickets are single-use and expire after thirty
+    seconds. Event names carry message type; JSON payloads have no redundant type field. Use Engine.IO
+    heartbeats, not application ping/pong. Access tokens never appear in URLs. See docs/watchparty-migration-compatibility.md
+    for complete mesh signaling epochs and lifecycle.
+servers:
+  production:
+    host: watchparty.top
+    protocol: wss
+    pathname: /socket.io/
+    description: Engine.IO v4 WebSocket-only transport; Socket.IO namespaces below
+channels:
+  room:
+    address: /watchparty/rooms/{roomId}
+    parameters:
+      roomId:
+        description: Room UUID
+    messages:
+      snapshot:
+        $ref: '#/components/messages/Snapshot'
+      event:
+        $ref: '#/components/messages/Event'
+      syncState:
+        $ref: '#/components/messages/SyncState'
+      syncInvite:
+        $ref: '#/components/messages/SyncInvite'
+      syncRespond:
+        $ref: '#/components/messages/SyncRespond'
+      syncCommit:
+        $ref: '#/components/messages/SyncCommit'
+      syncCancel:
+        $ref: '#/components/messages/SyncCancel'
+      syncReady:
+        $ref: '#/components/messages/SyncReady'
+      syncFailed:
+        $ref: '#/components/messages/SyncFailed'
+      syncClock:
+        $ref: '#/components/messages/SyncClock'
+      syncResult:
+        $ref: '#/components/messages/SyncResult'
+      error:
+        $ref: '#/components/messages/Error'
+      playbackReport:
+        $ref: '#/components/messages/PlaybackReport'
+      syncRequest:
+        $ref: '#/components/messages/SyncRequest'
+      ack:
+        $ref: '#/components/messages/Ack'
+      authRefresh:
+        $ref: '#/components/messages/AuthRefresh'
+  voice:
+    address: /watchparty/voice/{roomId}
+    parameters:
+      roomId:
+        description: Room UUID
+    messages:
+      roster:
+        $ref: '#/components/messages/VoiceRoster'
+      mute:
+        $ref: '#/components/messages/VoiceMute'
+      leave:
+        $ref: '#/components/messages/VoiceLeave'
+      signalSend:
+        $ref: '#/components/messages/SignalSend'
+      signalReceive:
+        $ref: '#/components/messages/SignalReceive'
+      authRefresh:
+        $ref: '#/components/messages/AuthRefresh'
+      error:
+        $ref: '#/components/messages/Error'
+operations:
+  receiveRoom:
+    action: receive
+    channel:
+      $ref: '#/channels/room'
+    messages:
+    - $ref: '#/channels/room/messages/snapshot'
+    - $ref: '#/channels/room/messages/event'
+    - $ref: '#/channels/room/messages/syncResult'
+    - $ref: '#/channels/room/messages/syncState'
+    - $ref: '#/channels/room/messages/error'
+  sendRoom:
+    action: send
+    channel:
+      $ref: '#/channels/room'
+    messages:
+    - $ref: '#/channels/room/messages/playbackReport'
+    - $ref: '#/channels/room/messages/syncRequest'
+    - $ref: '#/channels/room/messages/syncInvite'
+    - $ref: '#/channels/room/messages/syncRespond'
+    - $ref: '#/channels/room/messages/syncCommit'
+    - $ref: '#/channels/room/messages/syncCancel'
+    - $ref: '#/channels/room/messages/syncReady'
+    - $ref: '#/channels/room/messages/syncFailed'
+    - $ref: '#/channels/room/messages/syncClock'
+    - $ref: '#/channels/room/messages/ack'
+    - $ref: '#/channels/room/messages/authRefresh'
+  receiveVoice:
+    action: receive
+    channel:
+      $ref: '#/channels/voice'
+    messages:
+    - $ref: '#/channels/voice/messages/roster'
+    - $ref: '#/channels/voice/messages/signalReceive'
+    - $ref: '#/channels/voice/messages/error'
+  sendVoice:
+    action: send
+    channel:
+      $ref: '#/channels/voice'
+    messages:
+    - $ref: '#/channels/voice/messages/mute'
+    - $ref: '#/channels/voice/messages/leave'
+    - $ref: '#/channels/voice/messages/signalSend'
+    - $ref: '#/channels/voice/messages/authRefresh'
+components:
+  messages:
+    Snapshot:
+      name: snapshot
+      title: Full room snapshot
+      description: Sent on connection or recovery. Replaces client room state.
+      contentType: application/json
+      payload:
+        type: object
+        required:
+        - room
+        - members
+        - stream
+        - sequence
+        - chat
+        properties:
+          room:
+            $ref: '#/components/schemas/Room'
+          members:
+            type: array
+            items:
+              $ref: '#/components/schemas/MemberSummary'
+          stream:
+            $ref: '#/components/schemas/Stream'
+          sequence:
+            type: integer
+          chat:
+            $ref: '../openapi/openapi.yaml#/components/schemas/ChatPage'
+    Event:
+      name: event
+      title: Durable room event
+      description: Delivered at-least-once from the transactional outbox. Topic chat.message has payload {message} using ChatMessage in the shared OpenAPI schema; message sequence equals envelope sequence. Chat sends use HTTP, not a new socket command.
+      contentType: application/json
+      payload:
+        type: object
+        required:
+        - topic
+        - eventId
+        - payload
+        - sequence
+        properties:
+          topic:
+            type: string
+            enum:
+            - room.created
+            - member.joined
+            - member.left
+            - member.absent
+            - member.returned
+            - owner.presence
+            - stream.started
+            - stream.aborted
+            - chat.message
+            - room.closed
+          eventId:
+            type: string
+          payload:
+            type: object
+            additionalProperties: true
+          sequence:
+            type: integer
+    SyncState:
+      name: sync.state
+      description: Full ephemeral attempt state, separate from durable room event sequencing. New shared streams automatically enter PREPARING at zero with connected members ACCEPTED; manual invitations begin at INVITING. See docs/synchronization-contract.md for phase and recovery rules.
+      payload:
+        type: object
+        required: [serverTimeMs, state]
+        properties:
+          serverTimeMs:
+            type: integer
+            format: int64
+          state:
+            oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/SyncAttempt'
+    SyncInvite:
+      name: sync.invite
+      description: Acknowledged command; returns serverTimeMs and state, or a stable error.
+      payload:
+        type: object
+        required: [streamSessionId, requestId, positionMs]
+        properties:
+          streamSessionId:
+            type: string
+          requestId:
+            type: string
+          positionMs:
+            type: integer
+    SyncRespond:
+      name: sync.respond
+      description: Acknowledged command; returns serverTimeMs and state, or a stable error.
+      payload:
+        type: object
+        required: [streamSessionId, requestId, response]
+        properties:
+          streamSessionId:
+            type: string
+          requestId:
+            type: string
+          response:
+            type: string
+            enum: [ACCEPTED, DECLINED, WITHDRAWN]
+    SyncCommit:
+      name: sync.commit
+      description: Acknowledged command; returns serverTimeMs and state, or a stable error.
+      payload:
+        type: object
+        required: [streamSessionId, requestId]
+        properties:
+          streamSessionId:
+            type: string
+          requestId:
+            type: string
+    SyncCancel:
+      name: sync.cancel
+      description: Acknowledged command; returns serverTimeMs and state, or a stable error.
+      payload:
+        type: object
+        required: [streamSessionId, requestId]
+        properties:
+          streamSessionId:
+            type: string
+          requestId:
+            type: string
+    SyncReady:
+      name: sync.ready
+      description: Acknowledged command; returns serverTimeMs and state, or a stable error.
+      payload:
+        type: object
+        required: [streamSessionId, requestId, ready]
+        properties:
+          streamSessionId:
+            type: string
+          requestId:
+            type: string
+          ready:
+            type: boolean
+    SyncFailed:
+      name: sync.failed
+      description: Acknowledged command; returns serverTimeMs and state, or a stable error.
+      payload:
+        type: object
+        required: [streamSessionId, requestId, reason]
+        properties:
+          streamSessionId:
+            type: string
+          requestId:
+            type: string
+          reason:
+            type: string
+    SyncClock:
+      name: sync.clock
+      description: Acknowledged command; returns serverTimeMs and state, or a stable error.
+      payload:
+        type: object
+    SyncResult:
+      name: sync.result
+      title: Sync result
+      description: Private catch-up to fresh owner telemetry, including rewinds. Other players are untouched.
+      contentType: application/json
+      payload:
+        type: object
+        required:
+        - status
+        - targetPositionMs
+        - serverTimeMs
+        - playing
+        - requestId
+        properties:
+          serverTimeMs:
+            type: integer
+            format: int64
+          playing:
+            type: boolean
+          status:
+            type: string
+            enum:
+            - APPLIED
+            - UNAVAILABLE
+          targetPositionMs:
+            type: integer
+            format: int64
+          requestId:
+            type: string
+            description: Echoes the requestId of the sync.request being answered so clients can ignore
+              stale replies.
+    Error:
+      name: error
+      title: Stable error
+      contentType: application/json
+      payload:
+        type: object
+        required:
+        - code
+        - message
+        properties:
+          code:
+            type: string
+          message:
+            type: string
+    PlaybackReport:
+      name: playback.report
+      title: Playback report
+      description: Sent on connect, seek, play, pause, and every three seconds while active.
+      contentType: application/json
+      payload:
+        type: object
+        required:
+        - streamSessionId
+        - positionMs
+        - playing
+        properties:
+          streamSessionId:
+            type: string
+          positionMs:
+            type: integer
+            format: int64
+          playing:
+            type: boolean
+    SyncRequest:
+      name: sync.request
+      title: Explicit sync request
+      contentType: application/json
+      payload:
+        type: object
+        required:
+        - streamSessionId
+        - positionMs
+        - requestId
+        properties:
+          requestId:
+            type: string
+            description: Client-generated correlation id echoed on the matching sync.result.
+          streamSessionId:
+            type: string
+          positionMs:
+            type: integer
+            format: int64
+    Ack:
+      name: ack
+      title: Event acknowledgement
+      contentType: application/json
+      payload:
+        type: object
+        required:
+        - eventId
+        properties:
+          eventId:
+            type: string
+    AuthRefresh:
+      name: auth.refresh
+      description: Both namespaces verify a fresh same-identity access credential and acknowledge {expiresAt}.
+        Refresh preserves membership, generation, peers, playback and mute. Revocation disconnects roles;
+        transient AUTH_UNAVAILABLE blocks protected commands without replacing identity.
+      payload:
+        type: object
+        required:
+        - accessToken
+        properties:
+          accessToken:
+            type: string
+    VoiceRoster:
+      name: voice.roster
+      description: Only opted-in voice members; authoritative reconciliation after reconnect. Initial
+        mute is true. Disconnected sessions remain in the roster for thirty seconds with
+        signalingConnected false so healthy media links survive signaling recovery.
+      payload:
+        type: object
+        required:
+        - members
+        properties:
+          members:
+            type: array
+            items:
+              type: object
+              required:
+              - membershipId
+              - voiceSessionId
+              - muted
+              - signalingConnected
+              properties:
+                membershipId:
+                  type: string
+                voiceSessionId:
+                  type: string
+                muted:
+                  type: boolean
+                signalingConnected:
+                  type: boolean
+    VoiceLeave:
+      name: voice.leave
+      description: Explicit voice opt-out on the current authenticated socket. Immediately removes
+        this voice generation, admission tickets and roster entry; other voice links and room
+        membership remain active. Acknowledges {ok:true} or {code,message}. The client stops capture
+        immediately, waits at most one second for the acknowledgement, then closes its namespace.
+        Socket loss without this command retains the session for thirty-second resume grace.
+        Superseded sockets cannot remove their replacement session.
+      payload:
+        type: object
+        additionalProperties: false
+    VoiceMute:
+      name: voice.mute
+      description: Changes caller mute intent; acknowledges {ok:true} and publishes roster.
+      payload:
+        type: object
+        required:
+        - muted
+        properties:
+          muted:
+            type: boolean
+    SignalSend:
+      name: signal
+      description: Client to server; msg is JSON encoded audio-only SDP/ICE/restart/requestOffer with generation,targetGeneration,peerGeneration,targetPeerGeneration,negotiationId.
+        Server authorizes membership and epochs, derives sender, and rejects video/data-channel media.
+        Maximum msg 64 KiB; 20/s burst60. Lower membership UUID is offerer. See shared compatibility contract
+        for exact epoch rules. negotiationId is a unique per-message 1..128 character ASCII
+        identifier matching [A-Za-z0-9:_-]. Retry the exact same msg and ID after lost ACK;
+        identical accepted retries acknowledge ok without forwarding again. ID reuse with different
+        content returns STALE_NEGOTIATION. Replay cache retains the latest 2048 messages per member
+        across socket resumes. All signals acknowledge {ok:true} or {code,message}; every ACK must
+        be inspected. RATE_LIMITED permits bounded retries with at least 50ms backoff. Queue SDP
+        before its ICE candidates. ICE before sender SDP returns STALE_NEGOTIATION.
+        Exactly one of sdp, ice, restart true, or requestOffer true is allowed. requestOffer is
+        an explicit user retry from the higher membership UUID to the lower offerer only.
+        The requester first replaces only its failed peer connection and uses its new increasing
+        peerGeneration; targetPeerGeneration may be zero if the offerer epoch is unknown.
+        The server rejects an older sender epoch, a reused request epoch, or a nonzero target
+        other than the current offerer epoch, without changing ordinary SDP/ICE/restart epochs.
+        Lost-ACK retries retain the same negotiationId and are acknowledged without another delivery.
+        The offerer records request epochs across peer replacements within both voice-session generations,
+        ignores duplicates and unchanged/stale epochs on connected links, and resets only the addressed
+        pair's retry budget before creating one new offer. A sender epoch newer than its known remote
+        epoch proves remote replacement and repairs that pair even while local ICE still says connected.
+        Other healthy peer links remain untouched. A new voice-session generation clears request epochs.
+      payload:
+        type: object
+        required:
+        - to
+        - msg
+        properties:
+          to:
+            type: string
+          msg:
+            type: string
+    SignalReceive:
+      name: signal
+      description: Server derived authorized sender, delivered only to addressed active peer.
+      payload:
+        type: object
+        required:
+        - from
+        - msg
+        properties:
+          from:
+            type: string
+          msg:
+            type: string
+  schemas:
+    SyncAttempt:
+      type: object
+      required: [requestId, streamSessionId, streamRevision, ownerMembershipId, targetPositionMs, createdAtMs, revision, phase, participants]
+      properties:
+        requestId: {type: string}
+        streamSessionId: {type: string}
+        streamRevision: {type: integer}
+        ownerMembershipId: {type: string}
+        targetPositionMs: {type: integer, format: int64}
+        createdAtMs: {type: integer, format: int64}
+        revision: {type: integer}
+        phase: {type: string, enum: [INVITING, PREPARING, SCHEDULED, COMPLETED, CANCELLED, FAILED]}
+        deadlineMs: {type: integer, format: int64}
+        startAtMs: {type: integer, format: int64}
+        reason: {type: string}
+        localFile: {type: boolean, default: false, description: Local files require selection consent and whole-attempt failure restoration}
+        participants:
+          type: array
+          items:
+            type: object
+            required: [membershipId, response, ready]
+            properties:
+              membershipId: {type: string}
+              response: {type: string, enum: [PENDING, ACCEPTED, DECLINED, WITHDRAWN, EXCLUDED]}
+              ready: {type: boolean}
+              reason: {type: string}
+    Room:
+      type: object
+      properties:
+        id:
+          type: string
+        code:
+          type: string
+        title:
+          type: string
+        ownerIdentityId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        endedAt:
+          type: string
+          format: date-time
+    MemberSummary:
+      type: object
+      properties:
+        membershipId:
+          type: string
+        identityId:
+          type: string
+        displayName:
+          type: string
+        avatar:
+          type: string
+        isOwner:
+          type: boolean
+        present:
+          type: boolean
+    Stream:
+      type: object
+      properties:
+        id:
+          type: string
+        roomId:
+          type: string
+        sessionId:
+          type: string
+        revision:
+          type: integer
+          format: int64
+        state:
+          type: string
+          enum:
+          - EMPTY
+          - ACTIVE
+          - ABORTED
+        url:
+          type: string
+        startedAt:
+          type: string
+          format: date-time
+        abortedAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time

@@ -1,0 +1,85 @@
+AVPlayer 1.3.1: expose local software playback buffer readiness.
+watchparty modification. Same LGPL-3.0-or-later terms as upstream.
+
+--- a/packages/avplayer/src/AVPlayer.ts
++++ b/packages/avplayer/src/AVPlayer.ts
+@@ -1299,10 +1299,6 @@
+   private async getResource(type: 'decoder' | 'resampler' | 'stretchpitcher', codecId?: AVCodecID, mediaType?: AVMediaType) {
+     const key = codecId != null ? `${type}-${codecId}` : type
+ 
+-    if (AVPlayer.Resource.has(key)) {
+-      return AVPlayer.Resource.get(key)
+-    }
+-
+     const wasmUrl = this.options.getWasm
+       ? this.options.getWasm(type, codecId, mediaType)
+       : getWasmUrl(
+@@ -1312,6 +1308,10 @@
+       )
+ 
+     if (wasmUrl) {
++      if (AVPlayer.Resource.has(key)) {
++        return AVPlayer.Resource.get(key)
++      }
++
+       let resource: WebAssemblyResource | ArrayBuffer
+       // safari 16 以下不支持将 WebAssembly.Module 传递到 worker 中
+       // 所以这里选择将 buffer 传递到 worker 中编译
+@@ -2716,7 +2716,7 @@
+     }
+ 
+     let minQueueLength = 10
+-    if (is.string(this.source) || this.source instanceof CustomIOLoader) {
++    if (is.string(this.source) || this.source instanceof CustomIOLoader || (!this.useMSE && this.source instanceof File)) {
+       let preLoadTime = this.isLive_ ? this.options.jitterBufferMin : this.options.preLoadTime
+       if (this.source instanceof CustomIOLoader) {
+         preLoadTime = Math.max(preLoadTime, this.source.minBuffer)
+@@ -4201,6 +4201,11 @@
+    * 
+    * @returns 
+    */
++  public getPacketHorizon() {
++    const indexes = [this.selectedVideoStream, this.selectedAudioStream].filter(Boolean).map(stream => stream.index)
++    return AVPlayer.DemuxerThread.getPacketHorizon(this.taskId, indexes)
++  }
++
+   public getStats() {
+     return this.GlobalData.stats
+   }
+--- a/packages/avpipeline/src/DemuxPipeline.ts
++++ b/packages/avpipeline/src/DemuxPipeline.ts
+@@ -148,6 +148,7 @@
+ 
+   realFormat: AVFormat
+ 
++  watchpartyReachedEnd?: boolean
+   demuxEnded: boolean
+   loop: LoopTask
+ 
+@@ -994,6 +995,7 @@
+         }
+         const ret = await this.doDemux(task, minQueueLength)
+         if (ret) {
++          task.watchpartyReachedEnd = ret === IOError.END
+           task.demuxEnded = true
+           logger.info(`demuxer ended, taskId: ${task.taskId}`)
+           task.loop.stop()
+@@ -1130,6 +1132,18 @@
+    * @param taskId
+    * @param max （毫秒）
+    */
++  public async getPacketHorizon(taskId: string, indexes: number[]) {
++    const task = this.tasks.get(taskId)
++    if (!task || !indexes.length) return 0
++    if (task.demuxEnded && task.watchpartyReachedEnd) return Infinity
++    return Math.min(...indexes.map(index => {
++      const packets = task.cacheAVPackets.get(index)
++      const packet = packets && packets[packets.length - 1]
++      if (!packet || packet <= 0) return 0
++      return Number(avRescaleQ2(packet.dts, addressof(packet.timeBase), AV_MILLI_TIME_BASE_Q))
++    }))
++  }
++
+   public async croppingAVPacketQueue(taskId: string, max: int64) {
+     const task = this.tasks.get(taskId)
+     if (task) {

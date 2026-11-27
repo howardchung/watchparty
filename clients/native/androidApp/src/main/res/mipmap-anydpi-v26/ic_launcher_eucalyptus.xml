@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@color/launcher_eucalyptus"/>
+    <foreground android:drawable="@drawable/ic_shared_screen_dark"/>
+    <monochrome android:drawable="@drawable/ic_shared_screen_monochrome"/>
+</adaptive-icon>

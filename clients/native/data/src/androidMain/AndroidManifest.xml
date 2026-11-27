@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <application>
+        <provider
+            android:name="top.roomio.data.party.WatchPartyContextProvider"
+            android:authorities="${applicationId}.roomio-init"
+            android:exported="false" />
+
+        <service
+            android:name="top.roomio.data.party.RoomSessionService"
+            android:exported="false"
+            android:foregroundServiceType="microphone|dataSync" />
+    </application>
+
+</manifest>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="launcher_tomato">#D50000</color>
+    <color name="launcher_flamingo">#E67C73</color>
+    <color name="launcher_tangerine">#F4511E</color>
+    <color name="launcher_pumpkin">#EF6C00</color>
+    <color name="launcher_mango">#F09300</color>
+    <color name="launcher_banana">#F6BF26</color>
+    <color name="launcher_citron">#E4C441</color>
+    <color name="launcher_avocado">#C0CA33</color>
+    <color name="launcher_pistachio">#7CB342</color>
+    <color name="launcher_basil">#0B8043</color>
+    <color name="launcher_eucalyptus">#009688</color>
+    <color name="launcher_sage">#33B679</color>
+    <color name="launcher_peacock">#039BE5</color>
+    <color name="launcher_cobalt">#4285F4</color>
+    <color name="launcher_blueberry">#3F51B5</color>
+    <color name="launcher_lavender">#7986CB</color>
+    <color name="launcher_wisteria">#B39DDB</color>
+    <color name="launcher_amethyst">#9E69AF</color>
+    <color name="launcher_grape">#8E24AA</color>
+    <color name="launcher_radicchio">#AD1457</color>
+    <color name="launcher_cherry_blossom">#D81B60</color>
+    <color name="launcher_cocoa">#795548</color>
+    <color name="launcher_graphite">#616161</color>
+    <color name="launcher_birch">#A79B8E</color>
+</resources>

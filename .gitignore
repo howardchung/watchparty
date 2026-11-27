@@ -1,27 +1,64 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# IDEs and editors
+.idea/
+*.iml
+.vscode/
+*.swp
+*~
 
-# dependencies
-/node_modules
-/.pnp
-.pnp.js
+# Local agent tooling and project skills
+.tools/
+.agents/
+**/.agents/
+.claude/
+**/.claude/
+.codex/
+**/.codex/
 
-# testing
-/coverage
+# Gradle, Kotlin, and Android build output
+.gradle/
+.kotlin/
+**/build/
+out/
+.externalNativeBuild/
+.cxx/
+captures/
+*.apk
+*.aab
 
-# production
-/build
+# JavaScript dependencies and generated bundles
+**/node_modules/
+**/dist/
 
-# misc
-.DS_Store
+# Local machine and environment configuration
+local.properties
+observability.properties
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*
+!.env.example
+**/google-services.json
 
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# macOS filesystem metadata
+.DS_Store
+*.xcuserstate
 
-.theia
-.eslintcache
+# Local crash and telemetry artifacts
+.sentry-native/
+
+# Windows metadata
+Thumbs.db
+Desktop.ini
+
+# Browser test artifacts
+clients/web/test-results/
+clients/web/playwright-report/
+clients/web/public/vendor/avplayer/
+
+# Local signing files and generated assets
+*.jks
+*.keystore
+*.p12
+*.pfx
+*.pem
+__pycache__/
+*.pyc
+/output/imagegen/

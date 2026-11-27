@@ -1,0 +1,22 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "top.watchparty.app",
+      "sha256_cert_fingerprints": [
+        "19:5C:B0:6F:D9:08:49:0A:72:17:BE:BB:D7:FC:CD:F0:C1:AB:E1:33:AC:B3:00:B2:76:8B:1B:62:5C:09:E2:27"
+      ]
+    }
+  },
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "top.roomio.app.androidApp",
+      "sha256_cert_fingerprints": [
+        "19:5C:B0:6F:D9:08:49:0A:72:17:BE:BB:D7:FC:CD:F0:C1:AB:E1:33:AC:B3:00:B2:76:8B:1B:62:5C:09:E2:27"
+      ]
+    }
+  }
+]

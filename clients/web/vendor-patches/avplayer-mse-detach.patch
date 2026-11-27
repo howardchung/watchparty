@@ -1,0 +1,12 @@
+--- a/packages/avplayer/src/mse/MSEPipeline.ts
++++ b/packages/avplayer/src/mse/MSEPipeline.ts
+@@ -803,6 +803,9 @@
+ 
+   private createLoop(resource: MSEResource, task: SelfTask) {
+     resource.loop = new LoopTask(() => {
++      if (Array.prototype.indexOf.call(task.mediaSource.sourceBuffers, resource.track.getSourceBuffer()) < 0) {
++        return false
++      }
+ 
+       const canPlayBufferTime = resource.track.getBufferedDuration(task.currentTime + (getTimestamp() - task.currentTimeNTP) / 1000)
+ 

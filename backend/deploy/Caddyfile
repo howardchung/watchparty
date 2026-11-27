@@ -1,0 +1,50 @@
+{
+    # HAProxy preserves the original client address before TLS. Trust only the
+    # loopback/host bridge used by the private 8443 -> container 443 mapping.
+    # https://caddyserver.com/docs/caddyfile/options#proxy-protocol
+    servers :443 {
+        listener_wrappers {
+            proxy_protocol {
+                timeout 2s
+                allow 127.0.0.1/32 172.30.55.1/32
+                fallback_policy reject
+            }
+            tls
+        }
+    }
+}
+
+{$SITE_DOMAIN} {
+    encode zstd gzip
+    header {
+        X-Content-Type-Options nosniff
+        Referrer-Policy strict-origin-when-cross-origin
+        Permissions-Policy "camera=(), microphone=(self)"
+    }
+    @backend path /v1 /v1/* /socket.io /socket.io/* /healthz /readyz
+    handle @backend {
+        reverse_proxy api:8080
+    }
+    handle {
+        root * /srv
+        header /downloads/latest.apk Cache-Control "no-store"
+        @assets path /assets/*
+        header @assets Cache-Control "public, max-age=31536000, immutable"
+        @entry path / /index.html
+        header @entry Cache-Control "no-cache"
+        try_files {path} /index.html
+        file_server
+    }
+}
+{$TURN_DOMAIN} {
+    tls {
+        issuer acme {
+            disable_tlsalpn_challenge
+        }
+    }
+    respond "watchparty TURN relay" 200
+}
+
+www.watchparty.top {
+    redir https://watchparty.top{uri} permanent
+}

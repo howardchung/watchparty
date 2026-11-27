@@ -1,0 +1,37 @@
+{
+  "name": "watchparty-web-ui",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "predev": "node scripts/prepare-player-assets.mjs",
+    "prebuild": "node scripts/prepare-player-assets.mjs"
+  },
+  "dependencies": {
+    "@libmedia/avplayer": "1.3.1",
+    "@material/material-color-utilities": "0.3.0",
+    "@sentry/react": "^11.12.0",
+    "hls.js": "^1.7.3",
+    "lucide-react": "1.24.0",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
+    "socket.io-client": "^4.8.4"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "@sentry/bundler-plugins": "^11.12.0",
+    "@types/node": "26.6.6",
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "6.0.3",
+    "esbuild": "^0.28.2",
+    "typescript": "7.0.2",
+    "vite": "8.1.4",
+    "vitest": "^5.0.4"
+  }
+}

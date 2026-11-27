@@ -1,0 +1,19 @@
+(security) {
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+	encode zstd gzip
+}
+
+{$HAM_DOMAIN} {
+	import security
+	reverse_proxy api:8080
+}
+
+{$HAM_LIVEKIT_DOMAIN} {
+	import security
+	reverse_proxy host.docker.internal:7880
+}

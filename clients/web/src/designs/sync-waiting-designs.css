@@ -1,0 +1,14 @@
+/* Study-only controls and three compact treatments in the existing dialog. */
+.wait-preview-controls{padding-bottom:12px;border-bottom:1px solid var(--md-sys-color-outline-variant)}
+.wait-preview-controls label{display:flex;align-items:center;gap:12px;font-size:.8rem;color:var(--md-sys-color-on-surface-variant)}
+.wait-preview-controls select{font:inherit;padding:8px 12px;min-height:44px;border:1px solid var(--md-sys-color-outline-variant);border-radius:var(--md-sys-shape-corner-small);background:var(--md-sys-color-surface-container);color:var(--md-sys-color-on-surface);min-width:0}
+.wait-preview-controls select:focus-visible{outline:3px solid var(--md-sys-color-primary);outline-offset:2px}
+.wait-dialog-status{display:flex;align-items:center;gap:10px;flex:1 1 100%;min-width:0;color:var(--md-sys-color-on-surface-variant);font-size:.85rem;line-height:1.6;padding-block:4px 8px}
+.wait-dialog-status .group-sync-waiting__spinner{flex-shrink:0;width:18px;height:18px}
+.wait-dialog-status--pill{flex-basis:auto;max-width:100%;border-radius:var(--md-sys-shape-corner-full);background:var(--md-sys-color-secondary-container);color:var(--md-sys-color-on-secondary-container);padding:10px 16px;margin-bottom:4px}
+.wait-dialog-status--line{flex-direction:column;align-items:stretch;gap:8px}
+.wait-dialog-line{height:3px;overflow:hidden;border-radius:var(--md-sys-shape-corner-full);background:var(--md-sys-color-outline-variant)}
+.wait-dialog-line i{display:block;width:28%;height:100%;border-radius:inherit;background:var(--md-sys-color-primary);animation:wait-dialog-slide 2s ease-in-out infinite alternate}
+@keyframes wait-dialog-slide{to{transform:translateX(258%)}}
+@media(prefers-reduced-motion:reduce){.wait-dialog-line i{animation:none}}
+.wait-dialog-status--inline{flex-basis:180px}
