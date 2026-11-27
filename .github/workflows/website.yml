@@ -37,11 +37,12 @@ jobs:
           VITE_SENTRY_DSN: ${{ vars.VITE_SENTRY_DSN }}
           VITE_POSTHOG_TOKEN: ${{ vars.VITE_POSTHOG_TOKEN }}
           VITE_POSTHOG_HOST: ${{ vars.VITE_POSTHOG_HOST }}
-      - run: tar -czf ../website.tgz -C dist .
+      - run: tar -czf "$RUNNER_TEMP/website.tgz" -C dist .
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: website
-          path: website.tgz
+          path: ${{ runner.temp }}/website.tgz
+          if-no-files-found: error
   deploy:
     if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     needs: build
